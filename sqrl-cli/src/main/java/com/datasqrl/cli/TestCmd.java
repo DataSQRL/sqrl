@@ -53,23 +53,12 @@ public class TestCmd extends AbstractCompileCmd {
       var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
       var sqrlTest =
-          new DatasqrlTest(cli.rootDir, planDir, sqrlConfig, flinkConfig, env, formatter);
+          new DatasqrlTest(
+              cli.rootDir, planDir, sqrlConfig, flinkConfig, env, outputMgr, formatter);
       var testExitCode = sqrlTest.run();
       exitCode.set(testExitCode);
 
       var success = testExitCode == 0;
-
-      if (!success) {
-        outputMgr.printCapturedErrors(formatter);
-
-        formatter.sectionHeader("Test Reports");
-        formatter.info("Full execution log: build/logs/test-execution.log");
-        formatter.info("Flink metrics:      build/logs/flink-metrics.log");
-        formatter.info(
-            "Test snapshots:     " + sqrlConfig.getTestConfig().getSnapshotDir(cli.rootDir));
-        formatter.info("");
-      }
-
       formatter.buildStatus(success, getElapsedTime(), LocalDateTime.now());
 
       if (!success) {

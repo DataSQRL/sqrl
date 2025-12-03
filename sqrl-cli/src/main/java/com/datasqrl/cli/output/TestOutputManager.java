@@ -16,37 +16,49 @@
 package com.datasqrl.cli.output;
 
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 
+@RequiredArgsConstructor
 public class TestOutputManager implements AutoCloseable {
 
   private static final String TEST_LOG_FILE = "test-execution.log";
 
-  private final PrintStream originalOut = System.out;
-  private final PrintStream originalErr = System.err;
-  private final PrintStream logStream;
+  private final Path rootDir;
 
-  @Getter private final ErrorCapturingStream errorCapturingStream;
+  private PrintStream originalOut;
+  private PrintStream originalErr;
+  private PrintStream logStream;
+  private ErrorCapturingStream errorCapturingStream;
+  private OutputStream fileOutputStream;
 
-  @SneakyThrows
-  public TestOutputManager(Path rootDir) {
-    var logsDir = rootDir.resolve("build/logs");
-    Files.createDirectories(logsDir);
+  public void redirectStd() {
+    originalOut = System.out;
+    originalErr = System.err;
 
-    var logFile = logsDir.resolve(TEST_LOG_FILE).toFile();
-    var fileOutputStream = new FileOutputStream(logFile, true);
-    errorCapturingStream = new ErrorCapturingStream(fileOutputStream);
-    logStream = new PrintStream(errorCapturingStream);
+    initLogStream();
 
     System.setOut(logStream);
     System.setErr(logStream);
+  }
+
+  public void restoreStd() {
+    if (originalOut != null) {
+      System.setOut(originalOut);
+      originalOut = null;
+    }
+
+    if (originalErr != null) {
+      System.setErr(originalErr);
+      originalErr = null;
+    }
   }
 
   public void disableConsoleLogs() {
@@ -60,12 +72,30 @@ public class TestOutputManager implements AutoCloseable {
     context.updateLoggers();
   }
 
+  @SneakyThrows
+  private void initLogStream() {
+    if (logStream != null) {
+      return;
+    }
+
+    var logsDir = rootDir.resolve("build/logs");
+    Files.createDirectories(logsDir);
+
+    var logFile = logsDir.resolve(TEST_LOG_FILE).toFile();
+    fileOutputStream = new FileOutputStream(logFile, true);
+    errorCapturingStream = new ErrorCapturingStream(fileOutputStream);
+    logStream = new PrintStream(errorCapturingStream);
+  }
+
   public List<String> getCapturedErrors() {
+    if (errorCapturingStream == null) {
+      return List.of();
+    }
     return errorCapturingStream.getCapturedErrors();
   }
 
   public boolean hasErrors() {
-    return errorCapturingStream.hasErrors();
+    return errorCapturingStream != null && errorCapturingStream.hasErrors();
   }
 
   public void printCapturedErrors(OutputFormatter formatter) {
@@ -80,9 +110,13 @@ public class TestOutputManager implements AutoCloseable {
   }
 
   @Override
-  public void close() {
-    System.setOut(originalOut);
-    System.setErr(originalErr);
+  public void close() throws Exception {
+    if (originalOut != null) {
+      System.setOut(originalOut);
+    }
+    if (originalErr != null) {
+      System.setErr(originalErr);
+    }
     if (logStream != null) {
       logStream.close();
     }
