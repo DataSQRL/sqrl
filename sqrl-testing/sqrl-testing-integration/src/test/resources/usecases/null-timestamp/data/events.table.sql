@@ -1,4 +1,4 @@
-CREATE TABLE `Events` (
+CREATE TABLE events (
   `id` INT NOT NULL,
   `name` STRING NOT NULL,
   `event_time` TIMESTAMP(3),

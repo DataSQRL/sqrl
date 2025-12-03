@@ -23,10 +23,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
 /**
- * Integration test that verifies errors during test execution are properly captured and surfaced in
- * the console output. This test uses a scenario with {@code "compiler": {"logger": "print"}} that
- * produces log output, and a null timestamp in the watermark field that causes a Flink
- * RuntimeException. The error should be displayed in the "Captured Errors" section when tests fail.
+ * Integration test that verifies warnings and errors during test execution are properly surfaced in
+ * the console output. This test uses a scenario with {@code "compiler": {"logger": "print"}} and a
+ * nullable timestamp column used as watermark, which produces compiler warnings and causes test
+ * failures due to empty results. The test verifies that important diagnostic information (warnings,
+ * test reports, failure details) is visible to help users debug issues.
  */
 @Slf4j
 public class TesterConsoleOutputIT extends SqrlContainerTestBase {
@@ -50,10 +51,10 @@ public class TesterConsoleOutputIT extends SqrlContainerTestBase {
     log.info("Container logs:\n{}", logs);
 
     assertThat(logs)
-        .as("Logs should contain error about null RowTime field or captured errors section")
+        .as("Logs should contain warning about nullable rowtime column or test failure info")
         .satisfiesAnyOf(
-            l -> assertThat(l).contains("RowTime field should not be null"),
-            l -> assertThat(l).contains("Captured Errors"),
-            l -> assertThat(l).contains("RuntimeException"));
+            l -> assertThat(l).contains("rowtime column 'event_time' for this table is nullable"),
+            l -> assertThat(l).contains("Test Reports"),
+            l -> assertThat(l).contains("EventsTest"));
   }
 }

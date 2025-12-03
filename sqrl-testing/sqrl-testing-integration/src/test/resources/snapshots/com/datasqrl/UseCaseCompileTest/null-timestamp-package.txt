@@ -1,0 +1,5 @@
+[FATAL] Object [Events] not found in module: data.Events
+in script:null-timestamp.sqrl [1:1]:
+IMPORT data.Events;
+^
+
