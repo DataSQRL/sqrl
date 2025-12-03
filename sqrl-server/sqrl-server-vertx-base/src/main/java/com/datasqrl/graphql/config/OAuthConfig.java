@@ -58,6 +58,21 @@ public class OAuthConfig {
   /** Resource identifier for this server (used in protected resource metadata) */
   private String resource;
 
+  /**
+   * External authorization server URL for discovery metadata. If set, this URL is returned in the
+   * /.well-known/oauth-protected-resource endpoint instead of the issuer. Useful when the issuer
+   * URL is only reachable internally (e.g., Docker network) but clients need an external URL.
+   */
+  private String authorizationServerUrl;
+
+  /** Returns the authorization server URL for discovery, defaulting to issuer if not set. */
+  public String getEffectiveAuthorizationServer() {
+    if (authorizationServerUrl != null && !authorizationServerUrl.isBlank()) {
+      return authorizationServerUrl;
+    }
+    return issuer;
+  }
+
   /** Returns the effective JWKS URI, either the explicit one or derived from issuer. */
   public String getEffectiveJwksUri() {
     if (jwksUri != null && !jwksUri.isBlank()) {

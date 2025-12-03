@@ -13,6 +13,7 @@
         "oauthConfig": {
           "provider": "keycloak",
           "issuer": "${KEYCLOAK_ISSUER}",
+          "authorizationServerUrl": "${KEYCLOAK_EXTERNAL_URL}",
           "audience": "datasqrl-mcp",
           "scopesSupported": ["mcp:tools", "mcp:resources"],
           "useJwks": true

@@ -69,7 +69,9 @@ public class OAuthDiscoveryHandler {
     var metadata =
         new JsonObject()
             .put("resource", resource)
-            .put("authorization_servers", new JsonArray().add(oauthConfig.getIssuer()))
+            .put(
+                "authorization_servers",
+                new JsonArray().add(oauthConfig.getEffectiveAuthorizationServer()))
             .put("scopes_supported", new JsonArray(oauthConfig.getScopesSupported()))
             .put("bearer_methods_supported", new JsonArray().add("header"));
 

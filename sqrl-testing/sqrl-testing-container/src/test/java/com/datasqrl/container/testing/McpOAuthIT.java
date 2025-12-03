@@ -54,6 +54,7 @@ class McpOAuthIT extends SqrlContainerTestBase {
 
   private static GenericContainer<?> keycloak;
   private static String keycloakInternalUrl;
+  private static String keycloakExternalUrl;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -82,7 +83,9 @@ class McpOAuthIT extends SqrlContainerTestBase {
     keycloak.start();
 
     keycloakInternalUrl = "http://keycloak:8080";
-    log.info("Keycloak started at internal URL: {}", keycloakInternalUrl);
+    keycloakExternalUrl = "http://localhost:" + keycloak.getMappedPort(8080);
+    log.info(
+        "Keycloak started - internal: {}, external: {}", keycloakInternalUrl, keycloakExternalUrl);
 
     configureKeycloakRealm();
   }
@@ -259,12 +262,14 @@ class McpOAuthIT extends SqrlContainerTestBase {
         testDir,
         c -> {
           c.withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/");
+          c.withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
         });
 
     startGraphQLServer(
         testDir,
         c -> {
           c.withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/");
+          c.withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
         });
 
     var discoveryUrl = getBaseUrl() + "/.well-known/oauth-protected-resource";
@@ -283,7 +288,8 @@ class McpOAuthIT extends SqrlContainerTestBase {
     assertThat(json.has("authorization_servers")).isTrue();
     assertThat(json.get("authorization_servers").isArray()).isTrue();
     assertThat(json.get("authorization_servers").get(0).asText())
-        .contains("keycloak:8080/realms/" + REALM_NAME);
+        .contains("localhost:")
+        .contains("/realms/" + REALM_NAME);
 
     assertThat(json.has("scopes_supported")).isTrue();
     assertThat(json.get("scopes_supported").isArray()).isTrue();
@@ -301,12 +307,14 @@ class McpOAuthIT extends SqrlContainerTestBase {
         testDir,
         c -> {
           c.withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/");
+          c.withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
         });
 
     startGraphQLServer(
         testDir,
         c -> {
           c.withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/");
+          c.withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
         });
 
     var mcpUrl = getBaseUrl() + "/v1/mcp";
@@ -326,6 +334,51 @@ class McpOAuthIT extends SqrlContainerTestBase {
     assertThat(wwwAuth).isNotNull();
     assertThat(wwwAuth.getValue()).contains("resource_metadata=");
     assertThat(wwwAuth.getValue()).contains(".well-known/oauth-protected-resource");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenOAuthConfig_whenMcpRequestWithValidToken_thenReturnsToolsList() {
+    compileSqrlProject(
+        testDir,
+        c -> {
+          c.withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/");
+          c.withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
+        });
+
+    startGraphQLServer(
+        testDir,
+        c -> {
+          c.withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/");
+          c.withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
+        });
+
+    var token = getUserToken();
+    log.info("Obtained user token: {}...", token.substring(0, 20));
+
+    var mcpUrl = getBaseUrl() + "/v1/mcp";
+    log.info("Testing authenticated MCP request to: {}", mcpUrl);
+
+    var request = new HttpPost(mcpUrl);
+    request.setHeader("Authorization", "Bearer " + token);
+    request.setEntity(
+        new StringEntity(
+            "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\",\"id\":1}",
+            ContentType.APPLICATION_JSON));
+
+    var response = sharedHttpClient.execute(request);
+    var statusCode = response.getStatusLine().getStatusCode();
+    var body = EntityUtils.toString(response.getEntity());
+
+    log.info("MCP response status: {}, body: {}", statusCode, body);
+
+    assertThat(statusCode).isEqualTo(200);
+
+    var json = objectMapper.readTree(body);
+    assertThat(json.has("jsonrpc")).isTrue();
+    assertThat(json.get("jsonrpc").asText()).isEqualTo("2.0");
+    assertThat(json.has("result")).isTrue();
+    assertThat(json.get("result").has("tools")).isTrue();
   }
 
   /** Compiles the SQRL project with environment variable support. */

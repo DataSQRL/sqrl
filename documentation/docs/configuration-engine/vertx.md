@@ -7,7 +7,6 @@ Eclipse Vert.x is a reactive server framework that serves as the GraphQL API ser
 | Key           | Type        | Default   | Notes                                                         |
 |---------------|-------------|-----------|---------------------------------------------------------------|
 | `enabledAuth` | **array**   | `[]`      | List of enabled auth methods: `"JWT"`, `"OAUTH"`              |
-| `authKind`    | **string**  | `"NONE"`  | _Deprecated_: Use `enabledAuth` instead                       |
 | `config`      | **object**  | see below | Vert.x-specific configuration including auth settings         |
 
 ## Basic Configuration

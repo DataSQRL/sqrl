@@ -43,7 +43,6 @@ import io.vertx.ext.web.RoutingContext;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -103,8 +102,7 @@ class RestBridgeVerticleTest {
     when(route.handler(any())).thenReturn(route);
 
     restBridgeVerticle =
-        new RestBridgeVerticle(
-            router, serverConfig, "v1", model, Optional.empty(), graphQLServerVerticle);
+        new RestBridgeVerticle(router, serverConfig, "v1", model, List.of(), graphQLServerVerticle);
   }
 
   @Test

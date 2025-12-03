@@ -238,9 +238,9 @@ public class HttpServerVerticle extends AbstractVerticle {
     var hasMcp = model.getOperations().stream().anyMatch(ApiOperation::isMcpEndpoint);
     var hasRest = model.getOperations().stream().anyMatch(ApiOperation::isRestEndpoint);
 
-    return createAuthProvider()
+    return createAuthProviders()
         .compose(
-            jwtOpt -> {
+            authProviders -> {
               var execFunctionPlan = loadExecFunctionPlan();
               if (execFunctionPlan.isPresent()) {
                 log.info("Exec function plan loaded");
@@ -248,7 +248,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
               var graphQLVerticle =
                   new GraphQLServerVerticle(
-                      router, config, modelVersion, model, jwtOpt, execFunctionPlan);
+                      router, config, modelVersion, model, authProviders, execFunctionPlan);
 
               return vertx
                   .deployVerticle(graphQLVerticle, childOpts)
@@ -258,7 +258,12 @@ public class HttpServerVerticle extends AbstractVerticle {
                         if (hasMcp) {
                           var mcpBridgeVerticle =
                               new McpBridgeVerticle(
-                                  router, config, modelVersion, model, jwtOpt, graphQLVerticle);
+                                  router,
+                                  config,
+                                  modelVersion,
+                                  model,
+                                  authProviders,
+                                  graphQLVerticle);
                           vertx
                               .deployVerticle(mcpBridgeVerticle, childOpts)
                               .onSuccess(
@@ -270,7 +275,12 @@ public class HttpServerVerticle extends AbstractVerticle {
                         if (hasRest) {
                           var restBridgeVerticle =
                               new RestBridgeVerticle(
-                                  router, config, modelVersion, model, jwtOpt, graphQLVerticle);
+                                  router,
+                                  config,
+                                  modelVersion,
+                                  model,
+                                  authProviders,
+                                  graphQLVerticle);
                           vertx
                               .deployVerticle(restBridgeVerticle, childOpts)
                               .onSuccess(
@@ -289,21 +299,42 @@ public class HttpServerVerticle extends AbstractVerticle {
             });
   }
 
-  /** Creates the authentication provider, preferring OAuth config over legacy JWT config. */
-  private Future<Optional<AuthenticationProvider>> createAuthProvider() {
+  /**
+   * Creates authentication providers for all configured auth methods. Supports both OAuth and JWT
+   * simultaneously when both are configured.
+   */
+  private Future<List<AuthenticationProvider>> createAuthProviders() {
+    List<Future<AuthenticationProvider>> providerFutures = new ArrayList<>();
+
     if (config.getOauthConfig() != null && config.getOauthConfig().getIssuer() != null) {
-      log.info("Using OAuth authentication with JWKS");
-      return OAuth2AuthFactory.createAuthProvider(vertx, config.getOauthConfig())
-          .map(Optional::ofNullable);
+      log.info("Configuring OAuth authentication with JWKS");
+      providerFutures.add(
+          OAuth2AuthFactory.createAuthProvider(vertx, config.getOauthConfig())
+              .map(provider -> (AuthenticationProvider) provider));
     }
 
     if (config.getJwtAuth() != null) {
-      log.info("Using legacy JWT authentication");
-      return Future.succeededFuture(Optional.of(JWTAuth.create(vertx, config.getJwtAuth())));
+      log.info("Configuring JWT authentication");
+      providerFutures.add(
+          Future.succeededFuture(
+              (AuthenticationProvider) JWTAuth.create(vertx, config.getJwtAuth())));
     }
 
-    log.info("No authentication configured");
-    return Future.succeededFuture(Optional.empty());
+    if (providerFutures.isEmpty()) {
+      log.info("No authentication configured");
+      return Future.succeededFuture(List.of());
+    }
+
+    return Future.all(providerFutures)
+        .map(
+            composite -> {
+              List<AuthenticationProvider> providers = new ArrayList<>();
+              for (int i = 0; i < composite.size(); i++) {
+                providers.add(composite.resultAt(i));
+              }
+              log.info("Configured {} authentication provider(s)", providers.size());
+              return providers;
+            });
   }
 
   // ---------------------------------------------------------------------------

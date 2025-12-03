@@ -36,8 +36,8 @@ import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +58,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
   protected final ServerConfig config;
   protected final String modelVersion;
   protected final RootGraphqlModel model;
-  protected final Optional<AuthenticationProvider> authProvider;
+  protected final List<AuthenticationProvider> authProviders;
   protected final GraphQLServerVerticle graphQLServerVerticle;
 
   protected void handleError(

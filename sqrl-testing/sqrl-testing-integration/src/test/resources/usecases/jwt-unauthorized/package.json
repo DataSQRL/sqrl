@@ -5,7 +5,7 @@
   },
   "engines" : {
     "vertx" : {
-      "authKind": "JWT",
+      "enabledAuth": ["JWT"],
       "config": {
         "jwtAuth": {
           "pubSecKeys": [
