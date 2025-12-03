@@ -1,6 +1,0 @@
-subscription {
-  SensorReadingSubscription {
-    sensorid
-    temperature
-  }
-}

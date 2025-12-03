@@ -17,39 +17,57 @@ package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 
 /**
- * Integration test that verifies successful test execution does NOT print captured errors or
- * excessive log output. This test uses the sensors-mutation test case which is known to work
- * correctly. The test verifies that the "Captured Errors" section is NOT shown when tests succeed.
+ * Integration test that verifies successful test execution redirects log output to log file. This
+ * test uses the logging/print test case which exports data to a print logger. The test verifies
+ * that "LogData" appears in the log file and NOT in console output. Also verifies that "Captured
+ * Errors" and "Test Reports" sections are NOT shown when tests succeed.
  */
 @Slf4j
 public class TesterQuietOnSuccessIT extends SqrlContainerTestBase {
 
   @Override
   protected String getTestCaseName() {
-    return "sensors-mutation";
+    return "logging/print";
   }
 
   @Test
   @SneakyThrows
-  void givenSuccessfulTest_whenTestExecuted_thenNoErrorsDisplayed() {
+  void givenPrintLogger_whenTestSucceeds_thenLogDataInFileNotConsole() {
     var result = sqrlCmd(testDir, "test package.json".split(" "));
 
-    var logs = result.logs();
-    log.info("Container logs:\n{}", logs);
+    var consoleLogs = result.logs();
+    log.info("Container logs:\n{}", consoleLogs);
 
-    assertThat(logs).as("Logs should indicate successful build").contains("BUILD SUCCESS");
+    assertThat(consoleLogs)
+        .as("Console should indicate successful build")
+        .contains("BUILD SUCCESS");
 
-    assertThat(logs)
-        .as("Logs should NOT contain 'Captured Errors' section on success")
+    assertThat(consoleLogs)
+        .as("Console should NOT contain 'Captured Errors' section on success")
         .doesNotContain("Captured Errors");
 
-    assertThat(logs)
-        .as("Logs should NOT contain 'Test Reports' section on success")
+    assertThat(consoleLogs)
+        .as("Console should NOT contain 'Test Reports' section on success")
         .doesNotContain("Test Reports");
+
+    var logFile = testDir.resolve("build/logs/test-execution.log");
+    assertThat(logFile).as("Log file should exist").exists();
+
+    var logFileContent = Files.readString(logFile);
+    log.info("Log file content length: {} bytes", logFileContent.length());
+
+    assertThat(logFileContent)
+        .as("Log file should contain LogData output from print logger")
+        .contains("LogData");
+
+    assertThat(consoleLogs)
+        .as("Console should NOT contain LogData output (redirected to log file)")
+        .doesNotContain("LogData");
   }
 }

@@ -1,6 +1,0 @@
-query {
-    SensorMaxTemp {
-        sensorid
-        maxTemp
-    }
-}
