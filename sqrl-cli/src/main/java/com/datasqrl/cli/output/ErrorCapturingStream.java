@@ -34,6 +34,7 @@ public class ErrorCapturingStream extends OutputStream {
 
   private static final Pattern EXCEPTION_PATTERN =
       Pattern.compile("^(.*Exception|.*Error|Caused by:).*", Pattern.CASE_INSENSITIVE);
+  private static final Pattern LOG_ERROR_PATTERN = Pattern.compile("^\\[(WARN|ERROR)].*");
   private static final Pattern STACK_TRACE_PATTERN = Pattern.compile("^\\s+at\\s+.*");
 
   private final OutputStream delegate;
@@ -97,6 +98,9 @@ public class ErrorCapturingStream extends OutputStream {
       capturedErrors.add(line);
       capturingStackTrace = true;
       stackTraceLineCount = 0;
+    } else if (LOG_ERROR_PATTERN.matcher(line).matches()) {
+      capturedErrors.add(line);
+      capturingStackTrace = false;
     } else if (capturingStackTrace && STACK_TRACE_PATTERN.matcher(line).matches()) {
       if (stackTraceLineCount < MAX_STACK_TRACE_LINES) {
         capturedErrors.add(line);

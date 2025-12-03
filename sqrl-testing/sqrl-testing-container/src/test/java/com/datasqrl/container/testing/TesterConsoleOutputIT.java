@@ -51,10 +51,11 @@ public class TesterConsoleOutputIT extends SqrlContainerTestBase {
     log.info("Container logs:\n{}", logs);
 
     assertThat(logs)
-        .as("Logs should contain warning about nullable rowtime column or test failure info")
-        .satisfiesAnyOf(
-            l -> assertThat(l).contains("rowtime column 'event_time' for this table is nullable"),
-            l -> assertThat(l).contains("Test Reports"),
-            l -> assertThat(l).contains("EventsTest"));
+        .as("Logs should contain 'Test Reports' section when tests fail")
+        .contains("Test Reports");
+
+    assertThat(logs)
+        .as("Logs should contain compiler warning about nullable rowtime")
+        .contains("[WARN]");
   }
 }

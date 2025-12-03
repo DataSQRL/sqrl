@@ -1,0 +1,11 @@
+{
+  "data" : {
+    "HighTempAlertTest" : [ {
+      "sensorid" : 3,
+      "temperature" : 50.7
+    }, {
+      "sensorid" : 2,
+      "temperature" : 55.1
+    } ]
+  }
+}

@@ -119,4 +119,44 @@ class ErrorCapturingStreamTest {
 
     assertThat(delegate.toString()).isEqualTo(content);
   }
+
+  @Test
+  void givenWarnLogLine_whenWriting_thenWarnCaptured() {
+    printStream.println("[WARN] The rowtime column 'event_time' for this table is nullable");
+    printStream.println("Normal line after warning");
+
+    assertThat(stream.hasErrors()).isTrue();
+    var errors = stream.getCapturedErrors();
+    assertThat(errors).hasSize(1);
+    assertThat(errors.get(0)).contains("[WARN]");
+    assertThat(errors.get(0)).contains("nullable");
+  }
+
+  @Test
+  void givenErrorLogLine_whenWriting_thenErrorCaptured() {
+    printStream.println("[ERROR] Failed to process record");
+    printStream.println("Some context information");
+
+    assertThat(stream.hasErrors()).isTrue();
+    var errors = stream.getCapturedErrors();
+    assertThat(errors).hasSize(1);
+    assertThat(errors.get(0)).contains("[ERROR]");
+  }
+
+  @Test
+  void givenMixedWarningsAndExceptions_whenWriting_thenAllCaptured() {
+    printStream.println("[WARN] This is a warning");
+    printStream.println("Normal output");
+    printStream.println("java.lang.RuntimeException: Test error");
+    printStream.println("    at com.example.Class.method(Class.java:10)");
+    printStream.println("[ERROR] Another error log");
+
+    assertThat(stream.hasErrors()).isTrue();
+    var errors = stream.getCapturedErrors();
+    assertThat(errors).hasSize(4);
+    assertThat(errors.get(0)).contains("[WARN]");
+    assertThat(errors.get(1)).contains("RuntimeException");
+    assertThat(errors.get(2)).contains("at com.example");
+    assertThat(errors.get(3)).contains("[ERROR]");
+  }
 }

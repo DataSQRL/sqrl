@@ -1,0 +1,21 @@
+{
+  "data" : {
+    "SensorReading" : [ {
+      "sensorid" : 1
+    }, {
+      "sensorid" : 2
+    }, {
+      "sensorid" : 3
+    }, {
+      "sensorid" : 2
+    }, {
+      "sensorid" : 1
+    }, {
+      "sensorid" : 1
+    }, {
+      "sensorid" : 1
+    }, {
+      "sensorid" : 1
+    } ]
+  }
+}

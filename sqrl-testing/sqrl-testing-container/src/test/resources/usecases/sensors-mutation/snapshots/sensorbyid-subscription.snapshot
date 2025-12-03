@@ -1,0 +1,29 @@
+[ {
+  "data" : {
+    "SensorSubscriptionById" : {
+      "sensorid" : 2,
+      "temperature" : 14.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorSubscriptionById" : {
+      "sensorid" : 2,
+      "temperature" : 15.1
+    }
+  }
+}, {
+  "data" : {
+    "SensorSubscriptionById" : {
+      "sensorid" : 2,
+      "temperature" : 24.7
+    }
+  }
+}, {
+  "data" : {
+    "SensorSubscriptionById" : {
+      "sensorid" : 2,
+      "temperature" : 55.1
+    }
+  }
+} ]
