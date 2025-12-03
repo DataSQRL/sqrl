@@ -67,7 +67,7 @@ For example, for `ES256`, this would look something like this:
 
 ## OAuth 2.0 Authentication Configuration
 
-For OAuth 2.0 authentication with providers like Auth0 or Keycloak, use the `oauth2Options` section.
+For OAuth 2.0 authentication with providers like Auth0 or Keycloak, use the `oauthConfig` section.
 This enables MCP (Model Context Protocol) clients like Claude Code to authenticate using OAuth.
 
 ```json
@@ -76,11 +76,11 @@ This enables MCP (Model Context Protocol) clients like Claude Code to authentica
     "vertx": {
       "authKind": ["OAUTH"],
       "config": {
-        "oauth2Options": {
-          "site": "https://your-tenant.auth0.com/",
-          "clientId": "your-client-id"
-        },
-        "oauthDiscovery": {
+        "oauthConfig": {
+          "oauth2Options": {
+            "site": "https://your-tenant.auth0.com/",
+            "clientId": "your-client-id"
+          },
           "authorizationServerUrl": "https://your-tenant.auth0.com/",
           "scopesSupported": ["mcp:tools", "mcp:resources"]
         }
@@ -101,31 +101,32 @@ You can enable both authentication methods simultaneously:
       "authKind": ["JWT", "OAUTH"],
       "config": {
         "jwtAuth": { ... },
-        "oauth2Options": { ... }
+        "oauthConfig": { ... }
       }
     }
   }
 }
 ```
 
+### OAuthConfig Structure
+
+The `oauthConfig` object combines Vert.x's [OAuth2Options](https://vertx.io/docs/apidocs/io/vertx/ext/auth/oauth2/OAuth2Options.html) with discovery metadata:
+
+| Key                      | Type       | Required | Description                                              |
+|--------------------------|------------|----------|----------------------------------------------------------|
+| `oauth2Options`          | **object** | Yes      | Vert.x OAuth2Options for authentication                  |
+| `authorizationServerUrl` | **string** | No       | External authorization server URL for discovery          |
+| `scopesSupported`        | **array**  | No       | Scopes advertised (default: `["mcp:tools", "mcp:resources"]`) |
+| `resource`               | **string** | No       | Override resource identifier in discovery metadata       |
+
 ### OAuth2Options Configuration
 
-The `oauth2Options` object uses Vert.x's [OAuth2Options](https://vertx.io/docs/apidocs/io/vertx/ext/auth/oauth2/OAuth2Options.html) class:
+The `oauth2Options` object uses Vert.x's OAuth2Options class:
 
 | Key        | Type       | Required | Description                                           |
 |------------|------------|----------|-------------------------------------------------------|
 | `site`     | **string** | Yes      | OAuth issuer URL (e.g., `https://tenant.auth0.com`)   |
 | `clientId` | **string** | No       | OAuth client ID (defaults to `datasqrl-mcp`)          |
-
-### OAuth Discovery Configuration
-
-The optional `oauthDiscovery` object configures the RFC 9728 discovery endpoint:
-
-| Key                      | Type      | Required | Description                                              |
-|--------------------------|-----------|----------|----------------------------------------------------------|
-| `authorizationServerUrl` | **string**| No       | External authorization server URL for discovery          |
-| `scopesSupported`        | **array** | No       | Scopes advertised (default: `["mcp:tools", "mcp:resources"]`) |
-| `resource`               | **string**| No       | Override resource identifier in discovery metadata       |
 
 ### OAuth Discovery Endpoint
 
@@ -138,10 +139,10 @@ You can use environment variables in the OAuth configuration:
 
 ```json
 {
-  "oauth2Options": {
-    "site": "${AUTH0_ISSUER}"
-  },
-  "oauthDiscovery": {
+  "oauthConfig": {
+    "oauth2Options": {
+      "site": "${AUTH0_ISSUER}"
+    },
     "authorizationServerUrl": "${AUTH0_EXTERNAL_URL}"
   }
 }

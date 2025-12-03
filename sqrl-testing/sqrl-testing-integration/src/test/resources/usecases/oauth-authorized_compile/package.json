@@ -10,10 +10,10 @@
     "vertx": {
       "authKind": ["OAUTH"],
       "config": {
-        "oauth2Options": {
-          "site": "${KEYCLOAK_ISSUER}"
-        },
-        "oauthDiscovery": {
+        "oauthConfig": {
+          "oauth2Options": {
+            "site": "${KEYCLOAK_ISSUER}"
+          },
           "authorizationServerUrl": "${KEYCLOAK_EXTERNAL_URL}"
         }
       }

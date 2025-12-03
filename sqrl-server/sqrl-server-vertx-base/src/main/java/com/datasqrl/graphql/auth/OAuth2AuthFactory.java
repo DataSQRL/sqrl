@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql.auth;
 
+import com.datasqrl.graphql.config.OAuthConfig;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
@@ -36,18 +37,19 @@ public class OAuth2AuthFactory {
    * key rotation by fetching keys from the provider.
    *
    * @param vertx the Vert.x instance
-   * @param oauth2Options OAuth2 options with site configured
+   * @param oauthConfig OAuth configuration containing OAuth2Options
    * @return Future containing the AuthenticationProvider, or null if config is invalid
    */
   public static Future<AuthenticationProvider> createAuthProvider(
-      Vertx vertx, OAuth2Options oauth2Options) {
-    if (oauth2Options == null) {
+      Vertx vertx, OAuthConfig oauthConfig) {
+    if (oauthConfig == null || oauthConfig.getOauth2Options() == null) {
       return Future.succeededFuture(null);
     }
 
+    var oauth2Options = oauthConfig.getOauth2Options();
     var site = oauth2Options.getSite();
     if (site == null || site.isBlank()) {
-      log.warn("OAuth2 options present but no site configured");
+      log.warn("OAuth config present but no site configured");
       return Future.succeededFuture(null);
     }
 

@@ -306,10 +306,10 @@ public class HttpServerVerticle extends AbstractVerticle {
   private Future<List<AuthenticationProvider>> createAuthProviders() {
     List<Future<AuthenticationProvider>> providerFutures = new ArrayList<>();
 
-    if (config.getOauth2Options() != null && config.getOauth2Options().getSite() != null) {
+    if (config.getOauthConfig() != null && config.getOauthConfig().getSite() != null) {
       log.info("Configuring OAuth authentication with JWKS");
       providerFutures.add(
-          OAuth2AuthFactory.createAuthProvider(vertx, config.getOauth2Options())
+          OAuth2AuthFactory.createAuthProvider(vertx, config.getOauthConfig())
               .map(provider -> (AuthenticationProvider) provider));
     }
 

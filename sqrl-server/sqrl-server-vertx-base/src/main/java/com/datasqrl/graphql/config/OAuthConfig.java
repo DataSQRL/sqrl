@@ -16,20 +16,28 @@
 package com.datasqrl.graphql.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSetter;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.oauth2.OAuth2Options;
 import java.util.List;
+import java.util.Map;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Configuration for OAuth 2.0 Protected Resource Metadata (RFC 9728). These settings control what
- * is returned in the /.well-known/oauth-protected-resource endpoint.
+ * OAuth 2.0 configuration combining Vert.x OAuth2Options with discovery metadata. This allows
+ * reusing Vert.x's OAuth2Options for authentication while adding fields needed for RFC 9728
+ * Protected Resource Metadata.
  */
 @Getter
 @Setter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class OAuthDiscoveryConfig {
+public class OAuthConfig {
+
+  /** Vert.x OAuth2Options for authentication provider creation. */
+  private OAuth2Options oauth2Options;
 
   /**
    * External authorization server URL for discovery metadata. Use when the internal OAuth2Options
@@ -42,4 +50,26 @@ public class OAuthDiscoveryConfig {
 
   /** Resource identifier for this server (derived from request if not set). */
   private String resource;
+
+  @JsonSetter("oauth2Options")
+  public void setOauth2OptionsFromJson(Map<String, Object> options) {
+    this.oauth2Options = options == null ? null : new OAuth2Options(new JsonObject(options));
+  }
+
+  /** Returns the site URL from OAuth2Options, or null if not configured. */
+  public String getSite() {
+    return oauth2Options != null ? oauth2Options.getSite() : null;
+  }
+
+  /** Returns the authorization server URL for discovery, defaulting to site if not set. */
+  public String getEffectiveAuthorizationServer() {
+    if (authorizationServerUrl != null && !authorizationServerUrl.isBlank()) {
+      return authorizationServerUrl;
+    }
+    var site = getSite();
+    if (site == null) {
+      return null;
+    }
+    return site.endsWith("/") ? site : site + "/";
+  }
 }
