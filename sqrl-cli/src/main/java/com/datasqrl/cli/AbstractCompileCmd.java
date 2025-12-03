@@ -108,17 +108,6 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     }
   }
 
-  private void printCompilationResults(OutputFormatter formatter) {
-    formatter.newline();
-    formatter.sectionHeader("Compilation Results");
-    formatter.info("Deployment artifacts: " + getTargetDir());
-    formatter.info("Pipeline DAG:         " + getBuildDir().resolve("pipeline_explain.txt"));
-    formatter.info("Visual DAG:           " + getBuildDir().resolve("pipeline_visual.html"));
-    formatter.newline();
-
-    formatter.buildStatus(true, getElapsedTime(), LocalDateTime.now());
-  }
-
   protected void execute(ErrorCollector errors) throws Exception {
     // Do nothing by default
   }
@@ -172,7 +161,23 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     }
   }
 
+  private void printCompilationResults(OutputFormatter formatter) {
+    var relBuildDir = relativizeFromRoot(getBuildDir());
+
+    formatter.newline();
+    formatter.sectionHeader("Compilation Results");
+    formatter.info("Deployment artifacts: " + relativizeFromRoot(getTargetDir()));
+    formatter.info("Pipeline DAG:         " + relBuildDir.resolve("pipeline_explain.txt"));
+    formatter.info("Visual DAG:           " + relBuildDir.resolve("pipeline_visual.html"));
+    formatter.newline();
+    formatter.buildStatus(true, getElapsedTime(), LocalDateTime.now());
+  }
+
   private boolean loadRunDefaults() {
     return getGoal() == ExecutionGoal.RUN || getGoal() == ExecutionGoal.TEST;
+  }
+
+  private Path relativizeFromRoot(Path path) {
+    return path == null || !path.startsWith(cli.rootDir) ? path : cli.rootDir.relativize(path);
   }
 }
