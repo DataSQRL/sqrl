@@ -15,12 +15,14 @@
  */
 package com.datasqrl.graphql.auth;
 
-import com.datasqrl.graphql.config.OAuthConfig;
+import com.datasqrl.graphql.config.OAuthDiscoveryConfig;
 import com.datasqrl.graphql.config.ServerConfig;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.oauth2.OAuth2Options;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class OAuthDiscoveryHandler {
 
+  private static final List<String> DEFAULT_SCOPES = List.of("mcp:tools", "mcp:resources");
+
   private final ServerConfig config;
 
   /**
@@ -39,18 +43,18 @@ public class OAuthDiscoveryHandler {
    * present.
    */
   public void registerRoutes(Router router) {
-    var oauthConfig = config.getOauthConfig();
-    if (oauthConfig == null) {
-      log.debug("OAuth config not present, skipping discovery endpoints");
+    var oauth2Options = config.getOauth2Options();
+    if (oauth2Options == null) {
+      log.debug("OAuth2 options not present, skipping discovery endpoints");
       return;
     }
 
-    if (oauthConfig.getIssuer() == null || oauthConfig.getIssuer().isBlank()) {
-      log.warn("OAuth config present but issuer is missing, skipping discovery endpoints");
+    if (oauth2Options.getSite() == null || oauth2Options.getSite().isBlank()) {
+      log.warn("OAuth2 options present but site is missing, skipping discovery endpoints");
       return;
     }
 
-    log.info("Registering OAuth discovery endpoints for issuer: {}", oauthConfig.getIssuer());
+    log.info("Registering OAuth discovery endpoints for site: {}", oauth2Options.getSite());
 
     router
         .get("/.well-known/oauth-protected-resource")
@@ -62,17 +66,18 @@ public class OAuthDiscoveryHandler {
    * authorization server to use.
    */
   private void handleProtectedResourceMetadata(RoutingContext ctx) {
-    var oauthConfig = config.getOauthConfig();
+    var oauth2Options = config.getOauth2Options();
+    var discoveryConfig = config.getOauthDiscovery();
 
-    var resource = determineResourceUri(ctx, oauthConfig);
+    var resource = determineResourceUri(ctx, discoveryConfig);
+    var authServer = getAuthorizationServerUrl(oauth2Options, discoveryConfig);
+    var scopes = getScopes(discoveryConfig);
 
     var metadata =
         new JsonObject()
             .put("resource", resource)
-            .put(
-                "authorization_servers",
-                new JsonArray().add(oauthConfig.getEffectiveAuthorizationServer()))
-            .put("scopes_supported", new JsonArray(oauthConfig.getScopesSupported()))
+            .put("authorization_servers", new JsonArray().add(authServer))
+            .put("scopes_supported", new JsonArray(scopes))
             .put("bearer_methods_supported", new JsonArray().add("header"));
 
     log.debug("Returning protected resource metadata: {}", metadata.encodePrettily());
@@ -83,9 +88,29 @@ public class OAuthDiscoveryHandler {
         .end(metadata.encode());
   }
 
-  private String determineResourceUri(RoutingContext ctx, OAuthConfig oauthConfig) {
-    if (oauthConfig.getResource() != null && !oauthConfig.getResource().isBlank()) {
-      return oauthConfig.getResource();
+  private String getAuthorizationServerUrl(
+      OAuth2Options oauth2Options, OAuthDiscoveryConfig discoveryConfig) {
+    if (discoveryConfig != null
+        && discoveryConfig.getAuthorizationServerUrl() != null
+        && !discoveryConfig.getAuthorizationServerUrl().isBlank()) {
+      return discoveryConfig.getAuthorizationServerUrl();
+    }
+    var site = oauth2Options.getSite();
+    return site.endsWith("/") ? site : site + "/";
+  }
+
+  private List<String> getScopes(OAuthDiscoveryConfig discoveryConfig) {
+    if (discoveryConfig != null && discoveryConfig.getScopesSupported() != null) {
+      return discoveryConfig.getScopesSupported();
+    }
+    return DEFAULT_SCOPES;
+  }
+
+  private String determineResourceUri(RoutingContext ctx, OAuthDiscoveryConfig discoveryConfig) {
+    if (discoveryConfig != null
+        && discoveryConfig.getResource() != null
+        && !discoveryConfig.getResource().isBlank()) {
+      return discoveryConfig.getResource();
     }
 
     var host = ctx.request().getHeader("Host");

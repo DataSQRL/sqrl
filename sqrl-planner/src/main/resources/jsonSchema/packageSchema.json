@@ -239,7 +239,7 @@
         "vertx": {
           "type": "object",
           "properties": {
-            "enabledAuth": {
+            "authKind": {
               "description": "List of enabled authentication methods.",
               "type": "array",
               "items": {

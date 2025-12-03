@@ -15,7 +15,6 @@
  */
 package com.datasqrl.graphql.auth;
 
-import com.datasqrl.graphql.config.OAuthConfig;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
@@ -30,37 +29,38 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OAuth2AuthFactory {
 
+  private static final String DEFAULT_CLIENT_ID = "datasqrl-mcp";
+
   /**
    * Creates an authentication provider using OpenID Connect discovery. This enables automatic JWKS
    * key rotation by fetching keys from the provider.
    *
    * @param vertx the Vert.x instance
-   * @param config OAuth configuration
+   * @param oauth2Options OAuth2 options with site configured
    * @return Future containing the AuthenticationProvider, or null if config is invalid
    */
-  public static Future<AuthenticationProvider> createAuthProvider(Vertx vertx, OAuthConfig config) {
-    if (config == null) {
+  public static Future<AuthenticationProvider> createAuthProvider(
+      Vertx vertx, OAuth2Options oauth2Options) {
+    if (oauth2Options == null) {
       return Future.succeededFuture(null);
     }
 
-    var issuer = config.getIssuer();
-    if (issuer == null || issuer.isBlank()) {
-      log.warn("OAuth config present but no issuer configured");
+    var site = oauth2Options.getSite();
+    if (site == null || site.isBlank()) {
+      log.warn("OAuth2 options present but no site configured");
       return Future.succeededFuture(null);
     }
 
-    var site = issuer.endsWith("/") ? issuer.substring(0, issuer.length() - 1) : issuer;
-    log.info("Creating OAuth2 auth provider via OpenID Connect discovery from: {}", site);
+    var normalizedSite = site.endsWith("/") ? site.substring(0, site.length() - 1) : site;
+    log.info("Creating OAuth2 auth provider via OpenID Connect discovery from: {}", normalizedSite);
 
-    var oauth2Options = new OAuth2Options().setSite(site);
+    var options = new OAuth2Options(oauth2Options.toJson()).setSite(normalizedSite);
 
-    if (config.getClientId() != null && !config.getClientId().isBlank()) {
-      oauth2Options.setClientId(config.getClientId());
-    } else {
-      oauth2Options.setClientId("datasqrl-mcp");
+    if (options.getClientId() == null || options.getClientId().isBlank()) {
+      options.setClientId(DEFAULT_CLIENT_ID);
     }
 
-    return OpenIDConnectAuth.discover(vertx, oauth2Options)
+    return OpenIDConnectAuth.discover(vertx, options)
         .map(
             oauth2 -> {
               log.info("OAuth2 auth provider created successfully via OIDC discovery");
@@ -69,7 +69,9 @@ public class OAuth2AuthFactory {
         .recover(
             err -> {
               log.error(
-                  "Failed to discover OpenID Connect provider at {}: {}", site, err.getMessage());
+                  "Failed to discover OpenID Connect provider at {}: {}",
+                  normalizedSite,
+                  err.getMessage());
               return Future.failedFuture(err);
             });
   }

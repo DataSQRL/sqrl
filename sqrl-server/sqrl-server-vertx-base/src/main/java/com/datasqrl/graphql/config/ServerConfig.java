@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.ext.auth.oauth2.OAuth2Options;
 import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.pgclient.PgConnectOptions;
@@ -48,8 +49,8 @@ public class ServerConfig {
   private CorsHandlerOptions corsHandlerOptions = new CorsHandlerOptions();
   private SwaggerConfig swaggerConfig = new SwaggerConfig();
   private JWTAuthOptions jwtAuth;
-
-  private OAuthConfig oauthConfig;
+  private OAuth2Options oauth2Options;
+  private OAuthDiscoveryConfig oauthDiscovery;
 
   private KafkaConfig.KafkaMutationConfig kafkaMutationConfig;
   private KafkaConfig.KafkaSubscriptionConfig kafkaSubscriptionConfig;
@@ -117,6 +118,11 @@ public class ServerConfig {
   @JsonSetter("jwtAuth")
   public void setJwtAuthFromJson(Map<String, Object> options) {
     this.jwtAuth = options == null ? null : new JWTAuthOptions(new JsonObject(options));
+  }
+
+  @JsonSetter("oauth2Options")
+  public void setOauth2OptionsFromJson(Map<String, Object> options) {
+    this.oauth2Options = options == null ? null : new OAuth2Options(new JsonObject(options));
   }
 
   ////////////////////////////////////////////////////////////////////////////////

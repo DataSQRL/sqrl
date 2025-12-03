@@ -84,7 +84,8 @@ class McpOAuthIT extends SqrlContainerTestBase {
 
     keycloakInternalUrl = "http://keycloak:8080";
     keycloakExternalUrl = "http://localhost:" + keycloak.getMappedPort(8080);
-    log.info("Keycloak started - internal: {}, external: {}", keycloakInternalUrl, keycloakExternalUrl);
+    log.info(
+        "Keycloak started - internal: {}, external: {}", keycloakInternalUrl, keycloakExternalUrl);
 
     configureKeycloakRealm();
   }

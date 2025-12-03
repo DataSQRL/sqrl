@@ -4,10 +4,10 @@ Eclipse Vert.x is a reactive server framework that serves as the GraphQL API ser
 
 ## Configuration Options
 
-| Key           | Type        | Default   | Notes                                                         |
-|---------------|-------------|-----------|---------------------------------------------------------------|
-| `enabledAuth` | **array**   | `[]`      | List of enabled auth methods: `"JWT"`, `"OAUTH"`              |
-| `config`      | **object**  | see below | Vert.x-specific configuration including auth settings         |
+| Key        | Type      | Default | Notes                                                    |
+|------------|-----------|---------|----------------------------------------------------------|
+| `authKind` | **array** | `[]`    | List of auth methods: `"JWT"`, `"OAUTH"`, or both        |
+| `config`   | **object**| see below| Vert.x-specific configuration including auth settings   |
 
 ## Basic Configuration
 
@@ -15,7 +15,7 @@ Eclipse Vert.x is a reactive server framework that serves as the GraphQL API ser
 {
   "engines": {
     "vertx": {
-      "enabledAuth": []
+      "authKind": []
     }
   }
 }
@@ -29,7 +29,7 @@ For secure APIs with JWT authentication:
 {
   "engines": {
     "vertx": {
-      "enabledAuth": ["JWT"],
+      "authKind": ["JWT"],
       "config": {
         "jwtAuth": {
           "pubSecKeys": [
@@ -67,21 +67,22 @@ For example, for `ES256`, this would look something like this:
 
 ## OAuth 2.0 Authentication Configuration
 
-For OAuth 2.0 authentication with providers like Auth0 or Keycloak, use the `oauthConfig` section.
+For OAuth 2.0 authentication with providers like Auth0 or Keycloak, use the `oauth2Options` section.
 This enables MCP (Model Context Protocol) clients like Claude Code to authenticate using OAuth.
 
 ```json
 {
   "engines": {
     "vertx": {
-      "enabledAuth": ["OAUTH"],
+      "authKind": ["OAUTH"],
       "config": {
-        "oauthConfig": {
-          "provider": "auth0",
-          "issuer": "https://your-tenant.auth0.com/",
-          "audience": "https://your-api-identifier",
-          "scopesSupported": ["mcp:tools", "mcp:resources"],
-          "useJwks": true
+        "oauth2Options": {
+          "site": "https://your-tenant.auth0.com/",
+          "clientId": "your-client-id"
+        },
+        "oauthDiscovery": {
+          "authorizationServerUrl": "https://your-tenant.auth0.com/",
+          "scopesSupported": ["mcp:tools", "mcp:resources"]
         }
       }
     }
@@ -89,17 +90,42 @@ This enables MCP (Model Context Protocol) clients like Claude Code to authentica
 }
 ```
 
-### OAuth Configuration Options
+### Combined JWT and OAuth Authentication
 
-| Key               | Type        | Required | Description                                              |
-|-------------------|-------------|----------|----------------------------------------------------------|
-| `provider`        | **string**  | No       | OAuth provider name (auth0, keycloak) - informational    |
-| `issuer`          | **string**  | Yes      | OAuth issuer URL (e.g., `https://tenant.auth0.com/`)     |
-| `audience`        | **string**  | No       | API identifier for token audience validation             |
-| `scopesSupported` | **array**   | No       | Scopes advertised in discovery endpoint                  |
-| `useJwks`         | **boolean** | No       | Use JWKS for key rotation (default: `true`)              |
-| `jwksUri`         | **string**  | No       | Override JWKS URI (defaults to issuer + `.well-known/jwks.json`) |
-| `resource`        | **string**  | No       | Override resource identifier in discovery metadata       |
+You can enable both authentication methods simultaneously:
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "authKind": ["JWT", "OAUTH"],
+      "config": {
+        "jwtAuth": { ... },
+        "oauth2Options": { ... }
+      }
+    }
+  }
+}
+```
+
+### OAuth2Options Configuration
+
+The `oauth2Options` object uses Vert.x's [OAuth2Options](https://vertx.io/docs/apidocs/io/vertx/ext/auth/oauth2/OAuth2Options.html) class:
+
+| Key        | Type       | Required | Description                                           |
+|------------|------------|----------|-------------------------------------------------------|
+| `site`     | **string** | Yes      | OAuth issuer URL (e.g., `https://tenant.auth0.com`)   |
+| `clientId` | **string** | No       | OAuth client ID (defaults to `datasqrl-mcp`)          |
+
+### OAuth Discovery Configuration
+
+The optional `oauthDiscovery` object configures the RFC 9728 discovery endpoint:
+
+| Key                      | Type      | Required | Description                                              |
+|--------------------------|-----------|----------|----------------------------------------------------------|
+| `authorizationServerUrl` | **string**| No       | External authorization server URL for discovery          |
+| `scopesSupported`        | **array** | No       | Scopes advertised (default: `["mcp:tools", "mcp:resources"]`) |
+| `resource`               | **string**| No       | Override resource identifier in discovery metadata       |
 
 ### OAuth Discovery Endpoint
 
@@ -112,9 +138,11 @@ You can use environment variables in the OAuth configuration:
 
 ```json
 {
-  "oauthConfig": {
-    "issuer": "${AUTH0_ISSUER}",
-    "audience": "${AUTH0_AUDIENCE}"
+  "oauth2Options": {
+    "site": "${AUTH0_ISSUER}"
+  },
+  "oauthDiscovery": {
+    "authorizationServerUrl": "${AUTH0_EXTERNAL_URL}"
   }
 }
 ```
@@ -150,11 +178,3 @@ Available `instance-size` options with storage variants:
   }
 }
 ```
-
-## Usage Notes
-
-- No mandatory keys required for basic operation
-- Connection pools to databases are generated automatically from the overall plan  
-- JWT authentication provides secure access to your GraphQL API
-- The server exposes GraphQL, REST, and MCP endpoints based on compiler configuration
-- Deployment configuration allows horizontal scaling for high-availability setups

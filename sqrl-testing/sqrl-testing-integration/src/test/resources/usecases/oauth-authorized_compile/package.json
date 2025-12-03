@@ -8,15 +8,13 @@
   },
   "engines": {
     "vertx": {
-      "enabledAuth": ["OAUTH"],
+      "authKind": ["OAUTH"],
       "config": {
-        "oauthConfig": {
-          "provider": "keycloak",
-          "issuer": "${KEYCLOAK_ISSUER}",
-          "authorizationServerUrl": "${KEYCLOAK_EXTERNAL_URL}",
-          "audience": "datasqrl-mcp",
-          "scopesSupported": ["mcp:tools", "mcp:resources"],
-          "useJwks": true
+        "oauth2Options": {
+          "site": "${KEYCLOAK_ISSUER}"
+        },
+        "oauthDiscovery": {
+          "authorizationServerUrl": "${KEYCLOAK_EXTERNAL_URL}"
         }
       }
     }

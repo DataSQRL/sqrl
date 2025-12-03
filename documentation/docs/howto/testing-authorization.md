@@ -21,7 +21,7 @@ And then we need to set the encoded secret as the `buffer` in the `package.json`
   ...
   "engines" : {
     "vertx" : {
-      "enabledAuth": ["JWT"],
+      "authKind": ["JWT"],
       "config": {
         "jwtAuth": {
           "pubSecKeys": [
