@@ -59,6 +59,14 @@ class PredicatePushdownTest extends AbstractAssetSnapshotTest {
   @AfterEach
   @Override
   public void cleanup() throws IOException {
+    // Force GC to release file handles held by Flink/Iceberg
+    System.gc();
+    // Give Flink/Iceberg time to release file handles before temp dir cleanup
+    try {
+      Thread.sleep(100);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
     super.cleanup();
     clearDir(Path.of("/tmp", "pp-tests"));
   }
