@@ -16,7 +16,6 @@
 package com.datasqrl.cli.output;
 
 import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,32 +32,31 @@ public class TestOutputManager implements AutoCloseable {
 
   private final Path rootDir;
 
-  private PrintStream originalOut;
-  private PrintStream originalErr;
+  private final PrintStream originalOut = System.out;
+  private final PrintStream originalErr = System.err;
   private PrintStream logStream;
   private ErrorCapturingStream errorCapturingStream;
-  private OutputStream fileOutputStream;
 
-  public void redirectStd() {
-    originalOut = System.out;
-    originalErr = System.err;
+  @SneakyThrows
+  public void init() {
+    var logsDir = rootDir.resolve("build/logs");
+    Files.createDirectories(logsDir);
 
-    initLogStream();
+    var logFile = logsDir.resolve(TEST_LOG_FILE).toFile();
+    var fileOutputStream = new FileOutputStream(logFile, true);
+    errorCapturingStream = new ErrorCapturingStream(fileOutputStream);
+    logStream = new PrintStream(errorCapturingStream);
 
     System.setOut(logStream);
     System.setErr(logStream);
   }
 
-  public void restoreStd() {
-    if (originalOut != null) {
-      System.setOut(originalOut);
-      originalOut = null;
-    }
+  public PrintStream getOriginalOut() {
+    return originalOut;
+  }
 
-    if (originalErr != null) {
-      System.setErr(originalErr);
-      originalErr = null;
-    }
+  public PrintStream getOriginalErr() {
+    return originalErr;
   }
 
   public void disableConsoleLogs() {
@@ -70,21 +68,6 @@ public class TestOutputManager implements AutoCloseable {
     }
     config.getRootLogger().removeAppender("Console");
     context.updateLoggers();
-  }
-
-  @SneakyThrows
-  private void initLogStream() {
-    if (logStream != null) {
-      return;
-    }
-
-    var logsDir = rootDir.resolve("build/logs");
-    Files.createDirectories(logsDir);
-
-    var logFile = logsDir.resolve(TEST_LOG_FILE).toFile();
-    fileOutputStream = new FileOutputStream(logFile, true);
-    errorCapturingStream = new ErrorCapturingStream(fileOutputStream);
-    logStream = new PrintStream(errorCapturingStream);
   }
 
   public List<String> getCapturedErrors() {
@@ -110,13 +93,9 @@ public class TestOutputManager implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
-    if (originalOut != null) {
-      System.setOut(originalOut);
-    }
-    if (originalErr != null) {
-      System.setErr(originalErr);
-    }
+  public void close() {
+    System.setOut(originalOut);
+    System.setErr(originalErr);
     if (logStream != null) {
       logStream.close();
     }

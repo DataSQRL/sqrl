@@ -1,0 +1,6 @@
+IMPORT data.Events;
+
+AllEvents := SELECT * FROM Events ORDER BY id;
+
+/*+test*/
+EventsTest := SELECT id, name FROM AllEvents;

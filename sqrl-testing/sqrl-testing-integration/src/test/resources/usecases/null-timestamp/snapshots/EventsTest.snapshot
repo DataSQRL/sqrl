@@ -1,0 +1,14 @@
+{
+  "data" : {
+    "EventsTest" : [ {
+      "id" : 1,
+      "name" : "Event One"
+    }, {
+      "id" : 2,
+      "name" : "Event Two"
+    }, {
+      "id" : 3,
+      "name" : "Event Three"
+    } ]
+  }
+}

@@ -15,6 +15,7 @@
  */
 package com.datasqrl.cli;
 
+import com.datasqrl.cli.output.DefaultOutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.env.GlobalEnvironmentStore;
@@ -35,9 +36,12 @@ public class TestCmd extends AbstractCompileCmd {
     }
 
     try (var outputMgr = new TestOutputManager(cli.rootDir)) {
+      outputMgr.init();
       outputMgr.disableConsoleLogs();
 
-      var formatter = getOutputFormatter();
+      var formatter =
+          new DefaultOutputFormatter(
+              batchMode, outputMgr.getOriginalOut(), outputMgr.getOriginalErr());
       formatter.header("DataSQRL Test Execution");
 
       var targetDir = getTargetDir();
@@ -53,16 +57,28 @@ public class TestCmd extends AbstractCompileCmd {
       var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
       var sqrlTest =
-          new DatasqrlTest(
-              cli.rootDir, planDir, sqrlConfig, flinkConfig, env, outputMgr, formatter);
+          new DatasqrlTest(cli.rootDir, planDir, sqrlConfig, flinkConfig, env, formatter);
       var testExitCode = sqrlTest.run();
       exitCode.set(testExitCode);
 
       var success = testExitCode == 0;
+
+      if (!success) {
+        outputMgr.printCapturedErrors(formatter);
+
+        formatter.sectionHeader("Test Reports");
+        formatter.info("Full execution log: build/logs/test-execution.log");
+        formatter.info("Flink metrics:      build/logs/flink-metrics.log");
+        formatter.info(
+            "Test snapshots:     " + sqrlConfig.getTestConfig().getSnapshotDir(cli.rootDir));
+        formatter.info("");
+      }
+
       formatter.buildStatus(success, getElapsedTime(), LocalDateTime.now());
 
       if (!success) {
-        formatter.helpLink("Help 1", "https://docs.datasqrl.com/docs/howto/testing");
+        formatter.helpText("Run with --update-snapshots to update expected results.");
+        formatter.helpLink("Help 1", "https://datasqrl.com/docs/testing#snapshot-failures");
       }
     }
   }

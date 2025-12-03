@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "script": {
+    "main": "null-timestamp.sqrl"
+  },
+  "compiler": {
+    "logger": "print"
+  },
+  "test-runner": {
+    "delay-sec": 30
+  }
+}
