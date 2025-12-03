@@ -36,14 +36,20 @@ import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
+import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.AuthenticationHandler;
+import io.vertx.ext.web.handler.ChainAuthHandler;
 import io.vertx.ext.web.handler.JWTAuthHandler;
+import io.vertx.ext.web.handler.OAuth2AuthHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.micrometer.backends.BackendRegistries;
 import io.vertx.sqlclient.SqlClient;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -61,7 +67,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   private final ServerConfig config;
   private final String modelVersion;
   private final RootGraphqlModel model;
-  private final Optional<JWTAuth> authProvider;
+  private final List<AuthenticationProvider> authProviders;
   private final Optional<FlinkExecFunctionPlan> execFunctionPlan;
 
   private GraphQL graphQLEngine;
@@ -100,16 +106,16 @@ public class GraphQLServerVerticle extends AbstractVerticle {
 
     // Setup GraphQL endpoint with auth if configured
     var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
-    authProvider.ifPresent(
-        (auth) -> {
-          log.info(
-              "Applying JWT authentication to GraphQL endpoint: {}",
-              this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
-          // Required for adding auth on ws handler
-          System.setProperty("io.vertx.web.router.setup.lenient", "true");
-          handler.handler(JWTAuthHandler.create(auth));
-          handler.failureHandler(new JwtFailureHandler());
-        });
+    if (!authProviders.isEmpty()) {
+      log.info(
+          "Applying {} authentication provider(s) to GraphQL endpoint: {}",
+          authProviders.size(),
+          this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
+      // Required for adding auth on ws handler
+      System.setProperty("io.vertx.web.router.setup.lenient", "true");
+      handler.handler(createChainAuthHandler());
+      handler.failureHandler(new JwtFailureHandler());
+    }
 
     // Create subscription configuration to track async subscription setups
     var subscriptionConfig = new SubscriptionConfigurationImpl(vertx, config);
@@ -135,13 +141,38 @@ public class GraphQLServerVerticle extends AbstractVerticle {
 
   private Map<MetadataType, MetadataReader> createMetadataReaders() {
     var readers = ImmutableMap.<MetadataType, MetadataReader>builder();
-    authProvider.ifPresent(
-        (auth) -> {
-          log.debug("Configuring JWT authentication metadata reader");
-          readers.put(MetadataType.AUTH, new AuthMetadataReader());
-        });
+    if (!authProviders.isEmpty()) {
+      log.debug("Configuring authentication metadata reader");
+      readers.put(MetadataType.AUTH, new AuthMetadataReader());
+    }
 
     return readers.build();
+  }
+
+  /**
+   * Creates a chained authentication handler that accepts any of the configured auth methods. Uses
+   * ChainAuthHandler.any() so a request is authenticated if ANY provider succeeds.
+   */
+  private AuthenticationHandler createChainAuthHandler() {
+    if (authProviders.size() == 1) {
+      return createAuthHandler(authProviders.get(0));
+    }
+
+    var chain = ChainAuthHandler.any();
+    for (var provider : authProviders) {
+      chain.add(createAuthHandler(provider));
+    }
+    return chain;
+  }
+
+  private AuthenticationHandler createAuthHandler(AuthenticationProvider auth) {
+    if (auth instanceof JWTAuth jwtAuth) {
+      return JWTAuthHandler.create(jwtAuth);
+    } else if (auth instanceof OAuth2Auth oauth2Auth) {
+      return OAuth2AuthHandler.create(vertx, oauth2Auth);
+    } else {
+      throw new IllegalArgumentException("Unsupported auth provider type: " + auth.getClass());
+    }
   }
 
   /**

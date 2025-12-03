@@ -15,6 +15,8 @@
  */
 package com.datasqrl.graphql;
 
+import com.datasqrl.graphql.auth.OAuth2AuthFactory;
+import com.datasqrl.graphql.auth.OAuthDiscoveryHandler;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
@@ -34,6 +36,7 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.*;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -172,6 +175,10 @@ public class HttpServerVerticle extends AbstractVerticle {
     // ── Health checks ────────────────────────────────────────────────────────
     router.get("/health*").handler(HealthCheckHandler.create(vertx));
 
+    // ── OAuth Discovery Endpoints (RFC 9728) ─────────────────────────────────
+    var oauthDiscovery = new OAuthDiscoveryHandler(config);
+    oauthDiscovery.registerRoutes(router);
+
     // Deploy GraphQL verticles and collect futures
     var deploymentFutures = new ArrayList<Future<String>>();
     for (var modelEntry : models.entrySet()) {
@@ -228,65 +235,106 @@ public class HttpServerVerticle extends AbstractVerticle {
   private Future<String> deployVersionedModel(
       Router router, String modelVersion, RootGraphqlModel model) {
     var childOpts = new DeploymentOptions().setInstances(1);
-
-    // inside bootstrap() in HttpServerVerticle
-    var jwtOpt =
-        Optional.ofNullable(config.getJwtAuth())
-            .map(
-                authCfg -> {
-                  log.info("JWT authentication enabled");
-                  return JWTAuth.create(vertx, authCfg);
-                });
-
-    if (jwtOpt.isEmpty()) {
-      log.info("JWT authentication disabled - no JWT configuration found");
-    }
-
-    var execFunctionPlan = loadExecFunctionPlan();
-    if (execFunctionPlan.isPresent()) {
-      log.info("Exec function plan loaded");
-    }
-
-    var graphQLVerticle =
-        new GraphQLServerVerticle(router, config, modelVersion, model, jwtOpt, execFunctionPlan);
     var hasMcp = model.getOperations().stream().anyMatch(ApiOperation::isMcpEndpoint);
     var hasRest = model.getOperations().stream().anyMatch(ApiOperation::isRestEndpoint);
 
-    return vertx
-        .deployVerticle(graphQLVerticle, childOpts)
-        .onSuccess(
-            graphQLDeploymentId -> {
-              log.info("GraphQL verticle deployed successfully: {}", graphQLDeploymentId);
-              if (hasMcp) {
-                // Deploy MCP bridge verticle with access to GraphQL engine
-                var mcpBridgeVerticle =
-                    new McpBridgeVerticle(
-                        router, config, modelVersion, model, jwtOpt, graphQLVerticle);
-                vertx
-                    .deployVerticle(mcpBridgeVerticle, childOpts)
-                    .onSuccess(
-                        mcpDeploymentId ->
-                            log.info(
-                                "MCP bridge verticle deployed successfully: {}", mcpDeploymentId))
-                    .onFailure(err -> log.error("Failed to deploy MCP bridge verticle", err));
+    return createAuthProviders()
+        .compose(
+            authProviders -> {
+              var execFunctionPlan = loadExecFunctionPlan();
+              if (execFunctionPlan.isPresent()) {
+                log.info("Exec function plan loaded");
               }
-              if (hasRest) {
-                // Deploy REST bridge verticle with access to GraphQL engine
-                var restBridgeVerticle =
-                    new RestBridgeVerticle(
-                        router, config, modelVersion, model, jwtOpt, graphQLVerticle);
-                vertx
-                    .deployVerticle(restBridgeVerticle, childOpts)
-                    .onSuccess(
-                        restDeploymentId ->
-                            log.info(
-                                "REST bridge verticle deployed successfully: {}", restDeploymentId))
-                    .onFailure(err -> log.error("Failed to deploy REST bridge verticle", err));
+
+              var graphQLVerticle =
+                  new GraphQLServerVerticle(
+                      router, config, modelVersion, model, authProviders, execFunctionPlan);
+
+              return vertx
+                  .deployVerticle(graphQLVerticle, childOpts)
+                  .onSuccess(
+                      graphQLDeploymentId -> {
+                        log.info("GraphQL verticle deployed successfully: {}", graphQLDeploymentId);
+                        if (hasMcp) {
+                          var mcpBridgeVerticle =
+                              new McpBridgeVerticle(
+                                  router,
+                                  config,
+                                  modelVersion,
+                                  model,
+                                  authProviders,
+                                  graphQLVerticle);
+                          vertx
+                              .deployVerticle(mcpBridgeVerticle, childOpts)
+                              .onSuccess(
+                                  id ->
+                                      log.info("MCP bridge verticle deployed successfully: {}", id))
+                              .onFailure(
+                                  err -> log.error("Failed to deploy MCP bridge verticle", err));
+                        }
+                        if (hasRest) {
+                          var restBridgeVerticle =
+                              new RestBridgeVerticle(
+                                  router,
+                                  config,
+                                  modelVersion,
+                                  model,
+                                  authProviders,
+                                  graphQLVerticle);
+                          vertx
+                              .deployVerticle(restBridgeVerticle, childOpts)
+                              .onSuccess(
+                                  id ->
+                                      log.info(
+                                          "REST bridge verticle deployed successfully: {}", id))
+                              .onFailure(
+                                  err -> log.error("Failed to deploy REST bridge verticle", err));
+                        }
+                      })
+                  .onFailure(
+                      err ->
+                          log.error(
+                              "Failed to deploy GraphQL verticle, will trigger orderly shutdown",
+                              err));
+            });
+  }
+
+  /**
+   * Creates authentication providers for all configured auth methods. Supports both OAuth and JWT
+   * simultaneously when both are configured.
+   */
+  private Future<List<AuthenticationProvider>> createAuthProviders() {
+    List<Future<AuthenticationProvider>> providerFutures = new ArrayList<>();
+
+    if (config.getOauthConfig() != null && config.getOauthConfig().getSite() != null) {
+      log.info("Configuring OAuth authentication with JWKS");
+      providerFutures.add(
+          OAuth2AuthFactory.createAuthProvider(vertx, config.getOauthConfig())
+              .map(provider -> (AuthenticationProvider) provider));
+    }
+
+    if (config.getJwtAuth() != null) {
+      log.info("Configuring JWT authentication");
+      providerFutures.add(
+          Future.succeededFuture(
+              (AuthenticationProvider) JWTAuth.create(vertx, config.getJwtAuth())));
+    }
+
+    if (providerFutures.isEmpty()) {
+      log.info("No authentication configured");
+      return Future.succeededFuture(List.of());
+    }
+
+    return Future.all(providerFutures)
+        .map(
+            composite -> {
+              List<AuthenticationProvider> providers = new ArrayList<>();
+              for (int i = 0; i < composite.size(); i++) {
+                providers.add(composite.resultAt(i));
               }
-            })
-        .onFailure(
-            err ->
-                log.error("Failed to deploy GraphQL verticle, will trigger orderly shutdown", err));
+              log.info("Configured {} authentication provider(s)", providers.size());
+              return providers;
+            });
   }
 
   // ---------------------------------------------------------------------------

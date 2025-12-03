@@ -168,10 +168,13 @@ class GraphQLJwtHandlerIT {
     router.route().handler(corsHandler);
 
     // Create the GraphQL server verticle directly (similar to McpBridgeVerticle)
-    var jwtAuth =
-        Optional.of(io.vertx.ext.auth.jwt.JWTAuth.create(vertx, serverConfig.getJwtAuth()));
+    var authProviders =
+        List.of(
+            (io.vertx.ext.auth.authentication.AuthenticationProvider)
+                io.vertx.ext.auth.jwt.JWTAuth.create(vertx, serverConfig.getJwtAuth()));
     graphQLServerVerticle =
-        new GraphQLServerVerticle(router, serverConfig, "v1", model, jwtAuth, Optional.empty());
+        new GraphQLServerVerticle(
+            router, serverConfig, "v1", model, authProviders, Optional.empty());
 
     vertx
         .deployVerticle(graphQLServerVerticle)

@@ -46,10 +46,10 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
 
   private static final Path USE_CASES = Path.of("src/test/resources/usecases");
 
-  @Disabled("Intended for manual usage")
   @Test
+  @Disabled("Intended for manual usage - replace path with test case to debug")
   void specificUseCase() {
-    var pkg = USE_CASES.resolve("filtered-distinct").resolve("package.json");
+    var pkg = USE_CASES.resolve("simple-select").resolve("package.json");
 
     var param = new UseCaseParam(pkg);
     fullUseCaseTest(param);

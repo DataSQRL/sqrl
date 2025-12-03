@@ -192,11 +192,12 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
     var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build();
 
     // Should fail when trying to initialize due to lack of authentication
+    // MCP uses OAuthFailureHandler which returns "authentication_required" error
     assertThatThrownBy(() -> client.initialize())
         .satisfies(
             ex -> {
               var fullMessage = getFullExceptionMessage(ex);
-              assertThat(fullMessage).containsIgnoringCase("JWT auth failed");
+              assertThat(fullMessage).containsIgnoringCase("authentication_required");
             });
 
     client.close();

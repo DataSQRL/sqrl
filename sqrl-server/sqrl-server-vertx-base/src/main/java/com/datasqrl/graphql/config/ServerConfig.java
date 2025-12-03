@@ -48,6 +48,7 @@ public class ServerConfig {
   private CorsHandlerOptions corsHandlerOptions = new CorsHandlerOptions();
   private SwaggerConfig swaggerConfig = new SwaggerConfig();
   private JWTAuthOptions jwtAuth;
+  private OAuthConfig oauthConfig;
 
   private KafkaConfig.KafkaMutationConfig kafkaMutationConfig;
   private KafkaConfig.KafkaSubscriptionConfig kafkaSubscriptionConfig;

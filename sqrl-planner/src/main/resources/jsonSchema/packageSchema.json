@@ -240,8 +240,13 @@
           "type": "object",
           "properties": {
             "authKind": {
-              "type": "string",
-              "enum": ["NONE", "JWT"]
+              "description": "List of enabled authentication methods.",
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["JWT", "OAUTH"]
+              },
+              "uniqueItems": true
             },
             "config": {
               "type": "object",

@@ -15,7 +15,7 @@
  */
 package com.datasqrl.graphql;
 
-import com.datasqrl.graphql.auth.JwtFailureHandler;
+import com.datasqrl.graphql.auth.OAuthFailureHandler;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
@@ -31,15 +31,19 @@ import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.handler.AuthenticationHandler;
+import io.vertx.ext.web.handler.ChainAuthHandler;
 import io.vertx.ext.web.handler.JWTAuthHandler;
+import io.vertx.ext.web.handler.OAuth2AuthHandler;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
@@ -70,9 +74,9 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
       ServerConfig config,
       String modelVersion,
       RootGraphqlModel model,
-      Optional<JWTAuth> jwtAuth,
+      List<AuthenticationProvider> authProviders,
       GraphQLServerVerticle graphQLServerVerticle) {
-    super(router, config, modelVersion, model, jwtAuth, graphQLServerVerticle);
+    super(router, config, modelVersion, model, authProviders, graphQLServerVerticle);
     this.tools =
         model.getOperations().stream()
             .filter(op -> op.getMcpMethod() == McpMethodType.TOOL)
@@ -159,13 +163,15 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     // MCP endpoint - handles POST for messages
     var postRoute = router.post(mcpRoutePrefix);
 
-    // Add JWT auth if configured
-    jwtAuth.ifPresent(
-        auth -> {
-          log.info("Applying JWT authentication to MCP endpoint: {}", mcpRoutePrefix);
-          postRoute.handler(JWTAuthHandler.create(auth));
-          postRoute.failureHandler(new JwtFailureHandler());
-        });
+    // Add JWT/OAuth auth if configured
+    if (!authProviders.isEmpty()) {
+      log.info(
+          "Applying {} authentication provider(s) to MCP endpoint: {}",
+          authProviders.size(),
+          mcpRoutePrefix);
+      postRoute.handler(createChainAuthHandler());
+      postRoute.failureHandler(new OAuthFailureHandler(config));
+    }
 
     postRoute.handler(
         ctx -> {
@@ -187,13 +193,15 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     // SSE endpoint for server-to-client streaming
     var sseRoute = router.get(mcpRoutePrefix + "/sse");
 
-    // Add JWT auth to SSE endpoint if configured
-    jwtAuth.ifPresent(
-        auth -> {
-          log.info("Applying JWT authentication to MCP SSE endpoint: {}/sse", mcpRoutePrefix);
-          sseRoute.handler(JWTAuthHandler.create(auth));
-          sseRoute.failureHandler(new JwtFailureHandler());
-        });
+    // Add JWT/OAuth auth to SSE endpoint if configured
+    if (!authProviders.isEmpty()) {
+      log.info(
+          "Applying {} authentication provider(s) to MCP SSE endpoint: {}/sse",
+          authProviders.size(),
+          mcpRoutePrefix);
+      sseRoute.handler(createChainAuthHandler());
+      sseRoute.failureHandler(new OAuthFailureHandler(config));
+    }
 
     sseRoute.handler(
         ctx -> {
@@ -643,6 +651,28 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   private static boolean accepts(RoutingContext ctx, String mime) {
     var accept = ctx.request().headers().getAll(HttpHeaders.ACCEPT);
     return accept.stream().anyMatch(h -> h.contains(mime));
+  }
+
+  private AuthenticationHandler createChainAuthHandler() {
+    if (authProviders.size() == 1) {
+      return createAuthHandler(authProviders.get(0));
+    }
+
+    var chain = ChainAuthHandler.any();
+    for (var provider : authProviders) {
+      chain.add(createAuthHandler(provider));
+    }
+    return chain;
+  }
+
+  private AuthenticationHandler createAuthHandler(AuthenticationProvider auth) {
+    if (auth instanceof JWTAuth jwtAuth) {
+      return JWTAuthHandler.create(jwtAuth);
+    } else if (auth instanceof OAuth2Auth oauth2Auth) {
+      return OAuth2AuthHandler.create(vertx, oauth2Auth);
+    } else {
+      throw new IllegalArgumentException("Unsupported auth provider type: " + auth.getClass());
+    }
   }
 
   private record SseConnection(String id, HttpServerResponse response) {}

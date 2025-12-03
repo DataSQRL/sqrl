@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "script": {
+    "main": "oauth-authorized.sqrl"
+  },
+  "compiler": {
+    "compile-flink-plan": false
+  },
+  "engines": {
+    "vertx": {
+      "authKind": ["OAUTH"],
+      "config": {
+        "oauthConfig": {
+          "oauth2Options": {
+            "site": "${KEYCLOAK_ISSUER}"
+          },
+          "authorizationServerUrl": "${KEYCLOAK_EXTERNAL_URL}"
+        }
+      }
+    }
+  }
+}
