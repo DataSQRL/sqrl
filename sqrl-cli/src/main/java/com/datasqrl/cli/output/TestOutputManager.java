@@ -16,9 +16,11 @@
 package com.datasqrl.cli.output;
 
 import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.logging.log4j.LogManager;
@@ -34,6 +36,8 @@ public class TestOutputManager implements AutoCloseable {
   private PrintStream originalOut;
   private PrintStream originalErr;
   private PrintStream logStream;
+  private ErrorCapturingStream errorCapturingStream;
+  private OutputStream fileOutputStream;
 
   public void redirectStd() {
     originalOut = System.out;
@@ -78,7 +82,31 @@ public class TestOutputManager implements AutoCloseable {
     Files.createDirectories(logsDir);
 
     var logFile = logsDir.resolve(TEST_LOG_FILE).toFile();
-    logStream = new PrintStream(new FileOutputStream(logFile, true));
+    fileOutputStream = new FileOutputStream(logFile, true);
+    errorCapturingStream = new ErrorCapturingStream(fileOutputStream);
+    logStream = new PrintStream(errorCapturingStream);
+  }
+
+  public List<String> getCapturedErrors() {
+    if (errorCapturingStream == null) {
+      return List.of();
+    }
+    return errorCapturingStream.getCapturedErrors();
+  }
+
+  public boolean hasErrors() {
+    return errorCapturingStream != null && errorCapturingStream.hasErrors();
+  }
+
+  public void printCapturedErrors(OutputFormatter formatter) {
+    if (!hasErrors()) {
+      return;
+    }
+
+    formatter.sectionHeader("Captured Errors");
+    for (var line : getCapturedErrors()) {
+      formatter.info(line);
+    }
   }
 
   @Override

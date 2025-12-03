@@ -273,8 +273,10 @@ public class DatasqrlTest {
         }
       }
 
+      outputManager.printCapturedErrors(formatter);
+
       formatter.sectionHeader("Test Reports");
-      formatter.info("Full execution log: build/logs/test.log");
+      formatter.info("Full execution log: build/logs/test-execution.log");
       formatter.info("Flink metrics:      build/logs/flink-metrics.log");
       formatter.info("Test snapshots:     " + snapshotDir);
       formatter.info("");

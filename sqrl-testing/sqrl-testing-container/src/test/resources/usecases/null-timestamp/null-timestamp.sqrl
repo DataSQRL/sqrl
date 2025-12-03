@@ -1,0 +1,6 @@
+IMPORT data.events;
+
+AllEvents := SELECT * FROM events ORDER BY id;
+
+/*+test*/
+EventsTest := SELECT id, name FROM AllEvents;
