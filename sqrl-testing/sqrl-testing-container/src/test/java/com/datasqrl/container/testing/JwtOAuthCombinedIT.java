@@ -17,6 +17,7 @@ package com.datasqrl.container.testing;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
@@ -370,7 +371,7 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
             .withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
     cmd.start();
 
-    org.awaitility.Awaitility.await().atMost(Duration.ofMinutes(5)).until(() -> !cmd.isRunning());
+    await().atMost(Duration.ofMinutes(5)).until(() -> !cmd.isRunning());
 
     var exitCode = cmd.getCurrentContainerInfo().getState().getExitCodeLong();
     var logs = cmd.getLogs();
