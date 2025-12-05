@@ -37,7 +37,6 @@ import graphql.GraphQL;
 import graphql.language.FieldDefinition;
 import graphql.language.InterfaceTypeDefinition;
 import graphql.language.ObjectTypeDefinition;
-import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.schema.DataFetcher;
 import graphql.schema.FieldCoordinates;
@@ -52,7 +51,6 @@ import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -184,7 +182,7 @@ public class GraphQLEngineBuilder
 
     extendedScalarTypes.forEach(wiring::scalar);
 
-    for (Map.Entry<String, TypeDefinition> typeEntry : registry.types().entrySet()) {
+    for (var typeEntry : registry.types().entrySet()) {
       if (typeEntry.getValue() instanceof InterfaceTypeDefinition) {
         // create a superficial resolver
         // TODO: interfaces and unions as return types
@@ -209,18 +207,19 @@ public class GraphQLEngineBuilder
         if (query.getDatabase().supportsPositionalParameters) {
           var nextOffset = query.getParameters().size() + 1; // positional arguments are 1-based
           query =
-              query.updateSQL(
+              query.updateSql(
                   AbstractQueryExecutionContext.addLimitOffsetToQuery(
                       query.getSql(), "$" + nextOffset, "$" + (nextOffset + 1)));
         } else {
           query =
-              query.updateSQL(
+              query.updateSql(
                   AbstractQueryExecutionContext.addLimitOffsetToQuery(query.getSql(), "?", "?"));
         }
         break;
       default:
         throw new UnsupportedOperationException("Unsupported pagination: " + query.getPagination());
     }
+
     return context.getClient().prepareQuery(query, context);
   }
 

@@ -298,7 +298,7 @@ public class RootGraphqlModel {
     String sql;
 
     /** The list of parameters to substitute at query time */
-    @Singular List<QueryParameterHandler> parameters;
+    List<QueryParameterHandler> parameters;
 
     /** How query results are paginated */
     PaginationType pagination;
@@ -309,17 +309,13 @@ public class RootGraphqlModel {
     /** The database the query is executed against */
     DatabaseType database;
 
-    public boolean requiresDynamicLimitOffset() {
-      return pagination == PaginationType.LIMIT_AND_OFFSET && !database.supportsLimitOffsetBinding;
-    }
-
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
       return visitor.visitSqlQuery(this, context);
     }
 
-    public SqlQuery updateSQL(String newSQL) {
-      return new SqlQuery(newSQL, parameters, pagination, cacheDurationMs, database);
+    public SqlQuery updateSql(String newSql) {
+      return new SqlQuery(newSql, parameters, pagination, cacheDurationMs, database);
     }
   }
 

@@ -15,6 +15,11 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import static com.datasqrl.config.SqrlConstants.FLINK_DEFAULT_DATABASE;
+import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_DATABASE_KEY;
+import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_IMPL_KEY;
+import static com.datasqrl.config.SqrlConstants.ICEBERG_GLUE_CATALOG_IMPL;
+import static com.datasqrl.config.SqrlConstants.ICEBERG_WAREHOUSE_KEY;
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
 import com.datasqrl.calcite.Dialect;
@@ -25,7 +30,6 @@ import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engine.database.relational.ddl.statements.GenericCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
@@ -44,9 +48,6 @@ import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
-
-  private static final String WAREHOUSE_KEY = "warehouse";
-  private static final String DATABASE_KEY = "catalog-database";
 
   private final EngineConfig engineConfig;
 
@@ -91,9 +92,13 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
                 var createTable = tableIdMap.get(tableId);
                 var connector = createTable.table().getConnectorOptions();
 
-                var warehouse = connector.get(WAREHOUSE_KEY);
+                var warehouse = connector.get(ICEBERG_WAREHOUSE_KEY);
                 var databaseName =
-                    connector.getOrDefault(DATABASE_KEY, SqrlConstants.FLINK_DEFAULT_DATABASE);
+                    connector.getOrDefault(ICEBERG_CATALOG_DATABASE_KEY, FLINK_DEFAULT_DATABASE);
+                // Adapt DB name in case of Glue catalog
+                if (ICEBERG_GLUE_CATALOG_IMPL.equals(connector.get(ICEBERG_CATALOG_IMPL_KEY))) {
+                  databaseName += ".db";
+                }
                 var rexBuilder = new RexBuilder(new TypeFactory());
                 if (warehouse.startsWith("file://")) {
                   warehouse = warehouse.substring(7);
@@ -122,7 +127,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
               }
             });
 
-    return createQuery(
+    return createQueryInternal(
         query.function().getSimpleName(),
         replaced,
         false,

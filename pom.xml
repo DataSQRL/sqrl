@@ -134,6 +134,7 @@
     <guice-multibindings.version>4.2.3</guice-multibindings.version>
     <guice.version>7.0.0</guice.version>
     <h2.version>2.4.240</h2.version>
+    <hikari.version>7.0.2</hikari.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
     <hadoop.version>3.3.4</hadoop.version>
@@ -352,6 +353,11 @@
         <groupId>io.agroal</groupId>
         <artifactId>agroal-pool</artifactId>
         <version>${agroal.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.zaxxer</groupId>
+        <artifactId>HikariCP</artifactId>
+        <version>${hikari.version}</version>
       </dependency>
 
       <!-- validation -->
