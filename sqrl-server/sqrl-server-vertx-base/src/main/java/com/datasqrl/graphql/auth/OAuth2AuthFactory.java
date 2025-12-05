@@ -27,6 +27,7 @@ import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -102,7 +103,7 @@ public class OAuth2AuthFactory {
               }
               var jwksUri = response.bodyAsJsonObject().getString("jwks_uri");
               if (jwksUri == null || jwksUri.isBlank()) {
-                throw new RuntimeException("OIDC discovery document missing jwks_uri");
+                throw new IllegalStateException("OIDC discovery document missing jwks_uri");
               }
               log.debug("Discovered JWKS URI: {}", jwksUri);
               return jwksUri;
@@ -123,37 +124,28 @@ public class OAuth2AuthFactory {
               }
               var keys = response.bodyAsJsonObject().getJsonArray("keys");
               if (keys == null || keys.isEmpty()) {
-                throw new RuntimeException("JWKS document has no keys");
+                throw new IllegalStateException("JWKS document has no keys");
               }
               log.debug("Fetched {} keys from JWKS", keys.size());
               return convertToJwkOptions(keys);
             });
   }
 
+  private static final Set<String> JWK_KEYS =
+      Set.of("kty", "use", "kid", "alg", "n", "e", "x", "y", "crv");
+
   private static List<JsonObject> convertToJwkOptions(JsonArray keys) {
     var result = new ArrayList<JsonObject>();
     for (int i = 0; i < keys.size(); i++) {
-      var key = keys.getJsonObject(i);
+      var source = keys.getJsonObject(i);
       var jwk = new JsonObject();
-
-      copyIfPresent(key, jwk, "kty");
-      copyIfPresent(key, jwk, "use");
-      copyIfPresent(key, jwk, "kid");
-      copyIfPresent(key, jwk, "alg");
-      copyIfPresent(key, jwk, "n");
-      copyIfPresent(key, jwk, "e");
-      copyIfPresent(key, jwk, "x");
-      copyIfPresent(key, jwk, "y");
-      copyIfPresent(key, jwk, "crv");
-
+      for (var key : JWK_KEYS) {
+        if (source.containsKey(key)) {
+          jwk.put(key, source.getValue(key));
+        }
+      }
       result.add(jwk);
     }
     return result;
-  }
-
-  private static void copyIfPresent(JsonObject from, JsonObject to, String key) {
-    if (from.containsKey(key)) {
-      to.put(key, from.getValue(key));
-    }
   }
 }
