@@ -15,7 +15,7 @@
  */
 package com.datasqrl.util;
 
-import java.util.Map;
+import com.datasqrl.graphql.config.JdbcConfig;
 import java.util.StringJoiner;
 import lombok.RequiredArgsConstructor;
 
@@ -24,7 +24,7 @@ public final class DuckDbExtensions {
 
   private final StringJoiner joiner = new StringJoiner(";", "", ";");
 
-  private final Map<String, Object> config;
+  private final JdbcConfig.DuckDbConfig config;
 
   public String buildInitSql() {
     joiner.add("INSTALL iceberg");
@@ -35,7 +35,7 @@ public final class DuckDbExtensions {
     joiner.add("LOAD httpfs");
     ifDiskCache("LOAD cache_httpfs");
 
-    if (asBoolean("use-version-guessing")) {
+    if (config.isUseVersionGuessing()) {
       joiner.add("SET unsafe_enable_version_guessing = true");
     }
 
@@ -43,12 +43,8 @@ public final class DuckDbExtensions {
   }
 
   private void ifDiskCache(String stmt) {
-    if (asBoolean("use-disk-cache")) {
+    if (config.isUseDiskCache()) {
       joiner.add(stmt);
     }
-  }
-
-  private boolean asBoolean(String key) {
-    return (boolean) config.getOrDefault(key, false);
   }
 }

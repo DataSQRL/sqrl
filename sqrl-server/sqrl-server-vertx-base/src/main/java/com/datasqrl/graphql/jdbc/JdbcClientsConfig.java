@@ -88,7 +88,7 @@ public class JdbcClientsConfig {
 
     // No need for Class.forName() - DuckDB JDBC driver auto-registers via JDBC 4.0+ ServiceLoader
     var url = duckDbConf.getUrl();
-    var extensions = new DuckDbExtensions(duckDbConf.getConfig());
+    var extensions = new DuckDbExtensions(duckDbConf);
     var initSql = extensions.buildInitSql();
     log.debug("DuckDB init SQL: {}", initSql);
 
