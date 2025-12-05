@@ -76,7 +76,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   @Override
   public QueryResult createQuery(
       Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap) {
-    return createQuery(
+
+    return createQueryInternal(
         query.function().getSimpleName(),
         query.relNode(),
         withView,
@@ -123,7 +124,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     return new QueryResult(qBuilder, view);
   }
 
-  public QueryResult createQuery(
+  protected QueryResult createQueryInternal(
       String viewName,
       RelNode relNode,
       boolean withView,

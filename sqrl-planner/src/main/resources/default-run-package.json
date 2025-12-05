@@ -15,9 +15,8 @@
   },
   "connectors": {
     "iceberg": {
-      "warehouse": "iceberg-data",
-      "catalog-type": "hadoop",
-      "catalog-name": "default_catalog"
+      "catalog-name": "default_catalog",
+      "warehouse": "iceberg-data"
     }
   }
 }

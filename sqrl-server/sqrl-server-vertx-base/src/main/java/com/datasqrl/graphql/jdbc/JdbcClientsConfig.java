@@ -18,8 +18,9 @@ package com.datasqrl.graphql.jdbc;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.util.DuckDbExtensions;
 import com.google.common.collect.ImmutableMap;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
 import io.vertx.sqlclient.Pool;
@@ -87,14 +88,13 @@ public class JdbcClientsConfig {
 
     // No need for Class.forName() - DuckDB JDBC driver auto-registers via JDBC 4.0+ ServiceLoader
     var url = duckDbConf.getUrl();
-    var extensions = new DuckDbExtensions(duckDbConf.getConfig());
+    var extensions = new DuckDbExtensions(duckDbConf);
     var initSql = extensions.buildInitSql();
+    log.debug("DuckDB init SQL: {}", initSql);
 
-    var connectOptions =
-        new JDBCConnectOptions()
-            .setJdbcUrl(url)
-            .setMetricsName("duckdb")
-            .setExtraConfig(new JsonObject().put("initialSql", initSql));
+    var hikariCfg = new HikariConfig();
+    hikariCfg.setJdbcUrl(url);
+    hikariCfg.setConnectionInitSql(initSql);
 
     var poolOptions =
         new PoolOptions(this.config.getPoolOptions())
@@ -103,7 +103,7 @@ public class JdbcClientsConfig {
             .setMaxLifetime(0)
             .setIdleTimeout(0);
 
-    return Optional.of(JDBCPool.pool(vertx, connectOptions, poolOptions));
+    return Optional.of(JDBCPool.pool(vertx, new HikariDataSource(hikariCfg), poolOptions));
   }
 
   private SqlClient initPostgresSqlClient() {

@@ -169,11 +169,14 @@
             "url": {
               "type": "string"
             },
-            "config": {
-              "type": "object",
-              "minProperties": 1
+            "use-disk-cache": {
+              "type": "boolean"
+            },
+            "use-version-guessing": {
+              "type": "boolean"
             }
           },
+          "additionalProperties": false,
           "required": ["url"]
         },
         "flink": {

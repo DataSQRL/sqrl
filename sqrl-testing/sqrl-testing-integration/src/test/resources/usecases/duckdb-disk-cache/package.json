@@ -14,9 +14,8 @@
   "engines": {
     "duckdb": {
       "url" : "jdbc:duckdb:",
-      "config": {
-        "use-disk-cache": true
-      }
+      "use-disk-cache": true,
+      "use-version-guessing": true
     },
     "flink": {
       "config": {

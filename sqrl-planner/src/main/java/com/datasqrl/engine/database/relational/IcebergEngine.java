@@ -15,6 +15,10 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_IMPL_KEY;
+import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_TABLE_KEY;
+import static com.datasqrl.config.SqrlConstants.ICEBERG_GLUE_CATALOG_IMPL;
+
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
@@ -29,9 +33,6 @@ import java.util.regex.Pattern;
 import lombok.NonNull;
 
 public class IcebergEngine extends AbstractJDBCTableFormatEngine {
-
-  private static final String CATALOG_TABLE_KEY = "catalog-table";
-  private static final String CATALOG_IMPL_KEY = "catalog-impl";
 
   private static final Pattern GLUE_TABLE_PATTERN = Pattern.compile("^[a-z0-9_]{1,255}$");
 
@@ -55,7 +56,7 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
   @Override
   public String getConnectorTableName(FlinkTableBuilder tableBuilder) {
-    return tableBuilder.getConnectorOptions().get(CATALOG_TABLE_KEY);
+    return tableBuilder.getConnectorOptions().get(ICEBERG_CATALOG_TABLE_KEY);
   }
 
   @Override
@@ -76,19 +77,19 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
       return connectorOptions;
     }
 
-    var tableName = connectorOptions.get(CATALOG_TABLE_KEY);
+    var tableName = connectorOptions.get(ICEBERG_CATALOG_TABLE_KEY);
     tableName = validatedGlueTableName(tableName);
 
     var mutableOptions = new HashMap<>(connectorOptions);
-    mutableOptions.put(CATALOG_TABLE_KEY, tableName);
+    mutableOptions.put(ICEBERG_CATALOG_TABLE_KEY, tableName);
 
     return mutableOptions;
   }
 
   private boolean isGlueCatalog(Map<String, String> connectorOptions) {
-    var catalogImpl = connectorOptions.get(CATALOG_IMPL_KEY);
+    var catalogImpl = connectorOptions.get(ICEBERG_CATALOG_IMPL_KEY);
 
-    return catalogImpl != null && catalogImpl.endsWith("GlueCatalog");
+    return ICEBERG_GLUE_CATALOG_IMPL.equals(catalogImpl);
   }
 
   /** AWS GlueCatalog names have to match {@code GLUE_TABLE_PATTERN}. */

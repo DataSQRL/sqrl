@@ -52,7 +52,7 @@ public class ServerConfig {
 
   private KafkaConfig.KafkaMutationConfig kafkaMutationConfig;
   private KafkaConfig.KafkaSubscriptionConfig kafkaSubscriptionConfig;
-  private JdbcConfig duckDbConfig;
+  private JdbcConfig.DuckDbConfig duckDbConfig;
   private JdbcConfig snowflakeConfig;
 
   /**
