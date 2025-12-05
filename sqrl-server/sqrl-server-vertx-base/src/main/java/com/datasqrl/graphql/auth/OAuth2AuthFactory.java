@@ -39,6 +39,8 @@ import lombok.extern.slf4j.Slf4j;
 public class OAuth2AuthFactory {
 
   private static final String OIDC_DISCOVERY_PATH = "/.well-known/openid-configuration";
+  private static final Set<String> JWK_KEYS =
+      Set.of("kty", "use", "kid", "alg", "n", "e", "x", "y", "crv");
 
   /**
    * Creates a JWTAuth provider using JWKS discovered from an OpenID Connect provider. This enables
@@ -130,9 +132,6 @@ public class OAuth2AuthFactory {
               return convertToJwkOptions(keys);
             });
   }
-
-  private static final Set<String> JWK_KEYS =
-      Set.of("kty", "use", "kid", "alg", "n", "e", "x", "y", "crv");
 
   private static List<JsonObject> convertToJwkOptions(JsonArray keys) {
     var result = new ArrayList<JsonObject>();
