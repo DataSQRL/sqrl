@@ -1,0 +1,33 @@
+{
+  "version": "1",
+  "script": {
+    "main": "jwt-oauth-combined.sqrl"
+  },
+  "engines": {
+    "vertx": {
+      "authKind": ["JWT", "OAUTH"],
+      "config": {
+        "jwtAuth": {
+          "pubSecKeys": [
+            {
+              "algorithm": "HS256",
+              "buffer": "dGVzdFNlY3JldFRoYXRJc0F0TGVhc3QyNTZCaXRzTG9uZzMyQ2hhcnM="
+            }
+          ],
+          "jwtOptions": {
+            "issuer": "my-test-issuer",
+            "audience": ["my-test-audience"],
+            "expiresInSeconds": 3600,
+            "leeway": 30
+          }
+        },
+        "oauthConfig": {
+          "oauth2Options": {
+            "site": "${KEYCLOAK_ISSUER}"
+          },
+          "authorizationServerUrl": "${KEYCLOAK_EXTERNAL_URL}"
+        }
+      }
+    }
+  }
+}
