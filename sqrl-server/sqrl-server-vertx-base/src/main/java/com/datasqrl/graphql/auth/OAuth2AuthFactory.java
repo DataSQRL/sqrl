@@ -18,26 +18,33 @@ package com.datasqrl.graphql.auth;
 import com.datasqrl.graphql.config.OAuthConfig;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
-import io.vertx.ext.auth.oauth2.OAuth2Options;
-import io.vertx.ext.auth.oauth2.providers.OpenIDConnectAuth;
+import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.client.WebClientOptions;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Factory for creating OAuth 2.0 authentication providers. Supports JWKS-based key discovery from
- * OAuth providers like Auth0 and Keycloak.
+ * Factory for creating JWT authentication providers with JWKS-based key discovery from OAuth/OIDC
+ * providers like Auth0 and Keycloak. Uses JWTAuth instead of OAuth2Auth for proper claim extraction
+ * from bearer tokens.
  */
 @Slf4j
 public class OAuth2AuthFactory {
 
-  private static final String DEFAULT_CLIENT_ID = "datasqrl-mcp";
+  private static final String OIDC_DISCOVERY_PATH = "/.well-known/openid-configuration";
 
   /**
-   * Creates an authentication provider using OpenID Connect discovery. This enables automatic JWKS
-   * key rotation by fetching keys from the provider.
+   * Creates a JWTAuth provider using JWKS discovered from an OpenID Connect provider. This enables
+   * automatic JWKS key discovery while using JWTAuth for proper JWT claim extraction.
    *
    * @param vertx the Vert.x instance
-   * @param oauthConfig OAuth configuration containing OAuth2Options
+   * @param oauthConfig OAuth configuration containing the OIDC site URL
    * @return Future containing the AuthenticationProvider, or null if config is invalid
    */
   public static Future<AuthenticationProvider> createAuthProvider(
@@ -54,27 +61,99 @@ public class OAuth2AuthFactory {
     }
 
     var normalizedSite = site.endsWith("/") ? site.substring(0, site.length() - 1) : site;
-    log.info("Creating OAuth2 auth provider via OpenID Connect discovery from: {}", normalizedSite);
+    log.info("Creating JWTAuth provider via OIDC JWKS discovery from: {}", normalizedSite);
 
-    var options = new OAuth2Options(oauth2Options.toJson()).setSite(normalizedSite);
+    var webClient =
+        WebClient.create(vertx, new WebClientOptions().setSsl(normalizedSite.startsWith("https")));
 
-    if (options.getClientId() == null || options.getClientId().isBlank()) {
-      options.setClientId(DEFAULT_CLIENT_ID);
-    }
-
-    return OpenIDConnectAuth.discover(vertx, options)
+    return discoverJwksUri(webClient, normalizedSite)
+        .compose(jwksUri -> fetchJwks(webClient, jwksUri))
         .map(
-            oauth2 -> {
-              log.info("OAuth2 auth provider created successfully via OIDC discovery");
-              return (AuthenticationProvider) oauth2;
+            jwks -> {
+              var jwtAuthOptions = new JWTAuthOptions().setJwks(jwks);
+              var jwtAuth = JWTAuth.create(vertx, jwtAuthOptions);
+              log.info(
+                  "JWTAuth provider created successfully with {} keys from OIDC discovery",
+                  jwks.size());
+              return (AuthenticationProvider) jwtAuth;
             })
         .recover(
             err -> {
               log.error(
-                  "Failed to discover OpenID Connect provider at {}: {}",
+                  "Failed to create JWTAuth from OIDC provider at {}: {}",
                   normalizedSite,
                   err.getMessage());
               return Future.failedFuture(err);
             });
+  }
+
+  private static Future<String> discoverJwksUri(WebClient webClient, String site) {
+    var discoveryUrl = site + OIDC_DISCOVERY_PATH;
+    log.debug("Fetching OIDC discovery document from: {}", discoveryUrl);
+
+    return webClient
+        .getAbs(discoveryUrl)
+        .send()
+        .map(
+            response -> {
+              if (response.statusCode() != 200) {
+                throw new RuntimeException(
+                    "OIDC discovery failed with status " + response.statusCode());
+              }
+              var jwksUri = response.bodyAsJsonObject().getString("jwks_uri");
+              if (jwksUri == null || jwksUri.isBlank()) {
+                throw new RuntimeException("OIDC discovery document missing jwks_uri");
+              }
+              log.debug("Discovered JWKS URI: {}", jwksUri);
+              return jwksUri;
+            });
+  }
+
+  private static Future<List<JsonObject>> fetchJwks(WebClient webClient, String jwksUri) {
+    log.debug("Fetching JWKS from: {}", jwksUri);
+
+    return webClient
+        .getAbs(jwksUri)
+        .send()
+        .map(
+            response -> {
+              if (response.statusCode() != 200) {
+                throw new RuntimeException(
+                    "JWKS fetch failed with status " + response.statusCode());
+              }
+              var keys = response.bodyAsJsonObject().getJsonArray("keys");
+              if (keys == null || keys.isEmpty()) {
+                throw new RuntimeException("JWKS document has no keys");
+              }
+              log.debug("Fetched {} keys from JWKS", keys.size());
+              return convertToJwkOptions(keys);
+            });
+  }
+
+  private static List<JsonObject> convertToJwkOptions(JsonArray keys) {
+    var result = new ArrayList<JsonObject>();
+    for (int i = 0; i < keys.size(); i++) {
+      var key = keys.getJsonObject(i);
+      var jwk = new JsonObject();
+
+      copyIfPresent(key, jwk, "kty");
+      copyIfPresent(key, jwk, "use");
+      copyIfPresent(key, jwk, "kid");
+      copyIfPresent(key, jwk, "alg");
+      copyIfPresent(key, jwk, "n");
+      copyIfPresent(key, jwk, "e");
+      copyIfPresent(key, jwk, "x");
+      copyIfPresent(key, jwk, "y");
+      copyIfPresent(key, jwk, "crv");
+
+      result.add(jwk);
+    }
+    return result;
+  }
+
+  private static void copyIfPresent(JsonObject from, JsonObject to, String key) {
+    if (from.containsKey(key)) {
+      to.put(key, from.getValue(key));
+    }
   }
 }

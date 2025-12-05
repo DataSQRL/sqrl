@@ -38,12 +38,10 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.auth.oauth2.OAuth2Auth;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.AuthenticationHandler;
 import io.vertx.ext.web.handler.ChainAuthHandler;
 import io.vertx.ext.web.handler.JWTAuthHandler;
-import io.vertx.ext.web.handler.OAuth2AuthHandler;
 import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
@@ -168,8 +166,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   private AuthenticationHandler createAuthHandler(AuthenticationProvider auth) {
     if (auth instanceof JWTAuth jwtAuth) {
       return JWTAuthHandler.create(jwtAuth);
-    } else if (auth instanceof OAuth2Auth oauth2Auth) {
-      return OAuth2AuthHandler.create(vertx, oauth2Auth);
     } else {
       throw new IllegalArgumentException("Unsupported auth provider type: " + auth.getClass());
     }
