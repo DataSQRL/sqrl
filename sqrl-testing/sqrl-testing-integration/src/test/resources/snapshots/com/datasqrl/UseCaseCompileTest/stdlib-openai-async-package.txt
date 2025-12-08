@@ -81,7 +81,8 @@ CREATE TABLE `data_1` (
   `val` INTEGER NOT NULL,
   `__pk_hash` INTEGER NOT NULL,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -95,7 +96,8 @@ CREATE TABLE `results_2` (
   `extract_json_result_with_schema_response` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `__pk_hash` INTEGER NOT NULL,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

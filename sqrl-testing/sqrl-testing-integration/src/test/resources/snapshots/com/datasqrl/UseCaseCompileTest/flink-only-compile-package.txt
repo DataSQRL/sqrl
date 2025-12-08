@@ -7,7 +7,8 @@ CREATE TABLE `Customer` (
   `name` STRING NOT NULL,
   `lastUpdated` AS `NOW`(),
   WATERMARK FOR `lastUpdated` AS `lastUpdated` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'datagen',
   'fields.customerid.kind' = 'sequence',
   'fields.customerid.start' = '1',
@@ -20,7 +21,8 @@ CREATE TABLE IF NOT EXISTS `customer_id_count` (
   `customerid` BIGINT,
   `numEntries` BIGINT,
   PRIMARY KEY (`customerid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'blackhole'
 );
 EXECUTE STATEMENT SET BEGIN

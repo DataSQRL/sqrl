@@ -24,7 +24,8 @@ CREATE TABLE `Category` (
   `description` STRING,
   `updateTime` AS NOW(),
   WATERMARK FOR `updateTime` AS `updateTime` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -65,7 +66,8 @@ CREATE TABLE `Category` (
   `description` STRING,
   `updateTime` AS `NOW`(),
   WATERMARK FOR `updateTime` AS `updateTime` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -84,7 +86,8 @@ CREATE TABLE `Category_1` (
   `updateTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -98,7 +101,8 @@ CREATE TABLE `CategoryDistinct_2` (
   `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `updateTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`categoryid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

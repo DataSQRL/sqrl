@@ -412,13 +412,15 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `items` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/order_items.jsonl',
   'connector' = 'filesystem'
@@ -433,13 +435,15 @@ CREATE TEMPORARY TABLE `_ProductsStream__schema` (
   `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `usda_id` BIGINT NOT NULL,
   `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_ProductsStream` (
   PRIMARY KEY (`id`, `updated`) NOT ENFORCED,
   WATERMARK FOR `updated` AS `updated` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/products.jsonl',
   'connector' = 'filesystem'
@@ -453,14 +457,16 @@ CREATE TEMPORARY TABLE `_CustomersStream__schema` (
   `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `changed_on` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_CustomersStream` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`changed_on`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/customers.jsonl',
   'connector' = 'filesystem'
@@ -511,12 +517,14 @@ CREATE TEMPORARY TABLE `SinkTable_ex1__schema` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `spend` DOUBLE NOT NULL,
   `saved` DOUBLE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `SinkTable_ex1` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '/tmp/sink/',
   'connector' = 'filesystem'
@@ -542,7 +550,8 @@ CREATE TABLE `CustomerPromotion_1` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `spend` DOUBLE NOT NULL,
   `saved` DOUBLE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -560,7 +569,8 @@ CREATE TABLE `Customers_2` (
   `changed_on` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -575,7 +585,8 @@ CREATE TABLE `CustomersOrderStats_3` (
   `total_saved` DOUBLE NOT NULL,
   `num_orders` BIGINT NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -589,7 +600,8 @@ CREATE TABLE `CustomersPastPurchases_4` (
   `num_orders` BIGINT NOT NULL,
   `total_quantity` BIGINT NOT NULL,
   PRIMARY KEY (`customerid`, `productid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -604,7 +616,8 @@ CREATE TABLE `CustomersSpending_5` (
   `saved` DOUBLE NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -618,7 +631,8 @@ CREATE TABLE `Orders_6` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `items` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -634,7 +648,8 @@ CREATE TABLE `OrdersTotals_7` (
   `saving` DOUBLE NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -652,7 +667,8 @@ CREATE TABLE `Products_8` (
   `usda_id` BIGINT NOT NULL,
   `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -668,7 +684,8 @@ CREATE TABLE `ProductsByCountry_9` (
   `weight` BIGINT NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

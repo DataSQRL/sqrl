@@ -77,13 +77,15 @@ CREATE TEMPORARY TABLE `_MySchema__schema` (
   `uuidField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `timestampMillisField` TIMESTAMP(3) NOT NULL,
   `nullableTimestampMillisField` TIMESTAMP(3)
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_MySchema` (
   PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED,
   WATERMARK FOR `timestampMillisField` AS `timestampMillisField`
-) WITH (
+)
+WITH (
   'connector' = 'filesystem',
   'format' = 'avro',
   'path' = '${DATA_PATH}/data.avro',
@@ -99,7 +101,8 @@ CREATE TABLE `Res_1` (
   `timestampMillisField` TIMESTAMP(3) NOT NULL,
   `nullableTimestampMillisField` TIMESTAMP(3),
   PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

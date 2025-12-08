@@ -118,7 +118,8 @@ CREATE TABLE `UserTokens` (
   `tokens` BIGINT NOT NULL,
   `request_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR `request_time` AS `request_time` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -143,7 +144,8 @@ CREATE TABLE `_UserInfo` (
   `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `event_time` AS `NOW`(),
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/userinfo.jsonl',
@@ -170,7 +172,8 @@ CREATE TABLE `TotalOrgTokens_1` (
   `total_tokens` BIGINT NOT NULL,
   `total_requests` BIGINT NOT NULL,
   PRIMARY KEY (`orgid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -183,7 +186,8 @@ CREATE TABLE `TotalUserTokens_2` (
   `total_tokens` BIGINT NOT NULL,
   `total_requests` BIGINT NOT NULL,
   PRIMARY KEY (`userid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -195,7 +199,8 @@ CREATE TABLE `UsageAlert_3` (
   `userid` BIGINT NOT NULL,
   `tokens` BIGINT NOT NULL,
   `request_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',

@@ -97,7 +97,8 @@ CREATE TABLE `SensorReading` (
   `temperature` FLOAT NOT NULL,
   `event_time` BIGINT NOT NULL,
   PRIMARY KEY (`sensorid`, `event_time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'datagen',
   'number-of-rows' = '10',
   'rows-per-second' = '10',
@@ -121,7 +122,8 @@ CREATE TABLE `SensorReading_1` (
   `temperature` FLOAT NOT NULL,
   `event_time` BIGINT NOT NULL,
   PRIMARY KEY (`sensorid`, `event_time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

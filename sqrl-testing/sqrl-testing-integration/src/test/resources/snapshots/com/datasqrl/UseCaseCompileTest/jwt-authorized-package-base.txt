@@ -126,7 +126,8 @@ FROM (VALUES ROW('a'),
 CREATE TABLE `MyStringTable_1` (
   `val` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`val`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -137,7 +138,8 @@ CREATE TABLE `MyStringTable_1` (
 CREATE TABLE `MyTable_2` (
   `val` INTEGER NOT NULL,
   PRIMARY KEY (`val`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

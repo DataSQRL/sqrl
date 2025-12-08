@@ -164,7 +164,8 @@ CREATE TEMPORARY TABLE `_Applications__schema` (
   `duration` BIGINT NOT NULL,
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/applications.jsonl'
@@ -172,7 +173,8 @@ CREATE TEMPORARY TABLE `_Applications__schema` (
 CREATE TABLE `_Applications` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'source.monitor-interval' = '1'
 )
 LIKE `_Applications__schema`;
@@ -225,7 +227,8 @@ CREATE TABLE `_MyApplications2_2` (
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'catalog-name' = 'mydatabase',
   'catalog-table' = '_MyApplications2',
   'catalog-type' = 'hadoop',
@@ -242,7 +245,8 @@ CREATE TABLE `_MyApplications2_3` (
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

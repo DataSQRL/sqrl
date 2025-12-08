@@ -118,14 +118,16 @@ CREATE TEMPORARY TABLE `Employees__schema` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/employees.jsonl'
 );
 CREATE TABLE `Employees` (
   WATERMARK FOR `updatedDate` AS `updatedDate` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'source.monitor-interval' = '10 sec'
 )
 LIKE `Employees__schema`;
@@ -133,14 +135,16 @@ CREATE TEMPORARY TABLE `Reporting__schema` (
   `employeeid` BIGINT NOT NULL,
   `managerid` BIGINT NOT NULL,
   `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/reporting.jsonl'
 );
 CREATE TABLE `Reporting` (
   WATERMARK FOR `updatedDate` AS `updatedDate` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'source.monitor-interval' = '10 sec'
 )
 LIKE `Reporting__schema`;
@@ -165,7 +169,8 @@ CREATE TABLE `Employees_1` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`employeeid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -178,7 +183,8 @@ CREATE TABLE `Reporting_2` (
   `managerid` BIGINT NOT NULL,
   `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`employeeid`, `managerid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

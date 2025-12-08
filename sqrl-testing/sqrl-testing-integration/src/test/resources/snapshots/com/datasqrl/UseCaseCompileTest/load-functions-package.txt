@@ -59,7 +59,8 @@ CREATE TABLE `FunctionApplied_1` (
   `id` INTEGER NOT NULL,
   `fct_result` BOOLEAN,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

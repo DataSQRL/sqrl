@@ -103,7 +103,8 @@ CREATE TABLE `MathFunctions_1` (
   `normal_distribution` DOUBLE,
   `poisson_distribution` DOUBLE,
   PRIMARY KEY (`d`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

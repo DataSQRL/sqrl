@@ -115,7 +115,8 @@ CREATE TABLE `SensorReading` (
   `temperature` FLOAT NOT NULL,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -150,7 +151,8 @@ CREATE TABLE `HighTempAlert_1` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -163,7 +165,8 @@ CREATE TABLE `SensorAnalysis_2` (
   `avg_temperatures` FLOAT NOT NULL,
   `max_temperature` FLOAT NOT NULL,
   PRIMARY KEY (`sensorid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -176,7 +179,8 @@ CREATE TABLE `SensorMaxTempLastMin_3` (
   `endOfMin` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `avg_temperature` FLOAT NOT NULL,
   PRIMARY KEY (`sensorid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -190,7 +194,8 @@ CREATE TABLE `SensorReading_4` (
   `temperature` FLOAT NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   PRIMARY KEY (`uuid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

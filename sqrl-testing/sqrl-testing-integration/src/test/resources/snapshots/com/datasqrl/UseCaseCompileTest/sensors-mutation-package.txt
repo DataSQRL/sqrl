@@ -142,7 +142,8 @@ CREATE TABLE `SensorReading` (
   `temperature` DECIMAL(8, 2) NOT NULL,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -171,7 +172,8 @@ CREATE TABLE `HighTempAlert_1` (
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -183,7 +185,8 @@ CREATE TABLE `SensorMaxTemp_2` (
   `sensorid` INTEGER NOT NULL,
   `maxTemp` DECIMAL(8, 2) NOT NULL,
   PRIMARY KEY (`sensorid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -197,7 +200,8 @@ CREATE TABLE `SensorReading_3` (
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -209,7 +213,8 @@ CREATE TABLE `SensorReadingSubscription_4` (
   `sensorid` INTEGER NOT NULL,
   `temperature` DECIMAL(8, 2) NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',

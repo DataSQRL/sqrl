@@ -43,7 +43,8 @@ CREATE TABLE `functions_1` (
   `formatted_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name_json` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`name`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'print',
   'print-identifier' = 'functions'
 );

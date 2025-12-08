@@ -103,7 +103,7 @@
   "inputs" : [ "default_catalog.hr.Employees__base" ],
   "annotations" : [ ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[updatedDate], watermark=[-($3, 1:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, hr, Employees]])\n",
-  "sql" : "CREATE TEMPORARY TABLE `Employees__schema` (\n  `employeeid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'filesystem',\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/employees.jsonl'\n);\nCREATE TABLE `Employees` (\n  WATERMARK FOR `updatedDate` AS `updatedDate` - INTERVAL '0.001' SECOND\n) WITH (\n  'source.monitor-interval' = '10 sec'\n)\nLIKE `Employees__schema`",
+  "sql" : "CREATE TEMPORARY TABLE `Employees__schema` (\n  `employeeid` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n)\nWITH (\n  'connector' = 'filesystem',\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/employees.jsonl'\n);\nCREATE TABLE `Employees` (\n  WATERMARK FOR `updatedDate` AS `updatedDate` - INTERVAL '0.001' SECOND\n)\nWITH (\n  'source.monitor-interval' = '10 sec'\n)\nLIKE `Employees__schema`",
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",
@@ -137,7 +137,7 @@
   "inputs" : [ "default_catalog.hr.Reporting__base" ],
   "annotations" : [ ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[updatedDate], watermark=[-($2, 1:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, hr, Reporting]])\n",
-  "sql" : "CREATE TEMPORARY TABLE `Reporting__schema` (\n  `employeeid` BIGINT NOT NULL,\n  `managerid` BIGINT NOT NULL,\n  `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n) WITH (\n  'connector' = 'filesystem',\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/reporting.jsonl'\n);\nCREATE TABLE `Reporting` (\n  WATERMARK FOR `updatedDate` AS `updatedDate` - INTERVAL '0.001' SECOND\n) WITH (\n  'source.monitor-interval' = '10 sec'\n)\nLIKE `Reporting__schema`",
+  "sql" : "CREATE TEMPORARY TABLE `Reporting__schema` (\n  `employeeid` BIGINT NOT NULL,\n  `managerid` BIGINT NOT NULL,\n  `updatedDate` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n)\nWITH (\n  'connector' = 'filesystem',\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/reporting.jsonl'\n);\nCREATE TABLE `Reporting` (\n  WATERMARK FOR `updatedDate` AS `updatedDate` - INTERVAL '0.001' SECOND\n)\nWITH (\n  'source.monitor-interval' = '10 sec'\n)\nLIKE `Reporting__schema`",
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",

@@ -79,7 +79,8 @@ CREATE TABLE `Sensors` (
   `updatedTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   PRIMARY KEY (`sensorid`) NOT ENFORCED,
   WATERMARK FOR `updatedTime` AS `updatedTime` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'upsert-kafka',
   'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
@@ -118,7 +119,8 @@ CREATE TABLE `_SensorReading` (
   `temperature` FLOAT,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -134,7 +136,8 @@ CREATE TABLE `Sensors` (
   `updatedTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   PRIMARY KEY (`sensorid`) NOT ENFORCED,
   WATERMARK FOR `updatedTime` AS `updatedTime` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'upsert-kafka',
   'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
@@ -152,7 +155,8 @@ CREATE TABLE `_SensorReading` (
   `temperature` FLOAT,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -178,7 +182,8 @@ CREATE TABLE `MachineReading_1` (
   `machineid` INTEGER,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -192,7 +197,8 @@ CREATE TABLE `MachineTempByHour_2` (
   `avg_temperature` FLOAT,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -205,7 +211,8 @@ CREATE TABLE `Sensors_3` (
   `machineid` INTEGER,
   `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   PRIMARY KEY (`sensorid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
