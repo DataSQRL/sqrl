@@ -121,7 +121,7 @@
     <aws-sdk-bom.version>2.39.6</aws-sdk-bom.version>
     <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-csv.version>1.14.1</commons-csv.version>
-    <commons-exec.version>1.5.0</commons-exec.version>
+    <commons-exec.version>1.6.0</commons-exec.version>
     <commons-io.version>2.21.0</commons-io.version>
     <duckdb.version>1.4.2.0</duckdb.version>
     <feign.version>13.6</feign.version>
