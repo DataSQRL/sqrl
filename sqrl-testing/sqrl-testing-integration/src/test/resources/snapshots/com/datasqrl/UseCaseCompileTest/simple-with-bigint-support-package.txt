@@ -73,13 +73,15 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   `quantity` BIGINT NOT NULL,
   `unit_price` DOUBLE,
   `discount` DOUBLE
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Orders` (
   `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/orders.jsonl',
   'source.monitor-interval' = '10000',
@@ -96,7 +98,8 @@ CREATE TABLE `Orders_1` (
   `discount` DOUBLE,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

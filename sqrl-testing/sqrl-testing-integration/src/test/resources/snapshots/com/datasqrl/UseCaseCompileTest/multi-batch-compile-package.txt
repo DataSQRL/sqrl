@@ -30,7 +30,8 @@ Inputs:
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Src` (
   `val` INTEGER NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen',
   'number-of-rows' = '5',
   'rows-per-second' = '5',
@@ -40,22 +41,26 @@ CREATE TABLE `Src` (
 );
 CREATE TABLE `TableA` (
   `val` INTEGER
-) WITH (
+)
+WITH (
   'connector' = 'print'
 );
 CREATE TABLE `TableB` (
   `recordCount` INTEGER
-) WITH (
+)
+WITH (
   'connector' = 'print'
 );
 CREATE TABLE `SinkA_ex1` (
   `val` INTEGER
-) WITH (
+)
+WITH (
   'connector' = 'print'
 );
 CREATE TABLE `SinkB_ex2` (
   `val` INTEGER
-) WITH (
+)
+WITH (
   'connector' = 'print'
 );
 EXECUTE STATEMENT SET BEGIN

@@ -125,13 +125,15 @@ CREATE TEMPORARY TABLE `Click__schema` (
   `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Click` (
   PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/click.jsonl',
   'source.monitor-interval' = '10 sec',
@@ -158,7 +160,8 @@ CREATE TABLE `Click_1` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -171,7 +174,8 @@ CREATE TABLE `Recommendation_2` (
   `rec` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `frequency` BIGINT NOT NULL,
   PRIMARY KEY (`url`, `rec`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -183,7 +187,8 @@ CREATE TABLE `Trending_3` (
   `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `total` BIGINT NOT NULL,
   PRIMARY KEY (`url`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -197,7 +202,8 @@ CREATE TABLE `VisitAfter_4` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

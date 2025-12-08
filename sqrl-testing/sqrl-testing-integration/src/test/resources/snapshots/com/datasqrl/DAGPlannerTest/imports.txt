@@ -26,14 +26,16 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -67,13 +69,15 @@ CREATE TEMPORARY TABLE `Product__schema` (
   `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Product` (
   PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -86,14 +90,16 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -106,13 +112,15 @@ CREATE TEMPORARY TABLE `Product__schema` (
   `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Product` (
   PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -126,7 +134,8 @@ CREATE TABLE `Customer_1` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -141,7 +150,8 @@ CREATE TABLE `Product_2` (
   `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

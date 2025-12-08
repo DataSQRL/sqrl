@@ -26,7 +26,8 @@ CREATE TABLE `SensorReading` (
   `temperature` DOUBLE NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`epoch_timestamp`, 3), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'datagen',
   'number-of-rows' = '1000',
   'fields.sensorid.kind' = 'sequence',
@@ -73,7 +74,8 @@ CREATE TABLE `SensorReading` (
   `temperature` DOUBLE NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`epoch_timestamp`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'datagen',
   'number-of-rows' = '1000',
   'fields.sensorid.kind' = 'sequence',
@@ -98,7 +100,8 @@ CREATE TABLE `SensorReading_1` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -111,7 +114,8 @@ CREATE TABLE `SensorTempByHour_2` (
   `time_hour` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `avg_temperature` DOUBLE NOT NULL,
   PRIMARY KEY (`sensorid`, `time_hour`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

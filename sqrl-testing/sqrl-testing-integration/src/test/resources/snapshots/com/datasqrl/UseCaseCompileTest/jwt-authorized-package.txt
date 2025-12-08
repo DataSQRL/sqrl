@@ -201,7 +201,8 @@ CREATE TABLE `AuthInputData` (
   `message` STRING NOT NULL,
   `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -218,7 +219,8 @@ WHERE `message` <> '';
 CREATE TABLE `MyStringTable_1` (
   `val` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`val`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -229,7 +231,8 @@ CREATE TABLE `MyStringTable_1` (
 CREATE TABLE `MyTable_2` (
   `val` INTEGER NOT NULL,
   PRIMARY KEY (`val`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -242,7 +245,8 @@ CREATE TABLE `_Messages_3` (
   `val` BIGINT NOT NULL,
   `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',

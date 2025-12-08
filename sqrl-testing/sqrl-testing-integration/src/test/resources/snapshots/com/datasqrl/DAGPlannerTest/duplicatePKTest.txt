@@ -80,7 +80,8 @@ CREATE TABLE `SimpleInput` (
   `userid` INTEGER,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -117,7 +118,8 @@ CREATE TABLE `SimpleInput` (
   `userid` INTEGER,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -148,7 +150,8 @@ CREATE TABLE `InputDistinct_1` (
   `unique_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -162,7 +165,8 @@ CREATE TABLE `_Input_2` (
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   `unique_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

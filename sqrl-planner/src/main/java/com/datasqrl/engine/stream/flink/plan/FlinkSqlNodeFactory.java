@@ -114,7 +114,8 @@ public class FlinkSqlNodeFactory {
         true,
         isSystem,
         isSystem,
-        new SqlNodeList(SqlParserPos.ZERO));
+        SqlNodeList.EMPTY,
+        SqlNodeList.EMPTY);
   }
 
   public static SqlWatermark createWatermark(
@@ -125,14 +126,13 @@ public class FlinkSqlNodeFactory {
   public static SqlNode boundedStrategy(SqlNode watermark, String delay) {
     return new SqlBasicCall(
         SqlStdOperatorTable.MINUS,
-        new SqlNode[] {
-          watermark,
-          SqlLiteral.createInterval(
-              1,
-              delay,
-              new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO),
-              SqlParserPos.ZERO)
-        },
+        List.of(
+            watermark,
+            SqlLiteral.createInterval(
+                1,
+                delay,
+                new SqlIntervalQualifier(TimeUnit.SECOND, TimeUnit.SECOND, SqlParserPos.ZERO),
+                SqlParserPos.ZERO)),
         SqlParserPos.ZERO);
   }
 
@@ -342,6 +342,7 @@ public class FlinkSqlNodeFactory {
         null,
         SqlNodeList.of(SqlIdentifier.STAR),
         tableName,
+        null,
         null,
         null,
         null,

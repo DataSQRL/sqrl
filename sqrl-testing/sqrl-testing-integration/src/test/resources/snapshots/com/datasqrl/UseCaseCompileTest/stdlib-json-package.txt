@@ -90,13 +90,15 @@ CREATE TEMPORARY TABLE `Json__schema` (
   `id` BIGINT NOT NULL,
   `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Json` (
   PRIMARY KEY (`id`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/json.jsonl',
   'connector' = 'filesystem'
@@ -111,7 +113,8 @@ CREATE TABLE `Json_1` (
   `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -127,7 +130,8 @@ CREATE TABLE `UnmodifiedJsonData_2` (
   `json_col_3` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   `json_col_4` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

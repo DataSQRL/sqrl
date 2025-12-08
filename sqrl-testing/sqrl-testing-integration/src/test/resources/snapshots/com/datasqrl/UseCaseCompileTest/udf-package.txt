@@ -142,7 +142,8 @@ CREATE TABLE `MyAsyncTable_1` (
   `val` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
   `myFnc` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`val`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -154,7 +155,8 @@ CREATE TABLE `MyTable_2` (
   `val` INTEGER NOT NULL,
   `myFnc` BIGINT,
   PRIMARY KEY (`val`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -166,7 +168,8 @@ CREATE TABLE `MyTableAnother_3` (
   `val` INTEGER NOT NULL,
   `myFnc` BIGINT,
   PRIMARY KEY (`val`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -178,7 +181,8 @@ CREATE TABLE `MyTableDifferentCase_4` (
   `val` INTEGER NOT NULL,
   `fn` BIGINT,
   PRIMARY KEY (`val`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

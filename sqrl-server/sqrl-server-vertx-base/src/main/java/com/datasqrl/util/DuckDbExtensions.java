@@ -15,37 +15,36 @@
  */
 package com.datasqrl.util;
 
-import java.util.Map;
+import com.datasqrl.graphql.config.JdbcConfig;
 import java.util.StringJoiner;
+import lombok.RequiredArgsConstructor;
 
-public record DuckDbExtensions(Map<String, Object> config) {
+@RequiredArgsConstructor
+public final class DuckDbExtensions {
+
+  private final StringJoiner joiner = new StringJoiner(";", "", ";");
+
+  private final JdbcConfig.DuckDbConfig config;
 
   public String buildInitSql() {
-    var joiner = new StringJoiner(";", "", ";");
+    joiner.add("INSTALL iceberg");
+    joiner.add("INSTALL httpfs");
+    ifDiskCache("INSTALL cache_httpfs FROM community");
 
-    addInstallStatements(joiner);
-    addLoadStatements(joiner);
+    joiner.add("LOAD iceberg");
+    joiner.add("LOAD httpfs");
+    ifDiskCache("LOAD cache_httpfs");
+
+    if (config.isUseVersionGuessing()) {
+      joiner.add("SET unsafe_enable_version_guessing = true");
+    }
 
     return joiner.toString();
   }
 
-  private void addInstallStatements(StringJoiner joiner) {
-    joiner.add("INSTALL iceberg");
-    joiner.add("INSTALL httpfs");
-    if (useDiskCache()) {
-      joiner.add("INSTALL cache_httpfs FROM community");
+  private void ifDiskCache(String stmt) {
+    if (config.isUseDiskCache()) {
+      joiner.add(stmt);
     }
-  }
-
-  private void addLoadStatements(StringJoiner joiner) {
-    joiner.add("LOAD iceberg");
-    joiner.add("LOAD httpfs");
-    if (useDiskCache()) {
-      joiner.add("LOAD cache_httpfs");
-    }
-  }
-
-  private boolean useDiskCache() {
-    return (boolean) config.getOrDefault("use-disk-cache", false);
   }
 }

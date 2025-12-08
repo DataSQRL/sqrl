@@ -14,10 +14,10 @@ Since Iceberg is not a standalone data system but a data format, the configurati
 {
   "connectors": {
     "iceberg": {
-      "warehouse": "iceberg-data-dir", // path the Iceberg table data is written to 
-      "catalog-type": "hadoop",        // the catalog to use for Iceberg metadata
-      "catalog-name": "mycatalog"      // the name of the catalog
-    },  }
+      "warehouse": "iceberg-data",      // path the Iceberg table data is written to
+      "catalog-name": "default_catalog" // the name of the catalog
+    }
+  }
 }
 ```
 

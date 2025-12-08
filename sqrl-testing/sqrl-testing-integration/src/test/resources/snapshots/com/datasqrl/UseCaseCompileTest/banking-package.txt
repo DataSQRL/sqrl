@@ -242,13 +242,15 @@ CREATE TEMPORARY TABLE `CustomersStream__schema` (
   `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `CustomersStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/customers.jsonl',
   'source.monitor-interval' = '10 sec',
@@ -263,13 +265,15 @@ CREATE TEMPORARY TABLE `ApplicationsStream__schema` (
   `duration` BIGINT NOT NULL,
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `ApplicationsStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/applications.jsonl',
   'source.monitor-interval' = '10 sec',
@@ -286,13 +290,15 @@ CREATE TEMPORARY TABLE `LoanTypesStream__schema` (
   `max_duration` BIGINT NOT NULL,
   `min_duration` BIGINT NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `LoanTypesStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/loan_types.jsonl',
   'source.monitor-interval' = '10 sec',
@@ -307,7 +313,8 @@ CREATE TABLE `AddChatMessage` (
   `context` ROW(`customerid` INTEGER) NOT NULL,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -323,7 +330,8 @@ CREATE TABLE `ApplicationUpdates` (
   `message` STRING,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -374,7 +382,8 @@ CREATE TABLE `AddChatMessage_1` (
   `context` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -391,7 +400,8 @@ CREATE TABLE `ApplicationAlert_2` (
   `min_amount` DOUBLE NOT NULL,
   `amount` DOUBLE NOT NULL,
   PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -412,7 +422,8 @@ CREATE TABLE `ApplicationStatus_3` (
   `max_amount` DOUBLE NOT NULL,
   `min_amount` DOUBLE NOT NULL,
   PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -427,7 +438,8 @@ CREATE TABLE `ApplicationUpdates_4` (
   `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -444,7 +456,8 @@ CREATE TABLE `Applications_5` (
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -461,7 +474,8 @@ CREATE TABLE `ApplicationsStream_6` (
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -477,7 +491,8 @@ CREATE TABLE `CustomerChatMessage_7` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   `uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`uuid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -495,7 +510,8 @@ CREATE TABLE `Customers_8` (
   `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -513,7 +529,8 @@ CREATE TABLE `CustomersStream_9` (
   `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -532,7 +549,8 @@ CREATE TABLE `LoanTypes_10` (
   `min_duration` BIGINT NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -551,7 +569,8 @@ CREATE TABLE `LoanTypesStream_11` (
   `min_duration` BIGINT NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

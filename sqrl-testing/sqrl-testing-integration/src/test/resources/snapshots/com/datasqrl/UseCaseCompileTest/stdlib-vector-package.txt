@@ -120,7 +120,8 @@ CREATE TABLE `CategoryCentroids_1` (
   `category_id` INTEGER NOT NULL,
   `center_vector` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`category_id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -133,7 +134,8 @@ CREATE TABLE `VectorData_2` (
   `category_id` INTEGER NOT NULL,
   `vector` RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD'),
   PRIMARY KEY (`doc_id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

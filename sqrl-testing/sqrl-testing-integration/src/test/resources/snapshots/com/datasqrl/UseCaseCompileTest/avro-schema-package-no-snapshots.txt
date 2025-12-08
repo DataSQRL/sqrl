@@ -241,13 +241,15 @@ CREATE TEMPORARY TABLE `_Schema__schema` (
   `decimalField` DECIMAL(10, 2) NOT NULL,
   `mapField` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` > NOT NULL,
   `nullableMapField` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` >
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_Schema` (
   PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED,
   WATERMARK FOR `timestampMillisField` AS `timestampMillisField`
-) WITH (
+)
+WITH (
   'format' = 'json',
   'json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/schema.jsonl',
@@ -295,7 +297,8 @@ CREATE TABLE `Schema_1` (
   `mapField` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   `nullableMapField` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

@@ -16,7 +16,7 @@
 package com.datasqrl.graphql.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -28,5 +28,16 @@ import lombok.Setter;
 public class JdbcConfig {
 
   private String url;
-  private Map<String, Object> config;
+
+  @Getter
+  @Setter
+  @NoArgsConstructor
+  public static class DuckDbConfig extends JdbcConfig {
+
+    @JsonProperty("use-disk-cache")
+    private boolean useDiskCache;
+
+    @JsonProperty("use-version-guessing")
+    private boolean useVersionGuessing;
+  }
 }

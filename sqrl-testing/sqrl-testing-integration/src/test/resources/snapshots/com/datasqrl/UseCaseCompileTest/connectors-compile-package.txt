@@ -150,7 +150,8 @@ Inputs:
 CREATE TABLE `kafka_avro_table` (
   `user_id` INTEGER,
   `name` STRING
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'topic' = 'users-avro',
   'properties.bootstrap.servers' = 'localhost:9092',
@@ -160,7 +161,8 @@ CREATE TABLE `kafka_avro_table` (
 CREATE TABLE `kafka_safe_json_table` (
   `user_id` INTEGER,
   `name` STRING
-) WITH (
+)
+WITH (
   'connector' = 'kafka-safe',
   'topic' = 'users-json-avro',
   'properties.bootstrap.servers' = 'localhost:9092',
@@ -170,7 +172,8 @@ CREATE TABLE `kafka_safe_json_table` (
 CREATE TABLE `kafka_safe_csv_table` (
   `user_id` INTEGER,
   `name` STRING
-) WITH (
+)
+WITH (
   'connector' = 'kafka-safe',
   'topic' = 'users-csv-avro',
   'properties.bootstrap.servers' = 'localhost:9092',
@@ -181,7 +184,8 @@ CREATE TABLE `upsert_kafka_confluent_avro` (
   `user_id` INTEGER,
   `name` STRING,
   PRIMARY KEY (`user_id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'upsert-kafka',
   'topic' = 'users-upsert',
   'properties.group.id' = 'flink-kafka-avro-group',
@@ -194,7 +198,8 @@ CREATE TABLE `upsert_kafka_confluent_avro` (
 CREATE TABLE `kafka_debezium_table` (
   `user_id` INTEGER,
   `name` STRING
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'topic' = 'users-debezium',
   'properties.group.id' = 'flink-kafka-avro-group',
@@ -217,7 +222,8 @@ WITH (
 CREATE TABLE `_jdbc_table` (
   `user_id` INTEGER,
   `name` STRING
-) WITH (
+)
+WITH (
   'connector' = 'jdbc',
   'url' = 'jdbc:postgresql://localhost:5432/mydb',
   'table-name' = 'users',
@@ -229,7 +235,8 @@ CREATE TABLE `iceberg_parquet_table_1` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -242,7 +249,8 @@ CREATE TABLE `kafka_avro_table_2` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -255,7 +263,8 @@ CREATE TABLE `kafka_debezium_table_3` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -268,7 +277,8 @@ CREATE TABLE `kafka_safe_csv_table_4` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -281,7 +291,8 @@ CREATE TABLE `kafka_safe_json_table_5` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -293,7 +304,8 @@ CREATE TABLE `upsert_kafka_confluent_avro_6` (
   `user_id` INTEGER NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`user_id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

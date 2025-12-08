@@ -97,15 +97,15 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Flink runner props -->
-    <flinkrunner.version>0.9.0-alpha2</flinkrunner.version>
-    <flinkrunner.image.repo>docker.io</flinkrunner.image.repo>
+    <flinkrunner.version>0.9-SNAPSHOT</flinkrunner.version>
+    <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
 
     <!-- Params -->
     <docker.image.tag>local</docker.image.tag>
     <snapshots.update>false</snapshots.update>
 
     <!-- Flink versions -->
-    <flink.version>2.1.1</flink.version>
+    <flink.version>2.2.0</flink.version>
     <flink.cdc.version>3.5.0</flink.cdc.version>
     <flink.connector.jdbc.version>4.0.0-2.0</flink.connector.jdbc.version>
     <flink.connector.kafka.version>4.0.1-2.0</flink.connector.kafka.version>
@@ -118,10 +118,10 @@
     <autoservice.version>1.1.1</autoservice.version>
     <avro.version>1.12.1</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
-    <aws-sdk-bom.version>2.39.6</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.40.3</aws-sdk-bom.version>
     <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-csv.version>1.14.1</commons-csv.version>
-    <commons-exec.version>1.5.0</commons-exec.version>
+    <commons-exec.version>1.6.0</commons-exec.version>
     <commons-io.version>2.21.0</commons-io.version>
     <duckdb.version>1.4.2.0</duckdb.version>
     <feign.version>13.6</feign.version>
@@ -134,6 +134,7 @@
     <guice-multibindings.version>4.2.3</guice-multibindings.version>
     <guice.version>7.0.0</guice.version>
     <h2.version>2.4.240</h2.version>
+    <hikari.version>7.0.2</hikari.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
     <hadoop.version>3.3.4</hadoop.version>
@@ -149,7 +150,7 @@
     <kafka.version>3.9.1</kafka.version>
     <log4j.version>2.25.2</log4j.version>
     <lombok.version>1.18.42</lombok.version>
-    <mcp-sdk.version>0.16.0</mcp-sdk.version>
+    <mcp-sdk.version>0.17.0</mcp-sdk.version>
     <micrometer.version>1.16.0</micrometer.version>
     <mockito.version>4.8.0</mockito.version>
     <mustache.version>0.9.14</mustache.version>
@@ -158,7 +159,7 @@
     <picocli.version>4.7.7</picocli.version>
     <postgres.version>42.7.8</postgres.version>
     <projectreactor.version>3.8.0</projectreactor.version>
-    <protobuf.version>4.33.1</protobuf.version>
+    <protobuf.version>4.33.2</protobuf.version>
     <scala.version>2.12</scala.version>
     <scram.version>2.1</scram.version>
     <slf4j.version>1.7.36</slf4j.version>
@@ -352,6 +353,11 @@
         <groupId>io.agroal</groupId>
         <artifactId>agroal-pool</artifactId>
         <version>${agroal.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.zaxxer</groupId>
+        <artifactId>HikariCP</artifactId>
+        <version>${hikari.version}</version>
       </dependency>
 
       <!-- validation -->
@@ -905,7 +911,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>3.2.0</version>
+        <version>3.3.0</version>
         <configuration>
           <tagNameFormat>v@{project.version}</tagNameFormat>
           <autoVersionSubmodules>true</autoVersionSubmodules>

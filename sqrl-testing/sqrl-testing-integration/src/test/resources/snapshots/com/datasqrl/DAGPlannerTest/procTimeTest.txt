@@ -25,13 +25,15 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer` (
   `_ingest_time` AS PROCTIME(),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'format' = 'json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -95,13 +97,15 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Orders` (
   `_ingest_time` AS PROCTIME(),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -114,13 +118,15 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Orders` (
   `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -132,13 +138,15 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer` (
   `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'format' = 'json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -157,7 +165,8 @@ CREATE TABLE `Customer_1` (
   `lastUpdated` BIGINT NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -177,7 +186,8 @@ CREATE TABLE `CustomerOrdersJoin_2` (
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   `_ingest_time0` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`, `id`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -192,7 +202,8 @@ CREATE TABLE `Orders_3` (
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
