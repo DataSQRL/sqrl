@@ -19,10 +19,10 @@ import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
+import java.util.ArrayList;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
@@ -34,15 +34,12 @@ public class SplitIndexSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var string = call.getOperandList().get(0);
-    var delimiter = call.getOperandList().get(1);
-    var index = call.getOperandList().get(2);
+    var operands = new ArrayList<>(call.getOperandList());
+    var idx = (SqlLiteral) operands.get(2);
+    var idxVal = idx.intValue(false);
 
-    var one = SqlLiteral.createExactNumeric("1", SqlParserPos.ZERO);
-    var adjustedIndex = SqlStdOperatorTable.PLUS.createCall(SqlParserPos.ZERO, index, one);
+    operands.set(2, SqlLiteral.createExactNumeric(String.valueOf(idxVal + 1), SqlParserPos.ZERO));
 
-    CalciteFunctionUtil.lightweightOp("split_part")
-        .createCall(SqlParserPos.ZERO, string, delimiter, adjustedIndex)
-        .unparse(writer, leftPrec, rightPrec);
+    CalciteFunctionUtil.writeFunction("SPLIT_PART", writer, operands);
   }
 }

@@ -15,33 +15,28 @@
  */
 package com.datasqrl.function.translation.postgres.builtinflink;
 
-import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 
 @AutoService(SqlTranslation.class)
 public class TruncateSqlTranslation extends PostgresSqlTranslation {
 
   public TruncateSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp(BuiltInFunctionDefinitions.TRUNCATE));
+    super(BuiltInFunctionDefinitions.TRUNCATE);
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var operands = call.getOperandList();
-    if (operands.size() == 1) {
-      CalciteFunctionUtil.lightweightOp("TRUNC")
-          .createCall(SqlParserPos.ZERO, operands.get(0))
-          .unparse(writer, leftPrec, rightPrec);
-    } else if (operands.size() == 2) {
-      CalciteFunctionUtil.lightweightOp("TRUNC")
-          .createCall(SqlParserPos.ZERO, operands.get(0), operands.get(1))
-          .unparse(writer, leftPrec, rightPrec);
+    var trunc = writer.startFunCall("TRUNC");
+    call.operand(0).unparse(writer, 0, 0);
+    if (call.operandCount() > 1) {
+      writer.sep(",", true);
+      call.operand(1).unparse(writer, 0, 0);
     }
+    writer.endFunCall(trunc);
   }
 }

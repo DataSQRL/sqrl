@@ -16,14 +16,18 @@
 package com.datasqrl.function;
 
 import com.datasqrl.util.FunctionUtil;
+import java.util.List;
 import lombok.experimental.UtilityClass;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlBinaryOperator;
+import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperatorBinding;
 import org.apache.calcite.sql.SqlUnresolvedFunction;
+import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ReturnTypes;
 import org.apache.calcite.sql.type.SqlReturnTypeInference;
@@ -85,5 +89,30 @@ public class CalciteFunctionUtil {
         false,
         false,
         Optionality.IGNORED);
+  }
+
+  public static void writeFunction(String fnName, SqlWriter writer, SqlCall origCall) {
+    writeFunction(fnName, writer, origCall.getOperandList());
+  }
+
+  public static void writeFunction(String fnName, SqlWriter writer, SqlNode... operands) {
+    writeFunction(fnName, writer, List.of(operands));
+  }
+
+  public static void writeFunction(String fnName, SqlWriter writer, List<SqlNode> operands) {
+    var fn = writer.startFunCall(fnName);
+    writeOperands(writer, operands);
+    writer.endFunCall(fn);
+  }
+
+  public static void writeOperands(SqlWriter writer, List<SqlNode> operands) {
+    boolean first = true;
+    for (SqlNode operand : operands) {
+      if (!first) {
+        writer.sep(",", true);
+      }
+      operand.unparse(writer, 0, 0);
+      first = false;
+    }
   }
 }

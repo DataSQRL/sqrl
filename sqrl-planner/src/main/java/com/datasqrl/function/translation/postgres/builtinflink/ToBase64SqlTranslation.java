@@ -33,16 +33,18 @@ public class ToBase64SqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var string = call.getOperandList().get(0);
-    var utf8Literal = SqlLiteral.createCharString("UTF8", SqlParserPos.ZERO);
-    var base64Literal = SqlLiteral.createCharString("base64", SqlParserPos.ZERO);
+    var utf8Lit = SqlLiteral.createCharString("UTF8", SqlParserPos.ZERO);
+    var b64Lit = SqlLiteral.createCharString("base64", SqlParserPos.ZERO);
 
-    var convertToCall =
-        CalciteFunctionUtil.lightweightOp("convert_to")
-            .createCall(SqlParserPos.ZERO, string, utf8Literal);
-
-    CalciteFunctionUtil.lightweightOp("encode")
-        .createCall(SqlParserPos.ZERO, convertToCall, base64Literal)
-        .unparse(writer, leftPrec, rightPrec);
+    // encode(convert_to(<value>, 'UTF8'), 'base64')
+    var encode = writer.startFunCall("ENCODE");
+    var convert = writer.startFunCall("CONVERT_TO");
+    call.operand(0).unparse(writer, 0, 0);
+    writer.sep(",", true);
+    utf8Lit.unparse(writer, 0, 0);
+    writer.endFunCall(convert);
+    writer.sep(",", true);
+    b64Lit.unparse(writer, 0, 0);
+    writer.endFunCall(encode);
   }
 }

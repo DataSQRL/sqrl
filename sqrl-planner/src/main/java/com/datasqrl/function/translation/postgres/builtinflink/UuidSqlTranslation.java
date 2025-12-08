@@ -15,26 +15,23 @@
  */
 package com.datasqrl.function.translation.postgres.builtinflink;
 
-import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 
 @AutoService(SqlTranslation.class)
 public class UuidSqlTranslation extends PostgresSqlTranslation {
 
   public UuidSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp(BuiltInFunctionDefinitions.UUID));
+    super(BuiltInFunctionDefinitions.UUID);
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    CalciteFunctionUtil.lightweightOp("gen_random_uuid")
-        .createCall(SqlParserPos.ZERO)
-        .unparse(writer, leftPrec, rightPrec);
+    var frame = writer.startFunCall("gen_random_uuid");
+    writer.endFunCall(frame);
   }
 }

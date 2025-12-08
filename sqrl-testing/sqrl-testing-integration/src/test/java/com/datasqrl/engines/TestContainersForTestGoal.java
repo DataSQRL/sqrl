@@ -69,7 +69,7 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
     return new TestContainerHook() {
       final PostgreSQLContainer testDatabase =
           new PostgreSQLContainer(
-                  DockerImageName.parse("ankane/pgvector:v0.5.0")
+                  DockerImageName.parse("pgvector/pgvector:0.8.1-pg18-trixie")
                       .asCompatibleSubstituteFor("postgres"))
               .withDatabaseName("datasqrl")
               .withUsername("foo")

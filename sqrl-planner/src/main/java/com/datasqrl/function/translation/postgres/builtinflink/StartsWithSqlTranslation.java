@@ -21,23 +21,17 @@ import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 
 @AutoService(SqlTranslation.class)
 public class StartsWithSqlTranslation extends PostgresSqlTranslation {
 
   public StartsWithSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp(BuiltInFunctionDefinitions.STARTS_WITH));
+    super(BuiltInFunctionDefinitions.STARTS_WITH);
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var expr = call.getOperandList().get(0);
-    var prefix = call.getOperandList().get(1);
-
-    CalciteFunctionUtil.lightweightOp("starts_with")
-        .createCall(SqlParserPos.ZERO, expr, prefix)
-        .unparse(writer, leftPrec, rightPrec);
+    CalciteFunctionUtil.writeFunction("STARTS_WITH", writer, call);
   }
 }

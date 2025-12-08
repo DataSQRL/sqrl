@@ -15,26 +15,28 @@
  */
 package com.datasqrl.function.translation.postgres.builtinflink;
 
-import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 
 @AutoService(SqlTranslation.class)
 public class RandSqlTranslation extends PostgresSqlTranslation {
 
   public RandSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp(BuiltInFunctionDefinitions.RAND));
+    super(BuiltInFunctionDefinitions.RAND);
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    CalciteFunctionUtil.lightweightOp("RANDOM")
-        .createCall(SqlParserPos.ZERO)
-        .unparse(writer, leftPrec, rightPrec);
+    if (call.operandCount() > 0) {
+      throw new UnsupportedOperationException(
+          "PostgreSQL does not support RAND(seed) in a single expression. Use RAND() instead.");
+    }
+
+    var random = writer.startFunCall("RANDOM");
+    writer.endFunCall(random);
   }
 }

@@ -21,7 +21,6 @@ import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 
 @AutoService(SqlTranslation.class)
@@ -33,11 +32,6 @@ public class InstrSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var string1 = call.getOperandList().get(0);
-    var string2 = call.getOperandList().get(1);
-
-    CalciteFunctionUtil.lightweightOp("strpos")
-        .createCall(SqlParserPos.ZERO, string1, string2)
-        .unparse(writer, leftPrec, rightPrec);
+    CalciteFunctionUtil.writeFunction("STRPOS", writer, call);
   }
 }

@@ -15,27 +15,24 @@
  */
 package com.datasqrl.function.translation.postgres.builtinflink;
 
-import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 
 @AutoService(SqlTranslation.class)
 public class BinSqlTranslation extends PostgresSqlTranslation {
 
   public BinSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp(BuiltInFunctionDefinitions.BIN));
+    super(BuiltInFunctionDefinitions.BIN);
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var value = call.getOperandList().get(0);
-    CalciteFunctionUtil.lightweightOp("to_bin")
-        .createCall(SqlParserPos.ZERO, value)
-        .unparse(writer, leftPrec, rightPrec);
+    var toBin = writer.startFunCall("TO_BIN");
+    call.operand(0).unparse(writer, 0, 0);
+    writer.endFunCall(toBin);
   }
 }

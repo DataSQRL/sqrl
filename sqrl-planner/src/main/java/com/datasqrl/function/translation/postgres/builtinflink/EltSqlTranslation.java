@@ -21,8 +21,8 @@ import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import java.util.ArrayList;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
@@ -34,15 +34,22 @@ public class EltSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var operands = call.getOperandList();
-    var index = operands.get(0);
-    var elements = new ArrayList<>(operands.subList(1, operands.size()));
+    var operands = new ArrayList<>(call.getOperandList());
+    var idx = (SqlLiteral) operands.remove(0);
+    var idxVal = idx.intValue(false);
 
-    var arrayCall =
-        CalciteFunctionUtil.lightweightOp("ARRAY").createCall(SqlParserPos.ZERO, elements);
+    // Postgres idx starts at 1
+    var idxLit = SqlLiteral.createExactNumeric(String.valueOf(idxVal + 1), SqlParserPos.ZERO);
 
-    SqlStdOperatorTable.ITEM
-        .createCall(SqlParserPos.ZERO, arrayCall, index)
-        .unparse(writer, leftPrec, rightPrec);
+    // (ARRAY[...])[idx]
+    var paren = writer.startList("(", ")");
+    writer.keyword("ARRAY");
+    var argBrack = writer.startList("[", "]");
+    CalciteFunctionUtil.writeOperands(writer, operands);
+    writer.endList(argBrack);
+    writer.endList(paren);
+    var idxBrack = writer.startList("[", "]");
+    idxLit.unparse(writer, 0, 0);
+    writer.endList(idxBrack);
   }
 }

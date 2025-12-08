@@ -1,0 +1,35 @@
+{
+  "data" : {
+    "FunctionCallsTest" : [ {
+      "log2_example" : 3.0,
+      "log_nat_example" : 2.30258509,
+      "log_base_example" : 3.0,
+      "e_example" : 2.71828183,
+      "rand_example" : true,
+      "rand_int_example" : true,
+      "uuid_example" : true,
+      "bin_example" : "1010",
+      "hex_numeric_example" : "323535",
+      "hex_string_example" : "4142",
+      "truncate_scale_example" : 123.45,
+      "truncate_default_example" : 123.0,
+      "printf_example" : "bob 42 0.5 t",
+      "startswith_example" : true,
+      "endswith_example" : true,
+      "regexp_extract_example" : "123",
+      "regexp_extract_group_example" : "123",
+      "regexp_extract_all_example" : [ "1", "2", "3" ],
+      "regexp_extract_all_group_example" : [ "1", "2", "3" ],
+      "decode_example" : "hi",
+      "encode_example" : true,
+      "from_base64_example" : "hello",
+      "to_base64_example" : "aGVsbG8=",
+      "instr_example" : 7,
+      "regexp_example" : true,
+      "split_index_example" : "b",
+      "elt_example" : "third",
+      "now_example" : true,
+      "the_end" : "end"
+    } ]
+  }
+}

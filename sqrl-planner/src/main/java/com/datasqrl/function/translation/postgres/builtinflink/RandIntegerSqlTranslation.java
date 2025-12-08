@@ -21,8 +21,6 @@ import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
 public class RandIntegerSqlTranslation extends PostgresSqlTranslation {
@@ -33,11 +31,16 @@ public class RandIntegerSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var bound = call.getOperandList().get(0);
-    var randomCall = CalciteFunctionUtil.lightweightOp("random").createCall(SqlParserPos.ZERO);
-    var product = SqlStdOperatorTable.MULTIPLY.createCall(SqlParserPos.ZERO, randomCall, bound);
-    CalciteFunctionUtil.lightweightOp("floor")
-        .createCall(SqlParserPos.ZERO, product)
-        .unparse(writer, leftPrec, rightPrec);
+    if (call.operandCount() != 1) {
+      throw new UnsupportedOperationException(
+          "PostgreSQL does not support RAND_INTEGER(seed, end) in a single expression. Use RAND_INTEGER(end) instead.");
+    }
+
+    var floor = writer.startFunCall("FLOOR");
+    var random = writer.startFunCall("RANDOM");
+    writer.endFunCall(random);
+    writer.sep("*", true);
+    call.operand(0).unparse(writer, 0, 0);
+    writer.endFunCall(floor);
   }
 }

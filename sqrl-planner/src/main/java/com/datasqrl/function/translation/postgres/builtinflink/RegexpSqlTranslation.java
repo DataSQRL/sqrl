@@ -21,7 +21,6 @@ import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
 public class RegexpSqlTranslation extends PostgresSqlTranslation {
@@ -32,11 +31,6 @@ public class RegexpSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var string = call.getOperandList().get(0);
-    var pattern = call.getOperandList().get(1);
-
-    CalciteFunctionUtil.lightweightOp("regexp_like")
-        .createCall(SqlParserPos.ZERO, string, pattern)
-        .unparse(writer, leftPrec, rightPrec);
+    CalciteFunctionUtil.writeFunction("REGEXP_LIKE", writer, call);
   }
 }

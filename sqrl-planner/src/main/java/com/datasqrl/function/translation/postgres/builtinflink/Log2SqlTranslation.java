@@ -15,7 +15,6 @@
  */
 package com.datasqrl.function.translation.postgres.builtinflink;
 
-import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
@@ -29,16 +28,17 @@ import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 public class Log2SqlTranslation extends PostgresSqlTranslation {
 
   public Log2SqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp(BuiltInFunctionDefinitions.LOG2));
+    super(BuiltInFunctionDefinitions.LOG2);
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var value = call.getOperandList().get(0);
     var base = SqlLiteral.createExactNumeric("2", SqlParserPos.ZERO);
 
-    CalciteFunctionUtil.lightweightAggOp("LOG")
-        .createCall(SqlParserPos.ZERO, base, value)
-        .unparse(writer, leftPrec, rightPrec);
+    var log = writer.startFunCall("LOG");
+    base.unparse(writer, 0, 0);
+    writer.sep(",", true);
+    call.operand(0).unparse(writer, 0, 0);
+    writer.endFunCall(log);
   }
 }

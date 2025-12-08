@@ -19,21 +19,31 @@ import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
+import java.util.ArrayList;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 
 @AutoService(SqlTranslation.class)
 public class PrintfSqlTranslation extends PostgresSqlTranslation {
 
   public PrintfSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp("PRINTF"));
+    super(BuiltInFunctionDefinitions.PRINTF);
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    CalciteFunctionUtil.lightweightOp("format")
-        .createCall(SqlParserPos.ZERO, call.getOperandList())
-        .unparse(writer, leftPrec, rightPrec);
+    var operands = new ArrayList<>(call.getOperandList());
+    var template = (SqlLiteral) operands.get(0);
+
+    var templateStr = template.toValue();
+    var pgTemplateStr =
+        templateStr.replaceAll("%d", "%s").replaceAll("%f", "%s").replaceAll("%b", "%s");
+
+    operands.set(0, SqlLiteral.createCharString(pgTemplateStr, SqlParserPos.ZERO));
+
+    CalciteFunctionUtil.writeFunction("FORMAT", writer, operands);
   }
 }
