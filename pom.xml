@@ -159,7 +159,7 @@
     <picocli.version>4.7.7</picocli.version>
     <postgres.version>42.7.8</postgres.version>
     <projectreactor.version>3.8.0</projectreactor.version>
-    <protobuf.version>4.33.1</protobuf.version>
+    <protobuf.version>4.33.2</protobuf.version>
     <scala.version>2.12</scala.version>
     <scram.version>2.1</scram.version>
     <slf4j.version>1.7.36</slf4j.version>
