@@ -204,6 +204,7 @@ public class TableAnalysisLookup {
                             aggCall.isDistinct(),
                             aggCall.isApproximate(),
                             aggCall.ignoreNulls(),
+                            aggCall.rexList,
                             aggCall.getArgList(),
                             aggCall.filterArg,
                             aggCall.distinctKeys,

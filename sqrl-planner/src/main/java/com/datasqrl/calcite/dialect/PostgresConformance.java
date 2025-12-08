@@ -94,6 +94,11 @@ public class PostgresConformance implements SqlConformance {
   }
 
   @Override
+  public boolean isRegexReplaceCaptureGroupDollarIndexed() {
+    return false;
+  }
+
+  @Override
   public boolean isApplyAllowed() {
     return false; // PostgreSQL does not support APPLY operators (e.g., CROSS APPLY, OUTER APPLY).
   }
@@ -166,12 +171,12 @@ public class PostgresConformance implements SqlConformance {
   }
 
   @Override
-  public boolean isValueAllowed() {
+  public boolean allowLenientCoercion() {
     return true;
   }
 
   @Override
-  public boolean allowCoercionStringToArray() {
+  public boolean isValueAllowed() {
     return true;
   }
 }
