@@ -25,13 +25,15 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -124,13 +126,15 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -151,7 +155,8 @@ CREATE TABLE `Orders_1` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -165,7 +170,8 @@ CREATE TABLE `SelectOrders1_2` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -179,7 +185,8 @@ CREATE TABLE `SelectOrders2_3` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

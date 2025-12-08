@@ -363,13 +363,15 @@ CREATE TEMPORARY TABLE `_EventStream__schema` (
   `location` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `speakers` ROW(`name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `company` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`) NOT NULL ARRAY NOT NULL,
   `last_updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_EventStream` (
   PRIMARY KEY (`url`, `last_updated`) NOT ENFORCED,
   WATERMARK FOR `last_updated` AS `last_updated` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'json',
   'path' = '${DATA_PATH}/events.jsonl',
   'json.timestamp-format.standard' = 'ISO-8601',
@@ -404,13 +406,15 @@ CREATE TEMPORARY TABLE `_Likes__schema` (
   `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `liked` BOOLEAN NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_Likes` (
   PRIMARY KEY (`_uuid`) NOT ENFORCED,
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/likes.jsonl',
   'source.monitor-interval' = '1 sec',
@@ -423,13 +427,15 @@ CREATE TEMPORARY TABLE `_AddInterestStream__schema` (
   `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `text` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_AddInterestStream` (
   PRIMARY KEY (`_uuid`) NOT ENFORCED,
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/add_interest.jsonl',
   'source.monitor-interval' = '1',
@@ -475,7 +481,8 @@ CREATE TABLE `EventLikeCount_1` (
   `num` BIGINT NOT NULL,
   `test` BIGINT NOT NULL,
   PRIMARY KEY (`eventid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -498,7 +505,8 @@ CREATE TABLE `Events_2` (
   `embedding` RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD'),
   `startTimestamp` TIMESTAMP(3),
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -510,7 +518,8 @@ CREATE TABLE `_UserInterests_3` (
   `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `interestVector` RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD'),
   PRIMARY KEY (`userid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -525,7 +534,8 @@ CREATE TABLE `_UserLikes_4` (
   `liked` BOOLEAN NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`userid`, `eventid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

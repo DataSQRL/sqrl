@@ -32,7 +32,8 @@ CREATE TABLE `Data` (
   `TIMESTAMP` AS COALESCE(`TO_TIMESTAMP_LTZ`(`EPOCH_TIMESTAMP`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`ID`) NOT ENFORCED,
   WATERMARK FOR `TIMESTAMP` AS `TIMESTAMP` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'datagen',
   'number-of-rows' = '10',
   'fields.ID.kind' = 'sequence',
@@ -49,7 +50,8 @@ CREATE TABLE `DummyLogData_1` (
   `SOME_VALUE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `TIMESTAMP` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`ID`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'print',
   'print-identifier' = 'DummyLogData'
 );

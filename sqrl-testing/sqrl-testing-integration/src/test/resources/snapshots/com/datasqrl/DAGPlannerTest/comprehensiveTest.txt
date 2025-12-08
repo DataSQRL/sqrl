@@ -52,14 +52,16 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -322,13 +324,15 @@ CREATE TEMPORARY TABLE `ExternalOrders__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `ExternalOrders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -403,7 +407,8 @@ CREATE TABLE `Orders` (
   `orderid` INTEGER NOT NULL,
   `amount` FLOAT,
   PRIMARY KEY (`orderid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'upsert-kafka',
   'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
@@ -545,14 +550,16 @@ CREATE TEMPORARY TABLE `_Customer__schema` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_Customer` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -581,14 +588,16 @@ CREATE TEMPORARY TABLE `Customer__schema` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Customer` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -600,13 +609,15 @@ CREATE TEMPORARY TABLE `ExternalOrders__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `ExternalOrders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -618,14 +629,16 @@ CREATE TEMPORARY TABLE `_Customer__schema` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_Customer` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -637,13 +650,15 @@ CREATE TEMPORARY TABLE `_Orders__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -656,13 +671,15 @@ CREATE TEMPORARY TABLE `_Product__schema` (
   `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_Product` (
   PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -744,7 +761,8 @@ CREATE TABLE `Orders` (
   `orderid` INTEGER,
   `amount` FLOAT,
   PRIMARY KEY (`orderid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'upsert-kafka',
   'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
@@ -772,12 +790,14 @@ CREATE TEMPORARY TABLE `MyPrintSink_ex1__schema` (
   `customerid0` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `MyPrintSink_ex1` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'print'
 )
 LIKE `MyPrintSink_ex1__schema`;
@@ -786,7 +806,8 @@ CREATE TABLE `AnotherCustomer_1` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -801,7 +822,8 @@ CREATE TABLE `Customer_2` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -815,7 +837,8 @@ CREATE TABLE `Customer_3` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -830,7 +853,8 @@ CREATE TABLE `CustomerByMultipleTime_4` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `email`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -845,7 +869,8 @@ CREATE TABLE `CustomerByTime2_5` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -860,7 +885,8 @@ CREATE TABLE `CustomerFilteredDistinct_6` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -874,7 +900,8 @@ CREATE TABLE `CustomerSubscription_7` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -887,7 +914,8 @@ CREATE TABLE `TimeWindow_8` (
   `window_end` TIMESTAMP(3) NOT NULL,
   `unique_email_count` BIGINT NOT NULL,
   PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'print',
   'print-identifier' = 'TimeWindow'
 );
@@ -896,7 +924,8 @@ CREATE TABLE `CustomerTimeWindow_9` (
   `window_end` TIMESTAMP(3) NOT NULL,
   `unique_email_count` BIGINT NOT NULL,
   PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -909,7 +938,8 @@ CREATE TABLE `ExplicitDistinct_10` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -923,7 +953,8 @@ CREATE TABLE `ExternalOrders_11` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -936,7 +967,8 @@ CREATE TABLE `InvalidDistinct_12` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `namee` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -948,7 +980,8 @@ CREATE TABLE `Orders_13` (
   `orderid` INTEGER NOT NULL,
   `amount` FLOAT,
   PRIMARY KEY (`orderid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -963,7 +996,8 @@ CREATE TABLE `SelectCustomers_14` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `name`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -980,7 +1014,8 @@ CREATE TABLE `TemporalJoin_15` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -998,7 +1033,8 @@ CREATE TABLE `UnnestOrders_16` (
   `newId` BIGINT NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

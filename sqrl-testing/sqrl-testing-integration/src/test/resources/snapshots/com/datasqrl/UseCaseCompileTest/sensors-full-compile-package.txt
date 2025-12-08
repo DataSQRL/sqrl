@@ -249,14 +249,16 @@ CREATE TEMPORARY TABLE `SensorReading__schema` (
   `time` BIGINT NOT NULL,
   `temperature` DOUBLE NOT NULL,
   `humidity` DOUBLE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `SensorReading` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`time`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-csv',
   'path' = '${DATA_PATH}/sensorreading.csv.gz',
   'connector' = 'filesystem',
@@ -267,14 +269,16 @@ CREATE TEMPORARY TABLE `SensorUpdates__schema` (
   `id` BIGINT NOT NULL,
   `machineId` BIGINT NOT NULL,
   `placed` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `SensorUpdates` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`placed`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`id`, `placed`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/sensors.jsonl',
   'connector' = 'filesystem'
@@ -320,7 +324,8 @@ CREATE TABLE `HighTemp_1` (
   `temp` DOUBLE NOT NULL,
   `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -333,7 +338,8 @@ CREATE TABLE `Machine_2` (
   `maxTemp` DOUBLE NOT NULL,
   `avgTemp` DOUBLE NOT NULL,
   PRIMARY KEY (`machineId`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -346,7 +352,8 @@ CREATE TABLE `SecReading_3` (
   `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `temp` DOUBLE NOT NULL,
   PRIMARY KEY (`sensorid`, `timeSec`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -360,7 +367,8 @@ CREATE TABLE `SensorLastHour_4` (
   `avgTemp` DOUBLE NOT NULL,
   `maxTemp` DOUBLE NOT NULL,
   PRIMARY KEY (`sensorid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -375,7 +383,8 @@ CREATE TABLE `SensorReading_5` (
   `humidity` DOUBLE NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -389,7 +398,8 @@ CREATE TABLE `SensorUpdates_6` (
   `placed` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `placed`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -403,7 +413,8 @@ CREATE TABLE `Sensors_7` (
   `placed` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

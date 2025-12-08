@@ -165,13 +165,15 @@ CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (
   `duration` BIGINT NOT NULL,
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_ApplicationsStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/applications.jsonl',
   'source.monitor-interval' = '10 sec',
@@ -188,13 +190,15 @@ CREATE TEMPORARY TABLE `_LoanTypesStream__schema` (
   `max_duration` BIGINT NOT NULL,
   `min_duration` BIGINT NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_LoanTypesStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/loan_types.jsonl',
   'source.monitor-interval' = '10 sec',
@@ -206,13 +210,15 @@ CREATE TEMPORARY TABLE `_ApplicationUpdates__schema` (
   `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_ApplicationUpdates` (
   PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED,
   WATERMARK FOR `event_time` AS `event_time`
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/application_updates.jsonl',
   'connector' = 'filesystem'
@@ -294,7 +300,8 @@ CREATE TABLE `_LoanTypes_3` (
   `min_duration` BIGINT NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'catalog-name' = 'mydatabase',
   'catalog-table' = '_LoanTypes',
   'catalog-type' = 'hadoop',

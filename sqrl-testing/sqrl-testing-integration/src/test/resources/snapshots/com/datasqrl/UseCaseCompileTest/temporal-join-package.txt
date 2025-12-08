@@ -173,7 +173,8 @@ CREATE TABLE `SensorReading` (
   `temperature` FLOAT NOT NULL,
   `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -187,7 +188,8 @@ CREATE TABLE `SensorUpdates` (
   `sensor_name` STRING NOT NULL,
   `lastUpdated` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR `lastUpdated` AS `lastUpdated` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -212,7 +214,8 @@ CREATE TABLE `Result_1` (
   `temperature` FLOAT NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`
-) WITH (
+)
+WITH (
   'connector' = 'print',
   'print-identifier' = 'Result'
 );
@@ -223,7 +226,8 @@ CREATE TABLE `EnrichedSensorReading_2` (
   `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -235,7 +239,8 @@ CREATE TABLE `SensorReading_3` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'print',
   'print-identifier' = 'SensorReading'
 );
@@ -245,7 +250,8 @@ CREATE TABLE `SensorReading_4` (
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -257,7 +263,8 @@ CREATE TABLE `SensorUpdates_5` (
   `sensorid` INTEGER NOT NULL,
   `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'print',
   'print-identifier' = 'SensorUpdates'
 );
@@ -267,7 +274,8 @@ CREATE TABLE `SensorUpdates_6` (
   `lastUpdated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

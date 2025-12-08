@@ -92,13 +92,15 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   `customerid` BIGINT NOT NULL,
   `time` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `items` ROW(`productid` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Orders` (
   `_source_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `_source_time` AS `_source_time`
-) WITH (
+)
+WITH (
   'format' = 'avro',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = 'datasqrl-orders',
@@ -118,7 +120,8 @@ CREATE TABLE `OrderCount_1` (
   `number` BIGINT NOT NULL,
   `volume` INTEGER NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -134,7 +137,8 @@ CREATE TABLE `Orders_2` (
   `_source_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

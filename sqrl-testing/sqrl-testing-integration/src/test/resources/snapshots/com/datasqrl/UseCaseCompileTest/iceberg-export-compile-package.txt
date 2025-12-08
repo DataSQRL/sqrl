@@ -36,13 +36,15 @@ CREATE TEMPORARY TABLE `_Applications__schema` (
   `duration` BIGINT NOT NULL,
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_Applications` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/applications.jsonl',
   'source.monitor-interval' = '10 sec',
@@ -57,12 +59,14 @@ CREATE TEMPORARY TABLE `Iceberg_sink_ex1__schema` (
   `duration` BIGINT NOT NULL,
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Iceberg_sink_ex1` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'iceberg',
   'catalog-table' = 'my-table',
   'warehouse' = '/tmp/duckdb',

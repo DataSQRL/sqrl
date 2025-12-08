@@ -78,7 +78,8 @@ FROM (VALUES ROW(1),
 CREATE TABLE `MyTable_1` (
   `val` INTEGER NOT NULL,
   PRIMARY KEY (`val`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

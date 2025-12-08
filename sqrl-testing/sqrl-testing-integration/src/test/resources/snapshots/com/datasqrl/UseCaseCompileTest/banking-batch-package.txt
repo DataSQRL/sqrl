@@ -193,12 +193,14 @@ CREATE TEMPORARY TABLE `_CustomersStream__schema` (
   `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_CustomersStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/customers.jsonl',
   'connector' = 'filesystem'
@@ -212,12 +214,14 @@ CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (
   `duration` BIGINT NOT NULL,
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `_ApplicationsStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/applications.jsonl',
   'connector' = 'filesystem'
@@ -228,12 +232,14 @@ CREATE TEMPORARY TABLE `ApplicationUpdates__schema` (
   `status` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `ApplicationUpdates` (
   PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/application_updates.jsonl',
   'connector' = 'filesystem'
@@ -264,7 +270,8 @@ CREATE TABLE `ApplicationUpdates_1` (
   `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -281,7 +288,8 @@ CREATE TABLE `Applications_2` (
   `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -293,7 +301,8 @@ CREATE TABLE `CustomerUpdates_3` (
   `customer_id` BIGINT NOT NULL,
   `num_updates` BIGINT NOT NULL,
   PRIMARY KEY (`customer_id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -311,7 +320,8 @@ CREATE TABLE `Customers_4` (
   `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

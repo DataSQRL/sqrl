@@ -64,7 +64,7 @@
     "description" : "Click"
   } ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($1, 1000:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
-  "sql" : "CREATE TEMPORARY TABLE `Click__schema` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n) WITH (\n  'connector' = 'datagen'\n);\nCREATE TABLE `Click` (\n  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND\n) WITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/click.jsonl',\n  'source.monitor-interval' = '10 sec',\n  'connector' = 'filesystem'\n)\nLIKE `Click__schema`",
+  "sql" : "CREATE TEMPORARY TABLE `Click__schema` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n)\nWITH (\n  'connector' = 'datagen'\n);\nCREATE TABLE `Click` (\n  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND\n)\nWITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/click.jsonl',\n  'source.monitor-interval' = '10 sec',\n  'connector' = 'filesystem'\n)\nLIKE `Click__schema`",
   "timestamp" : "timestamp",
   "schema" : [ {
     "name" : "url",
@@ -159,13 +159,15 @@ CREATE TEMPORARY TABLE `Click__schema` (
   `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Click` (
   PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/click.jsonl',
   'source.monitor-interval' = '10 sec',

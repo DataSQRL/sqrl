@@ -74,14 +74,16 @@ CREATE TEMPORARY TABLE `CustomerImport__schema` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `CustomerImport` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -156,13 +158,15 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -198,7 +202,8 @@ CREATE TABLE `SimpleOrders` (
   `amount` FLOAT,
   `orderTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `orderTime` AS `orderTime` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -257,14 +262,16 @@ CREATE TEMPORARY TABLE `CustomerImport__schema` (
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `CustomerImport` (
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -276,13 +283,15 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-) WITH (
+)
+WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec',
@@ -296,7 +305,8 @@ CREATE TABLE `SimpleOrders` (
   `amount` FLOAT,
   `orderTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `orderTime` AS `orderTime` - INTERVAL '0.0' SECOND
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -327,12 +337,14 @@ CREATE TEMPORARY TABLE `MyPrintSink_ex1__schema` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'datagen'
 );
 CREATE TABLE `MyPrintSink_ex1` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'print'
 )
 LIKE `MyPrintSink_ex1__schema`;
@@ -343,7 +355,8 @@ CREATE TABLE `Customer_1` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -358,7 +371,8 @@ CREATE TABLE `CustomerImport_2` (
   `lastUpdated` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -373,7 +387,8 @@ CREATE TABLE `LargeOrders_3` (
   `amount` FLOAT,
   `orderTime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -387,7 +402,8 @@ CREATE TABLE `LargeOrders_4` (
   `customerid` BIGINT,
   `amount` FLOAT,
   `orderTime` TIMESTAMP(3) WITH LOCAL TIME ZONE
-) WITH (
+)
+WITH (
   'connector' = 'kafka',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
@@ -401,7 +417,8 @@ CREATE TABLE `Orders_5` (
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -416,7 +433,8 @@ CREATE TABLE `SimpleOrders_6` (
   `amount` FLOAT,
   `orderTime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
   PRIMARY KEY (`_uuid`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -431,7 +449,8 @@ CREATE TABLE `Unnestorders_7` (
   `productid` BIGINT NOT NULL,
   `quantity` BIGINT NOT NULL,
   `discount` DOUBLE
-) WITH (
+)
+WITH (
   'connector' = 'print',
   'print-identifier' = 'Unnestorders'
 );
@@ -444,7 +463,8 @@ CREATE TABLE `UnnestOrders_8` (
   `discount` DOUBLE,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',

@@ -100,7 +100,8 @@ CREATE TEMPORARY TABLE `Orders__schema` (
   `productid` BIGINT NOT NULL,
   `quantity` BIGINT NOT NULL,
   `unit_price` DOUBLE NOT NULL
-) WITH (
+)
+WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/orders.jsonl'
@@ -108,7 +109,8 @@ CREATE TEMPORARY TABLE `Orders__schema` (
 CREATE TABLE `Orders` (
   `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'source.monitor-interval' = '10000'
 )
 LIKE `Orders__schema`;
@@ -132,7 +134,8 @@ CREATE TABLE `DistinctOrders_1` (
   `unit_price` DOUBLE NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
@@ -149,7 +152,8 @@ CREATE TABLE `Orders_2` (
   `unit_price` DOUBLE NOT NULL,
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
-) WITH (
+)
+WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
