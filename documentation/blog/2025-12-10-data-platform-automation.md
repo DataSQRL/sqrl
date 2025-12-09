@@ -19,9 +19,7 @@ You can customize DataSQRL as the foundation of your self-driving data platform.
 
 To understand *why you need DataSQRL*, let's start with the obvious question: **Aren’t LLM-based coding agents good enough?**
 
-Large language models (LLMs) are powerful in their ability to generate code, but at their core they are sophisticated pattern‑matching systems with vast statistical knowledge. They do not inherently understand data processing, dataflow semantics, or the real‑world constraints that shape complex data pipelines. As a result, agents built purely on LLM reasoning frequently produce subtle bugs, brittle solutions, and low‑quality implementations when confronted with nontrivial, multi‑system data engineering tasks.
-
-This limitation is well‑documented in recent research. A prominent example is Apple’s 2024 paper [“The Illusion of Thinking”](https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf), which shows that LLMs lack grounded world models and struggle with causal, temporal, and systems‑level reasoning. In other words: they cannot internally form a coherent model of how data moves, transforms, and behaves in a production ecosystem. That missing understanding must be provided externally.
+LLMs are powerful pattern-matching systems but lack grounded models of how data systems behave. Research such as Apple’s 2024 paper [“The Illusion of Thinking”](https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf) shows that LLMs struggle with causal, temporal, and systems-level reasoning, which are the capabilities required to design reliable, multi-engine data pipelines. As a result, agents often generate brittle transformations, invalid mappings, and incorrect assumptions about how data moves and evolves over time.
 
 That is why DataSQRL exists. Coding agents are impressive solution generators, but they require a **conceptual model**, **validator**, and **simulator** to ensure correctness, safety, and robustness. In most successful agentic systems deployed in the wild, the neural network–driven reasoning is balanced by an external framework that supplies structure, constraints, and feedback loops.
 
@@ -178,7 +176,7 @@ Using GraphQL as the physical model for the API combines simplicity with flexibi
 
 ## Analysis
 
-The world model gives AI coding agents a frame of reference to reason about data pipeline and data product implementations. DataSQRL provides analyses to support that reasoning and give users tools to validate the correctness and quality of the generated result.
+The world model gives AI coding agents a frame of reference to reason about data pipeline and data product implementations. DataSQRL provides analyses to support that reasoning and give users tools to validate the correctness and quality of the generated pipelines and APIs.
 
 ### Verification & Introspection
 
@@ -288,3 +286,12 @@ DataSQRL supplies real-world feedback to coding agents through its embedded simu
 DataSQRL is a flexible framework that can be adapted to multiple data engines and extended for custom verification rules.
 
 [DataSQRL is open-source](https://github.com/DataSQRL/sqrl) so you can customize it to build a self-driving data platform tailored to your requirements.
+
+### Getting Started
+
+To try out DataSQRL:
+
+1. [Build a project from scratch with DataSQRL](/docs/intro/getting-started) to see how the components of DataSQRL work
+2. [Look at example projects](https://github.com/DataSQRL/datasqrl-examples) and run/modify them locally.
+3. [Read the documentation](docs/intro/index)
+4. [Check out the open-source project on GitHub](https://github.com/DataSQRL/sqrl)
