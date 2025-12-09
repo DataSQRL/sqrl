@@ -8,7 +8,8 @@
     "flink": {
       "config": {
         "execution.checkpointing.interval": "5 s",
-        "execution.checkpointing.min-pause": "2 s"
+        "execution.checkpointing.min-pause": "2 s",
+        "state.backend.memory.max-size": "25mb"
       }
     }
   },

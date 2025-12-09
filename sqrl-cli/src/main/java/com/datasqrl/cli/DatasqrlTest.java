@@ -251,7 +251,7 @@ public class DatasqrlTest {
     }
 
     // 6. Print the test results on the command line
-    printTestResults(testResults, snapshotDir.toString());
+    printTestResults(testResults, snapshotDir.normalize().toString());
     return testResults.stream().mapToInt(TestResult::exitCode).sum();
   }
 

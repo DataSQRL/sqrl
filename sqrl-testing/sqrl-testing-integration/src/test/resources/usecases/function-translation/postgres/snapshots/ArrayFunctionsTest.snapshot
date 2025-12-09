@@ -1,8 +1,12 @@
 {
   "data" : {
     "ArrayFunctionsTest" : [ {
-      "listagg_example" : "x,y,z",
-      "arrayagg_example" : [ "x", "y", "z" ]
+      "has_x" : true,
+      "has_y" : true,
+      "has_z" : true,
+      "array_has_x" : true,
+      "array_has_y" : true,
+      "array_has_z" : true
     } ]
   }
 }

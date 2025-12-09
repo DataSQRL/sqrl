@@ -119,14 +119,25 @@ _ArrayData := SELECT * FROM (VALUES ('x'), ('y'), ('z')) AS t(val);
 
 /*+engine(postgres)*/
 ArrayFunctions := SELECT
-                    LISTAGG(val, ',')           AS listagg_example,
+                    LISTAGG(val, ',')                         AS listagg_example,
                     -- TODO: map multisets to valid postgres datatype
 --                    ARRAY_JOIN(COLLECT(val), ',','')                AS collect_example,
-                    ARRAY_AGG(val   )           AS arrayagg_example
+                    ARRAY_AGG(val)                            AS arrayagg_example
                   FROM _ArrayData;
 
 /*+test */
 FunctionCallsTest := SELECT * FROM FunctionCalls;
 
 /*+test */
-ArrayFunctionsTest := SELECT * FROM ArrayFunctions;
+ArrayFunctionsTest :=
+    SELECT
+        -- LISTAGG validation (order-independent)
+        INSTR(listagg_example, 'x') > 0 AS has_x,
+        INSTR(listagg_example, 'y') > 0 AS has_y,
+        INSTR(listagg_example, 'z') > 0 AS has_z,
+
+        -- ARRAY_AGG validation (order-independent)
+        ARRAY_POSITION(arrayagg_example, 'x') IS NOT NULL AS array_has_x,
+        ARRAY_POSITION(arrayagg_example, 'y') IS NOT NULL AS array_has_y,
+        ARRAY_POSITION(arrayagg_example, 'z') IS NOT NULL AS array_has_z
+    FROM ArrayFunctions;

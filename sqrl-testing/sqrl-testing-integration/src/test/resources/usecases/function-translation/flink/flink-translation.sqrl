@@ -128,10 +128,10 @@ EXPORT FunctionCalls TO logger.calls;
 _ArrayData := SELECT * FROM (VALUES ('x'), ('y'), ('z')) AS t(val);
 
 ArrayFunctions := SELECT
-                    LISTAGG(val, ',')           AS listagg_example,
+                    LISTAGG(val, ',')                         AS listagg_example,
                     -- TODO: map multisets to valid postgres datatype
 --                    ARRAY_JOIN(COLLECT(val), ',','')                AS collect_example,
-                    ARRAY_AGG(val   )           AS arrayagg_example
+                    ARRAY_AGG(val)                            AS arrayagg_example
                   FROM _ArrayData;
 
 /*+test */
