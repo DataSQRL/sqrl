@@ -20,11 +20,13 @@ import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
-import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
-@CommandLine.Command(
+@Command(
     name = "run",
-    description = "Compiles, then runs a SQRL script in a lightweight, standalone environment")
+    description = "Compiles, then runs a SQRL project in a lightweight, standalone environment.",
+    mixinStandardHelpOptions = true,
+    versionProvider = CliVersionProvider.class)
 public class RunCmd extends AbstractCompileCmd {
 
   @Override
@@ -34,7 +36,7 @@ public class RunCmd extends AbstractCompileCmd {
       return;
     }
 
-    var targetDir = getTargetDir();
+    var targetDir = getTargetFolder();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
 
     // Start services before running

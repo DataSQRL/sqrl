@@ -32,5 +32,4 @@ export UDF_PATH=/build/build/deploy/flink/lib
 export BUILD_UID=$(stat -c '%u' /build)
 export BUILD_GID=$(stat -c '%g' /build)
 
-echo "Executing SQRL command: \"$1\" ..."
 exec java $SQRL_JVM_TOOL_OPTS $SQRL_JVM_ARGS -jar /opt/sqrl/sqrl-cli.jar "${@}"

@@ -22,9 +22,13 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
 import java.time.LocalDateTime;
-import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
-@CommandLine.Command(name = "test", description = "Compiles, then tests a SQRL script")
+@Command(
+    name = "test",
+    description = "Compiles, then tests a SQRL project.",
+    mixinStandardHelpOptions = true,
+    versionProvider = CliVersionProvider.class)
 public class TestCmd extends AbstractCompileCmd {
 
   @Override
@@ -40,7 +44,7 @@ public class TestCmd extends AbstractCompileCmd {
       var formatter = getOutputFormatter();
       formatter.header("DataSQRL Test Execution");
 
-      var targetDir = getTargetDir();
+      var targetDir = getTargetFolder();
       var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
 
       // Start services before testing

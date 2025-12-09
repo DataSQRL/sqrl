@@ -19,16 +19,18 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigLoaderUtils;
-import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
-@CommandLine.Command(
-    name = "execute",
-    description = "Executes an already compiled SQRL script using its existing build artifacts")
-public class ExecuteCmd extends BasePackageConfCmd {
+@Command(
+    name = "exec",
+    description = "Executes an already compiled SQRL script using its existing build artifacts.",
+    mixinStandardHelpOptions = true,
+    versionProvider = CliVersionProvider.class)
+public class ExecCmd extends BasePackageConfCmd {
 
   @Override
   protected void runInternal(ErrorCollector errors) throws Exception {
-    var targetDir = getTargetDir();
+    var targetDir = getTargetFolder();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
 
     // Start services before executing

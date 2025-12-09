@@ -31,11 +31,15 @@ import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.flink.api.common.RuntimeExecutionMode;
-import picocli.CommandLine;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@CommandLine.Command(name = "init", description = "Initializes an empty SQRL project")
+@Command(
+    name = "init",
+    description = "Initializes an empty SQRL project.",
+    mixinStandardHelpOptions = true,
+    versionProvider = CliVersionProvider.class)
 public class InitCmd extends BaseCmd {
 
   private static final String INIT_PROJECT_DIR = "templates/init-project";
@@ -43,18 +47,18 @@ public class InitCmd extends BaseCmd {
 
   private final MustacheFactory mustacheFactory = new DefaultMustacheFactory();
 
-  @Parameters(index = "0", description = "Project type. Valid values: ${COMPLETION-CANDIDATES}")
+  @Parameters(index = "0", description = "Project type. Valid values: ${COMPLETION-CANDIDATES}.")
   ProjectType projectType = ProjectType.STREAM;
 
   @Parameters(
       index = "1",
       description =
-          "Project name. The SQRL script and package config files will be named like this")
+          "Project name — used as the base name for both the SQRL script and the package configuration files.")
   String projectName;
 
   @Option(
       names = {"--batch"},
-      description = "Use BATCH mode in Flink")
+      description = "Use BATCH mode in Flink.")
   boolean batch = false;
 
   @Override

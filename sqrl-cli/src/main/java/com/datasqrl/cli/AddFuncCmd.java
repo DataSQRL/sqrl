@@ -25,14 +25,16 @@ import java.nio.file.StandardOpenOption;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
-import picocli.CommandLine;
+import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@CommandLine.Command(
+@Command(
     name = "add-func",
     description =
-        "Adds a new function definition into the 'functions' folder of an existing project")
+        "Adds a new function definition into the 'functions' folder of an existing project.",
+    mixinStandardHelpOptions = true,
+    versionProvider = CliVersionProvider.class)
 public class AddFuncCmd extends BaseCmd {
 
   private static final String FN_TEMPLATE_DIR = "templates/functions";
@@ -40,12 +42,12 @@ public class AddFuncCmd extends BaseCmd {
   private static final String AGGREGATE_UDF_TEMPLATE = FN_TEMPLATE_DIR + "/aggregate.java";
   private static final String SCALAR_UDF_TEMPLATE = FN_TEMPLATE_DIR + "/scalar.java";
 
-  @Parameters(index = "0", description = "Name of the function")
+  @Parameters(index = "0", description = "Name of the function.")
   String fnName;
 
   @Option(
       names = {"--aggregate"},
-      description = "Adds an aggregate function instead of the default scalar one")
+      description = "Adds an aggregate function instead of the default scalar one.")
   boolean aggregate = false;
 
   @Override

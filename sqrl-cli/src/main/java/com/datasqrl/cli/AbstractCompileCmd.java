@@ -56,14 +56,19 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     }
     var sqrlConfig = initPackageJson(errors, cli.rootDir, packageFiles);
 
-    DirectoryManager.prepareTargetDirectory(getTargetDir());
+    DirectoryManager.prepareTargetDirectory(getTargetFolder());
     errors.checkFatal(
         Files.isDirectory(cli.rootDir), "Not a valid root directory: %s", cli.rootDir);
 
     var injector =
         Guice.createInjector(
             new SqrlInjector(
-                errors, cli.rootDir, getTargetDir(), sqrlConfig, getGoal(), cli.internalTestExec));
+                errors,
+                cli.rootDir,
+                getTargetFolder(),
+                sqrlConfig,
+                getGoal(),
+                cli.internalTestExec));
 
     var engineHolder = injector.getInstance(ExecutionEnginesHolder.class);
     engineHolder.initEnabledEngines();
@@ -101,7 +106,7 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
       formatter.phaseStart("Generating deployment artifacts");
     }
 
-    packager.postprocess(getTargetDir(), plan.getLeft(), plan.getRight());
+    packager.postprocess(getTargetFolder(), plan.getLeft(), plan.getRight());
 
     if (getGoal() == ExecutionGoal.COMPILE) {
       printCompilationResults(formatter);
@@ -166,7 +171,7 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
 
     formatter.newline();
     formatter.sectionHeader("Compilation Results");
-    formatter.info("Deployment artifacts: " + relativizeFromRoot(getTargetDir()));
+    formatter.info("Deployment artifacts: " + relativizeFromRoot(getTargetFolder()));
     formatter.info("Pipeline DAG:         " + relBuildDir.resolve("pipeline_explain.txt"));
     formatter.info("Visual DAG:           " + relBuildDir.resolve("pipeline_visual.html"));
     formatter.newline();
