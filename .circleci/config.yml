@@ -111,9 +111,18 @@ commands:
               de.qaware.maven:go-offline-maven-plugin:1.2.8:resolve-dependencies \
               -T3
 
+  print-test-reports:
+    description: "Print test output files for debugging"
+    steps:
+      - run:
+          name: Print test output files
+          command: ./.circleci/print-test-reports.sh
+          when: always
+
   save-test-results:
     description: "Save test results and upload to Codecov"
     steps:
+      - print-test-reports
       - run:
           name: Save package results
           command: |
@@ -291,6 +300,7 @@ jobs:
               -pl :sqrl-testing-container \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
+      - save-test-results
 
   deploy:
     docker:
