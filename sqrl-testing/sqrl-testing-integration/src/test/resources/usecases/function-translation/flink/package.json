@@ -1,0 +1,18 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink"],
+  "script": {
+    "main": "flink-translation.sqrl"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.checkpointing.interval": "5 s",
+        "execution.checkpointing.min-pause": "2 s"
+      }
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}
