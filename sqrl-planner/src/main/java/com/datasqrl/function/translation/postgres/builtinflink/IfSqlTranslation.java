@@ -19,7 +19,9 @@ import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
+import java.util.List;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -33,12 +35,19 @@ public class IfSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var condition = call.getOperandList().get(0);
-    var trueValue = call.getOperandList().get(1);
-    var falseValue = call.getOperandList().get(2);
+    var condition = call.operand(0);
+    var trueVal = call.operand(1);
+    var falseVal = call.operand(2);
 
+    // CASE operator expects: [value, whenList, thenList, elseExpr]
+    // For searched CASE (no value): [NULL, whenList, thenList, elseExpr]
     SqlStdOperatorTable.CASE
-        .createCall(SqlParserPos.ZERO, condition, trueValue, falseValue)
+        .createCall(
+            SqlParserPos.ZERO,
+            null, // No value expr
+            new SqlNodeList(List.of(condition), SqlParserPos.ZERO), // WHEN conditions
+            new SqlNodeList(List.of(trueVal), SqlParserPos.ZERO), // THEN values
+            falseVal) // ELSE value
         .unparse(writer, leftPrec, rightPrec);
   }
 }

@@ -21,7 +21,6 @@ import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
 public class SplitSqlTranslation extends PostgresSqlTranslation {
@@ -32,11 +31,6 @@ public class SplitSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var string = call.getOperandList().get(0);
-    var delimiter = call.getOperandList().get(1);
-
-    CalciteFunctionUtil.lightweightOp("string_to_array")
-        .createCall(SqlParserPos.ZERO, string, delimiter)
-        .unparse(writer, leftPrec, rightPrec);
+    CalciteFunctionUtil.writeFunction("STRING_TO_ARRAY", writer, call);
   }
 }

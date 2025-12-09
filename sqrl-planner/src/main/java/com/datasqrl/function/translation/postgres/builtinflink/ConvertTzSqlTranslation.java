@@ -20,25 +20,28 @@ import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
-public class MapKeysSqlTranslation extends PostgresSqlTranslation {
+public class ConvertTzSqlTranslation extends PostgresSqlTranslation {
 
-  public MapKeysSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp("MAP_KEYS"));
+  public ConvertTzSqlTranslation() {
+    super(CalciteFunctionUtil.lightweightOp("CONVERT_TZ"));
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var map = call.getOperandList().get(0);
-
-    var keysCall =
-        CalciteFunctionUtil.lightweightOp("jsonb_object_keys").createCall(SqlParserPos.ZERO, map);
-
-    CalciteFunctionUtil.lightweightOp("ARRAY")
-        .createCall(SqlParserPos.ZERO, keysCall)
-        .unparse(writer, leftPrec, rightPrec);
+    var dt = (SqlLiteral) call.operand(0);
+    var srcTz = (SqlLiteral) call.operand(1);
+    var destTz = (SqlLiteral) call.operand(2);
+    var paren = writer.startList("(", ")");
+    writer.keyword("TIMESTAMP");
+    dt.unparse(writer, 0, 0);
+    writer.keyword("AT TIME ZONE");
+    srcTz.unparse(writer, 0, 0);
+    writer.endList(paren);
+    writer.keyword("AT TIME ZONE");
+    destTz.unparse(writer, 0, 0);
   }
 }

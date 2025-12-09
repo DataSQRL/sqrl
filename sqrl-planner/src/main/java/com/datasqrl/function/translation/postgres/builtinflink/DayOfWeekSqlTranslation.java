@@ -15,35 +15,27 @@
  */
 package com.datasqrl.function.translation.postgres.builtinflink;
 
-import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
-public class MapUnionSqlTranslation extends PostgresSqlTranslation {
+public class DayOfWeekSqlTranslation extends PostgresSqlTranslation {
 
-  public MapUnionSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp("MAP_UNION"));
+  public DayOfWeekSqlTranslation() {
+    super(SqlStdOperatorTable.EXTRACT);
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var operands = call.getOperandList();
-    if (operands.isEmpty()) {
-      return;
+    var typeLit = (SqlLiteral) call.operand(0);
+    SqlStdOperatorTable.EXTRACT.unparse(writer, call, leftPrec, rightPrec);
+    if ("DOW".equals(typeLit.toValue())) {
+      writer.print("+ 1");
     }
-
-    SqlNode result = operands.get(0);
-    for (int i = 1; i < operands.size(); i++) {
-      result = SqlStdOperatorTable.CONCAT.createCall(SqlParserPos.ZERO, result, operands.get(i));
-    }
-
-    result.unparse(writer, leftPrec, rightPrec);
   }
 }

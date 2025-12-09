@@ -1,0 +1,243 @@
+>>>pipeline_explain.txt
+=== FunctionCalls
+ID:          default_catalog.default_database.FunctionCalls
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
+Schema:
+ - log2_example: DOUBLE NOT NULL
+ - log_nat_example: DOUBLE NOT NULL
+ - log_base_example: DOUBLE NOT NULL
+ - e_example: DOUBLE NOT NULL
+ - rand_example: BOOLEAN NOT NULL
+ - rand_seed_example: BOOLEAN NOT NULL
+ - rand_int_example: BOOLEAN NOT NULL
+ - rand_int_seed_range_example: BOOLEAN NOT NULL
+ - uuid_example: BOOLEAN NOT NULL
+ - bin_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - hex_numeric_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - hex_string_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - unhex_example: VARBINARY(2147483647)
+ - truncate_scale_example: DECIMAL(6, 2) NOT NULL
+ - truncate_default_example: DECIMAL(4, 0) NOT NULL
+ - printf_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - startswith_example: BOOLEAN NOT NULL
+ - endswith_example: BOOLEAN NOT NULL
+ - regexp_extract_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - regexp_extract_group_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - regexp_extract_all_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY
+ - decode_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - encode_example: BOOLEAN NOT NULL
+ - from_base64_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - to_base64_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - instr_example: INTEGER NOT NULL
+ - locate_example: INTEGER NOT NULL
+ - regexp_example: BOOLEAN NOT NULL
+ - split_index_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - json_quote_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - elt_example: VARCHAR(6) CHARACTER SET "UTF-16LE"
+ - now_example: BOOLEAN NOT NULL
+ - year_example: BIGINT NOT NULL
+ - quarter_example: BIGINT NOT NULL
+ - month_example: BIGINT NOT NULL
+ - week_example: BIGINT NOT NULL
+ - dayofyear_example: BIGINT NOT NULL
+ - dayofmonth_example: BIGINT NOT NULL
+ - dayofweek_example: BIGINT NOT NULL
+ - hour_example: BIGINT NOT NULL
+ - minute_example: BIGINT NOT NULL
+ - second_example: BIGINT NOT NULL
+ - floor_minute_example: TIMESTAMP(3) NOT NULL
+ - ceil_minute_example: TIMESTAMP(3) NOT NULL
+ - date_format_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - timestampadd_example: TIMESTAMP(3) NOT NULL
+ - timestampdiff_example: INTEGER NOT NULL
+ - convert_tz_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - from_unixtime_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - unix_timestamp_now_example: BOOLEAN NOT NULL
+ - unix_timestamp_str_example: BIGINT NOT NULL
+ - to_date_func_example: DATE
+ - to_timestamp_ltz_epoch_example: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - to_timestamp_ltz_str_example: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - to_timestamp_func_example: TIMESTAMP(3)
+ - if_example: VARCHAR(3) CHARACTER SET "UTF-16LE" NOT NULL
+ - ifnull_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - is_alpha_example: BOOLEAN NOT NULL
+ - is_decimal_example: BOOLEAN NOT NULL
+ - is_digit_example: BOOLEAN NOT NULL
+ - element_example: INTEGER NOT NULL
+ - cardinality_example: INTEGER NOT NULL
+ - map_index_example: INTEGER
+ - array_contains_example: BOOLEAN NOT NULL
+ - array_distinct_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_prepend_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_slice_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_union_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_concat_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_except_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_reverse_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_sort_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_intersect_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_max_example: CHAR(1) CHARACTER SET "UTF-16LE"
+ - array_min_example: INTEGER
+ - array_join_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - map_keys_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - map_union_example: (CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL, INTEGER NOT NULL) MAP NOT NULL
+ - map_values_example: INTEGER NOT NULL ARRAY NOT NULL
+ - map_entries_example: RecordType:peek_no_expand(CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL key, INTEGER NOT NULL value) ARRAY NOT NULL
+ - map_from_arrays_example: (CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL, INTEGER NOT NULL) MAP NOT NULL
+ - str_to_map_example: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE", VARCHAR(2147483647) CHARACTER SET "UTF-16LE") MAP
+ - split_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY
+ - sha1_example: CHAR(40) CHARACTER SET "UTF-16LE" NOT NULL
+ - sha224_example: CHAR(56) CHARACTER SET "UTF-16LE" NOT NULL
+ - sha256_example: CHAR(64) CHARACTER SET "UTF-16LE" NOT NULL
+ - sha384_example: CHAR(96) CHARACTER SET "UTF-16LE" NOT NULL
+ - sha512_example: CHAR(128) CHARACTER SET "UTF-16LE" NOT NULL
+ - sha2_example: VARCHAR(128) CHARACTER SET "UTF-16LE" NOT NULL
+ - the_end: CHAR(3) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database._InputData
+
+=== _InputData
+ID:          default_catalog.default_database._InputData
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
+Schema:
+ - dummy: INTEGER NOT NULL
+
+=== calls
+ID:          logger.calls
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.FunctionCalls
+
+>>>flink-sql-no-functions.sql
+CREATE VIEW `_InputData`
+AS
+SELECT *
+FROM (VALUES ROW(1)) AS `base` (`dummy`);
+CREATE VIEW `FunctionCalls`
+AS
+SELECT `LOG2`(8) AS `log2_example`, `LOG`(10) AS `log_nat_example`, `LOG`(2, 8) AS `log_base_example`, `E`() AS `e_example`, RAND() IS NOT NULL AS `rand_example`, RAND(42) IS NOT NULL AS `rand_seed_example`, RAND_INTEGER(10) IS NOT NULL AS `rand_int_example`, RAND_INTEGER(12345, 100) IS NOT NULL AS `rand_int_seed_range_example`, `UUID`() IS NOT NULL AS `uuid_example`, `BIN`(10) AS `bin_example`, `HEX`(255) AS `hex_numeric_example`, `HEX`('AB') AS `hex_string_example`, `UNHEX`('4142') AS `unhex_example`, TRUNCATE(123.456, 2) AS `truncate_scale_example`, TRUNCATE(123.456) AS `truncate_default_example`, `PRINTF`('Hello %s %d', 'world', 42) AS `printf_example`, `STARTSWITH`('FlinkSQL', 'Flink') AS `startswith_example`, `ENDSWITH`('FlinkSQL', 'SQL') AS `endswith_example`, `REGEXP_EXTRACT`('abc-123-def', '(\d+)') AS `regexp_extract_example`, `REGEXP_EXTRACT`('abc-123-def', '(\d+)', 1) AS `regexp_extract_group_example`, `REGEXP_EXTRACT_ALL`('a1b2c3', '(\d)', 1) AS `regexp_extract_all_example`, `DECODE`(`ENCODE`('hi', 'UTF-8'), 'UTF-8') AS `decode_example`, `ENCODE`('hi', 'UTF-8') IS NOT NULL AS `encode_example`, `FROM_BASE64`(`TO_BASE64`('hello')) AS `from_base64_example`, `TO_BASE64`('hello') AS `to_base64_example`, `INSTR`('hello world', 'world') AS `instr_example`, `LOCATE`('l', 'hello', 3) AS `locate_example`, `REGEXP`('foo123bar', '\\d+') AS `regexp_example`, `SPLIT_INDEX`('a,b,c', ',', 1) AS `split_index_example`, `JSON_QUOTE`('hello "json"') AS `json_quote_example`, `ELT`(2, 'first', 'second', 'third') AS `elt_example`, `NOW`() IS NOT NULL AS `now_example`, YEAR(DATE '2024-01-02') AS `year_example`, QUARTER(DATE '2024-01-02') AS `quarter_example`, MONTH(DATE '2024-01-02') AS `month_example`, WEEK(DATE '2024-01-02') AS `week_example`, DAYOFYEAR(DATE '2024-01-02') AS `dayofyear_example`, DAYOFMONTH(DATE '2024-01-02') AS `dayofmonth_example`, DAYOFWEEK(DATE '2024-01-02') AS `dayofweek_example`, HOUR(TIMESTAMP '2024-01-02 03:04:05') AS `hour_example`, MINUTE(TIMESTAMP '2024-01-02 03:04:05') AS `minute_example`, SECOND(TIMESTAMP '2024-01-02 03:04:05') AS `second_example`, CAST(FLOOR(TIMESTAMP '2024-01-02 03:04:05' TO MINUTE) AS TIMESTAMP(3)) AS `floor_minute_example`, CAST(CEIL(TIMESTAMP '2024-01-02 03:04:05' TO MINUTE) AS TIMESTAMP(3)) AS `ceil_minute_example`, `DATE_FORMAT`(TIMESTAMP '2024-01-02 03:04:05', 'yyyy-MM-dd') AS `date_format_example`, CAST(TIMESTAMPADD(DAY, 1, TIMESTAMP '2024-01-02 03:04:05') AS TIMESTAMP(3)) AS `timestampadd_example`, TIMESTAMPDIFF(DAY, TIMESTAMP '2024-01-01 00:00:00', TIMESTAMP '2024-01-02 00:00:00') AS `timestampdiff_example`, `CONVERT_TZ`('2024-01-02 03:04:05', 'UTC', 'America/Los_Angeles') AS `convert_tz_example`, `FROM_UNIXTIME`(1700000000, 'yyyy-MM-dd HH:mm:ss') AS `from_unixtime_example`, `UNIX_TIMESTAMP`() IS NOT NULL AS `unix_timestamp_now_example`, `UNIX_TIMESTAMP`('2024-01-02 03:04:05') AS `unix_timestamp_str_example`, `TO_DATE`('2024-01-02', 'yyyy-MM-dd') AS `to_date_func_example`, `TO_TIMESTAMP_LTZ`(1700000000, 0) AS `to_timestamp_ltz_epoch_example`, `TO_TIMESTAMP_LTZ`('2024-01-02 03:04:05', 'yyyy-MM-dd HH:mm:ss') AS `to_timestamp_ltz_str_example`, `TO_TIMESTAMP`('2024-01-02 03:04:05', 'yyyy-MM-dd HH:mm:ss') AS `to_timestamp_func_example`, `IF`(1 < 2, 'yes', 'no') AS `if_example`, `IFNULL`(CAST(NULL AS STRING), 'fallback') AS `ifnull_example`, `IS_ALPHA`('OnlyLetters') AS `is_alpha_example`, `IS_DECIMAL`('123.45') AS `is_decimal_example`, `IS_DIGIT`('12345') AS `is_digit_example`, ELEMENT(ARRAY[3]) AS `element_example`, CARDINALITY(MAP['a', 1, 'b', 2]) AS `cardinality_example`, MAP['a', 1, 'b', 2]['a'] AS `map_index_example`, `ARRAY_CONTAINS`(ARRAY[1, 2, 3], 2) AS `array_contains_example`, `ARRAY_DISTINCT`(ARRAY['a', 'b', 'b', 'c']) AS `array_distinct_example`, `ARRAY_PREPEND`(ARRAY['b', 'c'], 'a') AS `array_prepend_example`, `ARRAY_SLICE`(ARRAY['a', 'b', 'c', 'd', 'e'], 2, 4) AS `array_slice_example`, `ARRAY_UNION`(ARRAY['a', 'b'], ARRAY['b', 'c']) AS `array_union_example`, `ARRAY_CONCAT`(ARRAY['a', 'b'], ARRAY['c', 'd'], ARRAY['e']) AS `array_concat_example`, `ARRAY_EXCEPT`(ARRAY['a', 'b', 'c'], ARRAY['b']) AS `array_except_example`, `ARRAY_REVERSE`(ARRAY['a', 'b', 'c']) AS `array_reverse_example`, `ARRAY_SORT`(ARRAY['c', 'a', 'b']) AS `array_sort_example`, `ARRAY_INTERSECT`(ARRAY['a', 'b', 'c'], ARRAY['b', 'c', 'd']) AS `array_intersect_example`, `ARRAY_MAX`(ARRAY['a', 'b', 'c']) AS `array_max_example`, `ARRAY_MIN`(ARRAY[1, 2, 3]) AS `array_min_example`, `ARRAY_JOIN`(ARRAY['a', NULL, 'c'], '-', '') AS `array_join_example`, `MAP_KEYS`(MAP['a', 1, 'b', 2]) AS `map_keys_example`, `MAP_UNION`(MAP['a', 1], MAP['b', 2]) AS `map_union_example`, `MAP_VALUES`(MAP['a', 1, 'b', 2]) AS `map_values_example`, `MAP_ENTRIES`(MAP['a', 1, 'b', 2]) AS `map_entries_example`, `MAP_FROM_ARRAYS`(ARRAY['a', 'b'], ARRAY[1, 2]) AS `map_from_arrays_example`, `STR_TO_MAP`('k1=1,k2=2', ',', '=') AS `str_to_map_example`, `SPLIT`('a|b|c', '|') AS `split_example`, `SHA1`('hello') AS `sha1_example`, `SHA224`('hello') AS `sha224_example`, `SHA256`('hello') AS `sha256_example`, `SHA384`('hello') AS `sha384_example`, `SHA512`('hello') AS `sha512_example`, `SHA2`('hello', 256) AS `sha2_example`, 'end' AS `the_end`
+FROM `_InputData`;
+CREATE VIEW `_ArrayData`
+AS
+SELECT *
+FROM (VALUES ROW('x'),
+   ROW('y'),
+   ROW('z')) AS `t` (`val`);
+CREATE VIEW `ArrayFunctions`
+AS
+SELECT LISTAGG(`val`, ',') AS `listagg_example`, ARRAY_AGG(`val`) AS `arrayagg_example`
+FROM `_ArrayData`;
+CREATE TABLE `calls_1` (
+  `log2_example` DOUBLE NOT NULL,
+  `log_nat_example` DOUBLE NOT NULL,
+  `log_base_example` DOUBLE NOT NULL,
+  `e_example` DOUBLE NOT NULL,
+  `rand_example` BOOLEAN NOT NULL,
+  `rand_seed_example` BOOLEAN NOT NULL,
+  `rand_int_example` BOOLEAN NOT NULL,
+  `rand_int_seed_range_example` BOOLEAN NOT NULL,
+  `uuid_example` BOOLEAN NOT NULL,
+  `bin_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `hex_numeric_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `hex_string_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `unhex_example` VARBINARY(2147483647),
+  `truncate_scale_example` DECIMAL(6, 2) NOT NULL,
+  `truncate_default_example` DECIMAL(4, 0) NOT NULL,
+  `printf_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `startswith_example` BOOLEAN NOT NULL,
+  `endswith_example` BOOLEAN NOT NULL,
+  `regexp_extract_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `regexp_extract_group_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `regexp_extract_all_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` ARRAY,
+  `decode_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `encode_example` BOOLEAN NOT NULL,
+  `from_base64_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `to_base64_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `instr_example` INTEGER NOT NULL,
+  `locate_example` INTEGER NOT NULL,
+  `regexp_example` BOOLEAN NOT NULL,
+  `split_index_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `json_quote_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `elt_example` VARCHAR(6) CHARACTER SET `UTF-16LE`,
+  `now_example` BOOLEAN NOT NULL,
+  `year_example` BIGINT NOT NULL,
+  `quarter_example` BIGINT NOT NULL,
+  `month_example` BIGINT NOT NULL,
+  `week_example` BIGINT NOT NULL,
+  `dayofyear_example` BIGINT NOT NULL,
+  `dayofmonth_example` BIGINT NOT NULL,
+  `dayofweek_example` BIGINT NOT NULL,
+  `hour_example` BIGINT NOT NULL,
+  `minute_example` BIGINT NOT NULL,
+  `second_example` BIGINT NOT NULL,
+  `floor_minute_example` TIMESTAMP(3) NOT NULL,
+  `ceil_minute_example` TIMESTAMP(3) NOT NULL,
+  `date_format_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `timestampadd_example` TIMESTAMP(3) NOT NULL,
+  `timestampdiff_example` INTEGER NOT NULL,
+  `convert_tz_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `from_unixtime_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `unix_timestamp_now_example` BOOLEAN NOT NULL,
+  `unix_timestamp_str_example` BIGINT NOT NULL,
+  `to_date_func_example` DATE,
+  `to_timestamp_ltz_epoch_example` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `to_timestamp_ltz_str_example` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `to_timestamp_func_example` TIMESTAMP(3),
+  `if_example` VARCHAR(3) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ifnull_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `is_alpha_example` BOOLEAN NOT NULL,
+  `is_decimal_example` BOOLEAN NOT NULL,
+  `is_digit_example` BOOLEAN NOT NULL,
+  `element_example` INTEGER NOT NULL,
+  `cardinality_example` INTEGER NOT NULL,
+  `map_index_example` INTEGER,
+  `array_contains_example` BOOLEAN NOT NULL,
+  `array_distinct_example` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `array_prepend_example` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `array_slice_example` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `array_union_example` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `array_concat_example` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `array_except_example` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `array_reverse_example` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `array_sort_example` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `array_intersect_example` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `array_max_example` CHAR(1) CHARACTER SET `UTF-16LE`,
+  `array_min_example` INTEGER,
+  `array_join_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `map_keys_example` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL ARRAY NOT NULL,
+  `map_union_example` MAP< CHAR(1) CHARACTER SET `UTF-16LE`, INTEGER > NOT NULL,
+  `map_values_example` INTEGER NOT NULL ARRAY NOT NULL,
+  `map_entries_example` ROW(`key` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL, `value` INTEGER NOT NULL) NOT NULL ARRAY NOT NULL,
+  `map_from_arrays_example` MAP< CHAR(1) CHARACTER SET `UTF-16LE`, INTEGER > NOT NULL,
+  `str_to_map_example` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, VARCHAR(2147483647) CHARACTER SET `UTF-16LE` >,
+  `split_example` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` ARRAY,
+  `sha1_example` CHAR(40) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sha224_example` CHAR(56) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sha256_example` CHAR(64) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sha384_example` CHAR(96) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sha512_example` CHAR(128) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sha2_example` VARCHAR(128) CHARACTER SET `UTF-16LE` NOT NULL,
+  `the_end` CHAR(3) CHARACTER SET `UTF-16LE` NOT NULL,
+  `__pk_hash` INTEGER NOT NULL,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'print',
+  'print-identifier' = 'calls'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`calls_1`
+SELECT `log2_example`, `log_nat_example`, `log_base_example`, `e_example`, `rand_example`, `rand_seed_example`, `rand_int_example`, `rand_int_seed_range_example`, `uuid_example`, `bin_example`, `hex_numeric_example`, `hex_string_example`, `unhex_example`, `truncate_scale_example`, `truncate_default_example`, `printf_example`, `startswith_example`, `endswith_example`, `regexp_extract_example`, `regexp_extract_group_example`, `regexp_extract_all_example`, `decode_example`, `encode_example`, `from_base64_example`, `to_base64_example`, `instr_example`, `locate_example`, `regexp_example`, `split_index_example`, `json_quote_example`, `elt_example`, `now_example`, `year_example`, `quarter_example`, `month_example`, `week_example`, `dayofyear_example`, `dayofmonth_example`, `dayofweek_example`, `hour_example`, `minute_example`, `second_example`, `floor_minute_example`, `ceil_minute_example`, `date_format_example`, `timestampadd_example`, `timestampdiff_example`, `convert_tz_example`, `from_unixtime_example`, `unix_timestamp_now_example`, `unix_timestamp_str_example`, `to_date_func_example`, `to_timestamp_ltz_epoch_example`, `to_timestamp_ltz_str_example`, `to_timestamp_func_example`, `if_example`, `ifnull_example`, `is_alpha_example`, `is_decimal_example`, `is_digit_example`, `element_example`, `cardinality_example`, `map_index_example`, `array_contains_example`, `array_distinct_example`, `array_prepend_example`, `array_slice_example`, `array_union_example`, `array_concat_example`, `array_except_example`, `array_reverse_example`, `array_sort_example`, `array_intersect_example`, `array_max_example`, `array_min_example`, `array_join_example`, `map_keys_example`, `map_union_example`, `map_values_example`, `map_entries_example`, `map_from_arrays_example`, `str_to_map_example`, `split_example`, `sha1_example`, `sha224_example`, `sha256_example`, `sha384_example`, `sha512_example`, `sha2_example`, `the_end`, 1 AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`FunctionCalls`
+;
+END

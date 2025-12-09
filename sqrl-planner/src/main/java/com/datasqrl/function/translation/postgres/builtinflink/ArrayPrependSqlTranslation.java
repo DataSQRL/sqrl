@@ -21,7 +21,6 @@ import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
 public class ArrayPrependSqlTranslation extends PostgresSqlTranslation {
@@ -32,11 +31,10 @@ public class ArrayPrependSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var array = call.getOperandList().get(0);
-    var element = call.getOperandList().get(1);
-
-    CalciteFunctionUtil.lightweightOp("array_prepend")
-        .createCall(SqlParserPos.ZERO, element, array)
-        .unparse(writer, leftPrec, rightPrec);
+    var arrayPrepend = writer.startFunCall("ARRAY_PREPEND");
+    call.operand(1).unparse(writer, 0, 0);
+    writer.sep(",", true);
+    call.operand(0).unparse(writer, 0, 0);
+    writer.endFunCall(arrayPrepend);
   }
 }

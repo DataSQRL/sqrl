@@ -15,34 +15,13 @@
  */
 package com.datasqrl.function.translation.postgres.builtinflink;
 
-import com.datasqrl.function.CalciteFunctionUtil;
-import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
-public class Sha384SqlTranslation extends PostgresSqlTranslation {
+public class Sha384SqlTranslation extends BaseShaSqlTranslation {
 
   public Sha384SqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp("SHA384"));
-  }
-
-  @Override
-  public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var string = call.getOperandList().get(0);
-    var sha384Literal = SqlLiteral.createCharString("sha384", SqlParserPos.ZERO);
-    var hexLiteral = SqlLiteral.createCharString("hex", SqlParserPos.ZERO);
-
-    var digestCall =
-        CalciteFunctionUtil.lightweightOp("digest")
-            .createCall(SqlParserPos.ZERO, string, sha384Literal);
-
-    CalciteFunctionUtil.lightweightOp("encode")
-        .createCall(SqlParserPos.ZERO, digestCall, hexLiteral)
-        .unparse(writer, leftPrec, rightPrec);
+    super("sha384");
   }
 }

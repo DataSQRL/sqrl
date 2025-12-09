@@ -21,20 +21,27 @@ import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
-public class ConcatWsSqlTranslation extends PostgresSqlTranslation {
+public class UnixTimestampSqlTranslation extends PostgresSqlTranslation {
 
-  public ConcatWsSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp("CONCAT_WS"));
+  public UnixTimestampSqlTranslation() {
+    super(CalciteFunctionUtil.lightweightOp("UNIX_TIMESTAMP"));
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    CalciteFunctionUtil.lightweightOp("concat_ws")
-        .createCall(
-            SqlParserPos.ZERO, call.getOperandList().toArray(new org.apache.calcite.sql.SqlNode[0]))
-        .unparse(writer, leftPrec, rightPrec);
+    if (call.operandCount() > 0) {
+      throw new UnsupportedOperationException(
+          "Calling UNIX_TIMESTAMP(...) with args is not supported yet for PostgreSQL.");
+    }
+
+    writer.print("(");
+    var extract = writer.startFunCall("EXTRACT");
+    writer.keyword("EPOCH");
+    writer.keyword("FROM");
+    writer.keyword("CURRENT_TIMESTAMP");
+    writer.endFunCall(extract);
+    writer.print("::bigint)");
   }
 }

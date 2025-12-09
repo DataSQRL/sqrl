@@ -17,27 +17,34 @@ package com.datasqrl.function.translation.postgres.builtinflink;
 
 import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
-import com.datasqrl.function.translation.SqlTranslation;
-import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
-@AutoService(SqlTranslation.class)
-public class CurrentTimeSqlTranslation extends PostgresSqlTranslation {
+abstract class BaseShaSqlTranslation extends PostgresSqlTranslation {
 
-  public CurrentTimeSqlTranslation() {
-    super(SqlStdOperatorTable.CURRENT_TIME);
+  private final String shaAlg;
+
+  BaseShaSqlTranslation(String shaAlg) {
+    super(CalciteFunctionUtil.lightweightOp(shaAlg.toUpperCase()));
+    this.shaAlg = shaAlg;
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var zero = SqlLiteral.createExactNumeric("0", SqlParserPos.ZERO);
+    var shaLit = SqlLiteral.createCharString(shaAlg, SqlParserPos.ZERO);
+    var hexLit = SqlLiteral.createCharString("hex", SqlParserPos.ZERO);
 
-    CalciteFunctionUtil.lightweightOp("CURRENT_TIME")
-        .createCall(SqlParserPos.ZERO, zero)
-        .unparse(writer, leftPrec, rightPrec);
+    // encode(digest(<value>, 'sha224'), 'hex')
+    var encode = writer.startFunCall("ENCODE");
+    var digest = writer.startFunCall("DIGEST");
+    call.operand(0).unparse(writer, 0, 0);
+    writer.sep(",", true);
+    shaLit.unparse(writer, 0, 0);
+    writer.endFunCall(digest);
+    writer.sep(",", true);
+    hexLit.unparse(writer, 0, 0);
+    writer.endFunCall(encode);
   }
 }

@@ -16,9 +16,12 @@
 package com.datasqrl.function;
 
 import com.datasqrl.util.FunctionUtil;
+import java.util.Arrays;
 import java.util.List;
 import lombok.experimental.UtilityClass;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.SqlAsOperator;
+import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlBinaryOperator;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlFunctionCategory;
@@ -114,5 +117,16 @@ public class CalciteFunctionUtil {
       operand.unparse(writer, 0, 0);
       first = false;
     }
+  }
+
+  public static SqlNode wrapNodeWithParenthesis(SqlNode node) {
+    return new SqlBasicCall(new SqlAsOperator(), Arrays.asList(node, null), SqlParserPos.ZERO) {
+      @Override
+      public void unparse(SqlWriter writer, int leftPrec, int rightPrec) {
+        writer.print("(");
+        node.unparse(writer, 0, 0);
+        writer.print(")");
+      }
+    };
   }
 }

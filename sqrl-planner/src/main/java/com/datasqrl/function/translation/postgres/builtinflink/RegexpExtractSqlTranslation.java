@@ -32,8 +32,8 @@ public class RegexpExtractSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var string = call.getOperandList().get(0);
-    var regex = call.getOperandList().get(1);
+    var str = call.operand(0);
+    var regex = call.operand(1);
 
     // Check if group index is provided
     boolean useRegexpSubstr;
@@ -52,7 +52,7 @@ public class RegexpExtractSqlTranslation extends PostgresSqlTranslation {
       if (!useRegexpSubstr) {
         // For group >= 1: (regexp_match(string1, string2))[integer]
         var parenthesis = writer.startList("(", ")");
-        CalciteFunctionUtil.writeFunction("REGEXP_MATCH", writer, string, regex);
+        CalciteFunctionUtil.writeFunction("REGEXP_MATCH", writer, str, regex);
         writer.endList(parenthesis);
         var brackets = writer.startList("[", "]");
         groupIndex.unparse(writer, 0, 0);
@@ -62,6 +62,6 @@ public class RegexpExtractSqlTranslation extends PostgresSqlTranslation {
     }
 
     // No group index or group index = 0 - use regexp_substr for full match
-    CalciteFunctionUtil.writeFunction("REGEXP_SUBSTR", writer, string, regex);
+    CalciteFunctionUtil.writeFunction("REGEXP_SUBSTR", writer, str, regex);
   }
 }

@@ -34,7 +34,7 @@ public class IsDecimalSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var string = call.getOperandList().get(0);
+    var string = call.operand(0);
     var pattern = SqlLiteral.createCharString("^[+-]?[0-9]+(\\.[0-9]+)?$", SqlParserPos.ZERO);
 
     SqlStdOperatorTable.POSIX_REGEX_CASE_SENSITIVE

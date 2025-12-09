@@ -22,6 +22,7 @@ import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlWriter;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
@@ -33,11 +34,20 @@ public class ElementSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var array = call.getOperandList().get(0);
+    var array = call.operand(0);
     var one = SqlLiteral.createExactNumeric("1", SqlParserPos.ZERO);
+    var nullLit = SqlLiteral.createNull(SqlParserPos.ZERO);
 
-    CalciteFunctionUtil.lightweightOp("element")
-        .createCall(SqlParserPos.ZERO, array, one)
-        .unparse(writer, leftPrec, rightPrec);
+    var cardinality = SqlStdOperatorTable.CARDINALITY.createCall(SqlParserPos.ZERO, array);
+    var eq = SqlStdOperatorTable.EQUALS.createCall(SqlParserPos.ZERO, cardinality, one);
+    var wrappedArr = CalciteFunctionUtil.wrapNodeWithParenthesis(array);
+    var item = SqlStdOperatorTable.ITEM.createCall(SqlParserPos.ZERO, wrappedArr, one);
+
+    // IF(CARDINALITY(array) = 1, array[1], NULL)
+    CalciteFunctionUtil.lightweightOp("IF")
+        .createCall(SqlParserPos.ZERO, eq, item, nullLit)
+        .unparse(writer, 0, 0);
+
+    int i = 5;
   }
 }

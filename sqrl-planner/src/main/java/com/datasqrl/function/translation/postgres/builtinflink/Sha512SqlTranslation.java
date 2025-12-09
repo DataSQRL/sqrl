@@ -15,34 +15,13 @@
  */
 package com.datasqrl.function.translation.postgres.builtinflink;
 
-import com.datasqrl.function.CalciteFunctionUtil;
-import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
-import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlLiteral;
-import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
-public class Sha512SqlTranslation extends PostgresSqlTranslation {
+public class Sha512SqlTranslation extends BaseShaSqlTranslation {
 
   public Sha512SqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp("SHA512"));
-  }
-
-  @Override
-  public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var string = call.getOperandList().get(0);
-    var sha512Literal = SqlLiteral.createCharString("sha512", SqlParserPos.ZERO);
-    var hexLiteral = SqlLiteral.createCharString("hex", SqlParserPos.ZERO);
-
-    var digestCall =
-        CalciteFunctionUtil.lightweightOp("digest")
-            .createCall(SqlParserPos.ZERO, string, sha512Literal);
-
-    CalciteFunctionUtil.lightweightOp("encode")
-        .createCall(SqlParserPos.ZERO, digestCall, hexLiteral)
-        .unparse(writer, leftPrec, rightPrec);
+    super("sha512");
   }
 }

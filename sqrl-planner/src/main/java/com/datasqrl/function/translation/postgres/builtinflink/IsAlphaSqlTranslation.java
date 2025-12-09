@@ -33,13 +33,13 @@ public class IsAlphaSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var string = call.getOperandList().get(0);
+    var str = call.operand(0);
     var pattern = SqlLiteral.createCharString("^[A-Za-z]+$", SqlParserPos.ZERO);
 
-    writer.print("(");
-    string.unparse(writer, 0, 0);
-    writer.print(" ~ ");
+    var paren = writer.startList("(", ")");
+    str.unparse(writer, 0, 0);
+    writer.print("~ ");
     pattern.unparse(writer, 0, 0);
-    writer.print(")");
+    writer.endFunCall(paren);
   }
 }

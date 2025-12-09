@@ -268,6 +268,8 @@ public class OsProcessManager {
           "su", "-", "postgres", "-c", "psql -U postgres -c \"CREATE DATABASE datasqrl;\"");
       executePostgresCommand(
           "su", "-", "postgres", "-c", "psql -U postgres -c \"CREATE EXTENSION vector;\"");
+      executePostgresCommand(
+          "su", "-", "postgres", "-c", "psql -U postgres -c \"CREATE EXTENSION pgcrypto;\"");
     }
 
     if (!started) {

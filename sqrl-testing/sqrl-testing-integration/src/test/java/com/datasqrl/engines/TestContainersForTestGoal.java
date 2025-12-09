@@ -87,26 +87,34 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
         GlobalEnvironmentStore.put(POSTGRES_USERNAME, testDatabase.getUsername());
         GlobalEnvironmentStore.put(POSTGRES_PASSWORD, testDatabase.getPassword());
         GlobalEnvironmentStore.put(POSTGRES_DATABASE, testDatabase.getDatabaseName());
+
+        execStmt("CREATE EXTENSION pgcrypto;");
       }
 
       @Override
       public void clear() {
+        execStmt(
+            "DO $$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END $$;");
+      }
+
+      @Override
+      public void teardown() {
+        testDatabase.stop();
+      }
+
+      private void execStmt(String sql) {
         try (var conn =
                 DriverManager.getConnection(
                     testDatabase.getJdbcUrl(),
                     testDatabase.getUsername(),
                     testDatabase.getPassword());
             var stmt = conn.createStatement()) {
-          stmt.execute(
-              "DO $$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END $$;");
-        } catch (SQLException e) {
-          throw new RuntimeException("Failed to drop tables", e);
-        }
-      }
 
-      @Override
-      public void teardown() {
-        testDatabase.stop();
+          stmt.execute(sql);
+
+        } catch (SQLException e) {
+          throw new RuntimeException("Postgres execution failed", e);
+        }
       }
     };
   }

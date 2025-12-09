@@ -33,11 +33,8 @@ public class IfNullSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var input = call.getOperandList().get(0);
-    var replacement = call.getOperandList().get(1);
-
     SqlStdOperatorTable.COALESCE
-        .createCall(SqlParserPos.ZERO, input, replacement)
+        .createCall(SqlParserPos.ZERO, call.operand(0), call.operand(1))
         .unparse(writer, leftPrec, rightPrec);
   }
 }
