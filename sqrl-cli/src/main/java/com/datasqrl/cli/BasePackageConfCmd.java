@@ -29,23 +29,23 @@ import picocli.CommandLine.Parameters;
 
 public abstract class BasePackageConfCmd extends BaseCmd {
 
-  protected static final Path DEFAULT_TARGET_DIR =
+  protected static final Path DEFAULT_TARGET =
       Path.of(SqrlConstants.BUILD_DIR_NAME, SqrlConstants.DEPLOY_DIR_NAME);
 
   @Parameters(
       arity = "0..*",
-      description = "Package configuration file(s)",
+      description = "Package configuration file(s) of the project. Default: \"package.json\".",
       scope = CommandLine.ScopeType.INHERIT)
   protected List<Path> packageFiles = Collections.emptyList();
 
   @Option(
       names = {"-t", "--target"},
-      description = "Target directory for deployment artifacts and plans")
-  protected Path targetDir = DEFAULT_TARGET_DIR;
+      description = "Target folder for deployment artifacts and plans. Default: \"build/deploy\".")
+  protected Path targetFolder = DEFAULT_TARGET;
 
   @Option(
       names = {"-B", "--batch-output"},
-      description = "Run in batch output mode (disable colored output)")
+      description = "Run in batch output mode (disables colored output).")
   protected boolean batchMode = false;
 
   @Override
@@ -63,11 +63,11 @@ public abstract class BasePackageConfCmd extends BaseCmd {
     return new OsProcessManager(System.getenv());
   }
 
-  protected Path getTargetDir() {
-    if (targetDir.isAbsolute()) {
-      return targetDir;
+  protected Path getTargetFolder() {
+    if (targetFolder.isAbsolute()) {
+      return targetFolder;
     }
 
-    return cli.rootDir.resolve(targetDir);
+    return cli.rootDir.resolve(targetFolder);
   }
 }

@@ -63,7 +63,7 @@ class RunCmdTest {
     runCmd.execute(errors);
 
     verify(runCmd).execute(errors);
-    verify(runCmd, never()).getTargetDir();
+    verify(runCmd, never()).getTargetFolder();
   }
 
   @Test
@@ -71,7 +71,7 @@ class RunCmdTest {
     runCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
 
     Path buildDir = runCmd.getBuildDir();
-    Path planDir = runCmd.getTargetDir().resolve(SqrlConstants.PLAN_DIR);
+    Path planDir = runCmd.getTargetFolder().resolve(SqrlConstants.PLAN_DIR);
 
     // Mock static methods and verify arguments
     try (MockedStatic<ConfigLoaderUtils> mocked = mockStatic(ConfigLoaderUtils.class)) {

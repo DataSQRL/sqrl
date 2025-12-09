@@ -35,26 +35,26 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-class ExecuteCmdTest {
+class ExecCmdTest {
 
   @Mock private ErrorCollector errors;
   @Mock private Configuration flinkConfig;
 
-  private ExecuteCmd executeCmd;
+  private ExecCmd execCmd;
 
   @TempDir private Path tempDir;
 
   @BeforeEach
   void setup() {
-    executeCmd = spy(new ExecuteCmd());
+    execCmd = spy(new ExecCmd());
   }
 
   @Test
   void runInternal_shouldStartServicesAndRunDatasqrlRun() throws Exception {
-    executeCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
+    execCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
 
-    Path buildDir = executeCmd.getBuildDir();
-    Path planDir = executeCmd.getTargetDir().resolve(SqrlConstants.PLAN_DIR);
+    Path buildDir = execCmd.getBuildDir();
+    Path planDir = execCmd.getTargetFolder().resolve(SqrlConstants.PLAN_DIR);
 
     // Mock static methods and verify arguments
     try (MockedStatic<ConfigLoaderUtils> mocked = mockStatic(ConfigLoaderUtils.class)) {
@@ -72,7 +72,7 @@ class ExecuteCmdTest {
               mockConstruction(
                   DatasqrlRun.class, (mock, context) -> when(mock.run()).thenReturn(null))) {
 
-        executeCmd.runInternal(errors);
+        execCmd.runInternal(errors);
 
         // Verify service manager was created and started
         assertThat(serviceManagerMocked.constructed()).hasSize(1);

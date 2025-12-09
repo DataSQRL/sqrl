@@ -19,8 +19,9 @@ import java.nio.file.Path;
 import lombok.Getter;
 import lombok.NonNull;
 import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
-@CommandLine.Command(
+@Command(
     name = "sqrl",
     mixinStandardHelpOptions = true,
     versionProvider = CliVersionProvider.class,
@@ -30,7 +31,7 @@ import picocli.CommandLine;
       CompileCmd.class,
       TestCmd.class,
       RunCmd.class,
-      ExecuteCmd.class
+      ExecCmd.class
     })
 @Getter
 public class DatasqrlCli implements Runnable {

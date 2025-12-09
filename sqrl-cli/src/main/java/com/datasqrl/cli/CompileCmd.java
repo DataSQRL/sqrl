@@ -16,11 +16,13 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.plan.validate.ExecutionGoal;
-import picocli.CommandLine;
+import picocli.CommandLine.Command;
 
-@CommandLine.Command(
+@Command(
     name = "compile",
-    description = "Compiles an SQRL script and produces all build artifacts")
+    description = "Compiles an SQRL project and produces all build artifacts.",
+    mixinStandardHelpOptions = true,
+    versionProvider = CliVersionProvider.class)
 public class CompileCmd extends AbstractCompileCmd {
 
   @Override
