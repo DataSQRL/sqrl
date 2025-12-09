@@ -34,11 +34,11 @@ FunctionCalls := SELECT
     ELT(2, 'first', 'second', 'third')               AS elt_example,
 
     NOW() IS NOT NULL                                AS now_example,
---     LOCALTIME  IS NOT NULL                           AS local_time_example,
---     LOCALTIMESTAMP  IS NOT NULL                      AS local_timestamp_example,
---     CURRENT_TIME  IS NOT NULL                        AS current_time_example,
---     CURRENT_DATE   IS NOT NULL                       AS current_date_example,
---     CURRENT_TIMESTAMP  IS NOT NULL                   AS current_timestamp_example,
+    LOCALTIME IS NOT NULL                            AS local_time_example,
+    LOCALTIMESTAMP IS NOT NULL                       AS local_timestamp_example,
+    CURRENT_TIME IS NOT NULL                         AS current_time_example,
+    CURRENT_DATE IS NOT NULL                         AS current_date_example,
+    CURRENT_TIMESTAMP IS NOT NULL                    AS current_timestamp_example,
 
     YEAR(DATE '2024-01-02')                          AS year_example,
     QUARTER(DATE '2024-01-02')                       AS quarter_example,
