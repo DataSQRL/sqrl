@@ -1,18 +1,25 @@
 # DataSQRL Documentation
 
-DataSQRL is a data automation framework for building reliable data pipelines, data APIs (REST, MCP, GraphQL), and data products in SQL using open-source technologies. It compiles SQL scripts into fully integrated data infrastructure that ingests data from multiple sources, transforms it through stream processing, and serves the results as realtime data APIs, LLM tooling, or Apache Iceberg views.
+DataSQRL is a data automation framework for building reliable data pipelines, data APIs (REST, MCP, GraphQL), and data products in SQL using open-source technologies. It provides a logical and physical world model, validator and planner, and a execution and testing framework to provide guardrails and feedback for AI coding agents.
+DataSQRL has a modular architecture to support different types of data systems like Apache Kafka, Iceberg, PostgreSQL, DuckDB, and others.
+It can be customized and extended for specific data platform automation requirements.
 
 ## What is DataSQRL?
 
+DataSQRL provides the foundational components needed by AI agents to produce safe, reliable data pipelines:
+* A world model to "understand" data processing
+* A validation framework to ensure quality solutions
+* A simulator to provide reproducible feedback on real-world data flows for correctness.
+
 ### World Model
 
-DataSQRL extends SQL to a comprehensive world model for data platforms. SQL provides the ideal foundation for automation because it offers a mathematical foundation (relational algebra), deep introspection through its declarative nature, deterministic validation and optimization, human readability, and strong support from modern LLMs. This SQL-based world model enables AI to understand your entire data landscape - from source to sink - including schemas, connectors, data transformations, and execution semantics. Without such a structured world model, AI-generated data solutions risk subtle bugs, inconsistencies, and production failures. DataSQRL's world model provides the necessary guardrails and feedback to ensure generated solutions are safe, reliable, and perform well in production.
+DataSQRL extends SQL to a comprehensive world model for data platforms. SQL provides the ideal foundation for automation because it offers a mathematical foundation (relational algebra), deep introspection through its declarative nature, deterministic validation and optimization, human readability, and strong support from modern LLMs. This SQL-based world model enables AI to understand your entire data landscape - from source to sink - including schemas, connectors, data transformations, and execution semantics. DataSQRL produces the computational graph and deployment assets for inspection by AI in iterative refinement loops.
 
 <img src="/img/diagrams/automation_overview.png" alt="SQRL Timeline" width="100%" />
 
 ### Simulation & Verification
 
-DataSQRL provides a complete runtime and testing framework that executes pipelines locally in Docker or Kubernetes, enabling rapid iteration with 100% reproducible results. The testing framework supports snapshot tests and assertions to verify pipeline correctness, spot regressions in CI/CD, and provide real-world feedback to AI in iterative refinement loops. Since the entire data pipeline is defined in SQL, it remains humanly readable and easy to verify. DataSQRL produces detailed execution plans showing how the computation DAG is distributed across engines, comprehensive data lineage graphs tracking data flow from source to sink, and optimization reports explaining compiler decisions. These artifacts enable both automated analysis by AI agents to improve solutions and manual inspection by developers to ensure correctness, making AI-assisted data platform automation trustworthy and production-safe.
+DataSQRL provides a complete runtime and testing framework that executes pipelines locally in Docker, enabling rapid iteration with 100% reproducible results. The testing framework supports snapshot tests and assertions to verify pipeline correctness, spot regressions in CI/CD, and provide real-world feedback to AI in iterative refinement loops. Since the entire data pipeline is defined in SQL, it remains humanly readable and easy to verify. DataSQRL produces detailed execution plans showing how the computation DAG is distributed across engines, comprehensive data lineage graphs tracking data flow from source to sink, and optimization reports explaining compiler decisions. These artifacts enable both automated analysis by AI agents to improve solutions and manual inspection by developers to ensure correctness, making AI-assisted data platform automation trustworthy and production-safe.
 
 ### Key Benefits
 - 🛡️ **Data Consistency Guarantees**: Exactly-once processing, data consistency across all outputs, schema alignment, and data lineage tracking

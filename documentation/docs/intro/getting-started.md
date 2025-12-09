@@ -1,6 +1,6 @@
 # Getting Started with DataSQRL
 
-Welcome to DataSQRL! This guide walks you through building and running your first data pipeline using SQRL — from setup to customization and debugging.
+The easiest way to understand how DataSQRL guides and provides feedback for agentic development of data pipelines is to build a data pipeline yourself.
 
 We are going to build a data pipeline with SQRL that:
 * Defines an API to receive user token usage data
@@ -32,6 +32,7 @@ docker --version
 
 Make sure Docker is running before continuing.
 
+--- rewrite using init script
 
 ## Define SQRL Script
 

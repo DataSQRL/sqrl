@@ -18,7 +18,7 @@ const header: HomepageHeaderProps = {
   text: (
       <>
         DataSQRL is a world-model and simulator to automate data pipeline development and operation with AI.<br />
-        Build safe and reliable data APIs, datasets, or data products without the grunt work.
+        Build safe and reliable data products, data streams, or data APIs.
       </>
   ),
   buttonLink: 'docs/intro/getting-started',
@@ -80,7 +80,7 @@ SpendingTransactionsByTime(
 
                   </p>
                   <p className="hero__subtitle">
-                    Define data APIs, datasets, and data products in a single SQL script. <br />
+                    Define the entire data product in a single SQL script. <br />
                     DataSQRL automates the data plumbing.
                   </p>
                   <p className="text--center">
@@ -98,7 +98,8 @@ SpendingTransactionsByTime(
                 <div className="col col--5 text--left">
                   <h2>End-to-End Automation with Understanding</h2>
                   <p className="hero__subtitle">
-                    DataSQRL compiles SQL into production-ready data pipelines that run on open-source technologies. Run locally, on Kubernetes, or cloud services.
+                    DataSQRL compiles SQL into production-ready data pipelines that run on open-source technologies.
+                    Run locally, on Kubernetes, or cloud services with full visibility.
                   </p>
                   <p className="hero__subtitle">
                     DataSQRL provides compile-time and runtime feedback to generative AI and users for consistent, high-quality results.

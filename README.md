@@ -2,7 +2,7 @@
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/DataSQRL/sqrl/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/DataSQRL/sqrl/tree/main)
 [![Docs](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://datasqrl.github.io/sqrl)
-[![codecov](https://codecov.io/gh/datasqrl/sqrl/branch/main/graph/badge.svg)](https://codecov.io/gh/datasqrl/sqrl)
+<!--[![codecov](https://codecov.io/gh/datasqrl/sqrl/branch/main/graph/badge.svg)](https://codecov.io/gh/datasqrl/sqrl) -->
 [![License](https://img.shields.io/github/license/datasqrl/sqrl.svg)](LICENSE)
 [![Docker Image Version](https://img.shields.io/docker/v/datasqrl/cmd?sort=semver)](https://hub.docker.com/r/datasqrl/cmd/tags)
 [![Maven Central](https://img.shields.io/maven-central/v/com.datasqrl/sqrl-root)](https://repo1.maven.org/maven2/com/datasqrl/sqrl-root/)
@@ -110,14 +110,14 @@ DataSQRL has a rich [function library](https://docs.datasqrl.com/docs/functions)
 [DataSQRL Cloud](https://www.datasqrl.com) is a managed service that runs DataSQRL pipelines with no operational overhead and integrates directly with GitHub for simple deployments.
 -->
 
-Learn more about DataSQRL in [the documentation](https://docs.datasqrl.com/).
+Read an [in-depth explanation of DataSQRL](https://docs.datasqrl.com/blog/data-platform-automation) or view the [full documentation](https://docs.datasqrl.com/) to learn more.
 
 
 ## Contributing
 
 ![Contribute to DataSQRL](documentation/static/img/undraw/code.svg)
 
-Our goal is to automate data platforms by building a world model that provides the necessary guardrails and feedback. We believe anyone who can read SQL should be empowered to build complex data systems that are robust and reliable. Your feedback is invaluable in achieving this goal. Let us know what works and what doesn't by filing GitHub issues or in the [DataSQRL Slack community]((https://join.slack.com/t/datasqrlcommunity/shared_invite/zt-2l3rl1g6o-im6YXYCqU7t55CNaHqz_Kg)).
+Our goal is to automate data platforms by building a world model that provides the necessary guardrails and feedback. We believe anyone who can read SQL should be empowered to build complex data systems that are robust and reliable. Your feedback is invaluable in achieving this goal. Let us know what works and what doesn't by filing GitHub issues or starting discussions.
 
 We welcome code contributions. For more details, check out [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
