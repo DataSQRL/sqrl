@@ -1,0 +1,15 @@
+{
+  "data" : {
+    "PgDefaultMappingTest" : [ {
+      "lower_example" : "asd",
+      "upper_example" : "BSD",
+      "trim_example" : "test",
+      "ltrim_example" : "test",
+      "rtrim_example" : "test",
+      "initcap_example" : "Alice Bob",
+      "substring_example" : "m ipsum",
+      "md5_example" : "098f6bcd4621d373cade4e832627b4f6",
+      "overlay_example" : "_est"
+    } ]
+  }
+}

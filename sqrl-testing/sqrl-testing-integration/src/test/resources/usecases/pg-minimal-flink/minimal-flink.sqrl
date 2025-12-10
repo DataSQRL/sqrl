@@ -27,3 +27,17 @@ SensorAggregate := SELECT sensorid, MAX(temperature) AS maxTemp, AVG(temperature
 
 /*+test */
 SensorAggregateTest := SELECT * FROM SensorAggregate ORDER BY sensorid ASC;
+
+-- Test to make sure we do not break default Flink SQL -> PostgreSQL function mappings
+/*+test */
+PgDefaultMappingTest :=
+    SELECT
+        LOWER('ASD')                       AS lower_example,
+        UPPER('bsd')                       AS upper_example,
+        TRIM(' test  ')                    AS trim_example,
+        LTRIM('  test')                    AS ltrim_example,
+        RTRIM('test  ')                    AS rtrim_example,
+        INITCAP('alice bob')               AS initcap_example,
+        SUBSTRING('lorem ipsum', 5)        AS substring_example,
+        MD5('test')                        AS md5_example,
+        OVERLAY('test' PLACING '_' FROM 1) AS overlay_example;
