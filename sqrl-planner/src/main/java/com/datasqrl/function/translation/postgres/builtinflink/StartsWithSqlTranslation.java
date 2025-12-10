@@ -26,6 +26,7 @@ import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 @AutoService(SqlTranslation.class)
 public class StartsWithSqlTranslation extends PostgresSqlTranslation {
 
+  // Built-in SQL function name is "STARTSWITH"
   public StartsWithSqlTranslation() {
     super(BuiltInFunctionDefinitions.STARTS_WITH);
   }
