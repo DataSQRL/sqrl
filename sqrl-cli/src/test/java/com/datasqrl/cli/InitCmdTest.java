@@ -96,6 +96,10 @@ class InitCmdTest {
     var prodContent = Files.readString(prodPkg);
     var testContent = Files.readString(testPkg);
 
+    // Verify project name is correctly substituted in package JSON files
+    assertThat(prodContent).contains("\"main\": \"%s.sqrl\"".formatted(PROJECT_NAME));
+    assertThat(testContent).contains("\"main\": \"%s.sqrl\"".formatted(PROJECT_NAME));
+
     // Verify type-specific expectations
     switch (type) {
       case STREAM:

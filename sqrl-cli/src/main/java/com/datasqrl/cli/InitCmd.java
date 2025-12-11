@@ -25,9 +25,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.flink.api.common.RuntimeExecutionMode;
@@ -64,7 +64,7 @@ public class InitCmd extends BaseCmd {
   @Override
   protected void runInternal(ErrorCollector errors) {
     try {
-      initProject(() -> cli.rootDir);
+      initProject(() -> cli.rootDir.resolve(projectName));
     } catch (Exception e) {
       throw errors.exception("Project initialization failed: %s", e);
     }
@@ -111,16 +111,18 @@ public class InitCmd extends BaseCmd {
     }
   }
 
-  private static Map<String, Object> loadVariables(ProjectType projectType) {
+  private Map<String, Object> loadVariables(ProjectType projectType) {
+    var propsMap = new HashMap<String, Object>();
+    propsMap.put("project-name", projectName);
+
     var props = ResourceUtils.loadProperties("init-project.properties");
     var prefix = projectType.name().toLowerCase() + '.';
 
-    return props.entrySet().stream()
+    props.entrySet().stream()
         .filter(e -> e.getKey().toString().startsWith(prefix))
-        .collect(
-            Collectors.toMap(
-                e -> e.getKey().toString().substring(prefix.length()),
-                e -> e.getValue().toString()));
+        .forEach(e -> propsMap.put(e.getKey().toString().substring(prefix.length()), e.getValue()));
+
+    return propsMap;
   }
 
   private Path getTargetPath(Path targetRoot, String resourcePath) {
