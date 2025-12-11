@@ -21,16 +21,13 @@
       }
     }
   },
-  "connectors" : {
-    "iceberg" : {
-      "write.parquet.page-size-bytes": 1000,
-      "warehouse":"/tmp/duckdb",
-      "catalog-type":"hadoop",
-      "catalog-name": "mydatabase"
+  "connectors": {
+    "iceberg": {
+      "warehouse": "/tmp/duckdb"
     }
   },
   "test-runner": {
-    "delay-sec" : -1,
-    "required-checkpoints" : 1
+    "delay-sec": -1,
+    "required-checkpoints": 1
   }
 }
