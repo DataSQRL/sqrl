@@ -12,11 +12,5 @@
         "taskmanager.memory.network.max": "800m"
       }
     }
-  },
-  "connectors": {
-    "iceberg": {
-      "catalog-name": "default_catalog",
-      "warehouse": "iceberg-data"
-    }
   }
 }

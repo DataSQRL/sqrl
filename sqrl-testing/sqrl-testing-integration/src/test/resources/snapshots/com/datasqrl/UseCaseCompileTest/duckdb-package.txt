@@ -211,12 +211,11 @@ CREATE TABLE `_MyApplications1_1` (
 )
 PARTITIONED BY (`id`)
 WITH (
-  'catalog-name' = 'mydatabase',
+  'catalog-name' = 'default_catalog',
   'catalog-table' = '_MyApplications1',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'warehouse' = '/tmp/duckdb',
-  'write.parquet.page-size-bytes' = '1000'
+  'warehouse' = '/tmp/duckdb'
 );
 CREATE TABLE `_MyApplications2_2` (
   `id` BIGINT NOT NULL,
@@ -229,12 +228,11 @@ CREATE TABLE `_MyApplications2_2` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
 )
 WITH (
-  'catalog-name' = 'mydatabase',
+  'catalog-name' = 'default_catalog',
   'catalog-table' = '_MyApplications2',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'warehouse' = '/tmp/duckdb',
-  'write.parquet.page-size-bytes' = '1000'
+  'warehouse' = '/tmp/duckdb'
 );
 CREATE TABLE `_MyApplications2_3` (
   `id` BIGINT NOT NULL,

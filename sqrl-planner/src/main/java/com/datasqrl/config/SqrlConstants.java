@@ -29,6 +29,7 @@ public class SqrlConstants {
   public static final String FLINK_DEFAULT_DATABASE = "default_database";
   public static final String ICEBERG_CATALOG_DATABASE_KEY = "catalog-database";
   public static final String ICEBERG_CATALOG_TABLE_KEY = "catalog-table";
+  public static final String ICEBERG_CATALOG_TYPE_KEY = "catalog-type";
   public static final String ICEBERG_CATALOG_IMPL_KEY = "catalog-impl";
   public static final String ICEBERG_WAREHOUSE_KEY = "warehouse";
   public static final String ICEBERG_GLUE_CATALOG_IMPL = "org.apache.iceberg.aws.glue.GlueCatalog";
