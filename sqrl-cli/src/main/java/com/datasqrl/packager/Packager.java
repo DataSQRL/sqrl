@@ -69,7 +69,8 @@ public class Packager {
         config.getScriptConfig().getMainScript().map(StringUtils::isNotBlank).orElse(Boolean.FALSE),
         "No config or main script specified");
     try {
-      cleanBuildDir(buildDir.buildDir());
+      cleanDir(buildDir.buildDir());
+      cleanDir(rootDir.rootDir().resolve(SqrlConstants.DEFAULT_ICEBERG_WAREHOUSE_DIR));
       createBuildDir(buildDir.buildDir());
       preprocPipeline.run(rootDir.rootDir(), errors);
       configureScripts(buildDir.buildDir());
@@ -151,14 +152,14 @@ public class Packager {
     Files.createDirectories(buildDir);
   }
 
-  private static void cleanBuildDir(Path buildDir) throws IOException {
-    if (Files.exists(buildDir) && Files.isDirectory(buildDir)) {
+  private static void cleanDir(Path dir) throws IOException {
+    if (Files.exists(dir) && Files.isDirectory(dir)) {
       // Sort the paths in reverse order so that directories are deleted last
-      try (var files = Files.walk(buildDir)) {
+      try (var files = Files.walk(dir)) {
         files.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
       }
-    } else if (Files.exists(buildDir) && !Files.isDirectory(buildDir)) {
-      buildDir.toFile().delete();
+    } else if (Files.exists(dir) && !Files.isDirectory(dir)) {
+      dir.toFile().delete();
     }
   }
 

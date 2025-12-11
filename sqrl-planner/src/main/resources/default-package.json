@@ -60,7 +60,7 @@
       "connector": "iceberg",
       "catalog-name": "default_catalog",
       "catalog-table": "${sqrl:table-name}",
-      "warehouse": "iceberg-data"
+      "warehouse": "sqrl_iceberg_data"
     },
     "postgres": {
       "connector": "jdbc-sqrl",
