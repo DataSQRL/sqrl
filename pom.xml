@@ -97,7 +97,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Flink runner props -->
-    <flinkrunner.version>0.9.0</flinkrunner.version>
+    <flinkrunner.version>0.9.1</flinkrunner.version>
     <flinkrunner.image.repo>docker.io</flinkrunner.image.repo>
 
     <!-- Params -->
