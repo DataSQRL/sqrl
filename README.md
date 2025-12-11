@@ -26,58 +26,69 @@ DataSQRL models data pipelines with the following requirements:
 
 To learn more about DataSQRL, check out [the documentation](https://docs.datasqrl.com/).
 
-## Example Implementation
+<!--
+## Video Demonstration
 
 The video demonstrates the interplay between DataSQRL and AI in building a data pipeline.
 
 VIDEO
 
+-->
 
 ## Getting Started
 
-To create a new data project with DataSQRL, use the `init` command.
+To create a new data project with DataSQRL, use the `init` command in an empty folder.
 
 ```bash
- docker run --rm -v $PWD:/build datasqrl/cmd init api myproject
+ docker run --rm -v $PWD:/build datasqrl/cmd init api messenger
 ```
 (Use `${PWD}` in Powershell on Windows).
 
-This creates a new data API project called `myproject` in the local directory. 
+This creates a new data API project called `messenger` with some sample data sources and a simple data processing script called `messenger.sqrl`.
 
-<!-- Update below with init command -->
-
-```sql title=myproject.sqrl
-/*+no_query */
-CREATE TABLE UserTokens (
-    userid BIGINT NOT NULL,
-    tokens BIGINT NOT NULL,
-    request_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
-);
-
-/*+query_by_all(userid) */
-TotalUserTokens := SELECT userid, sum(tokens) as total_tokens,
-                          count(tokens) as total_requests
-                   FROM UserTokens GROUP BY userid;
-
-UsageAlert := SUBSCRIBE SELECT * FROM UserTokens WHERE tokens > 100000;
+Run the project with
+```bash
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/build datasqrl/cmd run messenger-prod-package.json
 ```
 
-```bash
-docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/build datasqrl/cmd run usertokens.sqrl
-``` 
-(Use `${PWD}` in Powershell on Windows).
+This launches the entire data pipeline for ingesting, processing, storing, and serving messages.
+You can access the API in your browser [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/) and add messages with the following mutation:
 
-The pipeline results are exposed through an MCP Server at [http://localhost:8888/mcp/](http://localhost:8888/mcp) and GraphQL API that you can access at  [http://localhost:8888/graphiql/](http://localhost:8888/graphiql/) in your browser.
+```graphql
+mutation {
+	Messages(event: {message: "Hello World"}) {
+    message_time
+  }
+}
+```
 
-* `UserTokens` is exposed as a mutation and tool for adding data.
-* `TotalUserTokens` is exposed as a query and tool for retrieving the aggregated data.
-* `UsageAlert` is exposed as a subscription for real-time alerts.
+Query messages with:
+```graphql
+{
+	Messages {
+    message
+    message_time
+  }
+}
+```
 
+Alternatively, you can query messages through [REST](http://localhost:8888/v1/rest) or [MCP](http://localhost:8888/v1/mcp).
 Once you are done, terminate the pipeline with `CTRL-C`.
+
+For additional data processing, edit the `messenger.sqrl` script - for example to aggregate messages:
+```sql
+TotalMessages := SELECT COUNT(*) as num_messages, MAX(message_time) as latest_timestamp
+                 FROM Messages LIMIT 1;
+```
+
+To run the test case, execute:
+```bash
+docker run -it --rm -v $PWD:/build datasqrl/cmd test messenger-test-package.json
+```
 
 To build the deployment assets for the data pipeline, execute
 ```bash
-docker run --rm -v $PWD:/build datasqrl/cmd compile usertokens.sqrl
+docker run --rm -v $PWD:/build datasqrl/cmd compile messenger-prod-package.json
 ``` 
 The `build/deploy` directory contains the Flink compiled plan, Kafka topic definitions, PostgreSQL schema and view definitions, server queries, MCP tool definitions, and GraphQL data model. Those assets can be deployed in containerized environments (e.g. via Kubernetes) or cloud-managed services. 
 

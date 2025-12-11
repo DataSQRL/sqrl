@@ -26,6 +26,8 @@ DataSQRL provides a complete runtime and testing framework that executes pipelin
 - 🔒 **Production-Grade Reliability**: Robust, highly available, scalable, secure, access-controlled, and observable data pipelines
 - 🚀 **Developer Workflow Integration**: Local development, quick iteration with feedback, CI/CD support, and comprehensive testing framework
 
+[Learn more about](/blog/data-platform-automation) the design choices, science, and the "Why?" behind DataSQRL.
+
 ## Quick Start
 
 Check out the [**Getting Started**](getting-started) guide to build a realtime data pipeline with DataSQRL in 10 minutes.
