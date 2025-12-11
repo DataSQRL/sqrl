@@ -24,6 +24,7 @@ public class SqrlConstants {
   public static final String PLAN_DIR = "plan";
   public static final String PACKAGE_JSON = "package.json";
   public static final Path DEFAULT_PACKAGE = Path.of(PACKAGE_JSON);
+  public static final String DEFAULT_ICEBERG_WAREHOUSE_DIR = "sqrl_iceberg_data";
   public static final String FLINK_ASSETS_DIR = "flink";
   public static final String FLINK_DEFAULT_CATALOG = "default_catalog";
   public static final String FLINK_DEFAULT_DATABASE = "default_database";
