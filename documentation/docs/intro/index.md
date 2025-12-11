@@ -1,17 +1,40 @@
 # DataSQRL Documentation
 
-DataSQRL is a framework for building data pipelines with guaranteed data integrity. It compiles SQL scripts into fully integrated data infrastructure that ingests data from multiple sources, transforms it through stream processing, and serves the results as realtime data APIs, LLM tooling, or Apache Iceberg views.
+DataSQRL is a data automation framework for building reliable data pipelines, data APIs (REST, MCP, GraphQL), and data products in SQL using open-source technologies.
+It provides a logical and physical world model, validator and planner, and an execution and testing framework to provide guardrails and feedback for AI coding agents.
+DataSQRL has a modular architecture to support different types of data systems like Apache Kafka, Apache Iceberg, PostgreSQL, DuckDB, and others.
+It can be customized and extended for specific data platform automation requirements.
 
 ## What is DataSQRL?
 
-DataSQRL simplifies data pipeline development by automatically generating the glue code, schemas, mappings, and deployment artifacts needed to integrate Apache Flink, Postgres, Kafka, GraphQL APIs, and other technologies into a coherent, production-grade data stack.
+DataSQRL provides the foundational components needed by AI agents to produce safe, reliable data pipelines:
+* A world model to "understand" data processing
+* A validation framework to ensure quality solutions
+* A simulator to provide reproducible feedback on real-world data flows for correctness.
 
-**Key Benefits:**
-- 🛡️ **Data Integrity**: Exactly-once processing, consistent data across all outputs, automated data lineage
-- 🔒 **Production-Ready**: Highly available, scalable, observable pipelines using trusted OSS technologies
-- 🔗 **End-to-End Consistency**: Generated connectors and schemas maintain data integrity across the entire pipeline
-- 🚀 **Developer-Friendly**: Local development, CI/CD support, comprehensive testing framework
-- 🤖 **AI-Native**: Support for vector embeddings, LLM invocation, and ML model inference
+### World Model
+
+DataSQRL extends SQL to a comprehensive world model for data platforms. SQL provides the ideal foundation for automation because it offers a mathematical foundation (relational algebra),
+deep introspection through its declarative nature, deterministic validation and optimization, human readability, and strong support from modern LLMs.
+This SQL-based world model enables AI to understand your entire data landscape - from source to sink - including schemas, connectors, data transformations, and execution semantics.
+DataSQRL produces the computational graph and deployment assets for inspection by AI in iterative refinement loops.
+
+<img src="/img/diagrams/automation_overview.png" alt="SQRL Timeline" width="100%" />
+
+### Simulation & Verification
+
+DataSQRL provides a complete runtime and testing framework that executes pipelines locally in Docker, enabling rapid iteration with 100% reproducible results.
+The testing framework supports snapshot tests and assertions to verify pipeline correctness, spot regressions in CI/CD, and provide real-world feedback to AI in iterative refinement loops.
+Since the entire data pipeline is defined in SQL, it remains humanly readable and easy to verify.
+DataSQRL produces detailed execution plans showing how the computation DAG is distributed across engines, comprehensive data lineage graphs tracking data flow from source to sink, and optimization reports explaining compiler decisions.
+These artifacts enable both automated analysis by AI agents to improve solutions and manual inspection by developers to ensure correctness, making AI-assisted data platform automation trustworthy and production-safe.
+
+### Key Benefits
+- 🛡️ **Data Consistency Guarantees**: Exactly-once processing, data consistency across all outputs, schema alignment, and data lineage tracking
+- 🔒 **Production-Grade Reliability**: Robust, highly available, scalable, secure, access-controlled, and observable data pipelines
+- 🚀 **Developer Workflow Integration**: Local development, quick iteration with feedback, CI/CD support, and comprehensive testing framework
+
+[Learn more about](/blog/data-platform-automation) the design choices, science, and the "Why?" behind DataSQRL.
 
 ## Quick Start
 
@@ -19,12 +42,12 @@ Check out the [**Getting Started**](getting-started) guide to build a realtime d
 
 Take a look at the [DataSQRL Examples Repository](https://github.com/DataSQRL/datasqrl-examples) for simple and complex use cases implemented with DataSQRL.
 
-## Core Components
+## DataSQRL Components
 
-DataSQRL consists of three main components that work together:
+DataSQRL's world model consists of three components.
 
 ### 1. [SQRL Language](../sqrl-language)
-SQRL extends Flink SQL with features specifically designed for reactive data processing:
+SQRL extends Flink SQL to capture the complete data model and entire processing and retrieval logic of data pipelines:
 - **IMPORT/EXPORT** statements for connecting data systems
 - **Table functions and relationships** for interface definitions
 - **Hints** to control pipeline structure and execution
@@ -32,7 +55,7 @@ SQRL extends Flink SQL with features specifically designed for reactive data pro
 - **Type system** for stream processing semantics
 
 ### 2. [Interface Design](../interface)
-DataSQRL automatically generates interfaces from your SQRL script for multiple protocols:
+DataSQRL automatically generates interfaces from your SQRL script for multiple protocols with customization support:
 - **Data Products** as database/data lake views and tables
 - **GraphQL APIs** with queries, mutations, and subscriptions
 - **REST endpoints** with GET/POST operations
@@ -40,11 +63,13 @@ DataSQRL automatically generates interfaces from your SQRL script for multiple p
 - **Schema customization** and operation control
 
 ### 3. [Configuration](../configuration)
-JSON configuration files that define:
+JSON configuration file defines **how** the data pipeline gets executed:
 - **Engines**: Data technologies (Flink, Postgres, Kafka, etc.)
 - **Connectors**: Templates for data sources and sinks
 - **Dependencies**: External data packages and libraries
 - **Compiler options**: Optimization and deployment settings
+
+DataSQRL's verification and simulation is implemented by the compiler.
 
 ### 4. [Compiler](../compiler)
 The DataSQRL compiler:
@@ -77,30 +102,10 @@ The DataSQRL compiler:
 
 ## Use Cases
 
-DataSQRL is ideal for:
-- **Real-time Analytics**: Stream processing with consistent data APIs
-- **Event-Driven Applications**: Reactive systems with subscriptions and alerts
-- **Data Lakehouses**: Reliable Iceberg tables with automated schema management
-- **LLM Applications**: Accurate data delivery for AI agents and chatbots
-- **Microservices Integration**: Consistent data sharing across distributed systems
-
-## Architecture
-
-DataSQRL compiles your SQRL scripts into a data processing DAG that's optimized and distributed across multiple engines:
-
-```
-Data Sources → Apache Flink → PostgreSQL/Iceberg → GraphQL API
-     ↓              ↓              ↓                 ↓
-   Kafka        Stream         Database          Real-time
-  Topics      Processing        Views             APIs
-```
-
-The compiler automatically generates all necessary:
-- Flink job definitions and SQL plans
-- Database schemas and views  
-- Kafka topic configurations
-- GraphQL schemas and resolvers
-- Container and Kubernetes deployment files
+The goal of DataSQRL is automating data platforms with a focus on:
+- **Data Pipelines**: processing data in realtime or batch
+- **Data APIs**: serving processed data through REST, GraphQL, or MCP APIs.
+- **Data Lakehouse**: producing Apache Iceberg tables with catalog and schema management
 
 ## Community & Support
 
@@ -110,4 +115,4 @@ DataSQRL is open source and community-driven. Get help and contribute:
 - 💬 **Community**: [GitHub Discussions](https://github.com/DataSQRL/sqrl/discussions/)
 - 🎯 **Examples**: [DataSQRL Examples Repository](https://github.com/DataSQRL/datasqrl-examples)
 
-We welcome feedback, bug reports, and contributions to help make data pipeline development faster and more reliable for everyone.
+We welcome feedback, bug reports, and contributions to empower anyone to build safe, reliable data pipelines by automating the grunt work.

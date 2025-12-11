@@ -2,7 +2,7 @@
 
 ## System Functions
 
-SQRL supports all of [Flink's built-in system functions](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/functions/systemfunctions/).
+SQRL supports all of [Flink's built-in system functions](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/functions/systemfunctions/).
 
 SQRL adds [system functions](functions-system-generated) with support for:
 * a binary JSON type (JSONB) to represent semi-structured data efficiently.
@@ -34,7 +34,7 @@ Users can define custom functions and import them into a SQRL script.
 ### Java
 
 To create a new function package, first create a sub-folder `myjavafunction` in the directory of the script where you want to import the functions.
-Inside that package, create a java project which implements a [Flink function](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/functions/udfs/).
+Inside that package, create a java project which implements a [Flink function](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/functions/udfs/).
 Annotate the function with `@AutoService` and the Flink function that it extends so the function can be discovered by the compiler.
 
 Compile the java project into a jar file and import it into the SQRL script via:
