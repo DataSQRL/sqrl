@@ -1,9 +1,9 @@
 # SQRL Language Specification
 
-SQRL is an extension of FlinkSQL that adds support for table functions and convenience syntax to build reactive data processing and serving applications.  
+SQRL is an extension of Flink SQL that adds support for table functions and convenience syntax to build reactive data processing and serving applications.  
 The “R” in **SQRL** stands for *Reactive* and *Relationships*.
 
-This document focuses only on features **unique to SQRL**; when SQRL accepts FlinkSQL verbatim we simply refer to the [upstream spec](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/).
+This document focuses only on features **unique to SQRL**; when SQRL accepts Flink SQL verbatim we simply refer to the [upstream spec](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/sql/overview/).
 
 ## Script Structure
 
@@ -22,9 +22,9 @@ EXPORT MyTable TO ... -- write table data to sinks
 At compile time the statements form a *directed-acyclic graph* (DAG).  
 Each node is then assigned to an enabled execution engine according to the optimizer and the compiler generates the data processing code for that engine.
 
-## FlinkSQL
+## Flink SQL
 
-SQRL inherits full FlinkSQL grammar for
+SQRL inherits full Flink SQL grammar for
 
 * `CREATE {TABLE | VIEW | FUNCTION | CATALOG | DATABASE}`
 * `SELECT` queries inside any of the above
@@ -33,7 +33,7 @@ SQRL inherits full FlinkSQL grammar for
 
 ...with the caveat that SQRL currently tracks **Flink 1.19**; later features may not parse.
 
-Refer to the [FlinkSQL documentation](https://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/sql/overview/) for a detailed specification.
+Refer to the [Flink SQL documentation](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/sql/overview/) for a detailed specification.
 
 ## Type System
 In SQRL, every table and function has a type based on how the table represents data.
@@ -67,8 +67,8 @@ Examples:
 
 ## CREATE TABLE (internal vs external)
 
-SQRL understands the complete FlinkSQL `CREATE TABLE` syntax, but distinguishes between **internal** and **external** source tables.
-External source tables are standard FlinkSQL tables that connect to an external data source (e.g. database or Kafka cluster).
+SQRL understands the complete Flink SQL `CREATE TABLE` syntax, but distinguishes between **internal** and **external** source tables.
+External source tables are standard Flink SQL tables that connect to an external data source (e.g. database or Kafka cluster).
 Internal tables connect to a data source that is managed by SQRL (depending on the configured `log` engine, e.g. a Kafka topic) and exposed for data ingestion in the interface.
 
 | Feature                       | Internal source (managed by SQRL)                               | External Source (connector) |

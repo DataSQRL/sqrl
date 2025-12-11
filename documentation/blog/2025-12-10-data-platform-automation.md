@@ -56,20 +56,20 @@ The relational model uses set semantics. That is inconvenient for representing d
 
 Jennifer Widom's [Continuous Query Language](http://infolab.stanford.edu/~arvind/papers/cql-vldbj.pdf) extends the relational model with data streams and relational operators for moving between streams and sets.
 
-[FlinkSQL](https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/overview/), based on [Apache Calcite](https://calcite.apache.org/), is the most widely adopted implementation of this extended relational model. That's why we use FlinkSQL as the basis of the logical model in DataSQRL.
+[Flink SQL](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/overview/), based on [Apache Calcite](https://calcite.apache.org/), is the most widely adopted implementation of this extended relational model. That's why we use Flink SQL as the basis of the logical model in DataSQRL.
 
-Using a declarative language for the logical world model has a number of advantages from concise representation to deep introspection, but a practical shortcoming is the fact that some data transformations are easier to express imperatively. FlinkSQL overcomes this by supporting [user defined functions](https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/functions/udfs/) and [custom table operators](https://nightlies.apache.org/flink/flink-docs-master/docs/dev/table/functions/ptfs/) in programming languages like Java. This gives us a logical world model grounded in relational algebra with flexible extensibility to express complex data transformations imperatively.
+Using a declarative language for the logical world model has a number of advantages from concise representation to deep introspection, but a practical shortcoming is the fact that some data transformations are easier to express imperatively. Flink SQL overcomes this by supporting [user defined functions](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/functions/udfs/) and [custom table operators](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/functions/ptfs/) in programming languages like Java. This gives us a logical world model grounded in relational algebra with flexible extensibility to express complex data transformations imperatively.
 
-DataSQRL builds on FlinkSQL and adds 1) concise syntax for common transformations, 2) dbt-style templating, and 3) modular file management and importing. These features help with context management for LLMs by reducing the size of the active context that needs to be maintained during implementation and refinement.
+DataSQRL builds on Flink SQL and adds 1) concise syntax for common transformations, 2) dbt-style templating, and 3) modular file management and importing. These features help with context management for LLMs by reducing the size of the active context that needs to be maintained during implementation and refinement.
 
 ```sql
 -- Ingest data from connected systems
-IMPORT banking-data.AccountHoldersCDC; -- CDC stream from masterdata
-IMPORT banking-data.AccountsCDC;       -- CDC stream from database
-IMPORT banking-data.Transactions;      -- Kafka topic for transactions
+IMPORT banking_data.AccountHoldersCDC; -- CDC stream from masterdata
+IMPORT banking_data.AccountsCDC;       -- CDC stream from database
+IMPORT banking_data.Transactions;      -- Kafka topic for transactions
 
 -- Convert the CDC stream of updates to the most recent version
-Accounts := DISTINCT AccountsCDC ON account_id ORDER BY update_time DESC;
+Accounts       := DISTINCT AccountsCDC ON account_id ORDER BY update_time DESC;
 AccountHolders := DISTINCT AccountHoldersCDC ON holder_id ORDER BY update_time DESC;
 
 -- Enrich debit transactions with creditor information using time-consistent join
@@ -80,16 +80,16 @@ SELECT
     h.type AS creditor_type
 FROM Transactions t
          JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a
-              ON t.credit_account_id = a.account_id
+           ON t.credit_account_id = a.account_id
          JOIN AccountHolders FOR SYSTEM_TIME AS OF t.tx_time h
-              ON a.holder_id = h.holder_id;
+           ON a.holder_id = h.holder_id;
 ```
 
 We call this SQL dialect **SQRL**. You can [read the documentation](/docs/sqrl-language) for a complete reference of the SQRL language.
 
 #### 2. Serving
 
-In addition to data processing, a critical function of data platforms is serving data to consumers as data streams, datasets, or data APIs. Data APIs, in particular, are becoming more important with the rise of operational analytics and MCP (model context protocol) for making data accessible to AI agents.
+In addition to data processing, a critical function of data platforms is serving data to consumers as data streams, datasets, or data APIs. Data APIs, in particular, are becoming more important with the rise of operational analytics and MCP (Model Context Protocol) for making data accessible to AI agents.
 
 To support data serving, DataSQRL adds support for endpoint definitions via table functions and explicit relationships.
 
@@ -97,17 +97,17 @@ Table functions are part of the SQL:2016 standard and return entire tables as re
 
 ```sql
 /** Retrieve spending transactions within the given time-range.
-  fromTime (inclusive) and toTime (exclusive) must be RFC-3339 compliant date time.
+  from_time (inclusive) and to_time (exclusive) must be RFC-3339 compliant date time.
 */
 SpendingTransactionsByTime(
   account_id STRING NOT NULL METADATA FROM 'auth.accountId',
-  fromTime TIMESTAMP NOT NULL,
-  toTime TIMESTAMP NOT NULL
+  from_time TIMESTAMP NOT NULL,
+  to_time TIMESTAMP NOT NULL
 ) :=
 SELECT * FROM SpendingTransactions
 WHERE debit_account_id = :account_id
-  AND :fromTime <= tx_time
-  AND :toTime > tx_time
+  AND :from_time <= tx_time
+  AND :to_time > tx_time
 ORDER BY tx_time DESC;
 ```
 
@@ -137,8 +137,8 @@ With [hundreds of database systems](https://db-engines.com/) and many more data 
 After analyzing a wide range of data platforms, we identified that the vast majority of implementations combine multiple data systems from these categories:
 
 * **Database**: for storing and querying data, e.g., PostgreSQL, MySQL, SQLServer, Apache Cassandra, Clickhouse, etc.
-  * **Table Formats and Query Engines**: For analytic data, separating compute from storage can save money and support multiple consumers. DataSQRL conceptualizes this as a "disintegrated database" with table formats for storage (e.g., Apache Iceberg, DeltaLake, Hudi) and query engines for access (e.g., Spark, Flink, Snowflake).
-* **Data Processor**: for batch or realtime transformation of data, e.g., Apache Spark, Flink, etc.
+  * **Table Formats and Query Engines**: For analytic data, separating compute from storage can save money and support multiple consumers. DataSQRL conceptualizes this as a "disintegrated database" with table formats for storage (e.g., Apache Iceberg, DeltaLake, Apache Hudi) and query engines for access (e.g., Apache Spark, Apache Flink, Snowflake).
+* **Data Processor**: for batch or realtime transformation of data, e.g., Apache Spark, Apache Flink, etc.
 * **Log/Queue**: for reliably capturing data and moving it between data systems, e.g., Apache Kafka, RedPanda, Kinesis, etc.
 * **Server**: for capturing and exposing data through an API
   * **Cache**: sits between server and database to speed up frequent queries over less-frequently changing data.
@@ -156,7 +156,7 @@ While the physical model gives the AI control over what engine executes which co
 In the transpiler component, we make the following simplifying assumptions:
 
 * The database engines support a version of SQL (e.g., PostgreSQL, T-SQL) or a subset thereof (e.g., Cassandra Query Language)
-* The data processor supports a SQL-based dialect (e.g., SparkSQL, FlinkSQL)
+* The data processor supports a SQL-based dialect (e.g., Spark SQL, Flink SQL)
 * The log engine is Apache Kafka compatible (e.g., RedPanda, Azure EventHub)
 * The server has a GraphQL execution engine.
 
@@ -278,7 +278,7 @@ Logs and telemetry collection is a well-established practice for DevOps. What Da
 DataSQRL currently assumes production operation in Kubernetes or Docker and provides hooks for extracting logs and telemetry data.
 Correlating that data back to the physical model is not fully abstracted yet and requires individual setup for each deployment. This is work in progress.
 
-## Summary
+# Summary
 
 DataSQRL is a data automation framework that provides the foundational building blocks for autonomous data platforms. DataSQRL provides a logical and physical world model with validation and introspection for agentic implementation and refinement. It uses a neuro-symbolic approach for integrating solvers, planners, and transpilers to handle deterministic optimizations, following the principle of keeping the agentic context and task scope narrow to improve accuracy.
 DataSQRL supplies real-world feedback to coding agents through its embedded simulator and telemetry orchestration.
@@ -287,7 +287,7 @@ DataSQRL is a flexible framework that can be adapted to multiple data engines an
 
 [DataSQRL is open-source](https://github.com/DataSQRL/sqrl) so you can customize it to build a self-driving data platform tailored to your requirements.
 
-### Getting Started
+# Getting Started
 
 To try out DataSQRL:
 

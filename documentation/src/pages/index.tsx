@@ -40,7 +40,7 @@ export default function Home() {
                 <div className="col col--6">
                   <CodeBlock language="sql">
                     {`-- Ingest data from connected systems
-IMPORT banking-data.*;
+IMPORT banking_data.*;
 
 -- Enrich debit transactions with creditor information using time-consistent join
 SpendingTransactions :=
@@ -56,17 +56,17 @@ SpendingTransactions :=
 
 -- Create secure MCP tooling endpoint with description for agentic retrieval
 /** Retrieve spending transactions within the given time-range.
-  fromTime (inclusive) and toTime (exclusive) must be RFC-3339 compliant date time.
+  from_time (inclusive) and to_time (exclusive) must be RFC-3339 compliant date time.
 */
 SpendingTransactionsByTime(
   account_id STRING NOT NULL METADATA FROM 'auth.accountId',
-  fromTime TIMESTAMP NOT NULL,
-  toTime TIMESTAMP NOT NULL
+  from_time TIMESTAMP NOT NULL,
+  to_time TIMESTAMP NOT NULL
 ) :=
     SELECT * FROM SpendingTransactions
     WHERE debit_account_id = :account_id
-      AND :fromTime <= tx_time
-      AND :toTime > tx_time
+      AND :from_time <= tx_time
+      AND :to_time > tx_time
     ORDER BY tx_time DESC;`}
                   </CodeBlock>
                 </div>

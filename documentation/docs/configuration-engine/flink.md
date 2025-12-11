@@ -14,7 +14,7 @@ Frequently configured options include:
 * `table.exec.source.idle-timeout`: Timeout for idle sources so watermark can advance.
 * `table.exec.mini-batch.*`: For more efficient execution in STREAMING mode by processing in small batches.
 
-Refer to the [Flink Documentation](hhttps://nightlies.apache.org/flink/flink-docs-release-1.19/docs/dev/table/config/) for all Flink configuration options.
+Refer to the [Flink Documentation](hhttps://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/config/) for all Flink configuration options.
 
 ## Example Configuration
 
