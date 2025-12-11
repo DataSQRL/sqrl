@@ -44,10 +44,10 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
     super.testUseCase(packageFile);
   }
 
-  @Disabled("Intended for manual usage")
   @Test
+  @Disabled("Intended for manual usage")
   void runTestCaseByName() {
-    var pkg = USECASE_DIR.resolve("conference").resolve("package.json");
+    var pkg = USECASE_DIR.resolve("stdlib-to-append-stream").resolve("package.json");
     super.testUseCase(pkg);
   }
 

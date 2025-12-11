@@ -49,7 +49,7 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
   @Test
   @Disabled("Intended for manual usage")
   void specificUseCase() {
-    var pkg = USE_CASES.resolve("pg-minimal-flink").resolve("package.json");
+    var pkg = USE_CASES.resolve("stdlib-to-append-stream").resolve("package.json");
 
     var param = new UseCaseParam(pkg);
     fullUseCaseTest(param);
