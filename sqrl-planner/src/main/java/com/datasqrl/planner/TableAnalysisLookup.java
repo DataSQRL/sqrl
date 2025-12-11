@@ -41,8 +41,10 @@ import org.apache.calcite.rex.RexSubQuery;
 import org.apache.flink.table.catalog.ContextResolvedFunction;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionIdentifier;
+import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
+import org.apache.flink.table.types.inference.SystemTypeInference;
 
 /**
  * This class primarily exists to collapse views that were expanded by Flink during planning so we
@@ -287,18 +289,29 @@ public class TableAnalysisLookup {
       @Override
       public RexNode visitCall(RexCall call) {
         call = (RexCall) super.visitCall(call);
-        if (call.getOperator() instanceof BridgingSqlFunction) {
-          var func = (BridgingSqlFunction) call.getOperator();
-          var normalizedFct = normalizeFunction(func.getResolvedFunction());
-          if (normalizedFct.isPresent()) {
+        if (call.getOperator() instanceof BridgingSqlFunction fn) {
+          var normalizedFn = normalizeFunction(fn.getResolvedFunction());
+          if (normalizedFn.isPresent()) {
+            // This gets added automatically by Flink at this point.
+            // BridgingSqlFunction throws af these are present, cause it will try to add it again.
+            if (fn.getDefinition().getKind() == FunctionKind.PROCESS_TABLE) {
+              fn.getTypeInference()
+                  .getStaticArguments()
+                  .ifPresent(
+                      staticArgs ->
+                          staticArgs.removeIf(
+                              SystemTypeInference.PROCESS_TABLE_FUNCTION_SYSTEM_ARGS::contains));
+            }
+
             var normalizedFunc =
                 BridgingSqlFunction.of(
-                    func.getDataTypeFactory(),
-                    func.getTypeFactory(),
-                    func.getRexFactory(),
-                    func.kind,
-                    normalizedFct.get(),
-                    func.getTypeInference());
+                    fn.getDataTypeFactory(),
+                    fn.getTypeFactory(),
+                    fn.getRexFactory(),
+                    fn.kind,
+                    normalizedFn.get(),
+                    fn.getTypeInference());
+
             return rexBuilder.makeCall(normalizedFunc, call.getOperands());
           }
         }
