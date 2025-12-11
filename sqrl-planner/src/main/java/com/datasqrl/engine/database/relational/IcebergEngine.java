@@ -17,6 +17,7 @@ package com.datasqrl.engine.database.relational;
 
 import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_IMPL_KEY;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_TABLE_KEY;
+import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_TYPE_KEY;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_GLUE_CATALOG_IMPL;
 
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -27,8 +28,8 @@ import com.datasqrl.datatype.flink.iceberg.IcebergDataTypeMapper;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 import lombok.NonNull;
 
@@ -72,16 +73,17 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   @Override
   protected Map<String, String> getConnectorOptions(String originalTableName, String tableId) {
     var connectorOptions = super.getConnectorOptions(originalTableName, tableId);
+    var mutableOptions = new TreeMap<>(connectorOptions);
 
-    if (!isGlueCatalog(connectorOptions)) {
-      return connectorOptions;
+    if (isGlueCatalog(mutableOptions)) {
+      mutableOptions.compute(
+          ICEBERG_CATALOG_TABLE_KEY, (k, tableName) -> validatedGlueTableName(tableName));
+
+    } else if (!mutableOptions.containsKey(ICEBERG_CATALOG_TYPE_KEY)
+        && !mutableOptions.containsKey(ICEBERG_CATALOG_IMPL_KEY)) {
+      // If not Glue, nor explicitly set, we assume Hadoop catalog
+      mutableOptions.put(ICEBERG_CATALOG_TYPE_KEY, "hadoop");
     }
-
-    var tableName = connectorOptions.get(ICEBERG_CATALOG_TABLE_KEY);
-    tableName = validatedGlueTableName(tableName);
-
-    var mutableOptions = new HashMap<>(connectorOptions);
-    mutableOptions.put(ICEBERG_CATALOG_TABLE_KEY, tableName);
 
     return mutableOptions;
   }
