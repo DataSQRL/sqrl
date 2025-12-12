@@ -15,6 +15,8 @@
  */
 package com.datasqrl.graphql.config;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
@@ -28,6 +30,10 @@ import lombok.Setter;
 public class JdbcConfig {
 
   private String url;
+
+  public void validateConfig() {
+    checkNotNull(url, "The 'url' config must be set");
+  }
 
   @Getter
   @Setter
