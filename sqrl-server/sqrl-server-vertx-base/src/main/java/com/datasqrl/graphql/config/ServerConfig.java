@@ -80,6 +80,11 @@ public class ServerConfig {
       kafkaSubscriptionConfig.validateConfig();
     }
 
+    // Validate DuckDB config if present
+    if (duckDbConfig != null) {
+      duckDbConfig.validateConfig();
+    }
+
     return this;
   }
 
