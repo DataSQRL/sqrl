@@ -118,6 +118,7 @@ Configuration options that control the compiler, such as where logging output is
     "extended-scalar-types": true, // support extended scalar types in generated GraphQL
     "compile-flink-plan": true,    // produce a Flink physical plans (not supported in batch)
     "cost-model": "DEFAULT",       // cost model to use for DAG optimization ("DEFAULT" | "READ" | "WRITE")
+    "predicate-pushdown-rules": "LIMITED_TABLE_SOURCE_RULES", // configures the optimizer rules
 
     "explain": {                   // controls what and how the compiler writes pipeline plans to build/pipeline_*
       "sql":      false,          // include SQL code in the plan
@@ -140,6 +141,14 @@ Configuration options that control the compiler, such as where logging output is
   }
 }
 ```
+
+### Optimizer Configuration
+
+Limit predicate pushdown to improve subgraph identification and reduce the size of the physical computation graph by setting `predicate-pushdown-rules` to:
+- `DEFAULT`: uses the default optimizer rules of the Flink engine
+- `LIMITED_TABLE_SOURCE_RULES`: strip all table source related predicate pushdown rules
+- `LIMITED_RULES`: additionally strips additional filter rules
+This setting only applies for Flink streaming when `compile-flink-plan` is enabled.
 
 ## Connector Templates (`connectors`)
 
