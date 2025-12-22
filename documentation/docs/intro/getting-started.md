@@ -147,9 +147,9 @@ The picture above is the visualization of the pipeline we have build thus far. Y
 ## Next Steps
 
 Congratulations, you build a production-grade data pipeline and saw how DataSQRL generates the physical pipeline model from the logical definition of the data processing.
-We used the testing framework to simulate real-world execution of the pipeline and used snapshots for assessing actual for expected results.
+We used the testing framework to simulate real-world execution of the pipeline and used snapshots validating the results.
 
-Together, those two elements - the logical plus physical world model and workload simulation - provide valuable feedback and guard rails to AI coding agents.
+Together, those three elements - the conceptual framework with the logical (SQL) and physical (dataflow DAG) model, the compiler and validator, and the simulator - comprise the world model of DataSQRL. This world model provides feedback and guardrails to coding agents for autonomous development of data pipelines and data products. Now, you can pair up DataSQRL with your favorite coding agent and let it do the work for you.
 
 Next, check out:
 * **[Full Documentation](/docs/intro)** for the complete reference, language spec, and more.

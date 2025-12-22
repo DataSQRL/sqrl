@@ -50,7 +50,7 @@ export default function HomepageHeader({
           ></iframe>
       );
     } else if (image) {
-      return <img src={useBaseUrl(image)}
+      return <img src={useBaseUrl(image)} height="350"
                   alt="DataSQRL unlocks the value of your data"/>
     } else {
       return null;

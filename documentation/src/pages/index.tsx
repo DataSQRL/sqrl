@@ -23,7 +23,7 @@ const header: HomepageHeaderProps = {
   ),
   buttonLink: 'docs/intro/getting-started',
   buttonText: 'Automate Your Data',
-  image: "/img/diagrams/automation_overview.png"
+  image: "/img/diagrams/world_model_architecture.png"
 };
 
 export default function Home() {
