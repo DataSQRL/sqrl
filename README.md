@@ -26,14 +26,7 @@ DataSQRL models data pipelines with the following requirements:
 
 To learn more about DataSQRL, check out [the documentation](https://docs.datasqrl.com/).
 
-<!--
-## Video Demonstration
-
-The video demonstrates the interplay between DataSQRL and AI in building a data pipeline.
-
-VIDEO
-
--->
+To see how DataSQRL provides feedback and guides AI coding agents to build data products autonomously, [view this demo video](https://www.youtube.com/watch?v=RfMzdrtrEqQ).
 
 ## Getting Started
 
