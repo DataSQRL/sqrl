@@ -5,3 +5,12 @@ CustomersByName(inputName STRING NOT NULL, shortName AS CONCAT(LEFT(inputName, 3
 
 CustomersById(a BIGINT NOT NULL, b BIGINT NOT NULL, modId AS MOD(a, b)) :=
     SELECT * FROM Customers WHERE customerid < :modId ORDER BY customerid;
+
+IMPORT stdlib.openai.vector_embed;
+
+/*+no_query */
+CustomerVectorEmbed := SELECT customerid, name, vector_embed(name, 'text-embedding-3-small') AS name_vector, `timestamp`
+    FROM Customers;
+
+CustomersByVector(name STRING NOT NULL, vector AS vector_embed(name, 'text-embedding-3-small')) :=
+SELECT * FROM CustomerVectorEmbed ORDER BY cosine_similarity(:vector, name_vector) DESC;
