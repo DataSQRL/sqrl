@@ -212,6 +212,11 @@
       <artifactId>vertx-kafka-client</artifactId>
     </dependency>
     <dependency>
+      <groupId>software.amazon.msk</groupId>
+      <artifactId>aws-msk-iam-auth</artifactId>
+      <version>${aws-msk-iam-auth.version}</version>
+    </dependency>
+    <dependency>
       <groupId>io.projectreactor</groupId>
       <artifactId>reactor-core</artifactId>
     </dependency>
