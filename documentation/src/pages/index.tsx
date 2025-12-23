@@ -391,7 +391,16 @@ EnrichedTransactions := SELECT
               </div>
               <div className="row margin-bottom--xl margin-top--lg">
                 <div className="col col--6 text--center">
-
+                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
+                    <iframe
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                        src="https://www.youtube.com/embed/RfMzdrtrEqQ"
+                        title="DataSQRL Developer Workflow"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                    ></iframe>
+                  </div>
                 </div>
                 <div className="col col--5 text--left">
                   <h2>Developer Workflow</h2>
