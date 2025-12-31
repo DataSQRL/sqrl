@@ -75,6 +75,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   public static final String UPSERT_FORMAT = "upsert-%s";
 
   public static final String DEFAULT_TTL_KEY = "retention";
+  public static final String DEFAULT_RETENTION_BYTES_KEY = "retention-bytes";
 
   public static final EnumSet<EngineFeature> KAFKA_FEATURES = EnumSet.of(EngineFeature.MUTATIONS);
 
@@ -85,6 +86,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   // === SETTINGS ===
   private final Optional<Duration> defaultTTL;
+  private final Optional<Long> defaultRetentionBytes;
   private final Duration defaultWatermark;
   private final Duration transactionWatermark;
 
@@ -101,6 +103,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .getSettingOptional(DEFAULT_TTL_KEY)
             .filter(value -> !value.equals("-1"))
             .map(TimeUtils::parseDuration);
+    defaultRetentionBytes =
+        engineConfig.getSettingOptional(DEFAULT_RETENTION_BYTES_KEY).map(Long::parseLong);
     defaultWatermark = TimeUtils.parseDuration(engineConfig.getSetting("watermark"));
     transactionWatermark =
         TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
@@ -228,6 +232,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       connectorConfig.put("properties.isolation.level", "read_committed");
     }
     ttl.ifPresent(duration -> topicConfig.put("retention.ms", String.valueOf(duration.toMillis())));
+    defaultRetentionBytes.ifPresent(
+        bytes -> topicConfig.put("retention.bytes", String.valueOf(bytes)));
 
     tableBuilder.setConnectorOptions(connectorConfig);
     String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
