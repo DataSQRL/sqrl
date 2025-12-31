@@ -96,7 +96,11 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     this.streamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME);
     this.mutationConnectorConf =
         connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-mutation");
-    defaultTTL = engineConfig.getSettingOptional(DEFAULT_TTL_KEY).map(TimeUtils::parseDuration);
+    defaultTTL =
+        engineConfig
+            .getSettingOptional(DEFAULT_TTL_KEY)
+            .filter(value -> !value.equals("-1"))
+            .map(TimeUtils::parseDuration);
     defaultWatermark = TimeUtils.parseDuration(engineConfig.getSetting("watermark"));
     transactionWatermark =
         TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
