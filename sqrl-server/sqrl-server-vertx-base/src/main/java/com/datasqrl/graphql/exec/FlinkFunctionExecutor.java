@@ -48,7 +48,7 @@ public class FlinkFunctionExecutor implements FunctionExecutor {
             () -> {
               fn.instantiateFunction(Thread.currentThread().getContextClassLoader());
 
-              var mapper = new RowDataMapper(inputType);
+              var mapper = new RowDataMapper(inputType, fn.getOutputType());
               var rowData = mapper.toRowData(env.getArguments());
 
               var internalRes = fn.execute(rowData);
