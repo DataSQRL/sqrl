@@ -74,7 +74,8 @@ public class FlinkExecFunctionFactory {
     log.debug("Generated executable function [{}]: {}", uniqueFunctionName, fnCode);
 
     var execFn =
-        new FlinkExecFunction(uniqueFunctionName, description, inRowType, listOutput, genFn);
+        new FlinkExecFunction(
+            uniqueFunctionName, description, inRowType, outRowType, listOutput, genFn);
 
     planBuilder.function(execFn);
 
