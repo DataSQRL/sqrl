@@ -1,4 +1,5 @@
-FROM eclipse-temurin:17-jdk-noble
+ARG DUCKDB_EXTENSIONS_TAG=latest
+FROM datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG}
 
 ARG POSTGRES_VERSION=17
 ARG JBANG_VERSION=0.135.1
@@ -7,9 +8,8 @@ ENV TZ=America/Los_Angeles
 ENV POSTGRES_VERSION=${POSTGRES_VERSION}
 ENV JBANG_DOWNLOAD_VERSION=${JBANG_VERSION}
 ENV JBANG_DIR=/opt/jbang
-ENV DUCKDB_EXTENSIONS_DIR=/opt/duckdb_extensions
 
-# Install dependencies, PostgreSQL, Redpanda, JBang, and DuckDB extensions
+# Install dependencies, PostgreSQL, Redpanda, and JBang
 RUN apt-get update \
     && apt-get install -y --no-install-recommends lsb-release gnupg \
     && echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
@@ -22,11 +22,6 @@ RUN apt-get update \
     && curl -1sLf 'https://dl.redpanda.com/nzc4ZYQK3WRGd9sy/redpanda/cfg/setup/bash.deb.sh' | bash \
     && apt-get install -y --no-install-recommends redpanda \
     && curl -Ls https://sh.jbang.dev | bash -s - app setup \
-    && curl https://install.duckdb.org | sh \
-    && /root/.duckdb/cli/latest/duckdb -c "INSTALL iceberg; INSTALL httpfs; INSTALL cache_httpfs FROM community;" \
-    && mkdir -p ${DUCKDB_EXTENSIONS_DIR} \
-    && cp -a /root/.duckdb/extensions/. ${DUCKDB_EXTENSIONS_DIR}/ \
-    && rm -rf /root/.duckdb \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Expose needed ports
