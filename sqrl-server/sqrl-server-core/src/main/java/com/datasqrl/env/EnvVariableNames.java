@@ -22,6 +22,8 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class EnvVariableNames {
 
+  public static final String DUCKDB_EXTENSIONS_DIR = "DUCKDB_EXTENSIONS_DIR";
+
   public static final String KAFKA_BOOTSTRAP_SERVERS = "KAFKA_BOOTSTRAP_SERVERS";
   public static final String KAFKA_GROUP_ID = "KAFKA_GROUP_ID";
 

@@ -149,15 +149,22 @@ commands:
             # Upload the test reports.
             ./codecov do-upload --report-type test_results $COMMON_ARGS
 
-  compute-base-tag:
-    description: "Compute deterministic BASE_TAG from Dockerfile.base"
+  compute-sha1-tags:
+    description: "Compute deterministic tags from Dockerfiles"
     steps:
       - run:
-          name: Compute BASE_TAG
+          name: Compute Docker image tags
           command: |
-            BASE_TAG=$(sha1sum sqrl-cli/Dockerfile.base | cut -c1-12)
-            echo "Computed BASE_TAG=${BASE_TAG}"
-            echo "export BASE_TAG=${BASE_TAG}" >> "$BASH_ENV"
+            compute_sha1_tag() {
+              local file="$1"
+              local var_name="$2"
+              local tag=$(sha1sum "$file" | cut -c1-12)
+              echo "Computed ${var_name}=${tag}"
+              echo "export ${var_name}=${tag}" >> "$BASH_ENV"
+            }
+
+            compute_sha1_tag "Dockerfile.duckdb-extensions" "DUCKDB_EXTENSIONS_TAG"
+            compute_sha1_tag "sqrl-cli/Dockerfile.base" "BASE_TAG"
 
   compute-mcp-tag:
     description: "Compute MCP_TAG from latest @modelcontextprotocol/inspector version"
@@ -339,13 +346,14 @@ jobs:
           command: mvn -U -T1C -B install -DonlyJars
 
       - determine-version
-      - compute-base-tag
+      - compute-sha1-tags
       - setup-buildx:
           builder_name: "sqrl-builder"
 
       - run:
-          name: Pull base image
+          name: Pull base images
           command: |
+            docker pull datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
             docker pull datasqrl/base-sqrl:$BASE_TAG
 
       - run:
@@ -358,15 +366,16 @@ jobs:
           name: Build + push Docker images
           command: |
             set -x
-            
+
             build_and_push() {
               local repo="$1" ; shift
               local dir="$1"  ; shift
+              local extra_args="$@"
 
               docker buildx build \
                 --platform linux/amd64,linux/arm64 \
                 --push \
-                --build-arg BASE_TAG=$BASE_TAG \
+                $extra_args \
                 -t $REGISTRY/$repo:$TAG_SUFFIX \
                 -f $dir/Dockerfile \
                 $dir
@@ -379,15 +388,55 @@ jobs:
               fi
             }
 
-            build_and_push cmd                 sqrl-cli
-            build_and_push sqrl-server         sqrl-server/sqrl-server-vertx
+            build_and_push cmd                 sqrl-cli                     --build-arg BASE_TAG=$BASE_TAG
+            build_and_push sqrl-server         sqrl-server/sqrl-server-vertx --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
+
+  docker-build-duckdb-extensions:
+    machine:
+      image: ubuntu-2404:current
+    steps:
+      - checkout
+      - compute-sha1-tags
+      - setup-buildx:
+          builder_name: "duckdb-builder"
+      - run:
+          name: Skip build if duckdb-extensions already exists
+          command: |
+            set +e
+
+            if docker buildx imagetools inspect datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG} \
+                --format '{{json .}}' > /tmp/manifest.json 2>/dev/null; then
+              echo "── Manifest for datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG} ────────────────"
+              cat /tmp/manifest.json | jq .
+              echo "───────────────────────────────────────────────────────────────"
+              echo "Tag already exists – skipping duckdb-extensions build."
+              circleci step halt
+            else
+              echo "Tag does not exist yet – will build duckdb-extensions image."
+            fi
+
+      - run:
+          name: Login to Docker Hub
+          command: |
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      - run:
+          name: Build & push datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
+          command: |
+            docker buildx build \
+              --push \
+              --platform linux/amd64,linux/arm64 \
+              -t datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG \
+              -t datasqrl/duckdb-extensions:latest \
+              -f Dockerfile.duckdb-extensions \
+              .
 
   docker-build-base-image:
     machine:
       image: ubuntu-2404:current
     steps:
       - checkout
-      - compute-base-tag
+      - compute-sha1-tags
       - setup-buildx:
           builder_name: "base-builder"
       - run:
@@ -407,6 +456,11 @@ jobs:
             fi
 
       - run:
+          name: Pull duckdb-extensions image
+          command: |
+            docker pull datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
+
+      - run:
           name: Login to Docker Hub
           command: |
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
@@ -417,6 +471,7 @@ jobs:
             docker buildx build \
               --push \
               --platform linux/amd64,linux/arm64 \
+              --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG \
               -t datasqrl/base-sqrl:$BASE_TAG \
               -t datasqrl/base-sqrl:latest \
               -f sqrl-cli/Dockerfile.base \
@@ -465,8 +520,12 @@ jobs:
 workflows:
   ci:
     jobs:
+      - docker-build-duckdb-extensions:
+          <<: *job-defaults
       - docker-build-base-image:
           <<: *job-defaults
+          requires:
+            - docker-build-duckdb-extensions
       - docker-build-mcp-inspector:
           <<: *job-defaults
       - download-maven-dependencies:
@@ -499,6 +558,7 @@ workflows:
           <<: *job-defaults
           requires:
             - download-maven-dependencies
+            - docker-build-duckdb-extensions
             - docker-build-base-image
       - deploy:
           <<: *job-defaults
