@@ -30,6 +30,7 @@
 
   <modules>
     <module>sqrl-testing-integration</module>
+    <module>sqrl-coverage</module>
   </modules>
 
   <profiles>

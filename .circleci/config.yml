@@ -143,6 +143,13 @@ commands:
 
             ./codecov --version
 
+            # Debug: Show what JaCoCo files exist
+            echo "=== JaCoCo XML Reports ==="
+            find . -name "jacoco.xml" -type f | sort
+            echo ""
+            echo "=== Total jacoco.xml files found ==="
+            find . -name "jacoco.xml" -type f | wc -l
+
             # Upload the coverage report.
             ./codecov upload-coverage $COMMON_ARGS
 
@@ -289,8 +296,8 @@ jobs:
           name: Auth ghcr
           command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
-          name: Build with Docker images
-          command: mvn -U clean -T1C -B install -DonlyImages -Ddocker.image.tag=local-${CIRCLE_SHA1}
+          name: Build with Docker images (instrumented for coverage)
+          command: mvn -U clean -T1C -B install -DonlyImages -Pinstrument -Ddocker.image.tag=local-${CIRCLE_SHA1}
       - run:
           name: Run container tests using TestContainers
           command: |
@@ -298,6 +305,7 @@ jobs:
               -pl :sqrl-testing-container \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
+      - save-test-results
 
   deploy:
     docker:
@@ -316,7 +324,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease} -Deasyjacoco.skip=true
+          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease} -Djacoco.skip=true
 
   build-images:
     # use a full VM so we can run Docker / Buildx
