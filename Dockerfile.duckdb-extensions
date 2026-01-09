@@ -1,0 +1,10 @@
+FROM eclipse-temurin:17-jdk-noble
+
+ENV DUCKDB_EXTENSIONS_DIR=/opt/duckdb_extensions
+
+# Install DuckDB CLI and pre-install extensions
+RUN curl https://install.duckdb.org | sh \
+    && /root/.duckdb/cli/latest/duckdb -c "INSTALL iceberg; INSTALL httpfs; INSTALL cache_httpfs FROM community;" \
+    && mkdir -p ${DUCKDB_EXTENSIONS_DIR} \
+    && cp -a /root/.duckdb/extensions/. ${DUCKDB_EXTENSIONS_DIR}/ \
+    && rm -rf /root/.duckdb

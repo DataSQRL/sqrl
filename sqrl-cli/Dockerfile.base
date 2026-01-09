@@ -1,4 +1,5 @@
-FROM eclipse-temurin:17-jdk-noble
+ARG DUCKDB_EXTENSIONS_TAG=latest
+FROM datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG}
 
 ARG POSTGRES_VERSION=17
 ARG JBANG_VERSION=0.135.1

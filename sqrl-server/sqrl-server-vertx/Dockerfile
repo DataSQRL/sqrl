@@ -14,7 +14,8 @@
 # limitations under the License.
 #
 
-FROM eclipse-temurin:17
+ARG DUCKDB_EXTENSIONS_TAG=latest
+FROM datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG}
 
 # Create directories for application, configuration, and logs
 RUN mkdir -p /opt/sqrl/app /opt/sqrl/config /opt/sqrl/logs

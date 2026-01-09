@@ -90,11 +90,14 @@ public class JdbcClientsConfig {
     var url = duckDbConf.getUrl();
     var extensions = new DuckDbExtensions(duckDbConf);
     var initSql = extensions.buildInitSql();
-    log.debug("DuckDB init SQL: {}", initSql);
 
     var hikariCfg = new HikariConfig();
     hikariCfg.setJdbcUrl(url);
-    hikariCfg.setConnectionInitSql(initSql);
+    initSql.ifPresent(
+        isql -> {
+          log.debug("DuckDB init SQL: {}", isql);
+          hikariCfg.setConnectionInitSql(isql);
+        });
 
     var poolOptions =
         new PoolOptions(this.config.getPoolOptions())
