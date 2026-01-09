@@ -442,32 +442,22 @@
     <profile>
       <id>instrument</id>
 
-      <dependencies>
-        <dependency>
-          <groupId>org.jacoco</groupId>
-          <artifactId>org.jacoco.agent</artifactId>
-          <version>${jacoco.version}</version>
-          <classifier>runtime</classifier>
-        </dependency>
-      </dependencies>
-
       <build>
         <plugins>
           <plugin>
-            <groupId>com.marvinformatics.jacoco</groupId>
-            <artifactId>easy-jacoco-maven-plugin</artifactId>
-            <version>${easy-jacoco-maven-plugin.version}</version>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>${jacoco.version}</version>
             <executions>
               <execution>
                 <id>instrument-uber-jar</id>
                 <goals>
-                  <goal>instrument-jar</goal>
+                  <goal>instrument</goal>
                 </goals>
+                <phase>package</phase>
                 <configuration>
-                  <source>${project.build.directory}/sqrl-cli.jar</source>
-                  <destination>${project.build.directory}/sqrl-cli.jar</destination>
                   <includes>
-                    <include>com/datasqrl/*</include>
+                    <include>com/datasqrl/**</include>
                   </includes>
                 </configuration>
               </execution>

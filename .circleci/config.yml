@@ -120,6 +120,8 @@ commands:
             mkdir -p ~/test-results/junit/
             find . -type f -regex ".*/target/surefire-reports/.*xml" \
               -exec cp {} ~/test-results/junit/ \;
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" \
+              -exec cp {} ~/test-results/junit/ \;
           when: always
       - store_test_results:
           path: ~/test-results
@@ -289,8 +291,8 @@ jobs:
           name: Auth ghcr
           command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
-          name: Build with Docker images
-          command: mvn -U clean -T1C -B install -DonlyImages -Ddocker.image.tag=local-${CIRCLE_SHA1}
+          name: Build with Docker images (instrumented for coverage)
+          command: mvn -U clean -T1C -B install -DonlyImages -Pinstrument -Ddocker.image.tag=local-${CIRCLE_SHA1}
       - run:
           name: Run container tests using TestContainers
           command: |
@@ -298,6 +300,7 @@ jobs:
               -pl :sqrl-testing-container \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
+      - save-test-results
 
   deploy:
     docker:
@@ -316,7 +319,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease} -Deasyjacoco.skip=true
+          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease} -Djacoco.skip=true
 
   build-images:
     # use a full VM so we can run Docker / Buildx
