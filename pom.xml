@@ -147,7 +147,7 @@
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <jjwt.version>0.13.0</jjwt.version>
     <json-schema.version>2.0.0</json-schema.version>
-    <junit.jupiter.version>6.0.1</junit.jupiter.version>
+    <junit.jupiter.version>6.0.2</junit.jupiter.version>
     <kafka.version>3.9.1</kafka.version>
     <log4j.version>2.25.3</log4j.version>
     <lombok.version>1.18.42</lombok.version>
