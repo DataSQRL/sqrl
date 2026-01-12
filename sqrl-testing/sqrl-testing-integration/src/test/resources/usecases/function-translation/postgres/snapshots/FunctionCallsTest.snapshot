@@ -52,6 +52,7 @@
       "is_decimal_example" : true,
       "is_digit_example" : true,
       "element_example" : 3,
+      "map_elem_access_example" : 1,
       "array_contains_example" : true,
       "array_prepend_example" : [ "a", "b", "c" ],
       "array_concat_example" : [ "a", "b", "c", "d", "e" ],

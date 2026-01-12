@@ -83,7 +83,7 @@ FunctionCalls := SELECT
 
     ELEMENT(ARRAY[3])                                         AS element_example,
 --     CARDINALITY(MAP['a', 1, 'b', 2])                          AS cardinality_example,
---     MAP['a', 1, 'b', 2]['a']                                  AS map_index_example,
+    MAP['a', 1, 'b', 2]['a']                                  AS map_elem_access_example,
     ARRAY_CONTAINS(ARRAY[1, 2, 3], 2)                         AS array_contains_example,
 --     ARRAY_DISTINCT(ARRAY['a', 'b', 'b', 'c'])                 AS array_distinct_example,
     ARRAY_PREPEND(ARRAY['b', 'c'], 'a')                       AS array_prepend_example,
@@ -141,3 +141,11 @@ ArrayFunctionsTest :=
         ARRAY_POSITION(arrayagg_example, 'y') IS NOT NULL AS array_has_y,
         ARRAY_POSITION(arrayagg_example, 'z') IS NOT NULL AS array_has_z
     FROM ArrayFunctions;
+
+/*+engine(postgres)*/
+_MapData := SELECT MAP['name', name,'city', city] AS map_elems
+            FROM (VALUES ('Alice', 'Berlin'), ('Bob', 'Paris')) AS t(name, city);
+
+/*+test */
+MapTest :=
+    SELECT map_elems['name'] AS elem_name FROM _MapData;
