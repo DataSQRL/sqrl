@@ -1,0 +1,23 @@
+== Abstract Syntax Tree ==
+LogicalProject(uid_score=[+($0, 1)], segment_len=[CHAR_LENGTH($3)])
++- LogicalJoin(condition=[=($0, $2)], joinType=[inner])
+   :- LogicalTableScan(table=[[default_catalog, default_database, events]])
+   +- LogicalTableScan(table=[[default_catalog, default_database, dim_users_hist]])
+
+== Optimized Physical Plan ==
+Calc(select=[+(user_id, 1) AS uid_score, CHAR_LENGTH(segment) AS segment_len])
++- Join(joinType=[InnerJoin], where=[=(user_id, user_id0)], select=[user_id, user_id0, segment], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])
+   :- Exchange(distribution=[hash[user_id]])
+   :  +- Calc(select=[user_id])
+   :     +- TableSourceScan(table=[[default_catalog, default_database, events]], fields=[user_id, extra])
+   +- Exchange(distribution=[hash[user_id]])
+      +- TableSourceScan(table=[[default_catalog, default_database, dim_users_hist]], fields=[user_id, segment])
+
+== Optimized Execution Plan ==
+Calc(select=[(user_id + 1) AS uid_score, CHAR_LENGTH(segment) AS segment_len])
++- Join(joinType=[InnerJoin], where=[(user_id = user_id0)], select=[user_id, user_id0, segment], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])
+   :- Exchange(distribution=[hash[user_id]])
+   :  +- Calc(select=[user_id])
+   :     +- TableSourceScan(table=[[default_catalog, default_database, events]], fields=[user_id, extra])
+   +- Exchange(distribution=[hash[user_id]])
+      +- TableSourceScan(table=[[default_catalog, default_database, dim_users_hist]], fields=[user_id, segment])

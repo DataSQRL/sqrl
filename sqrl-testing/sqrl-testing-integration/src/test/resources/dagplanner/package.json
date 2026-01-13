@@ -8,8 +8,7 @@
       "sql": true,
       "logical": true,
       "physical": false
-    },
-    "predicate-pushdown-rules": "LIMITED_RULES"
+    }
   },
   "connectors": {
     "kafka": {
