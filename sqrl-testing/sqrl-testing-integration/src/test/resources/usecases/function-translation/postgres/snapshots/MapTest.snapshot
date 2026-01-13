@@ -1,0 +1,9 @@
+{
+  "data" : {
+    "MapTest" : [ {
+      "elem_name" : "Alice"
+    }, {
+      "elem_name" : "Bob"
+    } ]
+  }
+}
