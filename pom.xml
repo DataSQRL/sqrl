@@ -146,7 +146,7 @@
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <jjwt.version>0.13.0</jjwt.version>
-    <json-schema.version>2.0.0</json-schema.version>
+    <json-schema.version>3.0.0</json-schema.version>
     <junit.jupiter.version>6.0.2</junit.jupiter.version>
     <kafka.version>3.9.1</kafka.version>
     <log4j.version>2.25.3</log4j.version>
