@@ -107,6 +107,13 @@
                   </includes>
                 </configuration>
               </execution>
+              <execution>
+                <id>restore-instrumented-classes</id>
+                <goals>
+                  <goal>restore-instrumented-classes</goal>
+                </goals>
+                <phase>verify</phase>
+              </execution>
             </executions>
           </plugin>
         </plugins>

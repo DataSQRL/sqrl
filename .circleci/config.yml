@@ -143,15 +143,16 @@ commands:
 
             ./codecov --version
 
-            # Debug: Show what JaCoCo files exist
-            echo "=== JaCoCo XML Reports ==="
-            find . -name "jacoco.xml" -type f | sort
-            echo ""
-            echo "=== Total jacoco.xml files found ==="
-            find . -name "jacoco.xml" -type f | wc -l
-
-            # Upload the coverage report.
-            ./codecov upload-coverage $COMMON_ARGS
+            # Prefer the aggregated multi-module report.
+            JACOCO_AGG="sqrl-testing/sqrl-coverage/target/site/jacoco-aggregate/jacoco.xml"
+            if [ -f "$JACOCO_AGG" ]; then
+              echo "=== Using aggregate JaCoCo report: $JACOCO_AGG ==="
+              ls -lh "$JACOCO_AGG"
+              ./codecov upload-coverage $COMMON_ARGS --files "$JACOCO_AGG"
+            else
+              echo "=== No aggregate JaCoCo report found; skipping coverage upload ==="
+              # Avoid uploading empty/partial reports (they can drag down overall coverage).
+            fi
 
             # Upload the test reports.
             ./codecov do-upload --report-type test_results $COMMON_ARGS

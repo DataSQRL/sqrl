@@ -448,20 +448,27 @@
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>${jacoco.version}</version>
-            <executions>
-              <execution>
-                <id>instrument-uber-jar</id>
-                <goals>
-                  <goal>instrument</goal>
-                </goals>
-                <phase>package</phase>
-                <configuration>
-                  <includes>
-                    <include>com/datasqrl/**</include>
-                  </includes>
-                </configuration>
-              </execution>
-            </executions>
+              <executions>
+                <execution>
+                  <id>instrument-uber-jar</id>
+                  <goals>
+                    <goal>instrument</goal>
+                  </goals>
+                  <phase>package</phase>
+                  <configuration>
+                    <includes>
+                      <include>com/datasqrl/**</include>
+                    </includes>
+                  </configuration>
+                </execution>
+                <execution>
+                  <id>restore-instrumented-classes</id>
+                  <goals>
+                    <goal>restore-instrumented-classes</goal>
+                  </goals>
+                  <phase>verify</phase>
+                </execution>
+              </executions>
           </plugin>
         </plugins>
       </build>

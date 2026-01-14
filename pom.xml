@@ -1006,7 +1006,7 @@
             <flinkrunner.image.repo>${flinkrunner.image.repo}</flinkrunner.image.repo>
             <flinkrunner.version>${flinkrunner.version}</flinkrunner.version>
           </systemPropertyVariables>
-          <argLine>${failsafeArgLine} ${argLine}
+          <argLine>${argLine}
             --add-opens=java.base/java.util=ALL-UNNAMED
             --add-opens=java.base/java.lang=ALL-UNNAMED
             --add-opens=java.base/java.io=ALL-UNNAMED
