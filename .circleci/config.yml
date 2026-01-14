@@ -148,7 +148,7 @@ commands:
             if [ -f "$JACOCO_AGG" ]; then
               echo "=== Using aggregate JaCoCo report: $JACOCO_AGG ==="
               ls -lh "$JACOCO_AGG"
-              ./codecov upload-coverage $COMMON_ARGS --files "$JACOCO_AGG"
+              ./codecov upload-coverage $COMMON_ARGS --file "$JACOCO_AGG"
             else
               echo "=== No aggregate JaCoCo report found; skipping coverage upload ==="
               # Avoid uploading empty/partial reports (they can drag down overall coverage).
@@ -297,15 +297,19 @@ jobs:
           name: Auth ghcr
           command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
-          name: Build with Docker images (instrumented for coverage)
-          command: mvn -U clean -T1C -B install -DonlyImages -Pinstrument -Ddocker.image.tag=local-${CIRCLE_SHA1}
+          name: Build Docker images
+          command: mvn -U clean -T1C -B install -DonlyImages -Ddocker.image.tag=local-${CIRCLE_SHA1}
       - run:
           name: Run container tests using TestContainers
           command: |
             mvn -B install -DonlyContainerE2E \
               -pl :sqrl-testing-container \
+              -Dsqrl.container.coverage=true \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
+      - run:
+          name: Generate aggregate JaCoCo report
+          command: mvn -B -pl :sqrl-coverage -am -DskipTests -DskipITs verify
       - save-test-results
 
   deploy:

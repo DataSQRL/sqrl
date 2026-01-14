@@ -70,6 +70,7 @@
               <dataFileIncludes>
                 <dataFileInclude>**/target/jacoco.exec</dataFileInclude>
                 <dataFileInclude>**/target/jacoco-it.exec</dataFileInclude>
+                <dataFileInclude>**/target/jacoco/jacoco-container.exec</dataFileInclude>
               </dataFileIncludes>
             </configuration>
           </execution>
