@@ -29,6 +29,7 @@ import lombok.AllArgsConstructor;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.AsyncScalarFunction;
 import org.apache.flink.table.functions.FunctionDefinition;
+import org.apache.flink.table.functions.ProcessTableFunction;
 import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.functions.TableAggregateFunction;
 import org.apache.flink.table.functions.TableFunction;
@@ -49,6 +50,7 @@ public class ClasspathFunctionLoader {
           UserDefinedFunction.class,
           TableFunction.class,
           TableAggregateFunction.class,
+          ProcessTableFunction.class,
           AsyncScalarFunction.class);
 
   private static final List<String> TRUNCATED_PACKAGE_PREFIX =
