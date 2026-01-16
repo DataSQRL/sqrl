@@ -77,11 +77,11 @@ class PredicatePushdownTest extends AbstractAssetSnapshotTest {
     executeTest(sqlFile, rules);
   }
 
-  @Disabled("Intended for manual usage")
+  @Disabled("Manual single SQL test")
   @ParameterizedTest
   @EnumSource(PredicatePushdownRules.class)
   void testSingleFile(PredicatePushdownRules rules) throws Exception {
-    var sqlFile = SCRIPT_DIR.resolve("multi-table-source.sql");
+    var sqlFile = SCRIPT_DIR.resolve("project-join-transpose.sql");
     assertThat(sqlFile).isRegularFile();
 
     executeTest(sqlFile, rules);

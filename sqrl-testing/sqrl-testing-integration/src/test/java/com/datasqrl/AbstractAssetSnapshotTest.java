@@ -197,7 +197,7 @@ public abstract class AbstractAssetSnapshotTest {
   }
 
   protected AssertStatusHook execute(Path rootDir, String... args) {
-    return execute(rootDir, new ArrayList<>(List.of(args)));
+    return execute(rootDir, List.of(args));
   }
 
   /**

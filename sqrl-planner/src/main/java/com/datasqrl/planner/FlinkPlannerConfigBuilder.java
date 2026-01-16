@@ -33,6 +33,8 @@ import org.apache.flink.table.planner.plan.optimize.program.FlinkGroupProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
 import org.apache.flink.table.planner.plan.optimize.program.StreamOptimizeContext;
+import org.apache.flink.table.planner.plan.rules.logical.FlinkFilterProjectTransposeRule;
+import org.apache.flink.table.planner.plan.rules.logical.FlinkProjectJoinTransposeRule;
 import org.apache.flink.table.planner.plan.rules.logical.PushFilterInCalcIntoTableSourceScanRule;
 import org.apache.flink.table.planner.plan.rules.logical.PushFilterIntoLegacyTableSourceScanRule;
 import org.apache.flink.table.planner.plan.rules.logical.PushFilterIntoTableSourceScanRule;
@@ -69,7 +71,19 @@ public class FlinkPlannerConfigBuilder {
           // Removing prevents push filter through an aggregation
           CoreRules.FILTER_AGGREGATE_TRANSPOSE,
           // Removing prevents cloning filters to each UNION/INTERSECT leg
-          CoreRules.FILTER_SET_OP_TRANSPOSE);
+          CoreRules.FILTER_SET_OP_TRANSPOSE,
+          // Removing CoreRules.FILTER_PROJECT_TRANSPOSE keeps filters above projects (no rewrite
+          // like a+1>10→a>9), reducing predicate pushdown/pruning but often improving subgraph
+          // reuse by avoiding per-branch filter clones.
+          CoreRules.FILTER_PROJECT_TRANSPOSE,
+          // Removing keeps WHERE conditions above projections (no time-aware rewrite), limiting
+          // pushdown and simplification but avoiding duplicated Calcs across branches—useful for
+          // subgraph elimination.
+          FlinkFilterProjectTransposeRule.INSTANCE,
+          // Removing FlinkProjectJoinTransposeRule stops pushing projects into each join input,
+          // leading to wider joins (less column pruning) but fewer per-arm Calcs and more identical
+          // subgraphs around (temporal) joins.
+          FlinkProjectJoinTransposeRule.INSTANCE);
 
   private final CompilerConfig compilerConfig;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
