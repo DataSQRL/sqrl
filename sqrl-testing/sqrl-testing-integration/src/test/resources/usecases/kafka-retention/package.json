@@ -1,0 +1,15 @@
+{
+  "version": "1",
+  "enabled-engines": ["kafka", "flink"],
+  "engines": {
+    "kafka": {
+      "retention": "-1"
+    }
+  },
+  "compiler": {
+    "logger": "kafka"
+  },
+  "script": {
+    "main": "kafka-retention.sqrl"
+  }
+}

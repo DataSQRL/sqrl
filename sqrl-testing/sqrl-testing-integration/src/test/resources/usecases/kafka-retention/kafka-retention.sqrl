@@ -1,0 +1,3 @@
+IMPORT mock.data;
+
+EXPORT Data TO logger.LogData;
