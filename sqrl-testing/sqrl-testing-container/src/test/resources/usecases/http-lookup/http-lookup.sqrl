@@ -1,0 +1,37 @@
+-- Minimal example using flink-http-connector (rest-lookup)
+
+CREATE TABLE _Orders (
+  id STRING,
+  id2 STRING,
+  proc_time AS PROCTIME()
+) WITH (
+  'connector' = 'datagen',
+  'rows-per-second' = '1',
+  'fields.id.kind' = 'sequence',
+  'fields.id.start' = '1',
+  'fields.id.end' = '10',
+  'fields.id2.kind' = 'sequence',
+  'fields.id2.start' = '1',
+  'fields.id2.end' = '10'
+);
+
+CREATE TABLE _Customers (
+  id STRING,
+  id2 STRING,
+  msg STRING,
+  uuid STRING
+) WITH (
+  'connector' = 'rest-lookup',
+  'format' = 'json',
+  'url' = 'http://http-lookup-mock:18080/client',
+  'asyncPolling' = 'true'
+);
+
+EnrichedOrders :=
+    SELECT o.id, o.id2, c.msg, c.uuid
+      FROM _Orders o
+      JOIN _Customers FOR SYSTEM_TIME AS OF o.proc_time c
+        ON o.id = c.id AND o.id2 = c.id2;
+
+/*+test*/
+EnrichedOrdersTest := SELECT * FROM EnrichedOrders ORDER BY id, id2;
