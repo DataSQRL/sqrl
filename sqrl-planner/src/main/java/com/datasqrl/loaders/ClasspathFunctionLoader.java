@@ -27,7 +27,9 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import lombok.AllArgsConstructor;
 import org.apache.flink.table.functions.AggregateFunction;
+import org.apache.flink.table.functions.AsyncLookupFunction;
 import org.apache.flink.table.functions.AsyncScalarFunction;
+import org.apache.flink.table.functions.AsyncTableFunction;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.functions.ProcessTableFunction;
 import org.apache.flink.table.functions.ScalarFunction;
@@ -45,13 +47,15 @@ public class ClasspathFunctionLoader {
 
   public static final Set<Class<? extends FunctionDefinition>> FLINK_UDF_CLASSES =
       Set.of(
+          UserDefinedFunction.class,
           ScalarFunction.class,
           AggregateFunction.class,
-          UserDefinedFunction.class,
           TableFunction.class,
           TableAggregateFunction.class,
           ProcessTableFunction.class,
-          AsyncScalarFunction.class);
+          AsyncScalarFunction.class,
+          AsyncTableFunction.class,
+          AsyncLookupFunction.class);
 
   private static final List<String> TRUNCATED_PACKAGE_PREFIX =
       List.of("com.datasqrl.flinkrunner.", "com.datasqrl.");
