@@ -1009,6 +1009,7 @@
             <licenseSet>
               <header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
               <excludes>
+                <exclude>**/src/**/org/apache/flink/**</exclude>
                 <exclude>**/src/test/resources/**</exclude>
                 <exclude>**/resources/templates/init-project/**</exclude>
                 <exclude>**/resources/templates/functions/**</exclude>
