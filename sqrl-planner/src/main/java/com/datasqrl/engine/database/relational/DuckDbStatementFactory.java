@@ -26,7 +26,7 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.convert.PostgresRelToSqlNode;
 import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
-import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
+import com.datasqrl.calcite.dialect.ExtendedDuckDbSqlDialect;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -67,7 +67,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
 
   @Override
   protected SqlDataTypeSpec getSqlType(RelDataType type, Optional<DataTypeHint> hint) {
-    return ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(type);
+    return ExtendedDuckDbSqlDialect.DEFAULT.getCastSpec(type);
   }
 
   /**
