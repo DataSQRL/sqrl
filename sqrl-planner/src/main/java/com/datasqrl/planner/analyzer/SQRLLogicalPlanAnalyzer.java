@@ -553,14 +553,11 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       var pkBuilder = PrimaryKeyMap.build();
       for (PrimaryKeyMap.ColumnSet colSet : input.primaryKey.asList()) {
         Set<Integer> mappedTo =
-            colSet.getIndexes().stream()
+            colSet.indexes().stream()
                 .flatMap(idx -> mappedProjects.get(idx).stream())
                 .collect(Collectors.toUnmodifiableSet());
         if (mappedTo.isEmpty()) {
           lostPrimaryKeyMapping = true;
-          var pkIdx = colSet.pickBest(inputType);
-          //          errors.notice("Primary key column [%s] is not selected",
-          //              inputType.getFieldList().get(pkIdx).getName());
         } else {
           pkBuilder.add(mappedTo);
         }
