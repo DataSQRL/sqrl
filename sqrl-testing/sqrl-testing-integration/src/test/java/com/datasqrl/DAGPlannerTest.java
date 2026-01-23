@@ -74,7 +74,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   @Disabled
   @Test
   void specificScript() {
-    var script = SCRIPT_DIR.resolve("parserError-emptyLineBlockCommentPos-fail.sqrl");
+    var script = SCRIPT_DIR.resolve("postgresMapTranslationTest.sqrl");
     scripts(script);
   }
 

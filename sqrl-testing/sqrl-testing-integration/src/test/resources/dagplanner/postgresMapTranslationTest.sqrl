@@ -1,0 +1,8 @@
+/*+ engine(postgres)*/
+DuckDbTable := SELECT
+    user_id,
+    MAP['email', email, 'plan', plan] AS attrs
+FROM (VALUES (1, 'a@x.com', 'free'), (2, 'b@x.com', 'pro')) AS val(user_id, email, plan);
+
+/*+ engine(flink)*/
+MyTable := SELECT * FROM (VALUES (1)) AS val(num);
