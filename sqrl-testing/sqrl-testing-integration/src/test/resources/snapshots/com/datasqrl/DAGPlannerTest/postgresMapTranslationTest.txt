@@ -1,0 +1,246 @@
+>>>pipeline_explain.txt
+=== DuckDbTable
+ID:          default_catalog.default_database.DuckDbTable
+Type:        state
+Stage:       postgres
+Primary key: user_id
+Timestamp:   -
+---
+Schema:
+ - user_id: INTEGER NOT NULL
+ - attrs: (VARCHAR(5) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(7) CHARACTER SET "UTF-16LE" NOT NULL) MAP NOT NULL
+Plan:
+LogicalProject(user_id=[$0], attrs=[MAP('email':VARCHAR(5) CHARACTER SET "UTF-16LE", CAST($1):VARCHAR(7) CHARACTER SET "UTF-16LE" NOT NULL, 'plan':VARCHAR(5) CHARACTER SET "UTF-16LE", CAST($2):VARCHAR(7) CHARACTER SET "UTF-16LE" NOT NULL)])
+  LogicalValues(tuples=[[{ 1, 'a@x.com', 'free' }, { 2, 'b@x.com', 'pro' }]])
+SQL:
+CREATE VIEW `DuckDbTable` AS  SELECT
+    user_id,
+    MAP['email', email, 'plan', plan] AS attrs
+FROM (VALUES (1, 'a@x.com', 'free'), (2, 'b@x.com', 'pro')) AS val(user_id, email, plan);
+
+=== MyTable
+ID:          default_catalog.default_database.MyTable
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
+Schema:
+ - num: INTEGER NOT NULL
+Plan:
+LogicalProject(num=[$0])
+  LogicalValues(tuples=[[{ 1 }]])
+SQL:
+CREATE VIEW `MyTable` AS  SELECT * FROM (VALUES (1)) AS val(num);
+
+>>>flink-sql-no-functions.sql
+CREATE VIEW `DuckDbTable`
+AS
+SELECT `user_id`, MAP['email', `email`, 'plan', `plan`] AS `attrs`
+FROM (VALUES ROW(1, 'a@x.com', 'free'),
+   ROW(2, 'b@x.com', 'pro')) AS `val` (`user_id`, `email`, `plan`);
+CREATE VIEW `MyTable`
+AS
+SELECT *
+FROM (VALUES ROW(1)) AS `val` (`num`);
+CREATE TABLE `MyTable_1` (
+  `num` INTEGER NOT NULL,
+  `__pk_hash` INTEGER NOT NULL,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'MyTable_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`MyTable_1`
+SELECT `num`, 1 AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`MyTable`
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "MyTable_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"MyTable_1\" (\"num\" INTEGER NOT NULL, \"__pk_hash\" INTEGER NOT NULL, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "num",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "DuckDbTable",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"DuckDbTable\"(\"user_id\", \"attrs\") AS SELECT \"user_id\", MAP { 'email' : CAST(\"email\" AS TEXT), 'plan' : CAST(\"plan\" AS TEXT) } AS \"attrs\"\nFROM (VALUES (1, 'a@x.com', 'free'),\n    (2, 'b@x.com', 'pro')) AS \"t\" (\"user_id\", \"email\", \"plan\")",
+      "fields" : [
+        {
+          "name" : "user_id",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "attrs",
+          "type" : "JSONB",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "MyTable",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"MyTable\"(\"num\") AS SELECT \"num\"\nFROM \"MyTable_1\"",
+      "fields" : [
+        {
+          "name" : "num",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ]
+    }
+  ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "DuckDbTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"user_id\", MAP { 'email' : CAST(\"email\" AS TEXT), 'plan' : CAST(\"plan\" AS TEXT) } AS \"attrs\"\nFROM (VALUES (1, 'a@x.com', 'free'),\n    (2, 'b@x.com', 'pro')) AS \"t\" (\"user_id\", \"email\", \"plan\")",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MyTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"num\"\nFROM \"MyTable_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetDuckDbTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query DuckDbTable($limit: Int = 10, $offset: Int = 0) {\nDuckDbTable(limit: $limit, offset: $offset) {\nuser_id\nattrs\n}\n\n}",
+            "queryName" : "DuckDbTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/DuckDbTable{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetMyTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nnum\n}\n\n}",
+            "queryName" : "MyTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable{?offset,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DuckDbTable {\n  user_id: Int!\n  attrs: JSON!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyTable {\n  num: Int!\n}\n\ntype Query {\n  DuckDbTable(limit: Int = 10, offset: Int = 0): [DuckDbTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
