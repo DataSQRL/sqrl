@@ -15,8 +15,9 @@
  */
 package com.datasqrl.plan.util;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -35,8 +36,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Singular;
 import lombok.ToString;
-import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 
 /** This class keeps track of the column indexes that are part of the primary key. */
 @ToString
@@ -48,10 +49,8 @@ public class PrimaryKeyMap implements Serializable {
   @Getter final boolean undefined;
 
   public PrimaryKeyMap(List<ColumnSet> columns) {
-    List<Integer> allIndexes =
-        columns.stream().flatMap(ColumnSet::stream).collect(Collectors.toUnmodifiableList());
-    Preconditions.checkArgument(
-        allIndexes.size() == Set.copyOf(allIndexes).size(), "Duplicate column indexes");
+    var allIndexes = columns.stream().flatMap(ColumnSet::stream).toList();
+    checkArgument(allIndexes.size() == Set.copyOf(allIndexes).size(), "Duplicate column indexes");
     this.columns = columns;
     this.undefined = false;
   }
@@ -62,8 +61,7 @@ public class PrimaryKeyMap implements Serializable {
   }
 
   public static PrimaryKeyMap of(List<Integer> pks) {
-    return new PrimaryKeyMap(
-        pks.stream().map(Set::of).map(ColumnSet::new).collect(Collectors.toUnmodifiableList()));
+    return new PrimaryKeyMap(pks.stream().map(Set::of).map(ColumnSet::new).toList());
   }
 
   public static PrimaryKeyMap none() {
@@ -100,7 +98,7 @@ public class PrimaryKeyMap implements Serializable {
   }
 
   public ColumnSet get(int position) {
-    Preconditions.checkArgument(
+    checkArgument(
         position >= 0 && position < columns.size(),
         "Primary key index out of bounds: %s",
         position);
@@ -139,18 +137,15 @@ public class PrimaryKeyMap implements Serializable {
    * @return the primary key indexes as a list
    */
   public List<Integer> asSimpleList() {
-    Preconditions.checkArgument(isSimple(), "Not a simple primary key");
-    return columns.stream().map(ColumnSet::getOnly).collect(Collectors.toUnmodifiableList());
+    checkArgument(isSimple(), "Not a simple primary key");
+    return columns.stream().map(ColumnSet::getOnly).toList();
   }
 
   public PrimaryKeyMap makeSimple(RelDataType rowType) {
     if (undefined) {
       return this;
     }
-    return PrimaryKeyMap.of(
-        columns.stream()
-            .map(colSet -> colSet.pickBest(rowType))
-            .collect(Collectors.toUnmodifiableList()));
+    return PrimaryKeyMap.of(columns.stream().map(colSet -> colSet.pickBest(rowType)).toList());
   }
 
   /**
@@ -169,7 +164,7 @@ public class PrimaryKeyMap implements Serializable {
   }
 
   public List<ColumnSet> asSubList(int length) {
-    Preconditions.checkArgument(length <= getLength());
+    checkArgument(length <= getLength());
     return new ArrayList<>(columns.subList(0, length));
   }
 
@@ -183,20 +178,16 @@ public class PrimaryKeyMap implements Serializable {
   }
 
   public Builder toBuilder() {
-    Preconditions.checkArgument(!isUndefined(), "Cannot build on undefined primary key");
+    checkArgument(!isUndefined(), "Cannot build on undefined primary key");
     var builder = build();
     columns.forEach(builder::add);
     return builder;
   }
 
-  @Value
-  public static class ColumnSet {
+  public record ColumnSet(Set<Integer> indexes) {
 
-    private Set<Integer> indexes;
-
-    public ColumnSet(Set<Integer> indexes) {
-      Preconditions.checkArgument(!indexes.isEmpty());
-      this.indexes = indexes;
+    public ColumnSet {
+      checkArgument(!indexes.isEmpty());
     }
 
     public boolean isSimple() {
@@ -204,7 +195,7 @@ public class PrimaryKeyMap implements Serializable {
     }
 
     public int getOnly() {
-      Preconditions.checkArgument(isSimple());
+      checkArgument(isSimple());
       return Iterables.getOnlyElement(indexes);
     }
 
@@ -236,14 +227,18 @@ public class PrimaryKeyMap implements Serializable {
 
     public int pickBest(RelDataType rowType) {
       var fields = rowType.getFieldList();
+      var fieldCount = fields.size();
+
+      var validIndexes =
+          indexes.stream().filter(idx -> idx >= 0 && idx < fieldCount).sorted().toList();
+
       // Try to pick the first not-null
       var nonNullPk =
-          indexes.stream()
-              .filter(idx -> !fields.get(idx).getType().isNullable())
-              .sorted()
-              .findFirst();
-      // Otherwise, pick the first
-      return nonNullPk.orElseGet(() -> indexes.stream().sorted().findFirst().get());
+          validIndexes.stream().filter(idx -> !fields.get(idx).getType().isNullable()).findFirst();
+
+      // Otherwise, pick the first valid index
+      return nonNullPk.orElseGet(
+          () -> validIndexes.stream().findFirst().orElseThrow(() -> primaryKeyError(fields)));
     }
 
     public ColumnSet remap(IndexMap remap) {
@@ -252,9 +247,16 @@ public class PrimaryKeyMap implements Serializable {
               .map(remap::mapUnsafe)
               .filter(i -> i >= 0)
               .collect(Collectors.toUnmodifiableSet());
-      Preconditions.checkArgument(
+      checkArgument(
           !result.isEmpty(), "Mapping does not preserve any columns [%s]: %s", indexes, remap);
       return new ColumnSet(result);
+    }
+
+    private IllegalArgumentException primaryKeyError(List<RelDataTypeField> fields) {
+      var fieldNames = fields.stream().map(RelDataTypeField::getName).toList();
+
+      return new IllegalArgumentException(
+          "Primary key index out of bounds. indexes=%s fields=%s".formatted(indexes, fieldNames));
     }
   }
 
@@ -298,7 +300,7 @@ public class PrimaryKeyMap implements Serializable {
     }
 
     public PrimaryKeyMap build() {
-      Preconditions.checkArgument(columns.stream().noneMatch(Objects::isNull));
+      checkArgument(columns.stream().noneMatch(Objects::isNull));
       return new PrimaryKeyMap(columns);
     }
   }
