@@ -91,22 +91,21 @@ public abstract class BaseCmd implements Runnable, IExitCodeGenerator {
    * provide clean error messages.
    *
    * <p>Validation errors during dependency injection (e.g., in pipeline configuration) are thrown
-   * as {@link CollectedException} with clear messages. Spring wraps them in {@link
-   * BeanCreationException}, obscuring the original error with verbose DI stack traces.
+   * as {@link CollectedException} with clear messages. Spring wraps them in multiple layers of
+   * {@link BeanCreationException}, obscuring the original error with verbose DI stack traces.
    *
    * @param e the runtime exception that may be a CollectedException or contain one as a cause
    * @return the unwrapped CollectedException
    * @throws RuntimeException the original exception if it doesn't contain a CollectedException
    */
   private CollectedException unwrapCollectedException(RuntimeException e) {
-    if (e instanceof CollectedException ce) {
-      return ce;
+    Throwable current = e;
+    while (current != null) {
+      if (current instanceof CollectedException ce) {
+        return ce;
+      }
+      current = current.getCause();
     }
-
-    if (e.getCause() instanceof CollectedException ce) {
-      return ce;
-    }
-
     throw e;
   }
 }

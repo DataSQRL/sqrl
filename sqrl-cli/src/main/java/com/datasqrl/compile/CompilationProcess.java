@@ -41,9 +41,11 @@ import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
+@Lazy
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class CompilationProcess {
 
