@@ -127,8 +127,11 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
   @Override
   public TestContainerHook visit(KafkaTestEngine engine, Void context) {
     return new TestContainerHook() {
-      // Using Docker Hub image to avoid rate limiting from docker.redpanda.com
-      final RedpandaContainer testKafka = new RedpandaContainer("vectorized/redpanda:v23.1.2");
+      // Using Docker Hub image to avoid rate limiting from docker.redpanda.com registry
+      final RedpandaContainer testKafka =
+          new RedpandaContainer(
+              DockerImageName.parse("redpandadata/redpanda:v23.1.2")
+                  .asCompatibleSubstituteFor("docker.redpanda.com/redpandadata/redpanda"));
 
       @Override
       public void start() {
