@@ -27,7 +27,9 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.stereotype.Component;
 
+@Component
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 @Slf4j
 public class JBangPreprocessor extends UdfManifestPreprocessor {

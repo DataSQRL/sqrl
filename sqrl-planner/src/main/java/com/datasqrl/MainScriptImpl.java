@@ -23,7 +23,9 @@ import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
 
+@Component
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class MainScriptImpl implements MainScript {
 

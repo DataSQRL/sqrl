@@ -18,8 +18,10 @@ package com.datasqrl.config;
 import jakarta.inject.Inject;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
 
 /** Placeholder for future templated connector handling */
+@Component
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 

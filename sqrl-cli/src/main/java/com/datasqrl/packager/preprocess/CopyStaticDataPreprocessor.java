@@ -32,11 +32,13 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
  * Copies {@code .jsonl}, {@code .csv}, and {@code .avro} files (optionally with compression) to the
  * data folder, so they can be useb by Flink.
  */
+@Component
 @Slf4j
 public class CopyStaticDataPreprocessor implements Preprocessor {
 

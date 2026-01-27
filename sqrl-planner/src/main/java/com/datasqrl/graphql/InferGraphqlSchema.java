@@ -25,8 +25,10 @@ import graphql.schema.idl.SchemaPrinter;
 import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.stereotype.Component;
 
 /** Creates new table functions from the GraphQL schema. */
+@Component
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class InferGraphqlSchema {
 

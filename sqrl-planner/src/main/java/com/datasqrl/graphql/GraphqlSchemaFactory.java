@@ -60,8 +60,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.commons.collections.ListUtils;
+import org.springframework.stereotype.Component;
 
 /** Creates a default graphql schema based on the SQRL schema */
+@Component
 @Slf4j
 public class GraphqlSchemaFactory {
 
