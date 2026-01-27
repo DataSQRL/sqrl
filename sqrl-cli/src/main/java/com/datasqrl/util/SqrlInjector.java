@@ -18,130 +18,255 @@ package com.datasqrl.util;
 import com.datasqrl.MainScriptImpl;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.compile.CompilationProcess;
+import com.datasqrl.compile.DagWriter;
+import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.ConnectorFactoryFactoryImpl;
 import com.datasqrl.config.ExecutionEnginesHolder;
+import com.datasqrl.config.GraphqlSourceLoader;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.QueryEngineConfigConverter;
 import com.datasqrl.config.QueryEngineConfigConverterImpl;
+import com.datasqrl.config.RootPath;
 import com.datasqrl.config.SqrlCompilerConfiguration;
 import com.datasqrl.config.SqrlConfigPipeline;
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.config.TargetPath;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.GenerateServerModel;
+import com.datasqrl.graphql.GraphqlSchemaFactory;
+import com.datasqrl.graphql.InferGraphqlSchema;
+import com.datasqrl.graphql.ScriptFiles;
+import com.datasqrl.graphql.converter.GraphQLSchemaConverter;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
+import com.datasqrl.packager.FilePreprocessingPipeline;
+import com.datasqrl.packager.Packager;
 import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
 import com.datasqrl.packager.preprocess.JBangPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.validate.ExecutionGoal;
-import com.google.inject.AbstractModule;
-import com.google.inject.Injector;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.name.Named;
+import com.datasqrl.planner.SqlScriptPlanner;
+import com.datasqrl.planner.dag.DAGPlanner;
+import com.datasqrl.planner.parser.SqrlStatementParser;
 import java.nio.file.Path;
+import java.util.Set;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-public class SqrlInjector extends AbstractModule {
+@Configuration
+public class SqrlInjector {
 
-  private final ErrorCollector errors;
-  private final Path rootDir;
-  private final Path buildDir;
-  private final Path targetDir;
-  private final PackageJson sqrlConfig;
-  private final ExecutionGoal goal;
-  private final boolean internalTestExec;
-
-  public SqrlInjector(
-      ErrorCollector errors,
-      Path rootDir,
-      Path targetDir,
-      PackageJson sqrlConfig,
-      ExecutionGoal goal,
-      boolean internalTestExec) {
-    this.errors = errors;
-    this.rootDir = rootDir;
-    this.buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
-    this.targetDir = targetDir;
-    this.sqrlConfig = sqrlConfig;
-    this.goal = goal;
-    this.internalTestExec = internalTestExec;
+  @Bean
+  public RelDataTypeFactory relDataTypeFactory() {
+    return new TypeFactory();
   }
 
-  @Override
-  public void configure() {
-    bind(RelDataTypeFactory.class).to(TypeFactory.class);
-    bind(MainScript.class).to(MainScriptImpl.class);
-    bind(ExecutionPipeline.class).to(SqrlConfigPipeline.class);
-    bind(ModuleLoader.class).to(ModuleLoaderImpl.class);
-    bind(CompilerConfig.class).to(SqrlCompilerConfiguration.class);
-    bind(ConnectorFactoryFactory.class).to(ConnectorFactoryFactoryImpl.class);
-    bind(QueryEngineConfigConverter.class).to(QueryEngineConfigConverterImpl.class);
-
-    Multibinder<Preprocessor> binder = Multibinder.newSetBinder(binder(), Preprocessor.class);
-    binder.addBinding().to(CopyStaticDataPreprocessor.class);
-    binder.addBinding().to(JBangPreprocessor.class);
-    binder.addBinding().to(JarPreprocessor.class);
+  @Bean
+  public MainScript mainScript(PackageJson packageJson, ResourceResolver resourceResolver) {
+    return new MainScriptImpl(packageJson, resourceResolver);
   }
 
-  @Provides
-  @Named("buildDir")
-  public Path provideBuildDir() {
-    return buildDir;
+  @Bean
+  public ExecutionPipeline executionPipeline(ApplicationContext applicationContext) {
+    return new SqrlConfigPipeline(applicationContext);
   }
 
-  @Provides
-  @Named("rootDir")
-  public Path provideRootDir() {
-    return rootDir;
+  @Bean
+  public ModuleLoader moduleLoader(
+      ResourceResolver resourceResolver, BuildPath buildPath, ErrorCollector errors) {
+    return new ModuleLoaderImpl(resourceResolver, buildPath, errors);
   }
 
-  @Provides
-  @Named("targetDir")
-  public Path provideTargetDir() {
-    return targetDir;
+  @Bean
+  public CompilerConfig compilerConfig(PackageJson packageJson) {
+    return new SqrlCompilerConfiguration(packageJson);
   }
 
-  @Provides
-  public ResourceResolver provideResourceResolver() {
+  @Bean
+  public ConnectorFactoryFactory connectorFactoryFactory(PackageJson packageJson) {
+    return new ConnectorFactoryFactoryImpl(packageJson);
+  }
+
+  @Bean
+  public QueryEngineConfigConverter queryEngineConfigConverter(
+      ExecutionEnginesHolder enginesHolder, PackageJson packageJson) {
+    return new QueryEngineConfigConverterImpl(enginesHolder, packageJson);
+  }
+
+  @Bean
+  public Preprocessor copyStaticDataPreprocessor() {
+    return new CopyStaticDataPreprocessor();
+  }
+
+  @Bean
+  public Preprocessor jBangPreprocessor(JBangRunner jBangRunner) {
+    return new JBangPreprocessor(jBangRunner);
+  }
+
+  @Bean
+  public Preprocessor jarPreprocessor() {
+    return new JarPreprocessor();
+  }
+
+  @Bean
+  @Qualifier("buildDir")
+  public Path buildDir(@Qualifier("rootDir") Path rootDir) {
+    return rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
+  }
+
+  @Bean
+  public BuildPath buildPath(
+      @Qualifier("buildDir") Path buildDir, @Qualifier("targetDir") Path targetDir) {
+    return new BuildPath(buildDir, targetDir);
+  }
+
+  @Bean
+  public ResourceResolver resourceResolver(@Qualifier("buildDir") Path buildDir) {
     return new FileResourceResolver(buildDir);
   }
 
-  @Provides
-  public NameCanonicalizer provideNameCanonicalizer() {
+  @Bean
+  public NameCanonicalizer nameCanonicalizer() {
     return NameCanonicalizer.SYSTEM;
   }
 
-  @Provides
-  @Singleton
-  public JBangRunner provideJBangRunner() {
+  @Bean
+  public JBangRunner jBangRunner(@Qualifier("internalTestExec") Boolean internalTestExec) {
     return internalTestExec ? JBangRunner.disabled() : JBangRunner.create();
   }
 
-  @Provides
-  public PackageJson provideSqrlConfig() {
-    return sqrlConfig;
+  @Bean
+  public ExecutionEnginesHolder executionEnginesHolder(
+      ErrorCollector errors,
+      ApplicationContext applicationContext,
+      PackageJson sqrlConfig,
+      ExecutionGoal goal) {
+    return new ExecutionEnginesHolder(
+        errors, applicationContext, sqrlConfig, goal == ExecutionGoal.TEST);
   }
 
-  @Provides
-  public ExecutionGoal provideExecutionGoal() {
-    return goal;
+  @Bean
+  public RootPath rootPath(@Qualifier("rootDir") Path rootDir) {
+    return new RootPath(rootDir);
   }
 
-  @Provides
-  public ErrorCollector provideErrorCollector() {
-    return errors;
+  @Bean
+  public TargetPath targetPath(@Qualifier("targetDir") Path targetDir) {
+    return new TargetPath(targetDir);
   }
 
-  @Provides
-  public ExecutionEnginesHolder provideExecutionEnginesHolder(Injector injector) {
-    return new ExecutionEnginesHolder(errors, injector, sqrlConfig, goal == ExecutionGoal.TEST);
+  @Bean
+  public FilePreprocessingPipeline filePreprocessingPipeline(
+      BuildPath buildPath, Set<Preprocessor> preprocessors) {
+    return new FilePreprocessingPipeline(buildPath, preprocessors);
+  }
+
+  @Bean
+  public Packager packager(
+      RootPath rootPath,
+      PackageJson packageJson,
+      BuildPath buildPath,
+      FilePreprocessingPipeline preprocPipeline,
+      MainScript mainScript) {
+    return new Packager(rootPath, packageJson, buildPath, preprocPipeline, mainScript);
+  }
+
+  @Bean
+  public SqrlStatementParser sqrlStatementParser() {
+    return new SqrlStatementParser();
+  }
+
+  @Bean
+  public SqlScriptPlanner sqlScriptPlanner(
+      ErrorCollector errorCollector,
+      ModuleLoader moduleLoader,
+      SqrlStatementParser sqrlParser,
+      PackageJson packageJson,
+      ExecutionPipeline pipeline,
+      ExecutionGoal executionGoal) {
+    return new SqlScriptPlanner(
+        errorCollector, moduleLoader, sqrlParser, packageJson, pipeline, executionGoal);
+  }
+
+  @Bean
+  public DAGPlanner dagPlanner(
+      ExecutionPipeline pipeline, ErrorCollector errors, PackageJson packageJson) {
+    return new DAGPlanner(pipeline, errors, packageJson);
+  }
+
+  @Bean
+  public GraphQLSchemaConverter graphQLSchemaConverter() {
+    return new GraphQLSchemaConverter();
+  }
+
+  @Bean
+  public GenerateServerModel generateServerModel(
+      PackageJson configuration, ErrorCollector errorCollector, GraphQLSchemaConverter converter) {
+    return new GenerateServerModel(configuration, errorCollector, converter);
+  }
+
+  @Bean
+  public GraphqlSchemaFactory graphqlSchemaFactory(CompilerConfig config) {
+    return new GraphqlSchemaFactory(config);
+  }
+
+  @Bean
+  public InferGraphqlSchema inferGraphqlSchema(
+      ErrorCollector errorCollector, GraphqlSchemaFactory graphqlSchemaFactory) {
+    return new InferGraphqlSchema(errorCollector, graphqlSchemaFactory);
+  }
+
+  @Bean
+  public ScriptFiles scriptFiles(PackageJson rootConfig) {
+    return new ScriptFiles(rootConfig);
+  }
+
+  @Bean
+  public GraphqlSourceLoader graphqlSourceLoader(
+      ScriptFiles scriptFiles, ResourceResolver resolver) {
+    return new GraphqlSourceLoader(scriptFiles, resolver);
+  }
+
+  @Bean
+  public DagWriter dagWriter(BuildPath buildDir, CompilerConfig compilerConfig) {
+    return new DagWriter(buildDir, compilerConfig);
+  }
+
+  @Bean
+  public CompilationProcess compilationProcess(
+      SqlScriptPlanner planner,
+      DAGPlanner dagPlanner,
+      BuildPath buildPath,
+      MainScript mainScript,
+      PackageJson config,
+      GenerateServerModel generateServerModel,
+      InferGraphqlSchema inferGraphqlSchema,
+      DagWriter writeDeploymentArtifactsHook,
+      GraphqlSourceLoader graphqlSourceLoader,
+      ExecutionGoal executionGoal,
+      ErrorCollector errors) {
+    return new CompilationProcess(
+        planner,
+        dagPlanner,
+        buildPath,
+        mainScript,
+        config,
+        generateServerModel,
+        inferGraphqlSchema,
+        writeDeploymentArtifactsHook,
+        graphqlSourceLoader,
+        executionGoal,
+        errors);
   }
 }

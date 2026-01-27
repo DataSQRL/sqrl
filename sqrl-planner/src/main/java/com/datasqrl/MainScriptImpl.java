@@ -22,7 +22,7 @@ import com.datasqrl.plan.MainScript;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FileUtil;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;

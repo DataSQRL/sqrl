@@ -16,10 +16,10 @@
 package com.datasqrl.config;
 
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Singleton;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import lombok.experimental.Delegate;
+import org.springframework.context.ApplicationContext;
 
 @Singleton
 public class SqrlConfigPipeline implements ExecutionPipeline {
@@ -27,7 +27,7 @@ public class SqrlConfigPipeline implements ExecutionPipeline {
   @Delegate ExecutionPipeline pipeline;
 
   @Inject
-  public SqrlConfigPipeline(Injector injector) {
-    this.pipeline = new PipelineFactory(injector).createPipeline();
+  public SqrlConfigPipeline(ApplicationContext applicationContext) {
+    this.pipeline = new PipelineFactory(applicationContext).createPipeline();
   }
 }

@@ -35,7 +35,7 @@ import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;

@@ -25,7 +25,7 @@ import com.datasqrl.io.schema.TableSchemaFactory;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.util.FilenameAnalyzer;
 import com.datasqrl.util.NameUtil;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;

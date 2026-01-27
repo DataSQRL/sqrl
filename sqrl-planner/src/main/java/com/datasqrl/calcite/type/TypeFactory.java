@@ -15,7 +15,7 @@
  */
 package com.datasqrl.calcite.type;
 
-import com.google.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.lang.reflect.Type;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;

@@ -33,7 +33,7 @@ import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.hint.MaintenanceHint;
 import com.datasqrl.planner.hint.MaintenanceHint.MaintenanceType;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;

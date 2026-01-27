@@ -21,7 +21,7 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.jdbc.FlinkSqrlPostgresDataTypeMapper;
 import com.datasqrl.graphql.jdbc.DatabaseType;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import lombok.NonNull;
 
 public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {

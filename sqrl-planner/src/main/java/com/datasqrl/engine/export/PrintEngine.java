@@ -25,7 +25,7 @@ import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import org.apache.calcite.rel.type.RelDataType;
 
 public class PrintEngine implements ExportEngine {

@@ -23,7 +23,7 @@ import com.datasqrl.planner.dag.PipelineDAG;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.serializer.Deserializer;
 import com.google.common.io.Resources;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;

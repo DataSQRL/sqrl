@@ -51,7 +51,7 @@ import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.FlinkCompileException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

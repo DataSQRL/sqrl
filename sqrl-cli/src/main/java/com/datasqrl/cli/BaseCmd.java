@@ -19,10 +19,10 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import com.google.inject.ProvisionException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.BeanCreationException;
 import picocli.CommandLine.IExitCodeGenerator;
 import picocli.CommandLine.ParentCommand;
 
@@ -44,7 +44,7 @@ public abstract class BaseCmd implements Runnable, IExitCodeGenerator {
       runInternal(collector);
       cli.statusHook.onSuccess(collector);
 
-    } catch (ProvisionException | CollectedException e) {
+    } catch (BeanCreationException | CollectedException e) {
       var ce = unwrapCollectedException(e);
       if (ce.isInternalError()) {
         ce.printStackTrace();
@@ -87,12 +87,12 @@ public abstract class BaseCmd implements Runnable, IExitCodeGenerator {
   }
 
   /**
-   * Unwraps {@link CollectedException} from Guice {@link ProvisionException} wrappers to provide
-   * clean error messages.
+   * Unwraps {@link CollectedException} from Spring {@link BeanCreationException} wrappers to
+   * provide clean error messages.
    *
    * <p>Validation errors during dependency injection (e.g., in pipeline configuration) are thrown
-   * as {@link CollectedException} with clear messages. Guice wraps them in {@link
-   * ProvisionException}, obscuring the original error with verbose DI stack traces.
+   * as {@link CollectedException} with clear messages. Spring wraps them in {@link
+   * BeanCreationException}, obscuring the original error with verbose DI stack traces.
    *
    * @param e the runtime exception that may be a CollectedException or contain one as a cause
    * @return the unwrapped CollectedException

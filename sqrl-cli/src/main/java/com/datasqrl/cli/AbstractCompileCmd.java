@@ -32,13 +32,13 @@ import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FlinkCompileException;
 import com.datasqrl.util.SqrlInjector;
-import com.google.inject.Guice;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 public abstract class AbstractCompileCmd extends BasePackageConfCmd {
 
@@ -60,23 +60,23 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     errors.checkFatal(
         Files.isDirectory(cli.rootDir), "Not a valid root directory: %s", cli.rootDir);
 
-    var injector =
-        Guice.createInjector(
-            new SqrlInjector(
-                errors,
-                cli.rootDir,
-                getTargetFolder(),
-                sqrlConfig,
-                getGoal(),
-                cli.internalTestExec));
+    var context = new AnnotationConfigApplicationContext();
+    context.registerBean(ErrorCollector.class, () -> errors);
+    context.registerBean("rootDir", Path.class, () -> cli.rootDir);
+    context.registerBean("targetDir", Path.class, () -> getTargetFolder());
+    context.registerBean(PackageJson.class, () -> sqrlConfig);
+    context.registerBean(ExecutionGoal.class, () -> getGoal());
+    context.registerBean("internalTestExec", Boolean.class, () -> cli.internalTestExec);
+    context.register(SqrlInjector.class);
+    context.refresh();
 
-    var engineHolder = injector.getInstance(ExecutionEnginesHolder.class);
+    var engineHolder = context.getBean(ExecutionEnginesHolder.class);
     engineHolder.initEnabledEngines();
 
     if (getGoal() == ExecutionGoal.COMPILE) {
       formatter.phaseStart("Processing dependencies");
     }
-    var packager = injector.getInstance(Packager.class);
+    var packager = context.getBean(Packager.class);
     packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
     if (errors.hasErrors()) {
       return;
@@ -85,7 +85,7 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     if (getGoal() == ExecutionGoal.COMPILE) {
       formatter.phaseStart("Compiling SQRL script");
     }
-    var compilationProcess = injector.getInstance(CompilationProcess.class);
+    var compilationProcess = context.getBean(CompilationProcess.class);
     var testDir = sqrlConfig.getTestConfig().getTestDir(cli.rootDir);
     testDir.ifPresent(this::validateTestPath);
 
