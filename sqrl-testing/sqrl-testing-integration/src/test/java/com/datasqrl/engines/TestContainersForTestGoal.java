@@ -129,7 +129,9 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
     return new TestContainerHook() {
       // Mirrored to GHCR to avoid rate limiting from docker.redpanda.com
       final RedpandaContainer testKafka =
-          new RedpandaContainer("ghcr.io/datasqrl/redpanda:v23.1.2");
+          new RedpandaContainer(
+              DockerImageName.parse("ghcr.io/datasqrl/redpanda:v23.1.2")
+                  .asCompatibleSubstituteFor("docker.redpanda.com/redpandadata/redpanda"));
 
       @Override
       public void start() {
