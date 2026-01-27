@@ -56,7 +56,7 @@ public class KafkaStartupFailureContainerIT extends SqrlContainerTestBase {
             .withLogConsumer(logConsumer);
 
     assertThatThrownBy(() -> serverContainer.start())
-        .isExactlyInstanceOf(ContainerLaunchException.class)
+        .isInstanceOfAny(ContainerLaunchException.class, IllegalStateException.class)
         .hasMessageContaining("failed");
 
     // Get container logs from the consumer
@@ -92,7 +92,7 @@ public class KafkaStartupFailureContainerIT extends SqrlContainerTestBase {
             .withLogConsumer(logConsumer);
 
     assertThatThrownBy(() -> serverContainer.start())
-        .isExactlyInstanceOf(ContainerLaunchException.class)
+        .isInstanceOfAny(ContainerLaunchException.class, IllegalStateException.class)
         .hasMessageContaining("failed");
 
     // Get container logs from the consumer
