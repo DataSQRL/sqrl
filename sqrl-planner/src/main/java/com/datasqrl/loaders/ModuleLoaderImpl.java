@@ -32,7 +32,7 @@ import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;

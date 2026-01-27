@@ -19,7 +19,7 @@ import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 
 import com.datasqrl.engine.database.QueryEngine;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

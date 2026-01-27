@@ -15,7 +15,7 @@
  */
 package com.datasqrl.config;
 
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 

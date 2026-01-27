@@ -18,7 +18,7 @@ package com.datasqrl.graphql;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.ScriptApiConfig;
 import com.datasqrl.config.PackageJson.ScriptConfig;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;

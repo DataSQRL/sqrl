@@ -129,9 +129,8 @@
     <graphql-java.version>25.0</graphql-java.version>
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
     <guava.version>33.5.0-jre</guava.version>
-    <guice-multibindings.version>4.2.3</guice-multibindings.version>
-    <guice.version>7.0.0</guice.version>
     <h2.version>2.4.240</h2.version>
+    <spring-framework.version>6.2.3</spring-framework.version>
     <hikari.version>7.0.2</hikari.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
@@ -141,6 +140,7 @@
     <jackson.version>2.21.0</jackson.version>
     <jacoco.version>0.8.14</jacoco.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
+    <jakarta.inject.version>2.0.1</jakarta.inject.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <jjwt.version>0.13.0</jjwt.version>
     <json-schema.version>2.0.0</json-schema.version>

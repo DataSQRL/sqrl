@@ -17,7 +17,7 @@ package com.datasqrl.packager.preprocess;
 
 import com.datasqrl.packager.FilePreprocessingPipeline;
 import com.datasqrl.util.JBangRunner;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
