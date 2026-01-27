@@ -100,9 +100,9 @@ DataSQRL provides extended library functions that can be imported into your SQRL
 Library functions must be imported into the SQRL script via one of the following \`IMPORT\` statements:
 
 \`\`\`sql
-IMPORT library-name.*; --imports all functions in the library
-IMPORT library-name.function-name; --imports a single function by name
-IMPORT library-name.function-name AS myName; --imports a single function under a given name
+IMPORT stdlib.library-name.*; --imports all functions in the library
+IMPORT stdlib.library-name.function-name; --imports a single function by name
+IMPORT stdlib.library-name.function-name AS myName; --imports a single function under a given name
 \`\`\`
 `;
     
