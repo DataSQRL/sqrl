@@ -30,9 +30,11 @@ import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
+@Lazy
 @Value
 public class GraphqlSourceLoader {
 
