@@ -33,16 +33,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
-@ComponentScan(
-    basePackages = {
-      "com.datasqrl.calcite.type",
-      "com.datasqrl.compile",
-      "com.datasqrl.config",
-      "com.datasqrl.graphql",
-      "com.datasqrl.loaders",
-      "com.datasqrl.packager",
-      "com.datasqrl.planner"
-    })
+@ComponentScan(basePackages = "com.datasqrl")
 public class SqrlInjector {
 
   @Bean

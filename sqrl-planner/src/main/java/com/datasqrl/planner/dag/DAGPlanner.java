@@ -89,10 +89,12 @@ import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.plan.schema.FlinkPreparingTableBase;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /** Optimizes the DAG and produces the physical plan after DAG cutting */
 @Component
+@Lazy
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class DAGPlanner {
 

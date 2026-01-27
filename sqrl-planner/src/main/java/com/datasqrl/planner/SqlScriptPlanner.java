@@ -128,6 +128,7 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 /**
@@ -139,6 +140,7 @@ import org.springframework.stereotype.Component;
  * information needed to build the computation DAG via {@link DAGBuilder}.
  */
 @Component
+@Lazy
 public class SqlScriptPlanner {
 
   public static final String EXPORT_SUFFIX = "_ex";
