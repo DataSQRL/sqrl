@@ -34,7 +34,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.stereotype.Component;
 
+@Component
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class DagWriter {
 

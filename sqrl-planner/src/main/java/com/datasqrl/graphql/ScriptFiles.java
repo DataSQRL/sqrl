@@ -22,7 +22,9 @@ import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import lombok.Getter;
+import org.springframework.stereotype.Component;
 
+@Component
 @Getter
 public class ScriptFiles {
 

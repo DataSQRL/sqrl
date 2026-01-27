@@ -23,7 +23,9 @@ import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
+@Component
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 public class QueryEngineConfigConverterImpl implements QueryEngineConfigConverter {
 

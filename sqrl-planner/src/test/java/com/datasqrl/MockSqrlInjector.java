@@ -15,55 +15,26 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.config.BuildPath;
-import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.CompilerConfig;
-import com.datasqrl.config.SqrlCompilerConfiguration;
-import com.datasqrl.config.SqrlConfigPipeline;
-import com.datasqrl.engine.pipeline.ExecutionPipeline;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
-import com.datasqrl.plan.MainScript;
 import java.nio.file.Path;
-import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@ComponentScan(
+    basePackages = {
+      "com.datasqrl.calcite.type",
+      "com.datasqrl.config",
+      "com.datasqrl.graphql",
+      "com.datasqrl.loaders",
+      "com.datasqrl.planner"
+    })
 public class MockSqrlInjector {
-
-  @Bean
-  public RelDataTypeFactory relDataTypeFactory() {
-    return new TypeFactory();
-  }
-
-  @Bean
-  public MainScript mainScript(PackageJson packageJson, ResourceResolver resourceResolver) {
-    return new MainScriptImpl(packageJson, resourceResolver);
-  }
-
-  @Bean
-  public ExecutionPipeline executionPipeline(ApplicationContext applicationContext) {
-    return new SqrlConfigPipeline(applicationContext);
-  }
-
-  @Bean
-  public CompilerConfig compilerConfig(PackageJson packageJson) {
-    return new SqrlCompilerConfiguration(packageJson);
-  }
-
-  @Bean
-  public ModuleLoader moduleLoader(
-      ResourceResolver resourceResolver, BuildPath buildPath, ErrorCollector errors) {
-    return new ModuleLoaderImpl(resourceResolver, buildPath, errors);
-  }
 
   @Bean
   public NameCanonicalizer nameCanonicalizer() {

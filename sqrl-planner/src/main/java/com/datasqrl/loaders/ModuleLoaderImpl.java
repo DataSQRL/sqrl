@@ -44,7 +44,9 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.flink.table.functions.UserDefinedFunction;
+import org.springframework.stereotype.Component;
 
+@Component
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ModuleLoaderImpl implements ModuleLoader {
 

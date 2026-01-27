@@ -53,7 +53,9 @@ import lombok.SneakyThrows;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
 
+@Component
 @Getter
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class Packager {

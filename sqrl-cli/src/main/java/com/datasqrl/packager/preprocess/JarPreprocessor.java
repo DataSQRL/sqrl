@@ -18,10 +18,12 @@ package com.datasqrl.packager.preprocess;
 import com.datasqrl.packager.FilePreprocessingPipeline;
 import java.nio.file.Path;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /*
  * Reads a jar and creates sqrl manifest entries in the build directory
  */
+@Component
 @Slf4j
 public class JarPreprocessor extends UdfManifestPreprocessor {
 

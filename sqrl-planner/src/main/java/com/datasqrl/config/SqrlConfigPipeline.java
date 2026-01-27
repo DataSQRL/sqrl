@@ -20,7 +20,9 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.experimental.Delegate;
 import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
 
+@Component
 @Singleton
 public class SqrlConfigPipeline implements ExecutionPipeline {
 
