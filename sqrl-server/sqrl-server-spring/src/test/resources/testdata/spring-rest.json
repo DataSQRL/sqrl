@@ -1,0 +1,247 @@
+{
+  "models": {
+    "v1": {
+      "queries": [
+        {
+          "type": "args",
+          "parentType": "Query",
+          "fieldName": "HighTempAlert",
+          "exec": {
+            "arguments": [
+              {
+                "type": "variable",
+                "path": "offset"
+              },
+              {
+                "type": "variable",
+                "path": "limit"
+              }
+            ],
+            "query": {
+              "type": "SqlQuery",
+              "sql": "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\"\n  FROM \"HighTempAlert\"\n  ORDER BY \"sensorid\" DESC NULLS LAST) AS \"t0\"",
+              "parameters": [],
+              "pagination": "LIMIT_AND_OFFSET",
+              "database": "POSTGRES"
+            }
+          }
+        },
+        {
+          "type": "args",
+          "parentType": "Query",
+          "fieldName": "SensorMaxTemp",
+          "exec": {
+            "arguments": [
+              {
+                "type": "variable",
+                "path": "offset"
+              },
+              {
+                "type": "variable",
+                "path": "limit"
+              }
+            ],
+            "query": {
+              "type": "SqlQuery",
+              "sql": "SELECT *\nFROM (SELECT \"sensorid\", \"maxTemp\"\n  FROM \"SensorMaxTemp\"\n  ORDER BY \"sensorid\" DESC NULLS LAST) AS \"t\"",
+              "parameters": [],
+              "pagination": "LIMIT_AND_OFFSET",
+              "database": "POSTGRES"
+            }
+          }
+        },
+        {
+          "type": "args",
+          "parentType": "Query",
+          "fieldName": "SensorReading",
+          "exec": {
+            "arguments": [
+              {
+                "type": "variable",
+                "path": "offset"
+              },
+              {
+                "type": "variable",
+                "path": "limit"
+              }
+            ],
+            "query": {
+              "type": "SqlQuery",
+              "sql": "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading\"",
+              "parameters": [],
+              "pagination": "LIMIT_AND_OFFSET",
+              "database": "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations": [
+        {
+          "type": "kafka",
+          "fieldName": "SensorReading",
+          "returnList": true,
+          "topic": "SensorReading",
+          "computedColumns": {
+            "event_time": {
+              "metadataType": "TIMESTAMP",
+              "name": "",
+              "required": false
+            }
+          },
+          "transactional": false,
+          "sinkConfig": {}
+        }
+      ],
+      "subscriptions": [
+        {
+          "type": "kafka",
+          "fieldName": "SensorReadingSubscription",
+          "topic": "SensorReadingSubscription",
+          "sinkConfig": {},
+          "equalityConditions": {}
+        },
+        {
+          "type": "kafka",
+          "fieldName": "SensorSubscriptionById",
+          "topic": "SensorReadingSubscription",
+          "sinkConfig": {},
+          "equalityConditions": {
+            "sensorid": {
+              "type": "arg",
+              "path": "sensorid"
+            }
+          }
+        }
+      ],
+      "operations": [
+        {
+          "function": {
+            "name": "GetHighTempAlert",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "offset": {
+                  "type": "integer"
+                },
+                "limit": {
+                  "type": "integer"
+                }
+              },
+              "required": []
+            }
+          },
+          "format": "JSON",
+          "apiQuery": {
+            "query": "query HighTempAlert($limit: Int = 10, $offset: Int = 0) {\nHighTempAlert(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName": "HighTempAlert",
+            "operationType": "QUERY"
+          },
+          "mcpMethod": "TOOL",
+          "restMethod": "GET",
+          "uriTemplate": "queries/HighTempAlert{?offset,limit}"
+        },
+        {
+          "function": {
+            "name": "GetSensorMaxTemp",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "sensorid": {
+                  "type": "integer"
+                },
+                "offset": {
+                  "type": "integer"
+                },
+                "limit": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "sensorid"
+              ]
+            }
+          },
+          "format": "JSON",
+          "apiQuery": {
+            "query": "query SensorMaxTemp($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\n}\n\n}",
+            "queryName": "SensorMaxTemp",
+            "operationType": "QUERY"
+          },
+          "mcpMethod": "TOOL",
+          "restMethod": "GET",
+          "uriTemplate": "queries/{sensorid}/maxTemp{?offset,limit}"
+        },
+        {
+          "function": {
+            "name": "GetSensorReading",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "offset": {
+                  "type": "integer"
+                },
+                "limit": {
+                  "type": "integer"
+                }
+              },
+              "required": []
+            }
+          },
+          "format": "JSON",
+          "apiQuery": {
+            "query": "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName": "SensorReading",
+            "operationType": "QUERY"
+          },
+          "mcpMethod": "TOOL",
+          "restMethod": "GET",
+          "uriTemplate": "queries/SensorReading{?offset,limit}"
+        },
+        {
+          "function": {
+            "name": "AddSensorReading",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "event": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "temperature": {
+                        "type": "number"
+                      },
+                      "sensorid": {
+                        "type": "integer"
+                      }
+                    },
+                    "required": [
+                      "sensorid",
+                      "temperature"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "event"
+              ]
+            }
+          },
+          "format": "JSON",
+          "apiQuery": {
+            "query": "mutation SensorReading($event: [SensorReadingInput!]!) {\nSensorReading(event: $event) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName": "SensorReading",
+            "operationType": "MUTATION"
+          },
+          "mcpMethod": "NONE",
+          "restMethod": "POST",
+          "uriTemplate": "mutations/SensorReading"
+        }
+      ],
+      "schema": {
+        "type": "string",
+        "schema": "\"A slightly refined version of RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\n\"An arbitrary precision signed integer\"\nscalar GraphQLBigInteger\n\ntype Mutation {\n  SensorReading(event: [SensorReadingInput!]!): [SensorReadingResultOutput!]!\n}\n\ntype Query {\n  HighTempAlert(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorMaxTemp(limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ntype Subscription {\n  SensorReadingSubscription: SensorReading\n  SensorSubscriptionById(sensorid: Int!): SensorReading\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
