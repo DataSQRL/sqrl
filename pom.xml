@@ -166,6 +166,9 @@
     <swagger-core.version>2.2.42</swagger-core.version>
     <testcontainers.version>2.0.3</testcontainers.version>
     <vertx.version>5.0.7</vertx.version>
+    <spring-boot.version>3.4.3</spring-boot.version>
+    <r2dbc-postgresql.version>1.0.7.RELEASE</r2dbc-postgresql.version>
+    <reactor-kafka.version>1.3.23</reactor-kafka.version>
 
     <!-- Plugin versions -->
     <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
@@ -200,6 +203,11 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-server-vertx</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-server-spring</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -332,6 +340,29 @@
         <version>${vertx.version}</version>
         <type>pom</type>
         <scope>import</scope>
+      </dependency>
+
+      <!-- Spring Boot BOM -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- R2DBC PostgreSQL -->
+      <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>r2dbc-postgresql</artifactId>
+        <version>${r2dbc-postgresql.version}</version>
+      </dependency>
+
+      <!-- Reactor Kafka -->
+      <dependency>
+        <groupId>io.projectreactor.kafka</groupId>
+        <artifactId>reactor-kafka</artifactId>
+        <version>${reactor-kafka.version}</version>
       </dependency>
 
       <!-- required for vertx subscriptions -->
