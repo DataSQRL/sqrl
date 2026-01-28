@@ -18,6 +18,7 @@ package com.datasqrl.graphql.jdbc;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.graphql.jdbc.SchemaConstants.OFFSET;
 
+import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType;
 import com.datasqrl.graphql.VertxContext;
 import com.datasqrl.graphql.jdbc.VertxJdbcClient.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
@@ -28,6 +29,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -77,6 +79,10 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
     if (param instanceof JsonArray arr) {
       // Unwrap JsonArray to plain Java array to avoid pgclient treating it as JSONB
       return arr.getList().toArray();
+    }
+
+    if (param instanceof FlinkVectorType vec) {
+      return Arrays.toString(vec.getValue());
     }
 
     return param;

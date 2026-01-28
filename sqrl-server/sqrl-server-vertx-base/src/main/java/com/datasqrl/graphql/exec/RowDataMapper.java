@@ -29,8 +29,9 @@ import org.apache.flink.table.types.utils.TypeConversions;
  */
 public class RowDataMapper {
 
-  private final RowType rowType;
-  private final List<DataStructureConverter<Object, Object>> fieldConverters;
+  private final RowType inRowType;
+  private final List<DataStructureConverter<Object, Object>> inFieldConverters;
+  private final List<DataStructureConverter<Object, Object>> outFieldConverters;
 
   /**
    * Creates a new RowDataMapper for the specified row type schema.
@@ -38,20 +39,12 @@ public class RowDataMapper {
    * <p>Initializes field converters for each column in the row type, preparing them for
    * bidirectional conversion between external and internal representations.
    *
-   * @param rowType the Flink logical row type defining the schema and data types for conversion
+   * @param inRowType the Flink logical row type defining the schema and data types for conversion
    */
-  public RowDataMapper(RowType rowType) {
-    this.rowType = rowType;
-    var rowDataType = TypeConversions.fromLogicalToDataType(rowType);
-
-    this.fieldConverters = new ArrayList<>(rowType.getFieldCount());
-    for (int i = 0; i < rowType.getFieldCount(); i++) {
-      var fieldDataType = rowDataType.getChildren().get(i);
-      var converter = DataStructureConverters.getConverter(fieldDataType);
-      converter.open(getClass().getClassLoader());
-
-      fieldConverters.add(converter);
-    }
+  public RowDataMapper(RowType inRowType, RowType outRowType) {
+    this.inRowType = inRowType;
+    inFieldConverters = createFieldConverters(inRowType);
+    outFieldConverters = createFieldConverters(outRowType);
   }
 
   /**
@@ -66,12 +59,12 @@ public class RowDataMapper {
    * @return a GenericRowData containing the converted internal representation of all fields
    */
   public GenericRowData toRowData(Map<String, Object> args) {
-    var rowData = new GenericRowData(rowType.getFieldCount());
+    var rowData = new GenericRowData(inRowType.getFieldCount());
 
-    for (int i = 0; i < rowType.getFieldCount(); i++) {
-      var fieldName = rowType.getFieldNames().get(i);
+    for (int i = 0; i < inRowType.getFieldCount(); i++) {
+      var fieldName = inRowType.getFieldNames().get(i);
       var external = args.get(fieldName);
-      var internal = fieldConverters.get(i).toInternalOrNull(external);
+      var internal = inFieldConverters.get(i).toInternalOrNull(external);
 
       rowData.setField(i, internal);
     }
@@ -94,11 +87,26 @@ public class RowDataMapper {
 
     for (int i = 0; i < rowData.getArity(); i++) {
       var internal = rowData.getField(i);
-      var external = fieldConverters.get(i).toExternalOrNull(internal);
+      var external = outFieldConverters.get(i).toExternalOrNull(internal);
 
       res.add(external);
     }
 
     return res;
+  }
+
+  private List<DataStructureConverter<Object, Object>> createFieldConverters(RowType rowType) {
+    var rowDataType = TypeConversions.fromLogicalToDataType(rowType);
+    var converters = new ArrayList<DataStructureConverter<Object, Object>>(rowType.getFieldCount());
+
+    for (int i = 0; i < rowType.getFieldCount(); i++) {
+      var fieldDataType = rowDataType.getChildren().get(i);
+      var converter = DataStructureConverters.getConverter(fieldDataType);
+      converter.open(getClass().getClassLoader());
+
+      converters.add(converter);
+    }
+
+    return converters;
   }
 }
