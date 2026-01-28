@@ -165,7 +165,6 @@
     <snakeyaml.version>2.5</snakeyaml.version>
     <swagger-core.version>2.2.42</swagger-core.version>
     <testcontainers.version>2.0.3</testcontainers.version>
-    <vertx.version>5.0.7</vertx.version>
     <spring-boot.version>4.0.2</spring-boot.version>
     <r2dbc-postgresql.version>1.0.7.RELEASE</r2dbc-postgresql.version>
     <reactor-kafka.version>1.3.23</reactor-kafka.version>
@@ -193,16 +192,6 @@
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-server-core</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-server-vertx-base</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-server-vertx</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
@@ -334,14 +323,6 @@
         <version>${graphql-java-extended-scalars.version}</version>
       </dependency>
 
-      <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-dependencies</artifactId>
-        <version>${vertx.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-
       <!-- JUnit BOM - must be before Spring Boot to override its JUnit version -->
       <dependency>
         <groupId>org.junit</groupId>
@@ -374,19 +355,16 @@
         <version>${reactor-kafka.version}</version>
       </dependency>
 
-      <!-- required for vertx subscriptions -->
       <dependency>
         <groupId>io.projectreactor</groupId>
         <artifactId>reactor-core</artifactId>
         <version>${projectreactor.version}</version>
       </dependency>
-      <!-- vertx metrics -->
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
         <version>${micrometer.version}</version>
       </dependency>
-      <!-- required for vertx jdbc -->
       <dependency>
         <groupId>io.agroal</groupId>
         <artifactId>agroal-pool</artifactId>
@@ -834,11 +812,6 @@
           <version>3.6.1</version>
         </plugin>
         <plugin>
-          <groupId>io.reactiverse</groupId>
-          <artifactId>vertx-maven-plugin</artifactId>
-          <version>2.0.2</version>
-        </plugin>
-        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-javadoc-plugin</artifactId>
           <version>3.12.0</version>
@@ -1119,13 +1092,6 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>io.reactiverse</groupId>
-            <artifactId>vertx-maven-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
             <configuration>
@@ -1224,7 +1190,7 @@
 
               <excludeArtifacts>
                 <!-- client jars are too large, skipping uploading for now -->
-                <excludeArtifact>sqrl-server-vertx</excludeArtifact>
+                <excludeArtifact>sqrl-server-spring</excludeArtifact>
                 <excludeArtifact>sqrl-cli</excludeArtifact>
                 <excludeArtifact>sqrl-test</excludeArtifact>
                 <excludeArtifact>sqrl-run</excludeArtifact>
@@ -1403,13 +1369,6 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>io.reactiverse</groupId>
-            <artifactId>vertx-maven-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
             <configuration>
@@ -1436,13 +1395,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>io.reactiverse</groupId>
-            <artifactId>vertx-maven-plugin</artifactId>
             <configuration>
               <skip>true</skip>
             </configuration>

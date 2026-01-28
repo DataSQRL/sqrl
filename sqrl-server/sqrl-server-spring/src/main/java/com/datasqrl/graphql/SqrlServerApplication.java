@@ -20,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.server.context.WebServerInitializedEvent;
+import org.springframework.context.event.EventListener;
 
 /**
  * Main entry point for the Spring Boot GraphQL server application. Replaces the Vert.x-based
@@ -33,5 +35,11 @@ public class SqrlServerApplication {
   public static void main(String[] args) {
     GlobalEnvironmentStore.putAll(System.getenv());
     SpringApplication.run(SqrlServerApplication.class, args);
+  }
+
+  @EventListener
+  public void onApplicationEvent(WebServerInitializedEvent event) {
+    int port = event.getWebServer().getPort();
+    log.info("HTTP server listening on port {}", port);
   }
 }
