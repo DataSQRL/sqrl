@@ -36,8 +36,10 @@ public class CenterSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
+    var operands = VectorUtils.castDynamicParamsToVector(call.getOperandList());
+
     SqlStdOperatorTable.AVG
-        .createCall(SqlParserPos.ZERO, call.getOperandList())
+        .createCall(SqlParserPos.ZERO, operands)
         .unparse(writer, leftPrec, rightPrec);
   }
 }

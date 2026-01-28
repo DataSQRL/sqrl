@@ -7,6 +7,12 @@ type Customers {
   timestamp: DateTime!
 }
 
+type CustomersByVector {
+  customerid: Long!
+  name: String!
+  timestamp: DateTime!
+}
+
 "An RFC-3339 compliant Full Date Scalar"
 scalar Date
 
@@ -26,6 +32,7 @@ type Query {
   Customers(limit: Int = 10, offset: Int = 0): [Customers!]
   CustomersById(a: Long!, b: Long!, limit: Int = 10, offset: Int = 0): [Customers!]
   CustomersByName(inputName: String!, limit: Int = 10, offset: Int = 0): [Customers!]
+  CustomersByVector(name: String!, limit: Int = 10, offset: Int = 0): [CustomersByVector!]
 }
 
 enum _McpMethodType {
@@ -43,6 +50,23 @@ enum _RestMethodType {
 directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
+=== CustomerVectorEmbed
+ID:          default_catalog.default_database.CustomerVectorEmbed
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   timestamp
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name_vector: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customers
+Annotations:
+ - stream-root: Customers
+
 === Customers
 ID:          default_catalog.default_database.Customers
 Type:        stream
@@ -85,6 +109,18 @@ Annotations:
  - parameters: inputName, shortName
  - base-table: Customers
 
+=== CustomersByVector
+ID:          default_catalog.default_database.CustomersByVector
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.CustomerVectorEmbed
+Annotations:
+ - stream-root: Customers
+ - parameters: name, vector
+ - base-table: CustomersByVector
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customers__schema` (
   `customerid` BIGINT NOT NULL,
@@ -106,7 +142,27 @@ WITH (
   'source.monitor-interval' = '10 sec'
 )
 LIKE `Customers__schema`;
-CREATE TABLE `Customers_1` (
+CREATE VIEW `CustomerVectorEmbed`
+AS
+SELECT `customerid`, `name`, `vector_embed`(`name`, 'text-embedding-3-small') AS `name_vector`, `timestamp`
+FROM `Customers`;
+CREATE TABLE `CustomerVectorEmbed_1` (
+  `customerid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name_vector` RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD'),
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'CustomerVectorEmbed',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Customers_2` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -123,17 +179,24 @@ WITH (
   'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `default_catalog`.`default_database`.`Customers_1`
-SELECT *
- FROM `default_catalog`.`default_database`.`Customers`
+INSERT INTO `default_catalog`.`default_database`.`CustomerVectorEmbed_1`
+SELECT `customerid`, `name`, `name_vector`, `timestamp`, `hash_columns`(`customerid`, `name`, `name_vector`, `timestamp`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`CustomerVectorEmbed`
 ;
-END
+INSERT INTO `default_catalog`.`default_database`.`Customers_2`
+ SELECT *
+  FROM `default_catalog`.`default_database`.`Customers`
+ ;
+ END
 >>>kafka.json
 {
   "topics" : [ ],
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS "CustomerVectorEmbed" ("customerid" BIGINT NOT NULL, "name" TEXT NOT NULL, "name_vector" VECTOR, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid","lastUpdated"))
 >>>postgres-views.sql
 
@@ -192,7 +255,7 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Customers\"\nWHERE \"customerid\" < $3\nORDER BY \"customerid\" NULLS FIRST",
+              "sql" : "SELECT *\nFROM \"Customers\"\nWHERE \"customerid\" <= $3\nORDER BY \"customerid\" NULLS FIRST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -204,7 +267,7 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
                 },
                 {
                   "type" : "computed",
-                  "functionId" : "SqrlExecFn1"
+                  "functionId" : "SqrlExecFn0"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -242,7 +305,45 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
                 },
                 {
                   "type" : "computed",
-                  "functionId" : "SqrlExecFn0"
+                  "functionId" : "SqrlExecFn1"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersByVector",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "name"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customerid\", \"name\", \"name_vector\", \"timestamp\", 1 - (($2 ::vector) <=> \"name_vector\")\nFROM \"CustomerVectorEmbed\"\nORDER BY 1 - (($2 ::vector) <=> \"name_vector\") DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "name"
+                },
+                {
+                  "type" : "computed",
+                  "functionId" : "SqrlExecFn2"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -346,11 +447,42 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/CustomersByName{?offset,limit,inputName}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersByVector",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "name"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomersByVector($name: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomersByVector(name: $name, limit: $limit, offset: $offset) {\ncustomerid\nname\ntimestamp\n}\n\n}",
+            "queryName" : "CustomersByVector",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersByVector{?offset,name,limit}"
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customers {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersById(a: Long!, b: Long!, limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersByName(inputName: String!, limit: Int = 10, offset: Int = 0): [Customers!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Customers {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomersByVector {\n  customerid: Long!\n  name: String!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersById(a: Long!, b: Long!, limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersByName(inputName: String!, limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersByVector(name: String!, limit: Int = 10, offset: Int = 0): [CustomersByVector!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

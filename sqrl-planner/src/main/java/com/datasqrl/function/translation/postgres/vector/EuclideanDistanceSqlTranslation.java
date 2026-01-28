@@ -34,7 +34,9 @@ public class EuclideanDistanceSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    PgSpecificOperatorTable.EuclideanDistance.createCall(SqlParserPos.ZERO, call.getOperandList())
+    var operands = VectorUtils.castDynamicParamsToVector(call.getOperandList());
+
+    PgSpecificOperatorTable.EuclideanDistance.createCall(SqlParserPos.ZERO, operands)
         .unparse(writer, leftPrec, rightPrec);
   }
 }

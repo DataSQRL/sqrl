@@ -1,0 +1,6 @@
+query {
+  CustomersByVector(name: "Bob", limit: 1) {
+    customerid
+    name
+  }
+}

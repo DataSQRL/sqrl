@@ -20,11 +20,22 @@ import com.datasqrl.function.PgSpecificOperatorTable;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
+import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlWriter;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
-public class CosineDistanceSqlTranslation extends PostgresSqlTranslation.Simple {
+public class CosineDistanceSqlTranslation extends PostgresSqlTranslation {
 
   public CosineDistanceSqlTranslation() {
-    super(VectorFunctions.COSINE_DISTANCE, PgSpecificOperatorTable.CosineDistance);
+    super(VectorFunctions.COSINE_DISTANCE);
+  }
+
+  @Override
+  public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
+    var operands = VectorUtils.castDynamicParamsToVector(call.getOperandList());
+
+    PgSpecificOperatorTable.CosineDistance.createCall(SqlParserPos.ZERO, operands)
+        .unparse(writer, leftPrec, rightPrec);
   }
 }
