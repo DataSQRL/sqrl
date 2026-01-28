@@ -26,6 +26,7 @@ import io.vertx.core.json.jackson.VertxModule;
 import java.io.IOException;
 import java.nio.file.Path;
 import lombok.Getter;
+import org.apache.flink.api.common.typeutils.TypeSerializer;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.RowType;
 
@@ -46,7 +47,8 @@ public class Deserializer {
             .registerModule(module)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
             .addMixIn(LogicalType.class, AlphabeticMixin.class)
-            .addMixIn(RowType.RowField.class, AlphabeticMixin.class);
+            .addMixIn(RowType.RowField.class, AlphabeticMixin.class)
+            .addMixIn(TypeSerializer.class, AlphabeticMixin.class);
 
     yamlMapper = new YAMLMapper();
     yamlMapper

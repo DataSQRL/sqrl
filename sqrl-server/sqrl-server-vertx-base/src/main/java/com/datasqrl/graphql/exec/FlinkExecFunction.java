@@ -20,14 +20,22 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.apache.flink.api.common.TaskInfoImpl;
+import org.apache.flink.api.common.functions.DefaultOpenContext;
 import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.RichFlatMapFunction;
+import org.apache.flink.api.common.functions.RuntimeContext;
+import org.apache.flink.api.common.functions.util.ListCollector;
+import org.apache.flink.api.common.functions.util.RuntimeUDFContext;
+import org.apache.flink.metrics.groups.UnregisteredMetricsGroup;
 import org.apache.flink.table.data.RowData;
 import org.apache.flink.table.runtime.generated.GeneratedFunction;
 import org.apache.flink.table.types.logical.RowType;
-import org.apache.flink.util.Collector;
 
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public class FlinkExecFunction implements Serializable {
@@ -37,6 +45,7 @@ public class FlinkExecFunction implements Serializable {
   @Getter private final String functionId;
   @Getter private final String functionDescription;
   @Getter private final RowType inputType;
+  @Getter private final RowType outputType;
   @Getter private final boolean listOutput;
   @JsonIgnore private final GeneratedFunction<FlatMapFunction<RowData, RowData>> function;
 
@@ -56,22 +65,20 @@ public class FlinkExecFunction implements Serializable {
     return res.get(0);
   }
 
+  @SneakyThrows
   public List<RowData> execute(List<? extends RowData> inputs) {
     if (instantiatedFunction == null) {
       throw new IllegalStateException("Function %s not instantiated".formatted(functionId));
     }
 
-    var result = new ArrayList<RowData>();
-    var collector =
-        new Collector<RowData>() {
-          @Override
-          public void collect(RowData rowData) {
-            result.add(rowData);
-          }
+    // Init exec function
+    if (instantiatedFunction instanceof RichFlatMapFunction<RowData, RowData> richFn) {
+      richFn.setRuntimeContext(createRuntimeContext());
+      richFn.open(DefaultOpenContext.INSTANCE);
+    }
 
-          @Override
-          public void close() {}
-        };
+    var result = new ArrayList<RowData>();
+    var collector = new ListCollector<>(result);
 
     inputs.forEach(
         in -> {
@@ -86,5 +93,25 @@ public class FlinkExecFunction implements Serializable {
         });
 
     return result;
+  }
+
+  /**
+   * Creates a dummy runtime context for Flink functions that require initialization.
+   *
+   * <p>This ensures that if the execution function has {@code open()} logic, it will be executed
+   * properly.
+   *
+   * @return a dummy {@link RuntimeContext} with minimal configuration
+   */
+  private RuntimeContext createRuntimeContext() {
+    var taskInfo = new TaskInfoImpl(functionDescription, 1, 0, 1, 0);
+
+    return new RuntimeUDFContext(
+        taskInfo,
+        Thread.currentThread().getContextClassLoader(),
+        null,
+        Map.of(),
+        Map.of(),
+        UnregisteredMetricsGroup.createOperatorMetricGroup());
   }
 }
