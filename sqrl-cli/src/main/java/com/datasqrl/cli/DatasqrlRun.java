@@ -21,20 +21,12 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.flinkrunner.EnvVarResolver;
 import com.datasqrl.flinkrunner.SqrlRunner;
-import com.datasqrl.graphql.HttpServerVerticle;
 import com.datasqrl.graphql.SqrlObjectMapper;
-import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.server.ModelContainer;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.prometheusmetrics.PrometheusConfig;
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
-import io.vertx.micrometer.MicrometerMetricsFactory;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,7 +74,6 @@ public class DatasqrlRun {
   private final ObjectMapper mapper;
   @Nullable private final CountDownLatch shutdownLatch;
 
-  private Vertx vertx;
   private TableResult tableResult;
 
   private DatasqrlRun(
@@ -113,7 +104,7 @@ public class DatasqrlRun {
     initPostgres();
     initKafka();
 
-    startVertx();
+    startServer();
     tableResult = runFlinkJob();
 
     if (shutdownLatch != null) {
@@ -165,9 +156,6 @@ public class DatasqrlRun {
       } catch (Exception e) {
         // allow failure if job already ended
       }
-    }
-    if (vertx != null) {
-      vertx.close();
     }
 
     // Signal shutdown to release the hold
@@ -274,7 +262,7 @@ public class DatasqrlRun {
   }
 
   @SneakyThrows
-  private void startVertx() {
+  private void startServer() {
     var vertxJson = planDir.resolve("vertx.json").toFile();
     if (!vertxJson.exists()) {
       return;
@@ -282,36 +270,12 @@ public class DatasqrlRun {
 
     var rootGraphqlModel = mapper.readValue(vertxJson, ModelContainer.class).models;
     if (rootGraphqlModel == null || rootGraphqlModel.isEmpty()) {
-      return; // no graphql server queries
+      return;
     }
 
-    var vertxConfigJson = planDir.resolve("vertx-config.json").toFile();
-    if (!vertxConfigJson.exists()) {
-      throw new IllegalStateException(
-          "Server config JSON '%s' does not exist".formatted(vertxConfigJson));
-    }
-
-    Map<String, Object> json = mapper.readValue(vertxConfigJson, Map.class);
-    var baseServerConfig = ServerConfigUtil.fromConfigMap(json);
-
-    var serverConfig = ServerConfigUtil.mergeConfigs(baseServerConfig, vertxConfig());
-    var serverVerticle = new HttpServerVerticle(serverConfig, rootGraphqlModel, planDir);
-    var prometheusMeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-    var metricsOptions =
-        new MicrometerMetricsFactory(prometheusMeterRegistry).newOptions().setEnabled(true);
-
-    vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
-    vertx
-        .deployVerticle(serverVerticle)
-        .onComplete(
-            res -> {
-              if (res.succeeded()) {
-                log.info("Vertx deployment succeeded. ID: {}", res.result());
-              } else {
-                log.error("Vertx deployment failed", res.cause());
-                vertx.close().onComplete(v -> System.exit(1));
-              }
-            });
+    log.warn(
+        "Embedded GraphQL server is not available in this version. "
+            + "Please use 'docker run datasqrl/sqrl-server' to start the server separately.");
   }
 
   @SneakyThrows
@@ -350,13 +314,5 @@ public class DatasqrlRun {
   private Tuple2<Path, FileTime> attachCreationTime(Path path) {
     BasicFileAttributes attrs = Files.readAttributes(path, BasicFileAttributes.class);
     return Tuple2.of(path, attrs.creationTime());
-  }
-
-  private Map<String, Object> vertxConfig() {
-    return sqrlConfig
-        .getEngines()
-        .getEngineConfig(VertxEngineFactory.ENGINE_NAME)
-        .map(PackageJson.EngineConfig::getConfig)
-        .orElse(null);
   }
 }

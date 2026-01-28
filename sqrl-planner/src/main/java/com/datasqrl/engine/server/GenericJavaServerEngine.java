@@ -17,7 +17,6 @@ package com.datasqrl.engine.server;
 
 import static com.datasqrl.engine.EngineFeature.NO_CAPABILITIES;
 import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
-import static com.datasqrl.graphql.config.ServerConfigUtil.mergeConfigs;
 
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -26,9 +25,9 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.ArtifactType;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.planner.dag.plan.ServerStagePlan;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.util.JsonMergeUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,17 +77,20 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   @SneakyThrows
   private String serverConfig() {
-    var mergedConfig = mergeConfigs(readDefaultConfig(), engineConfig.getConfig());
-    return MAPPER.copy().writer(new PrettyPrinter()).writeValueAsString(mergedConfig);
+    var baseConfig = readDefaultConfig();
+    var overrides = engineConfig.getConfig();
+    if (overrides != null && !overrides.isEmpty()) {
+      JsonMergeUtils.merge(baseConfig, MAPPER.valueToTree(overrides));
+    }
+    return MAPPER.copy().writer(new PrettyPrinter()).writeValueAsString(baseConfig);
   }
 
   @SneakyThrows
-  ServerConfig readDefaultConfig() {
+  ObjectNode readDefaultConfig() {
     try (var input = getClass().getResourceAsStream("/templates/server-config.json")) {
       var serverConfNode = (ObjectNode) MAPPER.readTree(input);
       configConverter.convertConfigsToJson().forEach(serverConfNode::setAll);
-
-      return MAPPER.treeToValue(serverConfNode, ServerConfig.class).validated();
+      return serverConfNode;
     }
   }
 }

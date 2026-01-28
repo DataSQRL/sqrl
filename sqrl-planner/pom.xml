@@ -112,7 +112,7 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-server-vertx-base</artifactId>
+      <artifactId>sqrl-server-core</artifactId>
       <scope>compile</scope>
     </dependency>
     <dependency>
