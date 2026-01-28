@@ -144,7 +144,7 @@
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <jjwt.version>0.13.0</jjwt.version>
     <json-schema.version>2.0.0</json-schema.version>
-    <junit.jupiter.version>6.0.2</junit.jupiter.version>
+    <junit.version>6.0.2</junit.version>
     <kafka.version>3.9.1</kafka.version>
     <log4j.version>2.25.3</log4j.version>
     <lombok.version>1.18.42</lombok.version>
@@ -166,7 +166,7 @@
     <swagger-core.version>2.2.42</swagger-core.version>
     <testcontainers.version>2.0.3</testcontainers.version>
     <vertx.version>5.0.7</vertx.version>
-    <spring-boot.version>3.4.3</spring-boot.version>
+    <spring-boot.version>4.0.2</spring-boot.version>
     <r2dbc-postgresql.version>1.0.7.RELEASE</r2dbc-postgresql.version>
     <reactor-kafka.version>1.3.23</reactor-kafka.version>
 
@@ -338,6 +338,15 @@
         <groupId>io.vertx</groupId>
         <artifactId>vertx-dependencies</artifactId>
         <version>${vertx.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- JUnit BOM - must be before Spring Boot to override its JUnit version -->
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -637,13 +646,6 @@
         <artifactId>testcontainers-junit-jupiter</artifactId>
         <version>${testcontainers.version}</version>
         <scope>test</scope>
-        <!-- JUnit 4 is no longer necessary, so we exclude it -->
-        <exclusions>
-          <exclusion>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.testcontainers</groupId>
@@ -662,13 +664,6 @@
         <artifactId>testcontainers</artifactId>
         <version>${testcontainers.version}</version>
         <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.junit</groupId>
-        <artifactId>junit-bom</artifactId>
-        <version>${junit.jupiter.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
       </dependency>
 
       <!-- logging -->
@@ -705,6 +700,16 @@
         <artifactId>flink-test-utils</artifactId>
         <version>${flink.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -791,6 +796,11 @@
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
 
