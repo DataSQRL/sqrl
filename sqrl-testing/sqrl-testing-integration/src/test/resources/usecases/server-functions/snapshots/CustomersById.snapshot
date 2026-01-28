@@ -15,18 +15,6 @@
     }, {
       "customerid" : 5,
       "name" : "Emily Brown"
-    }, {
-      "customerid" : 6,
-      "name" : "Frank Moore"
-    }, {
-      "customerid" : 7,
-      "name" : "Grace Taylor"
-    }, {
-      "customerid" : 8,
-      "name" : "Henry Anderson"
-    }, {
-      "customerid" : 9,
-      "name" : "Isabella Thomas"
     } ]
   }
 }

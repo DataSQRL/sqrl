@@ -32,6 +32,14 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-core</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-vector</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-openai</artifactId>
+    </dependency>
 
     <!-- Vertx -->
     <dependency>

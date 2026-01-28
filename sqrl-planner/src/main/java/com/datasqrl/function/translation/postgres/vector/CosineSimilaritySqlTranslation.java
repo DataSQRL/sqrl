@@ -36,12 +36,13 @@ public class CosineSimilaritySqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
+    var operands = VectorUtils.castDynamicParamsToVector(call.getOperandList());
+
     SqlStdOperatorTable.MINUS
         .createCall(
             SqlParserPos.ZERO,
             SqlLiteral.createExactNumeric("1", SqlParserPos.ZERO),
-            PgSpecificOperatorTable.CosineDistance.createCall(
-                SqlParserPos.ZERO, call.getOperandList()))
+            PgSpecificOperatorTable.CosineDistance.createCall(SqlParserPos.ZERO, operands))
         .unparse(writer, leftPrec, rightPrec);
   }
 }
