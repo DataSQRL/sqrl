@@ -35,7 +35,6 @@ import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
-import com.google.inject.Inject;
 import graphql.Scalars;
 import graphql.introspection.Introspection;
 import graphql.language.IntValue;
@@ -47,6 +46,7 @@ import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLTypeReference;
+import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -60,8 +60,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.commons.collections.ListUtils;
+import org.springframework.stereotype.Component;
 
 /** Creates a default graphql schema based on the SQRL schema */
+@Component
 @Slf4j
 public class GraphqlSchemaFactory {
 

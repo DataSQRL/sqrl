@@ -27,7 +27,7 @@ import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.iceberg.IcebergDataTypeMapper;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Pattern;

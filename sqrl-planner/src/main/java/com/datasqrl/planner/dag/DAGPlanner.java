@@ -51,7 +51,7 @@ import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.FlinkCompileException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -89,8 +89,12 @@ import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.plan.schema.FlinkPreparingTableBase;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
 /** Optimizes the DAG and produces the physical plan after DAG cutting */
+@Component
+@Lazy
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class DAGPlanner {
 

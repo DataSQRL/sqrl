@@ -99,7 +99,7 @@ import com.datasqrl.planner.util.SqlTableNameExtractor;
 import com.datasqrl.util.FunctionUtil;
 import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -128,6 +128,8 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
 /**
  * This is the main class for planning SQRL scripts. It relies on the {@link SqrlStatementParser}
@@ -137,6 +139,8 @@ import org.apache.flink.table.functions.UserDefinedFunction;
  * <p>In planning the SQRL statements, it uses produces a {@link TableAnalysis} that has the
  * information needed to build the computation DAG via {@link DAGBuilder}.
  */
+@Component
+@Lazy
 public class SqlScriptPlanner {
 
   public static final String EXPORT_SUFFIX = "_ex";

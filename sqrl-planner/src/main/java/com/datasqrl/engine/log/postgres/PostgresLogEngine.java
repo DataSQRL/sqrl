@@ -32,7 +32,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.EnumSet;
 import java.util.Optional;
 import lombok.Getter;

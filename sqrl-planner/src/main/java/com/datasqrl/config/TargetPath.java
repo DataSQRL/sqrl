@@ -15,8 +15,8 @@
  */
 package com.datasqrl.config;
 
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.nio.file.Path;
 
 public record TargetPath(Path targetDir) {

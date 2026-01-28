@@ -19,11 +19,13 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.util.FileUtil;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
 
+@Component
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class MainScriptImpl implements MainScript {
 

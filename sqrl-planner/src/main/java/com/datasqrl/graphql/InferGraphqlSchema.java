@@ -19,14 +19,16 @@ import static com.datasqrl.graphql.GraphqlSchemaFactory.API_DIRECTIVE_NAME;
 
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
-import com.google.inject.Inject;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
+import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.stereotype.Component;
 
 /** Creates new table functions from the GraphQL schema. */
+@Component
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class InferGraphqlSchema {
 

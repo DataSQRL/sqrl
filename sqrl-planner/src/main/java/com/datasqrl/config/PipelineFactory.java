@@ -18,17 +18,17 @@ package com.datasqrl.config;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.SimplePipeline;
 import com.datasqrl.error.ErrorCollector;
-import com.google.inject.Injector;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationContext;
 
 @RequiredArgsConstructor
 public class PipelineFactory {
 
-  private final Injector injector;
+  private final ApplicationContext applicationContext;
 
   public ExecutionPipeline createPipeline() {
-    var engineHolder = injector.getInstance(ExecutionEnginesHolder.class);
-    var errorCollector = injector.getInstance(ErrorCollector.class);
+    var engineHolder = applicationContext.getBean(ExecutionEnginesHolder.class);
+    var errorCollector = applicationContext.getBean(ErrorCollector.class);
 
     return SimplePipeline.of(engineHolder.getEngines(), errorCollector);
   }

@@ -23,11 +23,13 @@ import com.datasqrl.graphql.converter.GraphQLSchemaConverterConfig;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
 import com.datasqrl.graphql.server.operation.ApiOperation;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import java.util.ArrayList;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
 
 /** Generates the model for the server */
+@Component
 @AllArgsConstructor(onConstructor_ = @Inject)
 public class GenerateServerModel {
 

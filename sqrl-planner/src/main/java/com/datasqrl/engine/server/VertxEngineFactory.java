@@ -20,7 +20,7 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.QueryEngineConfigConverter;
 import com.datasqrl.engine.IExecutionEngine;
 import com.google.auto.service.AutoService;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 
 @AutoService(EngineFactory.class)
 public class VertxEngineFactory extends GenericJavaServerEngineFactory {
