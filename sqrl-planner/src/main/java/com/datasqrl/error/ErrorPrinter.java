@@ -39,6 +39,7 @@ public class ErrorPrinter {
     var location = errorMessage.getLocation();
     //    Preconditions.checkNotNull(location, "Error location can not be null");
     var b = new StringBuilder();
+    var locationLength = -1;
 
     // print error severity and message
     b.append(getHead(errorMessage));
@@ -52,6 +53,7 @@ public class ErrorPrinter {
         b.append(" [").append(location.getFile().toString()).append("]");
       }
       b.append(":\n");
+      locationLength = b.length();
     }
 
     var addSeparator = false;
@@ -90,10 +92,11 @@ public class ErrorPrinter {
     }
     // print error description (context)
     b.append(getErrorDescription(errorMessage, addSeparator));
-    // print error code (if not generic)
-    //    if (label!=ErrorLabel.GENERIC) {
-    //      b.append("[").append(label.getLabel()).append("]");
-    //    }
+
+    if (locationLength == b.length()) {
+      return b.substring(0, locationLength - 2);
+    }
+
     return b.toString();
   }
 

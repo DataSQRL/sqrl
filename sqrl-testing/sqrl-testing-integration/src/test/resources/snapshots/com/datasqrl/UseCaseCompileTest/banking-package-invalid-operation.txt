@@ -1,0 +1,44 @@
+[WARN] The rowtime column 'event_time' for this table is nullable
+in script:loan.sqrl [22:1]:
+
+ApplicationUpdates.application := SELECT * FROM Applications a WHERE this.loan_application_id = a.id;
+Applications.updates := SELECT * FROM ApplicationUpdates u WHERE this.id = u.loan_application_id ORDER BY u.event_time;
+^
+The rowtime column is used to advance the watermark and for time-based operations. When it is null, the watermark does not advance and the record can be ignored for time-based operations, leading to unexpected output and performance issues.
+
+Ensure that the rowtime column always has a value by filtering or setting a default. If that is the case but the compiler doesn't recognize it, explicitly cast it in the table definition.
+For example:
+`rowTime AS COALESCE(TO_TIMESTAMP_LTZ(lastUpdated, 0), TIMESTAMP '1970-01-01 00:00:00.000')`
+[WARN] The rowtime column 'event_time' for this table is nullable
+in script:loan.sqrl [30:1]:
+                      GROUP BY a.loan_type_id;
+
+ApplicationStatus := SELECT u._uuid, u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
+^
+The rowtime column is used to advance the watermark and for time-based operations. When it is null, the watermark does not advance and the record can be ignored for time-based operations, leading to unexpected output and performance issues.
+
+Ensure that the rowtime column always has a value by filtering or setting a default. If that is the case but the compiler doesn't recognize it, explicitly cast it in the table definition.
+For example:
+`rowTime AS COALESCE(TO_TIMESTAMP_LTZ(lastUpdated, 0), TIMESTAMP '1970-01-01 00:00:00.000')`
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.ApplicationStatus[event_time]
+in script:loan.sqrl [38:1]:
+
+-- TODO make it a subscription
+ApplicationAlert := SELECT _uuid, id, customer_id, loan_type_id, max_amount, min_amount, amount
+^
+
+[WARN] The rowtime column 'timestamp' for this table is nullable
+in script:loan.sqrl [42:1]:
+                    WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
+
+CustomerChatMessage := SELECT role, content, name, c.context.customerid, event_time AS `timestamp`,
+^
+The rowtime column is used to advance the watermark and for time-based operations. When it is null, the watermark does not advance and the record can be ignored for time-based operations, leading to unexpected output and performance issues.
+
+Ensure that the rowtime column always has a value by filtering or setting a default. If that is the case but the compiler doesn't recognize it, explicitly cast it in the table definition.
+For example:
+`rowTime AS COALESCE(TO_TIMESTAMP_LTZ(lastUpdated, 0), TIMESTAMP '1970-01-01 00:00:00.000')`
+[FATAL] Invalid Operations: 
+
+FieldUndefined: Validation error (FieldUndefined@[ApplicationStatus/message123]) : Field 'message123' in type 'ApplicationStatus' is undefined (at SourceLocation{line=4, column=9})
+in script:invalid-query-applications.graphql
