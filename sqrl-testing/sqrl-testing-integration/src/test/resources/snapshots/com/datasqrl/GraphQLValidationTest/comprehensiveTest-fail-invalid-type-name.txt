@@ -27,5 +27,4 @@ type Customer~ {
     email: String!
     name: String!
 }]
-in script:comprehensiveTest-fail-invalid-type-name.graphqls:
-
+in script:comprehensiveTest-fail-invalid-type-name.graphqls
