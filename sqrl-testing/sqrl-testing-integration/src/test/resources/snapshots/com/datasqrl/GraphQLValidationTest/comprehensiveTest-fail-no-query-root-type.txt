@@ -20,5 +20,4 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Cannot find graphql root Query type
-in script:comprehensiveTest-fail-no-query-root-type.graphqls [0:0]:
-
+in script:comprehensiveTest-fail-no-query-root-type.graphqls [0:0]

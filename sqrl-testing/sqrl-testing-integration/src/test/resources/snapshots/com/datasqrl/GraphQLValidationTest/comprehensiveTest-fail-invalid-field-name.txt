@@ -27,5 +27,4 @@ CustomerTimeWindow := SELECT
     timestamp: DateTime
     related(limit: Int = 10, offset: Int = 0): [Customer!]
 }]
-in script:comprehensiveTest-fail-invalid-field-name.graphqls:
-
+in script:comprehensiveTest-fail-invalid-field-name.graphqls
