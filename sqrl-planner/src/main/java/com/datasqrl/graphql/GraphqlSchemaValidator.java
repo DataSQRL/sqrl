@@ -24,11 +24,13 @@ import static com.datasqrl.graphql.util.GraphqlCheckUtil.createThrowable;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.util.GraphqlErrorUtil;
 import com.datasqrl.graphql.util.GraphqlSchemaUtil;
 import com.datasqrl.planner.dag.plan.MutationQuery;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.google.inject.Inject;
+import graphql.ParseAndValidate;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
 import graphql.language.InputObjectTypeDefinition;
@@ -39,11 +41,13 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.language.ScalarTypeDefinition;
 import graphql.language.Type;
 import graphql.language.TypeName;
+import graphql.parser.Parser;
 import graphql.schema.GraphQLInputType;
 import graphql.schema.GraphQLNamedType;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
+import graphql.schema.idl.UnExecutableSchemaGenerator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -464,16 +468,42 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
     return type;
   }
 
-  public void validate(ApiSource source, String version) {
+  public void validate(ApiSources api) {
+    TypeDefinitionRegistry registry;
+
+    // Validate API
     try {
-      var registry = (new SchemaParser()).parse(source.getDefinition());
+      registry = new SchemaParser().parse(api.schema().getDefinition());
       var queryType = getType(registry, () -> getQueryTypeName(registry));
       if (queryType.isEmpty()) {
         throw createThrowable(null, "Cannot find graphql root Query type");
       }
-      walkAPISource(source);
+      walkAPISource(api.schema());
     } catch (Exception e) {
-      throw errorCollector.handle(e, "API " + version);
+      throw errorCollector.handle(e, "API " + api.version());
+    }
+
+    // Validate operations (if any)
+    try {
+      for (var operationSource : api.operations()) {
+        var opErrorCollector =
+            errorCollector.withScript(operationSource.getPath(), operationSource.getDefinition());
+
+        var schema = UnExecutableSchemaGenerator.makeUnExecutableSchema(registry);
+        var op = new Parser().parseDocument(operationSource.getDefinition());
+
+        var errors = ParseAndValidate.validate(schema, op);
+        if (!errors.isEmpty()) {
+          var errorStr =
+              errors.stream()
+                  .map(GraphqlErrorUtil::formatValidationError)
+                  .collect(Collectors.joining("\n\n"));
+
+          opErrorCollector.fatal("Invalid Operations: \n\n%s", errorStr);
+        }
+      }
+    } catch (Exception e) {
+      throw errorCollector.handle(e, "Cannot validate operations for API " + api.version());
     }
   }
 }

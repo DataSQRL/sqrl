@@ -26,9 +26,9 @@ import graphql.schema.idl.SchemaPrinter;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
-/** Creates new table functions from the GraphQL schema. */
+/** Handles GrapQL schema inference and validation. */
 @AllArgsConstructor(onConstructor_ = @Inject)
-public class InferGraphqlSchema {
+public class GraphqlSchemaHandler {
 
   private final ErrorCollector errorCollector;
   private final GraphqlSchemaFactory graphqlSchemaFactory;
@@ -52,6 +52,6 @@ public class InferGraphqlSchema {
             serverPlan.getMutations(),
             errorCollector.withScript(api.schema().getPath(), api.schema().getDefinition()));
 
-    schemaValidator.validate(api.schema(), api.version());
+    schemaValidator.validate(api);
   }
 }
