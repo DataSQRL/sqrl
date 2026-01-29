@@ -31,6 +31,18 @@
     <docker.image.name>datasqrl/sqrl-server</docker.image.name>
   </properties>
 
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
+
   <dependencies>
     <!-- SQRL Core -->
     <dependency>
@@ -338,6 +350,7 @@
         <version>${spring-boot.version}</version>
         <configuration>
           <mainClass>com.datasqrl.graphql.SqrlServerApplication</mainClass>
+          <classifier>exec</classifier>
         </configuration>
         <executions>
           <execution>

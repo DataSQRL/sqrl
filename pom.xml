@@ -66,10 +66,10 @@
   </developers>
 
   <modules>
-    <module>sqrl-cli</module>
     <module>sqrl-discovery</module>
     <module>sqrl-planner</module>
     <module>sqrl-server</module>
+    <module>sqrl-cli</module>
     <module>sqrl-testing</module>
   </modules>
 

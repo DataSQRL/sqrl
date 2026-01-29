@@ -18,7 +18,7 @@ FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
-COPY target/spring-server.jar /app/spring-server.jar
+COPY target/spring-server-exec.jar /app/spring-server.jar
 
 EXPOSE 8888
 

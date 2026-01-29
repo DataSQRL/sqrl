@@ -21,9 +21,11 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.flinkrunner.EnvVarResolver;
 import com.datasqrl.flinkrunner.SqrlRunner;
 import com.datasqrl.graphql.SqrlObjectMapper;
+import com.datasqrl.graphql.SqrlServerApplication;
 import com.datasqrl.graphql.server.ModelContainer;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,6 +63,8 @@ import org.apache.flink.table.api.TableResult;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.ConfigurableApplicationContext;
 
 @Slf4j
 public class DatasqrlRun {
@@ -75,6 +79,7 @@ public class DatasqrlRun {
   @Nullable private final CountDownLatch shutdownLatch;
 
   private TableResult tableResult;
+  private ConfigurableApplicationContext springContext;
 
   private DatasqrlRun(
       Path planDir,
@@ -156,6 +161,10 @@ public class DatasqrlRun {
       } catch (Exception e) {
         // allow failure if job already ended
       }
+    }
+
+    if (springContext != null) {
+      springContext.close();
     }
 
     // Signal shutdown to release the hold
@@ -273,9 +282,17 @@ public class DatasqrlRun {
       return;
     }
 
-    log.warn(
-        "Embedded GraphQL server is not available in this version. "
-            + "Please use 'docker run datasqrl/sqrl-server' to start the server separately.");
+    GlobalEnvironmentStore.putAll(env);
+
+    var app = new SpringApplication(SqrlServerApplication.class);
+    app.setDefaultProperties(
+        Map.of(
+            "spring.main.banner-mode", "off",
+            "logging.level.root", "WARN",
+            "logging.level.com.datasqrl", "INFO"));
+
+    springContext = app.run();
+    log.info("Spring Boot GraphQL server started");
   }
 
   @SneakyThrows
