@@ -27,7 +27,7 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.ApiSources;
 import com.datasqrl.graphql.GenerateServerModel;
-import com.datasqrl.graphql.InferGraphqlSchema;
+import com.datasqrl.graphql.GraphqlSchemaHandler;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.validate.ExecutionGoal;
@@ -51,7 +51,7 @@ public class CompilationProcess {
   private final MainScript mainScript;
   private final PackageJson config;
   private final GenerateServerModel generateServerModel;
-  private final InferGraphqlSchema inferGraphqlSchema;
+  private final GraphqlSchemaHandler graphqlSchemaHandler;
   private final DagWriter writeDeploymentArtifactsHook;
   private final GraphqlSourceLoader graphqlSourceLoader;
   private final ExecutionGoal executionGoal;
@@ -89,14 +89,14 @@ public class CompilationProcess {
       if (apiVersions.isEmpty()
           || executionGoal == ExecutionGoal.TEST) { // Infer schema from functions
 
-        var inferredSchema = inferGraphqlSchema.inferGraphQLSchema(serverPlan);
+        var inferredSchema = graphqlSchemaHandler.inferGraphQLSchema(serverPlan);
         apiVersions = List.of(new ApiSources(inferredSchema));
 
         // Write out the inferred API schema to the build dir
         writeDeploymentArtifactsHook.writeInferredSchema(inferredSchema);
       } else {
         apiVersions.forEach(
-            apiVersion -> inferGraphqlSchema.validateSchema(apiVersion, serverPlan));
+            apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));
       }
 
       apiVersions.forEach(

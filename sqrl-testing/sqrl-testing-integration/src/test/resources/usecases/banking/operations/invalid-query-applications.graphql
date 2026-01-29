@@ -1,0 +1,6 @@
+query ApplicationStatusSpecialMcp @api(rest: NONE, mcp: TOOL) {
+    ApplicationStatus(limit: 10, offset: 0) {
+        status
+        message123
+    }
+}
