@@ -31,7 +31,7 @@ mvn clean install -P quickbuild
 mvn -P dev initialize
 
 # Server-specific builds
-mvn clean package                    # Build fat JAR (vertx-server.jar)
+mvn clean package                    # Build fat JAR (spring-server.jar)
 mvn clean package -Pskip-shade-plugin  # Build without fat JAR
 mvn clean package -Pinstrument     # Build with JaCoCo instrumentation
 ```
@@ -94,8 +94,7 @@ This is a multi-module Maven project with the following key components:
 
 **sqrl-server/** - GraphQL API server implementation that translates GraphQL queries, mutations, and subscriptions into database calls:
 - `sqrl-server-core/` - Core interfaces and models (GraphQL schema, execution coordinates)
-- `sqrl-server-vertx-base/` - Full Vert.x implementation with database clients and Kafka integration
-- `sqrl-server-vertx/` - Standalone deployment module with Docker support
+- `sqrl-server-spring/` - Spring Boot implementation with R2DBC/JDBC database clients and Kafka integration
 
 **sqrl-tools/** - Command-line tools and utilities:
 - `sqrl-cli/` - Main CLI interface (entry point: `com.datasqrl.cli.DatasqrlCli`)
@@ -111,11 +110,11 @@ This is a multi-module Maven project with the following key components:
 - **Java 17** with Maven build system
 - **Apache Flink 1.19.2** for stream processing
 - **Apache Calcite 1.27.0** for SQL parsing and optimization
-- **Vert.x 5.0.0** for API server
+- **Spring Boot 4.0** for API server (WebFlux reactive)
 - **GraphQL Java 19.2** for API generation
 - **Apache Kafka 3.4.0** for streaming
 - **PostgreSQL 42.7.7** for storage
-- **JUnit 5** with Testcontainers for testing
+- **JUnit 6** with Testcontainers for testing
 
 ## Development Workflow
 
@@ -142,7 +141,7 @@ All dependency versions should be centralized as properties in the root pom.xml 
 ```xml
 <properties>
   <jackson.version>2.19.1</jackson.version>
-  <vertx.version>5.0.1</vertx.version>
+  <spring-boot.version>4.0.2</spring-boot.version>
   <kafka.version>3.4.0</kafka.version>
   <flink.version>1.19.3</flink.version>
   <httpcomponents.version>4.5.14</httpcomponents.version>
@@ -280,28 +279,27 @@ If tests fail due to Flink memory issues, uncomment the configuration line in `E
 
 ### Key Design Patterns
 - **Visitor Pattern**: Extensively used for processing GraphQL model (`RootVisitor`, `QueryCoordVisitor`, `SchemaVisitor`)
-- **Reactive Architecture**: Built on Vert.x event loop with CompletableFuture for async operations
-- **Schema-First**: GraphQL schema loaded from `server-model.json` at runtime with pre-compiled execution paths
+- **Reactive Architecture**: Built on Spring WebFlux with CompletableFuture for async operations
+- **Schema-First**: GraphQL schema loaded from `vertx.json` at runtime with pre-compiled execution paths
 
 ### Runtime Model
-The server operates on a compiled model where the DataSQRL compiler generates `server-model.json` containing all GraphQL execution metadata. The server loads this at startup and creates optimized execution paths - no runtime SQL generation occurs.
+The server operates on a compiled model where the DataSQRL compiler generates `vertx.json` containing all GraphQL execution metadata. The server loads this at startup and creates optimized execution paths - no runtime SQL generation occurs.
 
 ### Database Abstraction
-Multi-database support through `SqlClient` interface:
-- PostgreSQL: Native Vert.x client with pipelining
-- DuckDB: JDBC-based connection
+Multi-database support through `SpringJdbcClient` interface:
+- PostgreSQL: R2DBC async client for reactive database access
+- DuckDB: JDBC-based connection with Virtual Threads
 - Snowflake: JDBC-based connection with specialized configuration
 
 ### Server Configuration Files
-- `server-model.json`: Runtime GraphQL model and execution coordinates
-- `server-config.json`: Server configuration (ports, database connections)
+- `vertx.json`: Runtime GraphQL model and execution coordinates
+- `application.yaml`: Spring Boot configuration (ports, database connections)
 - `snowflake-config.json`: Optional Snowflake-specific configuration
-- `log4j2.properties`: Logging configuration
 
 ## Important Development Notes
 
 ### Module Dependencies
-Always check existing dependencies in `pom.xml` files before adding new libraries. The project uses specific versions of Vert.x, GraphQL-Java, and database drivers.
+Always check existing dependencies in `pom.xml` files before adding new libraries. The project uses specific versions of Spring Boot, GraphQL-Java, and database drivers.
 
 ### Database Operations
 All database operations are asynchronous and non-blocking. Use the appropriate `SqlClient` implementation for the target database system.

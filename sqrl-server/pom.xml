@@ -30,7 +30,6 @@
 
   <modules>
     <module>sqrl-server-core</module>
-    <module>sqrl-server-vertx-base</module>
-    <module>sqrl-server-vertx</module>
+    <module>sqrl-server-spring</module>
   </modules>
 </project>
