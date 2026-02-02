@@ -43,7 +43,17 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-server-vertx-base</artifactId>
+      <artifactId>sqrl-server-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl</groupId>
+      <artifactId>sqrl-server-spring</artifactId>
+      <exclusions>
+        <exclusion>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-logging</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
 
     <dependency>
@@ -162,6 +172,16 @@
       <groupId>org.testcontainers</groupId>
       <artifactId>testcontainers-postgresql</artifactId>
       <scope>compile</scope>
+    </dependency>
+
+    <!-- Logging -->
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.logging.log4j</groupId>
+      <artifactId>log4j-core</artifactId>
     </dependency>
 
     <!-- Hadoop dependencies -->
@@ -304,22 +324,6 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-junit5</artifactId>
-      <scope>test</scope>
-      <!-- JUnit 4 is no longer necessary, so we exclude it -->
-      <exclusions>
-        <exclusion>
-          <groupId>junit</groupId>
-          <artifactId>junit</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>io.vertx</groupId>
-      <artifactId>vertx-web-client</artifactId>
-    </dependency>
-    <dependency>
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-planner</artifactId>
       <type>test-jar</type>
@@ -383,10 +387,6 @@
                 <relocation>
                   <pattern>jakarta.</pattern>
                   <shadedPattern>sqrl.jakarta.</shadedPattern>
-                </relocation>
-                <relocation>
-                  <pattern>io.vertx.</pattern>
-                  <shadedPattern>sqrl.vertx.</shadedPattern>
                 </relocation>
                 <relocation>
                   <pattern>com.sun.el.</pattern>

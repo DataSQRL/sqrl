@@ -66,10 +66,10 @@
   </developers>
 
   <modules>
-    <module>sqrl-cli</module>
     <module>sqrl-discovery</module>
     <module>sqrl-planner</module>
     <module>sqrl-server</module>
+    <module>sqrl-cli</module>
     <module>sqrl-testing</module>
   </modules>
 
@@ -144,7 +144,7 @@
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <jjwt.version>0.13.0</jjwt.version>
     <json-schema.version>2.0.0</json-schema.version>
-    <junit.jupiter.version>6.0.2</junit.jupiter.version>
+    <junit.version>6.0.2</junit.version>
     <kafka.version>3.9.1</kafka.version>
     <log4j.version>2.25.3</log4j.version>
     <lombok.version>1.18.42</lombok.version>
@@ -165,7 +165,9 @@
     <snakeyaml.version>2.5</snakeyaml.version>
     <swagger-core.version>2.2.42</swagger-core.version>
     <testcontainers.version>2.0.3</testcontainers.version>
-    <vertx.version>5.0.7</vertx.version>
+    <spring-boot.version>4.0.2</spring-boot.version>
+    <r2dbc-postgresql.version>1.0.7.RELEASE</r2dbc-postgresql.version>
+    <reactor-kafka.version>1.3.23</reactor-kafka.version>
 
     <!-- Plugin versions -->
     <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
@@ -194,12 +196,7 @@
       </dependency>
       <dependency>
         <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-server-vertx-base</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.datasqrl</groupId>
-        <artifactId>sqrl-server-vertx</artifactId>
+        <artifactId>sqrl-server-spring</artifactId>
         <version>${project.version}</version>
       </dependency>
 
@@ -326,27 +323,64 @@
         <version>${graphql-java-extended-scalars.version}</version>
       </dependency>
 
+      <!-- Jackson BOM - must be before Spring Boot to use our Jackson version -->
       <dependency>
-        <groupId>io.vertx</groupId>
-        <artifactId>vertx-dependencies</artifactId>
-        <version>${vertx.version}</version>
+        <groupId>com.fasterxml.jackson</groupId>
+        <artifactId>jackson-bom</artifactId>
+        <version>${jackson.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
 
-      <!-- required for vertx subscriptions -->
+      <!-- JUnit BOM - must be before Spring Boot to override its JUnit version -->
+      <dependency>
+        <groupId>org.junit</groupId>
+        <artifactId>junit-bom</artifactId>
+        <version>${junit.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Spring Boot BOM -->
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-dependencies</artifactId>
+        <version>${spring-boot.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+
+      <!-- Jackson Scala module - must match jackson.version -->
+      <dependency>
+        <groupId>com.fasterxml.jackson.module</groupId>
+        <artifactId>jackson-module-scala_2.12</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
+
+      <!-- R2DBC PostgreSQL -->
+      <dependency>
+        <groupId>org.postgresql</groupId>
+        <artifactId>r2dbc-postgresql</artifactId>
+        <version>${r2dbc-postgresql.version}</version>
+      </dependency>
+
+      <!-- Reactor Kafka -->
+      <dependency>
+        <groupId>io.projectreactor.kafka</groupId>
+        <artifactId>reactor-kafka</artifactId>
+        <version>${reactor-kafka.version}</version>
+      </dependency>
+
       <dependency>
         <groupId>io.projectreactor</groupId>
         <artifactId>reactor-core</artifactId>
         <version>${projectreactor.version}</version>
       </dependency>
-      <!-- vertx metrics -->
       <dependency>
         <groupId>io.micrometer</groupId>
         <artifactId>micrometer-registry-prometheus</artifactId>
         <version>${micrometer.version}</version>
       </dependency>
-      <!-- required for vertx jdbc -->
       <dependency>
         <groupId>io.agroal</groupId>
         <artifactId>agroal-pool</artifactId>
@@ -555,14 +589,6 @@
         <scope>import</scope>
       </dependency>
 
-      <dependency>
-        <groupId>com.fasterxml.jackson</groupId>
-        <artifactId>jackson-bom</artifactId>
-        <version>${jackson.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-
       <!-- JSON Schema -->
       <dependency>
         <groupId>com.networknt</groupId>
@@ -606,13 +632,6 @@
         <artifactId>testcontainers-junit-jupiter</artifactId>
         <version>${testcontainers.version}</version>
         <scope>test</scope>
-        <!-- JUnit 4 is no longer necessary, so we exclude it -->
-        <exclusions>
-          <exclusion>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-          </exclusion>
-        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.testcontainers</groupId>
@@ -631,13 +650,6 @@
         <artifactId>testcontainers</artifactId>
         <version>${testcontainers.version}</version>
         <scope>test</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.junit</groupId>
-        <artifactId>junit-bom</artifactId>
-        <version>${junit.jupiter.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
       </dependency>
 
       <!-- logging -->
@@ -674,6 +686,16 @@
         <artifactId>flink-test-utils</artifactId>
         <version>${flink.version}</version>
         <scope>test</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>*</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -762,6 +784,11 @@
       <artifactId>junit-jupiter-api</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
 
     <dependency>
       <groupId>org.assertj</groupId>
@@ -791,11 +818,6 @@
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-shade-plugin</artifactId>
           <version>3.6.1</version>
-        </plugin>
-        <plugin>
-          <groupId>io.reactiverse</groupId>
-          <artifactId>vertx-maven-plugin</artifactId>
-          <version>2.0.2</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
@@ -1078,13 +1100,6 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>io.reactiverse</groupId>
-            <artifactId>vertx-maven-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
             <configuration>
@@ -1183,7 +1198,7 @@
 
               <excludeArtifacts>
                 <!-- client jars are too large, skipping uploading for now -->
-                <excludeArtifact>sqrl-server-vertx</excludeArtifact>
+                <excludeArtifact>sqrl-server-spring</excludeArtifact>
                 <excludeArtifact>sqrl-cli</excludeArtifact>
                 <excludeArtifact>sqrl-test</excludeArtifact>
                 <excludeArtifact>sqrl-run</excludeArtifact>
@@ -1362,13 +1377,6 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>io.reactiverse</groupId>
-            <artifactId>vertx-maven-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-          <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
             <configuration>
@@ -1395,13 +1403,6 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <configuration>
-              <skip>true</skip>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>io.reactiverse</groupId>
-            <artifactId>vertx-maven-plugin</artifactId>
             <configuration>
               <skip>true</skip>
             </configuration>

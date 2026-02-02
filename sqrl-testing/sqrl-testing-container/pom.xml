@@ -132,7 +132,7 @@
 
     <dependency>
       <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-server-vertx</artifactId>
+      <artifactId>sqrl-server-spring</artifactId>
       <version>${project.version}</version>
       <type>pom</type>
       <scope>provided</scope>

@@ -17,22 +17,20 @@ package com.datasqrl.cli;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.vertx.core.Future;
-import io.vertx.core.MultiMap;
-import io.vertx.core.Vertx;
-import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.WebSocket;
-import io.vertx.core.http.WebSocketConnectOptions;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.WebSocket;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
-// Simplified example WebSocket client code using Vert.x
 @RequiredArgsConstructor
 @Slf4j
 public class SubscriptionClient implements AutoCloseable {
@@ -40,7 +38,7 @@ public class SubscriptionClient implements AutoCloseable {
   private static final long INITIAL_DELAY_MS = 100;
 
   private final ObjectMapper objectMapper = new ObjectMapper();
-  private final Vertx vertx = Vertx.vertx();
+  private final HttpClient httpClient = HttpClient.newHttpClient();
   private final CompletableFuture<Void> connectedFuture = new CompletableFuture<>();
   @Getter private final List<String> messages = new ArrayList<>();
 
@@ -73,88 +71,72 @@ public class SubscriptionClient implements AutoCloseable {
           MAX_RETRIES,
           name,
           delay);
-      vertx.setTimer(delay, id -> connectWebSocket(attempt));
-    } else {
-      connectWebSocket(attempt);
+      try {
+        Thread.sleep(delay);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        connectedFuture.completeExceptionally(e);
+        return;
+      }
     }
+
+    connectWebSocket(attempt);
   }
 
   private void connectWebSocket(int attempt) {
-    /* 1. Collect handshake headers */
-    var headerMap = MultiMap.caseInsensitiveMultiMap();
-    headers.forEach(headerMap::add);
+    var uri = URI.create("ws://localhost:8888/%s/graphql".formatted(version));
+    var builder = httpClient.newWebSocketBuilder();
+    builder.subprotocols("graphql-transport-ws");
+    headers.forEach(builder::header);
 
-    /* 2. Describe the connection */
-    var opts =
-        new WebSocketConnectOptions()
-            .setHost("localhost")
-            .setPort(8888)
-            .setURI("/%s/graphql".formatted(version))
-            .addSubProtocol("graphql-transport-ws") // or "graphql-ws"
-            .setHeaders(headerMap);
-
-    /* 3. Open the socket with the new WebSocketClient API */
-    var wsClient = vertx.createWebSocketClient();
-    wsClient
-        .connect(opts)
-        .onSuccess(
-            ws -> {
-              this.webSocket = ws;
-              log.info("WebSocket opened for subscription: {}", name);
-
-              // Set a message handler for incoming messages
-              ws.handler(this::handleTextMessage);
-
-              // Send initial connection message
-              sendConnectionInit()
-                  .onComplete(success -> connectedFuture.complete(null))
-                  .onFailure(connectedFuture::completeExceptionally);
-            })
-        .onFailure(
-            throwable -> {
-              if (attempt < MAX_RETRIES - 1) {
-                log.warn(
-                    "Failed to open WebSocket for subscription: {} (attempt {}/{}), retrying...",
-                    name,
-                    attempt + 1,
-                    MAX_RETRIES,
-                    throwable);
-                attemptConnection(attempt + 1);
+    builder
+        .buildAsync(uri, new WebSocketListener())
+        .whenComplete(
+            (ws, throwable) -> {
+              if (throwable != null) {
+                if (attempt < MAX_RETRIES - 1) {
+                  log.warn(
+                      "Failed to open WebSocket for subscription: {} (attempt {}/{}), retrying...",
+                      name,
+                      attempt + 1,
+                      MAX_RETRIES,
+                      throwable);
+                  attemptConnection(attempt + 1);
+                } else {
+                  log.error(
+                      "Failed to open WebSocket for subscription: {} after {} attempts",
+                      name,
+                      MAX_RETRIES,
+                      throwable);
+                  connectedFuture.completeExceptionally(throwable);
+                }
               } else {
-                log.error(
-                    "Failed to open WebSocket for subscription: {} after {} attempts",
-                    name,
-                    MAX_RETRIES,
-                    throwable);
-                connectedFuture.completeExceptionally(throwable);
+                this.webSocket = ws;
+                log.info("WebSocket opened for subscription: {}", name);
+                sendConnectionInit();
               }
             });
   }
 
-  private Future<Void> sendConnectionInit() {
-    return sendMessage(Map.of("type", "connection_init"));
+  private void sendConnectionInit() {
+    sendMessage(Map.of("type", "connection_init"));
   }
 
-  private Future<Void> sendSubscribe() {
-    Map<String, Object> payload =
-        Map.of(
-            //              "operationName", "breakMe",
-            "query", query);
+  private void sendSubscribe() {
+    Map<String, Object> payload = Map.of("query", query);
     Map<String, Object> message =
         Map.of("id", System.nanoTime(), "type", "subscribe", "payload", payload);
-    return sendMessage(message);
+    sendMessage(message);
   }
 
   @SneakyThrows
-  private Future<Void> sendMessage(Map<String, Object> message) {
+  private void sendMessage(Map<String, Object> message) {
     String json = objectMapper.writeValueAsString(message);
     System.out.println("Sending: " + json);
-    return webSocket.writeTextMessage(json);
+    webSocket.sendText(json, true);
   }
 
-  private void handleTextMessage(Buffer buffer) {
-    var data = buffer.toString();
-    // Handle the incoming messages
+  private void handleTextMessage(String data) {
     System.out.println("Data: " + data);
     Map<String, Object> message;
     try {
@@ -175,13 +157,11 @@ public class SubscriptionClient implements AutoCloseable {
     var type = (String) message.get("type");
 
     if ("connection_ack".equals(type)) {
-      // Connection acknowledged, send the subscribe message
       sendSubscribe();
       connectedFuture.complete(null);
     } else if ("complete".equals(type)) {
       // Subscription complete
     } else if ("error".equals(type)) {
-      // Handle error
       System.err.println("Error message received: " + data);
       throw new RuntimeException("Error data: " + data);
     } else {
@@ -191,16 +171,46 @@ public class SubscriptionClient implements AutoCloseable {
 
   @Override
   public void close() throws Exception {
-    if (webSocket != null && !webSocket.isClosed()) {
-      // Send 'complete' message to close the subscription properly
-      waitCompletion(sendMessage(Map.of("id", System.nanoTime(), "type", "complete")));
-      waitCompletion(webSocket.close());
+    if (webSocket != null) {
+      sendMessage(Map.of("id", System.nanoTime(), "type", "complete"));
+      webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "closing").join();
     }
-    waitCompletion(vertx.close());
   }
 
-  @SneakyThrows
-  private void waitCompletion(Future<?> future) {
-    future.toCompletionStage().toCompletableFuture().get();
+  private class WebSocketListener implements WebSocket.Listener {
+    private final StringBuilder textBuffer = new StringBuilder();
+
+    @Override
+    public void onOpen(WebSocket webSocket) {
+      webSocket.request(1);
+    }
+
+    @Override
+    public CompletionStage<?> onText(WebSocket webSocket, CharSequence data, boolean last) {
+      textBuffer.append(data);
+      if (last) {
+        handleTextMessage(textBuffer.toString());
+        textBuffer.setLength(0);
+      }
+      webSocket.request(1);
+      return null;
+    }
+
+    @Override
+    public CompletionStage<?> onBinary(WebSocket webSocket, ByteBuffer data, boolean last) {
+      webSocket.request(1);
+      return null;
+    }
+
+    @Override
+    public CompletionStage<?> onClose(WebSocket webSocket, int statusCode, String reason) {
+      log.info("WebSocket closed: {} - {}", statusCode, reason);
+      return null;
+    }
+
+    @Override
+    public void onError(WebSocket webSocket, Throwable error) {
+      log.error("WebSocket error for subscription: {}", name, error);
+    }
   }
 }

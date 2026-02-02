@@ -389,7 +389,7 @@ jobs:
             }
 
             build_and_push cmd                 sqrl-cli                     --build-arg BASE_TAG=$BASE_TAG
-            build_and_push sqrl-server         sqrl-server/sqrl-server-vertx --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
+            build_and_push sqrl-server         sqrl-server/sqrl-server-spring --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
 
   docker-build-duckdb-extensions:
     machine:
