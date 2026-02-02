@@ -49,7 +49,7 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
   @Test
   @Disabled("Intended for manual usage")
   void specificUseCase() {
-    var pkg = USE_CASES.resolve("function-translation/postgres").resolve("package.json");
+    var pkg = USE_CASES.resolve("banking").resolve("package.json");
 
     var param = new UseCaseParam(pkg);
     fullUseCaseTest(param);
