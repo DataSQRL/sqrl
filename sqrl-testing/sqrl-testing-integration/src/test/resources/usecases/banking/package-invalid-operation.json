@@ -1,0 +1,25 @@
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "engines": {
+    "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "1000 ms"
+      }
+    }
+  },
+  "test-runner": {
+    "snapshot-folder": "snapshots-loan",
+    "test-folder": "tests-loan",
+    "delay-sec": -1
+  },
+  "script": {
+    "main": "loan.sqrl",
+    "api": {
+      "v1": {
+        "schema": "loan.graphqls",
+        "operations": ["operations/invalid-query-applications.graphql"]
+      }
+    }
+  }
+}

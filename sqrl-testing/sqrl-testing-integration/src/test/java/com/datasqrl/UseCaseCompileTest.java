@@ -47,7 +47,7 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   @Test
   @Disabled("Intended for manual usage")
   void runTestCaseByName() {
-    var pkg = USECASE_DIR.resolve("duckdb").resolve("package.json");
+    var pkg = USECASE_DIR.resolve("banking").resolve("package-invalid-operation.json");
     super.testUseCase(pkg);
   }
 
