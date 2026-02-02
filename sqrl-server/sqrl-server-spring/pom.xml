@@ -119,6 +119,16 @@
       <version>${graphql-micrometer.version}</version>
     </dependency>
 
+    <!-- Jackson datatype modules -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jdk8</artifactId>
+    </dependency>
+
     <!-- DuckDB and Snowflake JDBC drivers -->
     <dependency>
       <groupId>org.duckdb</groupId>

@@ -18,6 +18,8 @@ package com.datasqrl.graphql.config;
 import com.datasqrl.graphql.JsonEnvVarDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -85,7 +87,8 @@ public class WebConfiguration implements WebFluxConfigurer {
     var module = new SimpleModule();
     module.addDeserializer(String.class, new JsonEnvVarDeserializer());
     objectMapper.registerModule(module);
-    objectMapper.findAndRegisterModules();
+    objectMapper.registerModule(new JavaTimeModule());
+    objectMapper.registerModule(new Jdk8Module());
     return objectMapper;
   }
 }
