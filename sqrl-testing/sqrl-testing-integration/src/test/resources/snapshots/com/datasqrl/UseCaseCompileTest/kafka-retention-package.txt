@@ -1,0 +1,83 @@
+>>>pipeline_explain.txt
+=== Data
+ID:          default_catalog.default_database.Data
+Type:        stream
+Stage:       flink
+Primary key: ID
+Timestamp:   TIMESTAMP
+---
+Schema:
+ - ID: BIGINT NOT NULL
+ - EPOCH_TIMESTAMP: BIGINT NOT NULL
+ - SOME_VALUE: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - TIMESTAMP: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Data__base
+Annotations:
+ - stream-root: Data
+
+=== LogData
+ID:          logger.LogData
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.Data
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Data` (
+  `ID` BIGINT NOT NULL,
+  `EPOCH_TIMESTAMP` BIGINT NOT NULL,
+  `SOME_VALUE` STRING NOT NULL,
+  `TIMESTAMP` AS COALESCE(`TO_TIMESTAMP_LTZ`(`EPOCH_TIMESTAMP`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`ID`) NOT ENFORCED,
+  WATERMARK FOR `TIMESTAMP` AS `TIMESTAMP` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10',
+  'fields.ID.kind' = 'sequence',
+  'fields.ID.start' = '0',
+  'fields.ID.end' = '9',
+  'fields.EPOCH_TIMESTAMP.kind' = 'sequence',
+  'fields.EPOCH_TIMESTAMP.start' = '1719318565000',
+  'fields.EPOCH_TIMESTAMP.end' = '1719319565000',
+  'fields.SOME_VALUE.kind' = 'random'
+);
+CREATE TABLE `LogData_1` (
+  `ID` BIGINT NOT NULL,
+  `EPOCH_TIMESTAMP` BIGINT NOT NULL,
+  `SOME_VALUE` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `TIMESTAMP` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'kafka',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'LogData'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`LogData_1`
+SELECT *
+ FROM `default_catalog`.`default_database`.`Data`
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "LogData",
+      "tableName" : "LogData_1",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "config" : {
+        "retention.ms" : "-1"
+      }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
