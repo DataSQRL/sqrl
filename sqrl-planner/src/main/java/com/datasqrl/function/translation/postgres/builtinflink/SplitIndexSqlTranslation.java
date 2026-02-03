@@ -20,9 +20,13 @@ import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import java.util.ArrayList;
+import java.util.List;
+import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriter;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
@@ -35,10 +39,23 @@ public class SplitIndexSqlTranslation extends PostgresSqlTranslation {
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
     var operands = new ArrayList<>(call.getOperandList());
-    var idx = (SqlLiteral) operands.get(2);
-    var idxVal = idx.intValue(false);
 
-    operands.set(2, SqlLiteral.createExactNumeric(String.valueOf(idxVal + 1), SqlParserPos.ZERO));
+    // Flink SPLIT_INDEX is 0-based, Postgres SPLIT_PART is 1-based.
+    var idxNode = operands.get(2);
+
+    SqlNode newIdxNode;
+    if (idxNode instanceof SqlLiteral idxLiteral) {
+      var idxVal = idxLiteral.intValue(false);
+      newIdxNode = SqlLiteral.createExactNumeric(String.valueOf(idxVal + 1), SqlParserPos.ZERO);
+
+    } else {
+      // Index can be an expression (e.g. 1 - 1). Preserve the expression and add 1.
+      var one = SqlLiteral.createExactNumeric("1", SqlParserPos.ZERO);
+      newIdxNode =
+          new SqlBasicCall(SqlStdOperatorTable.PLUS, List.of(idxNode, one), SqlParserPos.ZERO);
+    }
+
+    operands.set(2, newIdxNode);
 
     CalciteFunctionUtil.writeFunction("SPLIT_PART", writer, operands);
   }
