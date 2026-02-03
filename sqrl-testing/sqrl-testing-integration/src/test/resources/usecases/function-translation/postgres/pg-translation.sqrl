@@ -30,6 +30,7 @@ FunctionCalls := SELECT
 --     LOCATE('l', 'hello', 3)                          AS locate_example,
     REGEXP('foo123bar', '\d+')                       AS regexp_example,
     SPLIT_INDEX('a,b,c', ',', 1)                     AS split_index_example,
+    SPLIT_INDEX('a,b,c', ',', 1 - 1)                 AS split_index_expr_example,
 --     JSON_QUOTE('hello "json"')                       AS json_quote_example,
     ELT(2, 'first', 'second', 'third')               AS elt_example,
     TRY_CAST('123' AS INT)                           AS try_cast_to_int_example,
