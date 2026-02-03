@@ -27,6 +27,7 @@
       "instr_example" : 7,
       "regexp_example" : true,
       "split_index_example" : "b",
+      "split_index_expr_example" : "a",
       "elt_example" : "third",
       "try_cast_to_int_example" : 123,
       "try_cast_to_bigint_example" : 112233445566778899,
