@@ -1,0 +1,11 @@
+IMPORT ecommerceTs.orders;
+
+CREATE TABLE NestedCustomers (
+    customerid INT,
+    payload ROW<a INT, b INT, c INT>,
+    updatedTime TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+    PRIMARY KEY (customerid) NOT ENFORCED
+);
+
+CustomerData := SELECT o.customerid, c.payload
+                  FROM Orders o JOIN NestedCustomers FOR SYSTEM_TIME AS OF o.`time` c ON o.customerid = c.customerid;
