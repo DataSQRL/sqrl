@@ -226,9 +226,7 @@ public class GraphqlSchemaUtil {
       }
       var columnType = field.getType();
       getGraphQLType(metaType, columnType, fieldPath, extendedScalarTypes)
-          .map(
-              fieldType ->
-                  (GraphQLInputType) wrapNullable(fieldType, columnType)) // recursively traverse
+          .map(fieldType -> wrapNullable(fieldType, columnType)) // recursively traverse
           .ifPresent(fieldType -> fieldConsumer.accept(field.getName(), fieldType));
     }
     return Optional.of(buildResult.get());
