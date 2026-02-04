@@ -16,6 +16,7 @@
 package com.datasqrl.cli.output;
 
 import java.io.PrintStream;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -27,18 +28,20 @@ public class DefaultOutputFormatter implements OutputFormatter {
   private static final DateTimeFormatter TIMESTAMP_FORMAT =
       DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
-  private final AnsiColors colors;
+  private final Path cliRoot;
   private final PrintStream out;
   private final PrintStream err;
+  private final AnsiColors colors;
 
-  public DefaultOutputFormatter(boolean batchMode) {
-    this(batchMode, System.out, System.err);
+  public DefaultOutputFormatter(Path cliRoot, boolean batchMode) {
+    this(cliRoot, batchMode, System.out, System.err);
   }
 
-  public DefaultOutputFormatter(boolean batchMode, PrintStream out, PrintStream err) {
-    this.colors = new AnsiColors(batchMode);
+  public DefaultOutputFormatter(Path cliRoot, boolean batchMode, PrintStream out, PrintStream err) {
+    this.cliRoot = cliRoot;
     this.out = out;
     this.err = err;
+    colors = new AnsiColors(batchMode);
   }
 
   @Override
@@ -138,13 +141,21 @@ public class DefaultOutputFormatter implements OutputFormatter {
 
   @Override
   public void failureDetails(
-      String testName, String testFile, String expectedFile, String actualFile, String diffFile) {
+      String testName, String testFile, String expectedFile, String actualFile) {
     out.println("  " + colors.bold() + testName + colors.reset());
-    out.println("    Test:     " + testFile);
-    out.println("    Expected: " + expectedFile);
-    out.println("    Actual:   " + actualFile);
-    out.println("    Diff:     " + diffFile);
+    out.println("  " + "-".repeat(testName.length()));
     newline();
+    out.println("    Test: " + testFile);
+    newline();
+    out.println("    Expected:\n\n" + expectedFile);
+    newline();
+    out.println("    Actual:\n\n" + actualFile);
+    newline();
+  }
+
+  @Override
+  public Path relativizeFromCliRoot(Path path) {
+    return path == null || !path.startsWith(cliRoot) ? path : cliRoot.relativize(path);
   }
 
   private String formatDuration(long millis) {

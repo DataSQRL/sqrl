@@ -15,6 +15,7 @@
  */
 package com.datasqrl.cli.output;
 
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 
 public interface OutputFormatter {
@@ -47,6 +48,9 @@ public interface OutputFormatter {
 
   void testSummary(int totalTests, int failures);
 
-  void failureDetails(
-      String testName, String testFile, String expectedFile, String actualFile, String diffFile);
+  void failureDetails(String testName, String testFile, String expectedFile, String actualFile);
+
+  default Path relativizeFromCliRoot(Path path) {
+    return path;
+  }
 }
