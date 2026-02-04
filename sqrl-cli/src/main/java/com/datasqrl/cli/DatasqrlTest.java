@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -83,6 +84,7 @@ public class DatasqrlTest {
     var testConfig = sqrlConfig.getTestConfig();
     // Initialize snapshot directory
     var snapshotDir = testConfig.getSnapshotDir(rootDir);
+    var testDir = testConfig.getTestDir(rootDir);
     // Check if the directory exists, create it if it doesn’t
     if (!Files.exists(snapshotDir)) {
       Files.createDirectories(snapshotDir);
@@ -251,11 +253,12 @@ public class DatasqrlTest {
     }
 
     // 6. Print the test results on the command line
-    printTestResults(testResults, snapshotDir.normalize().toString());
+    printTestResults(testResults, snapshotDir, testDir);
     return testResults.stream().mapToInt(TestResult::exitCode).sum();
   }
 
-  private void printTestResults(List<TestResult> testResults, String snapshotDir) {
+  private void printTestResults(
+      List<TestResult> testResults, Path snapshotDir, Optional<Path> testDir) {
     for (var result : testResults) {
       formatter.testResult(result.getTestName(), result.isSuccess());
     }
@@ -269,17 +272,16 @@ public class DatasqrlTest {
       formatter.sectionHeader("Failures");
       for (var result : testResults) {
         if (!result.isSuccess()) {
-          result.printDetails(formatter, snapshotDir);
+          result.printDetails(formatter, testDir);
         }
       }
 
       outputManager.printCapturedErrors(formatter);
 
       formatter.sectionHeader("Test Reports");
-      formatter.info("Full execution log: build/logs/test-execution.log");
-      formatter.info("Flink metrics:      build/logs/flink-metrics.log");
-      formatter.info("Test snapshots:     " + snapshotDir);
-      formatter.info("");
+      formatter.info("Test execution log: build/logs/test-execution.log");
+      formatter.info("Snapshot folder:    " + formatter.relativizeFromCliRoot(snapshotDir));
+      formatter.newline();
     }
   }
 
