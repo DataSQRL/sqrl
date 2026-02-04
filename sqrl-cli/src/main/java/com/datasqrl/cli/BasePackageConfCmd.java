@@ -56,7 +56,9 @@ public abstract class BasePackageConfCmd extends BaseCmd {
   }
 
   protected OutputFormatter getOutputFormatter() {
-    return cli.internalTestExec ? new NoOutputFormatter() : new DefaultOutputFormatter(batchMode);
+    return cli.internalTestExec
+        ? new NoOutputFormatter()
+        : new DefaultOutputFormatter(cli.rootDir, batchMode);
   }
 
   protected OsProcessManager getOsProcessManager() {

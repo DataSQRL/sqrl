@@ -167,22 +167,18 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
   }
 
   private void printCompilationResults(OutputFormatter formatter) {
-    var relBuildDir = relativizeFromRoot(getBuildDir());
+    var relBuildDir = formatter.relativizeFromCliRoot(getBuildDir());
 
-    formatter.newline();
     formatter.sectionHeader("Compilation Results");
-    formatter.info("Deployment artifacts: " + relativizeFromRoot(getTargetFolder()));
+    formatter.info("Deployment artifacts: " + formatter.relativizeFromCliRoot(getTargetFolder()));
     formatter.info("Pipeline DAG:         " + relBuildDir.resolve("pipeline_explain.txt"));
     formatter.info("Visual DAG:           " + relBuildDir.resolve("pipeline_visual.html"));
     formatter.newline();
     formatter.buildStatus(true, getElapsedTime(), LocalDateTime.now());
+    formatter.newline();
   }
 
   private boolean loadRunDefaults() {
     return getGoal() == ExecutionGoal.RUN || getGoal() == ExecutionGoal.TEST;
-  }
-
-  private Path relativizeFromRoot(Path path) {
-    return path == null || !path.startsWith(cli.rootDir) ? path : cli.rootDir.relativize(path);
   }
 }

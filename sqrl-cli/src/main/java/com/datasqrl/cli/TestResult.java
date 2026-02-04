@@ -16,6 +16,8 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.cli.output.OutputFormatter;
+import java.nio.file.Path;
+import java.util.Optional;
 
 public abstract class TestResult {
 
@@ -25,7 +27,7 @@ public abstract class TestResult {
 
   public abstract int exitCode();
 
-  public abstract void printDetails(OutputFormatter formatter, String snapshotDir);
+  public abstract void printDetails(OutputFormatter formatter, Optional<Path> testDir);
 
   abstract static class NamedResult extends TestResult {
 
@@ -58,7 +60,7 @@ public abstract class TestResult {
     }
 
     @Override
-    public void printDetails(OutputFormatter formatter, String snapshotDir) {}
+    public void printDetails(OutputFormatter formatter, Optional<Path> testDir) {}
   }
 
   public static class SnapshotCreate extends NamedResult {
@@ -78,7 +80,7 @@ public abstract class TestResult {
     }
 
     @Override
-    public void printDetails(OutputFormatter formatter, String snapshotDir) {
+    public void printDetails(OutputFormatter formatter, Optional<Path> testDir) {
       formatter.warning("Snapshot created for test: " + getTestName());
       formatter.warning("Rerun to verify.");
     }
@@ -101,7 +103,7 @@ public abstract class TestResult {
     }
 
     @Override
-    public void printDetails(OutputFormatter formatter, String snapshotDir) {
+    public void printDetails(OutputFormatter formatter, Optional<Path> testDir) {
       formatter.error("Snapshot on filesystem but not in result: " + getTestName());
     }
   }
@@ -128,12 +130,18 @@ public abstract class TestResult {
     }
 
     @Override
-    public void printDetails(OutputFormatter formatter, String snapshotDir) {
+    public void printDetails(OutputFormatter formatter, Optional<Path> testDir) {
       var testName = getTestName();
-      var testFile = "build/test/" + testName + ".graphql";
-      var diffFile = snapshotDir + "/" + testName + ".diff";
 
-      formatter.failureDetails(testName, testFile, expectedPath, actualPath, diffFile);
+      var testFileName = testName + ".graphql";
+      var testFile =
+          testDir
+              .map(formatter::relativizeFromCliRoot)
+              .map(p -> p.resolve(testFileName))
+              .map(Path::toString)
+              .orElse(testFileName);
+
+      formatter.failureDetails(testName, testFile, expectedPath, actualPath);
     }
   }
 
@@ -171,7 +179,7 @@ public abstract class TestResult {
     }
 
     @Override
-    public void printDetails(OutputFormatter formatter, String snapshotDir) {
+    public void printDetails(OutputFormatter formatter, Optional<Path> testDir) {
       formatter.error(msg);
       if (cause != null) {
         cause.printStackTrace();

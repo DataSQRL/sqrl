@@ -67,6 +67,7 @@ public class TestCmd extends AbstractCompileCmd {
 
       if (!success) {
         formatter.helpLink("Help 1", "https://docs.datasqrl.com/docs/howto/testing");
+        formatter.newline();
       }
     }
   }

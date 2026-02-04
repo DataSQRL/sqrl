@@ -63,5 +63,5 @@ public class NoOutputFormatter implements OutputFormatter {
 
   @Override
   public void failureDetails(
-      String testName, String testFile, String expectedFile, String actualFile, String diffFile) {}
+      String testName, String testFile, String expectedFile, String actualFile) {}
 }

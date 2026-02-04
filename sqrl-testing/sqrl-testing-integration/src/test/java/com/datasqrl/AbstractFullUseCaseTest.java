@@ -142,7 +142,7 @@ abstract class AbstractFullUseCaseTest {
               flinkConfig,
               env,
               outputMgr,
-              new DefaultOutputFormatter(false));
+              new DefaultOutputFormatter(rootDir, false));
       try {
         var run = test.run();
         if (run != 0) {
