@@ -71,6 +71,8 @@ public abstract class SqrlContainerTestBase {
   protected static final String SQRL_CMD_IMAGE = "datasqrl/cmd";
   protected static final String SQRL_SERVER_IMAGE = "datasqrl/sqrl-server";
   protected static final String BUILD_DIR = "/build";
+  protected static final String JACOCO_OUT_DIR = "/jacoco";
+  protected static final String JACOCO_AGENT_PATH = "/jacoco-agent.jar";
   protected static final int HTTP_SERVER_PORT = 8888;
 
   protected static Network sharedNetwork;
@@ -115,6 +117,8 @@ public abstract class SqrlContainerTestBase {
             .withFileSystemBind(workingDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
             .withEnv("TZ", "America/Los_Angeles");
 
+    container = configureJacocoCoverage(container, "cmd");
+
     if (debug) {
       container = container.withEnv("SQRL_DEBUG", "1");
     }
@@ -127,14 +131,19 @@ public abstract class SqrlContainerTestBase {
     var deployPlanPath = workingDir.resolve("build/deploy/plan");
     assertThat(deployPlanPath).exists().isDirectory();
 
-    return new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + getImageTag()))
-        .withNetwork(sharedNetwork)
-        .withExposedPorts(HTTP_SERVER_PORT)
-        .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
-        .withEnv("SQRL_DEBUG", "1")
-        .waitingFor(
-            Wait.forLogMessage(".*HTTP server listening on port 8888.*", 1)
-                .withStartupTimeout(Duration.ofSeconds(30)));
+    var container =
+        new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + getImageTag()))
+            .withNetwork(sharedNetwork)
+            .withExposedPorts(HTTP_SERVER_PORT)
+            .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
+            .withEnv("SQRL_DEBUG", "1")
+            .waitingFor(
+                Wait.forLogMessage(".*HTTP server listening on port 8888.*", 1)
+                    .withStartupTimeout(Duration.ofSeconds(30)));
+
+    container = configureJacocoCoverage(container, "server");
+
+    return container;
   }
 
   protected void compileSqrlProject(Path workingDir) {
@@ -288,6 +297,75 @@ public abstract class SqrlContainerTestBase {
 
   private String getImageTag() {
     return System.getProperty("docker.image.tag", "local");
+  }
+
+  @SneakyThrows
+  private GenericContainer<?> configureJacocoCoverage(GenericContainer<?> container, String component) {
+    if (!Boolean.parseBoolean(System.getProperty("sqrl.container.coverage", "false"))) {
+      return container;
+    }
+
+    var jacocoAgentJar = findJacocoAgentJar();
+    if (jacocoAgentJar == null) {
+      log.warn("Container coverage enabled but JaCoCo agent jar not found in ~/.m2; skipping");
+      return container;
+    }
+
+    var jacocoOutDir = Paths.get("target", "jacoco").toAbsolutePath();
+    var hostDestFile = jacocoOutDir.resolve("jacoco-container.exec");
+    Files.createDirectories(jacocoOutDir);
+
+    var containerDestFile = JACOCO_OUT_DIR + "/jacoco-container.exec";
+    var agentArg =
+        "-javaagent:"
+            + JACOCO_AGENT_PATH
+            + "=destfile="
+            + containerDestFile
+            + ",append=true,excludes=org/**";
+
+    var toolOptions = agentArg;
+
+    log.info(
+        "Enabling container JaCoCo for {}: agent={} destfile={}",
+        component,
+        jacocoAgentJar,
+        hostDestFile);
+
+    return container
+        .withFileSystemBind(jacocoOutDir.toString(), JACOCO_OUT_DIR, BindMode.READ_WRITE)
+        .withFileSystemBind(jacocoAgentJar.toString(), JACOCO_AGENT_PATH, BindMode.READ_ONLY)
+        .withEnv("JAVA_TOOL_OPTIONS", toolOptions);
+  }
+
+  @Nullable
+  private Path findJacocoAgentJar() {
+    var m2 = Paths.get(System.getProperty("user.home"), ".m2", "repository");
+    var jacocoDir = m2.resolve(Paths.get("org", "jacoco", "org.jacoco.agent"));
+    if (!Files.exists(jacocoDir)) {
+      return null;
+    }
+
+    try (var stream = Files.list(jacocoDir)) {
+      var versions =
+          stream
+              .filter(Files::isDirectory)
+              .map(p -> p.getFileName().toString())
+              .sorted()
+              .toList();
+      for (int i = versions.size() - 1; i >= 0; i--) {
+        var version = versions.get(i);
+        var candidate =
+            jacocoDir.resolve(
+                Paths.get(version, "org.jacoco.agent-" + version + "-runtime.jar"));
+        if (Files.exists(candidate)) {
+          return candidate;
+        }
+      }
+      return null;
+    } catch (Exception e) {
+      log.warn("Failed to locate JaCoCo agent jar under {}", jacocoDir, e);
+      return null;
+    }
   }
 
   protected String getDockerRunCommand(GenericContainer<?> container, Path workingDir) {
