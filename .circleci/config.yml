@@ -161,16 +161,24 @@ commands:
       - run:
           name: Compute Docker image tags
           command: |
-            compute_sha1_tag() {
-              local file="$1"
-              local var_name="$2"
-              local tag=$(sha1sum "$file" | cut -c1-12)
+            DUCKDB_JDBC_VERSION=$(sed -n 's:.*<duckdb.version>\([^<]*\)</duckdb.version>.*:\1:p' pom.xml | head -n 1)
+            if [ -z "$DUCKDB_JDBC_VERSION" ]; then
+              echo "Failed to determine duckdb.version from pom.xml" >&2
+              exit 1
+            fi
+            echo "export DUCKDB_JDBC_VERSION=${DUCKDB_JDBC_VERSION}" >> "$BASH_ENV"
+
+            compute_sha1_tag_with_salt() {
+              local var_name="$1"
+              local salt="$2"
+              shift 2
+              local tag=$( (sha1sum "$@"; printf '%s' "$salt") | sha1sum | cut -c1-12)
               echo "Computed ${var_name}=${tag}"
               echo "export ${var_name}=${tag}" >> "$BASH_ENV"
             }
 
-            compute_sha1_tag "Dockerfile.duckdb-extensions" "DUCKDB_EXTENSIONS_TAG"
-            compute_sha1_tag "sqrl-cli/Dockerfile.base" "BASE_TAG"
+            compute_sha1_tag_with_salt "DUCKDB_EXTENSIONS_TAG" "$DUCKDB_JDBC_VERSION" "Dockerfile.duckdb-extensions"
+            compute_sha1_tag_with_salt "BASE_TAG" "$DUCKDB_JDBC_VERSION" "sqrl-cli/Dockerfile.base" "Dockerfile.duckdb-extensions"
 
   compute-mcp-tag:
     description: "Compute MCP_TAG from latest @modelcontextprotocol/inspector version"
@@ -432,6 +440,7 @@ jobs:
             docker buildx build \
               --push \
               --platform linux/amd64,linux/arm64 \
+              --build-arg DUCKDB_JDBC_VERSION=$DUCKDB_JDBC_VERSION \
               -t datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG \
               -t datasqrl/duckdb-extensions:latest \
               -f Dockerfile.duckdb-extensions \
