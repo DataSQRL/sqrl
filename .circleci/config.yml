@@ -74,15 +74,21 @@ commands:
             PR_NUM=$(get_pr_number)
 
             if [ -n "$PR_NUM" ]; then
-              echo "export TAG_SUFFIX=pr-$PR_NUM" >> "$BASH_ENV"
+              echo "export TAG_SUFFIX=pr-$PR_NUM"     >> "$BASH_ENV"
               echo "export REGISTRY=ghcr.io/datasqrl" >> "$BASH_ENV"
             elif [ -n "$CIRCLE_TAG" ]; then
               echo "export TAG_SUFFIX=$CIRCLE_TAG"    >> "$BASH_ENV"
-              echo "export REGISTRY=datasqrl"        >> "$BASH_ENV"
-              echo "export LATEST_TAG=true"          >> "$BASH_ENV"
+              echo "export REGISTRY=datasqrl"         >> "$BASH_ENV"
+
+              # Only tag :latest for stable SemVer releases (no pre-release suffix)
+              if [[ "$CIRCLE_TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                echo "export LATEST_TAG=true"         >> "$BASH_ENV"
+              else
+                echo "export LATEST_TAG=false"        >> "$BASH_ENV"
+              fi
             elif [ "$CIRCLE_BRANCH" = "main" ]; then
-              echo "export TAG_SUFFIX=dev"           >> "$BASH_ENV"
-              echo "export REGISTRY=datasqrl"        >> "$BASH_ENV"
+              echo "export TAG_SUFFIX=dev"            >> "$BASH_ENV"
+              echo "export REGISTRY=datasqrl"         >> "$BASH_ENV"
             else
               echo "export TAG_SUFFIX=$CIRCLE_BRANCH" >> "$BASH_ENV"
               echo "export REGISTRY=datasqrl"         >> "$BASH_ENV"
