@@ -2,9 +2,16 @@ FROM eclipse-temurin:17-jdk-noble
 
 ENV DUCKDB_EXTENSIONS_DIR=/opt/duckdb_extensions
 
+ARG DUCKDB_JDBC_VERSION
+
 # Install DuckDB CLI and pre-install extensions
-RUN curl https://install.duckdb.org | sh \
-    && /root/.duckdb/cli/latest/duckdb -c "INSTALL iceberg; INSTALL httpfs; INSTALL cache_httpfs FROM community;" \
-    && mkdir -p ${DUCKDB_EXTENSIONS_DIR} \
-    && cp -a /root/.duckdb/extensions/. ${DUCKDB_EXTENSIONS_DIR}/ \
-    && rm -rf /root/.duckdb
+RUN set -eux; \
+    duckdb_jdbc_version="${DUCKDB_JDBC_VERSION:?DUCKDB_JDBC_VERSION build-arg is required}"; \
+    duckdb_jdbc_version="${duckdb_jdbc_version%%-*}"; \
+    duckdb_cli_version="$(printf '%s' "${duckdb_jdbc_version}" | cut -d. -f1-3)"; \
+    export DUCKDB_VERSION="${duckdb_cli_version}"; \
+    curl https://install.duckdb.org | sh; \
+    /root/.duckdb/cli/${duckdb_cli_version}/duckdb -c "INSTALL iceberg; INSTALL httpfs; INSTALL cache_httpfs FROM community;"; \
+    mkdir -p "${DUCKDB_EXTENSIONS_DIR}"; \
+    cp -a /root/.duckdb/extensions/. "${DUCKDB_EXTENSIONS_DIR}/"; \
+    rm -rf /root/.duckdb
