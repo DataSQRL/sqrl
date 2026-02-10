@@ -1,0 +1,29 @@
+CREATE TABLE NestedCustomers (
+    customer_id BIGINT,
+    customer ROW(
+        `name` VARCHAR,
+        profile ROW(
+          email VARCHAR,
+          address ROW(
+            street VARCHAR,
+            city VARCHAR,
+            geo ROW(
+              lat DOUBLE,
+              lon DOUBLE,
+              prec ROW(
+                `source` VARCHAR,
+                meters INTEGER
+              )
+            )
+          )
+        )
+    )
+) WITH (
+     'format' = 'flexible-json',
+     'path' = 'file:/mock',
+     'source.monitor-interval' = '10 sec',
+     'connector' = 'filesystem'
+);
+
+/*+ test */
+NestedCustomersTest := SELECT * FROM NestedCustomers;

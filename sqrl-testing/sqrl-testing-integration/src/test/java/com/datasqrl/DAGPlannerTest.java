@@ -74,7 +74,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   @Disabled
   @Test
   void specificScript() {
-    var script = SCRIPT_DIR.resolve("mutationNestedTypeTest.sqrl");
+    var script = SCRIPT_DIR.resolve("deeplyNestedTableTest.sqrl");
     scripts(script);
   }
 
