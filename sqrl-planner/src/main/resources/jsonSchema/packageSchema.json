@@ -216,9 +216,23 @@
                       "minItems": 1
                     }
                   ]
+                },
+                "schedule": {
+                  "description": "Schedule for periodic awakening of the Flink job",
+                  "type": "object",
+                  "properties": {
+                    "cron": {
+                      "type": "string"
+                    },
+                    "timezone": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["cron", "timezone"],
+                  "additionalProperties": false
                 }
               },
-              "additionalProperties": false
+              "additionalProperties": true
             }
           },
           "additionalProperties": false
