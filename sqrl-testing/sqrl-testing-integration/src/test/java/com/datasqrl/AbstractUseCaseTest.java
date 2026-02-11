@@ -46,7 +46,13 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
     var hook = execute(baseDir, args);
 
     if (testName == null) {
-      testName = getDisplayName(baseDir) + '-' + getDisplayName(packageFile);
+      var useCasesPath = packageFile.getParent();
+      while (!useCasesPath.getFileName().toString().equals("usecases")) {
+        useCasesPath = useCasesPath.getParent();
+      }
+
+      var displayPath = useCasesPath.relativize(packageFile);
+      testName = getNestedDisplayName(displayPath);
     }
 
     snapshot(testName, hook);
