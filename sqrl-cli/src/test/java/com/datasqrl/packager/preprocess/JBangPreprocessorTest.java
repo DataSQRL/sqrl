@@ -15,6 +15,7 @@
  */
 package com.datasqrl.packager.preprocess;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -74,7 +75,7 @@ class JBangPreprocessorTest {
 
     // then
     verifyNoInteractions(context);
-    verify(jBangRunner, never()).exportLocalJar(any(), any());
+    verify(jBangRunner, never()).exportFatJar(any(), any());
   }
 
   @Test
@@ -88,16 +89,15 @@ class JBangPreprocessorTest {
 
     // then
     verifyNoInteractions(context);
-    verify(jBangRunner, never()).exportLocalJar(any(), any());
+    verify(jBangRunner, never()).exportFatJar(any(), any());
   }
 
   @Test
-  void given_javaFileWithoutDepsComment_when_process_then_skipsProcessing() throws IOException {
+  void given_javaFileWithoutDepsComment_when_process_then_processesFile() throws IOException {
     // given
     var content =
         """
         public class TestClass extends ScalarFunction {
-            // No //DEPS comment
         }
         """;
     var javaFile = createJavaFile("TestClass.java", content);
@@ -106,8 +106,8 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
 
     // then
-    verifyNoInteractions(context);
-    verify(jBangRunner, never()).exportLocalJar(any(), any());
+    verify(jBangRunner).exportFatJar(eq(javaFile), any());
+    verify(context).createNewBuildFile(Path.of("TestClass.function.json"));
   }
 
   @Test
@@ -120,7 +120,6 @@ class JBangPreprocessorTest {
         package com.example.udfs;
 
         public class MyUDF extends ScalarFunction {
-            // implementation
         }
         """;
     var javaFile = createJavaFile("MyUDF.java", content);
@@ -129,7 +128,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
 
     // then
-    verify(jBangRunner).exportLocalJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(javaFile), any());
     verify(context).createNewBuildFile(Path.of("MyUDF.function.json"));
   }
 
@@ -143,7 +142,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
 
     // then
-    verify(jBangRunner).exportLocalJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(javaFile), any());
     verify(context).createNewBuildFile(Path.of("SimpleUDF.function.json"));
   }
 
@@ -157,7 +156,6 @@ class JBangPreprocessorTest {
 
         public class MultiLineUDF
             extends TableFunction {
-            // implementation
         }
         """;
     var javaFile = createJavaFile("MultiLineUDF.java", content);
@@ -166,7 +164,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
 
     // then
-    verify(jBangRunner).exportLocalJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(javaFile), any());
     verify(context).createNewBuildFile(Path.of("MultiLineUDF.function.json"));
   }
 
@@ -178,7 +176,6 @@ class JBangPreprocessorTest {
         //DEPS some.library:artifact:1.0.0
 
         public class NotAUDF extends SomeOtherClass {
-            // implementation
         }
         """;
     var javaFile = createJavaFile("NotAUDF.java", content);
@@ -187,7 +184,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
 
     // then
-    verify(jBangRunner, never()).exportLocalJar(any(), any());
+    verify(jBangRunner, never()).exportFatJar(any(), any());
     verifyNoInteractions(context);
   }
 
@@ -196,14 +193,10 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
-        //DEPS io.flink:flink-table-api-java:1.17.0
-
         public class FirstUDF extends ScalarFunction {
-            // implementation
         }
 
         public class SecondUDF extends TableFunction {
-            // implementation
         }
         """;
     var javaFile = createJavaFile("MultipleClasses.java", content);
@@ -212,7 +205,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
 
     // then
-    verify(jBangRunner, never()).exportLocalJar(any(), any());
+    verify(jBangRunner, never()).exportFatJar(any(), any());
     verifyNoInteractions(context);
   }
 
@@ -221,10 +214,7 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
-        //DEPS io.flink:flink-table-api-java:1.17.0
-
         class PrivateClass extends ScalarFunction {
-            // implementation
         }
         """;
     var javaFile = createJavaFile("PrivateClass.java", content);
@@ -233,7 +223,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
 
     // then
-    verify(jBangRunner, never()).exportLocalJar(any(), any());
+    verify(jBangRunner, never()).exportFatJar(any(), any());
     verifyNoInteractions(context);
   }
 
@@ -242,10 +232,7 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
-        //DEPS io.flink:flink-table-api-java:1.17.0
-
         public class NoExtendsClass {
-            // implementation
         }
         """;
     var javaFile = createJavaFile("NoExtendsClass.java", content);
@@ -254,7 +241,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
 
     // then
-    verify(jBangRunner, never()).exportLocalJar(any(), any());
+    verify(jBangRunner, never()).exportFatJar(any(), any());
     verifyNoInteractions(context);
   }
 
@@ -262,13 +249,13 @@ class JBangPreprocessorTest {
   void given_jbangExportFails_when_process_then_logsWarningButContinues() throws IOException {
     // given
     var javaFile = createJavaFile("FailingUDF.java", validScalarFunctionContent());
-    doThrow(new ExecuteException("JBang failed", 1)).when(jBangRunner).exportLocalJar(any(), any());
+    doThrow(new ExecuteException("JBang failed", 1)).when(jBangRunner).exportFatJar(any(), any());
 
     // when
     underTest.process(javaFile, context);
 
     // then
-    verify(jBangRunner).exportLocalJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(javaFile), any());
     verify(context, never()).createNewBuildFile(any());
   }
 
@@ -277,13 +264,13 @@ class JBangPreprocessorTest {
       throws IOException {
     // given
     var javaFile = createJavaFile("IOFailUDF.java", validScalarFunctionContent());
-    doThrow(new IOException("IO failure")).when(jBangRunner).exportLocalJar(any(), any());
+    doThrow(new IOException("IO failure")).when(jBangRunner).exportFatJar(any(), any());
 
     // when
     underTest.process(javaFile, context);
 
     // then
-    verify(jBangRunner).exportLocalJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(javaFile), any());
     verify(context, never()).createNewBuildFile(any());
   }
 
@@ -293,10 +280,7 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
-        //DEPS io.flink:flink-table-api-java:1.17.0
-
         public class MyAggregateUDF extends AggregateFunction {
-            // implementation
         }
         """;
     var javaFile = createJavaFile("MyAggregateUDF.java", content);
@@ -305,8 +289,47 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
 
     // then
-    verify(jBangRunner).exportLocalJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(javaFile), any());
     verify(context).createNewBuildFile(Path.of("MyAggregateUDF.function.json"));
+  }
+
+  @Test
+  void given_javaFileWithFlinkDeps_when_process_then_throwsError() throws IOException {
+    // given
+    var content =
+        """
+        //DEPS org.apache.flink:flink-table-common:2.1.0
+
+        public class MyUDF extends ScalarFunction {
+        }
+        """;
+    var javaFile = createJavaFile("MyUDF.java", content);
+
+    // when/then
+    assertThatThrownBy(() -> underTest.process(javaFile, context))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Flink dependencies are provided automatically via classpath");
+  }
+
+  @Test
+  void given_plainJavaFileWithNoUdfClass_when_process_then_skipsProcessing() throws IOException {
+    // given
+    var content =
+        """
+        public class UtilityHelper {
+            public static String format(String input) {
+                return input.trim();
+            }
+        }
+        """;
+    var javaFile = createJavaFile("UtilityHelper.java", content);
+
+    // when
+    underTest.process(javaFile, context);
+
+    // then
+    verify(jBangRunner, never()).exportFatJar(any(), any());
+    verifyNoInteractions(context);
   }
 
   private Path createJavaFile(String filename, String content) throws IOException {
@@ -317,10 +340,7 @@ class JBangPreprocessorTest {
 
   private String validScalarFunctionContent() {
     return """
-        //DEPS io.flink:flink-table-api-java:1.17.0
-
         public class SimpleUDF extends ScalarFunction {
-            // implementation
         }
         """;
   }

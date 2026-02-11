@@ -16,13 +16,9 @@
 package com.datasqrl.util;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
+import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +39,7 @@ public class JBangRunner {
     return new DisabledRunner();
   }
 
-  public void exportLocalJar(Path srcFile, Path targetFile) throws IOException {
+  public void exportFatJar(Path srcFile, Path targetFile) throws IOException {
     if (!isJBangAvailable()) {
       return;
     }
@@ -51,58 +47,46 @@ public class JBangRunner {
     var cmdLine =
         new CommandLine("jbang")
             .addArgument("export")
-            .addArgument("local")
+            .addArgument("fatjar")
             .addArgument("--force")
             .addArgument("--fresh")
             .addArgument("--output")
-            .addArgument(targetFile.toString())
-            .addArgument(srcFile.toString());
+            .addArgument(targetFile.toString());
+
+    var cliJar =
+        resolveCliJarPath()
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Cannot resolve sqrl-cli.jar path. "
+                            + "JBang UDF compilation requires the CLI fat JAR on the classpath to provide Flink dependencies."));
+    cmdLine.addArgument("--class-path");
+    cmdLine.addArgument(cliJar.toString());
+
+    cmdLine.addArgument(srcFile.toString());
 
     // TODO: ferenc: add custom PrintStream for stderr of the executor to get JBang error
     var executor = DefaultExecutor.builder().get();
     executor.setExitValue(0);
     executor.execute(cmdLine);
-
-    removeClassPathFromJarManifest(targetFile);
   }
 
-  void removeClassPathFromJarManifest(Path jarPath) {
-    try (var original = new JarFile(jarPath.toFile())) {
-      var manifest = original.getManifest();
-      if (manifest == null) {
-        log.debug("No manifest found in JAR: {}", jarPath);
-        return;
+  static Optional<Path> resolveCliJarPath() {
+    try {
+      var codeSource = JBangRunner.class.getProtectionDomain().getCodeSource();
+      if (codeSource == null) {
+        return Optional.empty();
       }
 
-      Path tempJar = Files.createTempFile("modified", ".jar");
-      try (var output = new JarOutputStream(Files.newOutputStream(tempJar))) {
-        manifest.getMainAttributes().remove(Attributes.Name.CLASS_PATH);
-        output.putNextEntry(new JarEntry("META-INF/MANIFEST.MF"));
-        manifest.write(output);
-        output.closeEntry();
-
-        // Copy other entries
-        original.stream()
-            .filter(entry -> !entry.getName().equals("META-INF/MANIFEST.MF"))
-            .forEach(
-                entry -> {
-                  try {
-                    output.putNextEntry(new JarEntry(entry.getName()));
-                    try (var inputStream = original.getInputStream(entry)) {
-                      inputStream.transferTo(output);
-                    }
-                    output.closeEntry();
-                  } catch (IOException e) {
-                    log.warn("Failed to copy JAR entry: {}", entry.getName(), e);
-                  }
-                });
+      var location = Path.of(codeSource.getLocation().toURI());
+      if (!location.toString().endsWith(".jar")) {
+        return Optional.empty();
       }
 
-      Files.move(tempJar, jarPath, StandardCopyOption.REPLACE_EXISTING);
-      log.debug("Removed Class-Path from JAR manifest: {}", jarPath);
-
-    } catch (IOException e) {
-      log.warn("Failed to remove Class-Path from JAR manifest: {}", jarPath, e);
+      return Optional.of(location);
+    } catch (URISyntaxException e) {
+      log.debug("Failed to resolve CLI jar path", e);
+      return Optional.empty();
     }
   }
 
@@ -138,7 +122,7 @@ public class JBangRunner {
   private static class DisabledRunner extends JBangRunner {
 
     @Override
-    public void exportLocalJar(Path srcFile, Path targetFile) {
+    public void exportFatJar(Path srcFile, Path targetFile) {
       // do nothing
     }
 

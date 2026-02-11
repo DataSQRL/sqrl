@@ -32,20 +32,24 @@ import org.apache.commons.io.FilenameUtils;
 @Slf4j
 public class JBangPreprocessor extends UdfManifestPreprocessor {
 
-  private static final String DEPS_EXPR = "//DEPS";
   private static final Pattern PACKAGE_PATTERN = Pattern.compile("package\\s+([\\w.]+);");
   private static final Pattern CLASS_EXTENDS_PATTERN =
       Pattern.compile("public\\s+class\\s+(\\w+)\\s+extends\\s+(\\w+)", Pattern.DOTALL);
+  private static final Pattern FLINK_DEPS_PATTERN =
+      Pattern.compile("^//DEPS\\s+org\\.apache\\.flink:", Pattern.MULTILINE);
 
   private final JBangRunner jBangRunner;
 
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
-    if (!jBangRunner.isJBangAvailable() || skipFile(file)) {
+    if (!jBangRunner.isJBangAvailable() || !isJavaFile(file)) {
       return;
     }
 
     var content = readFileContent(file);
+
+    validateNoFlinkDeps(file, content);
+
     var udfClassName = parseUdfClassName(file, content);
     if (udfClassName == null) {
       return;
@@ -55,7 +59,7 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
       var jarName = FilenameUtils.removeExtension(file.getFileName().toString()) + ".jar";
       var targetPath = ctx.libDir().resolve(jarName);
 
-      jBangRunner.exportLocalJar(file, targetPath);
+      jBangRunner.exportFatJar(file, targetPath);
       createUdfManifest(udfClassName, jarName, ctx);
 
     } catch (ExecuteException e) {
@@ -65,14 +69,17 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     }
   }
 
-  @SneakyThrows
-  private boolean skipFile(Path file) {
-    if (!file.getFileName().toString().endsWith(".java")) {
-      return true;
-    }
+  private boolean isJavaFile(Path file) {
+    return file.getFileName().toString().endsWith(".java");
+  }
 
-    try (var lines = Files.lines(file)) {
-      return lines.map(String::trim).noneMatch(l -> l.startsWith(DEPS_EXPR));
+  private void validateNoFlinkDeps(Path file, String content) {
+    if (FLINK_DEPS_PATTERN.matcher(content).find()) {
+      throw new IllegalArgumentException(
+          "File "
+              + file
+              + " declares a Flink //DEPS dependency. "
+              + "Flink dependencies are provided automatically via classpath and must not be declared in //DEPS.");
     }
   }
 
@@ -85,7 +92,7 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     var classExtendsMatcher = CLASS_EXTENDS_PATTERN.matcher(content);
     var results = classExtendsMatcher.results().toList();
     if (results.isEmpty()) {
-      log.warn(
+      log.debug(
           "Skip preprocessing file {}, as it does not contain a 'public class' with an 'extends' statement",
           file);
       return null;

@@ -1,5 +1,3 @@
-//DEPS org.apache.flink:flink-table-common:2.1.0
-
 import org.apache.flink.table.functions.AsyncScalarFunction;
 import org.apache.flink.table.functions.FunctionContext;
 
