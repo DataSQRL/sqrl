@@ -47,7 +47,7 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   @Test
   @Disabled("Intended for manual usage")
   void runTestCaseByName() {
-    var pkg = USECASE_DIR.resolve("banking").resolve("package-invalid-operation.json");
+    var pkg = USECASE_DIR.resolve("function-translation/flink").resolve("package.json");
     super.testUseCase(pkg);
   }
 
