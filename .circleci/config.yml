@@ -149,8 +149,16 @@ commands:
 
             ./codecov --version
 
-            # Upload the coverage report.
-            ./codecov upload-coverage $COMMON_ARGS
+            # Prefer the aggregated multi-module report.
+            JACOCO_AGG="sqrl-testing/sqrl-coverage/target/site/jacoco-aggregate/jacoco.xml"
+            if [ -f "$JACOCO_AGG" ]; then
+              echo "=== Using aggregate JaCoCo report: $JACOCO_AGG ==="
+              ls -lh "$JACOCO_AGG"
+              ./codecov upload-coverage $COMMON_ARGS --file "$JACOCO_AGG"
+            else
+              echo "=== No aggregate JaCoCo report found; skipping coverage upload ==="
+              # Avoid uploading empty/partial reports (they can drag down overall coverage).
+            fi
 
             # Upload the test reports.
             ./codecov do-upload --report-type test_results $COMMON_ARGS
@@ -303,15 +311,20 @@ jobs:
           name: Auth ghcr
           command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
-          name: Build with Docker images
+          name: Build Docker images
           command: mvn -U clean -T1C -B install -DonlyImages -Ddocker.image.tag=local-${CIRCLE_SHA1}
       - run:
           name: Run container tests using TestContainers
           command: |
             mvn -B install -DonlyContainerE2E \
               -pl :sqrl-testing-container \
+              -Dsqrl.container.coverage=true \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
+      - run:
+          name: Generate aggregate JaCoCo report
+          command: mvn -B -pl :sqrl-coverage -am -DskipTests -DskipITs verify
+      - save-test-results
 
   deploy:
     docker:
@@ -330,7 +343,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease} -Deasyjacoco.skip=true
+          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease} -Djacoco.skip=true
 
   build-images:
     # use a full VM so we can run Docker / Buildx
