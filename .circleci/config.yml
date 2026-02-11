@@ -55,6 +55,19 @@ commands:
                    sudo update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
                    java -version
 
+  compute-maven-version:
+    description: "Extract Maven project version from root pom.xml"
+    steps:
+      - run:
+          name: Compute Maven project version
+          command: |
+            MAVEN_PROJECT_VERSION=$(sed -n 's:.*<version>\([^<]*\)</version>.*:\1:p' pom.xml | head -n 1)
+            if [ -z "$MAVEN_PROJECT_VERSION" ]; then
+              echo "Failed to determine project version from pom.xml" >&2
+              exit 1
+            fi
+            echo "export MAVEN_PROJECT_VERSION=${MAVEN_PROJECT_VERSION}" >> "$BASH_ENV"
+
   determine-version:
     description: "Derive TAG_SUFFIX and REGISTRY"
     steps:
@@ -168,17 +181,33 @@ commands:
             fi
             echo "export DUCKDB_JDBC_VERSION=${DUCKDB_JDBC_VERSION}" >> "$BASH_ENV"
 
+            if [ -z "$MAVEN_PROJECT_VERSION" ]; then
+              echo "MAVEN_PROJECT_VERSION is not set; run compute-maven-version first" >&2
+              exit 1
+            fi
+
             compute_sha1_tag_with_salt() {
               local var_name="$1"
               local salt="$2"
               shift 2
+
               local tag=$( (sha1sum "$@"; printf '%s' "$salt") | sha1sum | cut -c1-12)
               echo "Computed ${var_name}=${tag}"
+
+              # Make it available in this step and the next ones.
+              export "$var_name=$tag"
               echo "export ${var_name}=${tag}" >> "$BASH_ENV"
             }
 
-            compute_sha1_tag_with_salt "DUCKDB_EXTENSIONS_TAG" "$DUCKDB_JDBC_VERSION" "Dockerfile.duckdb-extensions"
-            compute_sha1_tag_with_salt "BASE_TAG" "$DUCKDB_JDBC_VERSION" "sqrl-cli/Dockerfile.base" "Dockerfile.duckdb-extensions"
+            compute_sha1_tag_with_salt "DUCKDB_EXTENSIONS_SHA1_TAG" "$DUCKDB_JDBC_VERSION" "Dockerfile.duckdb-extensions"
+            compute_sha1_tag_with_salt "BASE_SHA1_TAG" "$DUCKDB_JDBC_VERSION" "sqrl-cli/Dockerfile.base" "Dockerfile.duckdb-extensions"
+
+            # Version-scoped tags (do not include Maven version in checksum).
+            DUCKDB_EXTENSIONS_TAG="${MAVEN_PROJECT_VERSION}-${DUCKDB_EXTENSIONS_SHA1_TAG}"
+            BASE_TAG="${MAVEN_PROJECT_VERSION}-${BASE_SHA1_TAG}"
+
+            echo "export DUCKDB_EXTENSIONS_TAG=${DUCKDB_EXTENSIONS_TAG}" >> "$BASH_ENV"
+            echo "export BASE_TAG=${BASE_TAG}" >> "$BASH_ENV"
 
   compute-mcp-tag:
     description: "Compute MCP_TAG from latest @modelcontextprotocol/inspector version"
@@ -200,8 +229,13 @@ commands:
             DOCKERFILE_HASH=$(sha1sum Dockerfile.mcp-inspector | cut -c1-12)
             echo "Dockerfile.mcp-inspector hash: ${DOCKERFILE_HASH}"
             
-            # Combine version and dockerfile hash for the tag
-            MCP_TAG="${MCP_VERSION}-${DOCKERFILE_HASH}"
+            if [ -z "$MAVEN_PROJECT_VERSION" ]; then
+              echo "MAVEN_PROJECT_VERSION is not set; run compute-maven-version first" >&2
+              exit 1
+            fi
+
+            # Combine Maven version, inspector version, and dockerfile hash for the tag
+            MCP_TAG="${MAVEN_PROJECT_VERSION}-${MCP_VERSION}-${DOCKERFILE_HASH}"
             echo "Combined MCP_TAG: ${MCP_TAG}"
             echo "export MCP_TAG=${MCP_TAG}" >> "$BASH_ENV"
 
@@ -298,6 +332,7 @@ jobs:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
       - install-jdk
+      - compute-maven-version
       - compute-mcp-tag
       - run:
           name: Auth ghcr
@@ -360,6 +395,7 @@ jobs:
           command: mvn -U -T1C -B install -DonlyJars
 
       - determine-version
+      - compute-maven-version
       - compute-sha1-tags
       - setup-buildx:
           builder_name: "sqrl-builder"
@@ -410,6 +446,7 @@ jobs:
       image: ubuntu-2404:current
     steps:
       - checkout
+      - compute-maven-version
       - compute-sha1-tags
       - setup-buildx:
           builder_name: "duckdb-builder"
@@ -451,6 +488,7 @@ jobs:
       image: ubuntu-2404:current
     steps:
       - checkout
+      - compute-maven-version
       - compute-sha1-tags
       - setup-buildx:
           builder_name: "base-builder"
@@ -497,6 +535,7 @@ jobs:
       image: ubuntu-2404:current
     steps:
       - checkout
+      - compute-maven-version
       - compute-mcp-tag
       - setup-buildx:
           builder_name: "mcp-builder"
