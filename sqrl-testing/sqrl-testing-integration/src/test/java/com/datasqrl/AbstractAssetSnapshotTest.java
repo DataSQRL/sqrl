@@ -225,6 +225,13 @@ public abstract class AbstractAssetSnapshotTest {
     return statusHook;
   }
 
+  public static String getNestedDisplayName(Path path) {
+    var dirsStr = path.getParent().toString().replaceAll("/", "-");
+    var fileStr = getDisplayName(path.getFileName());
+
+    return dirsStr + '-' + fileStr;
+  }
+
   public static String getDisplayName(Path path) {
     if (path == null) {
       return "";
