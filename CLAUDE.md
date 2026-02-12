@@ -298,6 +298,15 @@ Multi-database support through `SqlClient` interface:
 - `snowflake-config.json`: Optional Snowflake-specific configuration
 - `log4j2.properties`: Logging configuration
 
+## JBang UDF Files
+
+JBang-based user-defined functions (UDFs) are detected by the `JBangPreprocessor` using a shebang-based opt-in mechanism:
+
+- JBang UDF files **must** start with `///usr/bin/env jbang "$0" "$@" ; exit $?` as their first line
+- `.java` files without the shebang are ignored by the preprocessor, even if they extend a Flink UDF class
+- `//DEPS` for Flink is **not required** — Flink dependencies are provided automatically via classpath
+- Declaring Flink `//DEPS` (e.g., `//DEPS org.apache.flink:...`) will cause a build error
+
 ## Important Development Notes
 
 ### Module Dependencies

@@ -21,58 +21,91 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.ExecuteException;
-import org.apache.commons.io.FilenameUtils;
 
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 @Slf4j
 public class JBangPreprocessor extends UdfManifestPreprocessor {
 
-  private static final String DEPS_EXPR = "//DEPS";
   private static final Pattern PACKAGE_PATTERN = Pattern.compile("package\\s+([\\w.]+);");
   private static final Pattern CLASS_EXTENDS_PATTERN =
       Pattern.compile("public\\s+class\\s+(\\w+)\\s+extends\\s+(\\w+)", Pattern.DOTALL);
+  private static final Pattern FLINK_DEPS_PATTERN =
+      Pattern.compile("^//DEPS\\s+org\\.apache\\.flink:", Pattern.MULTILINE);
+  private static final String JBANG_SHEBANG = "///usr/bin/env jbang \"$0\" \"$@\" ; exit $?";
+  static final String JBANG_JAR_NAME = "jbang-udfs.jar";
 
   private final JBangRunner jBangRunner;
+  private final List<JBangFileInfo> collectedFiles = new ArrayList<>();
+  private FilePreprocessingPipeline.Context ctx;
 
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
-    if (!jBangRunner.isJBangAvailable() || skipFile(file)) {
+    if (!jBangRunner.isJBangAvailable() || !isJBangFile(file)) {
       return;
     }
 
     var content = readFileContent(file);
+
+    validateNoFlinkDeps(file, content);
+
     var udfClassName = parseUdfClassName(file, content);
     if (udfClassName == null) {
       return;
     }
 
+    this.ctx = ctx;
+    collectedFiles.add(new JBangFileInfo(file, udfClassName));
+  }
+
+  @Override
+  public void complete() {
+    if (collectedFiles.isEmpty()) {
+      return;
+    }
+
+    var targetPath = ctx.libDir().resolve(JBANG_JAR_NAME);
+    var allPaths = collectedFiles.stream().map(JBangFileInfo::file).toList();
+    var allClassNames = collectedFiles.stream().map(JBangFileInfo::udfClassName).toList();
+
     try {
-      var jarName = FilenameUtils.removeExtension(file.getFileName().toString()) + ".jar";
-      var targetPath = ctx.libDir().resolve(jarName);
-
-      jBangRunner.exportLocalJar(file, targetPath);
-      createUdfManifest(udfClassName, jarName, ctx);
-
+      jBangRunner.exportFatJar(allPaths, targetPath);
+      createUdfManifests(allClassNames, JBANG_JAR_NAME, ctx);
     } catch (ExecuteException e) {
-      log.warn("JBang export failed with exit code: {} for file: {}", e.getExitValue(), file);
+      log.warn("JBang export failed with exit code: {}", e.getExitValue());
     } catch (IOException e) {
-      log.warn("Failed to execute JBang export for file: " + file, e);
+      log.warn("Failed to execute JBang export", e);
     }
   }
 
-  @SneakyThrows
-  private boolean skipFile(Path file) {
-    if (!file.getFileName().toString().endsWith(".java")) {
-      return true;
-    }
+  private record JBangFileInfo(Path file, String udfClassName) {}
 
-    try (var lines = Files.lines(file)) {
-      return lines.map(String::trim).noneMatch(l -> l.startsWith(DEPS_EXPR));
+  private boolean isJavaFile(Path file) {
+    return file.getFileName().toString().endsWith(".java");
+  }
+
+  @SneakyThrows
+  private boolean isJBangFile(Path file) {
+    if (!isJavaFile(file)) {
+      return false;
+    }
+    var firstLine = Files.readAllLines(file).get(0).trim();
+    return JBANG_SHEBANG.equals(firstLine);
+  }
+
+  private void validateNoFlinkDeps(Path file, String content) {
+    if (FLINK_DEPS_PATTERN.matcher(content).find()) {
+      throw new IllegalArgumentException(
+          "File "
+              + file
+              + " declares a Flink //DEPS dependency. "
+              + "Flink dependencies are provided automatically via classpath and must not be declared in //DEPS.");
     }
   }
 
@@ -85,7 +118,7 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     var classExtendsMatcher = CLASS_EXTENDS_PATTERN.matcher(content);
     var results = classExtendsMatcher.results().toList();
     if (results.isEmpty()) {
-      log.warn(
+      log.info(
           "Skip preprocessing file {}, as it does not contain a 'public class' with an 'extends' statement",
           file);
       return null;

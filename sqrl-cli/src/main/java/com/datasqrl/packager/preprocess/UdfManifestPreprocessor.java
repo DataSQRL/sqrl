@@ -21,6 +21,7 @@ import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -56,6 +57,11 @@ abstract class UdfManifestPreprocessor implements Preprocessor {
     } catch (Exception e) {
       log.warn("Could not read JAR file:" + jarPath, e);
     }
+  }
+
+  void createUdfManifests(
+      List<String> fnClasses, String jarName, FilePreprocessingPipeline.Context ctx) {
+    fnClasses.forEach(fnClass -> createUdfManifest(fnClass, jarName, ctx));
   }
 
   @SneakyThrows
