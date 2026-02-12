@@ -118,7 +118,7 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     var classExtendsMatcher = CLASS_EXTENDS_PATTERN.matcher(content);
     var results = classExtendsMatcher.results().toList();
     if (results.isEmpty()) {
-      log.debug(
+      log.info(
           "Skip preprocessing file {}, as it does not contain a 'public class' with an 'extends' statement",
           file);
       return null;
