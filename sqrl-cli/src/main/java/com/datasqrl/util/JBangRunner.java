@@ -35,6 +35,15 @@ public class JBangRunner {
     return new JBangRunner();
   }
 
+  public static JBangRunner withClasspath(String classpath) {
+    return new JBangRunner() {
+      @Override
+      String resolveClasspath() {
+        return classpath;
+      }
+    };
+  }
+
   public static JBangRunner disabled() {
     return new DisabledRunner();
   }
@@ -53,15 +62,9 @@ public class JBangRunner {
             .addArgument("--output")
             .addArgument(targetFile.toString());
 
-    var cliJar =
-        resolveCliJarPath()
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Cannot resolve sqrl-cli.jar path. "
-                            + "JBang UDF compilation requires the CLI fat JAR on the classpath to provide Flink dependencies."));
+    var classpath = resolveClasspath();
     cmdLine.addArgument("--class-path");
-    cmdLine.addArgument(cliJar.toString());
+    cmdLine.addArgument(classpath, false);
 
     cmdLine.addArgument(srcFile.toString());
 
@@ -69,6 +72,16 @@ public class JBangRunner {
     var executor = DefaultExecutor.builder().get();
     executor.setExitValue(0);
     executor.execute(cmdLine);
+  }
+
+  String resolveClasspath() {
+    return resolveCliJarPath()
+        .map(Path::toString)
+        .orElseThrow(
+            () ->
+                new IllegalStateException(
+                    "Cannot resolve sqrl-cli.jar path. "
+                        + "JBang UDF compilation requires the CLI fat JAR on the classpath to provide Flink dependencies."));
   }
 
   static Optional<Path> resolveCliJarPath() {
