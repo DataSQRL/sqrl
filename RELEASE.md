@@ -1,16 +1,20 @@
 # Release Process for SQRL
 
 Releasing a new version of `sqrl` is automated and streamlined via CircleCI.
+The project follows semantic versioning, and have separate release branches for every minor version (e.g. `release-1.0`, `release-1.1`).
+The `main` branch points to the next upcoming minor (or major) version.
 
 ## ✅ Release Steps
 
-1. Go to the [GitHub Releases page](https://github.com/DataSQRL/sqrl/releases/new).
-2. Create a new **tag** using [Semantic Versioning (SemVer 2.0.0)](https://semver.org/) — for example:
-   - `1.0.0`
-   - `0.9.0-alpha.1`
-   - `1.2.3+build.456`
-3. Fill in the release title and changelog (optional but recommended).
-4. Click **"Publish release"**.
+1. If you release a patch version, make sure all the necessary commits are present on the relevant `release-x.y` branch
+2. Create a new signed **tag** using [SemVer](https://semver.org/) (for example `1.0.0`, or `1.0.0-alpha.1`)
+   ```sh
+   git tag -s 1.0.0 -m 'Release version 1.0.0'
+   git push origin 1.0.0
+   ``` 
+3. Go to the [GitHub Releases page](https://github.com/DataSQRL/sqrl/releases/new)
+4. Fill in the release title and changelog (optional but recommended)
+5. Click **"Publish release"**
 
 Once published, CircleCI will automatically build and publish the artifacts.
 
