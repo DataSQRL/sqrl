@@ -67,7 +67,12 @@ public class JBangRunner {
     cmdLine.addArgument("--class-path");
     cmdLine.addArgument(classpath, false);
 
-    srcFiles.forEach(f -> cmdLine.addArgument(f.toString()));
+    for (int i = 1; i < srcFiles.size(); i++) {
+      cmdLine.addArgument("--sources");
+      cmdLine.addArgument(srcFiles.get(i).toString());
+    }
+
+    cmdLine.addArgument(srcFiles.get(0).toString());
 
     var executor = DefaultExecutor.builder().get();
     executor.setExitValue(0);
