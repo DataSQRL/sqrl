@@ -23,6 +23,7 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -65,7 +66,7 @@ class JBangRunnerTest {
     var src = tempDir.resolve("Dummy.java");
     var target = tempDir.resolve("Dummy.jar");
 
-    assertThatCode(() -> runner.exportFatJar(src, target)).doesNotThrowAnyException();
+    assertThatCode(() -> runner.exportFatJar(List.of(src), target)).doesNotThrowAnyException();
     assertThat(target).doesNotExist();
   }
 
@@ -77,7 +78,7 @@ class JBangRunnerTest {
     var src = tempDir.resolve("Dummy.java");
     var target = tempDir.resolve("Dummy.jar");
 
-    assertThatCode(() -> runner.exportFatJar(src, target)).doesNotThrowAnyException();
+    assertThatCode(() -> runner.exportFatJar(List.of(src), target)).doesNotThrowAnyException();
     assertThat(target).doesNotExist();
   }
 
@@ -89,7 +90,7 @@ class JBangRunnerTest {
     var src = tempDir.resolve("Dummy.java");
     var target = tempDir.resolve("Dummy.jar");
 
-    assertThatThrownBy(() -> runner.exportFatJar(src, target))
+    assertThatThrownBy(() -> runner.exportFatJar(List.of(src), target))
         .isInstanceOf(IllegalStateException.class)
         .hasMessageContaining("Cannot resolve sqrl-cli.jar path");
   }
@@ -113,7 +114,7 @@ class JBangRunnerTest {
         """);
     var target = tempDir.resolve("TestUDF.jar");
 
-    runner.exportFatJar(src, target);
+    runner.exportFatJar(List.of(src), target);
 
     assertThat(target).exists().isRegularFile();
     assertThat(Files.size(target)).isGreaterThan(0);

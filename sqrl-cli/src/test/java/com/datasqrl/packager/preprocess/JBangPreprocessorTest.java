@@ -29,6 +29,7 @@ import com.datasqrl.util.JBangRunner;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.apache.commons.exec.ExecuteException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,36 +66,31 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_jbangNotAvailable_when_process_then_skipsProcessing() throws IOException {
-    // given
+  void given_jbangNotAvailable_when_processAndComplete_then_skipsProcessing() throws IOException {
     when(jBangRunner.isJBangAvailable()).thenReturn(false);
     var javaFile = createJavaFile("ValidUDF.java", validScalarFunctionContent());
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
     verifyNoInteractions(context);
     verify(jBangRunner, never()).exportFatJar(any(), any());
   }
 
   @Test
-  void given_nonJavaFile_when_process_then_skipsProcessing() throws IOException {
-    // given
+  void given_nonJavaFile_when_processAndComplete_then_skipsProcessing() throws IOException {
     var textFile = tempDir.resolve("test.txt");
     Files.writeString(textFile, "some content");
 
-    // when
     underTest.process(textFile, context);
+    underTest.complete();
 
-    // then
     verifyNoInteractions(context);
     verify(jBangRunner, never()).exportFatJar(any(), any());
   }
 
   @Test
-  void given_jbangFileWithoutDepsComment_when_process_then_processesFile() throws IOException {
-    // given
+  void given_jbangFileWithoutDepsComment_when_complete_then_exportsJar() throws IOException {
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -103,18 +99,16 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("TestClass.java", content);
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
-    verify(jBangRunner).exportFatJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
     verify(context).createNewBuildFile(Path.of("TestClass.function.json"));
   }
 
   @Test
-  void given_validScalarFunctionWithPackage_when_process_then_createsManifestAndExportsJar()
+  void given_validScalarFunctionWithPackage_when_complete_then_createsManifestAndExportsJar()
       throws IOException {
-    // given
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -125,32 +119,28 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("MyUDF.java", content);
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
-    verify(jBangRunner).exportFatJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
     verify(context).createNewBuildFile(Path.of("MyUDF.function.json"));
   }
 
   @Test
-  void given_validScalarFunctionWithoutPackage_when_process_then_createsManifestAndExportsJar()
+  void given_validScalarFunctionWithoutPackage_when_complete_then_createsManifestAndExportsJar()
       throws IOException {
-    // given
     var javaFile = createJavaFile("SimpleUDF.java", validScalarFunctionContent());
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
-    verify(jBangRunner).exportFatJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
     verify(context).createNewBuildFile(Path.of("SimpleUDF.function.json"));
   }
 
   @Test
-  void given_validTableFunctionWithMultilineDeclaration_when_process_then_createsManifest()
+  void given_validTableFunctionWithMultilineDeclaration_when_complete_then_createsManifest()
       throws IOException {
-    // given
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -161,17 +151,16 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("MultiLineUDF.java", content);
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
-    verify(jBangRunner).exportFatJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
     verify(context).createNewBuildFile(Path.of("MultiLineUDF.function.json"));
   }
 
   @Test
-  void given_classNotExtendingFlinkUDF_when_process_then_skipsProcessing() throws IOException {
-    // given
+  void given_classNotExtendingFlinkUDF_when_processAndComplete_then_skipsProcessing()
+      throws IOException {
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -182,17 +171,16 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("NotAUDF.java", content);
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
     verify(jBangRunner, never()).exportFatJar(any(), any());
     verifyNoInteractions(context);
   }
 
   @Test
-  void given_multiplePublicClasses_when_process_then_skipsProcessing() throws IOException {
-    // given
+  void given_multiplePublicClasses_when_processAndComplete_then_skipsProcessing()
+      throws IOException {
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -204,17 +192,15 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("MultipleClasses.java", content);
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
     verify(jBangRunner, never()).exportFatJar(any(), any());
     verifyNoInteractions(context);
   }
 
   @Test
-  void given_noPublicClassFound_when_process_then_skipsProcessing() throws IOException {
-    // given
+  void given_noPublicClassFound_when_processAndComplete_then_skipsProcessing() throws IOException {
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -223,17 +209,16 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("PrivateClass.java", content);
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
     verify(jBangRunner, never()).exportFatJar(any(), any());
     verifyNoInteractions(context);
   }
 
   @Test
-  void given_classWithoutExtendsStatement_when_process_then_skipsProcessing() throws IOException {
-    // given
+  void given_classWithoutExtendsStatement_when_processAndComplete_then_skipsProcessing()
+      throws IOException {
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -242,47 +227,41 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("NoExtendsClass.java", content);
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
     verify(jBangRunner, never()).exportFatJar(any(), any());
     verifyNoInteractions(context);
   }
 
   @Test
-  void given_jbangExportFails_when_process_then_logsWarningButContinues() throws IOException {
-    // given
+  void given_jbangExportFails_when_complete_then_logsWarningButContinues() throws IOException {
     var javaFile = createJavaFile("FailingUDF.java", validScalarFunctionContent());
     doThrow(new ExecuteException("JBang failed", 1)).when(jBangRunner).exportFatJar(any(), any());
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
-    verify(jBangRunner).exportFatJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
     verify(context, never()).createNewBuildFile(any());
   }
 
   @Test
-  void given_ioExceptionDuringExport_when_process_then_logsWarningButContinues()
+  void given_ioExceptionDuringExport_when_complete_then_logsWarningButContinues()
       throws IOException {
-    // given
     var javaFile = createJavaFile("IOFailUDF.java", validScalarFunctionContent());
     doThrow(new IOException("IO failure")).when(jBangRunner).exportFatJar(any(), any());
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
-    verify(jBangRunner).exportFatJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
     verify(context, never()).createNewBuildFile(any());
   }
 
   @Test
-  void given_aggregateFunctionWithSimpleClassName_when_process_then_matchesParentClass()
+  void given_aggregateFunctionWithSimpleClassName_when_complete_then_matchesParentClass()
       throws IOException {
-    // given
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -291,17 +270,15 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("MyAggregateUDF.java", content);
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
-    verify(jBangRunner).exportFatJar(eq(javaFile), any());
+    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
     verify(context).createNewBuildFile(Path.of("MyAggregateUDF.function.json"));
   }
 
   @Test
   void given_javaFileWithFlinkDeps_when_process_then_throwsError() throws IOException {
-    // given
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -312,15 +289,14 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("MyUDF.java", content);
 
-    // when/then
     assertThatThrownBy(() -> underTest.process(javaFile, context))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Flink dependencies are provided automatically via classpath");
   }
 
   @Test
-  void given_plainJavaFileWithNoUdfClass_when_process_then_skipsProcessing() throws IOException {
-    // given
+  void given_plainJavaFileWithNoUdfClass_when_processAndComplete_then_skipsProcessing()
+      throws IOException {
     var content =
         """
         public class UtilityHelper {
@@ -331,17 +307,16 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("UtilityHelper.java", content);
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
     verify(jBangRunner, never()).exportFatJar(any(), any());
     verifyNoInteractions(context);
   }
 
   @Test
-  void given_javaFileWithoutShebang_when_process_then_skipsProcessing() throws IOException {
-    // given
+  void given_javaFileWithoutShebang_when_processAndComplete_then_skipsProcessing()
+      throws IOException {
     var content =
         """
         public class MyUDF extends ScalarFunction {
@@ -349,12 +324,38 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("MyUDF.java", content);
 
-    // when
     underTest.process(javaFile, context);
+    underTest.complete();
 
-    // then
     verify(jBangRunner, never()).exportFatJar(any(), any());
     verifyNoInteractions(context);
+  }
+
+  @Test
+  void given_multipleJbangFiles_when_complete_then_batchesIntoSingleExportCall()
+      throws IOException {
+    var content1 =
+        """
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
+        public class FirstUDF extends ScalarFunction {
+        }
+        """;
+    var content2 =
+        """
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
+        public class SecondUDF extends TableFunction {
+        }
+        """;
+    var file1 = createJavaFile("FirstUDF.java", content1);
+    var file2 = createJavaFile("SecondUDF.java", content2);
+
+    underTest.process(file1, context);
+    underTest.process(file2, context);
+    underTest.complete();
+
+    verify(jBangRunner).exportFatJar(eq(List.of(file1, file2)), any());
+    verify(context).createNewBuildFile(Path.of("FirstUDF.function.json"));
+    verify(context).createNewBuildFile(Path.of("SecondUDF.function.json"));
   }
 
   private Path createJavaFile(String filename, String content) throws IOException {

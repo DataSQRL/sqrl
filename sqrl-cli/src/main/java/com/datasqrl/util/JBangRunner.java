@@ -18,6 +18,7 @@ package com.datasqrl.util;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -48,7 +49,7 @@ public class JBangRunner {
     return new DisabledRunner();
   }
 
-  public void exportFatJar(Path srcFile, Path targetFile) throws IOException {
+  public void exportFatJar(List<Path> srcFiles, Path targetFile) throws IOException {
     if (!isJBangAvailable()) {
       return;
     }
@@ -66,9 +67,8 @@ public class JBangRunner {
     cmdLine.addArgument("--class-path");
     cmdLine.addArgument(classpath, false);
 
-    cmdLine.addArgument(srcFile.toString());
+    srcFiles.forEach(f -> cmdLine.addArgument(f.toString()));
 
-    // TODO: ferenc: add custom PrintStream for stderr of the executor to get JBang error
     var executor = DefaultExecutor.builder().get();
     executor.setExitValue(0);
     executor.execute(cmdLine);
@@ -135,7 +135,7 @@ public class JBangRunner {
   private static class DisabledRunner extends JBangRunner {
 
     @Override
-    public void exportFatJar(Path srcFile, Path targetFile) {
+    public void exportFatJar(List<Path> srcFiles, Path targetFile) {
       // do nothing
     }
 

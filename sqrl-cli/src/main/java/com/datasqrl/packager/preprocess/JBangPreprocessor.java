@@ -21,12 +21,13 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.ExecuteException;
-import org.apache.commons.io.FilenameUtils;
 
 @RequiredArgsConstructor(onConstructor_ = @Inject)
 @Slf4j
@@ -38,8 +39,10 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
   private static final Pattern FLINK_DEPS_PATTERN =
       Pattern.compile("^//DEPS\\s+org\\.apache\\.flink:", Pattern.MULTILINE);
   private static final String JBANG_SHEBANG = "///usr/bin/env jbang \"$0\" \"$@\" ; exit $?";
+  static final String JBANG_JAR_NAME = "jbang-udfs.jar";
 
   private final JBangRunner jBangRunner;
+  private final List<JBangFileInfo> collectedFiles = new ArrayList<>();
 
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
@@ -56,19 +59,34 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
       return;
     }
 
+    collectedFiles.add(new JBangFileInfo(file, udfClassName, ctx));
+  }
+
+  @Override
+  public void complete() {
+    if (collectedFiles.isEmpty()) {
+      return;
+    }
+
+    var firstCtx = collectedFiles.get(0).ctx;
+    var targetPath = firstCtx.libDir().resolve(JBANG_JAR_NAME);
+    var allPaths = collectedFiles.stream().map(JBangFileInfo::file).toList();
+
     try {
-      var jarName = FilenameUtils.removeExtension(file.getFileName().toString()) + ".jar";
-      var targetPath = ctx.libDir().resolve(jarName);
+      jBangRunner.exportFatJar(allPaths, targetPath);
 
-      jBangRunner.exportFatJar(file, targetPath);
-      createUdfManifest(udfClassName, jarName, ctx);
-
+      for (var info : collectedFiles) {
+        createUdfManifest(info.udfClassName, JBANG_JAR_NAME, info.ctx);
+      }
     } catch (ExecuteException e) {
-      log.warn("JBang export failed with exit code: {} for file: {}", e.getExitValue(), file);
+      log.warn("JBang export failed with exit code: {}", e.getExitValue());
     } catch (IOException e) {
-      log.warn("Failed to execute JBang export for file: " + file, e);
+      log.warn("Failed to execute JBang export", e);
     }
   }
+
+  private record JBangFileInfo(
+      Path file, String udfClassName, FilePreprocessingPipeline.Context ctx) {}
 
   private boolean isJavaFile(Path file) {
     return file.getFileName().toString().endsWith(".java");

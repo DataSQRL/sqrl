@@ -67,6 +67,7 @@ public class FilePreprocessingPipeline {
         EnumSet.of(FileVisitOption.FOLLOW_LINKS),
         Integer.MAX_VALUE,
         new PathVisitor(sourceDir, buildDir, errors));
+    preprocessors.forEach(Preprocessor::complete);
   }
 
   private static Set<String> getCopyExtensions() {
