@@ -16,15 +16,14 @@
 package com.datasqrl.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.jar.Attributes;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -33,164 +32,91 @@ class JBangRunnerTest {
   @TempDir private Path tempDir;
 
   @Test
-  void
-      given_jarWithClassPathInManifest_when_removeClassPathFromJarManifest_then_removesClassPathEntry()
-          throws IOException {
-    // given
-    var jarPath = createJarWithManifest(true);
-    var runner = JBangRunner.create();
-
-    // when
-    runner.removeClassPathFromJarManifest(jarPath);
-
-    // then
-    try (var jarFile = new JarFile(jarPath.toFile())) {
-      var manifest = jarFile.getManifest();
-      assertThat(manifest).isNotNull();
-      assertThat(manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH)).isNull();
-      assertThat(manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS))
-          .isEqualTo("com.example.Main");
-    }
+  void given_runningFromClassesDirectory_when_resolveCliJarPath_then_returnsEmpty() {
+    var result = JBangRunner.resolveCliJarPath();
+    assertThat(result).isEmpty();
   }
 
   @Test
-  void
-      given_jarWithoutClassPathInManifest_when_removeClassPathFromJarManifest_then_manifestRemainsUnchanged()
-          throws IOException {
-    // given
-    var jarPath = createJarWithManifest(false);
+  void given_runningFromClassesDirectory_when_resolveClasspath_then_throwsIllegalState() {
     var runner = JBangRunner.create();
 
-    // when
-    runner.removeClassPathFromJarManifest(jarPath);
-
-    // then
-    try (var jarFile = new JarFile(jarPath.toFile())) {
-      var manifest = jarFile.getManifest();
-      assertThat(manifest).isNotNull();
-      assertThat(manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH)).isNull();
-      assertThat(manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS))
-          .isEqualTo("com.example.Main");
-    }
+    assertThatThrownBy(runner::resolveClasspath)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Cannot resolve sqrl-cli.jar path");
   }
 
   @Test
-  void given_jarWithNoManifest_when_removeClassPathFromJarManifest_then_doesNothing()
-      throws IOException {
-    // given
-    var jarPath = createJarWithoutManifest();
-    var runner = JBangRunner.create();
+  void given_withClasspath_when_resolveClasspath_then_returnsOverride() {
+    var runner = JBangRunner.withClasspath("/some/custom.jar");
 
-    // when
-    runner.removeClassPathFromJarManifest(jarPath);
-
-    // then
-    try (var jarFile = new JarFile(jarPath.toFile())) {
-      assertThat(jarFile.getManifest()).isNull();
-    }
+    assertThat(runner.resolveClasspath()).isEqualTo("/some/custom.jar");
   }
 
   @Test
-  void
-      given_jarWithMultipleEntries_when_removeClassPathFromJarManifest_then_preservesAllOtherEntries()
-          throws IOException {
-    // given
-    var jarPath = createJarWithMultipleEntries();
-    var runner = JBangRunner.create();
+  void given_disabledRunner_when_isJBangAvailable_then_returnsFalse() {
+    var runner = JBangRunner.disabled();
 
-    // when
-    runner.removeClassPathFromJarManifest(jarPath);
-
-    // then
-    try (var jarFile = new JarFile(jarPath.toFile())) {
-      var manifest = jarFile.getManifest();
-      assertThat(manifest).isNotNull();
-      assertThat(manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH)).isNull();
-
-      // Verify all other entries are preserved
-      var entryNames = jarFile.stream().map(JarEntry::getName).toList();
-      assertThat(entryNames)
-          .containsExactlyInAnyOrder(
-              "META-INF/MANIFEST.MF",
-              "com/example/Test.class",
-              "config.properties",
-              "nested/file.txt");
-
-      // Verify entry content is preserved
-      var testClassEntry = jarFile.getJarEntry("com/example/Test.class");
-      try (var inputStream = jarFile.getInputStream(testClassEntry)) {
-        var content = new String(inputStream.readAllBytes());
-        assertThat(content).isEqualTo("test class content");
-      }
-    }
+    assertThat(runner.isJBangAvailable()).isFalse();
   }
 
   @Test
-  void given_nonExistentJar_when_removeClassPathFromJarManifest_then_handlesGracefully() {
-    // given
-    var nonExistentJar = tempDir.resolve("non-existent.jar");
+  void given_disabledRunner_when_exportFatJar_then_doesNothing() {
+    var runner = JBangRunner.disabled();
+    var src = tempDir.resolve("Dummy.java");
+    var target = tempDir.resolve("Dummy.jar");
+
+    assertThatCode(() -> runner.exportFatJar(List.of(src), target)).doesNotThrowAnyException();
+    assertThat(target).doesNotExist();
+  }
+
+  @Test
+  void given_jbangUnavailable_when_exportFatJar_then_skipsWithoutError() {
     var runner = JBangRunner.create();
+    assumeThat(runner.isJBangAvailable()).isFalse();
 
-    // when/then - should not throw exception
-    runner.removeClassPathFromJarManifest(nonExistentJar);
+    var src = tempDir.resolve("Dummy.java");
+    var target = tempDir.resolve("Dummy.jar");
+
+    assertThatCode(() -> runner.exportFatJar(List.of(src), target)).doesNotThrowAnyException();
+    assertThat(target).doesNotExist();
   }
 
-  private Path createJarWithManifest(boolean includeClassPath) throws IOException {
-    var jarPath = tempDir.resolve("test.jar");
-    var manifest = new Manifest();
-    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, "com.example.Main");
+  @Test
+  void given_noClasspathOverride_when_exportFatJar_then_throwsBecauseNoJar() {
+    var runner = JBangRunner.create();
+    assumeThat(runner.isJBangAvailable()).isTrue();
 
-    if (includeClassPath) {
-      manifest
-          .getMainAttributes()
-          .put(Attributes.Name.CLASS_PATH, "lib/dependency1.jar lib/dependency2.jar");
-    }
+    var src = tempDir.resolve("Dummy.java");
+    var target = tempDir.resolve("Dummy.jar");
 
-    try (var output = new JarOutputStream(Files.newOutputStream(jarPath), manifest)) {
-      // Add a dummy entry
-      output.putNextEntry(new JarEntry("com/example/Test.class"));
-      output.write("test content".getBytes());
-      output.closeEntry();
-    }
-
-    return jarPath;
+    assertThatThrownBy(() -> runner.exportFatJar(List.of(src), target))
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Cannot resolve sqrl-cli.jar path");
   }
 
-  private Path createJarWithoutManifest() throws IOException {
-    var jarPath = tempDir.resolve("no-manifest.jar");
+  @Test
+  void given_testClasspath_when_exportFatJar_then_producesJar() throws IOException {
+    var runner = JBangRunner.withClasspath(System.getProperty("java.class.path"));
+    assumeThat(runner.isJBangAvailable()).isTrue();
 
-    try (var output = new JarOutputStream(Files.newOutputStream(jarPath))) {
-      output.putNextEntry(new JarEntry("com/example/Test.class"));
-      output.write("test content".getBytes());
-      output.closeEntry();
-    }
+    var src = tempDir.resolve("TestUDF.java");
+    Files.writeString(
+        src,
+        """
+        import org.apache.flink.table.functions.ScalarFunction;
 
-    return jarPath;
-  }
+        public class TestUDF extends ScalarFunction {
+          public String eval(String input) {
+            return input;
+          }
+        }
+        """);
+    var target = tempDir.resolve("TestUDF.jar");
 
-  private Path createJarWithMultipleEntries() throws IOException {
-    var jarPath = tempDir.resolve("multiple-entries.jar");
-    var manifest = new Manifest();
-    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().put(Attributes.Name.MAIN_CLASS, "com.example.Main");
-    manifest.getMainAttributes().put(Attributes.Name.CLASS_PATH, "lib/dep.jar");
+    runner.exportFatJar(List.of(src), target);
 
-    try (var output = new JarOutputStream(Files.newOutputStream(jarPath), manifest)) {
-      // Add multiple entries
-      output.putNextEntry(new JarEntry("com/example/Test.class"));
-      output.write("test class content".getBytes());
-      output.closeEntry();
-
-      output.putNextEntry(new JarEntry("config.properties"));
-      output.write("property=value".getBytes());
-      output.closeEntry();
-
-      output.putNextEntry(new JarEntry("nested/file.txt"));
-      output.write("nested content".getBytes());
-      output.closeEntry();
-    }
-
-    return jarPath;
+    assertThat(target).exists().isRegularFile();
+    assertThat(Files.size(target)).isGreaterThan(0);
   }
 }
