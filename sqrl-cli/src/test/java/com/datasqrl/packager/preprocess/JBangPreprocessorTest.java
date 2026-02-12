@@ -66,7 +66,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_jbangNotAvailable_when_processAndComplete_then_skipsProcessing() throws IOException {
+  void given_jbangNotAvailable_when_process_then_skipsProcessing() throws IOException {
     when(jBangRunner.isJBangAvailable()).thenReturn(false);
     var javaFile = createJavaFile("ValidUDF.java", validScalarFunctionContent());
 
@@ -78,7 +78,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_nonJavaFile_when_processAndComplete_then_skipsProcessing() throws IOException {
+  void given_nonJavaFile_when_process_then_skipsProcessing() throws IOException {
     var textFile = tempDir.resolve("test.txt");
     Files.writeString(textFile, "some content");
 
@@ -90,7 +90,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_jbangFileWithoutDepsComment_when_complete_then_exportsJar() throws IOException {
+  void given_jbangFileWithoutDepsComment_when_process_then_processesFile() throws IOException {
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -107,7 +107,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_validScalarFunctionWithPackage_when_complete_then_createsManifestAndExportsJar()
+  void given_validScalarFunctionWithPackage_when_process_then_createsManifestAndExportsJar()
       throws IOException {
     var content =
         """
@@ -127,7 +127,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_validScalarFunctionWithoutPackage_when_complete_then_createsManifestAndExportsJar()
+  void given_validScalarFunctionWithoutPackage_when_process_then_createsManifestAndExportsJar()
       throws IOException {
     var javaFile = createJavaFile("SimpleUDF.java", validScalarFunctionContent());
 
@@ -139,7 +139,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_validTableFunctionWithMultilineDeclaration_when_complete_then_createsManifest()
+  void given_validTableFunctionWithMultilineDeclaration_when_process_then_createsManifest()
       throws IOException {
     var content =
         """
@@ -159,8 +159,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_classNotExtendingFlinkUDF_when_processAndComplete_then_skipsProcessing()
-      throws IOException {
+  void given_classNotExtendingFlinkUDF_when_process_then_skipsProcessing() throws IOException {
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -179,8 +178,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_multiplePublicClasses_when_processAndComplete_then_skipsProcessing()
-      throws IOException {
+  void given_multiplePublicClasses_when_process_then_skipsProcessing() throws IOException {
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -200,7 +198,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_noPublicClassFound_when_processAndComplete_then_skipsProcessing() throws IOException {
+  void given_noPublicClassFound_when_process_then_skipsProcessing() throws IOException {
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -217,8 +215,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_classWithoutExtendsStatement_when_processAndComplete_then_skipsProcessing()
-      throws IOException {
+  void given_classWithoutExtendsStatement_when_process_then_skipsProcessing() throws IOException {
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -235,7 +232,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_jbangExportFails_when_complete_then_logsWarningButContinues() throws IOException {
+  void given_jbangExportFails_when_process_then_logsWarningButContinues() throws IOException {
     var javaFile = createJavaFile("FailingUDF.java", validScalarFunctionContent());
     doThrow(new ExecuteException("JBang failed", 1)).when(jBangRunner).exportFatJar(any(), any());
 
@@ -247,7 +244,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_ioExceptionDuringExport_when_complete_then_logsWarningButContinues()
+  void given_ioExceptionDuringExport_when_process_then_logsWarningButContinues()
       throws IOException {
     var javaFile = createJavaFile("IOFailUDF.java", validScalarFunctionContent());
     doThrow(new IOException("IO failure")).when(jBangRunner).exportFatJar(any(), any());
@@ -260,7 +257,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_aggregateFunctionWithSimpleClassName_when_complete_then_matchesParentClass()
+  void given_aggregateFunctionWithSimpleClassName_when_process_then_matchesParentClass()
       throws IOException {
     var content =
         """
@@ -295,8 +292,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_plainJavaFileWithNoUdfClass_when_processAndComplete_then_skipsProcessing()
-      throws IOException {
+  void given_plainJavaFileWithNoUdfClass_when_process_then_skipsProcessing() throws IOException {
     var content =
         """
         public class UtilityHelper {
@@ -315,8 +311,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_javaFileWithoutShebang_when_processAndComplete_then_skipsProcessing()
-      throws IOException {
+  void given_javaFileWithoutShebang_when_process_then_skipsProcessing() throws IOException {
     var content =
         """
         public class MyUDF extends ScalarFunction {
