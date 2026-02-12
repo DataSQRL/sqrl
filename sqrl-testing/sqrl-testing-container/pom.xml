@@ -167,7 +167,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
-          <forkCount>2</forkCount>
           <systemPropertyVariables>
             <log4j2.configurationFile>log4j2-test.xml</log4j2.configurationFile>
           </systemPropertyVariables>
