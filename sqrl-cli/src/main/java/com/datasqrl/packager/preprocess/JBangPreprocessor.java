@@ -37,12 +37,13 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
       Pattern.compile("public\\s+class\\s+(\\w+)\\s+extends\\s+(\\w+)", Pattern.DOTALL);
   private static final Pattern FLINK_DEPS_PATTERN =
       Pattern.compile("^//DEPS\\s+org\\.apache\\.flink:", Pattern.MULTILINE);
+  private static final String JBANG_SHEBANG = "///usr/bin/env jbang \"$0\" \"$@\" ; exit $?";
 
   private final JBangRunner jBangRunner;
 
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
-    if (!jBangRunner.isJBangAvailable() || !isJavaFile(file)) {
+    if (!jBangRunner.isJBangAvailable() || !isJBangFile(file)) {
       return;
     }
 
@@ -71,6 +72,15 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
 
   private boolean isJavaFile(Path file) {
     return file.getFileName().toString().endsWith(".java");
+  }
+
+  @SneakyThrows
+  private boolean isJBangFile(Path file) {
+    if (!isJavaFile(file)) {
+      return false;
+    }
+    var firstLine = Files.readAllLines(file).get(0).trim();
+    return JBANG_SHEBANG.equals(firstLine);
   }
 
   private void validateNoFlinkDeps(Path file, String content) {

@@ -93,10 +93,11 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_javaFileWithoutDepsComment_when_process_then_processesFile() throws IOException {
+  void given_jbangFileWithoutDepsComment_when_process_then_processesFile() throws IOException {
     // given
     var content =
         """
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
         public class TestClass extends ScalarFunction {
         }
         """;
@@ -116,7 +117,7 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
-        //DEPS io.flink:flink-table-api-java:1.17.0
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
         package com.example.udfs;
 
         public class MyUDF extends ScalarFunction {
@@ -152,7 +153,7 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
-        //DEPS io.flink:flink-table-api-java:1.17.0
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
 
         public class MultiLineUDF
             extends TableFunction {
@@ -173,6 +174,7 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
         //DEPS some.library:artifact:1.0.0
 
         public class NotAUDF extends SomeOtherClass {
@@ -193,6 +195,7 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
         public class FirstUDF extends ScalarFunction {
         }
 
@@ -214,6 +217,7 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
         class PrivateClass extends ScalarFunction {
         }
         """;
@@ -232,6 +236,7 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
         public class NoExtendsClass {
         }
         """;
@@ -280,6 +285,7 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
         public class MyAggregateUDF extends AggregateFunction {
         }
         """;
@@ -298,6 +304,7 @@ class JBangPreprocessorTest {
     // given
     var content =
         """
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
         //DEPS org.apache.flink:flink-table-common:2.1.0
 
         public class MyUDF extends ScalarFunction {
@@ -332,6 +339,24 @@ class JBangPreprocessorTest {
     verifyNoInteractions(context);
   }
 
+  @Test
+  void given_javaFileWithoutShebang_when_process_then_skipsProcessing() throws IOException {
+    // given
+    var content =
+        """
+        public class MyUDF extends ScalarFunction {
+        }
+        """;
+    var javaFile = createJavaFile("MyUDF.java", content);
+
+    // when
+    underTest.process(javaFile, context);
+
+    // then
+    verify(jBangRunner, never()).exportFatJar(any(), any());
+    verifyNoInteractions(context);
+  }
+
   private Path createJavaFile(String filename, String content) throws IOException {
     var file = tempDir.resolve(filename);
     Files.writeString(file, content);
@@ -340,6 +365,7 @@ class JBangPreprocessorTest {
 
   private String validScalarFunctionContent() {
     return """
+        ///usr/bin/env jbang "$0" "$@" ; exit $?
         public class SimpleUDF extends ScalarFunction {
         }
         """;

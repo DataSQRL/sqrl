@@ -1,3 +1,4 @@
+///usr/bin/env jbang "$0" "$@" ; exit $?
 import org.apache.flink.table.functions.AsyncScalarFunction;
 import org.apache.flink.table.functions.FunctionContext;
 
