@@ -16,6 +16,7 @@
 package com.datasqrl.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assumptions.assumeThat;
 
@@ -33,6 +34,51 @@ class JBangRunnerTest {
   void given_runningFromClassesDirectory_when_resolveCliJarPath_then_returnsEmpty() {
     var result = JBangRunner.resolveCliJarPath();
     assertThat(result).isEmpty();
+  }
+
+  @Test
+  void given_runningFromClassesDirectory_when_resolveClasspath_then_throwsIllegalState() {
+    var runner = JBangRunner.create();
+
+    assertThatThrownBy(runner::resolveClasspath)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("Cannot resolve sqrl-cli.jar path");
+  }
+
+  @Test
+  void given_withClasspath_when_resolveClasspath_then_returnsOverride() {
+    var runner = JBangRunner.withClasspath("/some/custom.jar");
+
+    assertThat(runner.resolveClasspath()).isEqualTo("/some/custom.jar");
+  }
+
+  @Test
+  void given_disabledRunner_when_isJBangAvailable_then_returnsFalse() {
+    var runner = JBangRunner.disabled();
+
+    assertThat(runner.isJBangAvailable()).isFalse();
+  }
+
+  @Test
+  void given_disabledRunner_when_exportFatJar_then_doesNothing() {
+    var runner = JBangRunner.disabled();
+    var src = tempDir.resolve("Dummy.java");
+    var target = tempDir.resolve("Dummy.jar");
+
+    assertThatCode(() -> runner.exportFatJar(src, target)).doesNotThrowAnyException();
+    assertThat(target).doesNotExist();
+  }
+
+  @Test
+  void given_jbangUnavailable_when_exportFatJar_then_skipsWithoutError() {
+    var runner = JBangRunner.create();
+    assumeThat(runner.isJBangAvailable()).isFalse();
+
+    var src = tempDir.resolve("Dummy.java");
+    var target = tempDir.resolve("Dummy.jar");
+
+    assertThatCode(() -> runner.exportFatJar(src, target)).doesNotThrowAnyException();
+    assertThat(target).doesNotExist();
   }
 
   @Test
