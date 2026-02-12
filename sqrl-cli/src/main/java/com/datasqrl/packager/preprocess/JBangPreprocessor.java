@@ -43,6 +43,7 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
 
   private final JBangRunner jBangRunner;
   private final List<JBangFileInfo> collectedFiles = new ArrayList<>();
+  private FilePreprocessingPipeline.Context ctx;
 
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
@@ -59,7 +60,8 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
       return;
     }
 
-    collectedFiles.add(new JBangFileInfo(file, udfClassName, ctx));
+    this.ctx = ctx;
+    collectedFiles.add(new JBangFileInfo(file, udfClassName));
   }
 
   @Override
@@ -68,16 +70,13 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
       return;
     }
 
-    var firstCtx = collectedFiles.get(0).ctx;
-    var targetPath = firstCtx.libDir().resolve(JBANG_JAR_NAME);
+    var targetPath = ctx.libDir().resolve(JBANG_JAR_NAME);
     var allPaths = collectedFiles.stream().map(JBangFileInfo::file).toList();
+    var allClassNames = collectedFiles.stream().map(JBangFileInfo::udfClassName).toList();
 
     try {
       jBangRunner.exportFatJar(allPaths, targetPath);
-
-      for (var info : collectedFiles) {
-        createUdfManifest(info.udfClassName, JBANG_JAR_NAME, info.ctx);
-      }
+      createUdfManifests(allClassNames, JBANG_JAR_NAME, ctx);
     } catch (ExecuteException e) {
       log.warn("JBang export failed with exit code: {}", e.getExitValue());
     } catch (IOException e) {
@@ -85,8 +84,7 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     }
   }
 
-  private record JBangFileInfo(
-      Path file, String udfClassName, FilePreprocessingPipeline.Context ctx) {}
+  private record JBangFileInfo(Path file, String udfClassName) {}
 
   private boolean isJavaFile(Path file) {
     return file.getFileName().toString().endsWith(".java");
