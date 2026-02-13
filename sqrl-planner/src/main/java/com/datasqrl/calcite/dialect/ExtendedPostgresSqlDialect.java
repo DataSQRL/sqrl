@@ -15,8 +15,6 @@
  */
 package com.datasqrl.calcite.dialect;
 
-import static org.apache.calcite.sql.SqlKind.COLLECTION_TABLE;
-
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType;
@@ -28,18 +26,15 @@ import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelRecordType;
 import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
-import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDialect;
-import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.ArraySqlType;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
-public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
+public class ExtendedPostgresSqlDialect extends BasePostgresSqlDialect {
 
   public static final Map<String, SqlTranslation> translationMap =
       ServiceLoaderDiscovery.getAll(SqlTranslation.class).stream()
@@ -146,32 +141,12 @@ public class ExtendedPostgresSqlDialect extends PostgresqlSqlDialect {
   }
 
   @Override
-  public void unparseCall(SqlWriter writer, SqlCall call, int leftPrec, int rightPrec) {
-    if (call.getOperator().getKind() == COLLECTION_TABLE) { // skip FROM TABLE(..) call
-      unparseCall(writer, (SqlCall) call.getOperandList().get(0), leftPrec, rightPrec);
-      return;
-    }
-
-    if (translationMap.containsKey(call.getOperator().getName().toLowerCase())) {
-      translationMap
-          .get(call.getOperator().getName().toLowerCase())
-          .unparse(call, writer, leftPrec, rightPrec);
-      return;
-    }
-    try {
-      super.unparseCall(writer, call, leftPrec, rightPrec);
-    } catch (UnsupportedOperationException e) {
-      throw new UnsupportedOperationException(
-          "Could not unparse:"
-              + call.getOperator().getName()
-              + " -> "
-              + call.getOperandList().toString(),
-          e);
-    }
+  public boolean supportsGroupByLiteral() {
+    return true;
   }
 
   @Override
-  public boolean supportsGroupByLiteral() {
-    return true;
+  protected Map<String, SqlTranslation> getTranslationMap() {
+    return translationMap;
   }
 }

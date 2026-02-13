@@ -24,13 +24,13 @@ import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.OperatorRuleTransformer;
-import com.datasqrl.calcite.convert.PostgresRelToSqlNode;
-import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
-import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
+import com.datasqrl.calcite.convert.DuckDbRelToSqlNode;
+import com.datasqrl.calcite.convert.DuckdbSqlNodeToString;
+import com.datasqrl.calcite.dialect.DuckDbSqlDialect;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.engine.database.relational.ddl.statements.GenericCreateTableDdlFactory;
+import com.datasqrl.engine.database.relational.ddl.GenericCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
@@ -53,21 +53,21 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
 
   public DuckDbStatementFactory(EngineConfig engineConfig) {
     super(
-        new OperatorRuleTransformer(Dialect.POSTGRES),
-        new PostgresRelToSqlNode(),
-        new PostgresSqlNodeToString(),
-        new GenericCreateTableDdlFactory()); // Iceberg does not support queries
+        new OperatorRuleTransformer(Dialect.DUCKDB),
+        new DuckDbRelToSqlNode(),
+        new DuckdbSqlNodeToString(),
+        new GenericCreateTableDdlFactory()); // Iceberg creates the tables, DuckDB only queries
     this.engineConfig = engineConfig;
   }
 
   @Override
   public JdbcDialect getDialect() {
-    return JdbcDialect.Postgres;
+    return JdbcDialect.DuckDB;
   }
 
   @Override
   protected SqlDataTypeSpec getSqlType(RelDataType type, Optional<DataTypeHint> hint) {
-    return ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(type);
+    return (SqlDataTypeSpec) DuckDbSqlDialect.DEFAULT.getCastSpec(type);
   }
 
   /**
@@ -130,7 +130,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
     return createQueryInternal(
         query.function().getSimpleName(),
         replaced,
-        false,
+        true,
         getTableNameMapping(tableIdMap),
         query.function().getDocumentation());
   }
