@@ -1,15 +1,17 @@
 ARG DUCKDB_EXTENSIONS_TAG=latest
+FROM jbangdev/jbang:0.136.0 AS jbang
+
 FROM datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG}
 
 ARG POSTGRES_VERSION=17
-ARG JBANG_VERSION=0.136.0
 
 ENV TZ=America/Los_Angeles
 ENV POSTGRES_VERSION=${POSTGRES_VERSION}
-ENV JBANG_DOWNLOAD_VERSION=${JBANG_VERSION}
 ENV JBANG_DIR=/opt/jbang
 
-# Install dependencies, PostgreSQL, Redpanda, and JBang
+COPY --from=jbang /jbang-*/ /opt/jbang/
+
+# Install dependencies, PostgreSQL, and Redpanda
 RUN apt-get update \
     && apt-get install -y --no-install-recommends lsb-release gnupg \
     && echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
@@ -21,7 +23,6 @@ RUN apt-get update \
             postgresql-${POSTGRES_VERSION}-pgvector \
     && curl -1sLf 'https://dl.redpanda.com/nzc4ZYQK3WRGd9sy/redpanda/cfg/setup/bash.deb.sh' | bash \
     && apt-get install -y --no-install-recommends redpanda \
-    && curl -Ls https://sh.jbang.dev | bash -s - app setup \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Expose needed ports
