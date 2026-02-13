@@ -304,12 +304,18 @@ jobs:
       - generate-settings
       - install-jdk
       - compute-mcp-tag
+      - compute-sha1-tags
       - run:
           name: Auth ghcr
           command: echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
       - run:
           name: Build with Docker images
-          command: mvn -U clean -T1C -B install -DonlyImages -Ddocker.image.tag=local-${CIRCLE_SHA1}
+          command: >-
+            mvn -U clean -T1C -B install -DonlyImages
+            -Ddocker.image.tag=local-${CIRCLE_SHA1}
+            -Ddocker.image.repo=ghcr.io/datasqrl
+            -Ddocker.image.base.tag=${BASE_TAG}
+            -Ddocker.image.duckdb.tag=${DUCKDB_EXTENSIONS_TAG}
       - run:
           name: Run container tests using TestContainers
           command: |
