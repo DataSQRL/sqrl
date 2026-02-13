@@ -14,8 +14,9 @@
 # limitations under the License.
 #
 
+ARG BASE_REPO=datasqrl
 ARG BASE_TAG=latest
-FROM datasqrl/base-sqrl:${BASE_TAG}
+FROM ${BASE_REPO}/sqrl-base:${BASE_TAG}
 
 COPY postgres.conf /etc/postgresql/${POSTGRES_VERSION}/main/conf.d/postgres.conf
 COPY pg_hba.conf /etc/postgresql/${POSTGRES_VERSION}/main/pg_hba.conf

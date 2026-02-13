@@ -73,25 +73,30 @@ commands:
 
             PR_NUM=$(get_pr_number)
 
+            # default: do not create :latest tags
+            echo "export LATEST_TAG=false" >> "$BASH_ENV"
+
             if [ -n "$PR_NUM" ]; then
-              echo "export TAG_SUFFIX=pr-$PR_NUM"     >> "$BASH_ENV"
-              echo "export REGISTRY=ghcr.io/datasqrl" >> "$BASH_ENV"
+              echo "export TAG_SUFFIX=pr-$PR_NUM"      >> "$BASH_ENV"
+              echo "export REGISTRY=ghcr.io/datasqrl"  >> "$BASH_ENV"
+              echo "export IS_RELEASE=false"           >> "$BASH_ENV"
             elif [ -n "$CIRCLE_TAG" ]; then
-              echo "export TAG_SUFFIX=$CIRCLE_TAG"    >> "$BASH_ENV"
-              echo "export REGISTRY=datasqrl"         >> "$BASH_ENV"
+              echo "export TAG_SUFFIX=$CIRCLE_TAG"     >> "$BASH_ENV"
+              echo "export REGISTRY=datasqrl"          >> "$BASH_ENV"
+              echo "export IS_RELEASE=true"            >> "$BASH_ENV"
 
               # Only tag :latest for stable SemVer releases (no pre-release suffix)
               if [[ "$CIRCLE_TAG" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                echo "export LATEST_TAG=true"         >> "$BASH_ENV"
-              else
-                echo "export LATEST_TAG=false"        >> "$BASH_ENV"
+                echo "export LATEST_TAG=true"          >> "$BASH_ENV"
               fi
             elif [ "$CIRCLE_BRANCH" = "main" ]; then
-              echo "export TAG_SUFFIX=dev"            >> "$BASH_ENV"
-              echo "export REGISTRY=datasqrl"         >> "$BASH_ENV"
+              echo "export TAG_SUFFIX=dev"             >> "$BASH_ENV"
+              echo "export REGISTRY=datasqrl"          >> "$BASH_ENV"
+              echo "export IS_RELEASE=false"           >> "$BASH_ENV"
             else
-              echo "export TAG_SUFFIX=$CIRCLE_BRANCH" >> "$BASH_ENV"
-              echo "export REGISTRY=datasqrl"         >> "$BASH_ENV"
+              echo "export TAG_SUFFIX=$CIRCLE_BRANCH"  >> "$BASH_ENV"
+              echo "export REGISTRY=ghcr.io/datasqrl"  >> "$BASH_ENV"
+              echo "export IS_RELEASE=false"           >> "$BASH_ENV"
             fi
 
   download-dependencies:
@@ -344,9 +349,9 @@ jobs:
           command: |
             set -x
             
-            # Skip publishing images if REGISTRY != datasqrl OR TAG_SUFFIX == CIRCLE_BRANCH
-            if [[ "$REGISTRY" != "datasqrl" ]] || [[ "$TAG_SUFFIX" == "$CIRCLE_BRANCH" ]]; then
-              echo "Skipping image publishing for REGISTRY=$REGISTRY, TAG_SUFFIX=$TAG_SUFFIX, CIRCLE_BRANCH=$CIRCLE_BRANCH"
+            # Push to Docker Hub for tagged releases and main=:dev.
+            if [ "$IS_RELEASE" != "true" ] && [ "$TAG_SUFFIX" != "dev" ]; then
+              echo "Skipping image publishing for TAG_SUFFIX=$TAG_SUFFIX (only tagged releases and main=:dev are published)."
               circleci step halt
             fi
       - restore_cache:
@@ -367,8 +372,9 @@ jobs:
       - run:
           name: Pull base images
           command: |
-            docker pull datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
-            docker pull datasqrl/base-sqrl:$BASE_TAG
+            # release images depend on base layers that are now published to GHCR
+            docker pull ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
+            docker pull ghcr.io/datasqrl/base-sqrl:$BASE_TAG
 
       - run:
           name: Login to registries
@@ -402,8 +408,8 @@ jobs:
               fi
             }
 
-            build_and_push cmd                 sqrl-cli                     --build-arg BASE_TAG=$BASE_TAG
-            build_and_push sqrl-server         sqrl-server/sqrl-server-vertx --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
+            build_and_push cmd          sqrl-cli                      --build-arg BASE_REPO=ghcr.io/datasqrl --build-arg BASE_TAG=$BASE_TAG
+            build_and_push sqrl-server  sqrl-server/sqrl-server-vertx --build-arg DUCKDB_EXTENSIONS_REPO=ghcr.io/datasqrl --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
 
   docker-build-duckdb-extensions:
     machine:
@@ -418,9 +424,9 @@ jobs:
           command: |
             set +e
 
-            if docker buildx imagetools inspect datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG} \
+            if docker buildx imagetools inspect ghcr.io/datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG} \
                 --format '{{json .}}' > /tmp/manifest.json 2>/dev/null; then
-              echo "── Manifest for datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG} ────────────────"
+              echo "── Manifest for ghcr.io/datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG} ────────────────"
               cat /tmp/manifest.json | jq .
               echo "───────────────────────────────────────────────────────────────"
               echo "Tag already exists – skipping duckdb-extensions build."
@@ -429,20 +435,21 @@ jobs:
               echo "Tag does not exist yet – will build duckdb-extensions image."
             fi
 
-      - run:
-          name: Login to Docker Hub
-          command: |
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
       - run:
-          name: Build & push datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
+          name: Login to GHCR
+          command: |
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+
+      - run:
+          name: Build & push ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
           command: |
             docker buildx build \
               --push \
               --platform linux/amd64,linux/arm64 \
               --build-arg DUCKDB_JDBC_VERSION=$DUCKDB_JDBC_VERSION \
-              -t datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG \
-              -t datasqrl/duckdb-extensions:latest \
+              -t ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG \
+              -t ghcr.io/datasqrl/duckdb-extensions:latest \
               -f Dockerfile.duckdb-extensions \
               .
 
@@ -459,9 +466,9 @@ jobs:
           command: |
             set +e
 
-            if docker buildx imagetools inspect datasqrl/base-sqrl:${BASE_TAG} \
+            if docker buildx imagetools inspect ghcr.io/datasqrl/sqrl-base:${BASE_TAG} \
                 --format '{{json .}}' > /tmp/manifest.json 2>/dev/null; then
-              echo "── Manifest for datasqrl/base-sqrl:${BASE_TAG} ────────────────"
+              echo "── Manifest for ghcr.io/datasqrl/sqrl-base:${BASE_TAG} ────────────────"
               cat /tmp/manifest.json | jq .
               echo "───────────────────────────────────────────────────────────────"
               echo "Tag already exists – skipping base-image build."
@@ -470,25 +477,27 @@ jobs:
               echo "Tag does not exist yet – will build base image."
             fi
 
+
       - run:
           name: Pull duckdb-extensions image
           command: |
-            docker pull datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
+            docker pull ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
 
       - run:
-          name: Login to Docker Hub
+          name: Login to GHCR
           command: |
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
 
       - run:
-          name: Build & push datasqrl/base-sqrl:$BASE_TAG
+          name: Build & push ghcr.io/datasqrl/sqrl-base:$BASE_TAG
           command: |
             docker buildx build \
               --push \
               --platform linux/amd64,linux/arm64 \
               --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG \
-              -t datasqrl/base-sqrl:$BASE_TAG \
-              -t datasqrl/base-sqrl:latest \
+              --build-arg DUCKDB_EXTENSIONS_REPO=ghcr.io/datasqrl \
+              -t ghcr.io/datasqrl/sqrl-base:$BASE_TAG \
+              -t ghcr.io/datasqrl/sqrl-base:latest \
               -f sqrl-cli/Dockerfile.base \
               sqrl-cli
 
@@ -515,6 +524,7 @@ jobs:
             else
               echo "Tag does not exist yet – will build MCP inspector image."
             fi
+
 
       - run:
           name: Login to Docker Hub
