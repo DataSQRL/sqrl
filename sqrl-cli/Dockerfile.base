@@ -1,7 +1,8 @@
+ARG IMG_REPO=datasqrl
 ARG DUCKDB_EXTENSIONS_TAG=latest
-FROM jbangdev/jbang:0.136.0 AS jbang
 
-FROM datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG}
+FROM jbangdev/jbang:0.136.0 AS jbang
+FROM ${IMG_REPO}/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG}
 
 ARG POSTGRES_VERSION=17
 
