@@ -386,7 +386,7 @@ jobs:
           command: |
             # release/dev images depend on base layers that are published to GHCR
             docker pull ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
-            docker pull ghcr.io/datasqrl/base-sqrl:$BASE_TAG
+            docker pull ghcr.io/datasqrl/sqrl-base:$BASE_TAG
 
       - run:
           name: Build + push Docker images
