@@ -370,17 +370,17 @@ jobs:
           builder_name: "sqrl-builder"
 
       - run:
-          name: Pull base images
-          command: |
-            # release images depend on base layers that are now published to GHCR
-            docker pull ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
-            docker pull ghcr.io/datasqrl/base-sqrl:$BASE_TAG
-
-      - run:
           name: Login to registries
           command: |
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
             echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+      - run:
+          name: Pull base images
+          command: |
+            # release/dev images depend on base layers that are published to GHCR
+            docker pull ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
+            docker pull ghcr.io/datasqrl/base-sqrl:$BASE_TAG
 
       - run:
           name: Build + push Docker images
@@ -479,14 +479,14 @@ jobs:
 
 
       - run:
-          name: Pull duckdb-extensions image
-          command: |
-            docker pull ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
-
-      - run:
           name: Login to GHCR
           command: |
             echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+
+      - run:
+          name: Pull duckdb-extensions image
+          command: |
+            docker pull ghcr.io/datasqrl/duckdb-extensions:$DUCKDB_EXTENSIONS_TAG
 
       - run:
           name: Build & push ghcr.io/datasqrl/sqrl-base:$BASE_TAG
