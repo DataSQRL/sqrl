@@ -16,12 +16,15 @@
 package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.error.ErrorCollector;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.JarURLConnection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.JarFile;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.configuration.ConfigOption;
 
@@ -31,60 +34,76 @@ public class FlinkConfigValidator {
   private static final Set<String> DEPLOYMENT_KEYS =
       Set.of("taskmanager-size", "jobmanager-size", "taskmanager-count", "secrets", "schedule");
 
-  private static final List<String> FLINK_OPTIONS_CLASSES =
+  private static final List<String> FLINK_OPTIONS_PACKAGES =
       List.of(
-          "org.apache.flink.configuration.CoreOptions",
-          "org.apache.flink.configuration.ExecutionOptions",
-          "org.apache.flink.configuration.CheckpointingOptions",
-          "org.apache.flink.configuration.StateBackendOptions",
-          "org.apache.flink.configuration.RestOptions",
-          "org.apache.flink.configuration.TaskManagerOptions",
-          "org.apache.flink.configuration.JobManagerOptions",
-          "org.apache.flink.configuration.PipelineOptions",
-          "org.apache.flink.configuration.SecurityOptions",
-          "org.apache.flink.configuration.HighAvailabilityOptions",
-          "org.apache.flink.configuration.DeploymentOptions",
-          "org.apache.flink.configuration.MetricOptions",
-          "org.apache.flink.configuration.NettyShuffleEnvironmentOptions",
-          "org.apache.flink.configuration.HeartbeatManagerOptions",
-          "org.apache.flink.configuration.AkkaOptions",
-          "org.apache.flink.configuration.BlobServerOptions",
-          "org.apache.flink.configuration.ClusterOptions",
-          "org.apache.flink.configuration.ResourceManagerOptions",
-          "org.apache.flink.configuration.WebOptions",
-          "org.apache.flink.streaming.api.environment.ExecutionCheckpointingOptions",
-          "org.apache.flink.table.api.config.ExecutionConfigOptions",
-          "org.apache.flink.table.api.config.OptimizerConfigOptions",
-          "org.apache.flink.table.api.config.TableConfigOptions");
+          "org.apache.flink.configuration",
+          "org.apache.flink.streaming.api.environment",
+          "org.apache.flink.table.api.config");
 
   private static final Set<String> KNOWN_KEYS = buildKnownKeys();
   private static final Set<String> KNOWN_PREFIXES = buildKnownPrefixes();
 
   private static Set<String> buildKnownKeys() {
     var keys = new HashSet<String>();
-    for (var className : FLINK_OPTIONS_CLASSES) {
-      try {
-        var clazz = Class.forName(className);
-        for (Field field : clazz.getDeclaredFields()) {
-          if (Modifier.isPublic(field.getModifiers())
-              && Modifier.isStatic(field.getModifiers())
-              && ConfigOption.class.isAssignableFrom(field.getType())) {
-            try {
-              var option = (ConfigOption<?>) field.get(null);
-              keys.add(option.key());
-              for (var fallback : option.fallbackKeys()) {
-                keys.add(fallback.getKey());
-              }
-            } catch (IllegalAccessException e) {
-              log.debug("Cannot access field {} in {}", field.getName(), className);
-            }
-          }
-        }
-      } catch (ClassNotFoundException e) {
-        log.debug("Flink options class not on classpath: {}", className);
+    for (var pkg : FLINK_OPTIONS_PACKAGES) {
+      for (var clazz : findOptionsClasses(pkg)) {
+        extractConfigOptionKeys(clazz, keys);
       }
     }
     return keys;
+  }
+
+  private static Set<Class<?>> findOptionsClasses(String packageName) {
+    var classes = new HashSet<Class<?>>();
+    var path = packageName.replace('.', '/');
+    try {
+      var urls = Thread.currentThread().getContextClassLoader().getResources(path);
+      while (urls.hasMoreElements()) {
+        var url = urls.nextElement();
+        if (!"jar".equals(url.getProtocol())) {
+          continue;
+        }
+        var connection = (JarURLConnection) url.openConnection();
+        try (var jarFile = new JarFile(connection.getJarFile().getName())) {
+          var entries = jarFile.entries();
+          while (entries.hasMoreElements()) {
+            var entry = entries.nextElement();
+            var name = entry.getName();
+            if (name.startsWith(path + "/")
+                && name.endsWith("Options.class")
+                && !name.contains("$")) {
+              var className = name.replace('/', '.').replace(".class", "");
+              try {
+                classes.add(Class.forName(className));
+              } catch (ClassNotFoundException | NoClassDefFoundError e) {
+                log.debug("Cannot load class: {}", className);
+              }
+            }
+          }
+        }
+      }
+    } catch (IOException e) {
+      log.debug("Cannot scan package {}: {}", packageName, e.getMessage());
+    }
+    return classes;
+  }
+
+  private static void extractConfigOptionKeys(Class<?> clazz, Set<String> keys) {
+    for (Field field : clazz.getDeclaredFields()) {
+      if (Modifier.isPublic(field.getModifiers())
+          && Modifier.isStatic(field.getModifiers())
+          && ConfigOption.class.isAssignableFrom(field.getType())) {
+        try {
+          var option = (ConfigOption<?>) field.get(null);
+          keys.add(option.key());
+          for (var fallback : option.fallbackKeys()) {
+            keys.add(fallback.getKey());
+          }
+        } catch (IllegalAccessException e) {
+          log.debug("Cannot access field {} in {}", field.getName(), clazz.getName());
+        }
+      }
+    }
   }
 
   private static Set<String> buildKnownPrefixes() {
