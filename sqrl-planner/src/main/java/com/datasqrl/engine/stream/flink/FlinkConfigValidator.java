@@ -18,12 +18,10 @@ package com.datasqrl.engine.stream.flink;
 import com.datasqrl.error.ErrorCollector;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.configuration.ConfigOption;
 
@@ -32,25 +30,6 @@ public class FlinkConfigValidator {
 
   private static final Set<String> DEPLOYMENT_KEYS =
       Set.of("taskmanager-size", "jobmanager-size", "taskmanager-count", "secrets", "schedule");
-
-  private static final Pattern DURATION_PATTERN =
-      Pattern.compile(
-          "\\d+\\s*(ns|nano|nanos|nanosecond|nanoseconds"
-              + "|us|micro|micros|microsecond|microseconds"
-              + "|ms|milli|millis|millisecond|milliseconds"
-              + "|s|sec|secs|second|seconds"
-              + "|min|minute|minutes"
-              + "|h|hour|hours"
-              + "|d|day|days)",
-          Pattern.CASE_INSENSITIVE);
-
-  private static final Pattern MEMORY_PATTERN =
-      Pattern.compile(
-          "\\d+\\s*(b|bytes|k|kb|kibibytes"
-              + "|m|mb|mebibytes"
-              + "|g|gb|gibibytes"
-              + "|t|tb|tebibytes)",
-          Pattern.CASE_INSENSITIVE);
 
   private static final List<String> FLINK_OPTIONS_CLASSES =
       List.of(
@@ -78,11 +57,11 @@ public class FlinkConfigValidator {
           "org.apache.flink.table.api.config.OptimizerConfigOptions",
           "org.apache.flink.table.api.config.TableConfigOptions");
 
-  private static final Map<String, ConfigOption<?>> KNOWN_OPTIONS = buildKnownOptions();
+  private static final Set<String> KNOWN_KEYS = buildKnownKeys();
   private static final Set<String> KNOWN_PREFIXES = buildKnownPrefixes();
 
-  private static Map<String, ConfigOption<?>> buildKnownOptions() {
-    var options = new HashMap<String, ConfigOption<?>>();
+  private static Set<String> buildKnownKeys() {
+    var keys = new HashSet<String>();
     for (var className : FLINK_OPTIONS_CLASSES) {
       try {
         var clazz = Class.forName(className);
@@ -92,9 +71,9 @@ public class FlinkConfigValidator {
               && ConfigOption.class.isAssignableFrom(field.getType())) {
             try {
               var option = (ConfigOption<?>) field.get(null);
-              options.put(option.key(), option);
+              keys.add(option.key());
               for (var fallback : option.fallbackKeys()) {
-                options.put(fallback.getKey(), option);
+                keys.add(fallback.getKey());
               }
             } catch (IllegalAccessException e) {
               log.debug("Cannot access field {} in {}", field.getName(), className);
@@ -105,12 +84,12 @@ public class FlinkConfigValidator {
         log.debug("Flink options class not on classpath: {}", className);
       }
     }
-    return options;
+    return keys;
   }
 
   private static Set<String> buildKnownPrefixes() {
     var prefixes = new HashSet<String>();
-    for (var key : KNOWN_OPTIONS.keySet()) {
+    for (var key : KNOWN_KEYS) {
       var dot = key.indexOf('.');
       if (dot > 0) {
         prefixes.add(key.substring(0, dot));
@@ -123,23 +102,13 @@ public class FlinkConfigValidator {
     if (config == null || config.isEmpty()) {
       return;
     }
-    for (var entry : config.entrySet()) {
-      var key = entry.getKey();
-      var value = entry.getValue();
-
+    for (var key : config.keySet()) {
       if (DEPLOYMENT_KEYS.contains(key)) {
         errors.warn(
             "Key '%s' belongs in 'engines.flink.deployment', not 'engines.flink.config'", key);
-        continue;
-      }
-
-      var option = KNOWN_OPTIONS.get(key);
-      if (option == null) {
+      } else if (!KNOWN_KEYS.contains(key)) {
         warnUnknownKey(key, errors);
-        continue;
       }
-
-      validateValueType(key, value, option, errors);
     }
   }
 
@@ -155,75 +124,5 @@ public class FlinkConfigValidator {
       }
     }
     errors.warn("Unrecognized Flink configuration key '%s'. Check for typos.", key);
-  }
-
-  private static void validateValueType(
-      String key, Object value, ConfigOption<?> option, ErrorCollector errors) {
-    var expectedType = getOptionType(option);
-    if (expectedType == null || String.class.isAssignableFrom(expectedType)) {
-      return;
-    }
-    if (expectedType.isEnum()) {
-      return;
-    }
-
-    var strValue = String.valueOf(value);
-
-    if (Boolean.class.isAssignableFrom(expectedType)
-        || boolean.class.isAssignableFrom(expectedType)) {
-      if (!"true".equalsIgnoreCase(strValue) && !"false".equalsIgnoreCase(strValue)) {
-        errors.warn(
-            "Invalid value '%s' for Flink config key '%s'. Expected type: Boolean", strValue, key);
-      }
-    } else if (Integer.class.isAssignableFrom(expectedType)
-        || int.class.isAssignableFrom(expectedType)) {
-      try {
-        Integer.parseInt(strValue);
-      } catch (NumberFormatException e) {
-        errors.warn(
-            "Invalid value '%s' for Flink config key '%s'. Expected type: Integer", strValue, key);
-      }
-    } else if (Long.class.isAssignableFrom(expectedType)
-        || long.class.isAssignableFrom(expectedType)) {
-      try {
-        Long.parseLong(strValue);
-      } catch (NumberFormatException e) {
-        errors.warn(
-            "Invalid value '%s' for Flink config key '%s'. Expected type: Long", strValue, key);
-      }
-    } else if (isDuration(expectedType)) {
-      if (!DURATION_PATTERN.matcher(strValue).matches()) {
-        errors.warn(
-            "Invalid value '%s' for Flink config key '%s'. Expected type: Duration"
-                + " (e.g. '60s', '5min', '1h')",
-            strValue, key);
-      }
-    } else if (isMemorySize(expectedType)) {
-      if (!MEMORY_PATTERN.matcher(strValue).matches()) {
-        errors.warn(
-            "Invalid value '%s' for Flink config key '%s'. Expected type: MemorySize"
-                + " (e.g. '256mb', '1gb')",
-            strValue, key);
-      }
-    }
-  }
-
-  private static Class<?> getOptionType(ConfigOption<?> option) {
-    try {
-      var field = ConfigOption.class.getDeclaredField("clazz");
-      field.setAccessible(true);
-      return (Class<?>) field.get(option);
-    } catch (ReflectiveOperationException e) {
-      log.debug("Cannot read clazz from ConfigOption for key '{}'", option.key());
-      return null;
-    }
-  }
-
-  private static boolean isDuration(Class<?> clazz) {
-    return clazz.getName().equals("java.time.Duration");
-  }
-
-  private static boolean isMemorySize(Class<?> clazz) {
-    return clazz.getName().equals("org.apache.flink.configuration.MemorySize");
   }
 }

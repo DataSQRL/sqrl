@@ -88,48 +88,6 @@ class FlinkConfigValidatorTest {
   }
 
   @Test
-  void givenBooleanValueAsString_whenValidate_thenNoWarnings() {
-    var errors = ErrorCollector.root();
-    var config = Map.<String, Object>of("pipeline.auto-generate-uids", "true");
-
-    FlinkConfigValidator.validate(config, errors);
-
-    assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
-  }
-
-  @Test
-  void givenInvalidBooleanValue_whenValidate_thenWarnsAboutType() {
-    var errors = ErrorCollector.root();
-    var config = Map.<String, Object>of("pipeline.auto-generate-uids", "yes");
-
-    FlinkConfigValidator.validate(config, errors);
-
-    assertThat(errors.hasErrorsWarningsOrNotices()).isTrue();
-    assertThat(warningMessages(errors)).anyMatch(msg -> msg.contains("Expected type: Boolean"));
-  }
-
-  @Test
-  void givenInvalidDurationValue_whenValidate_thenWarnsAboutType() {
-    var errors = ErrorCollector.root();
-    var config = Map.<String, Object>of("execution.checkpointing.interval", "not-a-duration");
-
-    FlinkConfigValidator.validate(config, errors);
-
-    assertThat(errors.hasErrorsWarningsOrNotices()).isTrue();
-    assertThat(warningMessages(errors)).anyMatch(msg -> msg.contains("Expected type: Duration"));
-  }
-
-  @Test
-  void givenValidDurationValue_whenValidate_thenNoWarnings() {
-    var errors = ErrorCollector.root();
-    var config = Map.<String, Object>of("execution.checkpointing.interval", "60s");
-
-    FlinkConfigValidator.validate(config, errors);
-
-    assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
-  }
-
-  @Test
   void givenEmptyConfig_whenValidate_thenNoWarnings() {
     var errors = ErrorCollector.root();
 
