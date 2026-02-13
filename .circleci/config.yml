@@ -408,8 +408,8 @@ jobs:
               fi
             }
 
-            build_and_push cmd          sqrl-cli                      --build-arg BASE_REPO=ghcr.io/datasqrl --build-arg BASE_TAG=$BASE_TAG
-            build_and_push sqrl-server  sqrl-server/sqrl-server-vertx --build-arg DUCKDB_EXTENSIONS_REPO=ghcr.io/datasqrl --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
+            build_and_push cmd         sqrl-cli                      --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg BASE_TAG=$BASE_TAG
+            build_and_push sqrl-server sqrl-server/sqrl-server-vertx --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
 
   docker-build-duckdb-extensions:
     machine:
@@ -494,8 +494,8 @@ jobs:
             docker buildx build \
               --push \
               --platform linux/amd64,linux/arm64 \
+              --build-arg IMG_REPO=ghcr.io/datasqrl \
               --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG \
-              --build-arg DUCKDB_EXTENSIONS_REPO=ghcr.io/datasqrl \
               -t ghcr.io/datasqrl/sqrl-base:$BASE_TAG \
               -t ghcr.io/datasqrl/sqrl-base:latest \
               -f sqrl-cli/Dockerfile.base \
