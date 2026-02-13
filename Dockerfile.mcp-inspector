@@ -1,6 +1,6 @@
 # MCP Inspector Docker Image
 # Pre-installs @modelcontextprotocol/inspector for faster test execution
-FROM node:20-alpine
+FROM node:25.6.1-alpine
 
 # Update npm to latest version and install MCP inspector globally
 RUN npm install -g npm@11.4.2 && \
