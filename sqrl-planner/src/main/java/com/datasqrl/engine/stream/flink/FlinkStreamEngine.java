@@ -26,6 +26,7 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.stream.StreamEngine;
+import com.datasqrl.error.ErrorCollector;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
@@ -44,9 +45,10 @@ public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEng
   @Getter private final EngineConfig engineConfig;
 
   @Inject
-  public FlinkStreamEngine(PackageJson json) {
+  public FlinkStreamEngine(PackageJson json, ErrorCollector errors) {
     super(FlinkEngineFactory.ENGINE_NAME, EngineType.PROCESS, FLINK_CAPABILITIES);
     this.engineConfig = json.getEngines().getEngineConfigOrEmpty(FlinkEngineFactory.ENGINE_NAME);
+    FlinkConfigValidator.validate(engineConfig.getConfig(), errors);
   }
 
   @Override
