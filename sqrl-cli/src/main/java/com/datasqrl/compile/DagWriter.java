@@ -84,6 +84,7 @@ public class DagWriter {
             .withHints(true)
             .includeLogicalPlan(true)
             .includeSQL(true)
+            .includeDocumentation(true)
             .includePhysicalPlan(true)
             .build();
     nodes = exporter.export(dag);

@@ -163,6 +163,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       messageKey = tableBuilder.getPartition();
     }
     if (tableBuilder.hasPrimaryKey()) {
+      // Kafka only supports upserts on state tables
       if (tableAnalysis.map(TableAnalysis::getType).orElse(TableType.STATE).isState()) {
         isUpsert = true;
         // The primary key must be the partition key

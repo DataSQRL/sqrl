@@ -10,6 +10,8 @@ Reporting := DISTINCT hr.Reporting ON employeeid, managerid ORDER BY updatedDate
 Employees.directReports := SELECT e.* FROM Reporting r JOIN Employees e ON r.employeeid = e.employeeid
                            WHERE r.managerid = this.employeeid ORDER BY e.employeeid;
 
+/** Returns all employees reporting to the given employee following down the reporting chain
+ */
 Employees.allReports RETURNS (employeeid BIGINT NOT NULL, name STRING NOT NULL, level INT NOT NULL) :=
   WITH RECURSIVE employee_hierarchy AS (
     -- Base case: direct reports

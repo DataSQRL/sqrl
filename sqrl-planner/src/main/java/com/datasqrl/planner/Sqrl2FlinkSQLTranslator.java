@@ -770,6 +770,7 @@ public class Sqrl2FlinkSQLTranslator {
       String tableName,
       ObjectIdentifier baseTableIdentifier,
       boolean isSourceTable,
+      TableAnalysis tableAnalysis,
       SqlCreateTable createdTable,
       String completeCreateTableSql) {}
 
@@ -928,7 +929,12 @@ public class Sqrl2FlinkSQLTranslator {
     tableLookup.registerTable(tableAnalysis);
     completeCreateTableSql += RelToFlinkSql.convertToString(fullTable);
     return new AddTableResult(
-        finalTableName, tableId, connector.isSourceConnector(), fullTable, completeCreateTableSql);
+        finalTableName,
+        tableId,
+        connector.isSourceConnector(),
+        tableAnalysis,
+        fullTable,
+        completeCreateTableSql);
   }
 
   public ObjectIdentifier createSinkTable(FlinkTableBuilder tableBuilder) {

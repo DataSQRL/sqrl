@@ -29,8 +29,11 @@ public class TableNode extends PlannedNode {
 
   final TableAnalysis tableAnalysis;
 
-  public TableNode(TableAnalysis tableAnalysis, Map<ExecutionStage, StageAnalysis> stageAnalysis) {
-    super(tableAnalysis.isSourceOrSink() ? "source" : "table", stageAnalysis);
+  public TableNode(
+      TableAnalysis tableAnalysis,
+      Map<ExecutionStage, StageAnalysis> stageAnalysis,
+      String documentation) {
+    super(tableAnalysis.isSourceOrSink() ? "source" : "table", stageAnalysis, documentation);
     this.tableAnalysis = tableAnalysis;
   }
 

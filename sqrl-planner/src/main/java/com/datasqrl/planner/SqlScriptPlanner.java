@@ -93,6 +93,7 @@ import com.datasqrl.planner.parser.StackableStatement;
 import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.SqlScriptWriter;
 import com.datasqrl.planner.util.SqlTableNameExtractor;
@@ -700,7 +701,8 @@ public class SqlScriptPlanner {
     Preconditions.checkArgument(tableAnalysis.getFromTables().size() == 1);
     var source = (TableAnalysis) tableAnalysis.getFromTables().get(0);
     Preconditions.checkArgument(source.isSourceOrSink());
-    var sourceNode = new TableNode(source, getSourceSinkStageAnalysis());
+    var sourceNode =
+        new TableNode(source, getSourceSinkStageAnalysis(), hintsAndDocs.getDocumentation());
     dagBuilder.add(sourceNode);
     var isHidden = tableAnalysis.getIdentifier().isHidden();
     var visibility =
@@ -733,7 +735,8 @@ public class SqlScriptPlanner {
             tableAnalysis,
             isSource
                 ? getSourceSinkStageAnalysis()
-                : getStageAnalysis(tableAnalysis, availableStages));
+                : getStageAnalysis(tableAnalysis, availableStages),
+            hintsAndDocs.getDocumentation());
     dagBuilder.add(tableNode);
 
     // Figure out if and what type of access function we should add for this table
@@ -768,7 +771,7 @@ public class SqlScriptPlanner {
       fnBuilder.documentation(hintsAndDocs.documentation());
       fnBuilder.cacheDuration(getCacheDuration(hintsAndDocs));
       addFunctionToDag(
-          fnBuilder.build(), HintsAndDocs.EMPTY); // hints don't apply to the function access
+          fnBuilder.build(), hintsAndDocs.dropHints()); // hints don't apply to the function access
     } else if (queryByHint.isPresent()) {
       throw new StatementParserException(
           ErrorLabel.GENERIC,
@@ -783,7 +786,9 @@ public class SqlScriptPlanner {
             determineViableStages(function.getVisibility().access()), hintsAndDocs.hints());
     dagBuilder.add(
         new TableFunctionNode(
-            function, getStageAnalysis(function.getFunctionAnalysis(), availableStages)));
+            function,
+            getStageAnalysis(function.getFunctionAnalysis(), availableStages),
+            hintsAndDocs.getDocumentation()));
   }
 
   private static Duration getCacheDuration(HintsAndDocs hintsAndDocs) {
@@ -996,6 +1001,7 @@ public class SqlScriptPlanner {
     var stageAnalysis = getSourceSinkStageAnalysis();
     ExportNode exportNode;
 
+    TableAnalysis existingTable;
     ObjectIdentifier sinkTableId = scriptContext.toIdentifier(sinkPath);
     // First, we check if the export is to a built-in sink, if so, resolve it
     var builtInSink =
@@ -1029,8 +1035,9 @@ public class SqlScriptPlanner {
               sinkPath,
               sqrlEnv.currentBatch(),
               Optional.of(exportStage),
+              Optional.empty(),
               Optional.empty());
-    } else if (sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId) != null) {
+    } else if ((existingTable = sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId)) != null) {
       // 2nd: the sink path resolves to a table source (i.e. CREATE TABLE)
       exportNode =
           new ExportNode(
@@ -1038,7 +1045,8 @@ public class SqlScriptPlanner {
               sinkPath,
               sqrlEnv.currentBatch(),
               Optional.empty(),
-              Optional.of(sinkTableId));
+              Optional.of(sinkTableId),
+              existingTable.getSourceSinkTable().map(SourceSinkTableAnalysis::connector));
     } else { // the export is to a user-defined sink: load it
       var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(
@@ -1090,7 +1098,11 @@ public class SqlScriptPlanner {
                 sinkPath,
                 sqrlEnv.currentBatch(),
                 Optional.empty(),
-                Optional.of(tableId));
+                Optional.of(tableId),
+                addTableResult
+                    .tableAnalysis()
+                    .getSourceSinkTable()
+                    .map(SourceSinkTableAnalysis::connector));
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }
@@ -1140,6 +1152,14 @@ public class SqlScriptPlanner {
   record HintsAndDocs(PlannerHints hints, Optional<String> documentation) {
 
     public static final HintsAndDocs EMPTY = new HintsAndDocs(PlannerHints.EMPTY, Optional.empty());
+
+    public String getDocumentation() {
+      return documentation.orElse("");
+    }
+
+    public HintsAndDocs dropHints() {
+      return new HintsAndDocs(PlannerHints.EMPTY, documentation);
+    }
   }
 
   private record ScriptContext(

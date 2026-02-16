@@ -22,6 +22,7 @@ import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.PipelineDAG;
 import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.PipelineNode;
+import com.datasqrl.planner.dag.nodes.PlannedNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
@@ -61,6 +62,8 @@ public class PipelineDAGExporter {
 
   @Builder.Default boolean includeSQL = true;
 
+  @Builder.Default boolean includeDocumentation = false;
+
   // TODO: We don't yet have the physical plans in the this DAG exporter
   @Builder.Default boolean includePhysicalPlan = true;
 
@@ -78,12 +81,13 @@ public class PipelineDAGExporter {
           }
           var source = table.getSourceSinkTable().get();
           result.add(
-              Source.builder()
+              SourceOrSink.builder()
                   .id(table.getIdentifier().toString())
                   .name(table.getName())
                   .type(NodeType.IMPORTS.getName())
                   .connector(source.connector().getOptions())
                   .stage(stage)
+                  .documentation(getDocumentation(tableNode))
                   .build());
         } else {
           var fields = table.getRowType().getFieldList();
@@ -94,6 +98,7 @@ public class PipelineDAGExporter {
                   .name(table.getName())
                   .type(NodeType.from(table.getType()).getName())
                   .stage(stage)
+                  .documentation(getDocumentation(tableNode))
                   .inputs(inputs)
                   .plan(explain(table.getCollapsedRelnode()))
                   .sql(getSql(table))
@@ -119,15 +124,20 @@ public class PipelineDAGExporter {
         }
       } else if (node instanceof ExportNode export) {
         result.add(
-            Node.builder()
+            SourceOrSink.builder()
                 .id(node.getId())
                 .name(export.getSinkPath().getLast().getDisplay())
                 .type(NodeType.EXPORT.getName())
                 .stage(stage)
                 .inputs(inputs)
+                .connector(
+                    export
+                        .getConnectorConfig()
+                        .map(FlinkConnectorConfig::getOptions)
+                        .orElse(Map.of()))
                 .build());
-      } else if (node instanceof TableFunctionNode) {
-        var fct = ((TableFunctionNode) node).getFunction();
+      } else if (node instanceof TableFunctionNode fctNode) {
+        var fct = fctNode.getFunction();
         if (fct.getVisibility().isAccessOnly() && !includeQueries) {
           continue;
         }
@@ -137,6 +147,7 @@ public class PipelineDAGExporter {
                 .name(fct.getFullPath().toString())
                 .type(NodeType.QUERY.getName())
                 .stage(stage)
+                .documentation(getDocumentation(fctNode))
                 .plan(explain(fct.getFunctionAnalysis().getCollapsedRelnode()))
                 .sql(getSql(fct.getFunctionAnalysis()))
                 .annotations(getAnnotations(fct))
@@ -147,6 +158,14 @@ public class PipelineDAGExporter {
       }
     }
     return result;
+  }
+
+  private String getDocumentation(PlannedNode node) {
+    if (includeDocumentation) {
+      return node.getDocumentation();
+    } else {
+      return null;
+    }
   }
 
   private String getSql(TableAnalysis tableAnalysis) {
@@ -254,6 +273,7 @@ public class PipelineDAGExporter {
     String name;
     String type;
     String stage;
+    String documentation;
     List<String> inputs;
     List<Annotation> annotations;
 
@@ -263,18 +283,23 @@ public class PipelineDAGExporter {
     }
 
     String getBaseHeaderString() {
-      return "=== "
-          + name
-          + LINEBREAK
-          + "ID:          "
-          + id
-          + LINEBREAK
-          + "Type:        "
-          + type
-          + LINEBREAK
-          + "Stage:       "
-          + stage
-          + LINEBREAK;
+      var header =
+          "=== "
+              + name
+              + LINEBREAK
+              + "ID:          "
+              + id
+              + LINEBREAK
+              + "Type:        "
+              + type
+              + LINEBREAK
+              + "Stage:       "
+              + stage
+              + LINEBREAK;
+      if (StringUtils.isNotBlank(documentation)) {
+        header += "Docs:       " + documentation + LINEBREAK;
+      }
+      return header;
     }
 
     String getBaseListsString() {
@@ -300,7 +325,7 @@ public class PipelineDAGExporter {
 
   @Getter
   @SuperBuilder
-  public static class Source extends Node {
+  public static class SourceOrSink extends Node {
 
     Map<String, String> connector;
 
