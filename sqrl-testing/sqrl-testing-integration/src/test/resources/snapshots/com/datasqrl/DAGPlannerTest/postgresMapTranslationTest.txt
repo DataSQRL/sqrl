@@ -97,7 +97,7 @@ END
     {
       "name" : "DuckDbTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"DuckDbTable\"(\"user_id\", \"attrs\") AS SELECT \"user_id\", MAP { 'email' : CAST(\"email\" AS TEXT), 'plan' : CAST(\"plan\" AS TEXT) } AS \"attrs\"\nFROM (VALUES (1, 'a@x.com', 'free'),\n    (2, 'b@x.com', 'pro')) AS \"t\" (\"user_id\", \"email\", \"plan\")",
+      "sql" : "CREATE OR REPLACE VIEW \"DuckDbTable\"(\"user_id\", \"attrs\") AS SELECT \"user_id\", MAP['email', CAST(\"email\" AS TEXT), 'plan', CAST(\"plan\" AS TEXT)] AS \"attrs\"\nFROM (VALUES (1, 'a@x.com', 'free'),\n    (2, 'b@x.com', 'pro')) AS \"t\" (\"user_id\", \"email\", \"plan\")",
       "fields" : [
         {
           "name" : "user_id",
@@ -147,7 +147,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"user_id\", MAP { 'email' : CAST(\"email\" AS TEXT), 'plan' : CAST(\"plan\" AS TEXT) } AS \"attrs\"\nFROM (VALUES (1, 'a@x.com', 'free'),\n    (2, 'b@x.com', 'pro')) AS \"t\" (\"user_id\", \"email\", \"plan\")",
+              "sql" : "SELECT \"user_id\", MAP['email', CAST(\"email\" AS TEXT), 'plan', CAST(\"plan\" AS TEXT)] AS \"attrs\"\nFROM (VALUES (1, 'a@x.com', 'free'),\n    (2, 'b@x.com', 'pro')) AS \"t\" (\"user_id\", \"email\", \"plan\")",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,

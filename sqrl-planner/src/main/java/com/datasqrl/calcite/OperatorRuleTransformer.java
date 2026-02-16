@@ -24,10 +24,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
-import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
@@ -45,11 +43,9 @@ import org.apache.calcite.tools.Programs;
  */
 public class OperatorRuleTransformer {
 
-  private final Dialect dialect;
   private final Map<Name, OperatorRuleTransform> transformMap;
 
   public OperatorRuleTransformer(Dialect dialect) {
-    this.dialect = dialect;
     // Lookup all transformations for this dialect by service discovery
     this.transformMap =
         ServiceLoaderDiscovery.getAll(OperatorRuleTransform.class).stream()
@@ -60,7 +56,7 @@ public class OperatorRuleTransformer {
   public RelNode convert(RelNode relNode) {
     // Identify all functions that require transformations and add them to the rule set
     var transforms = extractFunctionTransforms(relNode);
-    List<RelRule> rules =
+    var rules =
         transforms.entrySet().stream()
             .flatMap(transform -> transform.getValue().transform(transform.getKey()).stream())
             .collect(Collectors.toList());
@@ -73,13 +69,13 @@ public class OperatorRuleTransformer {
   }
 
   private Map<SqlOperator, OperatorRuleTransform> extractFunctionTransforms(RelNode relNode) {
-    Map<SqlOperator, OperatorRuleTransform> transforms = new HashMap<>();
+    var transforms = new HashMap<SqlOperator, OperatorRuleTransform>();
     relNode.accept(
         new RelShuttleImpl() {
 
           @Override
           public RelNode visit(LogicalAggregate aggregate) {
-            for (AggregateCall call : aggregate.getAggCallList()) {
+            for (var call : aggregate.getAggCallList()) {
               var transform = transformMap.get(Name.lower(call.getAggregation().getName()));
               if (transform != null) {
                 transforms.put(call.getAggregation(), transform);
@@ -106,6 +102,6 @@ public class OperatorRuleTransformer {
           }
         });
 
-    return new HashMap<>(transforms);
+    return Map.copyOf(transforms);
   }
 }

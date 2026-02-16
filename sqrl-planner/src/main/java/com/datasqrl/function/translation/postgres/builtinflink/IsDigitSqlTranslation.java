@@ -16,13 +16,12 @@
 package com.datasqrl.function.translation.postgres.builtinflink;
 
 import com.datasqrl.function.CalciteFunctionUtil;
+import com.datasqrl.function.translation.PostgresLikeTranslations;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
 public class IsDigitSqlTranslation extends PostgresSqlTranslation {
@@ -33,13 +32,6 @@ public class IsDigitSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var str = call.operand(0);
-    var pattern = SqlLiteral.createCharString("^[0-9]+$", SqlParserPos.ZERO);
-
-    var paren = writer.startList("(", ")");
-    str.unparse(writer, 0, 0);
-    writer.print("~ ");
-    pattern.unparse(writer, 0, 0);
-    writer.endFunCall(paren);
+    PostgresLikeTranslations.isDigit(call, writer);
   }
 }

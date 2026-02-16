@@ -1,0 +1,427 @@
+>>>inferred_schema.graphqls
+type ArrayFunctions {
+  listagg_example: String
+  arrayagg_example: [String]
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+type FunctionCalls {
+  log2_example: Float!
+  log_nat_example: Float!
+  log_base_example: Float!
+  e_example: Float!
+  rand_example: Boolean!
+  rand_int_example: Boolean!
+  uuid_example: Boolean!
+  bin_example: String!
+  hex_numeric_example: String!
+  hex_string_example: String!
+  truncate_scale_example: Float!
+  truncate_default_example: Float!
+  printf_example: String
+  startswith_example: Boolean!
+  endswith_example: Boolean!
+  regexp_extract_example: String
+  regexp_extract_group_example: String
+  regexp_extract_all_example: [String]
+  decode_example: String!
+  encode_example: Boolean!
+  from_base64_example: String!
+  to_base64_example: String!
+  instr_example: Int!
+  locate_example: Int!
+  regexp_example: Boolean!
+  split_index_example: String
+  json_quote_example: String!
+  elt_example: String
+  now_example: Boolean!
+  local_time_example: Boolean!
+  local_timestamp_example: Boolean!
+  current_time_example: Boolean!
+  current_date_example: Boolean!
+  current_timestamp_example: Boolean!
+  year_example: Long!
+  quarter_example: Long!
+  month_example: Long!
+  week_example: Long!
+  dayofyear_example: Long!
+  dayofmonth_example: Long!
+  dayofweek_example: Long!
+  hour_example: Long!
+  minute_example: Long!
+  second_example: Long!
+  date_format_example: String
+  timestampadd_example: DateTime!
+  convert_tz_example: String
+  unix_timestamp_now_example: Boolean!
+  if_example: String!
+  ifnull_example: String!
+  is_alpha_example: Boolean!
+  is_decimal_example: Boolean!
+  is_digit_example: Boolean!
+  element_example: Int!
+  cardinality_example: Int!
+  map_index_example: Int
+  array_contains_example: Boolean!
+  array_distinct_example: [String]!
+  array_prepend_example: [String]!
+  array_slice_example: [String]!
+  array_concat_example: [String]!
+  array_remove_example: [String]!
+  array_join_example: String!
+  split_example: [String]
+  sha1_example: String!
+  sha256_example: String!
+  the_end: String!
+}
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  ArrayFunctions(limit: Int = 10, offset: Int = 0): [ArrayFunctions!]
+  FunctionCalls(limit: Int = 10, offset: Int = 0): [FunctionCalls!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== ArrayFunctions
+ID:          default_catalog.default_database.ArrayFunctions
+Type:        state
+Stage:       iceberg
+Primary key: -
+Timestamp:   -
+---
+Schema:
+ - listagg_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - arrayagg_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY
+Inputs:
+ - default_catalog.default_database._ArrayData
+
+=== FunctionCalls
+ID:          default_catalog.default_database.FunctionCalls
+Type:        stream
+Stage:       iceberg
+Primary key: -
+Timestamp:   -
+---
+Schema:
+ - log2_example: DOUBLE NOT NULL
+ - log_nat_example: DOUBLE NOT NULL
+ - log_base_example: DOUBLE NOT NULL
+ - e_example: DOUBLE NOT NULL
+ - rand_example: BOOLEAN NOT NULL
+ - rand_int_example: BOOLEAN NOT NULL
+ - uuid_example: BOOLEAN NOT NULL
+ - bin_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - hex_numeric_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - hex_string_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - unhex_example: VARBINARY(2147483647)
+ - truncate_scale_example: DECIMAL(6, 2) NOT NULL
+ - truncate_default_example: DECIMAL(4, 0) NOT NULL
+ - printf_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - startswith_example: BOOLEAN NOT NULL
+ - endswith_example: BOOLEAN NOT NULL
+ - regexp_extract_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - regexp_extract_group_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - regexp_extract_all_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY
+ - decode_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - encode_example: BOOLEAN NOT NULL
+ - from_base64_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - to_base64_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - instr_example: INTEGER NOT NULL
+ - locate_example: INTEGER NOT NULL
+ - regexp_example: BOOLEAN NOT NULL
+ - split_index_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - json_quote_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - elt_example: VARCHAR(6) CHARACTER SET "UTF-16LE"
+ - now_example: BOOLEAN NOT NULL
+ - local_time_example: BOOLEAN NOT NULL
+ - local_timestamp_example: BOOLEAN NOT NULL
+ - current_time_example: BOOLEAN NOT NULL
+ - current_date_example: BOOLEAN NOT NULL
+ - current_timestamp_example: BOOLEAN NOT NULL
+ - year_example: BIGINT NOT NULL
+ - quarter_example: BIGINT NOT NULL
+ - month_example: BIGINT NOT NULL
+ - week_example: BIGINT NOT NULL
+ - dayofyear_example: BIGINT NOT NULL
+ - dayofmonth_example: BIGINT NOT NULL
+ - dayofweek_example: BIGINT NOT NULL
+ - hour_example: BIGINT NOT NULL
+ - minute_example: BIGINT NOT NULL
+ - second_example: BIGINT NOT NULL
+ - date_format_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - timestampadd_example: TIMESTAMP(3) NOT NULL
+ - convert_tz_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - unix_timestamp_now_example: BOOLEAN NOT NULL
+ - if_example: VARCHAR(3) CHARACTER SET "UTF-16LE" NOT NULL
+ - ifnull_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - is_alpha_example: BOOLEAN NOT NULL
+ - is_decimal_example: BOOLEAN NOT NULL
+ - is_digit_example: BOOLEAN NOT NULL
+ - element_example: INTEGER NOT NULL
+ - cardinality_example: INTEGER NOT NULL
+ - map_index_example: INTEGER
+ - array_contains_example: BOOLEAN NOT NULL
+ - array_distinct_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_prepend_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_slice_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_concat_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_remove_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+ - array_join_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - split_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY
+ - sha1_example: CHAR(40) CHARACTER SET "UTF-16LE" NOT NULL
+ - sha256_example: CHAR(64) CHARACTER SET "UTF-16LE" NOT NULL
+ - the_end: CHAR(3) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database._InputData
+
+=== _ArrayData
+ID:          default_catalog.default_database._ArrayData
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
+Schema:
+ - id: INTEGER
+ - str_char: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database._ArrayData__base
+
+=== _InputData
+ID:          default_catalog.default_database._InputData
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
+Schema:
+ - dummy: INTEGER
+Inputs:
+ - default_catalog.default_database._InputData__base
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `_InputData` (
+  `dummy` INTEGER
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '20',
+  'rows-per-second' = '1',
+  'fields.dummy.kind' = 'sequence',
+  'fields.dummy.start' = '1',
+  'fields.dummy.end' = '20'
+);
+CREATE VIEW `FunctionCalls`
+AS
+SELECT `LOG2`(8) AS `log2_example`, `LOG`(10) AS `log_nat_example`, `LOG`(2, 8) AS `log_base_example`, `E`() AS `e_example`, RAND() IS NOT NULL AS `rand_example`, RAND_INTEGER(10) IS NOT NULL AS `rand_int_example`, `UUID`() IS NOT NULL AS `uuid_example`, `BIN`(10) AS `bin_example`, `HEX`(255) AS `hex_numeric_example`, `HEX`('AB') AS `hex_string_example`, `UNHEX`('4142') AS `unhex_example`, TRUNCATE(123.456, 2) AS `truncate_scale_example`, TRUNCATE(123.456) AS `truncate_default_example`, `PRINTF`('Hello %s %d', 'world', 42) AS `printf_example`, `STARTSWITH`('FlinkSQL', 'Flink') AS `startswith_example`, `ENDSWITH`('FlinkSQL', 'SQL') AS `endswith_example`, `REGEXP_EXTRACT`('abc-123-def', '(\d+)') AS `regexp_extract_example`, `REGEXP_EXTRACT`('abc-123-def', '(\d+)', 1) AS `regexp_extract_group_example`, `REGEXP_EXTRACT_ALL`('a1b2c3', '(\d)', 1) AS `regexp_extract_all_example`, `DECODE`(`ENCODE`('hi', 'UTF-8'), 'UTF-8') AS `decode_example`, `ENCODE`('hi', 'UTF-8') IS NOT NULL AS `encode_example`, `FROM_BASE64`(`TO_BASE64`('hello')) AS `from_base64_example`, `TO_BASE64`('hello') AS `to_base64_example`, `INSTR`('hello world', 'world') AS `instr_example`, `LOCATE`('l', 'hello') AS `locate_example`, `REGEXP`('foo123bar', '\\d+') AS `regexp_example`, `SPLIT_INDEX`('a,b,c', ',', 1) AS `split_index_example`, `JSON_QUOTE`('hello "json"') AS `json_quote_example`, `ELT`(2, 'first', 'second', 'third') AS `elt_example`, `NOW`() IS NOT NULL AS `now_example`, LOCALTIME IS NOT NULL AS `local_time_example`, LOCALTIMESTAMP IS NOT NULL AS `local_timestamp_example`, CURRENT_TIME IS NOT NULL AS `current_time_example`, CURRENT_DATE IS NOT NULL AS `current_date_example`, CURRENT_TIMESTAMP IS NOT NULL AS `current_timestamp_example`, YEAR(DATE '2024-01-02') AS `year_example`, QUARTER(DATE '2024-01-02') AS `quarter_example`, MONTH(DATE '2024-01-02') AS `month_example`, WEEK(DATE '2024-01-02') AS `week_example`, DAYOFYEAR(DATE '2024-01-02') AS `dayofyear_example`, DAYOFMONTH(DATE '2024-01-02') AS `dayofmonth_example`, DAYOFWEEK(DATE '2024-01-02') AS `dayofweek_example`, HOUR(TIMESTAMP '2024-01-02 03:04:05') AS `hour_example`, MINUTE(TIMESTAMP '2024-01-02 03:04:05') AS `minute_example`, SECOND(TIMESTAMP '2024-01-02 03:04:05') AS `second_example`, `DATE_FORMAT`(TIMESTAMP '2024-01-02 03:04:05', 'yyyy-MM-dd') AS `date_format_example`, CAST(TIMESTAMPADD(DAY, 2, TIMESTAMP '2024-01-02 03:04:05') AS TIMESTAMP(3)) AS `timestampadd_example`, `CONVERT_TZ`('2024-01-02 03:04:05', 'UTC', 'America/Los_Angeles') AS `convert_tz_example`, `UNIX_TIMESTAMP`() IS NOT NULL AS `unix_timestamp_now_example`, `IF`(1 < 2, 'yes', 'no') AS `if_example`, `IFNULL`(CAST(NULL AS STRING), 'fallback') AS `ifnull_example`, `IS_ALPHA`('OnlyLetters') AS `is_alpha_example`, `IS_DECIMAL`('123.45') AS `is_decimal_example`, `IS_DIGIT`('12345') AS `is_digit_example`, ELEMENT(ARRAY[3]) AS `element_example`, CARDINALITY(MAP['a', 1, 'b', 2]) AS `cardinality_example`, MAP['a', 1, 'b', 2]['a'] AS `map_index_example`, `ARRAY_CONTAINS`(ARRAY[1, 2, 3], 2) AS `array_contains_example`, `ARRAY_DISTINCT`(ARRAY['a', 'b', 'b', 'c']) AS `array_distinct_example`, `ARRAY_PREPEND`(ARRAY['b', 'c'], 'a') AS `array_prepend_example`, `ARRAY_SLICE`(ARRAY['a', 'b', 'c', 'd', 'e'], 2, 4) AS `array_slice_example`, `ARRAY_CONCAT`(ARRAY['a', 'b'], ARRAY['c', 'd'], ARRAY['e']) AS `array_concat_example`, `ARRAY_REMOVE`(ARRAY['a', 'b', 'c'], 'b') AS `array_remove_example`, `ARRAY_JOIN`(ARRAY['a', NULL, 'c'], '-', '') AS `array_join_example`, `SPLIT`('a|b|c', '|') AS `split_example`, `SHA1`('hello') AS `sha1_example`, `SHA256`('hello') AS `sha256_example`, 'end' AS `the_end`
+FROM `_InputData`;
+CREATE TABLE `_ArrayData` (
+  `id` INTEGER,
+  `str_char` AS `CHR`(CAST(96 + `id` AS INTEGER))
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '20',
+  'rows-per-second' = '1',
+  'fields.id.kind' = 'sequence',
+  'fields.id.start' = '1',
+  'fields.id.end' = '20'
+);
+CREATE VIEW `ArrayFunctions`
+AS
+SELECT LISTAGG(`str_char`, ',') AS `listagg_example`, ARRAY_AGG(`str_char`) AS `arrayagg_example`
+FROM `_ArrayData`;
+CREATE TABLE `_ArrayData_1` (
+  `id` INTEGER,
+  `str_char` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'catalog-name' = 'default_catalog',
+  'catalog-table' = '_ArrayData',
+  'catalog-type' = 'hadoop',
+  'connector' = 'iceberg',
+  'warehouse' = '/tmp/duckdb'
+);
+CREATE TABLE `_InputData_2` (
+  `dummy` INTEGER,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'catalog-name' = 'default_catalog',
+  'catalog-table' = '_InputData',
+  'catalog-type' = 'hadoop',
+  'connector' = 'iceberg',
+  'warehouse' = '/tmp/duckdb'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`_ArrayData_1`
+SELECT `id`, `str_char`, `hash_columns`(`id`, `str_char`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`_ArrayData`
+;
+INSERT INTO `default_catalog`.`default_database`.`_InputData_2`
+ SELECT `dummy`, `hash_columns`(`dummy`) AS `__pk_hash`
+  FROM `default_catalog`.`default_database`.`_InputData`
+ ;
+ END
+>>>iceberg-duckdb-schema.sql
+CREATE TABLE IF NOT EXISTS "_ArrayData" ("id" INTEGER, "str_char" VARCHAR(65536), "__pk_hash" CHAR(32), PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "_InputData" ("dummy" INTEGER, "__pk_hash" CHAR(32), PRIMARY KEY ("__pk_hash"))
+>>>iceberg-duckdb-views.sql
+CREATE OR REPLACE VIEW "ArrayFunctions"("listagg_example", "arrayagg_example") AS SELECT LISTAGG("str_char", ',') AS "listagg_example", ARRAY_AGG("str_char") AS "arrayagg_example"
+FROM "iceberg_scan"('/tmp/duckdb/default_database/_ArrayData', ALLOW_MOVED_PATHS = TRUE);
+CREATE OR REPLACE VIEW "FunctionCalls"("log2_example", "log_nat_example", "log_base_example", "e_example", "rand_example", "rand_int_example", "uuid_example", "bin_example", "hex_numeric_example", "hex_string_example", "unhex_example", "truncate_scale_example", "truncate_default_example", "printf_example", "startswith_example", "endswith_example", "regexp_extract_example", "regexp_extract_group_example", "regexp_extract_all_example", "decode_example", "encode_example", "from_base64_example", "to_base64_example", "instr_example", "locate_example", "regexp_example", "split_index_example", "json_quote_example", "elt_example", "now_example", "local_time_example", "local_timestamp_example", "current_time_example", "current_date_example", "current_timestamp_example", "year_example", "quarter_example", "month_example", "week_example", "dayofyear_example", "dayofmonth_example", "dayofweek_example", "hour_example", "minute_example", "second_example", "date_format_example", "timestampadd_example", "convert_tz_example", "unix_timestamp_now_example", "if_example", "ifnull_example", "is_alpha_example", "is_decimal_example", "is_digit_example", "element_example", "cardinality_example", "map_index_example", "array_contains_example", "array_distinct_example", "array_prepend_example", "array_slice_example", "array_concat_example", "array_remove_example", "array_join_example", "split_example", "sha1_example", "sha256_example", "the_end") AS SELECT LOG2(8) AS "log2_example", LOG(10) AS "log_nat_example", LOG(2, 8) AS "log_base_example", EXP(1) AS "e_example", RANDOM() IS NOT NULL AS "rand_example", FLOOR(RANDOM() * 10) IS NOT NULL AS "rand_int_example", UUID() IS NOT NULL AS "uuid_example", BIN(10) AS "bin_example", HEX(255) AS "hex_numeric_example", HEX('AB') AS "hex_string_example", "UNHEX"('4142') AS "unhex_example", TRUNC(123.456, 2) AS "truncate_scale_example", TRUNC(123.456) AS "truncate_default_example", "PRINTF"('Hello %s %d', 'world', 42) AS "printf_example", STARTS_WITH('FlinkSQL', 'Flink') AS "startswith_example", ENDS_WITH('FlinkSQL', 'SQL') AS "endswith_example", REGEXP_EXTRACT('abc-123-def', '(\d+)') AS "regexp_extract_example", REGEXP_EXTRACT('abc-123-def', '(\d+)', 1) AS "regexp_extract_group_example", "REGEXP_EXTRACT_ALL"('a1b2c3', '(\d)', 1) AS "regexp_extract_all_example", DECODE(ENCODE('hi')) AS "decode_example", ENCODE('hi') IS NOT NULL AS "encode_example", FROM_BASE64(TO_BASE64('hello')) AS "from_base64_example", TO_BASE64('hello') AS "to_base64_example", INSTR('hello world', 'world') AS "instr_example", INSTR('hello', 'l') AS "locate_example", REGEXP_MATCHES('foo123bar', '\\d+') AS "regexp_example", SPLIT_PART('a,b,c', ',', 2) AS "split_index_example", "JSON_QUOTE"('hello "json"') AS "json_quote_example", LIST_EXTRACT(['first', 'second', 'third'], 2) AS "elt_example", NOW() IS NOT NULL AS "now_example", LOCALTIME IS NOT NULL AS "local_time_example", LOCALTIMESTAMP IS NOT NULL AS "local_timestamp_example", CURRENT_TIME IS NOT NULL AS "current_time_example", CURRENT_DATE IS NOT NULL AS "current_date_example", CURRENT_TIMESTAMP IS NOT NULL AS "current_timestamp_example", EXTRACT(YEAR FROM DATE '2024-01-02') AS "year_example", EXTRACT(QUARTER FROM DATE '2024-01-02') AS "quarter_example", EXTRACT(MONTH FROM DATE '2024-01-02') AS "month_example", EXTRACT(WEEK FROM DATE '2024-01-02') AS "week_example", EXTRACT(DOY FROM DATE '2024-01-02') AS "dayofyear_example", EXTRACT(DAY FROM DATE '2024-01-02') AS "dayofmonth_example", EXTRACT(DOW FROM DATE '2024-01-02') AS "dayofweek_example", EXTRACT(HOUR FROM TIMESTAMP '2024-01-02 03:04:05') AS "hour_example", EXTRACT(MINUTE FROM TIMESTAMP '2024-01-02 03:04:05') AS "minute_example", EXTRACT(SECOND FROM TIMESTAMP '2024-01-02 03:04:05') AS "second_example", "strftime"(TIMESTAMP '2024-01-02 03:04:05', '%Y-%m-%d') AS "date_format_example", CAST((TIMESTAMP '2024-01-02 03:04:05' + INTERVAL '1' DAY * 2) AS TIMESTAMP(3)) AS "timestampadd_example", (TIMESTAMP '2024-01-02 03:04:05' AT TIME ZONE 'UTC') AT TIME ZONE 'America/Los_Angeles' AS "convert_tz_example", (EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint)IS NOT NULL AS "unix_timestamp_now_example", IF(TRUE, 'yes', 'no') AS "if_example", "IFNULL"(NULL, 'fallback') AS "ifnull_example", ('OnlyLetters' ~ '^[A-Za-z]+$') AS "is_alpha_example", '123.45' ~ '^[+-]?[0-9]+(\.[0-9]+)?$' AS "is_decimal_example", ('12345' ~ '^[0-9]+$') AS "is_digit_example", "IF"("array_length"(ARRAY[3]) = 1, (ARRAY[3])[1], NULL) AS "element_example", CARDINALITY(MAP { 'a' : 1, 'b' : 2 }) AS "cardinality_example", MAP { 'a' : 1, 'b' : 2 }['a'] AS "map_index_example", "ARRAY_CONTAINS"(ARRAY[1, 2, 3], 2) AS "array_contains_example", "ARRAY_DISTINCT"(ARRAY['a', 'b', 'b', 'c']) AS "array_distinct_example", ARRAY_PREPEND('a', ARRAY['b', 'c']) AS "array_prepend_example", "ARRAY_SLICE"(ARRAY['a', 'b', 'c', 'd', 'e'], 2, 4) AS "array_slice_example", "ARRAY_CONCAT"(ARRAY['a', 'b'], ARRAY['c', 'd'], ARRAY['e']) AS "array_concat_example", LIST_FILTER(ARRAY['a', 'b', 'c'], x -> x <>'b') AS "array_remove_example", ARRAY_TO_STRING(LIST_TRANSFORM(ARRAY['a', NULL, 'c'], x -> COALESCE(x, '')), '-') AS "array_join_example", "SPLIT"('a|b|c', '|') AS "split_example", SHA1('hello') AS "sha1_example", SHA256('hello') AS "sha256_example", 'end' AS "the_end"
+FROM "iceberg_scan"('/tmp/duckdb/default_database/_InputData', ALLOW_MOVED_PATHS = TRUE)
+>>>iceberg-schema.sql
+CREATE TABLE IF NOT EXISTS "_ArrayData" ("id" INTEGER, "str_char" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "_InputData" ("dummy" INTEGER, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
+>>>iceberg-views.sql
+
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ArrayFunctions",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT LISTAGG(\"str_char\", ',') AS \"listagg_example\", ARRAY_AGG(\"str_char\") AS \"arrayagg_example\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_ArrayData', ALLOW_MOVED_PATHS = TRUE)",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "DUCKDB"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "FunctionCalls",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT LOG2(8) AS \"log2_example\", LOG(10) AS \"log_nat_example\", LOG(2, 8) AS \"log_base_example\", EXP(1) AS \"e_example\", RANDOM() IS NOT NULL AS \"rand_example\", FLOOR(RANDOM() * 10) IS NOT NULL AS \"rand_int_example\", UUID() IS NOT NULL AS \"uuid_example\", BIN(10) AS \"bin_example\", HEX(255) AS \"hex_numeric_example\", HEX('AB') AS \"hex_string_example\", \"UNHEX\"('4142') AS \"unhex_example\", TRUNC(123.456, 2) AS \"truncate_scale_example\", TRUNC(123.456) AS \"truncate_default_example\", \"PRINTF\"('Hello %s %d', 'world', 42) AS \"printf_example\", STARTS_WITH('FlinkSQL', 'Flink') AS \"startswith_example\", ENDS_WITH('FlinkSQL', 'SQL') AS \"endswith_example\", REGEXP_EXTRACT('abc-123-def', '(\\d+)') AS \"regexp_extract_example\", REGEXP_EXTRACT('abc-123-def', '(\\d+)', 1) AS \"regexp_extract_group_example\", \"REGEXP_EXTRACT_ALL\"('a1b2c3', '(\\d)', 1) AS \"regexp_extract_all_example\", DECODE(ENCODE('hi')) AS \"decode_example\", ENCODE('hi') IS NOT NULL AS \"encode_example\", FROM_BASE64(TO_BASE64('hello')) AS \"from_base64_example\", TO_BASE64('hello') AS \"to_base64_example\", INSTR('hello world', 'world') AS \"instr_example\", INSTR('hello', 'l') AS \"locate_example\", REGEXP_MATCHES('foo123bar', '\\\\d+') AS \"regexp_example\", SPLIT_PART('a,b,c', ',', 2) AS \"split_index_example\", \"JSON_QUOTE\"('hello \"json\"') AS \"json_quote_example\", LIST_EXTRACT(['first', 'second', 'third'], 2) AS \"elt_example\", NOW() IS NOT NULL AS \"now_example\", LOCALTIME IS NOT NULL AS \"local_time_example\", LOCALTIMESTAMP IS NOT NULL AS \"local_timestamp_example\", CURRENT_TIME IS NOT NULL AS \"current_time_example\", CURRENT_DATE IS NOT NULL AS \"current_date_example\", CURRENT_TIMESTAMP IS NOT NULL AS \"current_timestamp_example\", EXTRACT(YEAR FROM DATE '2024-01-02') AS \"year_example\", EXTRACT(QUARTER FROM DATE '2024-01-02') AS \"quarter_example\", EXTRACT(MONTH FROM DATE '2024-01-02') AS \"month_example\", EXTRACT(WEEK FROM DATE '2024-01-02') AS \"week_example\", EXTRACT(DOY FROM DATE '2024-01-02') AS \"dayofyear_example\", EXTRACT(DAY FROM DATE '2024-01-02') AS \"dayofmonth_example\", EXTRACT(DOW FROM DATE '2024-01-02') AS \"dayofweek_example\", EXTRACT(HOUR FROM TIMESTAMP '2024-01-02 03:04:05') AS \"hour_example\", EXTRACT(MINUTE FROM TIMESTAMP '2024-01-02 03:04:05') AS \"minute_example\", EXTRACT(SECOND FROM TIMESTAMP '2024-01-02 03:04:05') AS \"second_example\", \"strftime\"(TIMESTAMP '2024-01-02 03:04:05', '%Y-%m-%d') AS \"date_format_example\", CAST((TIMESTAMP '2024-01-02 03:04:05' + INTERVAL '1' DAY * 2) AS TIMESTAMP(3)) AS \"timestampadd_example\", (TIMESTAMP '2024-01-02 03:04:05' AT TIME ZONE 'UTC') AT TIME ZONE 'America/Los_Angeles' AS \"convert_tz_example\", (EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint)IS NOT NULL AS \"unix_timestamp_now_example\", IF(TRUE, 'yes', 'no') AS \"if_example\", \"IFNULL\"(NULL, 'fallback') AS \"ifnull_example\", ('OnlyLetters' ~ '^[A-Za-z]+$') AS \"is_alpha_example\", '123.45' ~ '^[+-]?[0-9]+(\\.[0-9]+)?$' AS \"is_decimal_example\", ('12345' ~ '^[0-9]+$') AS \"is_digit_example\", \"IF\"(\"array_length\"(ARRAY[3]) = 1, (ARRAY[3])[1], NULL) AS \"element_example\", CARDINALITY(MAP { 'a' : 1, 'b' : 2 }) AS \"cardinality_example\", MAP { 'a' : 1, 'b' : 2 }['a'] AS \"map_index_example\", \"ARRAY_CONTAINS\"(ARRAY[1, 2, 3], 2) AS \"array_contains_example\", \"ARRAY_DISTINCT\"(ARRAY['a', 'b', 'b', 'c']) AS \"array_distinct_example\", ARRAY_PREPEND('a', ARRAY['b', 'c']) AS \"array_prepend_example\", \"ARRAY_SLICE\"(ARRAY['a', 'b', 'c', 'd', 'e'], 2, 4) AS \"array_slice_example\", \"ARRAY_CONCAT\"(ARRAY['a', 'b'], ARRAY['c', 'd'], ARRAY['e']) AS \"array_concat_example\", LIST_FILTER(ARRAY['a', 'b', 'c'], x -> x <>'b') AS \"array_remove_example\", ARRAY_TO_STRING(LIST_TRANSFORM(ARRAY['a', NULL, 'c'], x -> COALESCE(x, '')), '-') AS \"array_join_example\", \"SPLIT\"('a|b|c', '|') AS \"split_example\", SHA1('hello') AS \"sha1_example\", SHA256('hello') AS \"sha256_example\", 'end' AS \"the_end\"\nFROM \"iceberg_scan\"('/tmp/duckdb/default_database/_InputData', ALLOW_MOVED_PATHS = TRUE)",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "DUCKDB"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetArrayFunctions",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query ArrayFunctions($limit: Int = 10, $offset: Int = 0) {\nArrayFunctions(limit: $limit, offset: $offset) {\nlistagg_example\narrayagg_example\n}\n\n}",
+            "queryName" : "ArrayFunctions",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ArrayFunctions{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetFunctionCalls",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query FunctionCalls($limit: Int = 10, $offset: Int = 0) {\nFunctionCalls(limit: $limit, offset: $offset) {\nlog2_example\nlog_nat_example\nlog_base_example\ne_example\nrand_example\nrand_int_example\nuuid_example\nbin_example\nhex_numeric_example\nhex_string_example\ntruncate_scale_example\ntruncate_default_example\nprintf_example\nstartswith_example\nendswith_example\nregexp_extract_example\nregexp_extract_group_example\nregexp_extract_all_example\ndecode_example\nencode_example\nfrom_base64_example\nto_base64_example\ninstr_example\nlocate_example\nregexp_example\nsplit_index_example\njson_quote_example\nelt_example\nnow_example\nlocal_time_example\nlocal_timestamp_example\ncurrent_time_example\ncurrent_date_example\ncurrent_timestamp_example\nyear_example\nquarter_example\nmonth_example\nweek_example\ndayofyear_example\ndayofmonth_example\ndayofweek_example\nhour_example\nminute_example\nsecond_example\ndate_format_example\ntimestampadd_example\nconvert_tz_example\nunix_timestamp_now_example\nif_example\nifnull_example\nis_alpha_example\nis_decimal_example\nis_digit_example\nelement_example\ncardinality_example\nmap_index_example\narray_contains_example\narray_distinct_example\narray_prepend_example\narray_slice_example\narray_concat_example\narray_remove_example\narray_join_example\nsplit_example\nsha1_example\nsha256_example\nthe_end\n}\n\n}",
+            "queryName" : "FunctionCalls",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/FunctionCalls{?offset,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type ArrayFunctions {\n  listagg_example: String\n  arrayagg_example: [String]\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype FunctionCalls {\n  log2_example: Float!\n  log_nat_example: Float!\n  log_base_example: Float!\n  e_example: Float!\n  rand_example: Boolean!\n  rand_int_example: Boolean!\n  uuid_example: Boolean!\n  bin_example: String!\n  hex_numeric_example: String!\n  hex_string_example: String!\n  truncate_scale_example: Float!\n  truncate_default_example: Float!\n  printf_example: String\n  startswith_example: Boolean!\n  endswith_example: Boolean!\n  regexp_extract_example: String\n  regexp_extract_group_example: String\n  regexp_extract_all_example: [String]\n  decode_example: String!\n  encode_example: Boolean!\n  from_base64_example: String!\n  to_base64_example: String!\n  instr_example: Int!\n  locate_example: Int!\n  regexp_example: Boolean!\n  split_index_example: String\n  json_quote_example: String!\n  elt_example: String\n  now_example: Boolean!\n  local_time_example: Boolean!\n  local_timestamp_example: Boolean!\n  current_time_example: Boolean!\n  current_date_example: Boolean!\n  current_timestamp_example: Boolean!\n  year_example: Long!\n  quarter_example: Long!\n  month_example: Long!\n  week_example: Long!\n  dayofyear_example: Long!\n  dayofmonth_example: Long!\n  dayofweek_example: Long!\n  hour_example: Long!\n  minute_example: Long!\n  second_example: Long!\n  date_format_example: String\n  timestampadd_example: DateTime!\n  convert_tz_example: String\n  unix_timestamp_now_example: Boolean!\n  if_example: String!\n  ifnull_example: String!\n  is_alpha_example: Boolean!\n  is_decimal_example: Boolean!\n  is_digit_example: Boolean!\n  element_example: Int!\n  cardinality_example: Int!\n  map_index_example: Int\n  array_contains_example: Boolean!\n  array_distinct_example: [String]!\n  array_prepend_example: [String]!\n  array_slice_example: [String]!\n  array_concat_example: [String]!\n  array_remove_example: [String]!\n  array_join_example: String!\n  split_example: [String]\n  sha1_example: String!\n  sha256_example: String!\n  the_end: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  ArrayFunctions(limit: Int = 10, offset: Int = 0): [ArrayFunctions!]\n  FunctionCalls(limit: Int = 10, offset: Int = 0): [FunctionCalls!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

@@ -27,7 +27,7 @@ import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.CreateTa
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
 import com.datasqrl.engine.database.relational.JdbcStatement.Field;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
-import com.datasqrl.engine.database.relational.ddl.statements.GenericCreateViewDdlFactory;
+import com.datasqrl.engine.database.relational.ddl.GenericCreateViewDdlFactory;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
 import com.datasqrl.planner.hint.PartitionKeyHint;

@@ -49,7 +49,7 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
   @Test
   @Disabled("Intended for manual usage")
   void specificUseCase() {
-    var pkg = USE_CASES.resolve("repository").resolve("package.json");
+    var pkg = USE_CASES.resolve("function-translation/duckdb").resolve("package.json");
 
     var param = new UseCaseParam(pkg);
     fullUseCaseTest(param);
