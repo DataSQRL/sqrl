@@ -38,10 +38,9 @@ abstract class BasePostgresSqlDialect extends PostgresqlSqlDialect {
       return;
     }
 
-    if (getTranslationMap().containsKey(call.getOperator().getName().toLowerCase())) {
-      getTranslationMap()
-          .get(call.getOperator().getName().toLowerCase())
-          .unparse(call, writer, leftPrec, rightPrec);
+    var operatorName = call.getOperator().getName().toLowerCase();
+    if (getTranslationMap().containsKey(operatorName)) {
+      getTranslationMap().get(operatorName).unparse(call, writer, leftPrec, rightPrec);
       return;
     }
     try {

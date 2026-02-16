@@ -63,6 +63,7 @@
       "array_contains_example" : true,
       "array_prepend_example" : [ "a", "b", "c" ],
       "array_concat_example" : [ "a", "b", "c", "d", "e" ],
+      "array_remove_example" : [ "a", "c" ],
       "array_join_example" : "a--c",
       "split_example" : [ "a", "b", "c" ],
       "sha1_example" : "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d",
