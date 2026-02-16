@@ -16,6 +16,7 @@
 package com.datasqrl.engine.log.kafka;
 
 import com.datasqrl.engine.database.EngineCreateTable;
+import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -37,14 +38,12 @@ public class NewTopic implements EngineCreateTable {
   private int numPartitions;
   private short replicationFactor;
   private Type type;
+  private List<String> messageKeys;
+  private String keySchema;
+  private String valueSchema;
   private Map<String, String> config;
 
   public NewTopic(String topicName, String tableName) {
-    this(topicName, tableName, null, Type.SUBSCRIPTION, Map.of());
-  }
-
-  public NewTopic(
-      String topicName, String tableName, String format, Type type, Map<String, String> config) {
-    this(topicName, tableName, format, 1, (short) 3, type, config);
+    this(topicName, tableName, null, 1, (short) 3, Type.SUBSCRIPTION, List.of(), "", "", Map.of());
   }
 }

@@ -22,7 +22,7 @@ public interface MutationEngine extends ExecutionEngine {
    * @param ttl
    * @return
    */
-  default EngineCreateTable createMutation(
+  default MutationCreateTable createMutation(
       ExecutionStage stage,
       String originalTableName,
       FlinkTableBuilder tableBuilder,
@@ -30,5 +30,9 @@ public interface MutationEngine extends ExecutionEngine {
       MutationInsertType insertType,
       Optional<Duration> ttl) {
     throw new UnsupportedOperationException("Does not support mutations");
+  }
+
+  interface MutationCreateTable extends EngineCreateTable {
+    MutationCreateTable withValueType(RelDataType inputValueType);
   }
 }

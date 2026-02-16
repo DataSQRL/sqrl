@@ -32,6 +32,7 @@ import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.formats.avro.typeutils.AvroSchemaConverter;
+import org.apache.flink.table.types.logical.RowType;
 
 @AllArgsConstructor
 public class AvroToRelDataTypeConverter {
@@ -50,6 +51,25 @@ public class AvroToRelDataTypeConverter {
     var typeFactory = TypeFactory.getTypeFactory();
 
     return typeFactory.createFieldTypeFromLogicalType(dataType.getLogicalType());
+  }
+
+  public static Schema convert2Avro(RelDataType rowType, List<String> selectedFields) {
+    var logicalType = TypeFactory.toLogicalType(rowType);
+    if (!(logicalType instanceof RowType fullRowType)) {
+      throw new IllegalArgumentException(
+          "AvroSchemaConverter expects a ROW type; got: " + logicalType);
+    }
+
+    RowType effectiveRowType = fullRowType;
+    if (selectedFields != null && !selectedFields.isEmpty()) {
+      var filteredFields =
+          selectedFields.stream()
+              .map(name -> fullRowType.getFields().get(fullRowType.getFieldIndex(name)))
+              .toList();
+      effectiveRowType = new RowType(filteredFields);
+    }
+
+    return AvroSchemaConverter.convertToSchema(effectiveRowType);
   }
 
   private void validateSchema(Schema schema, NamePath path, Set<Schema> recursionStack) {

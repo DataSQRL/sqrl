@@ -172,42 +172,6 @@ public class CalciteUtil {
     return new RelDataTypeFieldBuilder(factory.builder().kind(StructKind.FULLY_QUALIFIED));
   }
 
-  public static RelDataType addField(
-      @NonNull RelDataType relation,
-      int atIndex,
-      @NonNull String fieldId,
-      @NonNull RelDataType fieldType,
-      @NonNull RelDataTypeFactory factory) {
-    Preconditions.checkArgument(relation.isStruct());
-    var builder = getRelTypeBuilder(factory);
-    var index = 0;
-    if (index == atIndex) {
-      builder.add(fieldId, fieldType);
-    }
-    for (RelDataTypeField field : relation.getFieldList()) {
-      builder.add(field);
-      index++;
-      if (index == atIndex) {
-        builder.add(fieldId, fieldType);
-      }
-    }
-    Preconditions.checkArgument(
-        index >= atIndex, "Provided index [%s] larger than length [%s]", atIndex, index);
-    return builder.build();
-  }
-
-  public static List<String> identifyNullableFields(RelDataType datatype, List<Integer> indexes) {
-    List<String> fieldNames = new ArrayList<>();
-    var fields = datatype.getFieldList();
-    for (int index : indexes) {
-      var field = fields.get(index);
-      if (field.getType().isNullable()) {
-        fieldNames.add(field.getName());
-      }
-    }
-    return fieldNames;
-  }
-
   public static Optional<Integer> getInputRef(RexNode rexNode) {
     if (rexNode instanceof RexInputRef) { // Direct mapping
       return Optional.of(((RexInputRef) rexNode).getIndex());
