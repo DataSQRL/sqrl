@@ -24,7 +24,7 @@ import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromObjectSto
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
-import com.datasqrl.engine.database.relational.ddl.statements.GenericCreateTableDdlFactory;
+import com.datasqrl.engine.database.relational.ddl.GenericCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;
 import java.util.Optional;

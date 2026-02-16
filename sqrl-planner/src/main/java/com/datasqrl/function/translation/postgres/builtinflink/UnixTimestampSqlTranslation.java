@@ -16,6 +16,7 @@
 package com.datasqrl.function.translation.postgres.builtinflink;
 
 import com.datasqrl.function.CalciteFunctionUtil;
+import com.datasqrl.function.translation.PostgresLikeTranslations;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
@@ -31,17 +32,6 @@ public class UnixTimestampSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    if (call.operandCount() > 0) {
-      throw new UnsupportedOperationException(
-          "Calling UNIX_TIMESTAMP(...) with args is not supported yet for PostgreSQL.");
-    }
-
-    writer.print("(");
-    var extract = writer.startFunCall("EXTRACT");
-    writer.keyword("EPOCH");
-    writer.keyword("FROM");
-    writer.keyword("CURRENT_TIMESTAMP");
-    writer.endFunCall(extract);
-    writer.print("::bigint)");
+    PostgresLikeTranslations.unixTimestamp(call, writer, "PostgreSQL");
   }
 }

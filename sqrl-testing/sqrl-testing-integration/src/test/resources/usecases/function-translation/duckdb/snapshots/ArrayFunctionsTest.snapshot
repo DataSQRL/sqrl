@@ -1,0 +1,12 @@
+{
+  "data" : {
+    "ArrayFunctionsTest" : [ {
+      "has_a" : true,
+      "has_b" : true,
+      "has_c" : true,
+      "array_has_a" : true,
+      "array_has_b" : true,
+      "array_has_c" : true
+    } ]
+  }
+}

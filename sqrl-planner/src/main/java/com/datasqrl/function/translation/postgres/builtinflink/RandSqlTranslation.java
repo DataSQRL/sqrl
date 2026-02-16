@@ -15,6 +15,7 @@
  */
 package com.datasqrl.function.translation.postgres.builtinflink;
 
+import com.datasqrl.function.translation.PostgresLikeTranslations;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
@@ -31,12 +32,6 @@ public class RandSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    if (call.operandCount() > 0) {
-      throw new UnsupportedOperationException(
-          "PostgreSQL does not support RAND(seed) in a single expression. Use RAND() instead.");
-    }
-
-    var random = writer.startFunCall("RANDOM");
-    writer.endFunCall(random);
+    PostgresLikeTranslations.rand(call, writer, "PostgreSQL");
   }
 }

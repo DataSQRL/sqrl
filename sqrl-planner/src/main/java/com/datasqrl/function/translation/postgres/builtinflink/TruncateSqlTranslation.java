@@ -15,6 +15,7 @@
  */
 package com.datasqrl.function.translation.postgres.builtinflink;
 
+import com.datasqrl.function.translation.PostgresLikeTranslations;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
@@ -31,12 +32,6 @@ public class TruncateSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var trunc = writer.startFunCall("TRUNC");
-    call.operand(0).unparse(writer, 0, 0);
-    if (call.operandCount() > 1) {
-      writer.sep(",", true);
-      call.operand(1).unparse(writer, 0, 0);
-    }
-    writer.endFunCall(trunc);
+    PostgresLikeTranslations.truncate(call, writer);
   }
 }

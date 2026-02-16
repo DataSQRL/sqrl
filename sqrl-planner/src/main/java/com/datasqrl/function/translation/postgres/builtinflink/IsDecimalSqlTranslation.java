@@ -16,14 +16,12 @@
 package com.datasqrl.function.translation.postgres.builtinflink;
 
 import com.datasqrl.function.CalciteFunctionUtil;
+import com.datasqrl.function.translation.PostgresLikeTranslations;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlWriter;
-import org.apache.calcite.sql.fun.SqlStdOperatorTable;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
 public class IsDecimalSqlTranslation extends PostgresSqlTranslation {
@@ -34,11 +32,6 @@ public class IsDecimalSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var string = call.operand(0);
-    var pattern = SqlLiteral.createCharString("^[+-]?[0-9]+(\\.[0-9]+)?$", SqlParserPos.ZERO);
-
-    SqlStdOperatorTable.POSIX_REGEX_CASE_SENSITIVE
-        .createCall(SqlParserPos.ZERO, string, pattern)
-        .unparse(writer, leftPrec, rightPrec);
+    PostgresLikeTranslations.isDecimal(call, writer, leftPrec, rightPrec);
   }
 }

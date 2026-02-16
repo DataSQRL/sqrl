@@ -23,8 +23,9 @@ import org.apache.calcite.sql.SqlOperator;
 
 /**
  * Generates a rule for a given dialect to rewrite a function with structural changes to the logical
- * plan. These are then retrieved and executed by {@link com.datasqrl.calcite.DialectCallConverter}.
- * Make sure you annotate your implementation with @AutoService for it to be discovered.
+ * plan. These are then retrieved and executed by {@link
+ * com.datasqrl.calcite.OperatorRuleTransformer}. Make sure you annotate your implementation
+ * with @AutoService for it to be discovered.
  *
  * <p>Simpler transformations that only require changing the function name and/or arguments should
  * be implemented via {@link SqlTranslation}.

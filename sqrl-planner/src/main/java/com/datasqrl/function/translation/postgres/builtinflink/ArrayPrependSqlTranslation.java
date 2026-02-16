@@ -16,6 +16,7 @@
 package com.datasqrl.function.translation.postgres.builtinflink;
 
 import com.datasqrl.function.CalciteFunctionUtil;
+import com.datasqrl.function.translation.PostgresLikeTranslations;
 import com.datasqrl.function.translation.PostgresSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
@@ -31,10 +32,6 @@ public class ArrayPrependSqlTranslation extends PostgresSqlTranslation {
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
-    var arrayPrepend = writer.startFunCall("ARRAY_PREPEND");
-    call.operand(1).unparse(writer, 0, 0);
-    writer.sep(",", true);
-    call.operand(0).unparse(writer, 0, 0);
-    writer.endFunCall(arrayPrepend);
+    PostgresLikeTranslations.arrayPrepend(call, writer);
   }
 }

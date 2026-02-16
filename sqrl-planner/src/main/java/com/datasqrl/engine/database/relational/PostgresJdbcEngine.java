@@ -20,7 +20,6 @@ import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.jdbc.FlinkSqrlPostgresDataTypeMapper;
-import com.datasqrl.engine.database.relational.ddl.PostgresDDLFactory;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.google.inject.Inject;
 import lombok.NonNull;
@@ -52,6 +51,6 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
 
   @Override
   public JdbcStatementFactory getStatementFactory() {
-    return new PostgresDDLFactory();
+    return new PostgresStatementFactory();
   }
 }
