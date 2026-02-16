@@ -23,6 +23,7 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.datatype.DataTypeMapping;
+import com.datasqrl.datatype.flink.avro.AvroFlinkFormatTypeMapper;
 import com.datasqrl.datatype.flink.json.FlexibleJsonFlinkFormatTypeMapper;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -87,6 +88,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final Optional<Duration> defaultTTL;
   private final Duration defaultWatermark;
   private final Duration transactionWatermark;
+  private final String format;
 
   @Inject
   public KafkaLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
@@ -105,6 +107,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     defaultWatermark = TimeUtils.parseDuration(engineConfig.getSetting("watermark"));
     transactionWatermark =
         TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
+    format =
+        String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfig.FORMAT_KEY))
+            .trim()
+            .toLowerCase();
   }
 
   @Override
@@ -243,9 +249,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   @Override
   public DataTypeMapping getTypeMapping() {
-    var format = String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfig.FORMAT_KEY));
     if (FlexibleJsonFormat.FORMAT_NAME.equalsIgnoreCase(format)) {
       return new FlexibleJsonFlinkFormatTypeMapper();
+    } else if (format.equalsIgnoreCase(AvroFlinkFormatTypeMapper.FORMAT_NAME)) {
+      return new AvroFlinkFormatTypeMapper();
     } else {
       log.error("Unexpected format for Kafka log engine: {}", format);
       return DataTypeMapping.NONE;
@@ -334,7 +341,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     return new KafkaPhysicalPlan(topics, testRunnerTopics);
   }
 
-  private static NewTopic createNewTopic(Table table, NewTopic.Type type) {
+  private NewTopic createNewTopic(Table table, NewTopic.Type type) {
+
     return new NewTopic(
         table.topicName(),
         table.tableName(),
@@ -343,11 +351,12 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         (short) 3,
         type,
         table.messageKeys(),
-        table.messageKeys.isEmpty()
-            ? ""
-            : AvroToRelDataTypeConverter.convert2Avro(table.valueType, table.messageKeys)
-                .toString(),
-        AvroToRelDataTypeConverter.convert2Avro(table.valueType, List.of()).toString(),
+        format.startsWith("avro") && !table.messageKeys.isEmpty()
+            ? AvroToRelDataTypeConverter.convert2Avro(table.valueType, table.messageKeys).toString()
+            : "",
+        format.startsWith("avro")
+            ? AvroToRelDataTypeConverter.convert2Avro(table.valueType, List.of()).toString()
+            : "",
         table.config());
   }
 

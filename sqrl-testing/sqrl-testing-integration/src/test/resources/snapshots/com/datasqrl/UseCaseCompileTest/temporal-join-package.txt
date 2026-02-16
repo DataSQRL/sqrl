@@ -147,7 +147,6 @@ Annotations:
 ID:          logger.Result
 Type:        export
 Stage:       flink
----
 Inputs:
  - default_catalog.default_database.EnrichedSensorReading
 
@@ -155,7 +154,6 @@ Inputs:
 ID:          logger.SensorReading
 Type:        export
 Stage:       flink
----
 Inputs:
  - default_catalog.default_database.SensorReading
 
@@ -163,7 +161,6 @@ Inputs:
 ID:          logger.SensorUpdates
 Type:        export
 Stage:       flink
----
 Inputs:
  - default_catalog.default_database.SensorUpdates
 
@@ -176,7 +173,6 @@ CREATE TABLE `SensorReading` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -191,7 +187,6 @@ CREATE TABLE `SensorUpdates` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -319,6 +314,9 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : { }
     },
     {
@@ -328,6 +326,9 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : { }
     }
   ],

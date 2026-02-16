@@ -46,9 +46,15 @@ type SensorReadingResultOutput {
   event_time: DateTime
 }
 
+type SensorReadingSubscription {
+  sensorid: Int!
+  temperature: Float!
+  event_time: DateTime
+}
+
 type Subscription {
-  SensorReadingSubscription: SensorReading
-  SensorSubscriptionById(sensorid: Int!): SensorReading
+  SensorReadingSubscription: SensorReadingSubscription
+  SensorSubscriptionById(sensorid: Int!): SensorReadingSubscription
 }
 
 enum _McpMethodType {
@@ -116,12 +122,12 @@ ID:          default_catalog.default_database.SensorReadingSubscription
 Type:        stream
 Stage:       flink
 Primary key: -
-Timestamp:   event_time
+Timestamp:   -
 ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: DECIMAL(8, 2) NOT NULL
- - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+ - event_time: TIMESTAMP(3)
 Inputs:
  - default_catalog.default_database.SensorReading
 
@@ -134,7 +140,7 @@ Inputs:
  - default_catalog.default_database.SensorReadingSubscription
 Annotations:
  - parameters: sensorid
- - base-table: SensorReading
+ - base-table: SensorReadingSubscription
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `SensorReading` (
@@ -144,9 +150,9 @@ CREATE TABLE `SensorReading` (
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
 )
 WITH (
+  'avro-confluent.url' = '${KAFKA_REGISTRY_URL}',
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'format' = 'flexible-json',
+  'format' = 'avro-confluent',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
@@ -164,7 +170,7 @@ FROM `SensorReading`
 WHERE `temperature` > 50;
 CREATE VIEW `SensorReadingSubscription`
 AS
-SELECT *
+SELECT `sensorid`, `temperature`, CAST(`event_time` AS TIMESTAMP(3)) AS `event_time`
 FROM `SensorReading`;
 CREATE TABLE `HighTempAlert_1` (
   `sensorid` INTEGER NOT NULL,
@@ -212,12 +218,12 @@ WITH (
 CREATE TABLE `SensorReadingSubscription_4` (
   `sensorid` INTEGER NOT NULL,
   `temperature` DECIMAL(8, 2) NOT NULL,
-  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE
+  `event_time` TIMESTAMP(3)
 )
 WITH (
+  'avro-confluent.url' = '${KAFKA_REGISTRY_URL}',
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'format' = 'flexible-json',
+  'format' = 'avro-confluent',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'SensorReadingSubscription'
@@ -246,19 +252,25 @@ INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
     {
       "topicName" : "SensorReadingSubscription",
       "tableName" : "SensorReadingSubscription_4",
-      "format" : "flexible-json",
+      "format" : "avro-confluent",
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "{\"type\":\"record\",\"name\":\"record\",\"namespace\":\"org.apache.flink.avro.generated\",\"fields\":[{\"name\":\"sensorid\",\"type\":\"int\"},{\"name\":\"temperature\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":8,\"scale\":2}},{\"name\":\"event_time\",\"type\":[\"null\",{\"type\":\"long\",\"logicalType\":\"timestamp-millis\"}],\"default\":null}]}",
       "config" : { }
     },
     {
       "topicName" : "SensorReading",
       "tableName" : "SensorReading",
-      "format" : "flexible-json",
+      "format" : "avro-confluent",
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "{\"type\":\"record\",\"name\":\"record\",\"namespace\":\"org.apache.flink.avro.generated\",\"fields\":[{\"name\":\"sensorid\",\"type\":\"int\"},{\"name\":\"temperature\",\"type\":{\"type\":\"bytes\",\"logicalType\":\"decimal\",\"precision\":8,\"scale\":2}}]}",
       "config" : { }
     }
   ],
@@ -511,7 +523,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SensorReading(event: [SensorReadingInput!]!): [SensorReadingResultOutput!]!\n}\n\ntype Query {\n  HighTempAlert(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorMaxTemp(limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ntype Subscription {\n  SensorReadingSubscription: SensorReading\n  SensorSubscriptionById(sensorid: Int!): SensorReading\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SensorReading(event: [SensorReadingInput!]!): [SensorReadingResultOutput!]!\n}\n\ntype Query {\n  HighTempAlert(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorMaxTemp(limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\ntype SensorMaxTemp {\n  sensorid: Int!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ntype SensorReadingSubscription {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime\n}\n\ntype Subscription {\n  SensorReadingSubscription: SensorReadingSubscription\n  SensorSubscriptionById(sensorid: Int!): SensorReadingSubscription\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

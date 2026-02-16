@@ -127,7 +127,6 @@ Schema:
 ID:          logger.calls
 Type:        export
 Stage:       flink
----
 Inputs:
  - default_catalog.default_database.FunctionCalls
 

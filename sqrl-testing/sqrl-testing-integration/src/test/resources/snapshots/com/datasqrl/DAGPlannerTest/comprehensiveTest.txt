@@ -416,6 +416,7 @@ WITH (
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-Orders',
+  'value.fields-include' = 'ALL',
   'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 )
@@ -570,7 +571,7 @@ LIKE `_Customer__schema`
 ID:          mysink.customersink
 Type:        export
 Stage:       flink
----
+Connector:   print
 Inputs:
  - default_catalog.default_database.TemporalJoin
 
@@ -578,7 +579,6 @@ Inputs:
 ID:          print.TimeWindow
 Type:        export
 Stage:       flink
----
 Inputs:
  - default_catalog.default_database.CustomerTimeWindow
 
@@ -770,6 +770,7 @@ WITH (
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-Orders',
+  'value.fields-include' = 'ALL',
   'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 );
@@ -1122,6 +1123,9 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : { }
     },
     {
@@ -1131,6 +1135,9 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : { }
     },
     {
@@ -1140,6 +1147,11 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [
+        "orderid"
+      ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : {
         "retention.ms" : "129600000"
       }

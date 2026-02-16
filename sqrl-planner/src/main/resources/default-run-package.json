@@ -1,6 +1,6 @@
 {
-  "engines" : {
-    "flink" : {
+  "engines": {
+    "flink": {
       "config": {
         "execution.attached": true,
         "execution.checkpointing.dir": "file:///data/flink/checkpoints",
@@ -11,6 +11,14 @@
         "table.exec.resource.default-parallelism": 1,
         "taskmanager.memory.network.max": "800m"
       }
+    }
+  },
+  "connectors": {
+    "kafka-mutation": {
+      "flexible-json.timestamp-format.standard": "ISO-8601"
+    },
+    "kafka": {
+      "flexible-json.timestamp-format.standard": "ISO-8601"
     }
   }
 }

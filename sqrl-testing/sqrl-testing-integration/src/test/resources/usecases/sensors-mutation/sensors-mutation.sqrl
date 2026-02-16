@@ -20,7 +20,9 @@ HighTempAlertTest := SELECT sensorid, temperature FROM HighTempAlert ORDER BY se
 /*+test */
 SensorMaxTempTest := SELECT sensorid, maxTemp FROM SensorMaxTemp ORDER BY sensorid DESC;
 
-SensorReadingSubscription := SUBSCRIBE SELECT * FROM SensorReading;
+-- TODO: For now, avro format requires explicit casting on LTZ
+SensorReadingSubscription := SUBSCRIBE SELECT sensorid, temperature, CAST(event_time AS TIMESTAMP(3)) event_time
+                                       FROM SensorReading;
 
 SensorSubscriptionById(sensorid INT NOT NULL) := SUBSCRIBE SELECT * FROM SensorReadingSubscription
                                                                     WHERE sensorid = :sensorid;

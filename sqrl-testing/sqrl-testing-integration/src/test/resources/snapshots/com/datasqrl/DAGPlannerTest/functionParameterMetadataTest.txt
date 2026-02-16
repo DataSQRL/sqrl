@@ -234,6 +234,9 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerMessage_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : { }
     },
     {
@@ -243,6 +246,9 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerMessage_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : { }
     }
   ],

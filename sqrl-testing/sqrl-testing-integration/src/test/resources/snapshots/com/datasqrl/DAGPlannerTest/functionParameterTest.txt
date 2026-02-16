@@ -218,6 +218,9 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : { }
     }
   ],

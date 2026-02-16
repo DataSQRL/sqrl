@@ -5,5 +5,24 @@
   },
   "test-runner": {
     "delay-sec": -1
+  },
+  "connectors": {
+    "kafka-mutation": {
+      "connector": "kafka",
+      "format": "avro-confluent",
+      "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
+      "properties.group.id": "${KAFKA_GROUP_ID}",
+      "properties.auto.offset.reset": "earliest",
+      "avro-confluent.url": "${KAFKA_REGISTRY_URL}",
+      "topic": "${sqrl:table-name}"
+    },
+    "kafka": {
+      "connector": "kafka",
+      "format": "avro-confluent",
+      "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
+      "properties.group.id": "${KAFKA_GROUP_ID}",
+      "avro-confluent.url": "${KAFKA_REGISTRY_URL}",
+      "topic": "${sqrl:table-name}"
+    }
   }
 }

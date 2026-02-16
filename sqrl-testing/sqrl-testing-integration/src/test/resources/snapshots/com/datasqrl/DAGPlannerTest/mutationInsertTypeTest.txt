@@ -89,6 +89,7 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'properties.isolation.level' = 'read_committed',
   'topic' = 'kafka-mutation-Sensors',
+  'value.fields-include' = 'ALL',
   'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 )
@@ -146,6 +147,7 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'properties.isolation.level' = 'read_committed',
   'topic' = 'kafka-mutation-Sensors',
+  'value.fields-include' = 'ALL',
   'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 );
@@ -244,6 +246,11 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [
+        "sensorid"
+      ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : { }
     },
     {
@@ -253,6 +260,9 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : { }
     }
   ],

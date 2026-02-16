@@ -244,7 +244,7 @@ CREATE VIEW `UnnestOrders` AS  SELECT o.id, o.customerid, o.`time`, e.productid,
 ID:          mysink.customersink
 Type:        export
 Stage:       flink
----
+Connector:   print
 Inputs:
  - default_catalog.default_database.CustomerImport
 
@@ -252,7 +252,6 @@ Inputs:
 ID:          print.Unnestorders
 Type:        export
 Stage:       flink
----
 Inputs:
  - default_catalog.default_database.UnnestOrders
 
@@ -520,6 +519,9 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : { }
     },
     {
@@ -529,6 +531,9 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "keySchema" : "",
+      "valueSchema" : "",
       "config" : { }
     }
   ],

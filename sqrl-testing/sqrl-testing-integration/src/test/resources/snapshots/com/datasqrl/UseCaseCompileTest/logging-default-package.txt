@@ -20,7 +20,6 @@ Annotations:
 ID:          logger.LogData
 Type:        export
 Stage:       flink
----
 Inputs:
  - default_catalog.default_database.Data
 

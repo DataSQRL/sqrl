@@ -32,6 +32,7 @@ import org.apache.avro.Schema.Field;
 import org.apache.avro.Schema.Type;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.flink.formats.avro.typeutils.AvroSchemaConverter;
+import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 import org.apache.flink.table.types.logical.RowType;
 
 @AllArgsConstructor
@@ -54,22 +55,35 @@ public class AvroToRelDataTypeConverter {
   }
 
   public static Schema convert2Avro(RelDataType rowType, List<String> selectedFields) {
-    var logicalType = TypeFactory.toLogicalType(rowType);
-    if (!(logicalType instanceof RowType fullRowType)) {
+    // Convert rowType to remove ROWTIME markers before Avro conversion
+    var typeFactory = TypeFactory.getTypeFactory();
+    var builder = typeFactory.builder();
+
+    for (var field : rowType.getFieldList()) {
+      // Apply selectedFields filter if provided
+      if (selectedFields != null
+          && !selectedFields.isEmpty()
+          && !selectedFields.contains(field.getName())) {
+        continue;
+      }
+      // Convert ROWTIME to base timestamp type
+      var fieldType = field.getType();
+      if (fieldType instanceof TimeIndicatorRelDataType) {
+        var baseType =
+            typeFactory.createSqlType(fieldType.getSqlTypeName(), fieldType.getPrecision());
+        fieldType = typeFactory.createTypeWithNullability(baseType, fieldType.isNullable());
+      }
+      builder.add(field.getName(), fieldType);
+    }
+    var filteredRowType = builder.build();
+
+    var logicalType = TypeFactory.toLogicalType(filteredRowType);
+    if (!(logicalType instanceof RowType convertedRowType)) {
       throw new IllegalArgumentException(
           "AvroSchemaConverter expects a ROW type; got: " + logicalType);
     }
 
-    RowType effectiveRowType = fullRowType;
-    if (selectedFields != null && !selectedFields.isEmpty()) {
-      var filteredFields =
-          selectedFields.stream()
-              .map(name -> fullRowType.getFields().get(fullRowType.getFieldIndex(name)))
-              .toList();
-      effectiveRowType = new RowType(filteredFields);
-    }
-
-    return AvroSchemaConverter.convertToSchema(effectiveRowType);
+    return AvroSchemaConverter.convertToSchema(convertedRowType);
   }
 
   private void validateSchema(Schema schema, NamePath path, Set<Schema> recursionStack) {
