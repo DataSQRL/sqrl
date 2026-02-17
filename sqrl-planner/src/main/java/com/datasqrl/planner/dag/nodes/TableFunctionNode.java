@@ -29,8 +29,10 @@ public class TableFunctionNode extends PlannedNode {
   private final SqrlTableFunction function;
 
   public TableFunctionNode(
-      SqrlTableFunction function, Map<ExecutionStage, StageAnalysis> stageAnalysis) {
-    super("function", stageAnalysis);
+      SqrlTableFunction function,
+      Map<ExecutionStage, StageAnalysis> stageAnalysis,
+      String documentation) {
+    super("function", stageAnalysis, documentation);
     this.function = function;
   }
 

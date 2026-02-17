@@ -17,7 +17,7 @@ package com.datasqrl.planner.dag.plan;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.ExecutableQuery;
-import com.datasqrl.engine.database.EngineCreateTable;
+import com.datasqrl.engine.log.MutationEngine.MutationCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.graphql.server.ResolvedMetadata;
@@ -45,7 +45,7 @@ public class MutationQuery implements ExecutableQuery, Documented {
   ExecutionStage stage;
 
   /** The topic that the mutation is written into */
-  EngineCreateTable createTopic;
+  MutationCreateTable createTopic;
 
   /** The data type of the input data for the mutation */
   RelDataType inputDataType;
@@ -64,4 +64,8 @@ public class MutationQuery implements ExecutableQuery, Documented {
 
   /** Whether this mutation should be exposed in the interface */
   boolean generateAccess;
+
+  public MutationCreateTable getCreateTopic() {
+    return createTopic.withValueType(inputDataType);
+  }
 }

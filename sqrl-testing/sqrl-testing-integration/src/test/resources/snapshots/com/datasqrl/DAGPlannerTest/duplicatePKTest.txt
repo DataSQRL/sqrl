@@ -83,7 +83,6 @@ CREATE TABLE `SimpleInput` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -121,7 +120,6 @@ CREATE TABLE `SimpleInput` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -194,6 +192,8 @@ INSERT INTO `default_catalog`.`default_database`.`_Input_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
       "config" : { }
     }
   ],

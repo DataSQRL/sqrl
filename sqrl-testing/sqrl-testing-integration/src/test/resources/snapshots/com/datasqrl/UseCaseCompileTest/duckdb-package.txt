@@ -215,6 +215,7 @@ WITH (
   'catalog-table' = '_MyApplications1',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
+  'format-version' = '2',
   'warehouse' = '/tmp/duckdb'
 );
 CREATE TABLE `_MyApplications2_2` (
@@ -232,6 +233,7 @@ WITH (
   'catalog-table' = '_MyApplications2',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
+  'format-version' = '2',
   'warehouse' = '/tmp/duckdb'
 );
 CREATE TABLE `_MyApplications2_3` (

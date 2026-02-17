@@ -20,12 +20,19 @@ import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis.UniqueIdentifier;
 import java.util.Map;
+import lombok.Getter;
 import lombok.NonNull;
 
 public abstract class PlannedNode extends PipelineNode {
 
-  public PlannedNode(@NonNull String type, Map<ExecutionStage, StageAnalysis> stageAnalysis) {
+  @Getter private final String documentation;
+
+  public PlannedNode(
+      @NonNull String type,
+      Map<ExecutionStage, StageAnalysis> stageAnalysis,
+      String documentation) {
     super(type, stageAnalysis);
+    this.documentation = documentation;
   }
 
   public abstract TableAnalysis getAnalysis();

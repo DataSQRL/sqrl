@@ -192,7 +192,6 @@ CREATE TABLE `CustomerByNothing_2` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
@@ -218,6 +217,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
       "config" : { }
     }
   ],

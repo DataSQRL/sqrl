@@ -134,7 +134,6 @@ CREATE TABLE `_InputData` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -172,7 +171,6 @@ CREATE TABLE `_InputData` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -208,7 +206,6 @@ CREATE TABLE `CustomerMessage_2` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
@@ -234,6 +231,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerMessage_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
       "config" : { }
     },
     {
@@ -243,6 +242,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerMessage_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
       "config" : { }
     }
   ],

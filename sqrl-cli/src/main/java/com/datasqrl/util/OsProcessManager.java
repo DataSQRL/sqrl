@@ -17,6 +17,7 @@ package com.datasqrl.util;
 
 import static com.datasqrl.env.EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS;
 import static com.datasqrl.env.EnvVariableNames.KAFKA_GROUP_ID;
+import static com.datasqrl.env.EnvVariableNames.KAFKA_REGISTRY_URL;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_AUTHORITY;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_DATABASE;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_HOST;
@@ -55,6 +56,7 @@ public class OsProcessManager {
 
   private static final String LOCALHOST = "localhost";
   private static final String RP_PORT = "9092";
+  private static final String RP_SCHEMA_PORT = "8081";
   private static final String PG_PORT = "5432";
   private static final String PG_DB = "datasqrl";
   private static final String PG_AUTHORITY = LOCALHOST + ':' + PG_PORT + '/' + PG_DB;
@@ -219,6 +221,7 @@ public class OsProcessManager {
       waitForService("Redpanda", RP_PORT, "rpk", "cluster", "health");
 
       bootstrapServers = LOCALHOST + ':' + RP_PORT;
+      setEnvironmentVariable(KAFKA_REGISTRY_URL, LOCALHOST + ':' + RP_SCHEMA_PORT);
       log.info("Redpanda started successfully");
     }
 
