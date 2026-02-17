@@ -1046,7 +1046,7 @@ public class SqlScriptPlanner {
               sqrlEnv.currentBatch(),
               Optional.empty(),
               Optional.of(sinkTableId),
-              existingTable.getSourceSinkTable().map(SourceSinkTableAnalysis::connector));
+              existingTable.getSourceSinkTable().map(SourceSinkTableAnalysis::connectorConfig));
     } else { // the export is to a user-defined sink: load it
       var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(
@@ -1102,7 +1102,7 @@ public class SqlScriptPlanner {
                 addTableResult
                     .tableAnalysis()
                     .getSourceSinkTable()
-                    .map(SourceSinkTableAnalysis::connector));
+                    .map(SourceSinkTableAnalysis::connectorConfig));
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }

@@ -85,7 +85,7 @@ public class PipelineDAGExporter {
                   .id(table.getIdentifier().toString())
                   .name(table.getName())
                   .type(NodeType.IMPORTS.getName())
-                  .connector(source.connector().getOptions())
+                  .connector(source.connectorConfig().getOptions())
                   .stage(stage)
                   .documentation(getDocumentation(tableNode))
                   .build());

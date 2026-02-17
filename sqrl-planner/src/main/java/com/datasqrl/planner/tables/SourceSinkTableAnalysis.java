@@ -23,13 +23,13 @@ import org.apache.flink.table.catalog.ResolvedSchema;
 /**
  * Metadata we keep track off for imported/exported tables and their definition
  *
- * @param connector The connector configuration for the source table
+ * @param connectorConfig The connector configuration for the source table
  * @param schema The Flink schema of the source table
  * @param mutationDefinition This is set for internal CREATE TABLE definitions that map to mutations
  *     only, otherwise null It contains the metadata information from the log engine on where to
  *     write the data
  */
 public record SourceSinkTableAnalysis(
-    @NonNull FlinkConnectorConfig connector,
+    @NonNull FlinkConnectorConfig connectorConfig,
     @NonNull ResolvedSchema schema,
     @Nullable MutationQuery mutationDefinition) {}
