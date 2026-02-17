@@ -42,6 +42,7 @@ FunctionCalls := SELECT
                                                      AS try_cast_to_timestamp_example,
     TRY_CAST('2024-01-02 03:04:05' AS TIMESTAMP_LTZ(3)) IS NOT NULL
                                                      AS try_cast_to_timestamptz_example,
+    TRY_CAST('abc' AS INT)                           AS try_cast_fail_example,
 
     NOW() IS NOT NULL                                AS now_example,
     LOCALTIME IS NOT NULL                            AS local_time_example,
