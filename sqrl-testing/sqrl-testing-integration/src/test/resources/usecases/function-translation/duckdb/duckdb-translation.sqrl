@@ -40,6 +40,16 @@ FunctionCalls := SELECT
     SPLIT_INDEX('a,b,c', ',', 1)                     AS split_index_example,
     JSON_QUOTE('hello "json"')                       AS json_quote_example,
     ELT(2, 'first', 'second', 'third')               AS elt_example,
+    TRY_CAST('123' AS INT)                           AS try_cast_to_int_example,
+    TRY_CAST('112233445566778899' AS BIGINT)         AS try_cast_to_bigint_example,
+    TRY_CAST('true' AS BOOLEAN)                      AS try_cast_to_bool_example,
+    TRY_CAST(123 AS VARCHAR)                         AS try_cast_to_text_example,
+    TRY_CAST('123.45' AS DECIMAL(10, 2))             AS try_cast_to_decimal_example,
+    TRY_CAST('2024-01-02 03:04:05' AS TIMESTAMP(3)) IS NOT NULL
+                                                     AS try_cast_to_timestamp_example,
+    TRY_CAST('2024-01-02 03:04:05' AS TIMESTAMP_LTZ(3)) IS NOT NULL
+                                                     AS try_cast_to_timestamptz_example,
+    TRY_CAST('abc' AS INT)                           AS try_cast_fail_example,
 
     NOW() IS NOT NULL                                AS now_example,
     LOCALTIME IS NOT NULL                            AS local_time_example,
