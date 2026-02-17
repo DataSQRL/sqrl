@@ -29,10 +29,10 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.log.LogEngine;
-import com.datasqrl.engine.log.kafka.NewTopic.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.flinkrunner.format.json.FlexibleJsonFormat;
 import com.datasqrl.graphql.server.MutationInsertType;
+import com.datasqrl.io.schema.avro.AvroToRelDataTypeConverter;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
@@ -87,6 +87,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final Optional<Duration> defaultTTL;
   private final Duration defaultWatermark;
   private final Duration transactionWatermark;
+  private final String format;
 
   @Inject
   public KafkaLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
@@ -105,10 +106,14 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     defaultWatermark = TimeUtils.parseDuration(engineConfig.getSetting("watermark"));
     transactionWatermark =
         TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
+    format =
+        String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfig.FORMAT_KEY))
+            .trim()
+            .toLowerCase();
   }
 
   @Override
-  public EngineCreateTable createMutation(
+  public MutationCreateTable createMutation(
       ExecutionStage stage,
       String originalTableName,
       FlinkTableBuilder tableBuilder,
@@ -144,7 +149,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         false);
   }
 
-  public EngineCreateTable createInternal(
+  public Table createInternal(
       ExecutionStage stage,
       String originalTableName,
       FlinkTableBuilder tableBuilder,
@@ -157,20 +162,24 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         Context.builder().tableName(originalTableName).tableId(tableBuilder.getTableName());
     var conf = isMutation ? mutationConnectorConf : streamConnectorConf;
     boolean isUpsert = false;
-    List<String> messageKey = List.of();
-    Map<String, String> topicConfig = new HashMap<>();
+    var messageKey = List.<String>of();
+    var topicConfig = new HashMap<String, String>();
+
     if (tableBuilder.hasPartition()) {
       messageKey = tableBuilder.getPartition();
     }
+
     if (tableBuilder.hasPrimaryKey()) {
+      // Kafka only supports upserts on state tables
       if (tableAnalysis.map(TableAnalysis::getType).orElse(TableType.STATE).isState()) {
         isUpsert = true;
         // The primary key must be the partition key
-        messageKey = List.of();
+        messageKey = tableBuilder.getPrimaryKey().get();
       } else {
         tableBuilder.removePrimaryKey();
       }
     }
+
     if (isMutation) {
       // Set watermark column for mutations based on 'timestamp' metadata
       for (SqlNode node : tableBuilder.getColumnList().getList()) {
@@ -187,7 +196,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         }
       }
     }
-    Map<String, String> connectorConfig = conf.toMapWithSubstitution(ctxBuilder.build());
+
+    var connectorConfig = conf.toMapWithSubstitution(ctxBuilder.build());
     // Configure format depending on type
     String format = connectorConfig.get(FlinkConnectorConfig.FORMAT_KEY);
     Preconditions.checkArgument(
@@ -195,18 +205,22 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         "Need to configure a 'format' for connector {}",
         KafkaLogEngineFactory.ENGINE_NAME);
 
-    if (!messageKey.isEmpty()) {
+    if (!messageKey.isEmpty() && !isUpsert) {
       connectorConfig.put("key.fields", String.join(";", messageKey));
     }
+
     if (isUpsert) {
       connectorConfig.put(
           FlinkConnectorConfig.CONNECTOR_KEY,
           UPSERT_FORMAT.formatted(connectorConfig.get(FlinkConnectorConfig.CONNECTOR_KEY)));
     }
-    if (!messageKey.isEmpty() || isUpsert) {
+
+    if (!messageKey.isEmpty()) {
       connectorConfig.remove(FlinkConnectorConfig.FORMAT_KEY);
       connectorConfig.put(FlinkConnectorConfig.KEY_FORMAT_KEY, format);
       connectorConfig.put(FlinkConnectorConfig.VALUE_FORMAT_KEY, format);
+      connectorConfig.put(
+          "value.fields-include", "ALL"); // it's slightly less efficient but easier for debugging
       // Extract format-specific options and re-assign them with key. and value. prefixes
       Map<String, String> formatOptions = new HashMap<>();
       for (java.util.Iterator<Map.Entry<String, String>> it = connectorConfig.entrySet().iterator();
@@ -232,20 +246,17 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
     tableBuilder.setConnectorOptions(connectorConfig);
     String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
-    // TODO: Add schema based on reldatatype
-    return new NewTopic(
-        topicName,
-        tableBuilder.getTableName(),
-        format,
-        isMutation ? Type.MUTATION : Type.SUBSCRIPTION,
-        topicConfig);
+    return new Table(
+        topicName, tableBuilder.getTableName(), format, messageKey, relDataType, topicConfig);
   }
 
   @Override
   public DataTypeMapping getTypeMapping() {
-    var format = String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfig.FORMAT_KEY));
     if (FlexibleJsonFormat.FORMAT_NAME.equalsIgnoreCase(format)) {
       return new FlexibleJsonFlinkFormatTypeMapper();
+      //    keeping this for future avro support
+      //    } else if (format.equalsIgnoreCase(AvroFlinkFormatTypeMapper.FORMAT_NAME)) {
+      //      return new AvroFlinkFormatTypeMapper();
     } else {
       log.error("Unexpected format for Kafka log engine: {}", format);
       return DataTypeMapping.NONE;
@@ -255,8 +266,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   @Override
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
     Map<String, String> table2TopicMap =
-        StreamUtil.filterByClass(stagePlan.getTables(), NewTopic.class)
-            .collect(Collectors.toMap(NewTopic::getTableName, NewTopic::getTopicName));
+        StreamUtil.filterByClass(stagePlan.getTables(), Table.class)
+            .collect(Collectors.toMap(Table::tableName, Table::topicName));
     // Plan queries
     for (Query query : stagePlan.getQueries()) {
       var errors = query.errors();
@@ -317,8 +328,13 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     }
     // Plan topic creation
     var topics =
-        Streams.concat(stagePlan.getTables().stream(), stagePlan.getMutations().stream())
-            .map(NewTopic.class::cast)
+        Streams.concat(
+                stagePlan.getTables().stream()
+                    .map(Table.class::cast)
+                    .map(t -> createNewTopic(t, NewTopic.Type.SUBSCRIPTION)),
+                stagePlan.getMutations().stream()
+                    .map(Table.class::cast)
+                    .map(t -> createNewTopic(t, NewTopic.Type.MUTATION)))
             .toList();
 
     var testRunnerTopics =
@@ -327,5 +343,40 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .toList();
 
     return new KafkaPhysicalPlan(topics, testRunnerTopics);
+  }
+
+  private NewTopic createNewTopic(Table table, NewTopic.Type type) {
+    String messageSchema;
+    if (format.startsWith("avro")) {
+      messageSchema =
+          AvroToRelDataTypeConverter.convert2Avro(table.valueType, List.of()).toString();
+    } else {
+      messageSchema = ""; // TODO: generate JSON schema
+    }
+    return new NewTopic(
+        table.topicName(),
+        table.tableName(),
+        table.format(),
+        1,
+        (short) 3,
+        type,
+        table.messageKeys(),
+        messageSchema,
+        table.config());
+  }
+
+  public record Table(
+      String topicName,
+      String tableName,
+      String format,
+      List<String> messageKeys,
+      RelDataType valueType,
+      Map<String, String> config)
+      implements MutationCreateTable {
+
+    @Override
+    public MutationCreateTable withValueType(RelDataType inputValueType) {
+      return new Table(topicName, tableName, format, messageKeys, inputValueType, config);
+    }
   }
 }

@@ -410,13 +410,12 @@ CREATE TABLE `Orders` (
 )
 WITH (
   'connector' = 'upsert-kafka',
-  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-Orders',
-  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.fields-include' = 'ALL',
   'value.format' = 'flexible-json'
 )
 === SelectCustomers
@@ -570,6 +569,7 @@ LIKE `_Customer__schema`
 ID:          mysink.customersink
 Type:        export
 Stage:       flink
+Connector:   print
 ---
 Inputs:
  - default_catalog.default_database.TemporalJoin
@@ -764,13 +764,12 @@ CREATE TABLE `Orders` (
 )
 WITH (
   'connector' = 'upsert-kafka',
-  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-Orders',
-  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.fields-include' = 'ALL',
   'value.format' = 'flexible-json'
 );
 CREATE VIEW `CustomerTimeWindow`
@@ -840,7 +839,6 @@ CREATE TABLE `Customer_3` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
@@ -903,7 +901,6 @@ CREATE TABLE `CustomerSubscription_7` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
@@ -1122,6 +1119,8 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
       "config" : { }
     },
     {
@@ -1131,6 +1130,8 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
       "config" : { }
     },
     {
@@ -1140,6 +1141,10 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [
+        "orderid"
+      ],
+      "messageSchema" : "",
       "config" : {
         "retention.ms" : "129600000"
       }

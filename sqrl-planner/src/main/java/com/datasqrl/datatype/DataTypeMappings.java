@@ -37,4 +37,6 @@ public class DataTypeMappings {
       new SimpleMapper(new vector_to_double(), Optional.empty());
   public static DataTypeMapping.Mapper TO_BYTES_ONLY =
       new SimpleMapper(new serialize_to_bytes(), Optional.empty());
+  public static DataTypeMapping.Mapper CAST_TIMESTAMP_LTZ =
+      new SimpleMapper(new vector_to_double(), Optional.empty());
 }

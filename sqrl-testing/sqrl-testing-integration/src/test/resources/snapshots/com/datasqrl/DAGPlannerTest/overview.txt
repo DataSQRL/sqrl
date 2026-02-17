@@ -205,7 +205,6 @@ CREATE TABLE `SimpleOrders` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -244,6 +243,7 @@ CREATE VIEW `UnnestOrders` AS  SELECT o.id, o.customerid, o.`time`, e.productid,
 ID:          mysink.customersink
 Type:        export
 Stage:       flink
+Connector:   print
 ---
 Inputs:
  - default_catalog.default_database.CustomerImport
@@ -308,7 +308,6 @@ CREATE TABLE `SimpleOrders` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -405,7 +404,6 @@ CREATE TABLE `LargeOrders_4` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
@@ -520,6 +518,8 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
       "config" : { }
     },
     {
@@ -529,6 +529,8 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
       "config" : { }
     }
   ],

@@ -25,6 +25,7 @@ public final class EnvVariableNames {
   public static final String DUCKDB_EXTENSIONS_DIR = "DUCKDB_EXTENSIONS_DIR";
 
   public static final String KAFKA_BOOTSTRAP_SERVERS = "KAFKA_BOOTSTRAP_SERVERS";
+  public static final String KAFKA_REGISTRY_URL = "KAFKA_REGISTRY_URL";
   public static final String KAFKA_GROUP_ID = "KAFKA_GROUP_ID";
 
   public static final String POSTGRES_VERSION = "POSTGRES_VERSION";

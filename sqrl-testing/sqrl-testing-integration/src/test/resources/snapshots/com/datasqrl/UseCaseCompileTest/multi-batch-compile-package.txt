@@ -15,6 +15,7 @@ Inputs:
 ID:          tables.sink_a
 Type:        export
 Stage:       flink
+Connector:   print
 ---
 Inputs:
  - default_catalog.default_database.Src
@@ -23,6 +24,7 @@ Inputs:
 ID:          tables.sink_b
 Type:        export
 Stage:       flink
+Connector:   print
 ---
 Inputs:
  - default_catalog.default_database.Src

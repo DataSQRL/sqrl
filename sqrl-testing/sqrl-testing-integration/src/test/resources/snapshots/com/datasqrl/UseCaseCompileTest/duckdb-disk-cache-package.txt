@@ -215,6 +215,7 @@ WITH (
   'catalog-table' = '_MyApplications1',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
+  'format-version' = '2',
   'warehouse' = '/tmp/duckdb-with-cache',
   'write.parquet.page-size-bytes' = '1000'
 );
@@ -233,6 +234,7 @@ WITH (
   'catalog-table' = '_MyApplications2',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
+  'format-version' = '2',
   'warehouse' = '/tmp/duckdb-with-cache',
   'write.parquet.page-size-bytes' = '1000'
 );

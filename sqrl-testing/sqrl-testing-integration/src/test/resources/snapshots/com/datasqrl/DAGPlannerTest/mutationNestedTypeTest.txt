@@ -54,13 +54,12 @@ CREATE TABLE `NestedCustomers` (
 )
 WITH (
   'connector' = 'upsert-kafka',
-  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-NestedCustomers',
-  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.fields-include' = 'ALL',
   'value.format' = 'flexible-json'
 )
 === Orders
@@ -134,13 +133,12 @@ CREATE TABLE `NestedCustomers` (
 )
 WITH (
   'connector' = 'upsert-kafka',
-  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-NestedCustomers',
-  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.fields-include' = 'ALL',
   'value.format' = 'flexible-json'
 );
 CREATE VIEW `CustomerData`
@@ -215,6 +213,10 @@ INSERT INTO `default_catalog`.`default_database`.`NestedCustomers_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
+      "messageKeys" : [
+        "customerid"
+      ],
+      "messageSchema" : "",
       "config" : { }
     }
   ],

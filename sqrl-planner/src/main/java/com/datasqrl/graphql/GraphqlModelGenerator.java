@@ -19,8 +19,8 @@ import static com.datasqrl.graphql.util.GraphqlCheckUtil.checkState;
 import static com.datasqrl.graphql.util.GraphqlSchemaUtil.hasVaryingCase;
 
 import com.datasqrl.engine.database.relational.ExecutableJdbcReadQuery;
+import com.datasqrl.engine.log.kafka.KafkaLogEngine;
 import com.datasqrl.engine.log.kafka.KafkaQuery;
-import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.jdbc.SchemaConstants;
 import com.datasqrl.graphql.server.MutationInsertType;
@@ -106,12 +106,12 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
       FieldDefinition atField, TypeDefinitionRegistry registry, MutationQuery mutation) {
     var computedColumns = mutation.getComputedColumns();
     var returnList = GraphqlSchemaUtil.isListType(atField.getType());
-    if (mutation.getCreateTopic() instanceof NewTopic newTopic) {
+    if (mutation.getCreateTopic() instanceof KafkaLogEngine.Table mutationTopic) {
       mutations.add(
           new KafkaMutationCoords(
               atField.getName(),
               returnList,
-              newTopic.getTopicName(),
+              mutationTopic.topicName(),
               computedColumns,
               mutation.getInsertType() == MutationInsertType.TRANSACTION,
               Map.of()));

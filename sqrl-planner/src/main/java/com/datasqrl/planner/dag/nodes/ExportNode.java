@@ -18,6 +18,7 @@ package com.datasqrl.planner.dag.nodes;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
+import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
@@ -32,18 +33,21 @@ public class ExportNode extends PipelineNode {
 
   private final Optional<ExecutionStage> sinkTo;
   private final Optional<ObjectIdentifier> createdSinkTable;
+  private final Optional<FlinkConnectorConfig> connectorConfig;
 
   public ExportNode(
       Map<ExecutionStage, StageAnalysis> stageAnalysis,
       NamePath sinkPath,
       int batchIndex,
       Optional<ExecutionStage> sinkTo,
-      Optional<ObjectIdentifier> createdSinkTable) {
+      Optional<ObjectIdentifier> createdSinkTable,
+      Optional<FlinkConnectorConfig> connectorConfig) {
     super("export", stageAnalysis);
     this.sinkPath = sinkPath;
     this.batchIndex = batchIndex;
     this.sinkTo = sinkTo;
     this.createdSinkTable = createdSinkTable;
+    this.connectorConfig = connectorConfig;
   }
 
   @Override

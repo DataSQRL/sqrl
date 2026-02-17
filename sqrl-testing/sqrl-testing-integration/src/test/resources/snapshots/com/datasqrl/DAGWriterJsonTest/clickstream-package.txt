@@ -4,6 +4,7 @@
   "name" : "Click",
   "type" : "query",
   "stage" : "postgres",
+  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Click" ],
   "annotations" : [ {
     "name" : "stream-root",
@@ -19,6 +20,7 @@
   "name" : "Recommendation",
   "type" : "query",
   "stage" : "postgres",
+  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Recommendation" ],
   "annotations" : [ {
     "name" : "parameters",
@@ -34,6 +36,7 @@
   "name" : "Trending",
   "type" : "query",
   "stage" : "postgres",
+  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Trending" ],
   "annotations" : [ {
     "name" : "base-table",
@@ -46,6 +49,7 @@
   "name" : "VisitAfter",
   "type" : "query",
   "stage" : "postgres",
+  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.VisitAfter" ],
   "annotations" : [ {
     "name" : "base-table",
@@ -58,6 +62,7 @@
   "name" : "Click",
   "type" : "stream",
   "stage" : "flink",
+  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Click__base" ],
   "annotations" : [ {
     "name" : "stream-root",
@@ -82,6 +87,7 @@
   "name" : "Click",
   "type" : "import",
   "stage" : "flink",
+  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/click.jsonl",
@@ -93,6 +99,7 @@
   "name" : "Recommendation",
   "type" : "state",
   "stage" : "flink",
+  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.VisitAfter" ],
   "annotations" : [ {
     "name" : "sort",
@@ -117,6 +124,7 @@
   "name" : "Trending",
   "type" : "state",
   "stage" : "flink",
+  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Click" ],
   "annotations" : [ {
     "name" : "sort",
@@ -138,6 +146,7 @@
   "name" : "VisitAfter",
   "type" : "stream",
   "stage" : "flink",
+  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Click" ],
   "annotations" : [ ],
   "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4])\n  LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
