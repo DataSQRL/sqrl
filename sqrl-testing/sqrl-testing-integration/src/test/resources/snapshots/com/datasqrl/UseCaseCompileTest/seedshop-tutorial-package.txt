@@ -403,6 +403,7 @@ ID:          local-sink.promotion
 Type:        export
 Stage:       flink
 Connector:   filesystem
+---
 Inputs:
  - default_catalog.default_database.CustomerPromotion
 

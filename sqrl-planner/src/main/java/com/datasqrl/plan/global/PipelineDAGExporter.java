@@ -338,7 +338,7 @@ public class PipelineDAGExporter {
 
     @Override
     public String toString() {
-      return getBaseHeaderString() + connectorString() + getBaseListsString();
+      return getBaseHeaderString() + connectorString() + "---" + LINEBREAK + getBaseListsString();
     }
   }
 

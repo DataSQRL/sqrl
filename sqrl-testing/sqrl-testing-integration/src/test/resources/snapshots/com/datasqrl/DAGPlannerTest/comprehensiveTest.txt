@@ -570,6 +570,7 @@ ID:          mysink.customersink
 Type:        export
 Stage:       flink
 Connector:   print
+---
 Inputs:
  - default_catalog.default_database.TemporalJoin
 
@@ -577,6 +578,7 @@ Inputs:
 ID:          print.TimeWindow
 Type:        export
 Stage:       flink
+---
 Inputs:
  - default_catalog.default_database.CustomerTimeWindow
 

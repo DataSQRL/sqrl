@@ -4,6 +4,7 @@ ID:          CustomerExport
 Type:        export
 Stage:       flink
 Connector:   kafka
+---
 Inputs:
  - default_catalog.default_database.CustomerSubset
 
@@ -167,6 +168,7 @@ LIKE `Orders__schema`
 ID:          log.DistinctStream
 Type:        export
 Stage:       flink
+---
 Inputs:
  - default_catalog.default_database.DistinctCustomer
 
@@ -174,6 +176,7 @@ Inputs:
 ID:          log.JoinStream
 Type:        export
 Stage:       flink
+---
 Inputs:
  - default_catalog.default_database.JoinStream
 

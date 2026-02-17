@@ -147,6 +147,7 @@ Annotations:
 ID:          logger.Result
 Type:        export
 Stage:       flink
+---
 Inputs:
  - default_catalog.default_database.EnrichedSensorReading
 
@@ -154,6 +155,7 @@ Inputs:
 ID:          logger.SensorReading
 Type:        export
 Stage:       flink
+---
 Inputs:
  - default_catalog.default_database.SensorReading
 
@@ -161,6 +163,7 @@ Inputs:
 ID:          logger.SensorUpdates
 Type:        export
 Stage:       flink
+---
 Inputs:
  - default_catalog.default_database.SensorUpdates
 

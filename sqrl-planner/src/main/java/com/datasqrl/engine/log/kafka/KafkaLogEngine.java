@@ -162,12 +162,13 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         Context.builder().tableName(originalTableName).tableId(tableBuilder.getTableName());
     var conf = isMutation ? mutationConnectorConf : streamConnectorConf;
     boolean isUpsert = false;
-    List<String> explicitMessageKey = List.of();
-    Map<String, String> topicConfig = new HashMap<>();
+    var messageKey = List.<String>of();
+    var topicConfig = new HashMap<String, String>();
+
     if (tableBuilder.hasPartition()) {
-      explicitMessageKey = tableBuilder.getPartition();
+      messageKey = tableBuilder.getPartition();
     }
-    var messageKey = explicitMessageKey;
+
     if (tableBuilder.hasPrimaryKey()) {
       // Kafka only supports upserts on state tables
       if (tableAnalysis.map(TableAnalysis::getType).orElse(TableType.STATE).isState()) {
@@ -178,6 +179,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         tableBuilder.removePrimaryKey();
       }
     }
+
     if (isMutation) {
       // Set watermark column for mutations based on 'timestamp' metadata
       for (SqlNode node : tableBuilder.getColumnList().getList()) {
@@ -194,7 +196,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         }
       }
     }
-    Map<String, String> connectorConfig = conf.toMapWithSubstitution(ctxBuilder.build());
+
+    var connectorConfig = conf.toMapWithSubstitution(ctxBuilder.build());
     // Configure format depending on type
     String format = connectorConfig.get(FlinkConnectorConfig.FORMAT_KEY);
     Preconditions.checkArgument(
@@ -202,20 +205,22 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         "Need to configure a 'format' for connector {}",
         KafkaLogEngineFactory.ENGINE_NAME);
 
-    if (!explicitMessageKey.isEmpty()) {
-      connectorConfig.put("key.fields", String.join(";", explicitMessageKey));
+    if (!messageKey.isEmpty() && !isUpsert) {
+      connectorConfig.put("key.fields", String.join(";", messageKey));
     }
+
     if (isUpsert) {
       connectorConfig.put(
           FlinkConnectorConfig.CONNECTOR_KEY,
           UPSERT_FORMAT.formatted(connectorConfig.get(FlinkConnectorConfig.CONNECTOR_KEY)));
     }
+
     if (!messageKey.isEmpty()) {
       connectorConfig.remove(FlinkConnectorConfig.FORMAT_KEY);
       connectorConfig.put(FlinkConnectorConfig.KEY_FORMAT_KEY, format);
       connectorConfig.put(FlinkConnectorConfig.VALUE_FORMAT_KEY, format);
       connectorConfig.put(
-          "value.fields-include", "ALL"); // it's slightly less efficient, but easier for debugging
+          "value.fields-include", "ALL"); // it's slightly less efficient but easier for debugging
       // Extract format-specific options and re-assign them with key. and value. prefixes
       Map<String, String> formatOptions = new HashMap<>();
       for (java.util.Iterator<Map.Entry<String, String>> it = connectorConfig.entrySet().iterator();
@@ -360,7 +365,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         table.config());
   }
 
-  public static record Table(
+  public record Table(
       String topicName,
       String tableName,
       String format,

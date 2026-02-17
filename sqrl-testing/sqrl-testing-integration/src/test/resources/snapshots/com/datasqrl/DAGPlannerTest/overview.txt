@@ -244,6 +244,7 @@ ID:          mysink.customersink
 Type:        export
 Stage:       flink
 Connector:   print
+---
 Inputs:
  - default_catalog.default_database.CustomerImport
 
@@ -251,6 +252,7 @@ Inputs:
 ID:          print.Unnestorders
 Type:        export
 Stage:       flink
+---
 Inputs:
  - default_catalog.default_database.UnnestOrders
 
