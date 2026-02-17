@@ -315,8 +315,7 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
       "replicationFactor" : 3,
       "type" : "MUTATION",
       "messageKeys" : [ ],
-      "keySchema" : "",
-      "valueSchema" : "",
+      "messageSchema" : "",
       "config" : { }
     },
     {
@@ -327,8 +326,7 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
       "replicationFactor" : 3,
       "type" : "MUTATION",
       "messageKeys" : [ ],
-      "keySchema" : "",
-      "valueSchema" : "",
+      "messageSchema" : "",
       "config" : { }
     }
   ],

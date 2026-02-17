@@ -291,8 +291,7 @@ INSERT INTO `default_catalog`.`default_database`.`StreamJoin_2`
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
       "messageKeys" : [ ],
-      "keySchema" : "",
-      "valueSchema" : "",
+      "messageSchema" : "",
       "config" : { }
     }
   ],
@@ -304,8 +303,7 @@ INSERT INTO `default_catalog`.`default_database`.`StreamJoin_2`
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
       "messageKeys" : [ ],
-      "keySchema" : "",
-      "valueSchema" : "",
+      "messageSchema" : "",
       "config" : { }
     },
     {
@@ -315,8 +313,7 @@ INSERT INTO `default_catalog`.`default_database`.`StreamJoin_2`
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
       "messageKeys" : [ ],
-      "keySchema" : "",
-      "valueSchema" : "",
+      "messageSchema" : "",
       "config" : { }
     }
   ]

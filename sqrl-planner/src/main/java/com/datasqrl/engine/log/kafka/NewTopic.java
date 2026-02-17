@@ -33,17 +33,36 @@ public class NewTopic implements EngineCreateTable {
   }
 
   private String topicName;
+
+  /**
+   * The name of the table for this mutation or subscription which can differ from the topic name
+   */
   private String tableName;
+
+  /** The format as defined in the FlinkSQL connector format option */
   private String format;
+
   private int numPartitions;
   private short replicationFactor;
   private Type type;
+
+  /**
+   * Fields from the message body/value that form the key of a message. Empty if there is no message
+   * key
+   */
   private List<String> messageKeys;
-  private String keySchema;
-  private String valueSchema;
+
+  /**
+   * We make the simplifying assumption that all fields are included in the message body/value which
+   * is described by the messageSchema. The schema for the message key can thus be derived by
+   * selecting the messageKeys from the messageSchema.
+   */
+  private String messageSchema;
+
+  /** Additional configuration options that are passed through to the engine */
   private Map<String, String> config;
 
   public NewTopic(String topicName, String tableName) {
-    this(topicName, tableName, null, 1, (short) 3, Type.SUBSCRIPTION, List.of(), "", "", Map.of());
+    this(topicName, tableName, null, 1, (short) 3, Type.SUBSCRIPTION, List.of(), "", Map.of());
   }
 }

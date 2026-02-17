@@ -73,8 +73,7 @@ END
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
       "messageKeys" : [ ],
-      "keySchema" : "",
-      "valueSchema" : "",
+      "messageSchema" : "",
       "config" : { }
     }
   ],

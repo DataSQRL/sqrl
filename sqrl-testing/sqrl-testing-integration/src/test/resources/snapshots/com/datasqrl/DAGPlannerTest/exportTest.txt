@@ -242,7 +242,6 @@ CREATE TABLE `CustomerExport` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -290,13 +289,11 @@ CREATE TABLE `DistinctStream_3` (
 )
 WITH (
   'connector' = 'upsert-kafka',
-  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-DistinctStream',
   'value.fields-include' = 'ALL',
-  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 );
 CREATE TABLE `DistinctCustomer_4` (
@@ -321,7 +318,6 @@ CREATE TABLE `JoinStream_5` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
@@ -403,8 +399,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerExport`
       "messageKeys" : [
         "customerid"
       ],
-      "keySchema" : "",
-      "valueSchema" : "",
+      "messageSchema" : "",
       "config" : { }
     },
     {
@@ -415,8 +410,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerExport`
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
       "messageKeys" : [ ],
-      "keySchema" : "",
-      "valueSchema" : "",
+      "messageSchema" : "",
       "config" : { }
     }
   ],

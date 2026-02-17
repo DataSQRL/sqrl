@@ -745,8 +745,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
       "replicationFactor" : 3,
       "type" : "SUBSCRIPTION",
       "messageKeys" : [ ],
-      "keySchema" : "",
-      "valueSchema" : "",
+      "messageSchema" : "",
       "config" : { }
     }
   ],

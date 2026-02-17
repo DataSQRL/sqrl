@@ -85,7 +85,6 @@ CREATE TABLE `_SensorReading` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -119,14 +118,12 @@ CREATE TABLE `_Sensors` (
 )
 WITH (
   'connector' = 'upsert-kafka',
-  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-_Sensors',
   'value.fields-include' = 'ALL',
-  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 )
 >>>flink-sql-no-functions.sql
@@ -139,14 +136,12 @@ CREATE TABLE `_Sensors` (
 )
 WITH (
   'connector' = 'upsert-kafka',
-  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-_Sensors',
   'value.fields-include' = 'ALL',
-  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 );
 CREATE TABLE `_SensorReading` (
@@ -158,7 +153,6 @@ CREATE TABLE `_SensorReading` (
 )
 WITH (
   'connector' = 'kafka',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -227,8 +221,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "replicationFactor" : 3,
       "type" : "MUTATION",
       "messageKeys" : [ ],
-      "keySchema" : "",
-      "valueSchema" : "",
+      "messageSchema" : "",
       "config" : { }
     },
     {
@@ -241,8 +234,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "messageKeys" : [
         "sensorid"
       ],
-      "keySchema" : "",
-      "valueSchema" : "",
+      "messageSchema" : "",
       "config" : { }
     }
   ],

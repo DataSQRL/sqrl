@@ -23,7 +23,6 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.datatype.DataTypeMapping;
-import com.datasqrl.datatype.flink.avro.AvroFlinkFormatTypeMapper;
 import com.datasqrl.datatype.flink.json.FlexibleJsonFlinkFormatTypeMapper;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -242,7 +241,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
     tableBuilder.setConnectorOptions(connectorConfig);
     String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
-    // TODO: Add schema based on reldatatype
     return new Table(
         topicName, tableBuilder.getTableName(), format, messageKey, relDataType, topicConfig);
   }
@@ -251,8 +249,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   public DataTypeMapping getTypeMapping() {
     if (FlexibleJsonFormat.FORMAT_NAME.equalsIgnoreCase(format)) {
       return new FlexibleJsonFlinkFormatTypeMapper();
-    } else if (format.equalsIgnoreCase(AvroFlinkFormatTypeMapper.FORMAT_NAME)) {
-      return new AvroFlinkFormatTypeMapper();
+      //    keeping this for future avro support
+      //    } else if (format.equalsIgnoreCase(AvroFlinkFormatTypeMapper.FORMAT_NAME)) {
+      //      return new AvroFlinkFormatTypeMapper();
     } else {
       log.error("Unexpected format for Kafka log engine: {}", format);
       return DataTypeMapping.NONE;
@@ -342,7 +341,13 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   }
 
   private NewTopic createNewTopic(Table table, NewTopic.Type type) {
-
+    String messageSchema;
+    if (format.startsWith("avro")) {
+      messageSchema =
+          AvroToRelDataTypeConverter.convert2Avro(table.valueType, List.of()).toString();
+    } else {
+      messageSchema = ""; // TODO: generate JSON schema
+    }
     return new NewTopic(
         table.topicName(),
         table.tableName(),
@@ -351,12 +356,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         (short) 3,
         type,
         table.messageKeys(),
-        format.startsWith("avro") && !table.messageKeys.isEmpty()
-            ? AvroToRelDataTypeConverter.convert2Avro(table.valueType, table.messageKeys).toString()
-            : "",
-        format.startsWith("avro")
-            ? AvroToRelDataTypeConverter.convert2Avro(table.valueType, List.of()).toString()
-            : "",
+        messageSchema,
         table.config());
   }
 
