@@ -267,8 +267,8 @@ INSERT INTO `default_catalog`.`default_database`.`_MyApplications2_2`
   ;
   END
 >>>iceberg-duckdb-schema.sql
-CREATE TABLE IF NOT EXISTS "_MyApplications1" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL, "updated_at" TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"));
-CREATE TABLE IF NOT EXISTS "_MyApplications2" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL, "updated_at" TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"))
+CREATE TABLE IF NOT EXISTS "_MyApplications1" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"));
+CREATE TABLE IF NOT EXISTS "_MyApplications2" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"))
 >>>iceberg-duckdb-views.sql
 CREATE OR REPLACE VIEW "MyTable1"("id", "hello") AS SELECT "id", 'hello world1' AS "hello"
 FROM "iceberg_scan"('/tmp/duckdb/default_database/_MyApplications1', ALLOW_MOVED_PATHS = TRUE);
