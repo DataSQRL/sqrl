@@ -21,7 +21,11 @@ import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.calcite.avatica.util.Casing;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
+import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class DuckDbSqlDialect extends BasePostgresSqlDialect {
 
@@ -46,6 +50,22 @@ public class DuckDbSqlDialect extends BasePostgresSqlDialect {
 
   public DuckDbSqlDialect(Context context) {
     super(context);
+  }
+
+  @Override
+  public SqlDataTypeSpec getCastSpec(RelDataType type) {
+    String castSpec;
+    switch (type.getSqlTypeName()) {
+      case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+        castSpec = "TIMESTAMP WITH TIME ZONE";
+        break;
+      default:
+        return (SqlDataTypeSpec) super.getCastSpec(type);
+    }
+
+    return new SqlDataTypeSpec(
+        new SqlAlienSystemTypeNameSpec(castSpec, type.getSqlTypeName(), SqlParserPos.ZERO),
+        SqlParserPos.ZERO);
   }
 
   @Override
