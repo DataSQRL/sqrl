@@ -30,6 +30,7 @@ public class DAGWriterJsonTest extends AbstractUseCaseTest {
       List.of(
           getResourcesDirectory("usecases/clickstream"),
           getResourcesDirectory("usecases/passthrough"),
+          getResourcesDirectory("usecases/multi-batch-compile"),
           getResourcesDirectory("usecases/analytics-only"));
 
   @Override
