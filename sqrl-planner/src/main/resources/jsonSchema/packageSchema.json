@@ -339,7 +339,19 @@
       "minProperties": 1
     },
     "package": {
+      "description": "Deprecated, do not use anymore",
       "type": "object",
+      "minProperties": 1
+    },
+    "project": {
+      "description": "Project information",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "Project description",
+          "type": "string"
+        }
+      },
       "minProperties": 1
     },
     "test-runner": {
