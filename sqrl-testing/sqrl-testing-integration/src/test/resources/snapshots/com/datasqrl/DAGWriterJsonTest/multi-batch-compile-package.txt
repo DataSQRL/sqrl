@@ -1,0 +1,77 @@
+>>>pipeline_explain.json
+[ {
+  "id" : "default_catalog.default_database.Src",
+  "name" : "Src",
+  "type" : "stream",
+  "stage" : "flink",
+  "documentation" : "",
+  "inputs" : [ "default_catalog.default_database.Src__base" ],
+  "annotations" : [ ],
+  "plan" : "LogicalTableScan(table=[[default_catalog, default_database, Src]])\n",
+  "sql" : "CREATE TABLE `Src` (\n  `val` INTEGER NOT NULL\n)\nWITH (\n  'connector' = 'datagen',\n  'number-of-rows' = '5',\n  'rows-per-second' = '5',\n  'fields.val.kind' = 'random',\n  'fields.val.min' = '1',\n  'fields.val.max' = '5'\n)",
+  "timestamp" : "-",
+  "schema" : [ {
+    "name" : "val",
+    "type" : "INTEGER NOT NULL"
+  } ]
+}, {
+  "id" : "default_catalog.default_database.Src__base",
+  "name" : "Src",
+  "type" : "import",
+  "stage" : "flink",
+  "documentation" : "",
+  "connector" : {
+    "number-of-rows" : "5",
+    "connector" : "datagen",
+    "fields.val.kind" : "random",
+    "rows-per-second" : "5",
+    "fields.val.max" : "5",
+    "fields.val.min" : "1"
+  }
+}, {
+  "id" : "tables.sink_a",
+  "name" : "sink_a",
+  "type" : "export",
+  "stage" : "flink",
+  "inputs" : [ "default_catalog.default_database.Src" ],
+  "connector" : {
+    "connector" : "print"
+  }
+}, {
+  "id" : "tables.sink_b",
+  "name" : "sink_b",
+  "type" : "export",
+  "stage" : "flink",
+  "inputs" : [ "default_catalog.default_database.Src" ],
+  "connector" : {
+    "connector" : "print"
+  }
+} ]
+>>>pipeline_source.sqrl
+CREATE TABLE `Src` (
+  `val` INTEGER NOT NULL
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '5',
+  'rows-per-second' = '5',
+  'fields.val.kind' = 'random',
+  'fields.val.min' = '1',
+  'fields.val.max' = '5'
+);
+CREATE TABLE TableA (
+  val INT
+) WITH (
+  'connector' = 'print'
+);
+CREATE TABLE TableB (
+  recordCount INT
+) WITH (
+  'connector' = 'print'
+);
+INSERT INTO TableA SELECT * FROM Src;
+EXPORT Src TO tables.sink_a;
+NEXT_BATCH;
+INSERT INTO TableB SELECT * FROM Src;
+EXPORT Src TO tables.sink_b;
+
