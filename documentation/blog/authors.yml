@@ -42,3 +42,9 @@ stefan_anca:
   title: AI Consultant
   url: https://www.linkedin.com/in/stefananca/
   image_url: /img/headshots/stefan1.png
+
+ferenc:
+  name: Ferenc Csaky
+  title: Apache Flink PMC
+  url: https://github.com/ferenc-csaky
+  image_url: https://avatars.githubusercontent.com/u/17282839?v=4
