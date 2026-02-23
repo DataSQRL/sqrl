@@ -23,7 +23,11 @@ import static org.assertj.core.api.Assumptions.assumeThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -118,5 +122,69 @@ class JBangRunnerTest {
 
     assertThat(target).exists().isRegularFile();
     assertThat(Files.size(target)).isGreaterThan(0);
+  }
+
+  @Test
+  void given_fatJarWithClasspathEntries_when_stripClasspathEntries_then_removesOverlap()
+      throws IOException {
+    var cpJar = tempDir.resolve("classpath.jar");
+    try (var out = new JarOutputStream(Files.newOutputStream(cpJar))) {
+      out.putNextEntry(new JarEntry("org/apache/flink/Function.class"));
+      out.write(new byte[] {1, 2, 3});
+      out.closeEntry();
+      out.putNextEntry(new JarEntry("org/apache/kafka/Client.class"));
+      out.write(new byte[] {4, 5, 6});
+      out.closeEntry();
+    }
+
+    var fatJar = tempDir.resolve("fat.jar");
+    try (var out = new JarOutputStream(Files.newOutputStream(fatJar))) {
+      out.putNextEntry(new JarEntry("META-INF/MANIFEST.MF"));
+      out.write("Manifest-Version: 1.0\n".getBytes());
+      out.closeEntry();
+      out.putNextEntry(new JarEntry("MyUDF.class"));
+      out.write(new byte[] {10, 20, 30});
+      out.closeEntry();
+      out.putNextEntry(new JarEntry("com/google/gson/Gson.class"));
+      out.write(new byte[] {40, 50, 60});
+      out.closeEntry();
+      out.putNextEntry(new JarEntry("org/apache/flink/Function.class"));
+      out.write(new byte[] {1, 2, 3});
+      out.closeEntry();
+      out.putNextEntry(new JarEntry("org/apache/kafka/Client.class"));
+      out.write(new byte[] {4, 5, 6});
+      out.closeEntry();
+    }
+
+    var runner = JBangRunner.withClasspath(cpJar.toString());
+    runner.stripClasspathEntries(fatJar, cpJar.toString());
+
+    try (var jar = new JarFile(fatJar.toFile())) {
+      var entryNames = new HashSet<String>();
+      jar.entries().asIterator().forEachRemaining(e -> entryNames.add(e.getName()));
+
+      assertThat(entryNames)
+          .contains("META-INF/MANIFEST.MF", "MyUDF.class", "com/google/gson/Gson.class");
+      assertThat(entryNames)
+          .doesNotContain("org/apache/flink/Function.class", "org/apache/kafka/Client.class");
+    }
+  }
+
+  @Test
+  void given_emptyClasspath_when_stripClasspathEntries_then_leavesJarUnchanged()
+      throws IOException {
+    var fatJar = tempDir.resolve("fat.jar");
+    try (var out = new JarOutputStream(Files.newOutputStream(fatJar))) {
+      out.putNextEntry(new JarEntry("MyUDF.class"));
+      out.write(new byte[] {10, 20, 30});
+      out.closeEntry();
+    }
+
+    var originalSize = Files.size(fatJar);
+
+    var runner = JBangRunner.withClasspath("/nonexistent/path.jar");
+    runner.stripClasspathEntries(fatJar, "/nonexistent/path.jar");
+
+    assertThat(Files.size(fatJar)).isEqualTo(originalSize);
   }
 }
