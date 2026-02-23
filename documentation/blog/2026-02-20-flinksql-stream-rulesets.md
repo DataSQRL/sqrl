@@ -171,3 +171,11 @@ This ensures only a limited set of Calcite rules are applied during the compiled
 As an alternative, you can selectively disable Calcite rules in your own instrumentation framework for Flink. Check out this [code snippet](/tbd) to see what rules we are disabling. We highly recommend that you produce a compiled plan for your FlinkSQL jobs for introspection and predictability. You can use the open-source [Flink SQL Runner](https://github.com/DataSQRL/flink-sql-runner) to execute compiled plans.
 
 In effect, it allows you to define a streaming-specific optimization ruleset, rather than relying solely on optimizations designed primarily for traditional query workloads.
+
+## What's Next?
+
+While the ruleset tweaks described above address most cases of subgraph duplication in streaming FlinkSQL, we still have some more work to do for certain edge cases.
+
+In particular, SQL constructs that introduce correlation variables (e.g. `UNNEST`) into the Calcite logical plan do not get deduplicated yet because correlation variable have a static counter that makes each variable unique.
+
+We implemented a normalization algorithm for correlation variables and are looking for ways to contribute it directly to the Apache Flink project.
