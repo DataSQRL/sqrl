@@ -1,10 +1,9 @@
 ---
-slug: flinksql-stream-ruleset
+slug: Flink SQL-stream-ruleset
 title: "Avoiding Duplicate Processing in Flink SQL Streaming Jobs"
 authors: [ferenc, matthias]
-tags: [flinksql]
+tags: [Flink]
 ---
-
 
 <head>
   <meta property="og:image" content="/img/blog/subgraph_elimination_after.png" />
@@ -137,12 +136,12 @@ In traditional SQL systems, this behavior is desirable because it avoids process
 
 For our simple application, it is much more efficient to compute the temporal join once and enrich the clickstream with all the ad metadata we need downstream. That eliminates an operator and redundant data processing. More importantly, it cuts the number of state requests to RocksDB in half which is the primary bottleneck for this job.
 
-## Fixing Job-Graph Duplication in FlinkSQL
+## Fixing Job-Graph Duplication in Flink SQL
 
 Apache Flink already provides two important building blocks to eliminate this wasteful duplication:
 
-* Subgraph elimination within the physical Relnode graph to remove duplicate processing.
-* Compile plans, which generate a static artifact representing the generated job graph from FlinkSQL.
+* Subgraph elimination within the physical `RelNode` graph to remove duplicate processing.
+* Compile plans, which generate a static artifact representing the generated job graph from Flink SQL.
 
 The compile plan is especially useful because it allows validation of the generated job graph at compile time and assigns stable operator IDs. That's important for job evolution by preserving state mappings across job changes or Flink version upgrades.
 
@@ -150,9 +149,9 @@ The compile plan is especially useful because it allows validation of the genera
 
 The issue lies in how the Calcite optimizer applies certain optimization rules, particularly those related to projection pruning and filter pushdown. These are the most likely culprits for causing minor differences in the optimized versions of shared logical plans.
 
-In many real-world streaming scenarios with multiple sinks, these rules prevent effective subgraph elimination because they cause subtle difference in the Relnode graph whereas the subgraph elimination requires strict equality.
+In many real-world streaming scenarios with multiple sinks, these rules prevent effective subgraph elimination because they cause subtle difference in the `RelNode` graph whereas the subgraph elimination requires strict equality.
 
-The solution is to selectively disable specific Calcite rules so that intermediate views do not get optimized for each Relnode tree and remain identical. Identical Relnode trees are then removed during the subgraph elimination phase of the FlinkSQL optimizer.
+The solution is to selectively disable specific Calcite rules so that intermediate views do not get optimized for each `RelNode` tree and remain identical. Identical `RelNode` trees are then removed during the subgraph elimination phase of the Flink SQL optimizer.
 
 <img src="/img/blog/subgraph_elimination_after.png" alt="Duplicate Temporal Join" width="100%"/>
 
@@ -166,15 +165,15 @@ An easy way to remove job graph duplication is to use the [DataSQRL compiler](ht
 ```
 
 This ensures only a limited set of Calcite rules are applied during the compiled plan optimization.
-[DataSQRL](https://docs.datasqrl.com/) is a data automation framework that compiles FlinkSQL to data pipelines and it can compile your FlinkSQL to a compiled plan with a single command you execute locally. For more information, check out the [getting started](https://docs.datasqrl.com/docs/intro/getting-started) tutorial.
+[DataSQRL](https://docs.datasqrl.com/) is a data automation framework that compiles Flink SQL to data pipelines and it can compile your Flink SQL to a compiled plan with a single command you execute locally. For more information, check out the [getting started](https://docs.datasqrl.com/docs/intro/getting-started) tutorial.
 
-As an alternative, you can selectively disable Calcite rules in your own instrumentation framework for Flink. Check out this [code snippet](/tbd) to see what rules we are disabling. We highly recommend that you produce a compiled plan for your FlinkSQL jobs for introspection and predictability. You can use the open-source [Flink SQL Runner](https://github.com/DataSQRL/flink-sql-runner) to execute compiled plans.
+As an alternative, you can selectively disable Calcite rules in your own instrumentation framework for Flink. Check out this [code snippet](https://github.com/DataSQRL/sqrl/blob/release-0.9/sqrl-planner/src/main/java/com/datasqrl/planner/FlinkPlannerConfigBuilder.java) to see what rules we are disabling. We highly recommend that you produce a compiled plan for your Flink SQL jobs for introspection and predictability. You can use the open-source [Flink SQL Runner](https://github.com/DataSQRL/flink-sql-runner) to execute compiled plans.
 
 In effect, it allows you to define a streaming-specific optimization ruleset, rather than relying solely on optimizations designed primarily for traditional query workloads.
 
 ## What's Next?
 
-While the ruleset tweaks described above address most cases of subgraph duplication in streaming FlinkSQL, we still have some more work to do for certain edge cases.
+While the ruleset tweaks described above address most cases of subgraph duplication in streaming Flink SQL, we still have some more work to do for certain edge cases.
 
 In particular, SQL constructs that introduce correlation variables (e.g. `UNNEST`) into the Calcite logical plan do not get deduplicated yet because correlation variable have a static counter that makes each variable unique.
 
