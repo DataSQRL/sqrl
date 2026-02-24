@@ -1,5 +1,5 @@
 ---
-slug: Flink SQL-stream-ruleset
+slug: flink-sql-stream-ruleset
 title: "Avoiding Duplicate Processing in Flink SQL Streaming Jobs"
 authors: [ferenc, matthias]
 tags: [Flink]
