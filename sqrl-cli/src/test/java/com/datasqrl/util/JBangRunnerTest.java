@@ -171,6 +171,57 @@ class JBangRunnerTest {
   }
 
   @Test
+  void given_fatJarWithMetaInfFromClasspath_when_stripClasspathEntries_then_stripsNonManifest()
+      throws IOException {
+    var cpJar = tempDir.resolve("classpath.jar");
+    try (var out = new JarOutputStream(Files.newOutputStream(cpJar))) {
+      out.putNextEntry(new JarEntry("META-INF/native/libsnowflake.so"));
+      out.write(new byte[] {1, 2, 3, 4, 5});
+      out.closeEntry();
+      out.putNextEntry(new JarEntry("META-INF/services/some.Service"));
+      out.write("com.example.Impl\n".getBytes());
+      out.closeEntry();
+      out.putNextEntry(new JarEntry("org/apache/flink/Function.class"));
+      out.write(new byte[] {1, 2, 3});
+      out.closeEntry();
+    }
+
+    var fatJar = tempDir.resolve("fat.jar");
+    try (var out = new JarOutputStream(Files.newOutputStream(fatJar))) {
+      out.putNextEntry(new JarEntry("META-INF/MANIFEST.MF"));
+      out.write("Manifest-Version: 1.0\n".getBytes());
+      out.closeEntry();
+      out.putNextEntry(new JarEntry("META-INF/native/libsnowflake.so"));
+      out.write(new byte[] {1, 2, 3, 4, 5});
+      out.closeEntry();
+      out.putNextEntry(new JarEntry("META-INF/services/some.Service"));
+      out.write("com.example.Impl\n".getBytes());
+      out.closeEntry();
+      out.putNextEntry(new JarEntry("MyUDF.class"));
+      out.write(new byte[] {10, 20, 30});
+      out.closeEntry();
+      out.putNextEntry(new JarEntry("org/apache/flink/Function.class"));
+      out.write(new byte[] {1, 2, 3});
+      out.closeEntry();
+    }
+
+    var runner = JBangRunner.withClasspath(cpJar.toString());
+    runner.stripClasspathEntries(fatJar, cpJar.toString());
+
+    try (var jar = new JarFile(fatJar.toFile())) {
+      var entryNames = new HashSet<String>();
+      jar.entries().asIterator().forEachRemaining(e -> entryNames.add(e.getName()));
+
+      assertThat(entryNames).contains("META-INF/MANIFEST.MF", "MyUDF.class");
+      assertThat(entryNames)
+          .doesNotContain(
+              "META-INF/native/libsnowflake.so",
+              "META-INF/services/some.Service",
+              "org/apache/flink/Function.class");
+    }
+  }
+
+  @Test
   void given_emptyClasspath_when_stripClasspathEntries_then_leavesJarUnchanged()
       throws IOException {
     var fatJar = tempDir.resolve("fat.jar");

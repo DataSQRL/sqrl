@@ -108,7 +108,7 @@ public class JBangRunner {
       var entries = inJar.entries();
       while (entries.hasMoreElements()) {
         var entry = entries.nextElement();
-        if (entry.getName().startsWith("META-INF/")
+        if (entry.getName().equals("META-INF/MANIFEST.MF")
             || !classpathEntryNames.contains(entry.getName())) {
           outJar.putNextEntry(new JarEntry(entry.getName()));
           try (var is = inJar.getInputStream(entry)) {
