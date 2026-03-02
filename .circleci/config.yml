@@ -417,6 +417,14 @@ jobs:
             build_and_push cmd         sqrl-cli                      --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg BASE_TAG=$BASE_TAG
             build_and_push sqrl-server sqrl-server/sqrl-server-vertx --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
 
+  build:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: Build completed successfully
+          command: echo "All jobs completed successfully"
+
   docker-build-duckdb-extensions:
     machine:
       image: ubuntu-2404:current
@@ -604,4 +612,11 @@ workflows:
               ignore: /.*/
           requires:
             - download-maven-dependencies
-
+      - build:
+          <<: *job-defaults
+          requires:
+            - container-e2e-test
+            - integration-tests
+            - build-images
+            - deploy
+            - unit-tests
