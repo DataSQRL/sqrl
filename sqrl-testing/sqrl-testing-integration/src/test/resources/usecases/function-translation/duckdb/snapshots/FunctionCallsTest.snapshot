@@ -28,6 +28,7 @@
       "regexp_example" : false,
       "split_index_example" : "b",
       "json_quote_example" : "\"hello \\\"json\\\"\"",
+      "json_object_kv_example" : "{\"k1\":\"v1\",\"k2\":\"v2\"}",
       "elt_example" : "second",
       "try_cast_to_int_example" : 123,
       "try_cast_to_bigint_example" : 112233445566778899,
