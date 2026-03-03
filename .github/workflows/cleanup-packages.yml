@@ -1,10 +1,10 @@
 name: Cleanup Package Versions
 
 on:
+  workflow_dispatch: # Allow manual triggering
   schedule:
     # Run every Monday at 2 AM UTC
-    - cron: '0 2 * * 1'
-  workflow_dispatch: # Allow manual triggering
+    - cron: '0 0 * * 0'
 
 jobs:
   discover-and-cleanup-maven-packages:
@@ -127,27 +127,10 @@ jobs:
               for endpoint in "orgs/DataSQRL" "user"; do
                 echo "Trying endpoint: $endpoint"
 
-                # Delete untagged versions
-                echo "Fetching untagged versions for $package_name..."
-                untagged_versions=$(gh api \
-                  --method GET \
-                  -H "Accept: application/vnd.github+json" \
-                  "/$endpoint/packages/container/$package_name/versions" \
-                  --jq '.[] | select(.metadata.container.tags | length == 0) | .id' 2>/dev/null || echo "")
-
-                if [ -n "$untagged_versions" ]; then
-                  echo "$untagged_versions" | while read -r version_id; do
-                    if [ -n "$version_id" ]; then
-                      echo "Deleting untagged version ID: $version_id"
-                      gh api \
-                        --method DELETE \
-                        -H "Accept: application/vnd.github+json" \
-                        "/$endpoint/packages/container/$package_name/versions/$version_id" || echo "Failed to delete version $version_id"
-                    fi
-                  done
-                else
-                  echo "No untagged versions found for $package_name"
-                fi
+                # Note: We don't delete "untagged" versions because in multi-arch images,
+                # each architecture (amd64, arm64, etc.) is stored as a separate version
+                # without tags, but is required for the multi-arch manifest to work.
+                # Deleting these breaks multi-arch containers.
 
                 # Delete tagged versions older than 30 days (excluding dev, latest, and semver tags)
                 echo "Fetching tagged versions older than $cutoff_date for $package_name (excluding dev, latest, and semver tags)..."
@@ -172,7 +155,7 @@ jobs:
                 fi
 
                 # If we found versions, break out of endpoint loop
-                if [ -n "$untagged_versions" ] || [ -n "$old_tagged_versions" ]; then
+                if [ -n "$old_tagged_versions" ]; then
                   break
                 fi
               done
