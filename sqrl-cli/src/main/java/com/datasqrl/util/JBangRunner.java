@@ -122,7 +122,7 @@ public class JBangRunner {
     var originalSize = Files.size(fatJar);
     Files.move(tempJar, fatJar, StandardCopyOption.REPLACE_EXISTING);
     var newSize = Files.size(fatJar);
-    log.info("Stripped classpath entries from fat JAR: {} -> {} bytes", originalSize, newSize);
+    log.debug("Stripped classpath entries from fat JAR: {} -> {} bytes", originalSize, newSize);
   }
 
   private Set<String> collectJarEntryNames(String classpath) throws IOException {
