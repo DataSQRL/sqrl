@@ -32,15 +32,21 @@ public class JwtFailureHandler implements Handler<RoutingContext> {
     var errorCause =
         throwable == null ? "Unknown error" : ExceptionUtils.getRootCauseMessage(throwable);
 
-    log.warn(
-        "JWT authentication failed for request {} {}: {} (status: {})",
-        ctx.request().method(),
-        ctx.request().path(),
-        errorCause,
-        statusCode);
-
     if (throwable != null) {
-      log.debug("JWT authentication failure details", throwable);
+      log.warn(
+          "JWT authentication failed for request {} {}: {} (status: {})",
+          ctx.request().method(),
+          ctx.request().path(),
+          errorCause,
+          statusCode,
+          throwable);
+    } else {
+      log.warn(
+          "JWT authentication failed for request {} {}: {} (status: {})",
+          ctx.request().method(),
+          ctx.request().path(),
+          errorCause,
+          statusCode);
     }
 
     var response =
