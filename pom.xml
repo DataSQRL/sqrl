@@ -119,13 +119,13 @@
     <avro.version>1.12.1</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
     <aws-msk-iam-auth.version>2.3.5</aws-msk-iam-auth.version>
-    <aws-sdk-bom.version>2.42.0</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.42.4</aws-sdk-bom.version>
     <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-csv.version>1.14.1</commons-csv.version>
     <commons-exec.version>1.6.0</commons-exec.version>
     <commons-io.version>2.21.0</commons-io.version>
     <duckdb.version>1.4.4.0</duckdb.version>
-    <feign.version>13.8</feign.version>
+    <feign.version>13.9.2</feign.version>
     <freemarker.version>2.3.34</freemarker.version>
     <glassfish.version>3.0.0</glassfish.version>
     <graphql-java-extended-scalars.version>24.0</graphql-java-extended-scalars.version>
@@ -160,12 +160,12 @@
     <picocli.version>4.7.7</picocli.version>
     <postgres.version>42.7.10</postgres.version>
     <projectreactor.version>3.8.3</projectreactor.version>
-    <protobuf.version>4.33.5</protobuf.version>
+    <protobuf.version>4.34.0</protobuf.version>
     <scala.version>2.12</scala.version>
     <scram.version>2.1</scram.version>
     <slf4j.version>1.7.36</slf4j.version>
     <snowflake-jdbc.version>4.0.1</snowflake-jdbc.version>
-    <snakeyaml.version>2.5</snakeyaml.version>
+    <snakeyaml.version>2.6</snakeyaml.version>
     <swagger-core.version>2.2.43</swagger-core.version>
     <testcontainers.version>2.0.3</testcontainers.version>
     <vertx.version>5.0.8</vertx.version>
