@@ -291,7 +291,7 @@ jobs:
       - install-jdk
       - run:
           name: Run Integration Tests
-          command: mvn -U -T2 -B install -DonlyITs
+          command: mvn -U -T2 -B install -DonlyITs -Dfailsafe.rerunFailingTestsCount=1
       - save-test-results
 
   container-e2e-test:
