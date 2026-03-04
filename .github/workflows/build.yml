@@ -1,0 +1,83 @@
+name: build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'release-*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Evaluate CircleCI Workflow Status
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="${{ github.repository }}"
+          # Use the PR head SHA if available, otherwise fallback to the push SHA
+          SHA="${{ github.event.pull_request.head.sha || github.sha }}"
+
+          # Define the stages we need to wait for. Add or remove contexts as needed.
+          CONTEXTS=(
+            "ci/circleci: unit-tests"
+            "ci/circleci: integration-tests-0-2"
+            "ci/circleci: integration-tests-1-2"
+            "ci/circleci: container-e2e-test"
+            "ci/circleci: build-images"
+            "ci/circleci: deploy"
+          )
+
+          echo "Waiting for CircleCI on $SHA..."
+
+          while true; do
+            # Fetch all statuses for the SHA. Capture errors if the API is down or returns HTML.
+            if ! RAW_STATUS=$(gh api "repos/$REPO/commits/$SHA/status" 2>/dev/null); then
+              echo "GitHub API error or unreachable. Retrying in 10s..."
+              sleep 10
+              continue
+            fi
+            
+            # Ensure it is valid JSON
+            if ! echo "$RAW_STATUS" | jq empty 2>/dev/null; then
+              echo "GitHub API returned invalid JSON. Retrying in 10s..."
+              sleep 10
+              continue
+            fi
+            
+            STATUSES=$(echo "$RAW_STATUS" | jq -r '.statuses // empty')
+
+            ALL_SUCCESS=true
+            ANY_FAILED=false
+
+            for CONTEXT in "${CONTEXTS[@]}"; do
+              # Use jq to extract the state for the specific context
+              STATE=$(echo "$STATUSES" | jq -r "map(select(.context == \"$CONTEXT\")) | .[0].state // empty")
+
+              if [[ -z "$STATE" ]] || [[ "$STATE" == "pending" ]]; then
+                ALL_SUCCESS=false
+                echo "  ⏳ '$CONTEXT' is pending or not started."
+              elif [[ "$STATE" == "success" ]]; then
+                echo "  ✅ '$CONTEXT' passed."
+              else
+                echo "  ❌ '$CONTEXT' failed or errored (state: $STATE)."
+                ANY_FAILED=true
+              fi
+            done
+
+            if [[ "$ANY_FAILED" == true ]]; then
+              echo "One or more CircleCI jobs failed. Exiting with error."
+              exit 1
+            fi
+
+            if [[ "$ALL_SUCCESS" == true ]]; then
+              echo "All required CircleCI jobs passed successfully!"
+              break
+            fi
+
+            echo "Waiting 20 seconds before checking again..."
+            echo "----------------------------------------"
+            sleep 20
+          done
