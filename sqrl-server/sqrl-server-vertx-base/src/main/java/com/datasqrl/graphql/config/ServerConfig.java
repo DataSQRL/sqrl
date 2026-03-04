@@ -19,6 +19,7 @@ import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 
 import com.datasqrl.env.EnvVariableNames;
 import com.datasqrl.env.GlobalEnvironmentStore;
+import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import io.vertx.core.http.HttpServerOptions;
@@ -28,16 +29,24 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@Slf4j
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServerConfig {
+
+  private static final Set<String> RECOGNIZED_JWT_AUTH_PROPERTIES =
+      Set.of("keyStore", "pubSecKeys", "jwtOptions", "jwks");
 
   private ServletConfig servletConfig = new ServletConfig();
   private GraphQLHandlerOptions graphQLHandlerOptions = new GraphQLHandlerOptions();
@@ -120,7 +129,50 @@ public class ServerConfig {
 
   @JsonSetter("jwtAuth")
   public void setJwtAuthFromJson(Map<String, Object> options) {
-    this.jwtAuth = options == null ? null : new JWTAuthOptions(new JsonObject(options));
+    if (options == null) {
+      this.jwtAuth = null;
+      return;
+    }
+    List<String> unknown =
+        options.keySet().stream()
+            .filter(k -> !RECOGNIZED_JWT_AUTH_PROPERTIES.contains(k))
+            .filter(k -> options.get(k) != null)
+            .collect(Collectors.toList());
+    if (!unknown.isEmpty()) {
+      throw new IllegalArgumentException(
+          String.format(
+              "Invalid jwtAuth configuration: unrecognized properties %s. "
+                  + "Valid properties are: %s. "
+                  + "Check that field names use exact camelCase (e.g., 'jwtOptions' not 'jwtoptions').",
+              unknown, RECOGNIZED_JWT_AUTH_PROPERTIES));
+    }
+    this.jwtAuth = new JWTAuthOptions(new JsonObject(options));
+  }
+
+  @JsonGetter("jwtAuth")
+  public Map<String, Object> getJwtAuthAsJson() {
+    if (jwtAuth == null) {
+      return null;
+    }
+    Map<String, Object> json = new java.util.LinkedHashMap<>();
+    if (jwtAuth.getKeyStore() != null) {
+      json.put("keyStore", MAPPER.convertValue(jwtAuth.getKeyStore(), Map.class));
+    }
+    if (jwtAuth.getPubSecKeys() != null) {
+      json.put(
+          "pubSecKeys",
+          jwtAuth.getPubSecKeys().stream()
+              .map(k -> k.toJson().getMap())
+              .collect(Collectors.toList()));
+    }
+    if (jwtAuth.getJWTOptions() != null) {
+      json.put("jwtOptions", jwtAuth.getJWTOptions().toJson().getMap());
+    }
+    if (jwtAuth.getJwks() != null) {
+      json.put(
+          "jwks", jwtAuth.getJwks().stream().map(JsonObject::getMap).collect(Collectors.toList()));
+    }
+    return json;
   }
 
   ////////////////////////////////////////////////////////////////////////////////

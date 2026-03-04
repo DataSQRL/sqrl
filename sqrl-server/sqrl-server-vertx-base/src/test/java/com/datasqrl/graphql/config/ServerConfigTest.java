@@ -18,6 +18,7 @@ package com.datasqrl.graphql.config;
 import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -54,7 +55,7 @@ class ServerConfigTest {
         MAPPER.createObjectNode().put("host", "custom-host").put("port", "1234"));
     json.set("poolOptions", MAPPER.createObjectNode().put("maxSize", 20));
     json.set("corsHandlerOptions", MAPPER.createObjectNode().put("allowCredentials", true));
-    json.set("jwtAuth", MAPPER.createObjectNode().put("algorithm", "HS256"));
+    json.set("jwtAuth", MAPPER.createObjectNode().set("pubSecKeys", MAPPER.createArrayNode()));
     json.set("swaggerConfig", MAPPER.createObjectNode().put("enabled", true));
 
     var kafkaMutationConfig = MAPPER.createObjectNode();
@@ -143,5 +144,42 @@ class ServerConfigTest {
     assertThat(serverConfig.getCorsHandlerOptions().getAllowedMethods())
         .containsExactlyInAnyOrder("POST", "GET", "OPTIONS");
     assertThat(serverConfig.getCorsHandlerOptions().getAllowedHeaders()).containsExactly("*");
+  }
+
+  @Test
+  void given_jwtAuthWithUnknownProperty_when_parsed_then_failsWithClearError() {
+    var json = MAPPER.createObjectNode();
+    var jwtAuth = MAPPER.createObjectNode();
+    jwtAuth.set("pubSecKeys", MAPPER.createArrayNode());
+    jwtAuth.set("jwtoptions", MAPPER.createObjectNode().put("leeway", 60));
+    json.set("jwtAuth", jwtAuth);
+
+    assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("jwtoptions")
+        .hasMessageContaining("jwtOptions");
+  }
+
+  @Test
+  void given_jwtAuthWithAudience_when_roundTripped_then_audiencePreserved() {
+    var json = MAPPER.createObjectNode();
+    var jwtAuth = MAPPER.createObjectNode();
+    var jwtOptions = MAPPER.createObjectNode();
+    jwtOptions.put("leeway", 60);
+    jwtOptions.set(
+        "audience", MAPPER.createArrayNode().add("https://backend.api.cloud.sqrl.site/"));
+    jwtAuth.set("jwtOptions", jwtOptions);
+    json.set("jwtAuth", jwtAuth);
+
+    var config = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
+    var serialized = MAPPER.convertValue(config, Map.class);
+    @SuppressWarnings("unchecked")
+    var roundTrippedAuth = (Map<String, Object>) serialized.get("jwtAuth");
+    @SuppressWarnings("unchecked")
+    var roundTrippedOpts = (Map<String, Object>) roundTrippedAuth.get("jwtOptions");
+
+    assertThat(roundTrippedOpts.get("audience"))
+        .isEqualTo(List.of("https://backend.api.cloud.sqrl.site/"));
+    assertThat(roundTrippedOpts.get("leeway")).isEqualTo(60);
   }
 }
