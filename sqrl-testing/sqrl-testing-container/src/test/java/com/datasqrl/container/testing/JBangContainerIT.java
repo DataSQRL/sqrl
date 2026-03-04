@@ -17,6 +17,7 @@ package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,9 +36,16 @@ class JBangContainerIT extends SqrlContainerTestBase {
   }
 
   @Test
-  void givenProjectWithJBangJarExport_whenTestCommandExecuted_thenCompileAndTestSuccessful() {
+  void givenProjectWithJBangJarExport_whenTestCommandExecuted_thenCompileAndTestSuccessful()
+      throws Exception {
     var res = sqrlCmd(testDir, "test", "package.json");
 
     assertThat(res.logs()).contains("MyTableTest", "MyAsyncTableTest", "BUILD SUCCESS");
+
+    var fatJar = testDir.resolve("build/deploy/flink/lib/jbang-udfs.jar");
+    assertThat(fatJar).exists().isRegularFile();
+    assertThat(Files.size(fatJar))
+        .as("Fat JAR should only contain UDF classes and declared //DEPS, not the entire classpath")
+        .isLessThan(10_000_000L);
   }
 }
