@@ -1,0 +1,46 @@
+name: documentation
+
+on:
+  pull_request:
+    paths:
+      - 'documentation/**'
+  push:
+    branches:
+      - main
+      - 'release-*'
+    paths:
+      - 'documentation/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Init submodules and sparse checkout
+        run: |
+          git submodule update --init --depth 1
+          cd documentation/docs/stdlib-docs
+          git sparse-checkout init --cone
+          git sparse-checkout set stdlib-docs
+          git checkout main
+          git pull --ff-only origin main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: documentation/package-lock.json
+
+      - name: Install dependencies
+        working-directory: documentation
+        run: npm install
+
+      - name: Build Docusaurus site
+        working-directory: documentation
+        run: npm run build

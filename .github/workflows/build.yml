@@ -8,7 +8,37 @@ on:
       - 'release-*'
 
 jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      docs-only: ${{ steps.filter.outputs.docs-only }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect documentation-only changes
+        id: filter
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+          fi
+
+          CHANGED=$(git diff --name-only "$BASE_SHA" "${{ github.sha }}" 2>/dev/null || echo "FORCE_BUILD")
+          NON_DOC=$(echo "$CHANGED" | grep -v '^documentation/' || true)
+
+          if [ -z "$NON_DOC" ]; then
+            echo "docs-only=true" >> "$GITHUB_OUTPUT"
+            echo "Only documentation changes detected."
+          else
+            echo "docs-only=false" >> "$GITHUB_OUTPUT"
+            echo "Non-documentation changes detected."
+          fi
+
   build:
+    needs: check-changes
+    if: needs.check-changes.outputs.docs-only != 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -39,14 +69,14 @@ jobs:
               sleep 10
               continue
             fi
-            
+
             # Ensure it is valid JSON
             if ! echo "$RAW_STATUS" | jq empty 2>/dev/null; then
               echo "GitHub API returned invalid JSON. Retrying in 10s..."
               sleep 10
               continue
             fi
-            
+
             STATUSES=$(echo "$RAW_STATUS" | jq -r '.statuses // empty')
 
             ALL_SUCCESS=true
