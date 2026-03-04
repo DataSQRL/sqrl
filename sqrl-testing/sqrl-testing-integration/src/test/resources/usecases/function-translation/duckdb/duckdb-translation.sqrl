@@ -39,6 +39,9 @@ FunctionCalls := SELECT
     REGEXP('foo123bar', '\\d+')                      AS regexp_example,
     SPLIT_INDEX('a,b,c', ',', 1)                     AS split_index_example,
     JSON_QUOTE('hello "json"')                       AS json_quote_example,
+    JSON_OBJECT(
+        KEY 'k1' VALUE 'v1',
+            'k2' VALUE 'v2' NULL ON NULL)            AS json_object_kv_example,
     ELT(2, 'first', 'second', 'third')               AS elt_example,
     TRY_CAST('123' AS INT)                           AS try_cast_to_int_example,
     TRY_CAST('112233445566778899' AS BIGINT)         AS try_cast_to_bigint_example,
