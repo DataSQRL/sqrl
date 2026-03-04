@@ -15,60 +15,123 @@
  */
 package com.datasqrl.util;
 
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
+
+import com.datasqrl.UseCaseParam;
+import java.lang.reflect.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.junit.jupiter.api.extension.ConditionEvaluationResult;
-import org.junit.jupiter.api.extension.ExecutionCondition;
 import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.api.extension.InvocationInterceptor;
+import org.junit.jupiter.api.extension.ReflectiveInvocationContext;
 
 /**
- * JUnit5 extension that distributes tests across shards based on environment variables.
+ * JUnit5 extension that implements test sharding based on environment variables.
+ *
+ * <p>This extension reads the following environment variables:
  *
  * <ul>
  *   <li>{@code TEST_SHARDING_TOTAL} - Total number of shards
  *   <li>{@code TEST_SHARDING_INDEX} - Current shard index (0-based)
  * </ul>
  *
- * <p>When sharding is enabled, tests are assigned to shards using a hash of their unique ID. For
- * parameterized tests, each invocation (parameter combination) is sharded independently, preventing
- * a single shard from running all invocations of a heavy parameterized test.
+ * <p>When sharding is enabled, tests are distributed across shards using a hash-based approach. For
+ * parameterized tests, the test parameters are used for hashing. For regular tests, the test method
+ * name is used. Tests not assigned to the current shard are skipped using JUnit assumptions.
  */
 @Slf4j
-public class TestShardingExtension implements ExecutionCondition {
+public class TestShardingExtension implements InvocationInterceptor {
 
   private static final String ENV_SHARDING_TOTAL = "TEST_SHARDING_TOTAL";
   private static final String ENV_SHARDING_INDEX = "TEST_SHARDING_INDEX";
 
-  @Override
-  public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
+  private final Integer totalShards;
+  private final Integer shardIndex;
+
+  public TestShardingExtension() {
     var total = System.getenv(ENV_SHARDING_TOTAL);
     var index = System.getenv(ENV_SHARDING_INDEX);
 
     if (ObjectUtils.isEmpty(total) || ObjectUtils.isEmpty(index)) {
-      return ConditionEvaluationResult.enabled("Sharding disabled");
+      log.debug("Test sharding disabled - environment variables not set");
+      this.totalShards = null;
+      this.shardIndex = null;
+      return;
     }
 
-    int totalShards = Integer.parseInt(total);
-    int shardIndex = Integer.parseInt(index);
+    this.totalShards = Integer.parseInt(total);
+    this.shardIndex = Integer.parseInt(index);
 
-    if (context.getTestMethod().isEmpty()) {
-      return ConditionEvaluationResult.enabled("Class-level evaluation, deferring to method level");
+    log.info("Test sharding enabled: total={}, index={}", totalShards, shardIndex);
+  }
+
+  @Override
+  public void interceptTestMethod(
+      Invocation<Void> invocation,
+      ReflectiveInvocationContext<Method> invocationCtx,
+      ExtensionContext extensionCtx)
+      throws Throwable {
+
+    handleSharding(invocation, invocationCtx, extensionCtx);
+  }
+
+  @Override
+  public void interceptTestTemplateMethod(
+      Invocation<Void> invocation,
+      ReflectiveInvocationContext<Method> invocationCtx,
+      ExtensionContext extensionCtx)
+      throws Throwable {
+
+    handleSharding(invocation, invocationCtx, extensionCtx);
+  }
+
+  private void handleSharding(
+      Invocation<Void> invocation,
+      ReflectiveInvocationContext<Method> invocationCtx,
+      ExtensionContext extensionCtx)
+      throws Throwable {
+
+    if (totalShards == null) {
+      invocation.proceed();
+      return;
     }
 
-    var testIdentifier = context.getUniqueId();
-    int shardAssignment = Math.abs(testIdentifier.hashCode()) % totalShards;
+    int shardAssignment = calculateShardAssignment(invocationCtx, extensionCtx);
 
     if (shardAssignment == shardIndex) {
-      log.info("Running test {} (shard {})", testIdentifier, shardAssignment);
-      return ConditionEvaluationResult.enabled("Assigned to current shard " + shardIndex);
+      invocation.proceed();
+    } else {
+      //noinspection DataFlowIssue
+      assumeTrue(
+          false,
+          String.format(
+              "Skipping due to test sharding. Test assigned to shard %d, current shard %d",
+              shardAssignment, shardIndex));
+    }
+  }
+
+  private int calculateShardAssignment(
+      ReflectiveInvocationContext<Method> invocationCtx, ExtensionContext extensionCtx) {
+
+    var arguments = invocationCtx.getArguments();
+
+    if (arguments.isEmpty()) {
+      // Regular test: use method name + class name for shard calculation
+      var testIdentifier =
+          extensionCtx.getRequiredTestClass().getName()
+              + "#"
+              + extensionCtx.getRequiredTestMethod().getName();
+      return Math.abs(testIdentifier.hashCode()) % totalShards;
     }
 
-    log.info(
-        "Skipping test {} (assigned to shard {}, current shard {})",
-        testIdentifier,
-        shardAssignment,
-        shardIndex);
-    return ConditionEvaluationResult.disabled(
-        "Assigned to shard " + shardAssignment + ", current shard " + shardIndex);
+    // Parameterized test: check if first parameter is UseCaseParam with index
+    var testParam = arguments.get(0);
+    if (testParam instanceof UseCaseParam useCaseParam) {
+      // Use index for even distribution across shards
+      return useCaseParam.index() % totalShards;
+    }
+
+    // Fallback to hash-based approach for other parameter types
+    return Math.abs(testParam.hashCode()) % totalShards;
   }
 }
