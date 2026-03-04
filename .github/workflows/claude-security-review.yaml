@@ -1,0 +1,68 @@
+name: Claude Security Review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  claude-security-review:
+    name: Claude Security Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: "--model claude-sonnet-4-6-20250514"
+          prompt: |
+            Review this pull request for DataSQRL, a development framework for incremental and real-time
+            data processing. It compiles SQL-like SQRL scripts into data pipelines integrating Kafka, Flink,
+            PostgreSQL, Iceberg, GraphQL APIs, and LLM tooling. Built with Java 17 and Maven.
+
+            Focus your review **exclusively on security issues**:
+
+            1. **Compiler & Parser Security**:
+               - SQL injection through SQRL script compilation (Calcite/Flink parser)
+               - Unsafe template expansion or code generation
+               - Path traversal in file resolution during compilation
+               - Unsafe deserialization of compiled plans (JSON plan files)
+
+            2. **Dependency & Supply Chain**:
+               - Known vulnerable dependencies being introduced
+               - Unpinned versions in dependency declarations
+               - Unsafe dependency resolution in the packager module
+
+            3. **Server Security (sqrl-server-vertx)**:
+               - GraphQL query injection or complexity attacks
+               - Missing authentication/authorization on GraphQL endpoints
+               - Unsafe database query construction from GraphQL input
+               - CORS misconfiguration
+
+            4. **Secrets & Credentials**:
+               - Secrets committed to source (API keys, tokens, database passwords)
+               - Hardcoded credentials in configuration files
+               - Sensitive data in log output
+
+            5. **Input Validation**:
+               - Unsanitized user input in CLI arguments reaching shell or file operations
+               - Missing validation on UDF (User Defined Function) loading paths
+               - Unsafe environment variable substitution
+
+            6. **Docker & Container Security**:
+               - Containers running as root without justification
+               - Sensitive data baked into Docker images
+
+            Note: Test JWT tokens and test credentials in test resources are expected.
+            Note: The CLI intentionally accepts file paths and SQL scripts as input.
+
+            Only comment on actual security issues. Do not comment on code style, naming, or non-security concerns.
