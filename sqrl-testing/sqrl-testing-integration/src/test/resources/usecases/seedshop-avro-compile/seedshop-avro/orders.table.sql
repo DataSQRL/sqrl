@@ -5,7 +5,7 @@ CREATE TABLE Orders (
     'format' = 'avro',
     'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
     'properties.group.id' = 'datasqrl-orders',
-    'topic' = '${sqrl:topic}',
+    'topic' = 'dummy-topic',
     'connector' = 'kafka',
     'avro.timestamp_mapping.legacy' = 'false'
 )
