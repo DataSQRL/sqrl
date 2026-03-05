@@ -946,7 +946,7 @@ public class SqlScriptPlanner {
             "CREATE TABLE requires that a log engine is configured that supports mutations");
       };
     }
-    if (!(logStage.get() instanceof LogEngine)) {
+    if (!(logStage.get().engine() instanceof LogEngine)) {
       throw new StatementParserException(
           "Configured engine %s is not a log engine required for CREATE TABLE statements"
               .formatted(logStage));
