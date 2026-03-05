@@ -27,12 +27,22 @@ import com.datasqrl.engine.database.CombinedEnginePlan;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.engine.export.ExportEngine;
+import com.datasqrl.engine.log.MutationEngine;
+import com.datasqrl.engine.log.MutationEngine.MutationCreateTable;
+import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.graphql.server.MutationInsertType;
+import com.datasqrl.io.tables.TableType;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.common.base.Preconditions;
+import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import lombok.NonNull;
+import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * Abstract implementation of a relational table format database engine. A table format database
@@ -49,7 +59,7 @@ import lombok.NonNull;
  * and b) the queries translated to that engine.
  */
 public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine
-    implements DatabaseEngine, AnalyticDatabaseEngine, ExportEngine {
+    implements DatabaseEngine, AnalyticDatabaseEngine, ExportEngine, MutationEngine {
 
   final ConnectorFactoryFactory connectorFactory;
   final Map<String, QueryEngine> queryEngines = new LinkedHashMap<>();
@@ -82,6 +92,21 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine
   public boolean supports(EngineFeature capability) {
     return super.supports(capability)
         || queryEngines.values().stream().allMatch(queryEngine -> queryEngine.supports(capability));
+  }
+
+  @Override
+  public MutationCreateTable createMutation(
+      ExecutionStage stage,
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      MutationInsertType insertType,
+      Optional<Duration> ttl) {
+    var tableAnalysis =
+        TableAnalysis.buildPlaceholder()
+            .type(tableBuilder.getPrimaryKey().isPresent() ? TableType.STATE : TableType.STREAM)
+            .build();
+    return createTable(stage, originalTableName, tableBuilder, relDataType, tableAnalysis);
   }
 
   @Override

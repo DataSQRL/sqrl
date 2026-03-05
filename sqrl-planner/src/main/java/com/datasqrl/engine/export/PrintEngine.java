@@ -44,7 +44,7 @@ public class PrintEngine implements ExportEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      Optional<TableAnalysis> tableAnalysis) {
+      TableAnalysis tableAnalysis) {
     tableBuilder.setConnectorOptions(
         connectorConf.toMapWithSubstitution(
             Context.builder()

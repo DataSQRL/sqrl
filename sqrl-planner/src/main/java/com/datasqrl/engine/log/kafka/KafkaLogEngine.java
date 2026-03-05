@@ -137,13 +137,13 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      Optional<TableAnalysis> tableAnalysis) {
+      TableAnalysis tableAnalysis) {
     return createInternal(
         stage,
         originalTableName,
         tableBuilder,
         relDataType,
-        tableAnalysis,
+        Optional.of(tableAnalysis),
         defaultTTL,
         false,
         false);

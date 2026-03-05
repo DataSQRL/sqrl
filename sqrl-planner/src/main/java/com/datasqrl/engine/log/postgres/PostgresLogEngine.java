@@ -60,7 +60,7 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      Optional<TableAnalysis> tableAnalysis) {
+      TableAnalysis tableAnalysis) {
     throw new UnsupportedOperationException("not yet supported");
   }
 

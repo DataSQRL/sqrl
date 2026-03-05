@@ -36,8 +36,7 @@ public interface ExportEngine extends ExecutionEngine {
    *     different to make it unique.
    * @param tableBuilder The table builder
    * @param relDataType The datatype for the columns in the table.
-   * @param tableAnalysis The table analysis for the table if this is a planned table (not available
-   *     for mutations)
+   * @param tableAnalysis The table analysis for the table
    * @return
    */
   EngineCreateTable createTable(
@@ -45,7 +44,7 @@ public interface ExportEngine extends ExecutionEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      Optional<TableAnalysis> tableAnalysis);
+      TableAnalysis tableAnalysis);
 
   DataTypeMapping getTypeMapping();
 }

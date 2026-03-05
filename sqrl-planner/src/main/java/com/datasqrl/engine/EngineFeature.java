@@ -81,12 +81,7 @@ public enum EngineFeature {
           REQUIRES_NOT_NULL_PRIMARY_KEY);
 
   public static EnumSet<EngineFeature> STANDARD_TABLE_FORMAT =
-      EnumSet.of(
-          MATERIALIZE_ON_KEY,
-          DENORMALIZE,
-          PARTITIONING,
-          PARTITIONED_WRITES,
-          ACCESS_WITHOUT_PARTITION);
+      EnumSet.of(DENORMALIZE, PARTITIONING, PARTITIONED_WRITES, ACCESS_WITHOUT_PARTITION);
 
   public static EnumSet<EngineFeature> STANDARD_QUERY =
       EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS);

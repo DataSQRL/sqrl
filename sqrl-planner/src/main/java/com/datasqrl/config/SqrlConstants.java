@@ -32,6 +32,7 @@ public class SqrlConstants {
   public static final String ICEBERG_CATALOG_TABLE_KEY = "catalog-table";
   public static final String ICEBERG_CATALOG_TYPE_KEY = "catalog-type";
   public static final String ICEBERG_CATALOG_IMPL_KEY = "catalog-impl";
+  public static final String ICEBERG_UPSERT_ENABLED_KEY = "write.upsert.enabled";
   public static final String ICEBERG_WAREHOUSE_KEY = "warehouse";
   public static final String ICEBERG_GLUE_CATALOG_IMPL = "org.apache.iceberg.aws.glue.GlueCatalog";
   public static final String LIB_DIR = "lib";

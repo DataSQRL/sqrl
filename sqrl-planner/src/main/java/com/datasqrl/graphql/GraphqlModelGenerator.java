@@ -116,7 +116,8 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
               mutation.getInsertType() == MutationInsertType.TRANSACTION,
               Map.of()));
     } else {
-      throw new RuntimeException("Unknown mutation implementation: " + mutation.getCreateTable());
+      throw new RuntimeException(
+          "Unsupported mutation implementation: " + mutation.getCreateTable());
     }
   }
 
