@@ -61,7 +61,7 @@ import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.dag.plan.MutationMetadataExtractor;
-import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.hint.CacheHint;
 import com.datasqrl.planner.hint.EngineHint;
 import com.datasqrl.planner.hint.MutationInsertHint;
@@ -932,7 +932,12 @@ public class SqlScriptPlanner {
    * @return
    */
   private MutationBuilder getLogEngineBuilder(HintsAndDocs hintsAndDocs) {
-    var logStage = pipeline.getMutationStage();
+    var logStage =
+        hintsAndDocs
+            .hints
+            .getHint(EngineHint.class)
+            .map(engineHint -> pipeline.getStage(engineHint.getName()))
+            .orElse(pipeline.getDefaultMutationStage());
     if (logStage.isEmpty()) {
       return (n, t, d) -> {
         throw new StatementParserException(
@@ -941,9 +946,14 @@ public class SqlScriptPlanner {
             "CREATE TABLE requires that a log engine is configured that supports mutations");
       };
     }
+    if (!(logStage.get() instanceof LogEngine)) {
+      throw new StatementParserException(
+          "Configured engine %s is not a log engine required for CREATE TABLE statements"
+              .formatted(logStage));
+    }
     var engine = (LogEngine) logStage.get().engine();
     return (origTableName, tableBuilder, dataType) -> {
-      var mutationBuilder = MutationQuery.builder();
+      var mutationBuilder = MutationTable.builder();
       mutationBuilder.generateAccess(scriptContext.generateAccess);
       mutationBuilder.stage(logStage.get());
       MutationInsertType insertType =
@@ -952,7 +962,7 @@ public class SqlScriptPlanner {
               .getHint(MutationInsertHint.class)
               .map(MutationInsertHint::getInsertType)
               .orElse(MutationInsertType.SINGLE);
-      mutationBuilder.createTopic(
+      mutationBuilder.createTable(
           engine.createMutation(
               logStage.get(),
               origTableName,
@@ -963,6 +973,7 @@ public class SqlScriptPlanner {
       mutationBuilder.name(Name.system(origTableName));
       mutationBuilder.insertType(insertType);
       mutationBuilder.documentation(hintsAndDocs.documentation());
+      mutationBuilder.tableBuilder(tableBuilder);
       // UUID and TIMESTAMP are special cases
       tableBuilder
           .extractMetadataColumns(new MutationMetadataExtractor())
@@ -1046,7 +1057,7 @@ public class SqlScriptPlanner {
               sqrlEnv.currentBatch(),
               Optional.empty(),
               Optional.of(sinkTableId),
-              existingTable.getSourceSinkTable().map(SourceSinkTableAnalysis::connectorConfig));
+              existingTable.getSourceSinkTable());
     } else { // the export is to a user-defined sink: load it
       var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(
@@ -1099,10 +1110,7 @@ public class SqlScriptPlanner {
                 sqrlEnv.currentBatch(),
                 Optional.empty(),
                 Optional.of(tableId),
-                addTableResult
-                    .tableAnalysis()
-                    .getSourceSinkTable()
-                    .map(SourceSinkTableAnalysis::connectorConfig));
+                addTableResult.tableAnalysis().getSourceSinkTable());
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }

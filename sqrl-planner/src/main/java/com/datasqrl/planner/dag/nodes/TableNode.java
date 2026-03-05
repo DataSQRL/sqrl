@@ -18,7 +18,7 @@ package com.datasqrl.planner.dag.nodes;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
-import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
@@ -38,15 +38,23 @@ public class TableNode extends PlannedNode {
   }
 
   public boolean isSource() {
-    // Table nodes cannot be sinks
+    // Table nodes cannot be sinks only
     return tableAnalysis.isSourceOrSink();
   }
 
-  public Optional<MutationQuery> getMutation() {
+  public boolean isSink() {
+    // Mutation tables can be used as sinks
+    return tableAnalysis
+        .getSourceSinkTable()
+        .map(t -> t.mutationDefinition() != null && t.mutationDefinition().isGenerateAccess())
+        .orElse(false);
+  }
+
+  public Optional<MutationTable> getMutationTable() {
     if (!isSource()) {
       return Optional.empty();
     }
-    MutationQuery mutation = tableAnalysis.getSourceSinkTable().get().mutationDefinition();
+    MutationTable mutation = tableAnalysis.getSourceSinkTable().get().mutationDefinition();
     return Optional.ofNullable(mutation);
   }
 

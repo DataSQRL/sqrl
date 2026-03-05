@@ -27,4 +27,4 @@ public record ServerStagePlan(
     ExecutionEngine serverEngine,
     FlinkExecFunctionFactory execFnFactory,
     @Singular List<SqrlTableFunction> functions,
-    @Singular List<MutationQuery> mutations) {}
+    @Singular List<MutationTable> mutations) {}

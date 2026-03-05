@@ -110,6 +110,9 @@
         "main": {
           "type": "string"
         },
+        "database": {
+          "type": "string"
+        },
         "graphql": {
           "type": "string"
         },

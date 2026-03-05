@@ -130,11 +130,7 @@ public class PipelineDAGExporter {
                 .type(NodeType.EXPORT.getName())
                 .stage(stage)
                 .inputs(inputs)
-                .connector(
-                    export
-                        .getConnectorConfig()
-                        .map(FlinkConnectorConfig::getOptions)
-                        .orElse(Map.of()))
+                .connector(export.getConnectorConfig().orElse(Map.of()))
                 .build());
       } else if (node instanceof TableFunctionNode fctNode) {
         var fct = fctNode.getFunction();

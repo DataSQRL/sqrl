@@ -24,7 +24,7 @@ import static com.datasqrl.planner.util.SqrTableFunctionUtil.getTableFunctionFro
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.server.TypeDefinitionRegistryUtil;
-import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import graphql.language.FieldDefinition;
@@ -54,7 +54,7 @@ public abstract class GraphqlSchemaWalker {
 
   //  protected final SqlNameMatcher nameMatcher;
   protected final List<SqrlTableFunction> tableFunctions;
-  protected final List<MutationQuery> mutations;
+  protected final List<MutationTable> mutations;
 
   protected final Set<ObjectTypeDefinition> seenObjectTypes = new HashSet<>();
   protected final Set<NamePath> seenTableFunctions = new HashSet<>();
@@ -263,7 +263,7 @@ public abstract class GraphqlSchemaWalker {
       FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry);
 
   protected abstract void visitMutation(
-      FieldDefinition atField, TypeDefinitionRegistry registry, MutationQuery mutation);
+      FieldDefinition atField, TypeDefinitionRegistry registry, MutationTable mutation);
 
   protected abstract void visitUnknownObject(
       FieldDefinition atField, Optional<RelDataType> relDataType);

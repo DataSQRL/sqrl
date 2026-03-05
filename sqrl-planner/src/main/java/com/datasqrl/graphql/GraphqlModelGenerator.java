@@ -42,7 +42,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.QueryWithArguments;
 import com.datasqrl.graphql.server.RootGraphqlModel.SqlQuery;
 import com.datasqrl.graphql.server.RootGraphqlModel.SubscriptionCoords;
 import com.datasqrl.graphql.util.GraphqlSchemaUtil;
-import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
@@ -74,7 +74,7 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
 
   public GraphqlModelGenerator(
       List<SqrlTableFunction> tableFunctions,
-      List<MutationQuery> mutations,
+      List<MutationTable> mutations,
       ErrorCollector errorCollector) {
     super(tableFunctions, mutations);
     this.errorCollector = errorCollector;
@@ -103,10 +103,10 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
 
   @Override
   protected void visitMutation(
-      FieldDefinition atField, TypeDefinitionRegistry registry, MutationQuery mutation) {
+      FieldDefinition atField, TypeDefinitionRegistry registry, MutationTable mutation) {
     var computedColumns = mutation.getComputedColumns();
     var returnList = GraphqlSchemaUtil.isListType(atField.getType());
-    if (mutation.getCreateTopic() instanceof KafkaLogEngine.Table mutationTopic) {
+    if (mutation.getCreateTable() instanceof KafkaLogEngine.Table mutationTopic) {
       mutations.add(
           new KafkaMutationCoords(
               atField.getName(),
@@ -116,7 +116,7 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
               mutation.getInsertType() == MutationInsertType.TRANSACTION,
               Map.of()));
     } else {
-      throw new RuntimeException("Unknown mutation implementation: " + mutation.getCreateTopic());
+      throw new RuntimeException("Unknown mutation implementation: " + mutation.getCreateTable());
     }
   }
 
