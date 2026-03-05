@@ -63,14 +63,14 @@ public record MutationDatabase(List<Table> tables) {
       }
 
       if (!table.engine().equals(compareTable.engine())) {
-        errors.fatal(
+        errors.warn(
             "Table '%s' engine changed from '%s' to '%s'",
             table.canonicalName(), compareTable.engine(), table.engine());
         compatible = false;
       }
 
       if (!table.definition().primaryKey().equals(compareTable.definition().primaryKey())) {
-        errors.fatal(
+        errors.warn(
             "Table '%s' primary key changed from %s to %s",
             table.canonicalName(),
             compareTable.definition().primaryKey(),
@@ -79,7 +79,7 @@ public record MutationDatabase(List<Table> tables) {
       }
 
       if (!table.definition().partitionKey().equals(compareTable.definition().partitionKey())) {
-        errors.fatal(
+        errors.warn(
             "Table '%s' partition key changed from %s to %s",
             table.canonicalName(),
             compareTable.definition().partitionKey(),
@@ -104,7 +104,7 @@ public record MutationDatabase(List<Table> tables) {
 
         if (!typeCompatibility.isBackwardsCompatible(
             newField.field().getType(), oldField.field().getType())) {
-          errors.fatal(
+          errors.warn(
               "Table '%s' field '%s' type is not backwards compatible: '%s' -> '%s'",
               table.canonicalName(),
               newField.field().getName(),
@@ -115,7 +115,7 @@ public record MutationDatabase(List<Table> tables) {
 
         if (newField.metadata().isPresent() || oldField.metadata().isPresent()) {
           if (!Objects.equals(newField.metadata(), oldField.metadata())) {
-            errors.fatal(
+            errors.warn(
                 "Table '%s' field '%s' metadata changed from '%s' to '%s'",
                 table.canonicalName(),
                 newField.field().getName(),
@@ -129,7 +129,7 @@ public record MutationDatabase(List<Table> tables) {
           var newDesc = newField.function().map(f -> f.getFunctionDescription()).orElse(null);
           var oldDesc = oldField.function().map(f -> f.getFunctionDescription()).orElse(null);
           if (!Objects.equals(newDesc, oldDesc)) {
-            errors.fatal(
+            errors.warn(
                 "Table '%s' field '%s' function changed from '%s' to '%s'",
                 table.canonicalName(), newField.field().getName(), oldDesc, newDesc);
             compatible = false;

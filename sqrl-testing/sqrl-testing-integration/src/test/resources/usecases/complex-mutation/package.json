@@ -1,0 +1,26 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "kafka", "iceberg", "duckdb", "vertx"],
+  "script": {
+    "main": "complex-mutation.sqrl",
+    "database": "database/valid_database.json"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "1 ms"
+      }
+    }
+  },
+  "connectors" : {
+    "iceberg" : {
+      "warehouse":"/tmp/duckdb",
+      "catalog-type":"hadoop",
+      "catalog-name": "mydatabase"
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1,
+    "required-checkpoints" : 1
+  }
+}

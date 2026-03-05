@@ -937,7 +937,7 @@ public class SqlScriptPlanner {
         hintsAndDocs
             .hints
             .getHint(EngineHint.class)
-            .map(engineHint -> pipeline.getStage(engineHint.getName()))
+            .map(engineHint -> pipeline.getStage(engineHint.getStageNames().get(0)))
             .orElse(pipeline.getDefaultMutationStage());
     if (mutationStage.isEmpty()) {
       return (n, t, d) -> {

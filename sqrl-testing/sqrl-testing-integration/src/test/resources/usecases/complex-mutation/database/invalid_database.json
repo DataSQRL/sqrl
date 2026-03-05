@@ -1,0 +1,46 @@
+{
+  "tables" : [ {
+    "canonicalName" : "InputTable",
+    "engine" : "kafka",
+    "createTableSql" : "CREATE TABLE `InputTable` (\n  `userid` STRING NOT NULL,\n  `tokens` BIGINT NOT NULL,\n  `event_time` TIMESTAMP_LTZ(3),\n  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND\n)\nWITH (\n  'connector' = 'kafka',\n  'format' = 'flexible-json',\n  'properties.auto.offset.reset' = 'earliest',\n  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',\n  'properties.group.id' = '${KAFKA_GROUP_ID}',\n  'topic' = 'InputTable'\n)",
+    "definition" : {
+      "columns" : [ {
+        "name" : "userid",
+        "spec" : "STRING NOT NULL"
+      }, {
+        "name" : "tokens",
+        "spec" : "BIGINT NOT NULL"
+      }, {
+        "name" : "event_time",
+        "spec" : "TIMESTAMP_LTZ(3)"
+      } ],
+      "primaryKey" : [ ],
+      "partitionKey" : [ ]
+    },
+    "configOptions" : { },
+    "documentation" : ""
+  }, {
+    "canonicalName" : "SinkTable",
+    "engine" : "iceberg",
+    "createTableSql" : "CREATE TABLE `SinkTable` (\n  `userid` INTEGER NOT NULL,\n  `total_tokens` STRING NOT NULL,\n  `window_end` TIMESTAMP_LTZ(3),\n  `window_time` TIMESTAMP_LTZ(3)\n)\nWITH (\n  'catalog-name' = 'mydatabase',\n  'catalog-table' = 'SinkTable',\n  'catalog-type' = 'hadoop',\n  'connector' = 'iceberg',\n  'format-version' = '3',\n  'warehouse' = '/tmp/duckdb'\n)",
+    "definition" : {
+      "columns" : [ {
+        "name" : "userid",
+        "spec" : "INTEGER NOT NULL"
+      }, {
+        "name" : "total_tokens",
+        "spec" : "STRING NOT NULL"
+      }, {
+        "name" : "window_end",
+        "spec" : "TIMESTAMP_LTZ(3)"
+      }, {
+        "name" : "window_time",
+        "spec" : "TIMESTAMP_LTZ(3)"
+      } ],
+      "primaryKey" : [ ],
+      "partitionKey" : [ ]
+    },
+    "configOptions" : { },
+    "documentation" : ""
+  } ]
+}
