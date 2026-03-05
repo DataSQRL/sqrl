@@ -195,14 +195,17 @@ public class DAGPlanner {
             .flatMap(p -> p.getMutationTable().stream())
             .collect(Collectors.toMap(MutationTable::getName, Function.identity()));
     planBuilder.mutationTables(mutationTables);
-    mutationTables.forEach(
-        (name, mut) -> {
-          var mutationPlanBld = exportPlans.get(mut.getStage());
-          mutationPlanBld.mutation(mut.getCreateTable());
-          if (mut.isGenerateAccess()) {
-            serverPlan.mutation(mut);
-          }
-        });
+    mutationTables.entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .forEach(
+            entry -> {
+              var mut = entry.getValue();
+              var mutationPlanBld = exportPlans.get(mut.getStage());
+              mutationPlanBld.mutation(mut.getCreateTable());
+              if (mut.isGenerateAccess()) {
+                serverPlan.mutation(mut);
+              }
+            });
 
     Map<InputTableKey, ObjectIdentifier> streamTableMapping = new HashMap<>();
     final var exportTableCounter = new AtomicInteger(0);
