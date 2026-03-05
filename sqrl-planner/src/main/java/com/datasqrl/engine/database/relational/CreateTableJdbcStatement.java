@@ -27,7 +27,6 @@ import java.time.Duration;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Value;
-import org.apache.commons.collections4.CollectionUtils;
 
 /**
  * A CREATE TABLE {@link JdbcStatement} which tracks additional information about the physical table
@@ -100,26 +99,6 @@ public class CreateTableJdbcStatement implements JdbcStatement {
   public String getSql() {
     Preconditions.checkNotNull(ddlFactory);
     return getSql(ddlFactory);
-  }
-
-  public CreateTableJdbcStatement updatePrimaryKey(List<String> newPk) {
-    checkArgument(
-        CollectionUtils.isEqualCollection(primaryKey, newPk),
-        "Primary keys are not compatible: %s vs %s",
-        primaryKey,
-        newPk);
-
-    return new CreateTableJdbcStatement(
-        name,
-        description,
-        fields,
-        newPk,
-        partitionKey,
-        partitionType,
-        numPartitions,
-        ttl,
-        engineTable,
-        ddlFactory);
   }
 
   public String getSql(CreateTableDdlFactory ddlFactory) {

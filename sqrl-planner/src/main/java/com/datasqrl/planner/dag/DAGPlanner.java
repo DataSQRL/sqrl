@@ -444,7 +444,7 @@ public class DAGPlanner {
       addHashColumn = List.of();
     } else if (pk.isUndefined()) {
       // Databases requires a primary key, see if we can create one
-      if (stage.getType() == EngineType.DATABASE) {
+      if (!stage.supportsFeature(EngineFeature.IDEMPOTENT_NO_PK)) {
         table
             .getErrors()
             .checkFatal(

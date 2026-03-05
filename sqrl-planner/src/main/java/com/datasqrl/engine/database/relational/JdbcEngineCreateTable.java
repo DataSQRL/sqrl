@@ -32,7 +32,7 @@ public record JdbcEngineCreateTable(
 
   @Override
   public MutationCreateTable withValueType(RelDataType inputValueType) {
-    return this;
+    return new JdbcEngineCreateTable(tableName, table, inputValueType, tableAnalysis);
   }
 
   @Override
