@@ -23,7 +23,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          claude_args: "--model claude-sonnet-4-6-20250514"
+          claude_args: "--model claude-sonnet-4-6"
           prompt: |
             Review this pull request for DataSQRL, a development framework for incremental and real-time
             data processing. It compiles SQL-like SQRL scripts into data pipelines integrating Kafka, Flink,
