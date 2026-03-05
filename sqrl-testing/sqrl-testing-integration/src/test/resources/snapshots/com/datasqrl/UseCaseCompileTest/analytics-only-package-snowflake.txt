@@ -289,7 +289,8 @@ WITH (
   'connector' = 'iceberg',
   'format-version' = '2',
   'warehouse' = '/tmp/duckdb',
-  'write.parquet.page-size-bytes' = '1000'
+  'write.parquet.page-size-bytes' = '1000',
+  'write.upsert.enabled' = 'true'
 );
 CREATE TABLE `_LoanTypes_3` (
   `id` BIGINT NOT NULL,
@@ -310,7 +311,8 @@ WITH (
   'connector' = 'iceberg',
   'format-version' = '2',
   'warehouse' = '/tmp/duckdb',
-  'write.parquet.page-size-bytes' = '1000'
+  'write.parquet.page-size-bytes' = '1000',
+  'write.upsert.enabled' = 'true'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`ApplicationStatus_1`
@@ -319,11 +321,11 @@ SELECT *
 ;
 INSERT INTO `default_catalog`.`default_database`.`_Applications_2`
  SELECT *
-  FROM `default_catalog`.`default_database`.`_ApplicationsStream`
+  FROM `default_catalog`.`default_database`.`_Applications`
  ;
  INSERT INTO `default_catalog`.`default_database`.`_LoanTypes_3`
   SELECT *
-   FROM `default_catalog`.`default_database`.`_LoanTypesStream`
+   FROM `default_catalog`.`default_database`.`_LoanTypes`
   ;
   END
 >>>iceberg-schema.sql

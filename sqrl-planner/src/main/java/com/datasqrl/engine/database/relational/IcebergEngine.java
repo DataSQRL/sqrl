@@ -19,6 +19,7 @@ import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_IMPL_KEY;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_TABLE_KEY;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_TYPE_KEY;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_GLUE_CATALOG_IMPL;
+import static com.datasqrl.config.SqrlConstants.ICEBERG_UPSERT_ENABLED_KEY;
 
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
@@ -26,12 +27,22 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.iceberg.IcebergDataTypeMapper;
 import com.datasqrl.engine.database.QueryEngine;
+import com.datasqrl.engine.log.LogEngine;
+import com.datasqrl.engine.log.MutationEngine;
+import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.graphql.server.MutationInsertType;
+import com.datasqrl.io.tables.TableType;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
+import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 import lombok.NonNull;
+import org.apache.calcite.rel.type.RelDataType;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 
 public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
@@ -71,8 +82,9 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   }
 
   @Override
-  protected Map<String, String> getConnectorOptions(String originalTableName, String tableId) {
-    var connectorOptions = super.getConnectorOptions(originalTableName, tableId);
+  protected Map<String, String> getConnectorOptions(
+      String originalTableName, String tableId, TableAnalysis tableAnalysis) {
+    var connectorOptions = super.getConnectorOptions(originalTableName, tableId, tableAnalysis);
     var mutableOptions = new TreeMap<>(connectorOptions);
 
     if (isGlueCatalog(mutableOptions)) {
@@ -83,6 +95,11 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
         && !mutableOptions.containsKey(ICEBERG_CATALOG_IMPL_KEY)) {
       // If not Glue, nor explicitly set, we assume Hadoop catalog
       mutableOptions.put(ICEBERG_CATALOG_TYPE_KEY, "hadoop");
+    }
+
+    // Enable upsert for state tables
+    if (tableAnalysis.getType().isState()) {
+      mutableOptions.put(ICEBERG_UPSERT_ENABLED_KEY, "true");
     }
 
     return mutableOptions;

@@ -277,7 +277,7 @@ public class DAGPlanner {
                   var tblBuilder = new FlinkTableBuilder();
                   tblBuilder.setName(uniqueNameFct.apply(originalTableName));
                   // #1st: determine primary key and partition key (if present)
-                  var pk = deterinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
+                  var pk = determinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
                   if (pk.isDefined()) {
                     var fields = relBuilder.peek().getRowType().getFieldList();
                     List<String> pkColNames =
@@ -311,11 +311,7 @@ public class DAGPlanner {
                   tblBuilder.setColumns(datatype);
                   var createdTable =
                       exportEngine.createTable(
-                          exportStage,
-                          originalTableName,
-                          tblBuilder,
-                          datatype,
-                          Optional.of(originalNodeTable));
+                          exportStage, originalTableName, tblBuilder, datatype, originalNodeTable);
                   exportPlans.get(exportStage).table(createdTable);
                   targetTable = sqrlEnv.createSinkTable(tblBuilder);
                   streamTableMapping.put(
@@ -434,7 +430,7 @@ public class DAGPlanner {
    * @param stage
    * @return
    */
-  private PrimaryKeyMap deterinePrimaryKey(
+  private PrimaryKeyMap determinePrimaryKey(
       TableAnalysis table,
       FlinkRelBuilder relBuilder,
       Sqrl2FlinkSQLTranslator sqrlEnv,

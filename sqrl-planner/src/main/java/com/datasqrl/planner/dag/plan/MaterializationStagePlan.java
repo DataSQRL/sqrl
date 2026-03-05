@@ -44,7 +44,7 @@ public class MaterializationStagePlan {
    */
   @Singular List<Query> queries;
 
-  /** All the mutations we write to this stage, only applies to logs */
+  /** All the mutations we write to this stage, only applies to stages supporting mutations */
   @Singular List<EngineCreateTable> mutations;
 
   /** Passed through since the engines might need it for query manipulation */

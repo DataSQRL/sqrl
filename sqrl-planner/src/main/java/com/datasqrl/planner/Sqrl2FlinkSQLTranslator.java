@@ -857,9 +857,9 @@ public class Sqrl2FlinkSQLTranslator {
     MutationTableBuilder mutationBld = null;
     FlinkConnectorConfig connectorConfig =
         new FlinkConnectorConfig(FlinkSqlNodeFactory.propertiesToMap(fullTable.getPropertyList()));
-    if (connectorConfig
-        .getConnectorName()
-        .isEmpty()) { // it's an internal CREATE TABLE for a mutation
+    if (connectorConfig.getConnectorName().isEmpty()
+        && !(fullTable
+            instanceof SqlCreateTableLike)) { // it's an internal CREATE TABLE for a mutation
       var tableBuilder = FlinkTableBuilder.toBuilder(fullTable);
       tableBuilder.setName(finalTableName);
       /* TODO: We want to create the table with a datagen connector so we can fully plan it

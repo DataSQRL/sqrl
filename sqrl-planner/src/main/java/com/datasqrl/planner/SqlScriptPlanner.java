@@ -26,6 +26,7 @@ import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.LogEngine;
+import com.datasqrl.engine.log.MutationEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
@@ -932,13 +933,13 @@ public class SqlScriptPlanner {
    * @return
    */
   private MutationBuilder getLogEngineBuilder(HintsAndDocs hintsAndDocs) {
-    var logStage =
+    var mutationStage =
         hintsAndDocs
             .hints
             .getHint(EngineHint.class)
             .map(engineHint -> pipeline.getStage(engineHint.getName()))
             .orElse(pipeline.getDefaultMutationStage());
-    if (logStage.isEmpty()) {
+    if (mutationStage.isEmpty()) {
       return (n, t, d) -> {
         throw new StatementParserException(
             ErrorLabel.GENERIC,
@@ -946,16 +947,16 @@ public class SqlScriptPlanner {
             "CREATE TABLE requires that a log engine is configured that supports mutations");
       };
     }
-    if (!(logStage.get().engine() instanceof LogEngine)) {
+    if (!(mutationStage.get().engine() instanceof MutationEngine)) {
       throw new StatementParserException(
           "Configured engine %s is not a log engine required for CREATE TABLE statements"
-              .formatted(logStage));
+              .formatted(mutationStage));
     }
-    var engine = (LogEngine) logStage.get().engine();
+    var engine = (MutationEngine) mutationStage.get().engine();
     return (origTableName, tableBuilder, dataType) -> {
       var mutationBuilder = MutationTable.builder();
       mutationBuilder.generateAccess(scriptContext.generateAccess);
-      mutationBuilder.stage(logStage.get());
+      mutationBuilder.stage(mutationStage.get());
       MutationInsertType insertType =
           hintsAndDocs
               .hints()
@@ -964,7 +965,7 @@ public class SqlScriptPlanner {
               .orElse(MutationInsertType.SINGLE);
       mutationBuilder.createTable(
           engine.createMutation(
-              logStage.get(),
+              mutationStage.get(),
               origTableName,
               tableBuilder,
               dataType,

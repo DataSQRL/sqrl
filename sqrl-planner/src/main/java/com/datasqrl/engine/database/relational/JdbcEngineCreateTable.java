@@ -16,8 +16,10 @@
 package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.engine.database.EngineCreateTable;
+import com.datasqrl.engine.log.MutationEngine.MutationCreateTable;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import java.util.Map;
 import org.apache.calcite.rel.type.RelDataType;
 
 /**
@@ -26,4 +28,15 @@ import org.apache.calcite.rel.type.RelDataType;
  */
 public record JdbcEngineCreateTable(
     String tableName, FlinkTableBuilder table, RelDataType datatype, TableAnalysis tableAnalysis)
-    implements EngineCreateTable {}
+    implements EngineCreateTable, MutationCreateTable {
+
+  @Override
+  public MutationCreateTable withValueType(RelDataType inputValueType) {
+    return this;
+  }
+
+  @Override
+  public Map<String, String> getConfig() {
+    return Map.of();
+  }
+}
