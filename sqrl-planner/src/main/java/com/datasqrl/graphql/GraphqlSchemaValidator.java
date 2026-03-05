@@ -26,7 +26,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.util.GraphqlErrorUtil;
 import com.datasqrl.graphql.util.GraphqlSchemaUtil;
-import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.google.inject.Inject;
@@ -66,7 +66,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
   @Inject
   public GraphqlSchemaValidator(
       List<SqrlTableFunction> tableFunctions,
-      List<MutationQuery> mutations,
+      List<MutationTable> mutations,
       ErrorCollector errorCollector) {
     super(tableFunctions, mutations);
     this.errorCollector = errorCollector;
@@ -80,7 +80,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
 
   @Override
   protected void visitMutation(
-      FieldDefinition atField, TypeDefinitionRegistry registry, MutationQuery mutation) {
+      FieldDefinition atField, TypeDefinitionRegistry registry, MutationTable mutation) {
     validateStructurallyEqualMutation(
         atField,
         getValidMutationOutputType(atField, registry),

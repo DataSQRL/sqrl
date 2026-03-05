@@ -22,6 +22,10 @@ import com.datasqrl.engine.database.relational.IcebergEngineFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -76,9 +80,67 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
         new DeploymentArtifact("-functions.sql", DeploymentArtifact.toSqlString(functions)));
 
     compiledPlan.map(plan -> builder.add(new DeploymentArtifact("-compiled-plan.json", plan)));
+    compiledPlan
+        .map(FlinkPhysicalPlan::condenseCompiledPlan)
+        .map(plan -> builder.add(new DeploymentArtifact("-compiled-plan-summary.json", plan)));
     explainedPlan.map(plan -> builder.add(new DeploymentArtifact("-explained-plan.txt", plan)));
 
     return builder.build();
+  }
+
+  /**
+   * Condenses a compiled Flink plan JSON to include only essential information: flink version, node
+   * id/type/description, and edge source/target.
+   */
+  private static String condenseCompiledPlan(String compiledPlanJson) {
+    try {
+      var mapper = new ObjectMapper();
+      var root = mapper.readTree(compiledPlanJson);
+
+      var condensed = mapper.createObjectNode();
+
+      if (root.has("flinkVersion")) {
+        condensed.put("flinkVersion", root.get("flinkVersion").asText());
+      }
+
+      if (root.has("nodes")) {
+        var condensedNodes = mapper.createArrayNode();
+        for (JsonNode node : root.get("nodes")) {
+          var condensedNode = mapper.createObjectNode();
+          if (node.has("id")) {
+            condensedNode.put("id", node.get("id").asInt());
+          }
+          if (node.has("type")) {
+            condensedNode.put("type", node.get("type").asText());
+          }
+          if (node.has("description")) {
+            condensedNode.put("description", node.get("description").asText());
+          }
+          condensedNodes.add(condensedNode);
+        }
+        condensed.set("nodes", condensedNodes);
+      }
+
+      if (root.has("edges")) {
+        var condensedEdges = mapper.createArrayNode();
+        for (JsonNode edge : root.get("edges")) {
+          var condensedEdge = mapper.createObjectNode();
+          if (edge.has("source")) {
+            condensedEdge.put("source", edge.get("source").asInt());
+          }
+          if (edge.has("target")) {
+            condensedEdge.put("target", edge.get("target").asInt());
+          }
+          condensedEdges.add(condensedEdge);
+        }
+        condensed.set("edges", condensedEdges);
+      }
+
+      return mapper.writerWithDefaultPrettyPrinter().writeValueAsString(condensed);
+    } catch (Exception e) {
+      // If parsing fails, return the original plan
+      return "{}";
+    }
   }
 
   @Getter

@@ -15,6 +15,7 @@
  */
 package com.datasqrl.planner.dag;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
@@ -41,6 +42,7 @@ import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.MaterializationStagePlanBuilder;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.dag.plan.ServerStagePlan;
 import com.datasqrl.planner.hint.PartitionKeyHint;
 import com.datasqrl.planner.parser.AccessModifier;
@@ -184,20 +186,23 @@ public class DAGPlanner {
                     Function.identity(),
                     s -> MaterializationStagePlan.builder().utils(engineUtils).stage(s)));
 
-    var mutationStage = pipeline.getMutationStage();
-    if (mutationStage.isPresent()) {
-      // Add mutations that were planned during DAG building
-      var planBuilder = exportPlans.get(mutationStage.get());
-      dag.allNodesByClass(TableNode.class)
-          .flatMap(node -> node.getMutation().stream())
-          .forEach(
-              mut -> {
-                planBuilder.mutation(mut.getCreateTopic());
-                if (mut.isGenerateAccess()) {
-                  serverPlan.mutation(mut);
-                }
-              });
-    }
+    var planBuilder = PhysicalPlan.builder();
+
+    // Collect all mutations from the DAG and add them to 1) physical plan, 2) stage plan and 3)
+    // server plan if accessible
+    Map<Name, MutationTable> mutationTables =
+        dag.allNodesByClass(PipelineNode.class)
+            .flatMap(p -> p.getMutationTable().stream())
+            .collect(Collectors.toMap(MutationTable::getName, Function.identity()));
+    planBuilder.mutationTables(mutationTables);
+    mutationTables.forEach(
+        (name, mut) -> {
+          var mutationPlanBld = exportPlans.get(mut.getStage());
+          mutationPlanBld.mutation(mut.getCreateTable());
+          if (mut.isGenerateAccess()) {
+            serverPlan.mutation(mut);
+          }
+        });
 
     Map<InputTableKey, ObjectIdentifier> streamTableMapping = new HashMap<>();
     final var exportTableCounter = new AtomicInteger(0);
@@ -205,7 +210,6 @@ public class DAGPlanner {
         name -> {
           return name + UNIQUE_TABLE_APPENDIX + exportTableCounter.incrementAndGet();
         };
-    var planBuilder = PhysicalPlan.builder();
     // move assembler logic here
     // ##1st: find all the cuts between flink and materialization (db+log) stages or sinks
     // generate a sink for each in the respective engine and insert into

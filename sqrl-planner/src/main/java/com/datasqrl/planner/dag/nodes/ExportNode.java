@@ -18,7 +18,9 @@ package com.datasqrl.planner.dag.nodes;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.tables.FlinkConnectorConfig;
+import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
@@ -33,7 +35,7 @@ public class ExportNode extends PipelineNode {
 
   private final Optional<ExecutionStage> sinkTo;
   private final Optional<ObjectIdentifier> createdSinkTable;
-  private final Optional<FlinkConnectorConfig> connectorConfig;
+  private final Optional<SourceSinkTableAnalysis> sinkTableAnalysis;
 
   public ExportNode(
       Map<ExecutionStage, StageAnalysis> stageAnalysis,
@@ -41,13 +43,22 @@ public class ExportNode extends PipelineNode {
       int batchIndex,
       Optional<ExecutionStage> sinkTo,
       Optional<ObjectIdentifier> createdSinkTable,
-      Optional<FlinkConnectorConfig> connectorConfig) {
+      Optional<SourceSinkTableAnalysis> sinkTableAnalysis) {
     super("export", stageAnalysis);
     this.sinkPath = sinkPath;
     this.batchIndex = batchIndex;
     this.sinkTo = sinkTo;
     this.createdSinkTable = createdSinkTable;
-    this.connectorConfig = connectorConfig;
+    this.sinkTableAnalysis = sinkTableAnalysis;
+  }
+
+  public Optional<Map<String, String>> getConnectorConfig() {
+    return sinkTableAnalysis.map(t -> t.connectorConfig().getOptions());
+  }
+
+  @Override
+  public Optional<MutationTable> getMutationTable() {
+    return sinkTableAnalysis.flatMap(t -> Optional.ofNullable(t.mutationDefinition()));
   }
 
   @Override

@@ -106,6 +106,8 @@ public interface PackageJson {
 
     Map<String, Object> getConfig();
 
+    Optional<String> getDatabase();
+
     void setMainScript(String script);
 
     void setGraphql(String graphql);

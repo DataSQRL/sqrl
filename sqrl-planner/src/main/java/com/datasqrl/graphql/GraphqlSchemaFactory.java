@@ -31,7 +31,7 @@ import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.util.GraphqlSchemaUtil;
 import com.datasqrl.plan.table.Multiplicity;
 import com.datasqrl.planner.analyzer.TableAnalysis;
-import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
@@ -211,12 +211,12 @@ public class GraphqlSchemaFactory {
     return Optional.of(objectType);
   }
 
-  public Optional<GraphQLObjectType> createMutationsObjectType(List<MutationQuery> mutations) {
+  public Optional<GraphQLObjectType> createMutationsObjectType(List<MutationTable> mutations) {
     if (mutations.isEmpty()) {
       return Optional.empty();
     }
     var builder = GraphQLObjectType.newObject().name("Mutation");
-    for (MutationQuery mutation : mutations) {
+    for (MutationTable mutation : mutations) {
       boolean isMultiple = mutation.getInsertType().isMultiple();
       var name = mutation.getName().getDisplay();
       var inputType =

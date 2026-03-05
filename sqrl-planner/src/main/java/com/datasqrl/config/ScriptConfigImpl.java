@@ -32,6 +32,7 @@ public class ScriptConfigImpl implements PackageJson.ScriptConfig {
   public static final String GRAPHQL_KEY = "graphql";
   public static final String OPERATIONS_KEY = "operations";
   public static final String CONFIG_KEY = "config";
+  public static final String DATABASE_KEY = "database";
 
   @Override
   public Optional<String> getMainScript() {
@@ -67,6 +68,11 @@ public class ScriptConfigImpl implements PackageJson.ScriptConfig {
   @Override
   public Map<String, Object> getConfig() {
     return sqrlConfig.getSubConfig(CONFIG_KEY).toMap();
+  }
+
+  @Override
+  public Optional<String> getDatabase() {
+    return sqrlConfig.asString(DATABASE_KEY).getOptional();
   }
 
   @Override

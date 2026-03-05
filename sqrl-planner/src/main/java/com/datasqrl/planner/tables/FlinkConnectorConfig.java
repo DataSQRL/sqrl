@@ -84,6 +84,11 @@ public class FlinkConnectorConfig implements ConnectorConfig {
   }
 
   @Override
+  public boolean isEmpty() {
+    return options.isEmpty();
+  }
+
+  @Override
   public Map<String, Object> toMap() {
     return (Map) options;
   }
@@ -97,4 +102,6 @@ public class FlinkConnectorConfig implements ConnectorConfig {
   public String toString() {
     return "ConnectorConfigImpl{" + options.toString() + "}";
   }
+
+
 }

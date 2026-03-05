@@ -378,5 +378,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     public MutationCreateTable withValueType(RelDataType inputValueType) {
       return new Table(topicName, tableName, format, messageKeys, inputValueType, config);
     }
+
+    @Override
+    public Map<String, String> getConfig() {
+      return config;
+    }
   }
 }

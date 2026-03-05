@@ -25,6 +25,7 @@ import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ResourceFileUtil;
+import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -237,6 +238,20 @@ public final class ConfigLoaderUtils {
     }
 
     return Optional.empty();
+  }
+
+  public static MutationDatabase loadMutationDatabase(Path databaseFile, ErrorCollector errors) {
+    checkArgument(
+        Files.isRegularFile(databaseFile),
+        "Mutation database file does not exist: %s",
+        databaseFile);
+
+    try {
+      return MAPPER.readValue(databaseFile.toFile(), MutationDatabase.class);
+    } catch (IOException e) {
+      throw errors.exception(
+          "Failed to load mutation database from '%s': %s", databaseFile, e.getMessage());
+    }
   }
 
   /**

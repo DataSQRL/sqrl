@@ -17,6 +17,7 @@ package com.datasqrl.planner.dag.nodes;
 
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.util.AbstractDAG;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -24,6 +25,7 @@ import com.google.common.collect.Iterables;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -54,6 +56,10 @@ public abstract class PipelineNode implements AbstractDAG.Node, Comparable<Pipel
   public <C extends PipelineNode> C unwrap(Class<C> clazz) {
     Preconditions.checkArgument(clazz.isInstance(this));
     return (C) this;
+  }
+
+  public Optional<MutationTable> getMutationTable() {
+    return Optional.empty();
   }
 
   /**
