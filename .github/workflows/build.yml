@@ -1,4 +1,4 @@
-name: build
+name: CI
 
 on:
   pull_request:
@@ -28,20 +28,8 @@ jobs:
 
           CHANGED=$(git diff --name-only "$BASE_SHA" "${{ github.sha }}" 2>/dev/null || echo "FORCE_BUILD")
 
-          DOC_CHANGES=$(echo "$CHANGED" | grep '^documentation/' || true)
-          NON_DOC=$(echo "$CHANGED" | grep -v '^documentation/' || true)
-
-          if [ -n "$NON_DOC" ]; then
-            echo "has-code=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has-code=false" >> "$GITHUB_OUTPUT"
-          fi
-
-          if [ -n "$DOC_CHANGES" ]; then
-            echo "has-docs=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has-docs=false" >> "$GITHUB_OUTPUT"
-          fi
+          echo "has-code=$(echo "$CHANGED" | grep -qv '^documentation/' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "has-docs=$(echo "$CHANGED" | grep -q '^documentation/' && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
   documentation:
     needs: check-changes
@@ -78,7 +66,7 @@ jobs:
         working-directory: documentation
         run: npm run build
 
-  circleci:
+  build:
     needs: check-changes
     if: needs.check-changes.outputs.has-code == 'true'
     runs-on: ubuntu-latest
