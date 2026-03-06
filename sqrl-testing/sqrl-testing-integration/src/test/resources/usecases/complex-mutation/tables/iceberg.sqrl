@@ -1,0 +1,7 @@
+/*+engine(iceberg) */
+CREATE TABLE SinkTable (
+    userid INT NOT NULL,
+    total_tokens BIGINT NOT NULL,
+    window_end TIMESTAMP_LTZ(3),
+    window_time TIMESTAMP_LTZ(3)
+);

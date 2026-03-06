@@ -21,6 +21,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 
@@ -49,5 +50,7 @@ public interface MutationEngine extends ExecutionEngine {
 
   interface MutationCreateTable extends EngineCreateTable {
     MutationCreateTable withValueType(RelDataType inputValueType);
+
+    Map<String, String> getConfig();
   }
 }

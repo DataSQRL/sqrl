@@ -53,6 +53,8 @@ public enum EngineFeature {
   PARTITIONING,
   // Engine supports partitioned writing of data
   PARTITIONED_WRITES,
+  // Engine supports idempotent streaming writes without PK
+  IDEMPOTENT_NO_PK,
   // Engine requires that the primary key is not null
   REQUIRES_NOT_NULL_PRIMARY_KEY,
   // Datastore engine support access to data without partition key
@@ -63,6 +65,7 @@ public enum EngineFeature {
           DENORMALIZE,
           TEMPORAL_JOIN,
           TO_STREAM,
+          IDEMPOTENT_NO_PK,
           STREAM_WINDOW_AGGREGATION,
           EXTENDED_FUNCTIONS,
           CUSTOM_FUNCTIONS,
@@ -82,9 +85,9 @@ public enum EngineFeature {
 
   public static EnumSet<EngineFeature> STANDARD_TABLE_FORMAT =
       EnumSet.of(
-          MATERIALIZE_ON_KEY,
           DENORMALIZE,
           PARTITIONING,
+          IDEMPOTENT_NO_PK,
           PARTITIONED_WRITES,
           ACCESS_WITHOUT_PARTITION);
 

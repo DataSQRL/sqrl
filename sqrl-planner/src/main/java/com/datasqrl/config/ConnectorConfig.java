@@ -31,4 +31,6 @@ public interface ConnectorConfig {
   TableType getTableType();
 
   Optional<String> getConnectorName();
+
+  boolean isEmpty();
 }

@@ -21,6 +21,7 @@ import com.datasqrl.engine.log.MutationEngine.MutationCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.graphql.server.ResolvedMetadata;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.util.Documented;
 import java.util.Map;
 import java.util.Optional;
@@ -31,12 +32,12 @@ import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 
 /**
- * Represents a CREATE TABLE statement without a connector that is managed by DataSQRL and exposed
- * as a mutation in GraphQL.
+ * Represents a CREATE TABLE statement without a connector that is managed by DataSQRL and
+ * potentially exposed as a mutation in GraphQL.
  */
 @Value
 @Builder
-public class MutationQuery implements ExecutableQuery, Documented {
+public class MutationTable implements ExecutableQuery, Documented {
 
   /** The name of the mutation */
   Name name;
@@ -45,13 +46,16 @@ public class MutationQuery implements ExecutableQuery, Documented {
   ExecutionStage stage;
 
   /** The topic that the mutation is written into */
-  MutationCreateTable createTopic;
+  MutationCreateTable createTable;
 
   /** The data type of the input data for the mutation */
   RelDataType inputDataType;
 
   /** The data type of the result data for the mutation */
   RelDataType outputDataType;
+
+  /** The table builder of the constructed table */
+  FlinkTableBuilder tableBuilder;
 
   /** The columns that are computed and not provided explicitly by the user */
   @Singular Map<String, ResolvedMetadata> computedColumns;
@@ -65,7 +69,7 @@ public class MutationQuery implements ExecutableQuery, Documented {
   /** Whether this mutation should be exposed in the interface */
   boolean generateAccess;
 
-  public MutationCreateTable getCreateTopic() {
-    return createTopic.withValueType(inputDataType);
+  public MutationCreateTable getCreateTable() {
+    return createTable.withValueType(inputDataType);
   }
 }

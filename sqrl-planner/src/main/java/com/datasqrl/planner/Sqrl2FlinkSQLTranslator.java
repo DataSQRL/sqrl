@@ -40,7 +40,7 @@ import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
-import com.datasqrl.planner.dag.plan.MutationQuery.MutationQueryBuilder;
+import com.datasqrl.planner.dag.plan.MutationTable.MutationTableBuilder;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsePosUtil.MessageLocation;
@@ -699,7 +699,7 @@ public class Sqrl2FlinkSQLTranslator {
 
   @FunctionalInterface
   public interface MutationBuilder {
-    MutationQueryBuilder createMutation(
+    MutationTableBuilder createMutation(
         String origTableName, FlinkTableBuilder tableBuilder, RelDataType dataType);
   }
 
@@ -854,8 +854,12 @@ public class Sqrl2FlinkSQLTranslator {
               tableDefinition.isTemporary(),
               tableDefinition.ifNotExists);
     }
-    MutationQueryBuilder mutationBld = null;
-    if (fullTable.getPropertyList().isEmpty()) { // it's an internal CREATE TABLE for a mutation
+    MutationTableBuilder mutationBld = null;
+    FlinkConnectorConfig connectorConfig =
+        new FlinkConnectorConfig(FlinkSqlNodeFactory.propertiesToMap(fullTable.getPropertyList()));
+    if (connectorConfig.getConnectorName().isEmpty()
+        && !(fullTable
+            instanceof SqlCreateTableLike)) { // it's an internal CREATE TABLE for a mutation
       var tableBuilder = FlinkTableBuilder.toBuilder(fullTable);
       tableBuilder.setName(finalTableName);
       /* TODO: We want to create the table with a datagen connector so we can fully plan it
@@ -1092,6 +1096,12 @@ public class Sqrl2FlinkSQLTranslator {
       throw new StatementParserException(
           location, e, converted.map(MessageLocation::message).orElse(e.getMessage()));
     }
+  }
+
+  public List<ParsedRelDataTypeResult> parse2RelDataType(String createTableStatement) {
+    var op = (CreateTableOperation) getOperation(parseSQL(createTableStatement));
+    var schema = op.getCatalogTable().getResolvedSchema();
+    return parseSchema(schema, true);
   }
 
   @SneakyThrows

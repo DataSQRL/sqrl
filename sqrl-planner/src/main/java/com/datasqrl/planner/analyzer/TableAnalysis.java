@@ -197,4 +197,8 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   public UniqueIdentifier getIdentifier() {
     return new UniqueIdentifier(objectIdentifier, isSourceOrSink());
   }
+
+  public static TableAnalysisBuilder buildPlaceholder() {
+    return builder().objectIdentifier(ObjectIdentifier.of("_", "_", "_"));
+  }
 }

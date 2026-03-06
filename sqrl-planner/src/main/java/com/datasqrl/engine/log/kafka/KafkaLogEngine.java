@@ -137,13 +137,13 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      Optional<TableAnalysis> tableAnalysis) {
+      TableAnalysis tableAnalysis) {
     return createInternal(
         stage,
         originalTableName,
         tableBuilder,
         relDataType,
-        tableAnalysis,
+        Optional.of(tableAnalysis),
         defaultTTL,
         false,
         false);
@@ -377,6 +377,11 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     @Override
     public MutationCreateTable withValueType(RelDataType inputValueType) {
       return new Table(topicName, tableName, format, messageKeys, inputValueType, config);
+    }
+
+    @Override
+    public Map<String, String> getConfig() {
+      return config;
     }
   }
 }

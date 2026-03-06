@@ -1,0 +1,14 @@
+IMPORT tables.kafka.*;
+IMPORT tables.iceberg;
+
+_UserTokens :=
+  SELECT userid,
+         SUM(tokens) AS total_tokens,
+         window_end,
+         window_time
+  FROM TABLE(TUMBLE(TABLE InputTable, DESCRIPTOR(event_time), INTERVAL '1' SECOND))
+  GROUP BY userid, window_start, window_end, window_time;
+
+LatestTokens := DISTINCT _UserTokens ON userid ORDER BY window_time DESC;
+
+EXPORT _UserTokens TO iceberg.SinkTable;

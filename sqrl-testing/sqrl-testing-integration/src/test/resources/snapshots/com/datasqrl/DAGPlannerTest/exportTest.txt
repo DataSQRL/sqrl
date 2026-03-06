@@ -415,6 +415,17 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerExport`
       "messageKeys" : [ ],
       "messageSchema" : "",
       "config" : { }
+    },
+    {
+      "topicName" : "kafka-mutation-CustomerExport",
+      "tableName" : "CustomerExport",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
     }
   ],
   "testRunnerTopics" : [ ]
@@ -862,7 +873,23 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerExport`
           }
         }
       ],
-      "mutations" : [ ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerExport",
+          "returnList" : false,
+          "topic" : "kafka-mutation-CustomerExport",
+          "computedColumns" : {
+            "timestamp" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : false
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
       "subscriptions" : [ ],
       "operations" : [
         {
@@ -994,11 +1021,37 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerExport`
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/Orders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "AddCustomerExport",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "mutation CustomerExport($customerid: Long, $name: String) {\nCustomerExport(event: { customerid: $customerid, name: $name }) {\ncustomerid\nname\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerExport",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/CustomerExport"
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerSubset {\n  customerid: Long!\n  name: String!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DistinctCustomer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\ntype JoinStream {\n  id: Long!\n  name: String!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerSubset(limit: Int = 10, offset: Int = 0): [CustomerSubset!]\n  DistinctCustomer(limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  JoinStream(limit: Int = 10, offset: Int = 0): [JoinStream!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ninput CustomerExportInput {\n  customerid: Long\n  name: String\n}\n\ntype CustomerExportResultOutput {\n  customerid: Long\n  name: String\n  timestamp: DateTime\n}\n\ntype CustomerSubset {\n  customerid: Long!\n  name: String!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DistinctCustomer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\ntype JoinStream {\n  id: Long!\n  name: String!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  CustomerExport(event: CustomerExportInput!): CustomerExportResultOutput!\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerSubset(limit: Int = 10, offset: Int = 0): [CustomerSubset!]\n  DistinctCustomer(limit: Int = 10, offset: Int = 0): [DistinctCustomer!]\n  JoinStream(limit: Int = 10, offset: Int = 0): [JoinStream!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

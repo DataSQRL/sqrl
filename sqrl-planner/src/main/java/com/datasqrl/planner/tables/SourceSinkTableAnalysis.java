@@ -15,7 +15,7 @@
  */
 package com.datasqrl.planner.tables;
 
-import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 import org.apache.flink.table.catalog.ResolvedSchema;
@@ -32,4 +32,4 @@ import org.apache.flink.table.catalog.ResolvedSchema;
 public record SourceSinkTableAnalysis(
     @NonNull FlinkConnectorConfig connectorConfig,
     @NonNull ResolvedSchema schema,
-    @Nullable MutationQuery mutationDefinition) {}
+    @Nullable MutationTable mutationDefinition) {}

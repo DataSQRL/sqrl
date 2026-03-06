@@ -16,8 +16,11 @@
 package com.datasqrl;
 
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.plan.MainScript;
+import com.datasqrl.planner.dag.plan.MutationDatabase;
+import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FileUtil;
 import com.google.inject.Inject;
 import java.nio.file.Path;
@@ -29,6 +32,7 @@ public class MainScriptImpl implements MainScript {
 
   private final PackageJson config;
   private final ResourceResolver resourceResolver;
+  private final ErrorCollector errors;
 
   @Override
   public String getContent() {
@@ -38,7 +42,11 @@ public class MainScriptImpl implements MainScript {
             .getMainScript()
             .map(Path::of)
             .flatMap(resourceResolver::resolveFile)
-            .orElseThrow(() -> new RuntimeException("Could not find main sqrl script file"));
+            .orElseThrow(
+                () ->
+                    errors.exception(
+                        "Could not find main sqrl script file: %s",
+                        config.getScriptConfig().getMainScript()));
     return FileUtil.readFile(mainScript);
   }
 
@@ -49,5 +57,23 @@ public class MainScriptImpl implements MainScript {
         .getMainScript()
         .map(Path::of)
         .flatMap(resourceResolver::resolveFile);
+  }
+
+  @Override
+  public Optional<MutationDatabase> getMutationDatabase() {
+    return config
+        .getScriptConfig()
+        .getDatabase()
+        .map(Path::of)
+        .map(
+            path ->
+                resourceResolver
+                    .resolveFile(path)
+                    .orElseThrow(
+                        () ->
+                            errors.exception(
+                                "Could not find database definition file: %s",
+                                config.getScriptConfig().getDatabase())))
+        .map(absPath -> ConfigLoaderUtils.loadMutationDatabase(absPath, errors));
   }
 }

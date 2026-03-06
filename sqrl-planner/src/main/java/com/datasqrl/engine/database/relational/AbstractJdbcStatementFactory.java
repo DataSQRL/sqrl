@@ -146,7 +146,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   @Override
   public JdbcStatement createTable(JdbcEngineCreateTable createTable) {
     var tableName = createTable.tableName();
-    List<String> primaryKeys = createTable.table().getPrimaryKey().orElseThrow();
+    List<String> primaryKeys = createTable.table().getPrimaryKey().orElse(List.of());
     List<String> partitionKeys =
         createTable
             .tableAnalysis()

@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
@@ -79,12 +80,12 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
   protected abstract String getConnectorTableName(FlinkTableBuilder tableBuilder);
 
-  public EngineCreateTable createTable(
+  public JdbcEngineCreateTable createTable(
       ExecutionStage stage,
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      Optional<TableAnalysis> tableAnalysis) {
+      TableAnalysis tableAnalysis) {
 
     if (!supports(EngineFeature.ACCESS_WITHOUT_PARTITION)) {
       var pk = tableBuilder.getPrimaryKey();
@@ -105,11 +106,12 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
       tableBuilder.setPartition(List.of());
     }
 
-    var connectorOptions = getConnectorOptions(originalTableName, tableBuilder.getTableName());
+    var connectorOptions =
+        getConnectorOptions(originalTableName, tableBuilder.getTableName(), tableAnalysis);
     tableBuilder.setConnectorOptions(connectorOptions);
 
     return new JdbcEngineCreateTable(
-        getConnectorTableName(tableBuilder), tableBuilder, relDataType, tableAnalysis.get());
+        getConnectorTableName(tableBuilder), tableBuilder, relDataType, tableAnalysis);
   }
 
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {
@@ -122,7 +124,9 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     var tableNames = new HashSet<String>();
     var duplicateTableNames = new ArrayList<String>();
     var jdbcCreateTables =
-        stagePlan.getTables().stream().map(JdbcEngineCreateTable.class::cast).toList();
+        Stream.concat(stagePlan.getTables().stream(), stagePlan.getMutations().stream())
+            .map(JdbcEngineCreateTable.class::cast)
+            .toList();
     var tableIdMap = new HashMap<String, CreateTableJdbcStatement>();
     var tableId2Create =
         jdbcCreateTables.stream()
@@ -183,7 +187,8 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     return planBuilder.build();
   }
 
-  protected Map<String, String> getConnectorOptions(String originalTableName, String tableId) {
+  protected Map<String, String> getConnectorOptions(
+      String originalTableName, String tableId, TableAnalysis tableAnalysis) {
     return connector
         .map(
             connConf ->
