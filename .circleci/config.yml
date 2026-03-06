@@ -20,6 +20,42 @@ executors:
       TZ: America/Los_Angeles
 
 commands:
+  skip-if-docs-only:
+    description: "Halt the job when the changeset only touches documentation/"
+    steps:
+      - run:
+          name: Skip if only documentation changed
+          command: |
+            # On tags we always build
+            if [ -n "$CIRCLE_TAG" ]; then
+              echo "Tagged build – proceeding."
+              exit 0
+            fi
+
+            BASE_BRANCH="origin/main"
+            git fetch --depth=50 origin main 2>/dev/null || true
+
+            # Determine changed files relative to main (or parent commit on main)
+            if [ "$CIRCLE_BRANCH" = "main" ]; then
+              CHANGED=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "FORCE_BUILD")
+            else
+              MERGE_BASE=$(git merge-base "$BASE_BRANCH" HEAD 2>/dev/null || echo "")
+              if [ -z "$MERGE_BASE" ]; then
+                echo "Cannot determine merge-base – proceeding with build."
+                exit 0
+              fi
+              CHANGED=$(git diff --name-only "$MERGE_BASE" HEAD)
+            fi
+
+            # If every changed file is under documentation/, skip
+            NON_DOC=$(echo "$CHANGED" | grep -v '^documentation/' || true)
+            if [ -z "$NON_DOC" ]; then
+              echo "Only documentation/ files changed – skipping this job."
+              circleci step halt
+            else
+              echo "Non-documentation changes detected – proceeding."
+            fi
+
   generate-settings:
     description: "Generate Maven settings.xml with GitHub credentials"
     steps:
@@ -251,6 +287,7 @@ jobs:
       - image: cimg/openjdk:17.0
     steps:
       - checkout-and-version
+      - skip-if-docs-only
       - generate-settings
       - download-dependencies
       - save_cache:
@@ -263,6 +300,7 @@ jobs:
       - image: cimg/openjdk:17.0
     steps:
       - checkout-and-version
+      - skip-if-docs-only
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
@@ -284,6 +322,7 @@ jobs:
       TEST_SHARDING_INDEX:  << parameters.test_sharding_index >>
     steps:
       - checkout-and-version
+      - skip-if-docs-only
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
@@ -298,6 +337,7 @@ jobs:
     executor: default-machine
     steps:
       - checkout-and-version
+      - skip-if-docs-only
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
@@ -329,6 +369,7 @@ jobs:
       - image: cimg/openjdk:17.0
     steps:
       - checkout-and-version
+      - skip-if-docs-only
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}
@@ -349,6 +390,7 @@ jobs:
 
     steps:
       - checkout-and-version
+      - skip-if-docs-only
       - determine-version
       - run:
           name: Skip image generation

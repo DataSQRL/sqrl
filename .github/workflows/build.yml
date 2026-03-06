@@ -1,4 +1,4 @@
-name: build
+name: CI
 
 on:
   pull_request:
@@ -8,7 +8,67 @@ on:
       - 'release-*'
 
 jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has-code: ${{ steps.filter.outputs.has-code }}
+      has-docs: ${{ steps.filter.outputs.has-docs }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect change scopes
+        id: filter
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          else
+            BASE_SHA="${{ github.event.before }}"
+          fi
+
+          CHANGED=$(git diff --name-only "$BASE_SHA" "${{ github.sha }}" 2>/dev/null || echo "FORCE_BUILD")
+
+          echo "has-code=$(echo "$CHANGED" | grep -qv '^documentation/' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "has-docs=$(echo "$CHANGED" | grep -q '^documentation/' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+  documentation:
+    needs: check-changes
+    if: needs.check-changes.outputs.has-docs == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Init submodules and sparse checkout
+        run: |
+          git submodule update --init --depth 1
+          cd documentation/docs/stdlib-docs
+          git sparse-checkout init --cone
+          git sparse-checkout set stdlib-docs
+          git checkout main
+          git pull --ff-only origin main
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: documentation/package-lock.json
+
+      - name: Install dependencies
+        working-directory: documentation
+        run: npm install
+
+      - name: Build Docusaurus site
+        working-directory: documentation
+        run: npm run build
+
   build:
+    needs: check-changes
+    if: needs.check-changes.outputs.has-code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -39,14 +99,14 @@ jobs:
               sleep 10
               continue
             fi
-            
+
             # Ensure it is valid JSON
             if ! echo "$RAW_STATUS" | jq empty 2>/dev/null; then
               echo "GitHub API returned invalid JSON. Retrying in 10s..."
               sleep 10
               continue
             fi
-            
+
             STATUSES=$(echo "$RAW_STATUS" | jq -r '.statuses // empty')
 
             ALL_SUCCESS=true
