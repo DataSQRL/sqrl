@@ -1,0 +1,36 @@
+CREATE TABLE CustomersStream (
+PRIMARY KEY (id, `updated_at`) NOT ENFORCED,
+WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
+) WITH (
+'format' = 'flexible-json',
+'path' = '${DATA_PATH}/customers.jsonl',
+'source.monitor-interval' = '10 sec',
+'connector' = 'filesystem'
+)
+LIKE `customers.schema.yml`;
+
+CREATE TABLE ApplicationUpdates (
+    WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+) LIKE `application_updates.jsonl`;
+
+CREATE TABLE ApplicationsStream (
+PRIMARY KEY (id, `updated_at`) NOT ENFORCED,
+WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECONDS
+) WITH (
+'format' = 'flexible-json',
+'path' = '${DATA_PATH}/applications.jsonl',
+'source.monitor-interval' = '10 sec',
+'connector' = 'filesystem'
+)
+LIKE `applications.schema.yml`;
+
+CREATE TABLE LoanTypesStream (
+PRIMARY KEY (id, `updated_at`) NOT ENFORCED,
+WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
+) WITH (
+'format' = 'flexible-json',
+'path' = '${DATA_PATH}/loan_types.jsonl',
+'source.monitor-interval' = '10 sec',
+'connector' = 'filesystem'
+)
+LIKE `loan_types.schema.yml`;

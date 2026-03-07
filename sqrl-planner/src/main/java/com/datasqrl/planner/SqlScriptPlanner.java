@@ -992,7 +992,7 @@ public class SqlScriptPlanner {
     var tablePath = exportStmt.getTableIdentifier().get();
 
     // Lookup the table that is being exported
-    var tableNode = dagBuilder.getNode(scriptContext.toIdentifier(tablePath.getLast()));
+    var tableNode = dagBuilder.getNode(scriptContext.toIdentifier(tablePath));
     var inputNode =
         tableNode
             .orElseThrow(
