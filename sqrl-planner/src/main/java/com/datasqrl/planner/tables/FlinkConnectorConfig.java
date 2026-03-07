@@ -63,10 +63,11 @@ public class FlinkConnectorConfig implements ConnectorConfig {
 
   @Override
   public TableType getTableType() {
-    var connectorName = getConnectorName().get().toLowerCase();
-    var tableType = CONNECTOR_TYPE_MAP.get(connectorName);
+    var connectorName = getConnectorName();
+    if (connectorName.isEmpty()) return TableType.RELATION;
+    var tableType = CONNECTOR_TYPE_MAP.get(connectorName.get().toLowerCase());
     if (tableType == null) {
-      log.debug("Defaulting '{}' connector to STREAM table for import.", connectorName);
+      log.debug("Defaulting '{}' connector to STREAM table for import.", connectorName.get());
       tableType = TableType.STREAM;
     }
     return tableType;

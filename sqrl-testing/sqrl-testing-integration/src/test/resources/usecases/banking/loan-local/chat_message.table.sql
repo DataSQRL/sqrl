@@ -1,3 +1,4 @@
+/*+engine(kafka) */
 CREATE TABLE ChatMessage (
     _uuid STRING NOT NULL METADATA FROM 'uuid',
     role STRING NOT NULL,

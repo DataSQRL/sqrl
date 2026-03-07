@@ -1,6 +1,6 @@
 IMPORT jwt-authorized-base.*;
 
-/*+no_query */
+/*+engine(kafka), no_query */
 CREATE TABLE AuthInputData (
     event_id STRING NOT NULL METADATA FROM 'uuid',
     val BIGINT NOT NULL METADATA FROM 'auth.val',

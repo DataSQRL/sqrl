@@ -278,52 +278,48 @@ SELECT LISTAGG(`str_char`, ',') AS `listagg_example`, ARRAY_AGG(`str_char`) AS `
 FROM `_ArrayData`;
 CREATE TABLE `_ArrayData_1` (
   `id` INTEGER,
-  `str_char` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
-  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+  `str_char` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`
 )
 WITH (
   'catalog-name' = 'default_catalog',
   'catalog-table' = '_ArrayData',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'format-version' = '2',
+  'format-version' = '3',
   'warehouse' = '/tmp/duckdb'
 );
 CREATE TABLE `_InputData_2` (
-  `dummy` INTEGER,
-  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
-  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+  `dummy` INTEGER
 )
 WITH (
   'catalog-name' = 'default_catalog',
   'catalog-table' = '_InputData',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'format-version' = '2',
+  'format-version' = '3',
   'warehouse' = '/tmp/duckdb'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`_ArrayData_1`
-SELECT `id`, `str_char`, `hash_columns`(`id`, `str_char`) AS `__pk_hash`
+SELECT *
  FROM `default_catalog`.`default_database`.`_ArrayData`
 ;
 INSERT INTO `default_catalog`.`default_database`.`_InputData_2`
- SELECT `dummy`, `hash_columns`(`dummy`) AS `__pk_hash`
+ SELECT *
   FROM `default_catalog`.`default_database`.`_InputData`
  ;
  END
 >>>iceberg-duckdb-schema.sql
-CREATE TABLE IF NOT EXISTS "_ArrayData" ("id" INTEGER, "str_char" VARCHAR(65536), "__pk_hash" CHAR(32), PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "_InputData" ("dummy" INTEGER, "__pk_hash" CHAR(32), PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "_ArrayData" ("id" INTEGER, "str_char" VARCHAR(65536));
+CREATE TABLE IF NOT EXISTS "_InputData" ("dummy" INTEGER)
 >>>iceberg-duckdb-views.sql
 CREATE OR REPLACE VIEW "ArrayFunctions"("listagg_example", "arrayagg_example") AS SELECT LISTAGG("str_char", ',') AS "listagg_example", ARRAY_AGG("str_char") AS "arrayagg_example"
 FROM "iceberg_scan"('/tmp/duckdb/default_database/_ArrayData', ALLOW_MOVED_PATHS = TRUE);
 CREATE OR REPLACE VIEW "FunctionCalls"("log2_example", "log_nat_example", "log_base_example", "e_example", "rand_example", "rand_int_example", "uuid_example", "bin_example", "hex_numeric_example", "hex_string_example", "unhex_example", "truncate_scale_example", "truncate_default_example", "printf_example", "startswith_example", "endswith_example", "regexp_extract_example", "regexp_extract_group_example", "regexp_extract_all_example", "decode_example", "encode_example", "from_base64_example", "to_base64_example", "instr_example", "locate_example", "regexp_example", "split_index_example", "json_quote_example", "json_object_kv_example", "elt_example", "try_cast_to_int_example", "try_cast_to_bigint_example", "try_cast_to_bool_example", "try_cast_to_text_example", "try_cast_to_decimal_example", "try_cast_to_timestamp_example", "try_cast_to_timestamptz_example", "try_cast_fail_example", "now_example", "local_time_example", "local_timestamp_example", "current_time_example", "current_date_example", "current_timestamp_example", "year_example", "quarter_example", "month_example", "week_example", "dayofyear_example", "dayofmonth_example", "dayofweek_example", "hour_example", "minute_example", "second_example", "date_format_example", "timestampadd_example", "convert_tz_example", "unix_timestamp_now_example", "if_example", "ifnull_example", "is_alpha_example", "is_decimal_example", "is_digit_example", "element_example", "cardinality_example", "map_index_example", "array_contains_example", "array_distinct_example", "array_prepend_example", "array_slice_example", "array_concat_example", "array_remove_example", "array_join_example", "split_example", "sha1_example", "sha256_example", "the_end") AS SELECT LOG2(8) AS "log2_example", LOG(10) AS "log_nat_example", LOG(2, 8) AS "log_base_example", EXP(1) AS "e_example", RANDOM() IS NOT NULL AS "rand_example", FLOOR(RANDOM() * 10) IS NOT NULL AS "rand_int_example", UUID() IS NOT NULL AS "uuid_example", BIN(10) AS "bin_example", HEX(255) AS "hex_numeric_example", HEX('AB') AS "hex_string_example", "UNHEX"('4142') AS "unhex_example", TRUNC(123.456, 2) AS "truncate_scale_example", TRUNC(123.456) AS "truncate_default_example", "PRINTF"('Hello %s %d', 'world', 42) AS "printf_example", STARTS_WITH('FlinkSQL', 'Flink') AS "startswith_example", ENDS_WITH('FlinkSQL', 'SQL') AS "endswith_example", REGEXP_EXTRACT('abc-123-def', '(\d+)') AS "regexp_extract_example", REGEXP_EXTRACT('abc-123-def', '(\d+)', 1) AS "regexp_extract_group_example", "REGEXP_EXTRACT_ALL"('a1b2c3', '(\d)', 1) AS "regexp_extract_all_example", DECODE(ENCODE('hi')) AS "decode_example", ENCODE('hi') IS NOT NULL AS "encode_example", FROM_BASE64(TO_BASE64('hello')) AS "from_base64_example", TO_BASE64('hello') AS "to_base64_example", INSTR('hello world', 'world') AS "instr_example", INSTR('hello', 'l') AS "locate_example", REGEXP_MATCHES('foo123bar', '\\d+') AS "regexp_example", SPLIT_PART('a,b,c', ',', 2) AS "split_index_example", "JSON_QUOTE"('hello "json"') AS "json_quote_example", JSON_OBJECT('k1', 'v1', 'k2', 'v2') AS "json_object_kv_example", LIST_EXTRACT(['first', 'second', 'third'], 2) AS "elt_example", (TRY_CAST ('123'  AS INTEGER)) AS "try_cast_to_int_example", (TRY_CAST ('112233445566778899'  AS BIGINT)) AS "try_cast_to_bigint_example", (TRY_CAST ('true'  AS BOOLEAN)) AS "try_cast_to_bool_example", (TRY_CAST (123  AS VARCHAR(65536))) AS "try_cast_to_text_example", (TRY_CAST ('123.45'  AS DECIMAL(10, 2))) AS "try_cast_to_decimal_example", (TRY_CAST ('2024-01-02 03:04:05'  AS TIMESTAMP(3))) IS NOT NULL AS "try_cast_to_timestamp_example", (TRY_CAST ('2024-01-02 03:04:05'  AS TIMESTAMP WITH TIME ZONE)) IS NOT NULL AS "try_cast_to_timestamptz_example", (TRY_CAST ('abc'  AS INTEGER)) AS "try_cast_fail_example", NOW() IS NOT NULL AS "now_example", LOCALTIME IS NOT NULL AS "local_time_example", LOCALTIMESTAMP IS NOT NULL AS "local_timestamp_example", CURRENT_TIME IS NOT NULL AS "current_time_example", CURRENT_DATE IS NOT NULL AS "current_date_example", CURRENT_TIMESTAMP IS NOT NULL AS "current_timestamp_example", EXTRACT(YEAR FROM DATE '2024-01-02') AS "year_example", EXTRACT(QUARTER FROM DATE '2024-01-02') AS "quarter_example", EXTRACT(MONTH FROM DATE '2024-01-02') AS "month_example", EXTRACT(WEEK FROM DATE '2024-01-02') AS "week_example", EXTRACT(DOY FROM DATE '2024-01-02') AS "dayofyear_example", EXTRACT(DAY FROM DATE '2024-01-02') AS "dayofmonth_example", EXTRACT(DOW FROM DATE '2024-01-02') AS "dayofweek_example", EXTRACT(HOUR FROM TIMESTAMP '2024-01-02 03:04:05') AS "hour_example", EXTRACT(MINUTE FROM TIMESTAMP '2024-01-02 03:04:05') AS "minute_example", EXTRACT(SECOND FROM TIMESTAMP '2024-01-02 03:04:05') AS "second_example", "strftime"(TIMESTAMP '2024-01-02 03:04:05', '%Y-%m-%d') AS "date_format_example", CAST((TIMESTAMP '2024-01-02 03:04:05' + INTERVAL '1' DAY * 2) AS TIMESTAMP(3)) AS "timestampadd_example", (TIMESTAMP '2024-01-02 03:04:05' AT TIME ZONE 'UTC') AT TIME ZONE 'America/Los_Angeles' AS "convert_tz_example", (EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint)IS NOT NULL AS "unix_timestamp_now_example", IF(TRUE, 'yes', 'no') AS "if_example", "IFNULL"(NULL, 'fallback') AS "ifnull_example", ('OnlyLetters' ~ '^[A-Za-z]+$') AS "is_alpha_example", '123.45' ~ '^[+-]?[0-9]+(\.[0-9]+)?$' AS "is_decimal_example", ('12345' ~ '^[0-9]+$') AS "is_digit_example", "IF"("array_length"(ARRAY[3]) = 1, (ARRAY[3])[1], NULL) AS "element_example", CARDINALITY(MAP { 'a' : 1, 'b' : 2 }) AS "cardinality_example", MAP { 'a' : 1, 'b' : 2 }['a'] AS "map_index_example", "ARRAY_CONTAINS"(ARRAY[1, 2, 3], 2) AS "array_contains_example", "ARRAY_DISTINCT"(ARRAY['a', 'b', 'b', 'c']) AS "array_distinct_example", ARRAY_PREPEND('a', ARRAY['b', 'c']) AS "array_prepend_example", "ARRAY_SLICE"(ARRAY['a', 'b', 'c', 'd', 'e'], 2, 4) AS "array_slice_example", "ARRAY_CONCAT"(ARRAY['a', 'b'], ARRAY['c', 'd'], ARRAY['e']) AS "array_concat_example", LIST_FILTER(ARRAY['a', 'b', 'c'], x -> x <>'b') AS "array_remove_example", ARRAY_TO_STRING(LIST_TRANSFORM(ARRAY['a', NULL, 'c'], x -> COALESCE(x, '')), '-') AS "array_join_example", "SPLIT"('a|b|c', '|') AS "split_example", SHA1('hello') AS "sha1_example", SHA256('hello') AS "sha256_example", 'end' AS "the_end"
 FROM "iceberg_scan"('/tmp/duckdb/default_database/_InputData', ALLOW_MOVED_PATHS = TRUE)
 >>>iceberg-schema.sql
-CREATE TABLE IF NOT EXISTS "_ArrayData" ("id" INTEGER, "str_char" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "_InputData" ("dummy" INTEGER, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "_ArrayData" ("id" INTEGER, "str_char" TEXT);
+CREATE TABLE IF NOT EXISTS "_InputData" ("dummy" INTEGER)
 >>>iceberg-views.sql
 
 >>>vertx.json

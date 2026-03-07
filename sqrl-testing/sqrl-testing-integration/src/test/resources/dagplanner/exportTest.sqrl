@@ -8,7 +8,7 @@ EXPORT DistinctCustomer TO log.DistinctStream;
 
 CustomerSubset := SELECT customerid, name, `timestamp` FROM Customer;
 
-/*+no_query */
+/*+engine(kafka), no_query */
 CREATE TABLE CustomerExport (
     customerid BIGINT,
     name STRING,

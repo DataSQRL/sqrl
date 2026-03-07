@@ -48,7 +48,7 @@ UnnestOrders.newId := id + productid;
 /**
     Newly placed orders
  */
-/*+ ttl(36 hours) */
+/*+engine(kafka), ttl(36 hours) */
 CREATE TABLE Orders (
                         orderid INT,
                         amount FLOAT,

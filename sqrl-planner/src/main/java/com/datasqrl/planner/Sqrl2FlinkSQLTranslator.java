@@ -707,9 +707,9 @@ public class Sqrl2FlinkSQLTranslator {
       Function<String, String> tableNameModifier,
       String tableDefinition,
       SchemaLoader schemaLoader,
-      MutationBuilder logEngineBuilder) {
+      Optional<MutationBuilder> mutationBuilder) {
     return addSourceTable(
-        addTable(tableNameModifier, tableDefinition, schemaLoader, logEngineBuilder));
+        addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder));
   }
 
   public AddTableResult addExternalExport(
@@ -717,18 +717,14 @@ public class Sqrl2FlinkSQLTranslator {
       String tableDefinition,
       SchemaLoader schemaLoader) {
 
-    return addTable(
-        tableNameModifier,
-        tableDefinition,
-        schemaLoader,
-        (x, y, z) -> {
-          throw new UnsupportedOperationException("Export tables require connector configuration");
-        });
+    return addTable(tableNameModifier, tableDefinition, schemaLoader, Optional.empty());
   }
 
   public Optional<TableAnalysis> createTable(
-      String tableDefinition, MutationBuilder logEngineBuilder, SchemaLoader schemaLoader) {
-    var result = addTable(Function.identity(), tableDefinition, schemaLoader, logEngineBuilder);
+      String tableDefinition,
+      Optional<MutationBuilder> mutationBuilder,
+      SchemaLoader schemaLoader) {
+    var result = addTable(Function.identity(), tableDefinition, schemaLoader, mutationBuilder);
     if (result.isSourceTable()) return Optional.of(addSourceTable(result));
     else return Optional.empty();
   }
@@ -789,7 +785,7 @@ public class Sqrl2FlinkSQLTranslator {
       Function<String, String> tableNameModifier,
       String createTableSql,
       SchemaLoader schemaLoader,
-      MutationBuilder mutationBuilder) {
+      Optional<MutationBuilder> mutationBuilder) {
     var tableSqlNode = parseSQL(createTableSql);
     checkArgument(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
     var tableDefinition = (SqlCreateTable) tableSqlNode;
@@ -855,11 +851,7 @@ public class Sqrl2FlinkSQLTranslator {
               tableDefinition.ifNotExists);
     }
     MutationTableBuilder mutationBld = null;
-    FlinkConnectorConfig connectorConfig =
-        new FlinkConnectorConfig(FlinkSqlNodeFactory.propertiesToMap(fullTable.getPropertyList()));
-    if (connectorConfig.getConnectorName().isEmpty()
-        && !(fullTable
-            instanceof SqlCreateTableLike)) { // it's an internal CREATE TABLE for a mutation
+    if (mutationBuilder.isPresent()) { // it's an internal CREATE TABLE for a mutation
       var tableBuilder = FlinkTableBuilder.toBuilder(fullTable);
       tableBuilder.setName(finalTableName);
       /* TODO: We want to create the table with a datagen connector so we can fully plan it
@@ -869,7 +861,7 @@ public class Sqrl2FlinkSQLTranslator {
       Note, that this requires we replace the table with the actual table (and the correct connector)
       in the schema with an ALTER TABLE statement.
        */
-      mutationBld = mutationBuilder.createMutation(origTableName, tableBuilder, null);
+      mutationBld = mutationBuilder.get().createMutation(origTableName, tableBuilder, null);
       fullTable = tableBuilder.buildSql(false);
     }
     var tableOp = (CreateTableOperation) executeSqlNode(fullTable);
@@ -922,7 +914,7 @@ public class Sqrl2FlinkSQLTranslator {
       mutationBld.outputDataType(outputType.build());
     }
     ObjectIdentifier tableId = tableOp.getTableIdentifier();
-    var connector = new FlinkConnectorConfig(tableOp.getCatalogTable().getOptions());
+    var connector = new FlinkConnectorConfig(resolveConnectorOptions(tableOp));
     var tableAnalysis =
         TableAnalysis.of(
             tableId,
@@ -939,6 +931,33 @@ public class Sqrl2FlinkSQLTranslator {
         tableAnalysis,
         fullTable,
         completeCreateTableSql);
+  }
+
+  private Map<String, String> resolveConnectorOptions(CreateTableOperation tableOp) {
+    var tableOptions = tableOp.getCatalogTable().getOptions();
+    if (tableOptions.containsKey(FlinkConnectorConfig.CONNECTOR_KEY)) {
+      return tableOptions;
+    }
+
+    var catalogName = tableOp.getTableIdentifier().getCatalogName();
+    if (catalogName == null || catalogName.isEmpty()) {
+      return tableOptions;
+    }
+
+    return catalogManager
+        .getCatalog(catalogName)
+        .map(
+            catalog -> {
+              //              if (catalog instanceof org.apache.iceberg.flink.FlinkCatalog
+              // flinkCatalog) {
+              //                var merged = new java.util.LinkedHashMap<String, String>();
+              ////                merged.putAll(flinkCatalog.getOptions());
+              //                merged.putAll(tableOptions);
+              //                return Map.<String, String>copyOf(merged);
+              //              }
+              return tableOptions;
+            })
+        .orElse(tableOptions);
   }
 
   public ObjectIdentifier createSinkTable(FlinkTableBuilder tableBuilder) {

@@ -730,7 +730,9 @@ public class SqlScriptPlanner {
       AccessVisibility visibility,
       boolean isSource,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
-    var availableStages = determineStages(tableStages, hintsAndDocs.hints());
+    // Sources must be processed by the stream stage
+    var availableStages =
+        isSource ? List.of(streamStage) : determineStages(tableStages, hintsAndDocs.hints());
     var tableNode =
         new TableNode(
             tableAnalysis,
@@ -932,55 +934,50 @@ public class SqlScriptPlanner {
    *
    * @return
    */
-  private MutationBuilder getLogEngineBuilder(HintsAndDocs hintsAndDocs) {
+  private Optional<MutationBuilder> getLogEngineBuilder(HintsAndDocs hintsAndDocs) {
     var mutationStage =
         hintsAndDocs
             .hints
             .getHint(EngineHint.class)
-            .map(engineHint -> pipeline.getStage(engineHint.getStageNames().get(0)))
-            .orElse(pipeline.getDefaultMutationStage());
+            .flatMap(engineHint -> pipeline.getStage(engineHint.getStageNames().get(0)));
     if (mutationStage.isEmpty()) {
-      return (n, t, d) -> {
-        throw new StatementParserException(
-            ErrorLabel.GENERIC,
-            FileLocation.START,
-            "CREATE TABLE requires that a log engine is configured that supports mutations");
-      };
+      return Optional.empty();
     }
     if (!(mutationStage.get().engine() instanceof MutationEngine)) {
       throw new StatementParserException(
-          "Configured engine %s is not a log engine required for CREATE TABLE statements"
+          "Configured engine %s is not a mutation engine required for CREATE TABLE statements"
               .formatted(mutationStage));
     }
     var engine = (MutationEngine) mutationStage.get().engine();
-    return (origTableName, tableBuilder, dataType) -> {
-      var mutationBuilder = MutationTable.builder();
-      mutationBuilder.generateAccess(scriptContext.generateAccess);
-      mutationBuilder.stage(mutationStage.get());
-      MutationInsertType insertType =
-          hintsAndDocs
-              .hints()
-              .getHint(MutationInsertHint.class)
-              .map(MutationInsertHint::getInsertType)
-              .orElse(MutationInsertType.SINGLE);
-      mutationBuilder.createTable(
-          engine.createMutation(
-              mutationStage.get(),
-              origTableName,
-              tableBuilder,
-              dataType,
-              insertType,
-              hintsAndDocs.hints().getHint(TtlHint.class).flatMap(TtlHint::getTtl)));
-      mutationBuilder.name(Name.system(origTableName));
-      mutationBuilder.insertType(insertType);
-      mutationBuilder.documentation(hintsAndDocs.documentation());
-      mutationBuilder.tableBuilder(tableBuilder);
-      // UUID and TIMESTAMP are special cases
-      tableBuilder
-          .extractMetadataColumns(new MutationMetadataExtractor())
-          .forEach(mutationBuilder::computedColumn);
-      return mutationBuilder;
-    };
+    return Optional.of(
+        (origTableName, tableBuilder, dataType) -> {
+          var mutationBuilder = MutationTable.builder();
+          mutationBuilder.generateAccess(scriptContext.generateAccess);
+          mutationBuilder.stage(mutationStage.get());
+          MutationInsertType insertType =
+              hintsAndDocs
+                  .hints()
+                  .getHint(MutationInsertHint.class)
+                  .map(MutationInsertHint::getInsertType)
+                  .orElse(MutationInsertType.SINGLE);
+          mutationBuilder.createTable(
+              engine.createMutation(
+                  mutationStage.get(),
+                  origTableName,
+                  tableBuilder,
+                  dataType,
+                  insertType,
+                  hintsAndDocs.hints().getHint(TtlHint.class).flatMap(TtlHint::getTtl)));
+          mutationBuilder.name(Name.system(origTableName));
+          mutationBuilder.insertType(insertType);
+          mutationBuilder.documentation(hintsAndDocs.documentation());
+          mutationBuilder.tableBuilder(tableBuilder);
+          // UUID and TIMESTAMP are special cases
+          tableBuilder
+              .extractMetadataColumns(new MutationMetadataExtractor())
+              .forEach(mutationBuilder::computedColumn);
+          return mutationBuilder;
+        });
   }
 
   /**

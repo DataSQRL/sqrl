@@ -3,7 +3,7 @@ IMPORT loan-local.applications AS ApplicationsStream;
 IMPORT loan-local.loan_types AS LoanTypesStream;
 IMPORT loan-local.chat_message AS AddChatMessage;
 
-/*+insert(transaction) */
+/*+engine(kafka), insert(transaction) */
 CREATE TABLE ApplicationUpdates (
   _uuid STRING NOT NULL METADATA FROM 'uuid',
   loan_application_id BIGINT NOT NULL,

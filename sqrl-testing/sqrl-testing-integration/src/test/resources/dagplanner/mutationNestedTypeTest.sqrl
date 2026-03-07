@@ -1,5 +1,6 @@
 IMPORT ecommerceTs.orders;
 
+/*+engine(kafka) */
 CREATE TABLE NestedCustomers (
     customerid INT,
     payload ROW<a INT, b INT, c INT>,

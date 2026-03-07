@@ -1,5 +1,6 @@
 IMPORT ecommerceTs.customer;
 
+/*+engine(kafka) */
 CREATE TABLE _InputData (
     event_id STRING NOT NULL METADATA FROM 'uuid',
     customerid BIGINT NOT NULL METADATA FROM 'auth.userid',

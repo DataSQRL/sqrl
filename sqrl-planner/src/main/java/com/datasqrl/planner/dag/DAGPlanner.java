@@ -220,7 +220,8 @@ public class DAGPlanner {
         .forEach(
             node -> {
               Set<ExecutionStage> downstreamStages =
-                  new HashSet<>(); // We want to only plan once for each stage
+                  new HashSet<>(); // We want to only plan each node once for each stage even if it
+                                   // is consumed multiple times
               // We need stable iteration order for reproducibility
               List<PipelineNode> downstreamNodes = dag.getOutputs(node).stream().sorted().toList();
               for (PipelineNode downstream : downstreamNodes) {
@@ -246,7 +247,8 @@ public class DAGPlanner {
                   } else { // We are sinking into another engine
                     exportStage = downstream.getChosenStage();
                     originalTableName = node.getTableAnalysis().getName();
-                    if (!downstreamStages.add(exportStage)) {
+                    if (!downstreamStages.add(
+                        exportStage)) { // we already planned this node for this stage
                       continue;
                     }
                   }
@@ -444,7 +446,7 @@ public class DAGPlanner {
       addHashColumn = List.of();
     } else if (pk.isUndefined()) {
       // Databases requires a primary key, see if we can create one
-      if (!stage.supportsFeature(EngineFeature.IDEMPOTENT_NO_PK)) {
+      if (stage.supportsFeature(EngineFeature.REQUIRES_PK_FOR_EXPORT)) {
         table
             .getErrors()
             .checkFatal(

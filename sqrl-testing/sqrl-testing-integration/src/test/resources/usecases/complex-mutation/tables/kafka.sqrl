@@ -1,4 +1,4 @@
-/*+no_query */
+/*+engine(kafka), no_query */
 CREATE TABLE InputTable (
     userid INT NOT NULL,
     tokens BIGINT NOT NULL,

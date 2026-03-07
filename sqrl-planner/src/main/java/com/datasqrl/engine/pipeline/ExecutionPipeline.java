@@ -57,24 +57,6 @@ public interface ExecutionPipeline {
         stages().stream().filter(s -> s.name().equalsIgnoreCase(name)));
   }
 
-  default Optional<ExecutionStage> getDefaultMutationStage() {
-    // prefer log engines, otherwise pick the first database engine that supports mutations
-    return StreamUtil.getOnlyElement(
-            getStagesByType(EngineType.LOG).stream()
-                .filter(stage -> stage.engine().supports(EngineFeature.MUTATIONS)))
-        .or(
-            () ->
-                stages().stream()
-                    .filter(stage -> stage.engine().supports(EngineFeature.MUTATIONS))
-                    .findFirst());
-  }
-
-  default List<ExecutionStage> getMutationStages() {
-    return stages().stream()
-        .filter(stage -> stage.engine().supports(EngineFeature.MUTATIONS))
-        .toList();
-  }
-
   default Optional<ExecutionStage> getStageByType(EngineType type) {
     return StreamUtil.getOnlyElement(
         stages().stream().filter(s -> s.engine().getType().equals(type)));

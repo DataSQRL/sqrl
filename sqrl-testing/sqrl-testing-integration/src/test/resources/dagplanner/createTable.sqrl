@@ -1,3 +1,4 @@
+/*+engine(kafka) */
 CREATE TABLE _Sensors (
     sensorid INT,
     machineid INT,
@@ -5,6 +6,7 @@ CREATE TABLE _Sensors (
     PRIMARY KEY (sensorid) NOT ENFORCED
 );
 
+/*+engine(kafka) */
 CREATE TABLE _SensorReading (
      event_id STRING NOT NULL METADATA FROM 'uuid',
      sensorid INT,

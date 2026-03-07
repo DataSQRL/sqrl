@@ -1,9 +1,11 @@
+/*+engine(kafka) */
 CREATE TABLE SensorReading (
    sensorid INT NOT NULL,
    temperature FLOAT NOT NULL,
    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
 );
 
+/*+engine(kafka) */
 CREATE TABLE SensorUpdates (
     sensorid INT NOT NULL,
     sensor_name STRING NOT NULL,

@@ -1,4 +1,4 @@
-/*+no_query */
+/*+engine(kafka), no_query */
 CREATE TABLE SensorReading (
     uuid STRING NOT NULL METADATA FROM 'uuid',
     sensorid INT NOT NULL,

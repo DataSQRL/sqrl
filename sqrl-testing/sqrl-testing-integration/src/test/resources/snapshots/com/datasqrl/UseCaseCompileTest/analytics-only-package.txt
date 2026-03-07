@@ -267,7 +267,7 @@ WITH (
   'catalog-table' = 'ApplicationStatus',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'format-version' = '2',
+  'format-version' = '3',
   'warehouse' = '/tmp/duckdb',
   'write.parquet.page-size-bytes' = '1000'
 );
@@ -287,7 +287,7 @@ WITH (
   'catalog-table' = '_Applications',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'format-version' = '2',
+  'format-version' = '3',
   'warehouse' = '/tmp/duckdb',
   'write.parquet.page-size-bytes' = '1000',
   'write.upsert.enabled' = 'true'
@@ -309,7 +309,7 @@ WITH (
   'catalog-table' = '_LoanTypes',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'format-version' = '2',
+  'format-version' = '3',
   'warehouse' = '/tmp/duckdb',
   'write.parquet.page-size-bytes' = '1000',
   'write.upsert.enabled' = 'true'
