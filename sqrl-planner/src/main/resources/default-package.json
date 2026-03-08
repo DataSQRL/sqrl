@@ -59,7 +59,8 @@
       "catalog-name": "default_catalog",
       "catalog-table": "${sqrl:table-name}",
       "warehouse": "sqrl_iceberg_data",
-      "format-version": 3
+      "format-version": 3,
+      "write.delete.vector.enabled": "true"
     },
     "postgres": {
       "connector": "jdbc-sqrl",
