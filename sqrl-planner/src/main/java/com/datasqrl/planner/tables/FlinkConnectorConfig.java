@@ -19,11 +19,14 @@ import com.datasqrl.config.ConnectorConfig;
 import com.datasqrl.io.tables.TableType;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.table.catalog.Catalog;
+import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 
 /**
  * A wrapper around Flink table options for analysis and access to specific options that we need to
@@ -44,16 +47,30 @@ public class FlinkConnectorConfig implements ConnectorConfig {
       ImmutableMap.of(
           "kafka", TableType.STREAM,
           "file", TableType.STREAM,
+          "iceberg", TableType.STREAM,
           "filesystem", TableType.STREAM,
           "upsert-kafka", TableType.VERSIONED_STATE,
           "jdbc", TableType.LOOKUP,
           "jdbc-sqrl", TableType.LOOKUP,
           "postgres-cdc", TableType.VERSIONED_STATE);
 
+  public static Map<String, String> CATALOG_CONNECTOR_MAP =
+      ImmutableMap.of("org.apache.iceberg.flink.FlinkCatalog", "iceberg");
+
   public static final Set<String> SINK_ONLY_CONNECTORS =
-      Set.of("blackhole", "print", "elasticsearch-7", "firehose");
+      Set.of(
+          "elasticsearch-6",
+          "elasticsearch-7",
+          "elasticsearch-8",
+          "opensearch",
+          "firehose",
+          "dynamodb",
+          "print",
+          "blackhole",
+          "prometheus");
 
   Map<String, String> options;
+  Optional<Catalog> catalog;
 
   @Override
   public Optional<String> getFormat() {
@@ -81,7 +98,16 @@ public class FlinkConnectorConfig implements ConnectorConfig {
 
   @Override
   public Optional<String> getConnectorName() {
-    return Optional.ofNullable(options.get(CONNECTOR_KEY));
+    var connector = options.get(CONNECTOR_KEY);
+    if (connector == null && catalog.isPresent()) {
+      if (!(catalog.get() instanceof GenericInMemoryCatalog)) {
+        // it's an external catalog, let's see if we know it
+        connector = CATALOG_CONNECTOR_MAP.get(catalog.get().getClass().getName());
+        // otherwise we give it a name because we assume it's a source
+        if (connector == null) connector = "unknown-catalog";
+      }
+    }
+    return Optional.ofNullable(connector);
   }
 
   @Override

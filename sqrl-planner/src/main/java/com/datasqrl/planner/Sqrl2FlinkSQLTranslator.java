@@ -914,7 +914,10 @@ public class Sqrl2FlinkSQLTranslator {
       mutationBld.outputDataType(outputType.build());
     }
     ObjectIdentifier tableId = tableOp.getTableIdentifier();
-    var connector = new FlinkConnectorConfig(resolveConnectorOptions(tableOp));
+    var connector =
+        new FlinkConnectorConfig(
+            tableOp.getCatalogTable().getOptions(),
+            catalogManager.getCatalog(tableId.getCatalogName()));
     var tableAnalysis =
         TableAnalysis.of(
             tableId,
@@ -931,33 +934,6 @@ public class Sqrl2FlinkSQLTranslator {
         tableAnalysis,
         fullTable,
         completeCreateTableSql);
-  }
-
-  private Map<String, String> resolveConnectorOptions(CreateTableOperation tableOp) {
-    var tableOptions = tableOp.getCatalogTable().getOptions();
-    if (tableOptions.containsKey(FlinkConnectorConfig.CONNECTOR_KEY)) {
-      return tableOptions;
-    }
-
-    var catalogName = tableOp.getTableIdentifier().getCatalogName();
-    if (catalogName == null || catalogName.isEmpty()) {
-      return tableOptions;
-    }
-
-    return catalogManager
-        .getCatalog(catalogName)
-        .map(
-            catalog -> {
-              //              if (catalog instanceof org.apache.iceberg.flink.FlinkCatalog
-              // flinkCatalog) {
-              //                var merged = new java.util.LinkedHashMap<String, String>();
-              ////                merged.putAll(flinkCatalog.getOptions());
-              //                merged.putAll(tableOptions);
-              //                return Map.<String, String>copyOf(merged);
-              //              }
-              return tableOptions;
-            })
-        .orElse(tableOptions);
   }
 
   public ObjectIdentifier createSinkTable(FlinkTableBuilder tableBuilder) {
