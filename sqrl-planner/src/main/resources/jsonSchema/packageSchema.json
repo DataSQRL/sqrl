@@ -196,7 +196,7 @@
                 },
                 "taskmanager-size": {
                   "type": "string",
-                  "enum": ["dev", "small", "small.mem", "small.cpu", "medium", "medium.mem", "medium.cpu", "large", "large.mem", "large.cpu"]
+                  "enum": ["dev", "small", "small.mem", "small.cpu", "small.mem-headroom", "medium", "medium.mem", "medium.cpu", "medium.mem-headroom", "large", "large.mem", "large.cpu", "large.mem-headroom"]
                 },
                 "taskmanager-count": {
                   "type": "integer",
