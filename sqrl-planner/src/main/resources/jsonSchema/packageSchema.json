@@ -284,7 +284,7 @@
       "minProperties": 1
     },
     "information": {
-      "description": "Information about this DataSQRL project",
+      "description": "Information about this DataSQRL project/deployment",
       "type": "object",
       "properties": {
         "description": {

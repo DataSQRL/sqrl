@@ -14,15 +14,7 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
- - id0: BIGINT NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - interest_rate: DOUBLE NOT NULL
- - max_amount: DOUBLE NOT NULL
- - min_amount: DOUBLE NOT NULL
- - max_duration: BIGINT NOT NULL
- - min_duration: BIGINT NOT NULL
- - updated_at0: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - id1: BIGINT NOT NULL
  - id2: BIGINT
 Inputs:
  - default_catalog.default_database._Applications
@@ -265,7 +257,7 @@ FROM `sources`.`ApplicationUpdates` AS `u`
  INNER JOIN `_LoanTypes` FOR SYSTEM_TIME AS OF `u`.`event_time` AS `t` ON `t`.`id` = `a`.`loan_type_id`;
 CREATE VIEW `ApplicationInfo`
 AS
-SELECT `a`.*, `t`.*, `t2`.`id` AS `id2`
+SELECT `a`.*, `t`.`id` AS `id1`, `t2`.`id` AS `id2`
 FROM `_Applications` AS `a`
  INNER JOIN `_LoanTypes` AS `t` ON `t`.`id` = `a`.`loan_type_id`
  LEFT JOIN `_LoanTypes` AS `t2` ON `t2`.`id` = `a`.`customer_id`;
@@ -361,7 +353,7 @@ CREATE OR REPLACE ICEBERG TABLE ApplicationStatus EXTERNAL_VOLUME = 'MyNewVolume
 CREATE OR REPLACE ICEBERG TABLE _Applications EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = '_Applications';
 CREATE OR REPLACE ICEBERG TABLE _LoanTypes EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = '_LoanTypes'
 >>>iceberg-snowflake-views.sql
-CREATE OR REPLACE VIEW ApplicationInfo(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, id0, name, description, interest_rate, max_amount, min_amount, max_duration, min_duration, updated_at0, id2) AS SELECT _Applications.id, _Applications.customer_id, _Applications.loan_type_id, _Applications.amount, _Applications.duration, _Applications.application_date, _Applications.updated_at, _LoanTypes.id AS id0, _LoanTypes.name, _LoanTypes.description, _LoanTypes.interest_rate, _LoanTypes.max_amount, _LoanTypes.min_amount, _LoanTypes.max_duration, _LoanTypes.min_duration, _LoanTypes.updated_at AS updated_at0, _LoanTypes0.id AS id2
+CREATE OR REPLACE VIEW ApplicationInfo(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, id1, id2) AS SELECT _Applications.id, _Applications.customer_id, _Applications.loan_type_id, _Applications.amount, _Applications.duration, _Applications.application_date, _Applications.updated_at, _LoanTypes.id AS id1, _LoanTypes0.id AS id2
 FROM _Applications
 INNER JOIN _LoanTypes ON _Applications.loan_type_id = _LoanTypes.id
 LEFT JOIN _LoanTypes AS _LoanTypes0 ON _Applications.customer_id = _LoanTypes0.id

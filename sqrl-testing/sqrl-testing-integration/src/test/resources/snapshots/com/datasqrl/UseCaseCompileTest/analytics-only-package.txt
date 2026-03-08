@@ -14,15 +14,7 @@ Schema:
  - duration: BIGINT NOT NULL
  - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
- - id0: BIGINT NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - interest_rate: DOUBLE NOT NULL
- - max_amount: DOUBLE NOT NULL
- - min_amount: DOUBLE NOT NULL
- - max_duration: BIGINT NOT NULL
- - min_duration: BIGINT NOT NULL
- - updated_at0: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - id1: BIGINT NOT NULL
  - id2: BIGINT
 Inputs:
  - default_catalog.default_database._Applications
@@ -265,7 +257,7 @@ FROM `sources`.`ApplicationUpdates` AS `u`
  INNER JOIN `_LoanTypes` FOR SYSTEM_TIME AS OF `u`.`event_time` AS `t` ON `t`.`id` = `a`.`loan_type_id`;
 CREATE VIEW `ApplicationInfo`
 AS
-SELECT `a`.*, `t`.*, `t2`.`id` AS `id2`
+SELECT `a`.*, `t`.`id` AS `id1`, `t2`.`id` AS `id2`
 FROM `_Applications` AS `a`
  INNER JOIN `_LoanTypes` AS `t` ON `t`.`id` = `a`.`loan_type_id`
  LEFT JOIN `_LoanTypes` AS `t2` ON `t2`.`id` = `a`.`customer_id`;
@@ -357,7 +349,7 @@ CREATE TABLE IF NOT EXISTS "ApplicationStatus" ("status" VARCHAR(65536) NOT NULL
 CREATE TABLE IF NOT EXISTS "_Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","loan_type_id"));
 CREATE TABLE IF NOT EXISTS "_LoanTypes" ("id" BIGINT NOT NULL, "name" VARCHAR(65536) NOT NULL, "description" VARCHAR(65536) NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"))
 >>>iceberg-duckdb-views.sql
-CREATE OR REPLACE VIEW "ApplicationInfo"("id", "customer_id", "loan_type_id", "amount", "duration", "application_date", "updated_at", "id0", "name", "description", "interest_rate", "max_amount", "min_amount", "max_duration", "min_duration", "updated_at0", "id2") AS SELECT "t"."id", "t"."customer_id", "t"."loan_type_id", "t"."amount", "t"."duration", "t"."application_date", "t"."updated_at", "t0"."id" AS "id0", "t0"."name", "t0"."description", "t0"."interest_rate", "t0"."max_amount", "t0"."min_amount", "t0"."max_duration", "t0"."min_duration", "t0"."updated_at" AS "updated_at0", "t1"."id" AS "id2"
+CREATE OR REPLACE VIEW "ApplicationInfo"("id", "customer_id", "loan_type_id", "amount", "duration", "application_date", "updated_at", "id1", "id2") AS SELECT "t"."id", "t"."customer_id", "t"."loan_type_id", "t"."amount", "t"."duration", "t"."application_date", "t"."updated_at", "t0"."id" AS "id1", "t1"."id" AS "id2"
 FROM (SELECT *
   FROM "iceberg_scan"('/tmp/duckdb/default_database/_Applications', ALLOW_MOVED_PATHS = TRUE)) AS "t"
  INNER JOIN (SELECT *

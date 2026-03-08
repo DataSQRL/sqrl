@@ -13,7 +13,7 @@ ApplicationStatus := SELECT u.status, u.message, u.event_time, a.id, a.customer_
                                                JOIN _LoanTypes FOR SYSTEM_TIME AS OF u.`event_time` t ON t.id = a.loan_type_id;
 
 -- Doing a double join here to force the optimizer to allocate this to the database stages
-ApplicationInfo := SELECT a.*, t.*, t2.id AS id2 FROM _Applications a
+ApplicationInfo := SELECT a.*, t.id AS id1, t2.id AS id2 FROM _Applications a
     JOIN _LoanTypes t ON t.id = a.loan_type_id
     LEFT JOIN _LoanTypes t2 ON t2.id = a.customer_id;
 
@@ -21,4 +21,4 @@ ApplicationInfo := SELECT a.*, t.*, t2.id AS id2 FROM _Applications a
 -- ApplicationStatusTest := SELECT status, COUNT(1) AS num FROM ApplicationStatus GROUP BY status ORDER BY status ASC;
 
 /*+test */
-ApplicationInfoTest := SELECT COUNT(1) AS num FROM ApplicationInfo;
+ApplicationInfoTest := SELECT COUNT(1) AS num FROM ApplicationInfo WHERE id > 0;
