@@ -19,7 +19,6 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable;
-import com.datasqrl.planner.tables.FlinkConnectorConfig;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import java.util.Map;
 import java.util.Optional;

@@ -19,7 +19,6 @@ import com.datasqrl.config.ConnectorConfig;
 import com.datasqrl.io.tables.TableType;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -129,6 +128,4 @@ public class FlinkConnectorConfig implements ConnectorConfig {
   public String toString() {
     return "ConnectorConfigImpl{" + options.toString() + "}";
   }
-
-
 }

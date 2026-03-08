@@ -26,7 +26,6 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.database.relational.JdbcStatementFactory.QueryResult;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.graphql.jdbc.DatabaseType;

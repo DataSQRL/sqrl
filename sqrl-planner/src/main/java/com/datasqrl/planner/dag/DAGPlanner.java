@@ -221,7 +221,7 @@ public class DAGPlanner {
             node -> {
               Set<ExecutionStage> downstreamStages =
                   new HashSet<>(); // We want to only plan each node once for each stage even if it
-                                   // is consumed multiple times
+              // is consumed multiple times
               // We need stable iteration order for reproducibility
               List<PipelineNode> downstreamNodes = dag.getOutputs(node).stream().sorted().toList();
               for (PipelineNode downstream : downstreamNodes) {

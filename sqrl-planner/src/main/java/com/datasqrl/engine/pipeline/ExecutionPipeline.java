@@ -16,7 +16,6 @@
 package com.datasqrl.engine.pipeline;
 
 import com.datasqrl.config.EngineType;
-import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.util.StreamUtil;
 import java.util.List;

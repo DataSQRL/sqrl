@@ -23,7 +23,6 @@ import static org.mockito.Mockito.when;
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import java.util.Map;

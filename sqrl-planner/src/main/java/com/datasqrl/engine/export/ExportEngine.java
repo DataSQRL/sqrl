@@ -21,7 +21,6 @@ import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
-import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 
 public interface ExportEngine extends ExecutionEngine {

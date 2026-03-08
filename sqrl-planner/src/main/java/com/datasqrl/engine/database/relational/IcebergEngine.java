@@ -27,22 +27,13 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.iceberg.IcebergDataTypeMapper;
 import com.datasqrl.engine.database.QueryEngine;
-import com.datasqrl.engine.log.LogEngine;
-import com.datasqrl.engine.log.MutationEngine;
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.graphql.server.MutationInsertType;
-import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
-import java.time.Duration;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 import lombok.NonNull;
-import org.apache.calcite.rel.type.RelDataType;
-import org.apache.flink.table.catalog.ObjectIdentifier;
 
 public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 

@@ -34,7 +34,6 @@ import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
 import java.util.EnumSet;
-import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 
