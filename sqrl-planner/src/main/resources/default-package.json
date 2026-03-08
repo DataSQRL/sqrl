@@ -59,7 +59,7 @@
       "catalog-name": "default_catalog",
       "catalog-table": "${sqrl:table-name}",
       "warehouse": "sqrl_iceberg_data",
-      "format-version": 3,
+      "format-version": 2,
       "write.delete.vector.enabled": "true"
     },
     "postgres": {

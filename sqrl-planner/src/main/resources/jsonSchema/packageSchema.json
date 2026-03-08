@@ -283,12 +283,16 @@
       "type": "object",
       "minProperties": 1
     },
-    "project": {
-      "description": "Project information",
+    "information": {
+      "description": "Information about this DataSQRL project",
       "type": "object",
       "properties": {
         "description": {
-          "description": "Project description",
+          "description": "Describes what is being deployed",
+          "type": "string"
+        },
+        "label": {
+          "description": "Labels individual deployments for this project",
           "type": "string"
         }
       },

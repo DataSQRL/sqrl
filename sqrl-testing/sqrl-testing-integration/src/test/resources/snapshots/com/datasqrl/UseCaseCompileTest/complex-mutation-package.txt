@@ -140,8 +140,9 @@ WITH (
   'catalog-table' = 'SinkTable',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'format-version' = '3',
-  'warehouse' = '/tmp/duckdb'
+  'format-version' = '2',
+  'warehouse' = '/tmp/duckdb',
+  'write.delete.vector.enabled' = 'true'
 );
 USE CATALOG `default_catalog`;
 CREATE DATABASE IF NOT EXISTS `default_database`;
@@ -169,8 +170,9 @@ WITH (
   'catalog-table' = 'LatestTokens',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'format-version' = '3',
+  'format-version' = '2',
   'warehouse' = '/tmp/duckdb',
+  'write.delete.vector.enabled' = 'true',
   'write.upsert.enabled' = 'true'
 );
 EXECUTE STATEMENT SET BEGIN

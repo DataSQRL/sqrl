@@ -215,8 +215,9 @@ WITH (
   'catalog-table' = '_MyApplications1',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'format-version' = '3',
-  'warehouse' = '/tmp/duckdb'
+  'format-version' = '2',
+  'warehouse' = '/tmp/duckdb',
+  'write.delete.vector.enabled' = 'true'
 );
 CREATE TABLE `_MyApplications2_2` (
   `id` BIGINT NOT NULL,
@@ -233,8 +234,9 @@ WITH (
   'catalog-table' = '_MyApplications2',
   'catalog-type' = 'hadoop',
   'connector' = 'iceberg',
-  'format-version' = '3',
-  'warehouse' = '/tmp/duckdb'
+  'format-version' = '2',
+  'warehouse' = '/tmp/duckdb',
+  'write.delete.vector.enabled' = 'true'
 );
 CREATE TABLE `_MyApplications2_3` (
   `id` BIGINT NOT NULL,
