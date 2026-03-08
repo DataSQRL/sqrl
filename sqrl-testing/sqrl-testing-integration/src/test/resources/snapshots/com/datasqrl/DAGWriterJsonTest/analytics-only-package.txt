@@ -10,7 +10,7 @@
     "name" : "base-table",
     "description" : "ApplicationInfo"
   } ],
-  "plan" : "LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], id0=[$7], name=[$8], description=[$9], interest_rate=[$10], max_amount=[$11], min_amount=[$12], max_duration=[$13], min_duration=[$14], updated_at0=[$15], id2=[$16])\n  LogicalTableScan(table=[[default_catalog, default_database, ApplicationInfo]])\n",
+  "plan" : "LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], id1=[$7], id2=[$8])\n  LogicalTableScan(table=[[default_catalog, default_database, ApplicationInfo]])\n",
   "sql" : "SELECT *\nFROM `default_catalog`.`default_database`.`ApplicationInfo`"
 }, {
   "id" : "access:ApplicationStatus",
@@ -33,8 +33,8 @@
   "documentation" : "",
   "inputs" : [ "default_catalog.default_database._Applications", "default_catalog.default_database._LoanTypes" ],
   "annotations" : [ ],
-  "plan" : "LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], id0=[$7], name=[$8], description=[$9], interest_rate=[$10], max_amount=[$11], min_amount=[$12], max_duration=[$13], min_duration=[$14], updated_at0=[$15], id2=[$16])\n  LogicalJoin(condition=[=($16, $1)], joinType=[left])\n    LogicalJoin(condition=[=($7, $2)], joinType=[inner])\n      LogicalTableScan(table=[[default_catalog, default_database, _Applications]])\n      LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])\n    LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])\n",
-  "sql" : "CREATE VIEW `ApplicationInfo` AS  SELECT a.*, t.*, t2.id AS id2 FROM _Applications a\n    JOIN _LoanTypes t ON t.id = a.loan_type_id\n    LEFT JOIN _LoanTypes t2 ON t2.id = a.customer_id;\n",
+  "plan" : "LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], id1=[$7], id2=[$16])\n  LogicalJoin(condition=[=($16, $1)], joinType=[left])\n    LogicalJoin(condition=[=($7, $2)], joinType=[inner])\n      LogicalTableScan(table=[[default_catalog, default_database, _Applications]])\n      LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])\n    LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])\n",
+  "sql" : "CREATE VIEW `ApplicationInfo` AS  SELECT a.*, t.id AS id1, t2.id AS id2 FROM _Applications a\n    JOIN _LoanTypes t ON t.id = a.loan_type_id\n    LEFT JOIN _LoanTypes t2 ON t2.id = a.customer_id;\n",
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
@@ -58,32 +58,8 @@
     "name" : "updated_at",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   }, {
-    "name" : "id0",
+    "name" : "id1",
     "type" : "BIGINT NOT NULL"
-  }, {
-    "name" : "name",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
-  }, {
-    "name" : "description",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
-  }, {
-    "name" : "interest_rate",
-    "type" : "DOUBLE NOT NULL"
-  }, {
-    "name" : "max_amount",
-    "type" : "DOUBLE NOT NULL"
-  }, {
-    "name" : "min_amount",
-    "type" : "DOUBLE NOT NULL"
-  }, {
-    "name" : "max_duration",
-    "type" : "BIGINT NOT NULL"
-  }, {
-    "name" : "min_duration",
-    "type" : "BIGINT NOT NULL"
-  }, {
-    "name" : "updated_at0",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   }, {
     "name" : "id2",
     "type" : "BIGINT"
@@ -408,9 +384,9 @@ ApplicationStatus := SELECT u.status, u.message, u.event_time, a.id, a.customer_
                             a.amount, a.duration, t.max_amount, t.min_amount
                      FROM sources.ApplicationUpdates u JOIN _Applications FOR SYSTEM_TIME AS OF u.`event_time` a ON a.id = u.loan_application_id
                                                JOIN _LoanTypes FOR SYSTEM_TIME AS OF u.`event_time` t ON t.id = a.loan_type_id;
-ApplicationInfo := SELECT a.*, t.*, t2.id AS id2 FROM _Applications a
+ApplicationInfo := SELECT a.*, t.id AS id1, t2.id AS id2 FROM _Applications a
     JOIN _LoanTypes t ON t.id = a.loan_type_id
     LEFT JOIN _LoanTypes t2 ON t2.id = a.customer_id;
 /*+test */
-ApplicationInfoTest := SELECT COUNT(1) AS num FROM ApplicationInfo;
+ApplicationInfoTest := SELECT COUNT(1) AS num FROM ApplicationInfo WHERE id > 0;
 
