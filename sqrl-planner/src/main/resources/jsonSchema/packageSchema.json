@@ -186,9 +186,13 @@
             "config": {
               "type": "object",
               "minProperties": 1
+            },
+            "deployment": {
+              "type": "object",
+              "additionalProperties": true
             }
           },
-          "additionalProperties": true
+          "additionalProperties": false
         },
         "snowflake": {
           "type": "object",
@@ -221,9 +225,13 @@
             "config": {
               "type": "object",
               "minProperties": 1
+            },
+            "deployment": {
+              "type": "object",
+              "additionalProperties": true
             }
           },
-          "additionalProperties": true
+          "additionalProperties": false
         },
         "postgres": {
           "type": "object",
@@ -231,9 +239,13 @@
             "config": {
               "type": "object",
               "minProperties": 1
+            },
+            "deployment": {
+              "type": "object",
+              "additionalProperties": true
             }
           },
-          "additionalProperties": true
+          "additionalProperties": false
         },
         "kafka": {
           "type": "object",
