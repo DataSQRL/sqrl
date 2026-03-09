@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "script": {
+    "main": "oauth-auth0.sqrl"
+  },
+  "compiler": {
+    "compile-flink-plan": false
+  },
+  "engines": {
+    "vertx": {
+      "authKind": ["OAUTH"],
+      "config": {
+        "oauthConfig": {
+          "oauth2Options": {
+            "site": "${AUTH0_ISSUER}"
+          },
+          "authorizationServerUrl": "${AUTH0_EXTERNAL_URL}"
+        }
+      }
+    }
+  }
+}
