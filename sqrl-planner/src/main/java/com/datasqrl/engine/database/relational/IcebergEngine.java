@@ -21,6 +21,8 @@ import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_TYPE_KEY;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_GLUE_CATALOG_IMPL;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_UPSERT_ENABLED_KEY;
 
+import com.datasqrl.config.ConnectorConf;
+import com.datasqrl.config.ConnectorConf.Context;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
@@ -28,9 +30,12 @@ import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.iceberg.IcebergDataTypeMapper;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.hint.MaintenanceHint;
+import com.datasqrl.planner.hint.MaintenanceHint.MaintenanceType;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 import lombok.NonNull;
@@ -39,12 +44,16 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
   private static final Pattern GLUE_TABLE_PATTERN = Pattern.compile("^[a-z0-9_]{1,255}$");
 
+  final Optional<ConnectorConf> maintenanceConnector;
+
   @Inject
   public IcebergEngine(@NonNull PackageJson json, ConnectorFactoryFactory connectorFactory) {
     super(
         IcebergEngineFactory.ENGINE_NAME,
         json.getEngines().getEngineConfigOrEmpty(IcebergEngineFactory.ENGINE_NAME),
         connectorFactory);
+    maintenanceConnector =
+        connectorFactory.getOptionalConfig(IcebergEngineFactory.ENGINE_NAME + "-maintenance");
   }
 
   @Override
@@ -73,7 +82,7 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   }
 
   @Override
-  protected Map<String, String> getConnectorOptions(
+  protected TreeMap<String, String> getConnectorOptions(
       String originalTableName, String tableId, TableAnalysis tableAnalysis) {
     var connectorOptions = super.getConnectorOptions(originalTableName, tableId, tableAnalysis);
     var mutableOptions = new TreeMap<>(connectorOptions);
@@ -92,6 +101,28 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
     if (tableAnalysis.getType().isState()) {
       mutableOptions.put(ICEBERG_UPSERT_ENABLED_KEY, "true");
     }
+
+    tableAnalysis
+        .getHints()
+        .getHint(MaintenanceHint.class)
+        .map(MaintenanceHint::getMaintenanceType)
+        .filter(type -> type != MaintenanceType.NONE)
+        .ifPresent(
+            maintenanceType ->
+                mutableOptions.putAll(
+                    maintenanceConnector
+                        .map(
+                            connConf ->
+                                connConf.toMapWithSubstitution(
+                                    Context.builder()
+                                        .tableName(originalTableName)
+                                        .tableId(tableId)
+                                        .build()))
+                        .orElseThrow(
+                            () ->
+                                new IllegalArgumentException(
+                                    "Missing Iceberg maintenance connector configuration for engine: "
+                                        + getName()))));
 
     return mutableOptions;
   }

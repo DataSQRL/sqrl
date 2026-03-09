@@ -17,6 +17,7 @@ package com.datasqrl.config;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import lombok.Builder;
 import lombok.Singular;
@@ -27,9 +28,9 @@ public interface ConnectorConf {
 
   Map<String, String> toMap();
 
-  Map<String, String> toMapWithSubstitution(Map<String, String> variables);
+  TreeMap<String, String> toMapWithSubstitution(Map<String, String> variables);
 
-  default Map<String, String> toMapWithSubstitution(Context context) {
+  default TreeMap<String, String> toMapWithSubstitution(Context context) {
     return toMapWithSubstitution(context.toVariables());
   }
 

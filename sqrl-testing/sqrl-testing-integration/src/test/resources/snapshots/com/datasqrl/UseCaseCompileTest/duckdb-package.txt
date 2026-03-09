@@ -214,10 +214,13 @@ WITH (
   'catalog-name' = 'default_catalog',
   'catalog-table' = '_MyApplications1',
   'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
   'connector' = 'iceberg',
   'format-version' = '2',
   'warehouse' = '/tmp/duckdb',
-  'write.delete.vector.enabled' = 'true'
+  'write.distribution-mode' = 'hash'
 );
 CREATE TABLE `_MyApplications2_2` (
   `id` BIGINT NOT NULL,
@@ -233,10 +236,13 @@ WITH (
   'catalog-name' = 'default_catalog',
   'catalog-table' = '_MyApplications2',
   'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
   'connector' = 'iceberg',
   'format-version' = '2',
   'warehouse' = '/tmp/duckdb',
-  'write.delete.vector.enabled' = 'true'
+  'write.distribution-mode' = 'hash'
 );
 CREATE TABLE `_MyApplications2_3` (
   `id` BIGINT NOT NULL,

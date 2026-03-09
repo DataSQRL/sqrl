@@ -28,6 +28,7 @@ import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -65,7 +66,7 @@ class IcebergEngineTest {
   private void setupConnectorOptions(Map<String, String> options) {
     when(mockConnectorConf.toMapWithSubstitution(
             org.mockito.ArgumentMatchers.any(ConnectorConf.Context.class)))
-        .thenReturn(options);
+        .thenReturn(new TreeMap<>(options));
   }
 
   @Test

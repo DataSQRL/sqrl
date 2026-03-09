@@ -60,7 +60,16 @@
       "catalog-table": "${sqrl:table-name}",
       "warehouse": "sqrl_iceberg_data",
       "format-version": 2,
-      "write.delete.vector.enabled": "true"
+      "write.distribution-mode": "hash",
+      "commit.retry.num-retries": "20",
+      "commit.retry.min-wait-ms": "100",
+      "commit.retry.max-wait-ms": "5000"
+    },
+    "iceberg-maintenance": {
+      "compaction.enabled": "true",
+      "write.metadata.delete-after-commit.enabled": "true",
+      "write.metadata.previous-versions-max": "10",
+      "history.expire.max-snapshot-age-ms": "86400000"
     },
     "postgres": {
       "connector": "jdbc-sqrl",

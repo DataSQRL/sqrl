@@ -124,7 +124,7 @@ WITH (
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
-  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}-group',
   'topic' = 'InputTable'
 );
 CREATE DATABASE IF NOT EXISTS `iceberg`;
@@ -139,10 +139,13 @@ WITH (
   'catalog-name' = 'mydatabase',
   'catalog-table' = 'SinkTable',
   'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
   'connector' = 'iceberg',
   'format-version' = '2',
   'warehouse' = '/tmp/duckdb',
-  'write.delete.vector.enabled' = 'true'
+  'write.distribution-mode' = 'none'
 );
 USE CATALOG `default_catalog`;
 CREATE DATABASE IF NOT EXISTS `default_database`;
@@ -169,10 +172,17 @@ WITH (
   'catalog-name' = 'mydatabase',
   'catalog-table' = 'LatestTokens',
   'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
+  'compaction.enabled' = 'true',
   'connector' = 'iceberg',
   'format-version' = '2',
+  'history.expire.max-snapshot-age-ms' = '86400000',
   'warehouse' = '/tmp/duckdb',
-  'write.delete.vector.enabled' = 'true',
+  'write.distribution-mode' = 'hash',
+  'write.metadata.delete-after-commit.enabled' = 'true',
+  'write.metadata.previous-versions-max' = '10',
   'write.upsert.enabled' = 'true'
 );
 EXECUTE STATEMENT SET BEGIN

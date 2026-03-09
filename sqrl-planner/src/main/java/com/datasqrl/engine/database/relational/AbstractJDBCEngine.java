@@ -39,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -107,6 +108,8 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
 
     var connectorOptions =
         getConnectorOptions(originalTableName, tableBuilder.getTableName(), tableAnalysis);
+    // preserve any existing connector options
+    connectorOptions.putAll(tableBuilder.getConnectorOptions());
     tableBuilder.setConnectorOptions(connectorOptions);
 
     return new JdbcEngineCreateTable(
@@ -186,7 +189,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     return planBuilder.build();
   }
 
-  protected Map<String, String> getConnectorOptions(
+  protected TreeMap<String, String> getConnectorOptions(
       String originalTableName, String tableId, TableAnalysis tableAnalysis) {
     return connector
         .map(

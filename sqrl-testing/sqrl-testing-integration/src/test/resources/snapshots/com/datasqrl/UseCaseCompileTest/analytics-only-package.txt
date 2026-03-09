@@ -279,10 +279,13 @@ WITH (
   'catalog-name' = 'mydatabase',
   'catalog-table' = 'ApplicationStatus',
   'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
   'connector' = 'iceberg',
   'format-version' = '2',
   'warehouse' = '/tmp/duckdb',
-  'write.delete.vector.enabled' = 'true',
+  'write.distribution-mode' = 'hash',
   'write.parquet.page-size-bytes' = '1000'
 );
 CREATE TABLE `_Applications_2` (
@@ -300,10 +303,13 @@ WITH (
   'catalog-name' = 'mydatabase',
   'catalog-table' = '_Applications',
   'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
   'connector' = 'iceberg',
   'format-version' = '2',
   'warehouse' = '/tmp/duckdb',
-  'write.delete.vector.enabled' = 'true',
+  'write.distribution-mode' = 'hash',
   'write.parquet.page-size-bytes' = '1000',
   'write.upsert.enabled' = 'true'
 );
@@ -323,10 +329,13 @@ WITH (
   'catalog-name' = 'mydatabase',
   'catalog-table' = '_LoanTypes',
   'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
   'connector' = 'iceberg',
   'format-version' = '2',
   'warehouse' = '/tmp/duckdb',
-  'write.delete.vector.enabled' = 'true',
+  'write.distribution-mode' = 'hash',
   'write.parquet.page-size-bytes' = '1000',
   'write.upsert.enabled' = 'true'
 );

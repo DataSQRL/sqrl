@@ -243,7 +243,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       connectorConfig.put("properties.isolation.level", "read_committed");
     }
     ttl.ifPresent(duration -> topicConfig.put("retention.ms", String.valueOf(duration.toMillis())));
-
+    // preserve any existing connector options
+    connectorConfig.putAll(tableBuilder.getConnectorOptions());
     tableBuilder.setConnectorOptions(connectorConfig);
     String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     return new Table(
