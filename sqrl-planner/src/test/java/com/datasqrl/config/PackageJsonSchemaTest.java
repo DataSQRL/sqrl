@@ -66,10 +66,6 @@ class PackageJsonSchemaTest {
         "invalidEnumString.json",
         "invalidScriptFields.json",
         "invalidScriptApiFields.json",
-        "invalidFlinkDeploymentSize.json",
-        "invalidDeploymentCount.json",
-        "invalidPostgresReplicaCount.json",
-        "invalidBadModifier.json"
       })
   void invalidConfigFile(String configFileName) {
     testForErrors(

@@ -189,49 +189,6 @@
             },
             "deployment": {
               "type": "object",
-              "properties": {
-                "jobmanager-size": {
-                  "type": "string",
-                  "enum": ["dev", "small", "medium", "large"]
-                },
-                "taskmanager-size": {
-                  "type": "string",
-                  "enum": ["dev", "small", "small.mem", "small.cpu", "small.mem-headroom", "medium", "medium.mem", "medium.cpu", "medium.mem-headroom", "large", "large.mem", "large.cpu", "large.mem-headroom"]
-                },
-                "taskmanager-count": {
-                  "type": "integer",
-                  "minimum": 1
-                },
-                "secrets": {
-                  "oneOf": [
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "string",
-                        "minLength": 1
-                      },
-                      "minItems": 1
-                    }
-                  ]
-                },
-                "schedule": {
-                  "description": "Schedule for periodic awakening of the Flink job",
-                  "type": "object",
-                  "properties": {
-                    "cron": {
-                      "type": "string"
-                    },
-                    "timezone": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["cron", "timezone"],
-                  "additionalProperties": false
-                }
-              },
               "additionalProperties": true
             }
           },
@@ -271,16 +228,6 @@
             },
             "deployment": {
               "type": "object",
-              "properties": {
-                "instance-size": {
-                  "type": "string",
-                  "enum": ["dev", "small", "small.disk", "medium", "medium.disk", "large", "large.disk"]
-                },
-                "instance-count": {
-                  "type": "integer",
-                  "minimum": 1
-                }
-              },
               "additionalProperties": true
             }
           },
@@ -295,16 +242,6 @@
             },
             "deployment": {
               "type": "object",
-              "properties": {
-                "instance-size": {
-                  "type": "string",
-                  "enum": ["dev", "small", "medium", "large", "xlarge"]
-                },
-                "replica-count": {
-                  "type": "integer",
-                  "minimum": 0
-                }
-              },
               "additionalProperties": true
             }
           },
