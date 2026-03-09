@@ -31,13 +31,15 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 /**
- * Integration tests for MCP OAuth authentication with Auth0. Tests the full OAuth flow including
- * OIDC discovery, protected resource metadata, and token validation against a real Auth0 tenant.
+ * Manual integration tests for MCP OAuth authentication with Auth0. Tests the full OAuth flow
+ * including OIDC discovery, protected resource metadata, and token validation against a real Auth0
+ * tenant.
  *
  * <p>Requires the following environment variables to be set:
  *
@@ -51,11 +53,12 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * <p>The Auth0 tenant is fixed to {@code test-x2k6ziops74yyzik.auth0.com}. If credentials are not
  * configured the tests are skipped automatically.
  */
+@Disabled("Intended for manual usage")
 @Testcontainers
 @Slf4j
 class McpAuth0IT extends SqrlContainerTestBase {
 
-  private static final String AUTH0_DOMAIN = "test-x2k6ziops74yyzik.auth0.com";
+  private static final String AUTH0_DOMAIN = ""; // Set Auth0 domain to test
   private static final String AUTH0_ISSUER_URL = "https://" + AUTH0_DOMAIN + "/";
   private static final String AUTH0_TOKEN_URL = "https://" + AUTH0_DOMAIN + "/oauth/token";
 
@@ -68,7 +71,7 @@ class McpAuth0IT extends SqrlContainerTestBase {
 
   @Override
   protected String getTestCaseName() {
-    return "oauth-auth0_compile";
+    return "oauth-authorized-compile";
   }
 
   @BeforeEach
@@ -108,8 +111,7 @@ class McpAuth0IT extends SqrlContainerTestBase {
     var statusCode = response.getStatusLine().getStatusCode();
 
     if (statusCode != 200) {
-      throw new RuntimeException(
-          "Failed to obtain Auth0 token: HTTP " + statusCode + " — " + body);
+      throw new RuntimeException("Failed to obtain Auth0 token: HTTP " + statusCode + " — " + body);
     }
 
     var json = objectMapper.readTree(body);
@@ -125,7 +127,8 @@ class McpAuth0IT extends SqrlContainerTestBase {
     return json.get("access_token").asText();
   }
 
-  private void compileSqrlProjectWithAuth0(Path workingDir, Consumer<GenericContainer<?>> customizer) {
+  private void compileSqrlProjectWithAuth0(
+      Path workingDir, Consumer<GenericContainer<?>> customizer) {
     cmd = createCmdContainer(workingDir).withCommand("compile", "package.json");
     customizer.accept(cmd);
     cmd.start();
@@ -147,8 +150,8 @@ class McpAuth0IT extends SqrlContainerTestBase {
         c -> {
           // Auth0 is a public cloud service; the issuer URL is the same from inside and outside
           // the Docker network.
-          c.withEnv("AUTH0_ISSUER", AUTH0_ISSUER_URL);
-          c.withEnv("AUTH0_EXTERNAL_URL", AUTH0_ISSUER_URL);
+          c.withEnv("KEYCLOAK_ISSUER", AUTH0_ISSUER_URL);
+          c.withEnv("KEYCLOAK_EXTERNAL_URL", AUTH0_ISSUER_URL);
         };
 
     compileSqrlProjectWithAuth0(testDir, auth0Env);
@@ -228,8 +231,7 @@ class McpAuth0IT extends SqrlContainerTestBase {
 
     var response = sharedHttpClient.execute(request);
     var body = EntityUtils.toString(response.getEntity());
-    log.info(
-        "MCP response status: {}, body: {}", response.getStatusLine().getStatusCode(), body);
+    log.info("MCP response status: {}, body: {}", response.getStatusLine().getStatusCode(), body);
 
     assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
 
