@@ -308,6 +308,9 @@
         "test-folder": {
           "type": "string"
         },
+        "use-inferred-schema": {
+          "type": "boolean"
+        },
         "delay-sec": {
           "type": "integer"
         },

@@ -95,16 +95,17 @@ MyTable := SELECT
 Configures how the DataSQRL test runner executes tests.
 For streaming pipelines, use `required-checkpoints` to set a reliable time-interval for creating snapshots. Otherwise, configure a wall-clock delay via `delay-sec`.
 
-```json
+```json5
 {
   "test-runner": {
     "snapshot-folder": "snapshots/myproject/", // Snapshots output directory (default: "./snapshots")
     "test-folder": "api/tests/",               // Directory containing test GraphQL queries (default: "./tests")
-    "delay-sec": 30,                          // Wait between data-load and taking snapshot in sec. Set -1 to disable (default: 30)
-    "mutation-delay-sec": 0,                  // Pause(s) between mutation queries (default: 0)
-    "required-checkpoints": 0,                // Minimum completed Flink checkpoints before taking snapshots (requires delay-sec = -1)
-    "create-topics": ["topic1", "topic2"],    // Kafka topics to create before tests start
-    "headers": {                              // Any HTTP headers to add during the test execution. For example, JWT auth header
+    "use-inferred-schema": true,               // Use inferred GraphQL schema when true, else use the one configured at "script.graphql" (default: true)
+    "delay-sec": 30,                           // Wait between data-load and taking snapshot in sec. Set -1 to disable (default: 30)
+    "mutation-delay-sec": 0,                   // Pause(s) between mutation queries (default: 0)
+    "required-checkpoints": 0,                 // Minimum completed Flink checkpoints before taking snapshots (requires delay-sec = -1)
+    "create-topics": ["topic1", "topic2"],     // Kafka topics to create before tests start
+    "headers": {                               // Any HTTP headers to add during the test execution. For example, JWT auth header
       "Authorization": "Bearer token"
     }
   }

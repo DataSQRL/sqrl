@@ -92,6 +92,7 @@ The following is the [default configuration file](https://raw.githubusercontent.
   "test-runner": {
     "snapshot-folder": "./snapshots",
     "test-folder": "./tests",
+    "use-inferred-schema": true,
     "delay-sec": 30,
     "mutation-delay-sec": 0,
     "required-checkpoints": 0
