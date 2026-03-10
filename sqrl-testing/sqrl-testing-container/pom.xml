@@ -106,6 +106,13 @@
       <version>${mcp-sdk.version}</version>
       <scope>test</scope>
     </dependency>
+    <!-- MCP SDK 1.0 uses Jackson 3 databind which requires jackson-annotations >= 2.20 -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.core</groupId>
+      <artifactId>jackson-annotations</artifactId>
+      <version>2.20</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>io.github.openfeign</groupId>
       <artifactId>feign-core</artifactId>
