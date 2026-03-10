@@ -19,11 +19,11 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-// @Disabled
+@Disabled
 public class ExternalUseCaseCompileTest extends AbstractUseCaseTest {
 
   @Test
   public void testIndividual() {
-    super.testUseCase(Path.of("/Users/matthias/git/cloud-backend/agent/package-test-api.json"));
+    super.testUseCase(Path.of("/your/path/package.json"));
   }
 }
