@@ -270,9 +270,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
         protected RelNode visitChild(RelNode parent, int i, RelNode child) {
           if (i == 0) {
             var tableAnalysis = tableLookup.lookupView(parent);
-            if (tableAnalysis.isPresent()) {
+            if (tableAnalysis.isPresent()) { // We replace this relnode sub-tree
               parent = fromSource(tableAnalysis.get(), parent).relNode;
-            } else {
+              return parent;
+            } else { // otherwise we recurse
               parent = parent.accept(subQueryRexShuttle);
             }
           }

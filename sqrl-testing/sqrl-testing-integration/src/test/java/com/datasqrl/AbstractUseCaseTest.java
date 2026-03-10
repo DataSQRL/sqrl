@@ -47,9 +47,12 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
 
     if (testName == null) {
       var useCasesPath = packageFile.getParent();
-      while (!useCasesPath.getFileName().toString().equals("usecases")) {
+      while (useCasesPath.getFileName() != null
+          && !useCasesPath.getFileName().toString().equals("usecases")) {
         useCasesPath = useCasesPath.getParent();
       }
+      // If we are not running this under "usecases", we assume parent directory
+      if (useCasesPath.getFileName() == null) useCasesPath = packageFile.getParent();
 
       var displayPath = useCasesPath.relativize(packageFile);
       testName = getNestedDisplayName(displayPath);
