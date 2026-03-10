@@ -30,6 +30,6 @@ import org.apache.flink.table.catalog.ResolvedSchema;
  *     write the data
  */
 public record SourceSinkTableAnalysis(
-    @NonNull FlinkConnectorConfig connectorConfig,
+    @NonNull FlinkConnectorConfigWrapper connectorConfig,
     @NonNull ResolvedSchema schema,
     @Nullable MutationTable mutationDefinition) {}

@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.calcite.compatibility;
+package com.datasqrl.calcite.type;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeUtil;
 
-public class RelDataTypeCompatibility {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class TypeCompatibility {
 
   /** Checks if newType can read data produced by oldType. */
-  public boolean isBackwardsCompatible(RelDataType newType, RelDataType oldType) {
+  public static boolean isBackwardsCompatible(RelDataType newType, RelDataType oldType) {
     // 1. Nullability Check
     // If the writer (b) could produce nulls, the reader (a) MUST be able to handle them.
     if (oldType.isNullable() && !newType.isNullable()) {
@@ -56,7 +59,7 @@ public class RelDataTypeCompatibility {
     return newType.getPrecision() >= oldType.getPrecision();
   }
 
-  private boolean checkStructCompatibility(RelDataType newType, RelDataType oldType) {
+  private static boolean checkStructCompatibility(RelDataType newType, RelDataType oldType) {
     // In the Avro sense, the reader (new) doesn't need to contain all fields from the writer (old).
     // However, any field the reader expects that is NOT in the writer must be nullable.
 

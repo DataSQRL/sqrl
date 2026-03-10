@@ -17,20 +17,18 @@ package com.datasqrl.config;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.function.Predicate;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
 
-/** TODO: change value type in map to 'String' */
 public interface ConnectorConf {
 
   Map<String, String> toMap();
 
-  TreeMap<String, String> toMapWithSubstitution(Map<String, String> variables);
+  Map<String, String> toMapWithSubstitution(Map<String, String> variables);
 
-  default TreeMap<String, String> toMapWithSubstitution(Context context) {
+  default Map<String, String> toMapWithSubstitution(Context context) {
     return toMapWithSubstitution(context.toVariables());
   }
 

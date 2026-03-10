@@ -15,7 +15,6 @@
  */
 package com.datasqrl.planner.dag;
 
-import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
@@ -40,7 +39,6 @@ import com.datasqrl.planner.dag.nodes.PlannedNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
-import com.datasqrl.planner.dag.plan.MaterializationStagePlan.MaterializationStagePlanBuilder;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.dag.plan.ServerStagePlan;
@@ -60,7 +58,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -138,8 +135,7 @@ public class DAGPlanner {
         dag.eliminateInviableStages(pipeline);
       }
       // Assign stage to table
-      if (node instanceof TableNode tableNode) {
-        var table = tableNode.getTableAnalysis();
+      if (node instanceof TableNode) {
         var stage = node.getChosenStage();
         Preconditions.checkNotNull(stage);
         // table.assignStage(stage); //this stage on the config below
@@ -174,11 +170,11 @@ public class DAGPlanner {
     var streamStage = pipeline.getStageByType(EngineType.PROCESS).orElseThrow();
     var serverEngine = pipeline.getServerEngine();
     var serverPlan = ServerStagePlan.builder();
-    List<ExecutionStage> dataStoreStages =
+    var dataStoreStages =
         pipeline.stages().stream().filter(stage -> stage.engine().getType().isDataStore()).toList();
 
     var engineUtils = new MaterializationStagePlan.Utils(sqrlEnv.getRexUtil());
-    Map<ExecutionStage, MaterializationStagePlanBuilder> exportPlans =
+    var exportPlans =
         pipeline.stages().stream()
             .filter(stage -> stage.engine().getType().supportsExport())
             .collect(
@@ -190,7 +186,7 @@ public class DAGPlanner {
 
     // Collect all mutations from the DAG and add them to 1) physical plan, 2) stage plan and 3)
     // server plan if accessible
-    Map<Name, MutationTable> mutationTables =
+    var mutationTables =
         dag.allNodesByClass(PipelineNode.class)
             .flatMap(p -> p.getMutationTable().stream())
             .collect(Collectors.toMap(MutationTable::getName, Function.identity()));
@@ -207,30 +203,30 @@ public class DAGPlanner {
               }
             });
 
-    Map<InputTableKey, ObjectIdentifier> streamTableMapping = new HashMap<>();
+    var streamTableMapping = new HashMap<InputTableKey, ObjectIdentifier>();
     final var exportTableCounter = new AtomicInteger(0);
     Function<String, String> uniqueNameFct =
-        name -> {
-          return name + UNIQUE_TABLE_APPENDIX + exportTableCounter.incrementAndGet();
-        };
+        name -> name + UNIQUE_TABLE_APPENDIX + exportTableCounter.incrementAndGet();
     // move assembler logic here
     // ##1st: find all the cuts between flink and materialization (db+log) stages or sinks
     // generate a sink for each in the respective engine and insert into
     dag.allNodesByClassAndStage(TableNode.class, streamStage)
         .forEach(
             node -> {
-              Set<ExecutionStage> downstreamStages =
-                  new HashSet<>(); // We want to only plan each node once for each stage even if it
+              var downstreamStages =
+                  new HashSet<
+                      ExecutionStage>(); // We want to only plan each node once for each stage even
+              // if it
               // is consumed multiple times
               // We need stable iteration order for reproducibility
-              List<PipelineNode> downstreamNodes = dag.getOutputs(node).stream().sorted().toList();
-              for (PipelineNode downstream : downstreamNodes) {
+              var downstreamNodes = dag.getOutputs(node).stream().sorted().toList();
+              for (var downstream : downstreamNodes) {
                 if (downstream instanceof ExportNode
                     || !downstream.getChosenStage().equals(streamStage)) {
                   // Create sink
-                  ExecutionStage exportStage = null;
-                  ObjectIdentifier targetTable = null;
-                  String originalTableName = null;
+                  ExecutionStage exportStage;
+                  ObjectIdentifier targetTable;
+                  String originalTableName;
                   if (downstream instanceof ExportNode exportNode) {
                     originalTableName = exportNode.getSinkPath().getLast().getDisplay();
                     if (exportNode.getSinkTo().isPresent()) {
@@ -282,7 +278,7 @@ public class DAGPlanner {
                   var pk = determinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
                   if (pk.isDefined()) {
                     var fields = relBuilder.peek().getRowType().getFieldList();
-                    List<String> pkColNames =
+                    var pkColNames =
                         pk.asSimpleList().stream()
                             .map(fields::get)
                             .map(RelDataTypeField::getName)

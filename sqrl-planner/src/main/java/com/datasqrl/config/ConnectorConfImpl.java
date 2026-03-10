@@ -26,15 +26,16 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class ConnectorConfImpl implements ConnectorConf {
+
   SqrlConfig sqrlConfig;
 
   @Override
   public Map<String, String> toMap() {
-    return (Map) sqrlConfig.toMap();
+    return sqrlConfig.toStringMap();
   }
 
   @Override
-  public TreeMap<String, String> toMapWithSubstitution(Map<String, String> variables) {
+  public Map<String, String> toMapWithSubstitution(Map<String, String> variables) {
     return replaceVariablesInValues(sqrlConfig.toMap(), variables);
   }
 

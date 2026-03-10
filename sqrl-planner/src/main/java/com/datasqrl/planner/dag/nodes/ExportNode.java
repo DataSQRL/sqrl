@@ -52,7 +52,7 @@ public class ExportNode extends PipelineNode {
   }
 
   public Optional<Map<String, String>> getConnectorConfig() {
-    return sinkTableAnalysis.map(t -> t.connectorConfig().getOptions());
+    return sinkTableAnalysis.map(t -> t.connectorConfig().options());
   }
 
   @Override

@@ -307,7 +307,7 @@ public class SqlScriptPlanner {
       sqrlEnv
           .createTable(
               statement.toSql(),
-              getLogEngineBuilder(hintsAndDocs),
+              getMutationBuilder(hintsAndDocs),
               scriptContext.moduleLoader().getSchemaLoader())
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
@@ -538,7 +538,7 @@ public class SqlScriptPlanner {
         sqrlEnv
             .createTable(
                 flinkStmt.getSql().get(),
-                getLogEngineBuilder(hintsAndDocs),
+                getMutationBuilder(hintsAndDocs),
                 scriptContext.moduleLoader().getSchemaLoader())
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
@@ -884,7 +884,7 @@ public class SqlScriptPlanner {
                 importNameModifier,
                 flinkTable.sqlCreateTable,
                 flinkTable.schemaLoader(),
-                getLogEngineBuilder(hintsAndDocs));
+                getMutationBuilder(hintsAndDocs));
         hintsAndDocs.hints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());
@@ -929,24 +929,24 @@ public class SqlScriptPlanner {
   /**
    * For CREATE TABLE statements without connectors which are mutations, we provide this
    * MutationBuilder to fill in the connector settings based on the configured log engine.
-   *
-   * @return
    */
-  private Optional<MutationBuilder> getLogEngineBuilder(HintsAndDocs hintsAndDocs) {
+  private Optional<MutationBuilder> getMutationBuilder(HintsAndDocs hintsAndDocs) {
     var mutationStage =
         hintsAndDocs
             .hints
             .getHint(EngineHint.class)
             .flatMap(engineHint -> pipeline.getStage(engineHint.getStageNames().get(0)));
+
     if (mutationStage.isEmpty()) {
       return Optional.empty();
     }
-    if (!(mutationStage.get().engine() instanceof MutationEngine)) {
+
+    if (!(mutationStage.get().engine() instanceof MutationEngine mutationEngine)) {
       throw new StatementParserException(
           "Configured engine %s is not a mutation engine required for CREATE TABLE statements"
               .formatted(mutationStage));
     }
-    var engine = (MutationEngine) mutationStage.get().engine();
+
     return Optional.of(
         (origTableName, tableBuilder, dataType) -> {
           var mutationBuilder = MutationTable.builder();
@@ -959,7 +959,7 @@ public class SqlScriptPlanner {
                   .map(MutationInsertHint::getInsertType)
                   .orElse(MutationInsertType.SINGLE);
           mutationBuilder.createTable(
-              engine.createMutation(
+              mutationEngine.createMutation(
                   mutationStage.get(),
                   origTableName,
                   tableBuilder,

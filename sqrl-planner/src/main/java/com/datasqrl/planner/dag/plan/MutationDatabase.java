@@ -15,8 +15,9 @@
  */
 package com.datasqrl.planner.dag.plan;
 
-import com.datasqrl.calcite.compatibility.RelDataTypeCompatibility;
+import com.datasqrl.calcite.type.TypeCompatibility;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.graphql.exec.FlinkExecFunction;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.ParsedRelDataTypeResult;
 import java.util.Collection;
@@ -110,14 +111,13 @@ public record MutationDatabase(List<Table> tables) {
           oldSchema.stream()
               .collect(Collectors.toMap(r -> r.field().getName(), Function.identity()));
 
-      var typeCompatibility = new RelDataTypeCompatibility();
       for (var newField : newSchema) {
         var oldField = oldFieldsByName.get(newField.field().getName());
         if (oldField == null) {
           continue;
         }
 
-        if (!typeCompatibility.isBackwardsCompatible(
+        if (!TypeCompatibility.isBackwardsCompatible(
             newField.field().getType(), oldField.field().getType())) {
           errors.warn(
               "Table '%s' field '%s' type is not backwards compatible: '%s' -> '%s'",
@@ -141,8 +141,10 @@ public record MutationDatabase(List<Table> tables) {
         }
 
         if (newField.function().isPresent() || oldField.function().isPresent()) {
-          var newDesc = newField.function().map(f -> f.getFunctionDescription()).orElse(null);
-          var oldDesc = oldField.function().map(f -> f.getFunctionDescription()).orElse(null);
+          var newDesc =
+              newField.function().map(FlinkExecFunction::getFunctionDescription).orElse(null);
+          var oldDesc =
+              oldField.function().map(FlinkExecFunction::getFunctionDescription).orElse(null);
           if (!Objects.equals(newDesc, oldDesc)) {
             errors.warn(
                 "Table '%s' field '%s' function changed from '%s' to '%s'",

@@ -130,7 +130,7 @@ public class FlinkTableBuilder {
   }
 
   public FlinkTableBuilder setDummyConnector() {
-    return setConnectorOptions(Map.of(FlinkConnectorConfig.CONNECTOR_KEY, "datagen"));
+    return setConnectorOptions(Map.of(FlinkConnectorConfigWrapper.CONNECTOR_KEY, "datagen"));
   }
 
   public FlinkTableBuilder setWatermarkMillis(String timestampColumnName, long watermarkMillis) {

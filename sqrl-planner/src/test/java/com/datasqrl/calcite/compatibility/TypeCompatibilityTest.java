@@ -17,6 +17,7 @@ package com.datasqrl.calcite.compatibility;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.calcite.type.TypeCompatibility;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
@@ -25,14 +26,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-class RelDataTypeCompatibilityTest {
+class TypeCompatibilityTest {
 
-  private RelDataTypeCompatibility compatibility;
   private RelDataTypeFactory typeFactory;
 
   @BeforeEach
   void setUp() {
-    compatibility = new RelDataTypeCompatibility();
     typeFactory = new SqlTypeFactoryImpl(RelDataTypeSystem.DEFAULT);
   }
 
@@ -43,7 +42,7 @@ class RelDataTypeCompatibilityTest {
     void givenBothNonNullable_whenCheckCompatibility_thenReturnsTrue() {
       var intType = typeFactory.createSqlType(SqlTypeName.INTEGER);
 
-      assertThat(compatibility.isBackwardsCompatible(intType, intType)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intType, intType)).isTrue();
     }
 
     @Test
@@ -51,7 +50,7 @@ class RelDataTypeCompatibilityTest {
       var intType = typeFactory.createSqlType(SqlTypeName.INTEGER);
       var nullableInt = typeFactory.createTypeWithNullability(intType, true);
 
-      assertThat(compatibility.isBackwardsCompatible(nullableInt, nullableInt)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(nullableInt, nullableInt)).isTrue();
     }
 
     @Test
@@ -59,7 +58,7 @@ class RelDataTypeCompatibilityTest {
       var intType = typeFactory.createSqlType(SqlTypeName.INTEGER);
       var nullableInt = typeFactory.createTypeWithNullability(intType, true);
 
-      assertThat(compatibility.isBackwardsCompatible(nullableInt, intType)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(nullableInt, intType)).isTrue();
     }
 
     @Test
@@ -67,7 +66,7 @@ class RelDataTypeCompatibilityTest {
       var intType = typeFactory.createSqlType(SqlTypeName.INTEGER);
       var nullableInt = typeFactory.createTypeWithNullability(intType, true);
 
-      assertThat(compatibility.isBackwardsCompatible(intType, nullableInt)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intType, nullableInt)).isFalse();
     }
   }
 
@@ -80,9 +79,9 @@ class RelDataTypeCompatibilityTest {
       var varcharType = typeFactory.createSqlType(SqlTypeName.VARCHAR, 255);
       var booleanType = typeFactory.createSqlType(SqlTypeName.BOOLEAN);
 
-      assertThat(compatibility.isBackwardsCompatible(intType, intType)).isTrue();
-      assertThat(compatibility.isBackwardsCompatible(varcharType, varcharType)).isTrue();
-      assertThat(compatibility.isBackwardsCompatible(booleanType, booleanType)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intType, intType)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(varcharType, varcharType)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(booleanType, booleanType)).isTrue();
     }
 
     @Test
@@ -92,11 +91,11 @@ class RelDataTypeCompatibilityTest {
       var bigintType = typeFactory.createSqlType(SqlTypeName.BIGINT);
 
       // SMALLINT -> INT is widening (compatible)
-      assertThat(compatibility.isBackwardsCompatible(intType, smallintType)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intType, smallintType)).isTrue();
       // INT -> BIGINT is widening (compatible)
-      assertThat(compatibility.isBackwardsCompatible(bigintType, intType)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(bigintType, intType)).isTrue();
       // SMALLINT -> BIGINT is widening (compatible)
-      assertThat(compatibility.isBackwardsCompatible(bigintType, smallintType)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(bigintType, smallintType)).isTrue();
     }
 
     @Test
@@ -107,9 +106,9 @@ class RelDataTypeCompatibilityTest {
 
       // Narrowing is NOT allowed for backwards compatibility - could cause overflow
       // SMALLINT reader cannot safely read INT data (values may exceed SMALLINT range)
-      assertThat(compatibility.isBackwardsCompatible(smallintType, intType)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(smallintType, intType)).isFalse();
       // INT reader cannot safely read BIGINT data (values may exceed INT range)
-      assertThat(compatibility.isBackwardsCompatible(intType, bigintType)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intType, bigintType)).isFalse();
     }
 
     @Test
@@ -117,7 +116,7 @@ class RelDataTypeCompatibilityTest {
       var floatType = typeFactory.createSqlType(SqlTypeName.FLOAT);
       var doubleType = typeFactory.createSqlType(SqlTypeName.DOUBLE);
 
-      assertThat(compatibility.isBackwardsCompatible(doubleType, floatType)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(doubleType, floatType)).isTrue();
     }
 
     @Test
@@ -126,9 +125,9 @@ class RelDataTypeCompatibilityTest {
       var varchar255 = typeFactory.createSqlType(SqlTypeName.VARCHAR, 255);
 
       // Larger varchar can read from smaller varchar (widening - safe)
-      assertThat(compatibility.isBackwardsCompatible(varchar255, varchar100)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(varchar255, varchar100)).isTrue();
       // Smaller varchar cannot read from larger (narrowing - could truncate)
-      assertThat(compatibility.isBackwardsCompatible(varchar100, varchar255)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(varchar100, varchar255)).isFalse();
     }
 
     @Test
@@ -137,8 +136,8 @@ class RelDataTypeCompatibilityTest {
       var booleanType = typeFactory.createSqlType(SqlTypeName.BOOLEAN);
 
       // INT and BOOLEAN are not compatible
-      assertThat(compatibility.isBackwardsCompatible(intType, booleanType)).isFalse();
-      assertThat(compatibility.isBackwardsCompatible(booleanType, intType)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intType, booleanType)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(booleanType, intType)).isFalse();
     }
 
     @Test
@@ -146,7 +145,7 @@ class RelDataTypeCompatibilityTest {
       var decimal10_2 = typeFactory.createSqlType(SqlTypeName.DECIMAL, 10, 2);
       var decimal15_2 = typeFactory.createSqlType(SqlTypeName.DECIMAL, 15, 2);
 
-      assertThat(compatibility.isBackwardsCompatible(decimal15_2, decimal10_2)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(decimal15_2, decimal10_2)).isTrue();
     }
   }
 
@@ -162,7 +161,7 @@ class RelDataTypeCompatibilityTest {
               .add("name", typeFactory.createSqlType(SqlTypeName.VARCHAR, 255))
               .build();
 
-      assertThat(compatibility.isBackwardsCompatible(struct, struct)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(struct, struct)).isTrue();
     }
 
     @Test
@@ -180,7 +179,7 @@ class RelDataTypeCompatibilityTest {
               .add("name", nullableVarchar)
               .build();
 
-      assertThat(compatibility.isBackwardsCompatible(readerStruct, writerStruct)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerStruct, writerStruct)).isTrue();
     }
 
     @Test
@@ -195,7 +194,7 @@ class RelDataTypeCompatibilityTest {
               .add("name", typeFactory.createSqlType(SqlTypeName.VARCHAR, 255))
               .build();
 
-      assertThat(compatibility.isBackwardsCompatible(readerStruct, writerStruct)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerStruct, writerStruct)).isFalse();
     }
 
     @Test
@@ -216,7 +215,7 @@ class RelDataTypeCompatibilityTest {
               .build();
 
       // Reader ignores extra fields from writer
-      assertThat(compatibility.isBackwardsCompatible(readerStruct, writerStruct)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerStruct, writerStruct)).isTrue();
     }
 
     @Test
@@ -230,7 +229,7 @@ class RelDataTypeCompatibilityTest {
       var readerStruct =
           typeFactory.builder().add("id", typeFactory.createSqlType(SqlTypeName.BOOLEAN)).build();
 
-      assertThat(compatibility.isBackwardsCompatible(readerStruct, writerStruct)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerStruct, writerStruct)).isFalse();
     }
 
     @Test
@@ -244,7 +243,7 @@ class RelDataTypeCompatibilityTest {
       var readerStruct =
           typeFactory.builder().add("count", typeFactory.createSqlType(SqlTypeName.BIGINT)).build();
 
-      assertThat(compatibility.isBackwardsCompatible(readerStruct, writerStruct)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerStruct, writerStruct)).isTrue();
     }
   }
 
@@ -267,7 +266,7 @@ class RelDataTypeCompatibilityTest {
               .add("address", innerStruct)
               .build();
 
-      assertThat(compatibility.isBackwardsCompatible(outerStruct, outerStruct)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(outerStruct, outerStruct)).isTrue();
     }
 
     @Test
@@ -302,7 +301,7 @@ class RelDataTypeCompatibilityTest {
               .add("address", readerInnerStruct)
               .build();
 
-      assertThat(compatibility.isBackwardsCompatible(readerOuterStruct, writerOuterStruct))
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerOuterStruct, writerOuterStruct))
           .isTrue();
     }
 
@@ -335,7 +334,7 @@ class RelDataTypeCompatibilityTest {
               .add("address", readerInnerStruct)
               .build();
 
-      assertThat(compatibility.isBackwardsCompatible(readerOuterStruct, writerOuterStruct))
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerOuterStruct, writerOuterStruct))
           .isFalse();
     }
 
@@ -351,7 +350,7 @@ class RelDataTypeCompatibilityTest {
 
       var level1 = typeFactory.builder().add("data", level2).build();
 
-      assertThat(compatibility.isBackwardsCompatible(level1, level1)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(level1, level1)).isTrue();
     }
   }
 
@@ -363,7 +362,7 @@ class RelDataTypeCompatibilityTest {
       var intArray =
           typeFactory.createArrayType(typeFactory.createSqlType(SqlTypeName.INTEGER), -1);
 
-      assertThat(compatibility.isBackwardsCompatible(intArray, intArray)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intArray, intArray)).isTrue();
     }
 
     @Test
@@ -373,7 +372,7 @@ class RelDataTypeCompatibilityTest {
       var bigintArray =
           typeFactory.createArrayType(typeFactory.createSqlType(SqlTypeName.BIGINT), -1);
 
-      assertThat(compatibility.isBackwardsCompatible(bigintArray, intArray)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(bigintArray, intArray)).isTrue();
     }
 
     @Test
@@ -383,7 +382,7 @@ class RelDataTypeCompatibilityTest {
       var booleanArray =
           typeFactory.createArrayType(typeFactory.createSqlType(SqlTypeName.BOOLEAN), -1);
 
-      assertThat(compatibility.isBackwardsCompatible(intArray, booleanArray)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intArray, booleanArray)).isFalse();
     }
 
     @Test
@@ -393,7 +392,7 @@ class RelDataTypeCompatibilityTest {
 
       var structArray = typeFactory.createArrayType(struct, -1);
 
-      assertThat(compatibility.isBackwardsCompatible(structArray, structArray)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(structArray, structArray)).isTrue();
     }
 
     @Test
@@ -414,7 +413,7 @@ class RelDataTypeCompatibilityTest {
       var writerArray = typeFactory.createArrayType(writerStruct, -1);
       var readerArray = typeFactory.createArrayType(readerStruct, -1);
 
-      assertThat(compatibility.isBackwardsCompatible(readerArray, writerArray)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerArray, writerArray)).isTrue();
     }
 
     @Test
@@ -423,7 +422,7 @@ class RelDataTypeCompatibilityTest {
           typeFactory.createArrayType(typeFactory.createSqlType(SqlTypeName.INTEGER), -1);
       var outerArray = typeFactory.createArrayType(innerArray, -1);
 
-      assertThat(compatibility.isBackwardsCompatible(outerArray, outerArray)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(outerArray, outerArray)).isTrue();
     }
 
     @Test
@@ -435,7 +434,7 @@ class RelDataTypeCompatibilityTest {
       var nullableElementArray = typeFactory.createArrayType(nullableInt, -1);
 
       // Reader expects non-nullable but writer produces nullable elements
-      assertThat(compatibility.isBackwardsCompatible(nonNullableArray, nullableElementArray))
+      assertThat(TypeCompatibility.isBackwardsCompatible(nonNullableArray, nullableElementArray))
           .isFalse();
     }
   }
@@ -450,7 +449,7 @@ class RelDataTypeCompatibilityTest {
               typeFactory.createSqlType(SqlTypeName.VARCHAR, 255),
               typeFactory.createSqlType(SqlTypeName.INTEGER));
 
-      assertThat(compatibility.isBackwardsCompatible(map, map)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(map, map)).isTrue();
     }
 
     @Test
@@ -461,7 +460,7 @@ class RelDataTypeCompatibilityTest {
       var readerMap =
           typeFactory.createMapType(keyType, typeFactory.createSqlType(SqlTypeName.BIGINT));
 
-      assertThat(compatibility.isBackwardsCompatible(readerMap, writerMap)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerMap, writerMap)).isTrue();
     }
 
     @Test
@@ -472,7 +471,7 @@ class RelDataTypeCompatibilityTest {
       var readerMap =
           typeFactory.createMapType(typeFactory.createSqlType(SqlTypeName.INTEGER), valueType);
 
-      assertThat(compatibility.isBackwardsCompatible(readerMap, writerMap)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerMap, writerMap)).isFalse();
     }
 
     @Test
@@ -483,7 +482,7 @@ class RelDataTypeCompatibilityTest {
       var readerMap =
           typeFactory.createMapType(keyType, typeFactory.createSqlType(SqlTypeName.BOOLEAN));
 
-      assertThat(compatibility.isBackwardsCompatible(readerMap, writerMap)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerMap, writerMap)).isFalse();
     }
 
     @Test
@@ -494,7 +493,7 @@ class RelDataTypeCompatibilityTest {
 
       var map = typeFactory.createMapType(keyType, struct);
 
-      assertThat(compatibility.isBackwardsCompatible(map, map)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(map, map)).isTrue();
     }
 
     @Test
@@ -506,7 +505,7 @@ class RelDataTypeCompatibilityTest {
       var writerMap = typeFactory.createMapType(keyType, nullableValue);
       var readerMap = typeFactory.createMapType(keyType, nonNullableValue);
 
-      assertThat(compatibility.isBackwardsCompatible(readerMap, writerMap)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(readerMap, writerMap)).isFalse();
     }
   }
 
@@ -518,8 +517,8 @@ class RelDataTypeCompatibilityTest {
       var intType = typeFactory.createSqlType(SqlTypeName.INTEGER);
       var intArray = typeFactory.createArrayType(intType, -1);
 
-      assertThat(compatibility.isBackwardsCompatible(intArray, intType)).isFalse();
-      assertThat(compatibility.isBackwardsCompatible(intType, intArray)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intArray, intType)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intType, intArray)).isFalse();
     }
 
     @Test
@@ -528,8 +527,8 @@ class RelDataTypeCompatibilityTest {
       var map =
           typeFactory.createMapType(typeFactory.createSqlType(SqlTypeName.VARCHAR, 255), intType);
 
-      assertThat(compatibility.isBackwardsCompatible(map, intType)).isFalse();
-      assertThat(compatibility.isBackwardsCompatible(intType, map)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(map, intType)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intType, map)).isFalse();
     }
 
     @Test
@@ -537,8 +536,8 @@ class RelDataTypeCompatibilityTest {
       var intType = typeFactory.createSqlType(SqlTypeName.INTEGER);
       var struct = typeFactory.builder().add("id", intType).build();
 
-      assertThat(compatibility.isBackwardsCompatible(struct, intType)).isFalse();
-      assertThat(compatibility.isBackwardsCompatible(intType, struct)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(struct, intType)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intType, struct)).isFalse();
     }
 
     @Test
@@ -547,15 +546,15 @@ class RelDataTypeCompatibilityTest {
       var timestamp3 = typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 3);
       var timestamp6 = typeFactory.createSqlType(SqlTypeName.TIMESTAMP, 6);
 
-      assertThat(compatibility.isBackwardsCompatible(timestamp3, timestamp0)).isTrue();
-      assertThat(compatibility.isBackwardsCompatible(timestamp6, timestamp3)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(timestamp3, timestamp0)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(timestamp6, timestamp3)).isTrue();
     }
 
     @Test
     void givenEmptyStructs_whenCheckCompatibility_thenReturnsTrue() {
       var emptyStruct = typeFactory.builder().build();
 
-      assertThat(compatibility.isBackwardsCompatible(emptyStruct, emptyStruct)).isTrue();
+      assertThat(TypeCompatibility.isBackwardsCompatible(emptyStruct, emptyStruct)).isTrue();
     }
 
     @Test
@@ -568,7 +567,7 @@ class RelDataTypeCompatibilityTest {
       var structWithNullableField = typeFactory.builder().add("name", nullableField).build();
 
       // Reader has nullable field, writer has empty struct - compatible
-      assertThat(compatibility.isBackwardsCompatible(structWithNullableField, emptyStruct))
+      assertThat(TypeCompatibility.isBackwardsCompatible(structWithNullableField, emptyStruct))
           .isTrue();
     }
 
@@ -583,7 +582,7 @@ class RelDataTypeCompatibilityTest {
               .build();
 
       // Reader has non-nullable field, writer has empty struct - incompatible
-      assertThat(compatibility.isBackwardsCompatible(structWithField, emptyStruct)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(structWithField, emptyStruct)).isFalse();
     }
 
     @Test
@@ -595,8 +594,8 @@ class RelDataTypeCompatibilityTest {
               typeFactory.createSqlType(SqlTypeName.VARCHAR, 255),
               typeFactory.createSqlType(SqlTypeName.INTEGER));
 
-      assertThat(compatibility.isBackwardsCompatible(intArray, map)).isFalse();
-      assertThat(compatibility.isBackwardsCompatible(map, intArray)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(intArray, map)).isFalse();
+      assertThat(TypeCompatibility.isBackwardsCompatible(map, intArray)).isFalse();
     }
   }
 }

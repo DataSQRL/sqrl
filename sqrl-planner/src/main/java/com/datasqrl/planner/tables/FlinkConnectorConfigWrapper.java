@@ -15,14 +15,11 @@
  */
 package com.datasqrl.planner.tables;
 
-import com.datasqrl.config.ConnectorConfig;
 import com.datasqrl.io.tables.TableType;
 import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.table.catalog.Catalog;
 import org.apache.flink.table.catalog.GenericInMemoryCatalog;
@@ -31,10 +28,8 @@ import org.apache.flink.table.catalog.GenericInMemoryCatalog;
  * A wrapper around Flink table options for analysis and access to specific options that we need to
  * evaluate during planning.
  */
-@AllArgsConstructor
-@Getter
 @Slf4j
-public class FlinkConnectorConfig implements ConnectorConfig {
+public record FlinkConnectorConfigWrapper(Map<String, String> options, Optional<Catalog> catalog) {
 
   public static final String CONNECTOR_KEY = "connector";
 
@@ -68,16 +63,11 @@ public class FlinkConnectorConfig implements ConnectorConfig {
           "blackhole",
           "prometheus");
 
-  Map<String, String> options;
-  Optional<Catalog> catalog;
-
-  @Override
   public Optional<String> getFormat() {
     return Optional.ofNullable(options.get(FORMAT_KEY))
         .or(() -> Optional.ofNullable(options.get(VALUE_FORMAT_KEY)));
   }
 
-  @Override
   public TableType getTableType() {
     var connectorName = getConnectorName();
     if (connectorName.isEmpty()) return TableType.RELATION;
@@ -95,7 +85,6 @@ public class FlinkConnectorConfig implements ConnectorConfig {
         .isPresent();
   }
 
-  @Override
   public Optional<String> getConnectorName() {
     var connector = options.get(CONNECTOR_KEY);
     if (connector == null && catalog.isPresent()) {
@@ -109,23 +98,12 @@ public class FlinkConnectorConfig implements ConnectorConfig {
     return Optional.ofNullable(connector);
   }
 
-  @Override
-  public boolean isEmpty() {
-    return options.isEmpty();
-  }
-
-  @Override
-  public Map<String, Object> toMap() {
-    return (Map) options;
-  }
-
-  @Override
   public void setProperty(String key, Object value) {
     options.put(key, String.valueOf(value));
   }
 
   @Override
   public String toString() {
-    return "ConnectorConfigImpl{" + options.toString() + "}";
+    return "FlinkConnectorConfigWrapper{" + options.toString() + "}";
   }
 }

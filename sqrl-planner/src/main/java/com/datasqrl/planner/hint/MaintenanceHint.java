@@ -51,15 +51,20 @@ public class MaintenanceHint extends PlannerHint {
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
       var arguments = source.get().getOptions();
+
       if (arguments.size() == 1) {
         var optIndex = EnumUtil.getByName(MaintenanceType.class, arguments.get(0));
-        if (optIndex.isPresent()) return new MaintenanceHint(source, optIndex.get());
+
+        if (optIndex.isPresent()) {
+          return new MaintenanceHint(source, optIndex.get());
+        }
       }
+
       throw new StatementParserException(
           ErrorLabel.GENERIC,
           source.getFileLocation(),
-          "Maintenance hint expect a single argument from list: %.",
-          Arrays.stream(MaintenanceType.values()).toList());
+          "Maintenance hint expect a single argument from list: %s.",
+          Arrays.toString(MaintenanceType.values()));
     }
 
     @Override

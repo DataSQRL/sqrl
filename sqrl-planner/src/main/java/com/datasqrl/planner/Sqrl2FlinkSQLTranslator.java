@@ -48,7 +48,7 @@ import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SQLStatement;
 import com.datasqrl.planner.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.datasqrl.planner.parser.StatementParserException;
-import com.datasqrl.planner.tables.FlinkConnectorConfig;
+import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
@@ -915,7 +915,7 @@ public class Sqrl2FlinkSQLTranslator {
     }
     ObjectIdentifier tableId = tableOp.getTableIdentifier();
     var connector =
-        new FlinkConnectorConfig(
+        new FlinkConnectorConfigWrapper(
             tableOp.getCatalogTable().getOptions(),
             catalogManager.getCatalog(tableId.getCatalogName()));
     var tableAnalysis =

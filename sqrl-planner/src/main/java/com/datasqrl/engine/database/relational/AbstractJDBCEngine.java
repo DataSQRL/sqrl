@@ -37,8 +37,8 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -188,7 +188,7 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     return planBuilder.build();
   }
 
-  protected TreeMap<String, String> getConnectorOptions(
+  protected Map<String, String> getConnectorOptions(
       String originalTableName, String tableId, TableAnalysis tableAnalysis) {
     return connector
         .map(

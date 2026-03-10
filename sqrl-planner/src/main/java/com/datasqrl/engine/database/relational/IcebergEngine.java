@@ -82,7 +82,7 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   }
 
   @Override
-  protected TreeMap<String, String> getConnectorOptions(
+  protected Map<String, String> getConnectorOptions(
       String originalTableName, String tableId, TableAnalysis tableAnalysis) {
     var connectorOptions = super.getConnectorOptions(originalTableName, tableId, tableAnalysis);
     var mutableOptions = new TreeMap<>(connectorOptions);
