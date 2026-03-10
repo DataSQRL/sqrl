@@ -24,10 +24,6 @@ import com.google.auto.service.AutoService;
 import java.util.Arrays;
 import lombok.Getter;
 
-/**
- * Execution hints allow the user to assign a stage to a table/function definition and the
- * corresponding node in the DAG.
- */
 @Getter
 public class MaintenanceHint extends PlannerHint {
 

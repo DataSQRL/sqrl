@@ -21,7 +21,7 @@ import com.google.auto.service.AutoService;
 import java.util.List;
 
 /**
- * Execution hints allow the user to assign a stage to a table/function definition and the
+ * Engine hints allow the user to assign a stage to a table/function definition and the
  * corresponding node in the DAG.
  */
 public class EngineHint extends PlannerHint {

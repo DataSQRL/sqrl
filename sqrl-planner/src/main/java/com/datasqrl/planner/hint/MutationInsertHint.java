@@ -26,10 +26,6 @@ import java.util.Arrays;
 import java.util.Optional;
 import lombok.Getter;
 
-/**
- * Execution hints allow the user to assign a stage to a table/function definition and the
- * corresponding node in the DAG.
- */
 public class MutationInsertHint extends PlannerHint {
 
   public static final String HINT_NAME = "insert";

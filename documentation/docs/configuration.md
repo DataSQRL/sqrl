@@ -55,15 +55,19 @@ Refer to the engine configuration documentation for more information on how to c
 
 Configures the main SQRL script to compile, the (optional) GraphQL schema for the exposed API, and (optional) list of operations defined as GraphQL queries.
 
+Optionally it can also take a mutation database JSON that is generated during every compilation, and if it's kept and included in the config,
+SQRL will check backward compatibility during compile making sure that mutation schemas will not get overwritten by mistake.
+
 The `config` JSON object is passed to the Mustache templating engine to substitute template variable occurrences (e.g. `{{table}}`) before the script is compiled.
 
-```json
+```json5
 {
   "script": {
     "main": "my-project.sqrl",                         // Main SQRL script for pipeline
     "graphql": "api/schema.v1.graphqls",               // GraphQL schema defines the API
-    "operations": ["api/operations-v1/myop1.graphql"], //List of GraphQL queries that define operations which are exposed as API endpoints
-    "config": {                                        //Arbitrary JSON object used by the mustache templating engine to instantiate SQRL files
+    "operations": ["api/operations-v1/myop1.graphql"], // List of GraphQL queries that define operations which are exposed as API endpoints
+    "database": "my-mutation-database.json",           // Check backward compatibility for mutation schema during compilation
+    "config": {                                        // Arbitrary JSON object used by the mustache templating engine to instantiate SQRL files
       "table": "orders",
       "filters": [
         { "field": "total_amount", "isNull": false },

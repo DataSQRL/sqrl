@@ -74,6 +74,7 @@ Internal tables connect to a data source that is managed by SQRL (depending on t
 | Feature                       | Internal source (managed by SQRL)                               | External Source (connector) |
 |-------------------------------|-----------------------------------------------------------------|-----------------------------|
 | Connector clause `WITH (...)` | **omitted**                                                     | **required**                |
+| Engine hint                   | **required**                                                    | **omitted**                 |
 | Metadata columns              | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner | Passed through              |
 | Watermark spec                | **generated**                                                   | **required**                |
 | Primary key                   | *Unenforced* upsert semantics                                   | Same as Flink               |
@@ -81,6 +82,7 @@ Internal tables connect to a data source that is managed by SQRL (depending on t
 Example (internal):
 
 ```sql
+/*+ engine(kafka) */
 CREATE TABLE Customer (
   customerid BIGINT,
   email      STRING,
@@ -305,6 +307,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **cache**                   | `cache(duration)`                                                          | table          | how long the results retrieved from this table can be cached on the server before they are refreshed. Expects a duration string like `10 seconds`. Disabled by default.            |
 | **filtered_distinct_order** | flag                                                                       | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                |
 | **engine**                  | `enigne(engine_id)`                                                        | table          | pin execution engine (`process`, `database`, `flink`, ...)                                                                                                                         |
+| **maintenance**             | `maintenance(type)`                                                        | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                 |
 | **test**                    | `test`                                                                     | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                       |
 | **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                    |
 
