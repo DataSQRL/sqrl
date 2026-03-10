@@ -20,6 +20,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.exec.FlinkExecFunction;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.ParsedRelDataTypeResult;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record MutationDatabase(List<Table> tables) {
 
   public static MutationDatabase from(Collection<MutationTable> mutationTables) {
