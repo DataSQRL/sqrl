@@ -17,6 +17,7 @@ package com.datasqrl.engine.database.relational;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -25,6 +26,7 @@ import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import java.util.Map;
 import java.util.Optional;
@@ -33,7 +35,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -58,7 +59,9 @@ class IcebergEngineTest {
     when(mockEngines.getEngineConfigOrEmpty("iceberg")).thenReturn(mockEngineConfig);
     when(mockConnectorFactory.getOptionalConfig("iceberg"))
         .thenReturn(Optional.of(mockConnectorConf));
-    Mockito.lenient().when(tableAnalysisStream.getType()).thenReturn(TableType.STREAM);
+
+    lenient().when(tableAnalysisStream.getType()).thenReturn(TableType.STREAM);
+    lenient().when(tableAnalysisStream.getHints()).thenReturn(PlannerHints.EMPTY);
 
     icebergEngine = new IcebergEngine(mockPackageJson, mockConnectorFactory);
   }

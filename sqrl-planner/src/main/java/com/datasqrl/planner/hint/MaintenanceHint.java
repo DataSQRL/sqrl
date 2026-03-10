@@ -16,14 +16,12 @@
 package com.datasqrl.planner.hint;
 
 import com.datasqrl.error.ErrorLabel;
-import com.datasqrl.plan.global.IndexType;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
 import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.util.EnumUtil;
 import com.google.auto.service.AutoService;
 import java.util.Arrays;
-import java.util.List;
 import lombok.Getter;
 
 /**
