@@ -20,9 +20,11 @@ import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.PackageJson.ExplainConfig;
 import com.datasqrl.plan.global.PipelineDAGExporter;
 import com.datasqrl.planner.dag.PipelineDAG;
+import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.serializer.Deserializer;
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -40,6 +42,7 @@ public class DagWriter {
   public static final String EXPLAIN_VISUAL_FILENAME = "pipeline_visual.html";
   public static final String EXPLAIN_JSON_FILENAME = "pipeline_explain.json";
   public static final String FULL_SOURCE_FILENAME = "pipeline_source.sqrl";
+  public static final String DATABASE_FILENAME = "pipeline_mutation_database.json";
   public static final String INFERRED_SCHEMA_FILENAME = "inferred_schema.graphqls";
   public static final String VISUAL_HTML_FILENAME = "visualize_dag.html";
 
@@ -48,17 +51,20 @@ public class DagWriter {
   private final BuildPath buildDir;
   private final CompilerConfig compilerConfig;
 
-  void run(PipelineDAG dag, String source) {
+  @SneakyThrows
+  void run(PipelineDAG dag, String source, MutationDatabase mutationDatabase) {
     writeExplain(dag);
     writeFile(buildDir.buildDir().resolve(FULL_SOURCE_FILENAME), source);
+    writeFile(
+        buildDir.buildDir().resolve(DATABASE_FILENAME),
+        Deserializer.INSTANCE.toJson(mutationDatabase));
   }
 
   void writeInferredSchema(String inferredSchema) {
     writeFile(buildDir.buildDir().resolve(INFERRED_SCHEMA_FILENAME), inferredSchema);
   }
 
-  @SneakyThrows
-  private void writeExplain(PipelineDAG dag) {
+  private void writeExplain(PipelineDAG dag) throws IOException {
     ExplainConfig explainConfig = compilerConfig.getExplain();
     // Write Pipeline plan as text
     PipelineDAGExporter exporter =

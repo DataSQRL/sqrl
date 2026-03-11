@@ -69,18 +69,24 @@ Examples:
 
 SQRL understands the complete Flink SQL `CREATE TABLE` syntax, but distinguishes between **internal** and **external** source tables.
 External source tables are standard Flink SQL tables that connect to an external data source (e.g. database or Kafka cluster).
-Internal tables connect to a data source that is managed by SQRL (depending on the configured `log` engine, e.g. a Kafka topic) and exposed for data ingestion in the interface.
+Internal tables connect to a data source that is managed by SQRL and exposed for data ingestion in the interface.
+
+:::important
+Internal tables support `kafka` and `iceberg` engines.
+:::
 
 | Feature                       | Internal source (managed by SQRL)                               | External Source (connector) |
 |-------------------------------|-----------------------------------------------------------------|-----------------------------|
 | Connector clause `WITH (...)` | **omitted**                                                     | **required**                |
+| Engine hint                   | **required**                                                    | **omitted**                 |
 | Metadata columns              | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner | Passed through              |
 | Watermark spec                | **generated**                                                   | **required**                |
 | Primary key                   | *Unenforced* upsert semantics                                   | Same as Flink               |
 
-Example (internal):
+### Internal Example
 
 ```sql
+/*+ engine(kafka) */
 CREATE TABLE Customer (
   customerid BIGINT,
   email      STRING,
@@ -90,7 +96,7 @@ CREATE TABLE Customer (
 );
 ```
 
-Example (external):
+### External example
 
 ```sql
 CREATE TABLE kafka_json_table (
@@ -305,6 +311,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **cache**                   | `cache(duration)`                                                          | table          | how long the results retrieved from this table can be cached on the server before they are refreshed. Expects a duration string like `10 seconds`. Disabled by default.            |
 | **filtered_distinct_order** | flag                                                                       | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                |
 | **engine**                  | `enigne(engine_id)`                                                        | table          | pin execution engine (`process`, `database`, `flink`, ...)                                                                                                                         |
+| **maintenance**             | `maintenance(type)`                                                        | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                 |
 | **test**                    | `test`                                                                     | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                       |
 | **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                    |
 

@@ -110,6 +110,9 @@
         "main": {
           "type": "string"
         },
+        "database": {
+          "type": "string"
+        },
         "graphql": {
           "type": "string"
         },
@@ -280,12 +283,16 @@
       "type": "object",
       "minProperties": 1
     },
-    "project": {
-      "description": "Project information",
+    "information": {
+      "description": "Information about this DataSQRL project/deployment",
       "type": "object",
       "properties": {
         "description": {
-          "description": "Project description",
+          "description": "Describes what is being deployed",
+          "type": "string"
+        },
+        "label": {
+          "description": "Labels individual deployments for this project",
           "type": "string"
         }
       },

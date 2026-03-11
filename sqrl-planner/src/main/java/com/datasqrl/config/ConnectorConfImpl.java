@@ -26,11 +26,12 @@ import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class ConnectorConfImpl implements ConnectorConf {
+
   SqrlConfig sqrlConfig;
 
   @Override
   public Map<String, String> toMap() {
-    return (Map) sqrlConfig.toMap();
+    return sqrlConfig.toStringMap();
   }
 
   @Override
@@ -44,7 +45,7 @@ public class ConnectorConfImpl implements ConnectorConf {
     Preconditions.checkArgument(value != null, "Should not be null: %", key);
   }
 
-  private Map<String, String> replaceVariablesInValues(
+  private TreeMap<String, String> replaceVariablesInValues(
       Map<String, Object> configMap, Map<String, String> variables) {
     Map<Pattern, String> variableMatcher =
         variables.entrySet().stream()
@@ -53,7 +54,7 @@ public class ConnectorConfImpl implements ConnectorConf {
                     e -> Pattern.compile(getVariableRegex(e.getKey()), Pattern.CASE_INSENSITIVE),
                     Map.Entry::getValue));
 
-    Map<String, String> resultMap = new TreeMap<>();
+    TreeMap<String, String> resultMap = new TreeMap<>();
     for (Map.Entry<String, Object> entry : configMap.entrySet()) {
       var value = entry.getValue();
       if (value instanceof String strValue) {

@@ -22,7 +22,6 @@ import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
 
-/** TODO: change value type in map to 'String' */
 public interface ConnectorConf {
 
   Map<String, String> toMap();

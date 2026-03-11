@@ -1,0 +1,4 @@
+import catalog.iceberg;
+
+/*+primary_key(key_col) */
+Output := SELECT * FROM iceberg.my_database.my_table;

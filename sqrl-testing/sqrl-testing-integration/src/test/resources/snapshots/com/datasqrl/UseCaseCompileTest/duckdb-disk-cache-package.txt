@@ -214,9 +214,13 @@ WITH (
   'catalog-name' = 'mydatabase',
   'catalog-table' = '_MyApplications1',
   'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
   'connector' = 'iceberg',
   'format-version' = '2',
   'warehouse' = '/tmp/duckdb-with-cache',
+  'write.distribution-mode' = 'hash',
   'write.parquet.page-size-bytes' = '1000'
 );
 CREATE TABLE `_MyApplications2_2` (
@@ -233,9 +237,13 @@ WITH (
   'catalog-name' = 'mydatabase',
   'catalog-table' = '_MyApplications2',
   'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
   'connector' = 'iceberg',
   'format-version' = '2',
   'warehouse' = '/tmp/duckdb-with-cache',
+  'write.distribution-mode' = 'hash',
   'write.parquet.page-size-bytes' = '1000'
 );
 CREATE TABLE `_MyApplications2_3` (

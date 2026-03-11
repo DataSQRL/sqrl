@@ -168,7 +168,7 @@ type LoanTypesStream {
 }
 
 type Mutation {
-  ChatMessage(event: AddChatMessageInput!): AddChatMessageResultOutput!
+  AddChatMessage(event: AddChatMessageInput!): AddChatMessageResultOutput!
   ApplicationUpdates(event: [ApplicationUpdatesInput!]!): [ApplicationUpdatesResultOutput!]!
 }
 

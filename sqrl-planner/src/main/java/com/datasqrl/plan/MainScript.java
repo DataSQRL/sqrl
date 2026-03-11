@@ -15,11 +15,17 @@
  */
 package com.datasqrl.plan;
 
+import com.datasqrl.planner.dag.plan.MutationDatabase;
 import java.nio.file.Path;
 import java.util.Optional;
 
 public interface MainScript {
+
   Optional<Path> getPath();
 
   String getContent();
+
+  default Optional<MutationDatabase> getMutationDatabase() {
+    return Optional.empty();
+  }
 }

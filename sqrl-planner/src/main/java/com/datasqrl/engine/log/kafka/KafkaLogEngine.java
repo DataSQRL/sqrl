@@ -37,7 +37,7 @@ import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
-import com.datasqrl.planner.tables.FlinkConnectorConfig;
+import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
@@ -107,7 +107,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     transactionWatermark =
         TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
     format =
-        String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfig.FORMAT_KEY))
+        String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfigWrapper.FORMAT_KEY))
             .trim()
             .toLowerCase();
   }
@@ -137,13 +137,13 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      Optional<TableAnalysis> tableAnalysis) {
+      TableAnalysis tableAnalysis) {
     return createInternal(
         stage,
         originalTableName,
         tableBuilder,
         relDataType,
-        tableAnalysis,
+        Optional.of(tableAnalysis),
         defaultTTL,
         false,
         false);
@@ -199,7 +199,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
     var connectorConfig = conf.toMapWithSubstitution(ctxBuilder.build());
     // Configure format depending on type
-    String format = connectorConfig.get(FlinkConnectorConfig.FORMAT_KEY);
+    String format = connectorConfig.get(FlinkConnectorConfigWrapper.FORMAT_KEY);
     Preconditions.checkArgument(
         format != null && !format.isBlank(),
         "Need to configure a 'format' for connector {}",
@@ -211,14 +211,14 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
     if (isUpsert) {
       connectorConfig.put(
-          FlinkConnectorConfig.CONNECTOR_KEY,
-          UPSERT_FORMAT.formatted(connectorConfig.get(FlinkConnectorConfig.CONNECTOR_KEY)));
+          FlinkConnectorConfigWrapper.CONNECTOR_KEY,
+          UPSERT_FORMAT.formatted(connectorConfig.get(FlinkConnectorConfigWrapper.CONNECTOR_KEY)));
     }
 
     if (!messageKey.isEmpty()) {
-      connectorConfig.remove(FlinkConnectorConfig.FORMAT_KEY);
-      connectorConfig.put(FlinkConnectorConfig.KEY_FORMAT_KEY, format);
-      connectorConfig.put(FlinkConnectorConfig.VALUE_FORMAT_KEY, format);
+      connectorConfig.remove(FlinkConnectorConfigWrapper.FORMAT_KEY);
+      connectorConfig.put(FlinkConnectorConfigWrapper.KEY_FORMAT_KEY, format);
+      connectorConfig.put(FlinkConnectorConfigWrapper.VALUE_FORMAT_KEY, format);
       connectorConfig.put(
           "value.fields-include", "ALL"); // it's slightly less efficient but easier for debugging
       // Extract format-specific options and re-assign them with key. and value. prefixes
@@ -243,7 +243,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       connectorConfig.put("properties.isolation.level", "read_committed");
     }
     ttl.ifPresent(duration -> topicConfig.put("retention.ms", String.valueOf(duration.toMillis())));
-
+    // preserve any existing connector options
+    connectorConfig.putAll(tableBuilder.getConnectorOptions());
     tableBuilder.setConnectorOptions(connectorConfig);
     String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     return new Table(
@@ -377,6 +378,11 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     @Override
     public MutationCreateTable withValueType(RelDataType inputValueType) {
       return new Table(topicName, tableName, format, messageKeys, inputValueType, config);
+    }
+
+    @Override
+    public Map<String, String> getConfig() {
+      return config;
     }
   }
 }

@@ -40,7 +40,7 @@ import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
-import com.datasqrl.planner.dag.plan.MutationQuery.MutationQueryBuilder;
+import com.datasqrl.planner.dag.plan.MutationTable.MutationTableBuilder;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsePosUtil.MessageLocation;
@@ -48,7 +48,7 @@ import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SQLStatement;
 import com.datasqrl.planner.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.datasqrl.planner.parser.StatementParserException;
-import com.datasqrl.planner.tables.FlinkConnectorConfig;
+import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
@@ -699,7 +699,7 @@ public class Sqrl2FlinkSQLTranslator {
 
   @FunctionalInterface
   public interface MutationBuilder {
-    MutationQueryBuilder createMutation(
+    MutationTableBuilder createMutation(
         String origTableName, FlinkTableBuilder tableBuilder, RelDataType dataType);
   }
 
@@ -707,9 +707,9 @@ public class Sqrl2FlinkSQLTranslator {
       Function<String, String> tableNameModifier,
       String tableDefinition,
       SchemaLoader schemaLoader,
-      MutationBuilder logEngineBuilder) {
+      Optional<MutationBuilder> mutationBuilder) {
     return addSourceTable(
-        addTable(tableNameModifier, tableDefinition, schemaLoader, logEngineBuilder));
+        addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder));
   }
 
   public AddTableResult addExternalExport(
@@ -717,18 +717,14 @@ public class Sqrl2FlinkSQLTranslator {
       String tableDefinition,
       SchemaLoader schemaLoader) {
 
-    return addTable(
-        tableNameModifier,
-        tableDefinition,
-        schemaLoader,
-        (x, y, z) -> {
-          throw new UnsupportedOperationException("Export tables require connector configuration");
-        });
+    return addTable(tableNameModifier, tableDefinition, schemaLoader, Optional.empty());
   }
 
   public Optional<TableAnalysis> createTable(
-      String tableDefinition, MutationBuilder logEngineBuilder, SchemaLoader schemaLoader) {
-    var result = addTable(Function.identity(), tableDefinition, schemaLoader, logEngineBuilder);
+      String tableDefinition,
+      Optional<MutationBuilder> mutationBuilder,
+      SchemaLoader schemaLoader) {
+    var result = addTable(Function.identity(), tableDefinition, schemaLoader, mutationBuilder);
     if (result.isSourceTable()) return Optional.of(addSourceTable(result));
     else return Optional.empty();
   }
@@ -789,7 +785,7 @@ public class Sqrl2FlinkSQLTranslator {
       Function<String, String> tableNameModifier,
       String createTableSql,
       SchemaLoader schemaLoader,
-      MutationBuilder mutationBuilder) {
+      Optional<MutationBuilder> mutationBuilder) {
     var tableSqlNode = parseSQL(createTableSql);
     checkArgument(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
     var tableDefinition = (SqlCreateTable) tableSqlNode;
@@ -854,8 +850,8 @@ public class Sqrl2FlinkSQLTranslator {
               tableDefinition.isTemporary(),
               tableDefinition.ifNotExists);
     }
-    MutationQueryBuilder mutationBld = null;
-    if (fullTable.getPropertyList().isEmpty()) { // it's an internal CREATE TABLE for a mutation
+    MutationTableBuilder mutationBld = null;
+    if (mutationBuilder.isPresent()) { // it's an internal CREATE TABLE for a mutation
       var tableBuilder = FlinkTableBuilder.toBuilder(fullTable);
       tableBuilder.setName(finalTableName);
       /* TODO: We want to create the table with a datagen connector so we can fully plan it
@@ -865,7 +861,7 @@ public class Sqrl2FlinkSQLTranslator {
       Note, that this requires we replace the table with the actual table (and the correct connector)
       in the schema with an ALTER TABLE statement.
        */
-      mutationBld = mutationBuilder.createMutation(origTableName, tableBuilder, null);
+      mutationBld = mutationBuilder.get().createMutation(origTableName, tableBuilder, null);
       fullTable = tableBuilder.buildSql(false);
     }
     var tableOp = (CreateTableOperation) executeSqlNode(fullTable);
@@ -918,7 +914,10 @@ public class Sqrl2FlinkSQLTranslator {
       mutationBld.outputDataType(outputType.build());
     }
     ObjectIdentifier tableId = tableOp.getTableIdentifier();
-    var connector = new FlinkConnectorConfig(tableOp.getCatalogTable().getOptions());
+    var connector =
+        new FlinkConnectorConfigWrapper(
+            tableOp.getCatalogTable().getOptions(),
+            catalogManager.getCatalog(tableId.getCatalogName()));
     var tableAnalysis =
         TableAnalysis.of(
             tableId,
@@ -1092,6 +1091,12 @@ public class Sqrl2FlinkSQLTranslator {
       throw new StatementParserException(
           location, e, converted.map(MessageLocation::message).orElse(e.getMessage()));
     }
+  }
+
+  public List<ParsedRelDataTypeResult> parse2RelDataType(String createTableStatement) {
+    var op = (CreateTableOperation) getOperation(parseSQL(createTableStatement));
+    var schema = op.getCatalogTable().getResolvedSchema();
+    return parseSchema(schema, true);
   }
 
   @SneakyThrows

@@ -26,7 +26,6 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
-import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 
 public class PrintEngine implements ExportEngine {
@@ -44,7 +43,7 @@ public class PrintEngine implements ExportEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      Optional<TableAnalysis> tableAnalysis) {
+      TableAnalysis tableAnalysis) {
     tableBuilder.setConnectorOptions(
         connectorConf.toMapWithSubstitution(
             Context.builder()

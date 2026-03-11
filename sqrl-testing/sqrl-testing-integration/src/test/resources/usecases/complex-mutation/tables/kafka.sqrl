@@ -1,0 +1,8 @@
+/*+engine(kafka), no_query */
+CREATE TABLE InputTable (
+    userid INT NOT NULL,
+    tokens BIGINT NOT NULL,
+    event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+) WITH (
+    'properties.group.id'= '${KAFKA_GROUP_ID}-group'
+);

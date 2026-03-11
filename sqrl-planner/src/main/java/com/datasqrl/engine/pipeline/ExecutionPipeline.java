@@ -16,7 +16,6 @@
 package com.datasqrl.engine.pipeline;
 
 import com.datasqrl.config.EngineType;
-import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.server.ServerEngine;
 import com.datasqrl.util.StreamUtil;
 import java.util.List;
@@ -55,12 +54,6 @@ public interface ExecutionPipeline {
   default Optional<ExecutionStage> getStage(String name) {
     return StreamUtil.getOnlyElement(
         stages().stream().filter(s -> s.name().equalsIgnoreCase(name)));
-  }
-
-  default Optional<ExecutionStage> getMutationStage() {
-    return StreamUtil.getOnlyElement(
-        getStagesByType(EngineType.LOG).stream()
-            .filter(stage -> stage.engine().supports(EngineFeature.MUTATIONS)));
   }
 
   default Optional<ExecutionStage> getStageByType(EngineType type) {

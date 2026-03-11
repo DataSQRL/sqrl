@@ -1,4 +1,4 @@
-/*+insert(transaction) */
+/*+engine(kafka), insert(transaction) */
 CREATE TABLE Sensors (
     sensorid INT,
     machineid INT,
@@ -6,7 +6,7 @@ CREATE TABLE Sensors (
     PRIMARY KEY (sensorid) NOT ENFORCED
 );
 
-/*+insert(batch) */
+/*+engine(kafka), insert(batch) */
 CREATE TABLE _SensorReading (
      event_id STRING NOT NULL METADATA FROM 'uuid',
      sensorid INT,

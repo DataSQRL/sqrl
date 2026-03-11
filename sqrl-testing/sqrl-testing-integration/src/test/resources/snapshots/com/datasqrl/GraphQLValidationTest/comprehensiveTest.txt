@@ -1517,7 +1517,9 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
         "orderid"
       ],
       "messageSchema" : "",
-      "config" : { }
+      "config" : {
+        "retention.ms" : "129600000"
+      }
     }
   ],
   "testRunnerTopics" : [ ]

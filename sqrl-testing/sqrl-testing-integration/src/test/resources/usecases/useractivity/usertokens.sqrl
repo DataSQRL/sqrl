@@ -1,4 +1,4 @@
-/*+no_query */
+/*+engine(kafka), no_query */
 CREATE TABLE UserTokens (
    userid BIGINT NOT NULL,
    tokens BIGINT NOT NULL,

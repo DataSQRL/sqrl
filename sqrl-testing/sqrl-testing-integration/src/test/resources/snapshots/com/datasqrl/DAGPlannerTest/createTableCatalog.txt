@@ -1,0 +1,210 @@
+>>>pipeline_explain.txt
+=== Output
+ID:          default_catalog.default_database.Output
+Type:        stream
+Stage:       flink
+Primary key: key_col
+Timestamp:   -
+---
+Schema:
+ - key_col: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - int_col: INTEGER
+Inputs:
+ - iceberg.my_database.my_table
+Plan:
+LogicalProject(key_col=[$0], int_col=[$1])
+  LogicalTableScan(table=[[iceberg, my_database, my_table]])
+SQL:
+CREATE VIEW `Output` AS  SELECT * FROM iceberg.my_database.my_table;
+
+=== my_table
+ID:          iceberg.my_database.my_table
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+---
+Schema:
+ - key_col: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - int_col: INTEGER
+Inputs:
+ - iceberg.my_database.my_table__base
+Plan:
+LogicalTableScan(table=[[iceberg, my_database, my_table]])
+SQL:
+CREATE TABLE IF NOT EXISTS `my_table` (
+  `key_col` STRING,
+  `int_col` INTEGER
+)
+WITH (
+  'format-version' = '2'
+)
+>>>flink-sql-no-functions.sql
+CREATE DATABASE IF NOT EXISTS `iceberg`;
+USE `iceberg`;
+CREATE CATALOG `iceberg` WITH (
+  'type' = 'iceberg',
+  'catalog-type' = 'hadoop',
+  'warehouse' = 'file:///tmp/iceberg/warehouse'
+);
+USE CATALOG `iceberg`;
+CREATE DATABASE IF NOT EXISTS `my_database`;
+USE `my_database`;
+CREATE TABLE IF NOT EXISTS `my_table` (
+  `key_col` STRING,
+  `int_col` INTEGER
+)
+WITH (
+  'format-version' = '2'
+);
+USE CATALOG `default_catalog`;
+CREATE DATABASE IF NOT EXISTS `default_database`;
+USE `default_database`;
+CREATE VIEW `Output`
+AS
+SELECT *
+FROM `iceberg`.`my_database`.`my_table`;
+CREATE TABLE `Output_1` (
+  `key_col` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `int_col` INTEGER,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Output_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Output_1`
+SELECT `key_col`, `int_col`, `hash_columns`(`key_col`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`Output`
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Output_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Output_1\" (\"key_col\" TEXT, \"int_col\" INTEGER, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "key_col",
+          "type" : "TEXT",
+          "nullable" : true
+        },
+        {
+          "name" : "int_col",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "Output",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Output\"(\"key_col\", \"int_col\") AS SELECT \"key_col\", \"int_col\"\nFROM \"Output_1\"",
+      "fields" : [
+        {
+          "name" : "key_col",
+          "type" : "TEXT",
+          "nullable" : true
+        },
+        {
+          "name" : "int_col",
+          "type" : "INTEGER",
+          "nullable" : true
+        }
+      ]
+    }
+  ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Output",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"key_col\", \"int_col\"\nFROM \"Output_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetOutput",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Output($limit: Int = 10, $offset: Int = 0) {\nOutput(limit: $limit, offset: $offset) {\nkey_col\nint_col\n}\n\n}",
+            "queryName" : "Output",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Output{?offset,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Output(limit: Int = 10, offset: Int = 0): [my_table!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ntype my_table {\n  key_col: String\n  int_col: Int\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

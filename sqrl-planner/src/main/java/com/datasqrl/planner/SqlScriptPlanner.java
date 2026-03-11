@@ -25,7 +25,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
-import com.datasqrl.engine.log.LogEngine;
+import com.datasqrl.engine.log.MutationEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
@@ -61,7 +61,7 @@ import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.dag.plan.MutationMetadataExtractor;
-import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.hint.CacheHint;
 import com.datasqrl.planner.hint.EngineHint;
 import com.datasqrl.planner.hint.MutationInsertHint;
@@ -93,7 +93,6 @@ import com.datasqrl.planner.parser.StackableStatement;
 import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
-import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.SqlScriptWriter;
 import com.datasqrl.planner.util.SqlTableNameExtractor;
@@ -308,7 +307,7 @@ public class SqlScriptPlanner {
       sqrlEnv
           .createTable(
               statement.toSql(),
-              getLogEngineBuilder(hintsAndDocs),
+              getMutationBuilder(hintsAndDocs),
               scriptContext.moduleLoader().getSchemaLoader())
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
@@ -539,7 +538,7 @@ public class SqlScriptPlanner {
         sqrlEnv
             .createTable(
                 flinkStmt.getSql().get(),
-                getLogEngineBuilder(hintsAndDocs),
+                getMutationBuilder(hintsAndDocs),
                 scriptContext.moduleLoader().getSchemaLoader())
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
@@ -729,7 +728,9 @@ public class SqlScriptPlanner {
       AccessVisibility visibility,
       boolean isSource,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
-    var availableStages = determineStages(tableStages, hintsAndDocs.hints());
+    // Sources must be processed by the stream stage
+    var availableStages =
+        isSource ? List.of(streamStage) : determineStages(tableStages, hintsAndDocs.hints());
     var tableNode =
         new TableNode(
             tableAnalysis,
@@ -883,7 +884,7 @@ public class SqlScriptPlanner {
                 importNameModifier,
                 flinkTable.sqlCreateTable,
                 flinkTable.schemaLoader(),
-                getLogEngineBuilder(hintsAndDocs));
+                getMutationBuilder(hintsAndDocs));
         hintsAndDocs.hints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());
@@ -928,47 +929,53 @@ public class SqlScriptPlanner {
   /**
    * For CREATE TABLE statements without connectors which are mutations, we provide this
    * MutationBuilder to fill in the connector settings based on the configured log engine.
-   *
-   * @return
    */
-  private MutationBuilder getLogEngineBuilder(HintsAndDocs hintsAndDocs) {
-    var logStage = pipeline.getMutationStage();
-    if (logStage.isEmpty()) {
-      return (n, t, d) -> {
-        throw new StatementParserException(
-            ErrorLabel.GENERIC,
-            FileLocation.START,
-            "CREATE TABLE requires that a log engine is configured that supports mutations");
-      };
+  private Optional<MutationBuilder> getMutationBuilder(HintsAndDocs hintsAndDocs) {
+    var mutationStage =
+        hintsAndDocs
+            .hints
+            .getHint(EngineHint.class)
+            .flatMap(engineHint -> pipeline.getStage(engineHint.getStageNames().get(0)));
+
+    if (mutationStage.isEmpty()) {
+      return Optional.empty();
     }
-    var engine = (LogEngine) logStage.get().engine();
-    return (origTableName, tableBuilder, dataType) -> {
-      var mutationBuilder = MutationQuery.builder();
-      mutationBuilder.generateAccess(scriptContext.generateAccess);
-      mutationBuilder.stage(logStage.get());
-      MutationInsertType insertType =
-          hintsAndDocs
-              .hints()
-              .getHint(MutationInsertHint.class)
-              .map(MutationInsertHint::getInsertType)
-              .orElse(MutationInsertType.SINGLE);
-      mutationBuilder.createTopic(
-          engine.createMutation(
-              logStage.get(),
-              origTableName,
-              tableBuilder,
-              dataType,
-              insertType,
-              hintsAndDocs.hints().getHint(TtlHint.class).flatMap(TtlHint::getTtl)));
-      mutationBuilder.name(Name.system(origTableName));
-      mutationBuilder.insertType(insertType);
-      mutationBuilder.documentation(hintsAndDocs.documentation());
-      // UUID and TIMESTAMP are special cases
-      tableBuilder
-          .extractMetadataColumns(new MutationMetadataExtractor())
-          .forEach(mutationBuilder::computedColumn);
-      return mutationBuilder;
-    };
+
+    if (!(mutationStage.get().engine() instanceof MutationEngine mutationEngine)) {
+      throw new StatementParserException(
+          "Configured engine %s is not a mutation engine required for CREATE TABLE statements"
+              .formatted(mutationStage));
+    }
+
+    return Optional.of(
+        (origTableName, tableBuilder, dataType) -> {
+          var mutationBuilder = MutationTable.builder();
+          mutationBuilder.generateAccess(scriptContext.generateAccess);
+          mutationBuilder.stage(mutationStage.get());
+          MutationInsertType insertType =
+              hintsAndDocs
+                  .hints()
+                  .getHint(MutationInsertHint.class)
+                  .map(MutationInsertHint::getInsertType)
+                  .orElse(MutationInsertType.SINGLE);
+          mutationBuilder.createTable(
+              mutationEngine.createMutation(
+                  mutationStage.get(),
+                  origTableName,
+                  tableBuilder,
+                  dataType,
+                  insertType,
+                  hintsAndDocs.hints().getHint(TtlHint.class).flatMap(TtlHint::getTtl)));
+          mutationBuilder.name(Name.system(origTableName));
+          mutationBuilder.insertType(insertType);
+          mutationBuilder.documentation(hintsAndDocs.documentation());
+          mutationBuilder.tableBuilder(tableBuilder);
+          // UUID and TIMESTAMP are special cases
+          tableBuilder
+              .extractMetadataColumns(new MutationMetadataExtractor())
+              .forEach(mutationBuilder::computedColumn);
+          return mutationBuilder;
+        });
   }
 
   /**
@@ -983,7 +990,7 @@ public class SqlScriptPlanner {
     var tablePath = exportStmt.getTableIdentifier().get();
 
     // Lookup the table that is being exported
-    var tableNode = dagBuilder.getNode(scriptContext.toIdentifier(tablePath.getLast()));
+    var tableNode = dagBuilder.getNode(scriptContext.toIdentifier(tablePath));
     var inputNode =
         tableNode
             .orElseThrow(
@@ -1046,7 +1053,7 @@ public class SqlScriptPlanner {
               sqrlEnv.currentBatch(),
               Optional.empty(),
               Optional.of(sinkTableId),
-              existingTable.getSourceSinkTable().map(SourceSinkTableAnalysis::connectorConfig));
+              existingTable.getSourceSinkTable());
     } else { // the export is to a user-defined sink: load it
       var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
       checkFatal(
@@ -1099,10 +1106,7 @@ public class SqlScriptPlanner {
                 sqrlEnv.currentBatch(),
                 Optional.empty(),
                 Optional.of(tableId),
-                addTableResult
-                    .tableAnalysis()
-                    .getSourceSinkTable()
-                    .map(SourceSinkTableAnalysis::connectorConfig));
+                addTableResult.tableAnalysis().getSourceSinkTable());
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
       }

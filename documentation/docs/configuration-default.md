@@ -47,7 +47,6 @@ The following is the [default configuration file](https://raw.githubusercontent.
     "kafka-mutation": {
       "connector": "kafka",
       "format": "flexible-json",
-      "flexible-json.timestamp-format.standard": "ISO-8601",
       "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
       "properties.group.id": "${KAFKA_GROUP_ID}",
       "properties.auto.offset.reset": "earliest",
@@ -56,14 +55,26 @@ The following is the [default configuration file](https://raw.githubusercontent.
     "kafka": {
       "connector": "kafka",
       "format": "flexible-json",
-      "flexible-json.timestamp-format.standard": "ISO-8601",
       "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
       "properties.group.id": "${KAFKA_GROUP_ID}",
       "topic": "${sqrl:table-name}"
     },
     "iceberg": {
       "connector": "iceberg",
-      "catalog-table": "${sqrl:table-name}"
+      "catalog-name": "default_catalog",
+      "catalog-table": "${sqrl:table-name}",
+      "warehouse": "sqrl_iceberg_data",
+      "format-version": 2,
+      "write.distribution-mode": "hash",
+      "commit.retry.num-retries": "20",
+      "commit.retry.min-wait-ms": "100",
+      "commit.retry.max-wait-ms": "5000"
+    },
+    "iceberg-maintenance": {
+      "compaction.enabled": "true",
+      "write.metadata.delete-after-commit.enabled": "true",
+      "write.metadata.previous-versions-max": "10",
+      "history.expire.max-snapshot-age-ms": "86400000"
     },
     "postgres": {
       "connector": "jdbc-sqrl",

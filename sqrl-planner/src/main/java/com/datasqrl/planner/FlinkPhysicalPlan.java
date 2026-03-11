@@ -20,7 +20,8 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.relational.IcebergEngineFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
-import com.datasqrl.planner.tables.FlinkConnectorConfig;
+import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
+import com.datasqrl.planner.util.CompiledPlanCondenser;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
@@ -76,6 +77,9 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
         new DeploymentArtifact("-functions.sql", DeploymentArtifact.toSqlString(functions)));
 
     compiledPlan.map(plan -> builder.add(new DeploymentArtifact("-compiled-plan.json", plan)));
+    compiledPlan
+        .map(CompiledPlanCondenser::condense)
+        .map(plan -> builder.add(new DeploymentArtifact("-compiled-plan-summary.json", plan)));
     explainedPlan.map(plan -> builder.add(new DeploymentArtifact("-explained-plan.txt", plan)));
 
     return builder.build();
@@ -133,13 +137,15 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       if (node instanceof SqlCreateTable table) {
         for (SqlNode option : table.getPropertyList().getList()) {
           var sqlTableOption = (SqlTableOption) option;
-          if (sqlTableOption.getKeyString().equalsIgnoreCase(FlinkConnectorConfig.CONNECTOR_KEY)) {
+          if (sqlTableOption
+              .getKeyString()
+              .equalsIgnoreCase(FlinkConnectorConfigWrapper.CONNECTOR_KEY)) {
             connectors.add(sqlTableOption.getValueString());
           }
           switch (sqlTableOption.getKeyString()) {
-            case FlinkConnectorConfig.FORMAT_KEY:
-            case FlinkConnectorConfig.KEY_FORMAT_KEY:
-            case FlinkConnectorConfig.VALUE_FORMAT_KEY:
+            case FlinkConnectorConfigWrapper.FORMAT_KEY:
+            case FlinkConnectorConfigWrapper.KEY_FORMAT_KEY:
+            case FlinkConnectorConfigWrapper.VALUE_FORMAT_KEY:
               formats.add(sqlTableOption.getValueString());
           }
         }

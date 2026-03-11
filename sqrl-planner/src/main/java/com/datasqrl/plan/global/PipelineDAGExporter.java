@@ -25,7 +25,7 @@ import com.datasqrl.planner.dag.nodes.PipelineNode;
 import com.datasqrl.planner.dag.nodes.PlannedNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
-import com.datasqrl.planner.tables.FlinkConnectorConfig;
+import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.CalciteHacks;
 import com.datasqrl.util.StreamUtil;
@@ -85,7 +85,7 @@ public class PipelineDAGExporter {
                   .id(table.getIdentifier().toString())
                   .name(table.getName())
                   .type(NodeType.IMPORTS.getName())
-                  .connector(source.connectorConfig().getOptions())
+                  .connector(source.connectorConfig().options())
                   .stage(stage)
                   .documentation(getDocumentation(tableNode))
                   .build());
@@ -130,11 +130,7 @@ public class PipelineDAGExporter {
                 .type(NodeType.EXPORT.getName())
                 .stage(stage)
                 .inputs(inputs)
-                .connector(
-                    export
-                        .getConnectorConfig()
-                        .map(FlinkConnectorConfig::getOptions)
-                        .orElse(Map.of()))
+                .connector(export.getConnectorConfig().orElse(Map.of()))
                 .build());
       } else if (node instanceof TableFunctionNode fctNode) {
         var fct = fctNode.getFunction();
@@ -330,8 +326,10 @@ public class PipelineDAGExporter {
     Map<String, String> connector;
 
     String connectorString() {
-      if (connector != null && connector.get(FlinkConnectorConfig.CONNECTOR_KEY) != null) {
-        return "Connector:   " + connector.get(FlinkConnectorConfig.CONNECTOR_KEY) + LINEBREAK;
+      if (connector != null && connector.get(FlinkConnectorConfigWrapper.CONNECTOR_KEY) != null) {
+        return "Connector:   "
+            + connector.get(FlinkConnectorConfigWrapper.CONNECTOR_KEY)
+            + LINEBREAK;
       }
       return "";
     }

@@ -70,8 +70,8 @@ public class CompilationProcess {
     var physicalPlan = dagPlanner.assemble(dag, environment);
     var rewriters = ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
     physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
-
-    writeDeploymentArtifactsHook.run(dag, planner.getCompleteScript().toString());
+    var mutationDatabase = physicalPlan.getMutationDatabase();
+    writeDeploymentArtifactsHook.run(dag, planner.getCompleteScript().toString(), mutationDatabase);
 
     TestPlan testPlan = null;
     // There can only be a single server plan
@@ -120,6 +120,14 @@ public class CompilationProcess {
       }
     }
 
+    // Read database file if configured and check compatibility
+    mainScript
+        .getMutationDatabase()
+        .ifPresent(
+            compareDb ->
+                errors.checkFatal(
+                    mutationDatabase.isBackwardsCompatible(compareDb, environment, errors),
+                    "The mutation tables defined by the script are not backwards compatible with the provided database. See warnings above for incompatibilities."));
     return Pair.of(physicalPlan, testPlan);
   }
 }

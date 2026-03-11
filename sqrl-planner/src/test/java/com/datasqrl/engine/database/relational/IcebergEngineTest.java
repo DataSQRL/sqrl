@@ -17,15 +17,20 @@ package com.datasqrl.engine.database.relational;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.io.tables.TableType;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +46,8 @@ class IcebergEngineTest {
 
   @Mock private ConnectorConf mockConnectorConf;
 
+  @Mock private TableAnalysis tableAnalysisStream;
+
   private IcebergEngine icebergEngine;
 
   @BeforeEach
@@ -53,13 +60,16 @@ class IcebergEngineTest {
     when(mockConnectorFactory.getOptionalConfig("iceberg"))
         .thenReturn(Optional.of(mockConnectorConf));
 
+    lenient().when(tableAnalysisStream.getType()).thenReturn(TableType.STREAM);
+    lenient().when(tableAnalysisStream.getHints()).thenReturn(PlannerHints.EMPTY);
+
     icebergEngine = new IcebergEngine(mockPackageJson, mockConnectorFactory);
   }
 
   private void setupConnectorOptions(Map<String, String> options) {
     when(mockConnectorConf.toMapWithSubstitution(
             org.mockito.ArgumentMatchers.any(ConnectorConf.Context.class)))
-        .thenReturn(options);
+        .thenReturn(new TreeMap<>(options));
   }
 
   @Test
@@ -69,7 +79,7 @@ class IcebergEngineTest {
             "catalog-table", "my_test_table",
             "catalog-impl", "org.apache.iceberg.hive.HiveCatalog"));
 
-    var result = icebergEngine.getConnectorOptions("test", "test_id");
+    var result = icebergEngine.getConnectorOptions("test", "test_id", tableAnalysisStream);
 
     assertThat(result.get("catalog-table")).isEqualTo("my_test_table");
   }
@@ -78,7 +88,7 @@ class IcebergEngineTest {
   void givenNullCatalogImpl_whenGetConnectorOptions_thenReturnsOriginalOptions() {
     setupConnectorOptions(Map.of("catalog-table", "my_test_table"));
 
-    var result = icebergEngine.getConnectorOptions("test", "test_id");
+    var result = icebergEngine.getConnectorOptions("test", "test_id", tableAnalysisStream);
 
     assertThat(result.get("catalog-table")).isEqualTo("my_test_table");
   }
@@ -90,7 +100,7 @@ class IcebergEngineTest {
             "catalog-table", "valid_table_123",
             "catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog"));
 
-    var result = icebergEngine.getConnectorOptions("test", "test_id");
+    var result = icebergEngine.getConnectorOptions("test", "test_id", tableAnalysisStream);
 
     assertThat(result.get("catalog-table")).isEqualTo("valid_table_123");
   }
@@ -102,7 +112,7 @@ class IcebergEngineTest {
             "catalog-table", "MyTable_123",
             "catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog"));
 
-    var result = icebergEngine.getConnectorOptions("test", "test_id");
+    var result = icebergEngine.getConnectorOptions("test", "test_id", tableAnalysisStream);
 
     assertThat(result.get("catalog-table")).isEqualTo("mytable_123");
   }
@@ -114,7 +124,8 @@ class IcebergEngineTest {
             "catalog-table", "my-table-name",
             "catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog"));
 
-    assertThatThrownBy(() -> icebergEngine.getConnectorOptions("test", "test_id"))
+    assertThatThrownBy(
+            () -> icebergEngine.getConnectorOptions("test", "test_id", tableAnalysisStream))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Invalid AWS Glue table name: 'my-table-name'")
         .hasMessageContaining("Name has to match: ^[a-z0-9_]{1,255}$");
@@ -128,7 +139,8 @@ class IcebergEngineTest {
             "catalog-table", "table@name!",
             "catalog-impl", "org.apache.iceberg.aws.glue.GlueCatalog"));
 
-    assertThatThrownBy(() -> icebergEngine.getConnectorOptions("test", "test_id"))
+    assertThatThrownBy(
+            () -> icebergEngine.getConnectorOptions("test", "test_id", tableAnalysisStream))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Invalid AWS Glue table name: 'table@name!'")
         .hasMessageContaining("Name has to match: ^[a-z0-9_]{1,255}$");

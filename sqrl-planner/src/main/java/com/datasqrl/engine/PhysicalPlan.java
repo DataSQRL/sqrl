@@ -15,12 +15,16 @@
  */
 package com.datasqrl.engine;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.planner.dag.plan.MutationDatabase;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.util.StreamUtil;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import lombok.Builder;
 import lombok.Singular;
@@ -32,8 +36,14 @@ public class PhysicalPlan {
 
   @Singular List<PhysicalStagePlan> stagePlans;
 
+  @Singular Map<Name, MutationTable> mutationTables;
+
   public <T extends EnginePhysicalPlan> Stream<T> getPlans(Class<T> clazz) {
     return StreamUtil.filterByClass(stagePlans.stream().map(PhysicalStagePlan::plan), clazz);
+  }
+
+  public MutationDatabase getMutationDatabase() {
+    return MutationDatabase.from(mutationTables.values());
   }
 
   public PhysicalPlan applyRewriting(
@@ -41,7 +51,7 @@ public class PhysicalPlan {
     if (rewriters.isEmpty()) {
       return this;
     }
-    var builder = PhysicalPlan.builder();
+    var builder = PhysicalPlan.builder().mutationTables(mutationTables);
     for (PhysicalStagePlan stagePlan : stagePlans) {
       var enginePlan = stagePlan.plan;
       for (PhysicalPlanRewriter rewriter : rewriters) {

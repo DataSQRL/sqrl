@@ -53,6 +53,8 @@ public enum EngineFeature {
   PARTITIONING,
   // Engine supports partitioned writing of data
   PARTITIONED_WRITES,
+  // Engine supports idempotent streaming writes without PK
+  REQUIRES_PK_FOR_EXPORT,
   // Engine requires that the primary key is not null
   REQUIRES_NOT_NULL_PRIMARY_KEY,
   // Datastore engine support access to data without partition key
@@ -72,6 +74,7 @@ public enum EngineFeature {
       EnumSet.of(
           NOW,
           GLOBAL_SORT,
+          REQUIRES_PK_FOR_EXPORT,
           MATERIALIZE_ON_KEY,
           MULTI_RANK,
           TABLE_FUNCTION_SCAN,
@@ -81,12 +84,7 @@ public enum EngineFeature {
           REQUIRES_NOT_NULL_PRIMARY_KEY);
 
   public static EnumSet<EngineFeature> STANDARD_TABLE_FORMAT =
-      EnumSet.of(
-          MATERIALIZE_ON_KEY,
-          DENORMALIZE,
-          PARTITIONING,
-          PARTITIONED_WRITES,
-          ACCESS_WITHOUT_PARTITION);
+      EnumSet.of(DENORMALIZE, PARTITIONING, PARTITIONED_WRITES, ACCESS_WITHOUT_PARTITION);
 
   public static EnumSet<EngineFeature> STANDARD_QUERY =
       EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS);

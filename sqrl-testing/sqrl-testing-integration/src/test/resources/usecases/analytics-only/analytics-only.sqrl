@@ -1,22 +1,19 @@
-IMPORT loan-local.applications AS _ApplicationsStream;
-IMPORT loan-local.loan_types AS _LoanTypesStream;
-IMPORT loan-local.application_updates AS _ApplicationUpdates;
-
+IMPORT loan-local.sources;
 /*+primary_key(id, loan_type_id) */
 /*+partition_key(loan_type_id) */
-_Applications := DISTINCT _ApplicationsStream ON id ORDER BY updated_at DESC;
-_LoanTypes := DISTINCT _LoanTypesStream ON id ORDER BY updated_at DESC;
+_Applications := DISTINCT sources.ApplicationsStream ON id ORDER BY updated_at DESC;
+_LoanTypes := DISTINCT sources.LoanTypesStream ON id ORDER BY updated_at DESC;
 
 /** Status of an Application */
 /*+primary_key(customer_id) */
 /*+partition_key(customer_id) */
 ApplicationStatus := SELECT u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
                             a.amount, a.duration, t.max_amount, t.min_amount
-                     FROM _ApplicationUpdates u JOIN _Applications FOR SYSTEM_TIME AS OF u.`event_time` a ON a.id = u.loan_application_id
+                     FROM sources.ApplicationUpdates u JOIN _Applications FOR SYSTEM_TIME AS OF u.`event_time` a ON a.id = u.loan_application_id
                                                JOIN _LoanTypes FOR SYSTEM_TIME AS OF u.`event_time` t ON t.id = a.loan_type_id;
 
 -- Doing a double join here to force the optimizer to allocate this to the database stages
-ApplicationInfo := SELECT a.*, t.*, t2.id AS id2 FROM _Applications a
+ApplicationInfo := SELECT a.*, t.id AS id1, t2.id AS id2 FROM _Applications a
     JOIN _LoanTypes t ON t.id = a.loan_type_id
     LEFT JOIN _LoanTypes t2 ON t2.id = a.customer_id;
 
@@ -24,4 +21,4 @@ ApplicationInfo := SELECT a.*, t.*, t2.id AS id2 FROM _Applications a
 -- ApplicationStatusTest := SELECT status, COUNT(1) AS num FROM ApplicationStatus GROUP BY status ORDER BY status ASC;
 
 /*+test */
-ApplicationInfoTest := SELECT COUNT(1) AS num FROM ApplicationInfo;
+ApplicationInfoTest := SELECT COUNT(1) AS num FROM ApplicationInfo WHERE id > 0;

@@ -15,6 +15,7 @@ These can be internal tables (managed by DataSQRL) or external tables with conne
 
 ```sql
 -- Transaction events stream (STREAM type)
+/*+ engine(kafka) */
 CREATE TABLE Transaction (
     `txid` BIGINT NOT NULL,
     `accountid` BIGINT NOT NULL,
@@ -23,7 +24,8 @@ CREATE TABLE Transaction (
     WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 );
 
--- Account balance updates stream (STREAM type)  
+-- Account balance updates stream (STREAM type)
+/*+ engine(kafka) */
 CREATE TABLE AccountBalanceUpdates (
     `accountid` BIGINT NOT NULL,
     `balance` DECIMAL(15,2) NOT NULL,

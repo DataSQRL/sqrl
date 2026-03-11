@@ -17,7 +17,7 @@ package com.datasqrl.engine.server;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.graphql.server.RootGraphqlModel;
-import com.datasqrl.planner.dag.plan.MutationQuery;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.LinkedHashMap;
@@ -34,7 +34,7 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
   @JsonIgnore final List<SqrlTableFunction> functions;
 
   /** The mutation endpoints */
-  @JsonIgnore final List<MutationQuery> mutations;
+  @JsonIgnore final List<MutationTable> mutations;
 
   /** Additional server configuration */
   @JsonIgnore final List<DeploymentArtifact> deploymentArtifacts;

@@ -1,5 +1,5 @@
 [WARN] The rowtime column 'event_time' for this table is nullable
-in script:loan.sqrl [22:1]:
+in script:loan.sqrl [33:1]:
 
 ApplicationUpdates.application := SELECT * FROM Applications a WHERE this.loan_application_id = a.id;
 Applications.updates := SELECT * FROM ApplicationUpdates u WHERE this.id = u.loan_application_id ORDER BY u.event_time;
@@ -10,7 +10,7 @@ Ensure that the rowtime column always has a value by filtering or setting a defa
 For example:
 `rowTime AS COALESCE(TO_TIMESTAMP_LTZ(lastUpdated, 0), TIMESTAMP '1970-01-01 00:00:00.000')`
 [WARN] The rowtime column 'event_time' for this table is nullable
-in script:loan.sqrl [30:1]:
+in script:loan.sqrl [41:1]:
                       GROUP BY a.loan_type_id;
 
 ApplicationStatus := SELECT u._uuid, u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
@@ -21,14 +21,14 @@ Ensure that the rowtime column always has a value by filtering or setting a defa
 For example:
 `rowTime AS COALESCE(TO_TIMESTAMP_LTZ(lastUpdated, 0), TIMESTAMP '1970-01-01 00:00:00.000')`
 [NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.ApplicationStatus[event_time]
-in script:loan.sqrl [38:1]:
+in script:loan.sqrl [49:1]:
 
 -- TODO make it a subscription
 ApplicationAlert := SELECT _uuid, id, customer_id, loan_type_id, max_amount, min_amount, amount
 ^
 
 [WARN] The rowtime column 'timestamp' for this table is nullable
-in script:loan.sqrl [42:1]:
+in script:loan.sqrl [53:1]:
                     WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
 
 CustomerChatMessage := SELECT role, content, name, c.context.customerid, event_time AS `timestamp`,

@@ -39,8 +39,8 @@ import com.datasqrl.planner.dag.nodes.PlannedNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
-import com.datasqrl.planner.dag.plan.MaterializationStagePlan.MaterializationStagePlanBuilder;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.dag.plan.ServerStagePlan;
 import com.datasqrl.planner.hint.PartitionKeyHint;
 import com.datasqrl.planner.parser.AccessModifier;
@@ -58,7 +58,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -136,8 +135,7 @@ public class DAGPlanner {
         dag.eliminateInviableStages(pipeline);
       }
       // Assign stage to table
-      if (node instanceof TableNode tableNode) {
-        var table = tableNode.getTableAnalysis();
+      if (node instanceof TableNode) {
         var stage = node.getChosenStage();
         Preconditions.checkNotNull(stage);
         // table.assignStage(stage); //this stage on the config below
@@ -172,11 +170,11 @@ public class DAGPlanner {
     var streamStage = pipeline.getStageByType(EngineType.PROCESS).orElseThrow();
     var serverEngine = pipeline.getServerEngine();
     var serverPlan = ServerStagePlan.builder();
-    List<ExecutionStage> dataStoreStages =
+    var dataStoreStages =
         pipeline.stages().stream().filter(stage -> stage.engine().getType().isDataStore()).toList();
 
     var engineUtils = new MaterializationStagePlan.Utils(sqrlEnv.getRexUtil());
-    Map<ExecutionStage, MaterializationStagePlanBuilder> exportPlans =
+    var exportPlans =
         pipeline.stages().stream()
             .filter(stage -> stage.engine().getType().supportsExport())
             .collect(
@@ -184,45 +182,51 @@ public class DAGPlanner {
                     Function.identity(),
                     s -> MaterializationStagePlan.builder().utils(engineUtils).stage(s)));
 
-    var mutationStage = pipeline.getMutationStage();
-    if (mutationStage.isPresent()) {
-      // Add mutations that were planned during DAG building
-      var planBuilder = exportPlans.get(mutationStage.get());
-      dag.allNodesByClass(TableNode.class)
-          .flatMap(node -> node.getMutation().stream())
-          .forEach(
-              mut -> {
-                planBuilder.mutation(mut.getCreateTopic());
-                if (mut.isGenerateAccess()) {
-                  serverPlan.mutation(mut);
-                }
-              });
-    }
+    var planBuilder = PhysicalPlan.builder();
 
-    Map<InputTableKey, ObjectIdentifier> streamTableMapping = new HashMap<>();
+    // Collect all mutations from the DAG and add them to 1) physical plan, 2) stage plan and 3)
+    // server plan if accessible
+    var mutationTables =
+        dag.allNodesByClass(PipelineNode.class)
+            .flatMap(p -> p.getMutationTable().stream())
+            .collect(Collectors.toMap(MutationTable::getName, Function.identity()));
+    planBuilder.mutationTables(mutationTables);
+    mutationTables.entrySet().stream()
+        .sorted(Map.Entry.comparingByKey())
+        .forEach(
+            entry -> {
+              var mut = entry.getValue();
+              var mutationPlanBld = exportPlans.get(mut.getStage());
+              mutationPlanBld.mutation(mut.getCreateTable());
+              if (mut.isGenerateAccess()) {
+                serverPlan.mutation(mut);
+              }
+            });
+
+    var streamTableMapping = new HashMap<InputTableKey, ObjectIdentifier>();
     final var exportTableCounter = new AtomicInteger(0);
     Function<String, String> uniqueNameFct =
-        name -> {
-          return name + UNIQUE_TABLE_APPENDIX + exportTableCounter.incrementAndGet();
-        };
-    var planBuilder = PhysicalPlan.builder();
+        name -> name + UNIQUE_TABLE_APPENDIX + exportTableCounter.incrementAndGet();
     // move assembler logic here
     // ##1st: find all the cuts between flink and materialization (db+log) stages or sinks
     // generate a sink for each in the respective engine and insert into
     dag.allNodesByClassAndStage(TableNode.class, streamStage)
         .forEach(
             node -> {
-              Set<ExecutionStage> downstreamStages =
-                  new HashSet<>(); // We want to only plan once for each stage
+              var downstreamStages =
+                  new HashSet<
+                      ExecutionStage>(); // We want to only plan each node once for each stage even
+              // if it
+              // is consumed multiple times
               // We need stable iteration order for reproducibility
-              List<PipelineNode> downstreamNodes = dag.getOutputs(node).stream().sorted().toList();
-              for (PipelineNode downstream : downstreamNodes) {
+              var downstreamNodes = dag.getOutputs(node).stream().sorted().toList();
+              for (var downstream : downstreamNodes) {
                 if (downstream instanceof ExportNode
                     || !downstream.getChosenStage().equals(streamStage)) {
                   // Create sink
-                  ExecutionStage exportStage = null;
-                  ObjectIdentifier targetTable = null;
-                  String originalTableName = null;
+                  ExecutionStage exportStage;
+                  ObjectIdentifier targetTable;
+                  String originalTableName;
                   if (downstream instanceof ExportNode exportNode) {
                     originalTableName = exportNode.getSinkPath().getLast().getDisplay();
                     if (exportNode.getSinkTo().isPresent()) {
@@ -239,7 +243,8 @@ public class DAGPlanner {
                   } else { // We are sinking into another engine
                     exportStage = downstream.getChosenStage();
                     originalTableName = node.getTableAnalysis().getName();
-                    if (!downstreamStages.add(exportStage)) {
+                    if (!downstreamStages.add(
+                        exportStage)) { // we already planned this node for this stage
                       continue;
                     }
                   }
@@ -270,10 +275,10 @@ public class DAGPlanner {
                   var tblBuilder = new FlinkTableBuilder();
                   tblBuilder.setName(uniqueNameFct.apply(originalTableName));
                   // #1st: determine primary key and partition key (if present)
-                  var pk = deterinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
+                  var pk = determinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
                   if (pk.isDefined()) {
                     var fields = relBuilder.peek().getRowType().getFieldList();
-                    List<String> pkColNames =
+                    var pkColNames =
                         pk.asSimpleList().stream()
                             .map(fields::get)
                             .map(RelDataTypeField::getName)
@@ -304,11 +309,7 @@ public class DAGPlanner {
                   tblBuilder.setColumns(datatype);
                   var createdTable =
                       exportEngine.createTable(
-                          exportStage,
-                          originalTableName,
-                          tblBuilder,
-                          datatype,
-                          Optional.of(originalNodeTable));
+                          exportStage, originalTableName, tblBuilder, datatype, originalNodeTable);
                   exportPlans.get(exportStage).table(createdTable);
                   targetTable = sqrlEnv.createSinkTable(tblBuilder);
                   streamTableMapping.put(
@@ -427,7 +428,7 @@ public class DAGPlanner {
    * @param stage
    * @return
    */
-  private PrimaryKeyMap deterinePrimaryKey(
+  private PrimaryKeyMap determinePrimaryKey(
       TableAnalysis table,
       FlinkRelBuilder relBuilder,
       Sqrl2FlinkSQLTranslator sqrlEnv,
@@ -441,7 +442,7 @@ public class DAGPlanner {
       addHashColumn = List.of();
     } else if (pk.isUndefined()) {
       // Databases requires a primary key, see if we can create one
-      if (stage.getType() == EngineType.DATABASE) {
+      if (stage.supportsFeature(EngineFeature.REQUIRES_PK_FOR_EXPORT)) {
         table
             .getErrors()
             .checkFatal(

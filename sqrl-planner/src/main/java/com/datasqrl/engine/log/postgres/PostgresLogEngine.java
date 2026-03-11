@@ -34,7 +34,6 @@ import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.google.inject.Inject;
 import java.util.EnumSet;
-import java.util.Optional;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 
@@ -60,7 +59,7 @@ public class PostgresLogEngine extends ExecutionEngine.Base implements LogEngine
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      Optional<TableAnalysis> tableAnalysis) {
+      TableAnalysis tableAnalysis) {
     throw new UnsupportedOperationException("not yet supported");
   }
 
