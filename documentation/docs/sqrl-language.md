@@ -69,7 +69,11 @@ Examples:
 
 SQRL understands the complete Flink SQL `CREATE TABLE` syntax, but distinguishes between **internal** and **external** source tables.
 External source tables are standard Flink SQL tables that connect to an external data source (e.g. database or Kafka cluster).
-Internal tables connect to a data source that is managed by SQRL (depending on the configured `log` engine, e.g. a Kafka topic) and exposed for data ingestion in the interface.
+Internal tables connect to a data source that is managed by SQRL and exposed for data ingestion in the interface.
+
+:::important
+Internal tables support `kafka` and `iceberg` engines.
+:::
 
 | Feature                       | Internal source (managed by SQRL)                               | External Source (connector) |
 |-------------------------------|-----------------------------------------------------------------|-----------------------------|
@@ -79,7 +83,7 @@ Internal tables connect to a data source that is managed by SQRL (depending on t
 | Watermark spec                | **generated**                                                   | **required**                |
 | Primary key                   | *Unenforced* upsert semantics                                   | Same as Flink               |
 
-Example (internal):
+### Internal Example
 
 ```sql
 /*+ engine(kafka) */
@@ -92,7 +96,7 @@ CREATE TABLE Customer (
 );
 ```
 
-Example (external):
+### External example
 
 ```sql
 CREATE TABLE kafka_json_table (
