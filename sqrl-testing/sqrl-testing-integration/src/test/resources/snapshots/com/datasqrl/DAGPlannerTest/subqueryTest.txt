@@ -1,4 +1,29 @@
 >>>pipeline_explain.txt
+=== AdminOrderCustomers
+ID:          default_catalog.default_database.AdminOrderCustomers
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database._SpecialOrders
+Annotations:
+ - stream-root: Customer
+ - parameters: customerId, hasOrders, isAdmin
+ - base-table: AdminOrderCustomers
+Plan:
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[AND(OR(IS NULL(?0), =(?0, 0), =($0, ?0)), OR(IS FALSE(?1), NOT(EXISTS({
+LogicalFilter(condition=[AND(=($1, $cor2.customerid), $4)])
+  LogicalTableScan(table=[[default_catalog, default_database, _SpecialOrders]])
+}))), ?2)], variablesSet=[[$cor2]])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+CREATE VIEW `AdminOrderCustomers` AS 
+SELECT c.* FROM Customer c WHERE (?           IS NULL OR ?           = 0 OR c.customerid = ?          )
+                                   AND (?          IS FALSE OR NOT EXISTS (SELECT 1 FROM _SpecialOrders o WHERE o.customerid = c.customerid AND o.isSpecialorder))
+                                   AND ?       ;
+
 === Customer
 ID:          default_catalog.default_database.Customer
 Type:        stream
@@ -163,6 +188,30 @@ SELECT o.*, coalesce(o.customerid - (SELECT customerid FROM Customer WHERE name 
 FROM Orders o
 ORDER BY similarity DESC LIMIT 10;
 
+=== _SpecialOrders
+ID:          default_catalog.default_database._SpecialOrders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - isSpecialorder: BOOLEAN NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders
+Plan:
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], isSpecialorder=[>($0, 1000)])
+  LogicalFilter(condition=[<($0, 1000000)])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `_SpecialOrders` AS  SELECT *, id > 1000 AS isSpecialorder FROM Orders WHERE id < 1000000;
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
@@ -212,6 +261,11 @@ FROM `Customer` AS `c`
 WHERE EXISTS (SELECT `o`.`id`
   FROM `Orders` AS `o`
   WHERE `c`.`customerid` = `o`.`customerid`);
+CREATE VIEW `_SpecialOrders`
+AS
+SELECT *, `id` > 1000 AS `isSpecialorder`
+FROM `Orders`
+WHERE `id` < 1000000;
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -259,6 +313,22 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
+CREATE TABLE `_SpecialOrders_4` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `isSpecialorder` BOOLEAN NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = '_SpecialOrders_4',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
@@ -272,7 +342,11 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
   SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
    FROM `default_catalog`.`default_database`.`Orders`
   ;
-  END
+  INSERT INTO `default_catalog`.`default_database`.`_SpecialOrders_4`
+   SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `isSpecialorder`
+    FROM `default_catalog`.`default_database`.`_SpecialOrders`
+   ;
+   END
 >>>kafka.json
 {
   "topics" : [ ],
@@ -385,6 +459,46 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
           "name" : "entries",
           "type" : "JSONB",
           "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "_SpecialOrders_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"_SpecialOrders_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, \"isSpecialorder\" BOOLEAN NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        },
+        {
+          "name" : "isSpecialorder",
+          "type" : "BOOLEAN",
+          "nullable" : false
         }
       ],
       "primaryKey" : [
@@ -572,6 +686,56 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
         {
           "type" : "args",
           "parentType" : "Query",
+          "fieldName" : "AdminOrderCustomers",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "customerId"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "hasOrders"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE ($1 IS NULL OR $1 = 0 OR \"customerid\" = $1) AND ($2 IS FALSE OR NOT EXISTS (SELECT *\n    FROM \"_SpecialOrders\"\n    WHERE \"customerid\" = \"Customer_10\".\"customerid\" AND \"isSpecialorder\")) AND $3",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "customerId"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "hasOrders"
+                },
+                {
+                  "type" : "metadata",
+                  "metadata" : {
+                    "metadataType" : "AUTH",
+                    "name" : "is_admin",
+                    "required" : true
+                  }
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
           "fieldName" : "CustomerOrderCount",
           "exec" : {
             "arguments" : [
@@ -721,6 +885,41 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
         },
         {
           "function" : {
+            "name" : "GetAdminOrderCustomers",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customerId" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "hasOrders" : {
+                  "type" : "boolean"
+                }
+              },
+              "required" : [
+                "customerId",
+                "hasOrders"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query AdminOrderCustomers($customerId: Long!, $hasOrders: Boolean!, $limit: Int = 10, $offset: Int = 0) {\nAdminOrderCustomers(customerId: $customerId, hasOrders: $hasOrders, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "AdminOrderCustomers",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AdminOrderCustomers{?offset,customerId,limit,hasOrders}"
+        },
+        {
+          "function" : {
             "name" : "GetCustomerOrderCount",
             "parameters" : {
               "type" : "object",
@@ -784,7 +983,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerOrderCount {\n  name: String!\n  num_orders: Long!\n}\n\ntype CustomerWithOrders {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerWithOrders(limit: Int = 10, offset: Int = 0): [CustomerWithOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  CustomerOrderCount(customerid: Long!, limit: Int = 10, offset: Int = 0): [CustomerOrderCount!]\n  SimilarOrders(name: String!, limit: Int = 10, offset: Int = 0): [SimilarOrders!]\n}\n\ntype SimilarOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [SimilarOrders_entriesOutput]!\n  similarity: Long!\n}\n\ntype SimilarOrders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type AdminOrderCustomers {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerOrderCount {\n  name: String!\n  num_orders: Long!\n}\n\ntype CustomerWithOrders {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerWithOrders(limit: Int = 10, offset: Int = 0): [CustomerWithOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  AdminOrderCustomers(customerId: Long!, hasOrders: Boolean!, limit: Int = 10, offset: Int = 0): [AdminOrderCustomers!]\n  CustomerOrderCount(customerid: Long!, limit: Int = 10, offset: Int = 0): [CustomerOrderCount!]\n  SimilarOrders(name: String!, limit: Int = 10, offset: Int = 0): [SimilarOrders!]\n}\n\ntype SimilarOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [SimilarOrders_entriesOutput]!\n  similarity: Long!\n}\n\ntype SimilarOrders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

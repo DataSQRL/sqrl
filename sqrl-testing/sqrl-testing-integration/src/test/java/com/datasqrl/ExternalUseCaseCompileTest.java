@@ -24,6 +24,6 @@ public class ExternalUseCaseCompileTest extends AbstractUseCaseTest {
 
   @Test
   public void testIndividual() {
-    super.testUseCase(Path.of("/Users/matthias/git/cloud-backend/core/package-deploy.json"));
+    super.testUseCase(Path.of("/your/path/package.json"));
   }
 }

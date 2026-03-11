@@ -13,6 +13,14 @@ SELECT o.*, coalesce(o.customerid - (SELECT customerid FROM Customer WHERE name 
 FROM Orders o
 ORDER BY similarity DESC LIMIT 10;
 
+_SpecialOrders := SELECT *, id > 1000 AS isSpecialorder FROM Orders WHERE id < 1000000;
+
+AdminOrderCustomers(customerId BIGINT NOT NULL, hasOrders BOOLEAN NOT NULL,
+                    isAdmin BOOLEAN NOT NULL METADATA FROM 'auth.is_admin') :=
+SELECT c.* FROM Customer c WHERE (:customerId IS NULL OR :customerId = 0 OR c.customerid = :customerId)
+                                   AND (:hasOrders IS FALSE OR NOT EXISTS (SELECT 1 FROM _SpecialOrders o WHERE o.customerid = c.customerid AND o.isSpecialorder))
+                                   AND :isAdmin;
+
 -- Disabled because it doesn't resolve the correlate variable correctly when converting relnode to SQL
 -- CustomerOrderCount(name STRING NOT NULL) :=
 --  SELECT c.customerid, coalesce((SELECT COUNT(*) FROM Orders o WHERE o.customerid = c.customerid) -1, 0) AS num_orders
