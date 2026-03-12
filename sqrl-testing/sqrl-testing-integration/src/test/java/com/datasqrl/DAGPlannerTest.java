@@ -74,7 +74,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   @Disabled
   @Test
   void specificScript() {
-    var script = SCRIPT_DIR.resolve("deeplyNestedTableTest.sqrl");
+    var script = SCRIPT_DIR.resolve("createTableCatalogInline-fail.sqrl");
     scripts(script);
   }
 

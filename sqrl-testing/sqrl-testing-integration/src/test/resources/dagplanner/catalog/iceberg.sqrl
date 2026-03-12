@@ -10,8 +10,8 @@ CREATE DATABASE IF NOT EXISTS my_database;
 USE my_database;
 
 CREATE TABLE IF NOT EXISTS my_table  (
-                                         key_col STRING,
-                                         int_col INT
+    key_col STRING,
+    int_col INT
 ) WITH (
-      'format-version' = '2'
-      );
+    'format-version' = '2'
+);

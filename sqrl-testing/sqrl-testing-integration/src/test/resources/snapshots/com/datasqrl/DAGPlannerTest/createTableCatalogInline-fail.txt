@@ -1,0 +1,5 @@
+[FATAL] Catalog creation is not supported in the main script or in a script imported inline.
+in script:iceberg.sqrl [1:1]:
+CREATE CATALOG iceberg WITH (
+^
+
