@@ -368,6 +368,11 @@ public abstract class SqrlContainerTestBase {
 
   @SneakyThrows
   protected static Path itPath(String relativePath) {
+    var directLocalPath = Paths.get("src/test/resources", relativePath).toAbsolutePath();
+    if (Files.exists(directLocalPath) && Files.isDirectory(directLocalPath)) {
+      return directLocalPath.toRealPath();
+    }
+
     var localPath = Paths.get("src/test/resources/usecases", relativePath).toAbsolutePath();
     if (Files.exists(localPath) && Files.isDirectory(localPath)) {
       return localPath.toRealPath();
