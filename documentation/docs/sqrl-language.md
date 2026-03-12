@@ -31,9 +31,14 @@ SQRL inherits full Flink SQL grammar for
 * `USE ...`
 * `INSERT INTO`
 
-...with the caveat that SQRL currently tracks **Flink 1.19**; later features may not parse.
+...with the caveat that SQRL currently tracks **Flink 2.2**; later features may not parse.
 
 Refer to the [Flink SQL documentation](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/sql/overview/) for a detailed specification.
+
+:::warning
+Be aware that `CREATE CATALOG` statements are only supported in separate scripts, that are NOT imported inline.
+To learn more about how `IMPORT` works, see [IMPORT Statement](#import-statement).
+:::
 
 ## Type System
 In SQRL, every table and function has a type based on how the table represents data.
@@ -52,7 +57,7 @@ The table type determines what operators a table supports and how those operator
 
 ```
 IMPORT qualifiedPath (AS identifier)?;
-IMPORT qualifiedPath.*;             -- wildcard
+IMPORT qualifiedPath.*; -- wildcard
 ```
 
 Imports another SQRL script into the current script. The `qualifiedPath` is a `.` separated path that maps to the local file system relative to the current script, e.g. `IMPORT my.custom.script` maps to the relative path `./my/custom/script.sqrl`.
