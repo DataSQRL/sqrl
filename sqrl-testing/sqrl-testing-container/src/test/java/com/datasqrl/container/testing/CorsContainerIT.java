@@ -60,7 +60,7 @@ public class CorsContainerIT extends SqrlContainerTestBase {
 
   @Override
   protected String getTestCaseName() {
-    return "udf";
+    return "avro-schema";
   }
 
   // ─────────────────────────────────────────────────────────────────────────

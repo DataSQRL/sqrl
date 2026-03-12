@@ -159,7 +159,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
-            <log4j2.configurationFile>log4j2-test.xml</log4j2.configurationFile>
+            <log4j2.configurationFile>log4j2-test.properties</log4j2.configurationFile>
           </systemPropertyVariables>
         </configuration>
       </plugin>
@@ -168,7 +168,7 @@
         <artifactId>maven-failsafe-plugin</artifactId>
         <configuration>
           <systemPropertyVariables>
-            <log4j2.configurationFile>log4j2-test.xml</log4j2.configurationFile>
+            <log4j2.configurationFile>log4j2-test.properties</log4j2.configurationFile>
           </systemPropertyVariables>
         </configuration>
       </plugin>

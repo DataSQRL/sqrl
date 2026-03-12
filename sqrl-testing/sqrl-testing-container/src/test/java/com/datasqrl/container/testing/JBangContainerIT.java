@@ -21,12 +21,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 class JBangContainerIT extends SqrlContainerTestBase {
 
   @BeforeEach
   @Override
-  void setupBeforeEach() {
+  void setupBeforeEach(TestInfo testInfo) {
+    super.setupBeforeEach(testInfo);
     testDir = Path.of("src/test/resources", getTestCaseName());
   }
 

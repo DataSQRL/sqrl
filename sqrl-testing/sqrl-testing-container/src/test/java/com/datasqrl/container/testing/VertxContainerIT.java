@@ -32,7 +32,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
 
   @Override
   protected String getTestCaseName() {
-    return "udf";
+    return "avro-schema";
   }
 
   @Test
