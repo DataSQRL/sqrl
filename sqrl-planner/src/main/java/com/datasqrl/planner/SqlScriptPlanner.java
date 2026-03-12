@@ -174,7 +174,7 @@ public class SqlScriptPlanner {
       ExecutionGoal executionGoal) {
     this.errorCollector = errorCollector;
     this.completeScript = new SqlScriptWriter();
-    this.scriptContext = new ScriptContext(moduleLoader, FLINK_DEFAULT_DATABASE, true, true);
+    this.scriptContext = new ScriptContext(moduleLoader, FLINK_DEFAULT_DATABASE, true);
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -553,7 +553,7 @@ public class SqlScriptPlanner {
       } else if (node instanceof SqlDropTable || node instanceof SqlDropView) {
         errors.fatal(
             "Removing tables is not supported. The DAG planner automatically removes unused tables.");
-      } else if (node instanceof SqlCreateCatalog && scriptContext.root()) {
+      } else if (node instanceof SqlCreateCatalog && scriptContext.generateAccess()) {
         errors.fatal(
             "Catalog creation is not supported in the main script or in a script imported inline.");
       } else {
@@ -577,7 +577,7 @@ public class SqlScriptPlanner {
    */
   private AccessModifier adjustAccess(AccessModifier access) {
     Preconditions.checkArgument(access != AccessModifier.INHERIT);
-    if (!scriptContext.generateAccess
+    if (!scriptContext.generateAccess()
         || (access == AccessModifier.QUERY && queryStages.isEmpty())) {
       return AccessModifier.NONE;
     }
@@ -954,7 +954,7 @@ public class SqlScriptPlanner {
     return Optional.of(
         (origTableName, tableBuilder, dataType) -> {
           var mutationBuilder = MutationTable.builder();
-          mutationBuilder.generateAccess(scriptContext.generateAccess);
+          mutationBuilder.generateAccess(scriptContext.generateAccess());
           mutationBuilder.stage(mutationStage.get());
           MutationInsertType insertType =
               hintsAndDocs
@@ -1170,13 +1170,21 @@ public class SqlScriptPlanner {
     }
   }
 
+  /**
+   * Internal object that keeps the necessary context for the current script during planning.
+   *
+   * @param moduleLoader loads modules related to the script
+   * @param databaseName corresponding database name for the script context
+   * @param generateAccess denotes whether the current context should be exposed (main script or
+   *     inline import) or not
+   */
   private record ScriptContext(
-      ModuleLoader moduleLoader, String databaseName, boolean generateAccess, boolean root) {
+      ModuleLoader moduleLoader, String databaseName, boolean generateAccess) {
 
     ScriptContext fromImport(ModuleLoader moduleLoader, boolean isInline, String databaseName) {
       return isInline
-          ? new ScriptContext(moduleLoader, this.databaseName, generateAccess, root)
-          : new ScriptContext(moduleLoader, databaseName, false, false);
+          ? new ScriptContext(moduleLoader, this.databaseName, generateAccess)
+          : new ScriptContext(moduleLoader, databaseName, false);
     }
 
     boolean hasDifferentDatabase(ScriptContext other) {
