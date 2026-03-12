@@ -29,6 +29,7 @@ import org.apache.http.client.methods.HttpOptions;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -183,17 +184,21 @@ public class CorsContainerIT extends SqrlContainerTestBase {
       request.setEntity(new StringEntity(GRAPHQL_QUERY, ContentType.APPLICATION_JSON));
 
       var response = sharedHttpClient.execute(request);
-      assertSoftly(
-          softly -> {
-            softly
-                .assertThat(response.getStatusLine().getStatusCode())
-                .as("Cross-origin POST from %s should succeed", origin)
-                .isEqualTo(200);
-            softly
-                .assertThat(response.getFirstHeader("Access-Control-Allow-Origin"))
-                .as("Access-Control-Allow-Origin must be present for %s", origin)
-                .isNotNull();
-          });
+      try {
+        assertSoftly(
+            softly -> {
+              softly
+                  .assertThat(response.getStatusLine().getStatusCode())
+                  .as("Cross-origin POST from %s should succeed", origin)
+                  .isEqualTo(200);
+              softly
+                  .assertThat(response.getFirstHeader("Access-Control-Allow-Origin"))
+                  .as("Access-Control-Allow-Origin must be present for %s", origin)
+                  .isNotNull();
+            });
+      } finally {
+        EntityUtils.consume(response.getEntity());
+      }
     }
   }
 
