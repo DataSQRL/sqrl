@@ -14,9 +14,8 @@
 # limitations under the License.
 #
 
-ARG IMG_REPO=datasqrl
 ARG DUCKDB_EXTENSIONS_TAG=latest
-FROM ${IMG_REPO}/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG}
+FROM ghcr.io/datasqrl/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG}
 
 # Create directories for application, configuration, and logs
 RUN mkdir -p /opt/sqrl/app /opt/sqrl/config /opt/sqrl/logs

@@ -101,7 +101,6 @@
     <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
 
     <!-- Params -->
-    <docker.image.repo>datasqrl</docker.image.repo>
     <docker.image.tag>local</docker.image.tag>
     <docker.image.base.tag>latest</docker.image.base.tag>
     <docker.image.duckdb.tag>latest</docker.image.duckdb.tag>
@@ -819,7 +818,6 @@
             <tag>${docker.image.tag}</tag>
             <dockerfile>Dockerfile</dockerfile>
             <buildArgs>
-              <IMG_REPO>${docker.image.repo}</IMG_REPO>
               <BASE_TAG>${docker.image.base.tag}</BASE_TAG>
               <DUCKDB_EXTENSIONS_TAG>${docker.image.duckdb.tag}</DUCKDB_EXTENSIONS_TAG>
             </buildArgs>
