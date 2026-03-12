@@ -926,13 +926,6 @@
             </manifest>
           </archive>
         </configuration>
-        <executions>
-          <execution>
-            <goals>
-              <goal>test-jar</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -1307,14 +1300,14 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
               <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-              <redirectTestOutputToFile>true</redirectTestOutputToFile>
+              <redirectTestOutputToFile>false</redirectTestOutputToFile>
             </configuration>
           </plugin>
           <plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
               <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-              <redirectTestOutputToFile>true</redirectTestOutputToFile>
+              <redirectTestOutputToFile>false</redirectTestOutputToFile>
               <rerunFailingTestsCount>1</rerunFailingTestsCount>
             </configuration>
           </plugin>
