@@ -101,6 +101,7 @@
     <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
 
     <!-- Params -->
+    <docker.image.repo>datasqrl</docker.image.repo>
     <docker.image.tag>local</docker.image.tag>
     <docker.image.base.tag>latest</docker.image.base.tag>
     <docker.image.duckdb.tag>latest</docker.image.duckdb.tag>
@@ -818,6 +819,7 @@
             <tag>${docker.image.tag}</tag>
             <dockerfile>Dockerfile</dockerfile>
             <buildArgs>
+              <IMG_REPO>${docker.image.repo}</IMG_REPO>
               <BASE_TAG>${docker.image.base.tag}</BASE_TAG>
               <DUCKDB_EXTENSIONS_TAG>${docker.image.duckdb.tag}</DUCKDB_EXTENSIONS_TAG>
             </buildArgs>
@@ -926,6 +928,13 @@
             </manifest>
           </archive>
         </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -1300,14 +1309,14 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <configuration>
               <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-              <redirectTestOutputToFile>false</redirectTestOutputToFile>
+              <redirectTestOutputToFile>true</redirectTestOutputToFile>
             </configuration>
           </plugin>
           <plugin>
             <artifactId>maven-failsafe-plugin</artifactId>
             <configuration>
               <failIfNoSpecifiedTests>false</failIfNoSpecifiedTests>
-              <redirectTestOutputToFile>false</redirectTestOutputToFile>
+              <redirectTestOutputToFile>true</redirectTestOutputToFile>
               <rerunFailingTestsCount>1</rerunFailingTestsCount>
             </configuration>
           </plugin>
