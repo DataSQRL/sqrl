@@ -353,6 +353,7 @@ jobs:
           command: >-
             mvn -U clean -T1C -B install -DonlyImages
             -Ddocker.image.tag=local-${CIRCLE_SHA1}
+            -Ddocker.image.repo=ghcr.io/datasqrl
             -Ddocker.image.base.tag=${BASE_TAG}
             -Ddocker.image.duckdb.tag=${DUCKDB_EXTENSIONS_TAG}
       - run:
@@ -455,8 +456,8 @@ jobs:
               fi
             }
 
-            build_and_push cmd         sqrl-cli                      --build-arg BASE_TAG=$BASE_TAG
-            build_and_push sqrl-server sqrl-server/sqrl-server-vertx --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
+            build_and_push cmd         sqrl-cli                      --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg BASE_TAG=$BASE_TAG
+            build_and_push sqrl-server sqrl-server/sqrl-server-vertx --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
 
   docker-build-duckdb-extensions:
     machine:
@@ -541,6 +542,7 @@ jobs:
             docker buildx build \
               --push \
               --platform linux/amd64,linux/arm64 \
+              --build-arg IMG_REPO=ghcr.io/datasqrl \
               --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG \
               -t ghcr.io/datasqrl/sqrl-base:$BASE_TAG \
               -t ghcr.io/datasqrl/sqrl-base:latest \
