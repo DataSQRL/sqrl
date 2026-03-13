@@ -553,7 +553,7 @@ public class SqlScriptPlanner {
       } else if (node instanceof SqlDropTable || node instanceof SqlDropView) {
         errors.fatal(
             "Removing tables is not supported. The DAG planner automatically removes unused tables.");
-      } else if (node instanceof SqlCreateCatalog && scriptContext.generateAccess()) {
+      } else if (node instanceof SqlCreateCatalog && scriptContext.isRootContext()) {
         errors.fatal(
             "Catalog creation is not supported in the main script or in a script imported inline.");
       } else {
@@ -577,7 +577,7 @@ public class SqlScriptPlanner {
    */
   private AccessModifier adjustAccess(AccessModifier access) {
     Preconditions.checkArgument(access != AccessModifier.INHERIT);
-    if (!scriptContext.generateAccess()
+    if (!scriptContext.isRootContext()
         || (access == AccessModifier.QUERY && queryStages.isEmpty())) {
       return AccessModifier.NONE;
     }
@@ -954,7 +954,7 @@ public class SqlScriptPlanner {
     return Optional.of(
         (origTableName, tableBuilder, dataType) -> {
           var mutationBuilder = MutationTable.builder();
-          mutationBuilder.generateAccess(scriptContext.generateAccess());
+          mutationBuilder.generateAccess(scriptContext.isRootContext());
           mutationBuilder.stage(mutationStage.get());
           MutationInsertType insertType =
               hintsAndDocs
@@ -1175,15 +1175,15 @@ public class SqlScriptPlanner {
    *
    * @param moduleLoader loads modules related to the script
    * @param databaseName corresponding database name for the script context
-   * @param generateAccess denotes whether the current context should be exposed (main script or
-   *     inline import) or not
+   * @param isRootContext {@code true} if the context refers to the main script or an inline import,
+   *     {@code false} for regular imports
    */
   private record ScriptContext(
-      ModuleLoader moduleLoader, String databaseName, boolean generateAccess) {
+      ModuleLoader moduleLoader, String databaseName, boolean isRootContext) {
 
     ScriptContext fromImport(ModuleLoader moduleLoader, boolean isInline, String databaseName) {
       return isInline
-          ? new ScriptContext(moduleLoader, this.databaseName, generateAccess)
+          ? new ScriptContext(moduleLoader, this.databaseName, isRootContext)
           : new ScriptContext(moduleLoader, databaseName, false);
     }
 
