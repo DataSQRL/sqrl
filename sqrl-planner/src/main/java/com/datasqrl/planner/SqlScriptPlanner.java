@@ -120,6 +120,7 @@ import org.apache.calcite.schema.FunctionParameter;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.SqlAlterView;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
+import org.apache.flink.sql.parser.ddl.SqlCreateCatalog;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlDropTable;
@@ -523,13 +524,13 @@ public class SqlScriptPlanner {
       sqrlEnv.nextBatch();
 
     } else if (stmt instanceof FlinkSQLStatement flinkStmt) {
-      var node = sqrlEnv.parseSQL(flinkStmt.getSql().get());
+      var node = sqrlEnv.parseSQL(flinkStmt.sql().get());
       if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
         // plan like other definitions from above
         var visibility =
             new AccessVisibility(adjustAccess(AccessModifier.QUERY), false, true, false);
         addTableToDag(
-            sqrlEnv.addView(flinkStmt.getSql().get(), hints, errors),
+            sqrlEnv.addView(flinkStmt.sql().get(), hints, errors),
             hintsAndDocs,
             visibility,
             false,
@@ -537,7 +538,7 @@ public class SqlScriptPlanner {
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv
             .createTable(
-                flinkStmt.getSql().get(),
+                flinkStmt.sql().get(),
                 getMutationBuilder(hintsAndDocs),
                 scriptContext.moduleLoader().getSchemaLoader())
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
@@ -552,9 +553,12 @@ public class SqlScriptPlanner {
       } else if (node instanceof SqlDropTable || node instanceof SqlDropView) {
         errors.fatal(
             "Removing tables is not supported. The DAG planner automatically removes unused tables.");
+      } else if (node instanceof SqlCreateCatalog && scriptContext.isRootContext()) {
+        errors.fatal(
+            "Catalog creation is not supported in the main script or in a script imported inline.");
       } else {
         // just pass through
-        sqrlEnv.executeSQL(flinkStmt.getSql().get());
+        sqrlEnv.executeSQL(flinkStmt.sql().get());
       }
     }
   }
@@ -573,7 +577,7 @@ public class SqlScriptPlanner {
    */
   private AccessModifier adjustAccess(AccessModifier access) {
     Preconditions.checkArgument(access != AccessModifier.INHERIT);
-    if (!scriptContext.generateAccess
+    if (!scriptContext.isRootContext()
         || (access == AccessModifier.QUERY && queryStages.isEmpty())) {
       return AccessModifier.NONE;
     }
@@ -950,7 +954,7 @@ public class SqlScriptPlanner {
     return Optional.of(
         (origTableName, tableBuilder, dataType) -> {
           var mutationBuilder = MutationTable.builder();
-          mutationBuilder.generateAccess(scriptContext.generateAccess);
+          mutationBuilder.generateAccess(scriptContext.isRootContext());
           mutationBuilder.stage(mutationStage.get());
           MutationInsertType insertType =
               hintsAndDocs
@@ -1166,12 +1170,20 @@ public class SqlScriptPlanner {
     }
   }
 
+  /**
+   * Internal object that keeps the necessary context for the current script during planning.
+   *
+   * @param moduleLoader loads modules related to the script
+   * @param databaseName corresponding database name for the script context
+   * @param isRootContext {@code true} if the context refers to the main script or an inline import,
+   *     {@code false} for regular imports
+   */
   private record ScriptContext(
-      ModuleLoader moduleLoader, String databaseName, boolean generateAccess) {
+      ModuleLoader moduleLoader, String databaseName, boolean isRootContext) {
 
     ScriptContext fromImport(ModuleLoader moduleLoader, boolean isInline, String databaseName) {
       return isInline
-          ? new ScriptContext(moduleLoader, this.databaseName, generateAccess)
+          ? new ScriptContext(moduleLoader, this.databaseName, isRootContext)
           : new ScriptContext(moduleLoader, databaseName, false);
     }
 
