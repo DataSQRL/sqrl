@@ -33,6 +33,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
@@ -43,6 +44,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
@@ -55,17 +57,24 @@ import org.testcontainers.utility.DockerImageName;
 public abstract class SqrlContainerTestBase {
 
   protected Path testDir;
+  private long testStartTime;
+  private String currentTestName;
 
   protected abstract String getTestCaseName();
 
   @BeforeEach
-  void setupBeforeEach() {
+  void setupBeforeEach(TestInfo testInfo) {
+    currentTestName = testInfo.getDisplayName();
+    testStartTime = System.currentTimeMillis();
+    log.info(">>> Starting: {}", currentTestName);
     testDir = itPath(getTestCaseName());
   }
 
   @AfterEach
   protected void commonTearDown() {
     cleanupContainers();
+    var elapsed = System.currentTimeMillis() - testStartTime;
+    log.info("<<< Finished: {} ({}ms)", currentTestName, elapsed);
   }
 
   protected static final String SQRL_CMD_IMAGE = "datasqrl/cmd";
@@ -83,7 +92,13 @@ public abstract class SqrlContainerTestBase {
   @BeforeAll
   static void setUpSharedResources() {
     sharedNetwork = Network.newNetwork();
-    sharedHttpClient = HttpClients.createDefault();
+    var requestConfig =
+        RequestConfig.custom()
+            .setConnectTimeout(10_000)
+            .setSocketTimeout(30_000)
+            .setConnectionRequestTimeout(5_000)
+            .build();
+    sharedHttpClient = HttpClients.custom().setDefaultRequestConfig(requestConfig).build();
     log.info("Shared test resources initialized");
   }
 
@@ -353,6 +368,11 @@ public abstract class SqrlContainerTestBase {
 
   @SneakyThrows
   protected static Path itPath(String relativePath) {
+    var directLocalPath = Paths.get("src/test/resources", relativePath).toAbsolutePath();
+    if (Files.exists(directLocalPath) && Files.isDirectory(directLocalPath)) {
+      return directLocalPath.toRealPath();
+    }
+
     var localPath = Paths.get("src/test/resources/usecases", relativePath).toAbsolutePath();
     if (Files.exists(localPath) && Files.isDirectory(localPath)) {
       return localPath.toRealPath();
