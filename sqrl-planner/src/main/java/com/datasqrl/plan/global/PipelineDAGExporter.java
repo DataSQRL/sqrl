@@ -106,7 +106,7 @@ public class PipelineDAGExporter {
                       table.getPrimaryKey().isUndefined()
                           ? null
                           : table.getPrimaryKey().asList().stream()
-                              .flatMap(set -> set.indexes().stream().sorted())
+                              .flatMap(set -> set.getIndexes().stream().sorted())
                               .map(fields::get)
                               .map(RelDataTypeField::getName)
                               .toList())

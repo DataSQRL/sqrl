@@ -1,0 +1,13 @@
+CREATE TABLE source_a (
+    id_a STRING,
+    val  STRING,
+    PRIMARY KEY (id_a) NOT ENFORCED
+) WITH ('connector' = 'datagen');
+
+CREATE TABLE source_b (
+    id_b STRING,
+    val  STRING,
+    PRIMARY KEY (id_b) NOT ENFORCED
+) WITH ('connector' = 'datagen');
+
+CombinedStream := SELECT id_a, val FROM source_a UNION ALL SELECT val, id_b FROM source_b;
