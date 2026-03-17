@@ -552,9 +552,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     var lostPrimaryKeyMapping = false;
     if (input.primaryKey.isDefined()) {
       var pkBuilder = PrimaryKeyMap.build();
-      for (PrimaryKeyMap.ColumnSet colSet : input.primaryKey.asList()) {
-        Set<Integer> mappedTo =
-            colSet.indexes().stream()
+      for (var colSet : input.primaryKey.asList()) {
+        var mappedTo =
+            colSet.getIndexes().stream()
                 .flatMap(idx -> mappedProjects.get(idx).stream())
                 .collect(Collectors.toUnmodifiableSet());
         if (mappedTo.isEmpty()) {
@@ -795,22 +795,26 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   }
 
   private PrimaryKeyMap intersectPrimaryKeys(List<RelNodeAnalysis> inputs) {
-    if (inputs.get(0).primaryKey.isUndefined() || inputs.get(0).primaryKey.getLength() == 0) {
+    var firstPk = inputs.get(0).primaryKey;
+    if (firstPk.isUndefined() || firstPk.getLength() == 0) {
       return PrimaryKeyMap.UNDEFINED;
     }
-    var pkLength = inputs.get(0).primaryKey.getLength();
+
+    var pkLength = firstPk.getLength();
     if (inputs.stream().allMatch(in -> in.primaryKey.getLength() == pkLength)) {
       var pkBuilder = PrimaryKeyMap.build();
       // Compute the intersection of all column sets
       for (var i = 0; i < pkLength; i++) {
-        var colset = inputs.get(0).primaryKey.get(i);
+        var colSet = firstPk.get(i);
         for (var j = 1; j < inputs.size(); j++) {
-          colset = colset.intersect(inputs.get(j).primaryKey.get(i));
-          if (colset.isEmpty()) {
+          var otherColSet = inputs.get(j).primaryKey.get(i);
+          colSet = colSet.intersect(otherColSet);
+
+          if (colSet.isEmpty()) {
             return PrimaryKeyMap.UNDEFINED;
           }
         }
-        pkBuilder.add(colset);
+        pkBuilder.add(colSet);
       }
       return pkBuilder.build();
     }

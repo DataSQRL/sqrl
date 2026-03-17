@@ -36,6 +36,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Singular;
 import lombok.ToString;
+import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 
@@ -184,10 +185,21 @@ public class PrimaryKeyMap implements Serializable {
     return builder;
   }
 
-  public record ColumnSet(Set<Integer> indexes) {
+  @Value
+  @SuppressWarnings("ClassCanBeRecord")
+  public static class ColumnSet {
 
-    public ColumnSet {
-      checkArgument(!indexes.isEmpty());
+    private static final ColumnSet EMPTY = new ColumnSet();
+
+    Set<Integer> indexes;
+
+    private ColumnSet() {
+      indexes = Set.of();
+    }
+
+    public ColumnSet(Set<Integer> indexes) {
+      checkArgument(!indexes.isEmpty(), "ColumnSet must have at least one index");
+      this.indexes = indexes;
     }
 
     public boolean isSimple() {
@@ -206,7 +218,8 @@ public class PrimaryKeyMap implements Serializable {
     public ColumnSet intersect(ColumnSet other) {
       Set<Integer> intersection = new HashSet<>(indexes);
       intersection.retainAll(other.indexes);
-      return new ColumnSet(intersection);
+
+      return intersection.isEmpty() ? EMPTY : new ColumnSet(intersection);
     }
 
     public boolean contains(int index) {
@@ -289,13 +302,6 @@ public class PrimaryKeyMap implements Serializable {
 
     public Builder addAll(List<ColumnSet> columns) {
       this.columns.addAll(columns);
-      return this;
-    }
-
-    public Builder addAllNotOverlapping(List<ColumnSet> columns) {
-      columns.stream()
-          .filter(colSet -> this.columns.stream().noneMatch(col -> col.containsAny(colSet)))
-          .forEach(this.columns::add);
       return this;
     }
 
