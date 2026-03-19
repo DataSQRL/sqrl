@@ -60,56 +60,59 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     errors.checkFatal(
         Files.isDirectory(cli.rootDir), "Not a valid root directory: %s", cli.rootDir);
 
-    var context = new AnnotationConfigApplicationContext();
-    context.registerBean(ErrorCollector.class, () -> errors);
-    context.registerBean("rootDir", Path.class, () -> cli.rootDir);
-    context.registerBean("targetDir", Path.class, () -> getTargetFolder());
-    context.registerBean(PackageJson.class, () -> sqrlConfig);
-    context.registerBean(ExecutionGoal.class, () -> getGoal());
-    context.registerBean("internalTestExec", Boolean.class, () -> cli.internalTestExec);
-    context.register(SqrlInjector.class);
-    context.refresh();
+    try (var springCtx = new AnnotationConfigApplicationContext()) {
+      springCtx.registerBean(ErrorCollector.class, () -> errors);
+      springCtx.registerBean("rootDir", Path.class, () -> cli.rootDir);
+      springCtx.registerBean("targetDir", Path.class, this::getTargetFolder);
+      springCtx.registerBean(PackageJson.class, () -> sqrlConfig);
+      springCtx.registerBean(ExecutionGoal.class, this::getGoal);
+      springCtx.registerBean("internalTestExec", Boolean.class, () -> cli.internalTestExec);
+      springCtx.register(SqrlInjector.class);
+      springCtx.refresh();
 
-    var engineHolder = context.getBean(ExecutionEnginesHolder.class);
-    engineHolder.initEnabledEngines();
+      var engineHolder = springCtx.getBean(ExecutionEnginesHolder.class);
+      engineHolder.initEnabledEngines();
 
-    if (getGoal() == ExecutionGoal.COMPILE) {
-      formatter.phaseStart("Processing dependencies");
-    }
-    var packager = context.getBean(Packager.class);
-    packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
-    if (errors.hasErrors()) {
-      return;
-    }
+      if (getGoal() == ExecutionGoal.COMPILE) {
+        formatter.phaseStart("Processing dependencies");
+      }
 
-    if (getGoal() == ExecutionGoal.COMPILE) {
-      formatter.phaseStart("Compiling SQRL script");
-    }
-    var compilationProcess = context.getBean(CompilationProcess.class);
-    var testDir = sqrlConfig.getTestConfig().getTestDir(cli.rootDir);
-    testDir.ifPresent(this::validateTestPath);
+      var packager = springCtx.getBean(Packager.class);
+      packager.preprocess(errors.withLocation(ErrorPrefix.CONFIG.resolve(PACKAGE_JSON)));
+      if (errors.hasErrors()) {
+        return;
+      }
 
-    Pair<PhysicalPlan, ? extends TestPlan> plan;
-    try {
-      plan = compilationProcess.executeCompilation(testDir);
+      if (getGoal() == ExecutionGoal.COMPILE) {
+        formatter.phaseStart("Compiling SQRL script");
+      }
 
-    } catch (FlinkCompileException e) {
-      packager.postprocessFlinkCompileError(e);
-      throw e;
-    }
+      var compilationProcess = springCtx.getBean(CompilationProcess.class);
+      var testDir = sqrlConfig.getTestConfig().getTestDir(cli.rootDir);
+      testDir.ifPresent(this::validateTestPath);
 
-    if (errors.hasErrors()) {
-      return;
-    }
+      Pair<PhysicalPlan, ? extends TestPlan> plan;
+      try {
+        plan = compilationProcess.executeCompilation(testDir);
 
-    if (getGoal() == ExecutionGoal.COMPILE) {
-      formatter.phaseStart("Generating deployment artifacts");
-    }
+      } catch (FlinkCompileException e) {
+        packager.postprocessFlinkCompileError(e);
+        throw e;
+      }
 
-    packager.postprocess(getTargetFolder(), plan.getLeft(), plan.getRight());
+      if (errors.hasErrors()) {
+        return;
+      }
 
-    if (getGoal() == ExecutionGoal.COMPILE) {
-      printCompilationResults(formatter);
+      if (getGoal() == ExecutionGoal.COMPILE) {
+        formatter.phaseStart("Generating deployment artifacts");
+      }
+
+      packager.postprocess(getTargetFolder(), plan.getLeft(), plan.getRight());
+
+      if (getGoal() == ExecutionGoal.COMPILE) {
+        printCompilationResults(formatter);
+      }
     }
   }
 
