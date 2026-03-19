@@ -45,6 +45,11 @@ public class TestRunnerConfigImpl implements TestRunnerConfiguration {
   }
 
   @Override
+  public boolean useInferredSchema() {
+    return sqrlConfig.asBool("use-inferred-schema").get();
+  }
+
+  @Override
   public int getDelaySec() {
     return sqrlConfig.asInt("delay-sec").get();
   }

@@ -26,6 +26,8 @@ public interface TestRunnerConfiguration {
 
   Optional<Path> getTestDir(Path rootDir);
 
+  boolean useInferredSchema();
+
   int getDelaySec();
 
   int getMutationDelaySec();

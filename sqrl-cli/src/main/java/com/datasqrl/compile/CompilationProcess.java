@@ -87,7 +87,7 @@ public class CompilationProcess {
 
       var apiVersions = graphqlSourceLoader.getApiVersions();
       if (apiVersions.isEmpty()
-          || executionGoal == ExecutionGoal.TEST) { // Infer schema from functions
+          || (executionGoal == ExecutionGoal.TEST && config.getTestConfig().useInferredSchema())) {
 
         var inferredSchema = graphqlSchemaHandler.inferGraphQLSchema(serverPlan);
         apiVersions = List.of(new ApiSources(inferredSchema));

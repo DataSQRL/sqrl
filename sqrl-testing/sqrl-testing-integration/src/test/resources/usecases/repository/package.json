@@ -8,6 +8,7 @@
   "test-runner": {
     "snapshot-folder": "snapshots-repo",
     "test-folder": "tests-repo",
+    "use-inferred-schema": false,
     "delay-sec": -1
   }
 }

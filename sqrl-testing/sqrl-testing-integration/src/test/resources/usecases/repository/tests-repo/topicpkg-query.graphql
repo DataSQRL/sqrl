@@ -1,5 +1,5 @@
 {
-  TopicPackages(topicName: "example") {
+  TopicPackages {
     topicName
     pkgName
     numSubmissions
