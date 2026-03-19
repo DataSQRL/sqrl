@@ -51,7 +51,6 @@ import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.FlinkCompileException;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
-import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -94,7 +93,7 @@ import org.springframework.stereotype.Component;
 /** Optimizes the DAG and produces the physical plan after DAG cutting */
 @Component
 @Lazy
-@AllArgsConstructor(onConstructor_ = @Inject)
+@AllArgsConstructor
 public class DAGPlanner {
 
   public static final String UNIQUE_TABLE_APPENDIX = "_"; // TODO: add $ to ensure uniqueness?

@@ -15,7 +15,6 @@
  */
 package com.datasqrl.config;
 
-import jakarta.inject.Inject;
 import lombok.experimental.Delegate;
 import org.springframework.stereotype.Component;
 
@@ -24,7 +23,6 @@ public class SqrlCompilerConfiguration implements PackageJson.CompilerConfig {
 
   @Delegate private final PackageJson.CompilerConfig compilerConfig;
 
-  @Inject
   public SqrlCompilerConfiguration(PackageJson config) {
     this.compilerConfig = config.getCompilerConfig();
   }

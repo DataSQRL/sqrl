@@ -15,17 +15,16 @@
  */
 package com.datasqrl.config;
 
-import jakarta.inject.Inject;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /** Placeholder for future templated connector handling */
 @Component
-@AllArgsConstructor(onConstructor_ = @Inject)
+@RequiredArgsConstructor
 public class ConnectorFactoryFactoryImpl implements ConnectorFactoryFactory {
 
-  PackageJson packageJson;
+  private final PackageJson packageJson;
 
   @Override
   public ConnectorConf getConfig(String name) {

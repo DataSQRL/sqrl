@@ -23,7 +23,6 @@ import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import jakarta.inject.Inject;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -41,7 +40,6 @@ public class GraphqlSourceLoader {
   Map<String, ApiSources> apiByVersion;
   List<ApiSources> apiVersions;
 
-  @Inject
   public GraphqlSourceLoader(ScriptFiles scriptFiles, ResourceResolver resolver) {
     if (!scriptFiles.getApiConfigs().isEmpty()) {
 

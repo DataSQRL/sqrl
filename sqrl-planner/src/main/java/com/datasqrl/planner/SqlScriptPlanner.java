@@ -99,7 +99,6 @@ import com.datasqrl.planner.util.SqlTableNameExtractor;
 import com.datasqrl.util.FunctionUtil;
 import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
-import jakarta.inject.Inject;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -168,7 +167,6 @@ public class SqlScriptPlanner {
   /** Manages the context of the script that is processed, adjusted for imports */
   private ScriptContext scriptContext;
 
-  @Inject
   public SqlScriptPlanner(
       ErrorCollector errorCollector,
       ModuleLoader moduleLoader,

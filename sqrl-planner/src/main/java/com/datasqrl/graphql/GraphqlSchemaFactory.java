@@ -46,7 +46,6 @@ import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphQLTypeReference;
-import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -73,7 +72,6 @@ public class GraphqlSchemaFactory {
   private final boolean addApiDirective;
   private final int defaultLimit;
 
-  @Inject
   public GraphqlSchemaFactory(CompilerConfig config) {
     this.extendedScalarTypes = config.isExtendedScalarTypes();
     this.addApiDirective = !config.getApiConfig().isGraphQLProtocolOnly();

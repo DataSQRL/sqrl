@@ -22,14 +22,13 @@ import com.datasqrl.error.ErrorCollector;
 import graphql.schema.GraphQLSchema;
 import graphql.schema.GraphqlTypeComparatorRegistry;
 import graphql.schema.idl.SchemaPrinter;
-import jakarta.inject.Inject;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
 
 /** Handles GrapQL schema inference and validation. */
 @Component
-@AllArgsConstructor(onConstructor_ = @Inject)
+@AllArgsConstructor
 public class GraphqlSchemaHandler {
 
   private final ErrorCollector errorCollector;

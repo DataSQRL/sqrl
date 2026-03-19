@@ -17,7 +17,6 @@ package com.datasqrl.packager.preprocess;
 
 import com.datasqrl.packager.FilePreprocessingPipeline;
 import com.datasqrl.util.JBangRunner;
-import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -31,7 +30,7 @@ import org.apache.commons.exec.ExecuteException;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor(onConstructor_ = @Inject)
+@RequiredArgsConstructor
 @Slf4j
 public class JBangPreprocessor extends UdfManifestPreprocessor {
 

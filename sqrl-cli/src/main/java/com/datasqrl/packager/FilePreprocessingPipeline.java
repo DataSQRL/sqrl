@@ -25,7 +25,6 @@ import com.datasqrl.io.schema.TableSchemaFactory;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.util.FilenameAnalyzer;
 import com.datasqrl.util.NameUtil;
-import jakarta.inject.Inject;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -39,7 +38,6 @@ import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.stereotype.Component;
@@ -50,8 +48,7 @@ import org.springframework.stereotype.Component;
  * preprocessing than just copying files.
  */
 @Component
-@SuppressWarnings("NullableProblems")
-@AllArgsConstructor(onConstructor_ = @Inject)
+@RequiredArgsConstructor
 public class FilePreprocessingPipeline {
 
   private final BuildPath buildPath;

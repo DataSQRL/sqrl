@@ -29,7 +29,6 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
 import jakarta.annotation.Nullable;
-import jakarta.inject.Singleton;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -41,7 +40,6 @@ import org.springframework.context.ApplicationContext;
 
 /** Configuration for the engines */
 @RequiredArgsConstructor
-@Singleton
 public class ExecutionEnginesHolder {
 
   private static final List<String> defaultEngines = List.of(PrintEngineFactory.NAME);
