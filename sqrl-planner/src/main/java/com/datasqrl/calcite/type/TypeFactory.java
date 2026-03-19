@@ -15,14 +15,16 @@
  */
 package com.datasqrl.calcite.type;
 
-import com.google.inject.Singleton;
+import jakarta.inject.Singleton;
 import java.lang.reflect.Type;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.sql.type.SqlTypeName;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
+import org.springframework.stereotype.Component;
 
+@Component
 @Singleton
 public class TypeFactory extends FlinkTypeFactory {
 

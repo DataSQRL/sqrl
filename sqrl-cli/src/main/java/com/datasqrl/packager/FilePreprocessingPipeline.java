@@ -25,7 +25,6 @@ import com.datasqrl.io.schema.TableSchemaFactory;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.util.FilenameAnalyzer;
 import com.datasqrl.util.NameUtil;
-import com.google.inject.Inject;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -39,17 +38,17 @@ import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.stereotype.Component;
 
 /**
  * Helps to preprocess files which means 1) copying all relevant files into the build directory
  * (preserving relative paths) 2) running all registered preprocessors for more elaborate
  * preprocessing than just copying files.
  */
-@SuppressWarnings("NullableProblems")
-@AllArgsConstructor(onConstructor_ = @Inject)
+@Component
+@RequiredArgsConstructor
 public class FilePreprocessingPipeline {
 
   private final BuildPath buildPath;

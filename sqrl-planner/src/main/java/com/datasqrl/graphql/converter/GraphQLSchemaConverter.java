@@ -76,11 +76,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
  * Converts a given GraphQL Schema to a tools configuration for the function backend. It extracts
  * all queries and mutations and converts them into {@link ApiOperation}.
  */
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class GraphQLSchemaConverter {

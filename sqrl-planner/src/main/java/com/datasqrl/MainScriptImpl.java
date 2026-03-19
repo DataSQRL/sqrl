@@ -22,12 +22,13 @@ import com.datasqrl.plan.MainScript;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FileUtil;
-import com.google.inject.Inject;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
+import org.springframework.stereotype.Component;
 
-@AllArgsConstructor(onConstructor_ = @Inject)
+@Component
+@AllArgsConstructor
 public class MainScriptImpl implements MainScript {
 
   private final PackageJson config;

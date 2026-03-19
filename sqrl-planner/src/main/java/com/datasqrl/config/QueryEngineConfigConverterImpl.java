@@ -19,12 +19,13 @@ import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 
 import com.datasqrl.engine.database.QueryEngine;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
-@RequiredArgsConstructor(onConstructor_ = @Inject)
+@Component
+@RequiredArgsConstructor
 public class QueryEngineConfigConverterImpl implements QueryEngineConfigConverter {
 
   private final ExecutionEnginesHolder enginesHolder;

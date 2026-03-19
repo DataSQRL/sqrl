@@ -28,8 +28,6 @@ import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
-import com.google.inject.Injector;
-import com.google.inject.Singleton;
 import jakarta.annotation.Nullable;
 import java.util.Collections;
 import java.util.HashSet;
@@ -38,10 +36,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationContext;
 
 /** Configuration for the engines */
 @RequiredArgsConstructor
-@Singleton
 public class ExecutionEnginesHolder {
 
   private static final List<String> defaultEngines = List.of(PrintEngineFactory.NAME);
@@ -52,7 +50,7 @@ public class ExecutionEnginesHolder {
   private static final String VERTX_NAME = VertxEngineFactory.ENGINE_NAME;
 
   private final ErrorCollector errors;
-  private final Injector injector;
+  private final ApplicationContext applicationContext;
   private final PackageJson packageJson;
   private final boolean testExecution;
 
@@ -119,8 +117,8 @@ public class ExecutionEnginesHolder {
   ExecutionEngine getEngineInstance(String engineName) {
     var engineFactory =
         ServiceLoaderDiscovery.get(EngineFactory.class, EngineFactory::getEngineName, engineName);
-
-    return (ExecutionEngine) injector.getInstance(engineFactory.getFactoryClass());
+    var beanFactory = applicationContext.getAutowireCapableBeanFactory();
+    return (ExecutionEngine) beanFactory.createBean(engineFactory.getFactoryClass());
   }
 
   Map<String, ExecutionEngine> adaptToTest(Map<String, ExecutionEngine> engines) {

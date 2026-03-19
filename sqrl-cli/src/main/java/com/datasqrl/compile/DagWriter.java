@@ -23,7 +23,6 @@ import com.datasqrl.planner.dag.PipelineDAG;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.serializer.Deserializer;
 import com.google.common.io.Resources;
-import com.google.inject.Inject;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -32,10 +31,12 @@ import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.stereotype.Component;
 
-@AllArgsConstructor(onConstructor_ = @Inject)
+@Component
+@RequiredArgsConstructor
 public class DagWriter {
 
   public static final String EXPLAIN_TEXT_FILENAME = "pipeline_explain.txt";

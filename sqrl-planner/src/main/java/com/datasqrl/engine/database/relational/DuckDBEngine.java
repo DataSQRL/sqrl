@@ -19,7 +19,7 @@ import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.graphql.jdbc.DatabaseType;
-import com.google.inject.Inject;
+import jakarta.inject.Inject;
 import lombok.NonNull;
 
 public class DuckDBEngine extends AbstractJDBCQueryEngine {

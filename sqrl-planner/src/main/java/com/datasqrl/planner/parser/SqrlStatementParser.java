@@ -31,6 +31,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.springframework.stereotype.Component;
 
 /**
  * A lightweight REGEX based parser to identify and parse SQRL specific SQL statements.
@@ -47,6 +48,7 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
  * the code and complexity in this implementation is due to that. We use {@link ParsedObject} to
  * keep file locations. This is handled through {@link ParsedObject}.
  */
+@Component
 public class SqrlStatementParser {
 
   public static final String IDENTIFIER_REGEX = "[\\w\\.`*-]+?";

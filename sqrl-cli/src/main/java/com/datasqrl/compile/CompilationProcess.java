@@ -35,14 +35,17 @@ import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.util.ServiceLoaderDiscovery;
-import com.google.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
-@AllArgsConstructor(onConstructor_ = @Inject)
+@Component
+@Lazy
+@RequiredArgsConstructor
 public class CompilationProcess {
 
   private final SqlScriptPlanner planner;
