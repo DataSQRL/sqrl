@@ -109,6 +109,11 @@ const sidebars = {
               id: 'configuration-default',
               label: 'Default Configuration',
             },
+            {
+              type: 'doc',
+              id: 'configuration-engine/cloud-deployment',
+              label: 'Deployment Configuration',
+            },
           ],
         },
         {
