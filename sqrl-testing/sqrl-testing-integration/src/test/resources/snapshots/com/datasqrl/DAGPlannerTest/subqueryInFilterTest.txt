@@ -1,29 +1,4 @@
 >>>pipeline_explain.txt
-=== AdminOrderCustomers
-ID:          default_catalog.default_database.AdminOrderCustomers
-Type:        query
-Stage:       postgres
----
-Inputs:
- - default_catalog.default_database.Customer
- - default_catalog.default_database._SpecialOrders
-Annotations:
- - stream-root: Customer
- - parameters: customerId, hasOrders, isAdmin
- - base-table: AdminOrderCustomers
-Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[AND(OR(IS NULL(?0), =(?0, 0), =($0, ?0)), OR(IS FALSE(?1), NOT(EXISTS({
-LogicalFilter(condition=[AND(=($1, $cor2.customerid), $4)])
-  LogicalTableScan(table=[[default_catalog, default_database, _SpecialOrders]])
-}))), ?2)], variablesSet=[[$cor2]])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL:
-CREATE VIEW `AdminOrderCustomers` AS 
-SELECT c.* FROM Customer c WHERE (?           IS NULL OR ?           = 0 OR c.customerid = ?          )
-                                   AND (?          IS FALSE OR NOT EXISTS (SELECT 1 FROM _SpecialOrders o WHERE o.customerid = c.customerid AND o.isSpecialorder))
-                                   AND ?       ;
-
 === Customer
 ID:          default_catalog.default_database.Customer
 Type:        stream
@@ -67,59 +42,95 @@ WITH (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`
-=== CustomerOrderCount
-ID:          default_catalog.default_database.CustomerOrderCount
-Type:        query
-Stage:       postgres
----
-Inputs:
- - default_catalog.default_database.Customer
- - default_catalog.default_database.Orders
-Annotations:
- - stream-root: Customer
- - parameters: customerid
- - base-table: CustomerOrderCount
-Plan:
-LogicalProject(name=[$2], num_orders=[coalesce(-($SCALAR_QUERY({
-LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
-  LogicalFilter(condition=[=($1, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-}), 1), 0:BIGINT)])
-  LogicalFilter(condition=[=($0, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-SQL:
-CREATE VIEW `CustomerOrderCount` AS 
-SELECT c.name, coalesce((SELECT COUNT(*) FROM Orders o WHERE o.customerid = ?          ) -1, 0) AS num_orders
-FROM Customer c WHERE c.customerid = ?          ;
-
-=== CustomerWithOrders
-ID:          default_catalog.default_database.CustomerWithOrders
+=== ExcludedOrders
+ID:          default_catalog.default_database.ExcludedOrders
 Type:        stream
 Stage:       flink
-Primary key: customerid, lastUpdated
-Timestamp:   timestamp
+Primary key: id, time
+Timestamp:   time
 ---
 Schema:
+ - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
- - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - lastUpdated: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Customer
  - default_catalog.default_database.Orders
 Annotations:
- - stream-root: Customer
+ - stream-root: Orders
 Plan:
-LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
-  LogicalFilter(condition=[EXISTS({
-LogicalFilter(condition=[=($cor1.customerid, $1)])
-  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-})], variablesSet=[[$cor1]])
+LogicalProject(id=[$0], customerid=[$1], time=[$2])
+  LogicalFilter(condition=[NOT(IN($1, {
+LogicalProject(customerid=[$0])
+  LogicalFilter(condition=[IS NULL($1)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+}))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `CustomerWithOrders` AS  SELECT * FROM Customer c
-WHERE EXISTS (SELECT o.id FROM Orders o WHERE c.customerid = o.customerid);
+CREATE VIEW `ExcludedOrders` AS  SELECT o.id, o.customerid, o.`time` FROM Orders o
+WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.email IS NULL);
+
+=== FilteredOrders
+ID:          default_catalog.default_database.FilteredOrders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
+Annotations:
+ - stream-root: Orders
+Plan:
+LogicalProject(id=[$0], customerid=[$1], time=[$2])
+  LogicalFilter(condition=[IN($1, {
+LogicalProject(customerid=[$0])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+})])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `FilteredOrders` AS 
+SELECT o.id, o.customerid, o.`time` FROM Orders o
+WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name IS NOT NULL);
+
+=== FilteredOrdersByProduct
+ID:          default_catalog.default_database.FilteredOrdersByProduct
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
+ - default_catalog.default_database.Product
+Annotations:
+ - stream-root: Orders
+Plan:
+LogicalProject(id=[$0], customerid=[$1], time=[$2])
+  LogicalFilter(condition=[IN($0, {
+LogicalProject(productid=[$0])
+  LogicalProject(productid=[$0], name=[$1])
+    LogicalFilter(condition=[=($3, 'electronics')])
+      LogicalTableScan(table=[[default_catalog, default_database, Product]])
+})])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `FilteredOrdersByProduct` AS 
+SELECT o.id, o.customerid, o.`time` FROM Orders o
+WHERE o.id IN (
+    SELECT e.productid FROM (
+        SELECT p.productid, p.name FROM Product p WHERE p.category = 'electronics'
+    ) e
+);
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -162,56 +173,48 @@ WITH (
   'connector' = 'filesystem'
 )
 LIKE `Orders__schema`
-=== SimilarOrders
-ID:          default_catalog.default_database.SimilarOrders
-Type:        query
-Stage:       postgres
----
-Inputs:
- - default_catalog.default_database.Customer
- - default_catalog.default_database.Orders
-Annotations:
- - stream-root: Orders
- - parameters: name
- - base-table: SimilarOrders
-Plan:
-LogicalSort(sort0=[$4], dir0=[DESC-nulls-last], fetch=[10])
-  LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], similarity=[coalesce(-($1, $SCALAR_QUERY({
-LogicalProject(customerid=[$0])
-  LogicalFilter(condition=[=($2, ?0)])
-    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
-})), 0:BIGINT)])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
-SQL:
-CREATE VIEW `SimilarOrders` AS 
-SELECT o.*, coalesce(o.customerid - (SELECT customerid FROM Customer WHERE name = ?    ), 0) as similarity
-FROM Orders o
-ORDER BY similarity DESC LIMIT 10;
-
-=== _SpecialOrders
-ID:          default_catalog.default_database._SpecialOrders
+=== Product
+ID:          default_catalog.default_database.Product
 Type:        stream
 Stage:       flink
-Primary key: id, time
-Timestamp:   time
+Primary key: productid, name, description, category
+Timestamp:   _ingest_time
 ---
 Schema:
- - id: BIGINT NOT NULL
- - customerid: BIGINT NOT NULL
- - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
- - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - isSpecialorder: BOOLEAN NOT NULL
+ - productid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - _ingest_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
- - default_catalog.default_database.Orders
+ - default_catalog.default_database.Product__base
 Annotations:
- - stream-root: Orders
+ - stream-root: Product
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], isSpecialorder=[>($0, 1000)])
-  LogicalFilter(condition=[<($0, 1000000)])
-    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+LogicalWatermarkAssigner(rowtime=[_ingest_time], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, Product]])
 SQL:
-CREATE VIEW `_SpecialOrders` AS  SELECT *, id > 1000 AS isSpecialorder FROM Orders WHERE id < 1000000;
-
+CREATE TEMPORARY TABLE `Product__schema` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Product` (
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
+  WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Product__schema`
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
@@ -254,18 +257,49 @@ WITH (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`;
-CREATE VIEW `CustomerWithOrders`
+CREATE TEMPORARY TABLE `Product__schema` (
+  `productid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Product` (
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
+  WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Product__schema`;
+CREATE VIEW `FilteredOrders`
 AS
-SELECT *
-FROM `Customer` AS `c`
-WHERE EXISTS (SELECT `o`.`id`
-  FROM `Orders` AS `o`
-  WHERE `c`.`customerid` = `o`.`customerid`);
-CREATE VIEW `_SpecialOrders`
+SELECT `o`.`id`, `o`.`customerid`, `o`.`time`
+FROM `Orders` AS `o`
+WHERE `o`.`customerid` IN (SELECT `c`.`customerid`
+   FROM `Customer` AS `c`
+   WHERE `c`.`name` IS NOT NULL);
+CREATE VIEW `FilteredOrdersByProduct`
 AS
-SELECT *, `id` > 1000 AS `isSpecialorder`
-FROM `Orders`
-WHERE `id` < 1000000;
+SELECT `o`.`id`, `o`.`customerid`, `o`.`time`
+FROM `Orders` AS `o`
+WHERE `o`.`id` IN (SELECT `e`.`productid`
+   FROM (SELECT `p`.`productid`, `p`.`name`
+     FROM `Product` AS `p`
+     WHERE `p`.`category` = 'electronics') AS `e`);
+CREATE VIEW `ExcludedOrders`
+AS
+SELECT `o`.`id`, `o`.`customerid`, `o`.`time`
+FROM `Orders` AS `o`
+WHERE `o`.`customerid` NOT IN (SELECT `c`.`customerid`
+   FROM `Customer` AS `c`
+   WHERE `c`.`email` IS NULL);
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -282,50 +316,76 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `CustomerWithOrders_2` (
+CREATE TABLE `ExcludedOrders_2` (
+  `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'ExcludedOrders_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `FilteredOrders_3` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'FilteredOrders_3',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `FilteredOrdersByProduct_4` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'FilteredOrdersByProduct_4',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Orders_5` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Orders_5',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Product_6` (
+  `productid` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED
 )
 WITH (
   'connector' = 'jdbc-sqrl',
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
-  'table-name' = 'CustomerWithOrders_2',
-  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
-  'username' = '${POSTGRES_USERNAME}'
-);
-CREATE TABLE `Orders_3` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED
-)
-WITH (
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'password' = '${POSTGRES_PASSWORD}',
-  'table-name' = 'Orders_3',
-  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
-  'username' = '${POSTGRES_USERNAME}'
-);
-CREATE TABLE `_SpecialOrders_4` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
-  `isSpecialorder` BOOLEAN NOT NULL,
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED
-)
-WITH (
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'password' = '${POSTGRES_PASSWORD}',
-  'table-name' = '_SpecialOrders_4',
+  'table-name' = 'Product_6',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
@@ -334,19 +394,27 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
  FROM `default_catalog`.`default_database`.`Customer`
 ;
-INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
+INSERT INTO `default_catalog`.`default_database`.`ExcludedOrders_2`
  SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerWithOrders`
+  FROM `default_catalog`.`default_database`.`ExcludedOrders`
  ;
- INSERT INTO `default_catalog`.`default_database`.`Orders_3`
-  SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-   FROM `default_catalog`.`default_database`.`Orders`
+ INSERT INTO `default_catalog`.`default_database`.`FilteredOrders_3`
+  SELECT *
+   FROM `default_catalog`.`default_database`.`FilteredOrders`
   ;
-  INSERT INTO `default_catalog`.`default_database`.`_SpecialOrders_4`
-   SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `isSpecialorder`
-    FROM `default_catalog`.`default_database`.`_SpecialOrders`
+  INSERT INTO `default_catalog`.`default_database`.`FilteredOrdersByProduct_4`
+   SELECT *
+    FROM `default_catalog`.`default_database`.`FilteredOrdersByProduct`
    ;
-   END
+   INSERT INTO `default_catalog`.`default_database`.`Orders_5`
+    SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+     FROM `default_catalog`.`default_database`.`Orders`
+    ;
+    INSERT INTO `default_catalog`.`default_database`.`Product_6`
+     SELECT *
+      FROM `default_catalog`.`default_database`.`Product`
+     ;
+     END
 >>>kafka.json
 {
   "topics" : [ ],
@@ -396,18 +464,138 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
       "ttl" : 0.0
     },
     {
-      "name" : "CustomerWithOrders_2",
+      "name" : "ExcludedOrders_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerWithOrders_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ExcludedOrders_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
         {
           "name" : "customerid",
           "type" : "BIGINT",
           "nullable" : false
         },
         {
-          "name" : "email",
-          "type" : "TEXT",
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "FilteredOrders_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"FilteredOrders_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "FilteredOrdersByProduct_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"FilteredOrdersByProduct_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "Orders_5",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_5\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "Product_6",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Product_6\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
           "nullable" : false
         },
         {
@@ -416,94 +604,26 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
           "nullable" : false
         },
         {
-          "name" : "lastUpdated",
-          "type" : "BIGINT",
+          "name" : "description",
+          "type" : "TEXT",
           "nullable" : false
         },
         {
-          "name" : "timestamp",
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
       ],
       "primaryKey" : [
-        "customerid",
-        "lastUpdated"
-      ],
-      "partitionKey" : [ ],
-      "partitionType" : "NONE",
-      "numPartitions" : 0,
-      "ttl" : 0.0
-    },
-    {
-      "name" : "Orders_3",
-      "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
-      "fields" : [
-        {
-          "name" : "id",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "time",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "entries",
-          "type" : "JSONB",
-          "nullable" : true
-        }
-      ],
-      "primaryKey" : [
-        "id",
-        "time"
-      ],
-      "partitionKey" : [ ],
-      "partitionType" : "NONE",
-      "numPartitions" : 0,
-      "ttl" : 0.0
-    },
-    {
-      "name" : "_SpecialOrders_4",
-      "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"_SpecialOrders_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, \"isSpecialorder\" BOOLEAN NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
-      "fields" : [
-        {
-          "name" : "id",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "time",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "entries",
-          "type" : "JSONB",
-          "nullable" : true
-        },
-        {
-          "name" : "isSpecialorder",
-          "type" : "BOOLEAN",
-          "nullable" : false
-        }
-      ],
-      "primaryKey" : [
-        "id",
-        "time"
+        "productid",
+        "name",
+        "description",
+        "category"
       ],
       "partitionKey" : [ ],
       "partitionType" : "NONE",
@@ -543,32 +663,66 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
       ]
     },
     {
-      "name" : "CustomerWithOrders",
+      "name" : "ExcludedOrders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"CustomerWithOrders\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"CustomerWithOrders_2\"",
+      "sql" : "CREATE OR REPLACE VIEW \"ExcludedOrders\"(\"id\", \"customerid\", \"time\") AS SELECT *\nFROM \"ExcludedOrders_2\"",
       "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
         {
           "name" : "customerid",
           "type" : "BIGINT",
           "nullable" : false
         },
         {
-          "name" : "email",
-          "type" : "TEXT",
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
-        },
+        }
+      ]
+    },
+    {
+      "name" : "FilteredOrders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"FilteredOrders\"(\"id\", \"customerid\", \"time\") AS SELECT *\nFROM \"FilteredOrders_3\"",
+      "fields" : [
         {
-          "name" : "name",
-          "type" : "TEXT",
-          "nullable" : false
-        },
-        {
-          "name" : "lastUpdated",
+          "name" : "id",
           "type" : "BIGINT",
           "nullable" : false
         },
         {
-          "name" : "timestamp",
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "FilteredOrdersByProduct",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"FilteredOrdersByProduct\"(\"id\", \"customerid\", \"time\") AS SELECT *\nFROM \"FilteredOrdersByProduct_4\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
@@ -577,7 +731,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
     {
       "name" : "Orders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_3\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_5\"",
       "fields" : [
         {
           "name" : "id",
@@ -598,6 +752,38 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
           "name" : "entries",
           "type" : "JSONB",
           "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "Product",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Product\"(\"productid\", \"name\", \"description\", \"category\", \"_ingest_time\") AS SELECT *\nFROM \"Product_6\"",
+      "fields" : [
+        {
+          "name" : "productid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "category",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "_ingest_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
         }
       ]
     }
@@ -636,7 +822,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
         {
           "type" : "args",
           "parentType" : "Query",
-          "fieldName" : "CustomerWithOrders",
+          "fieldName" : "ExcludedOrders",
           "exec" : {
             "arguments" : [
               {
@@ -650,7 +836,57 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"CustomerWithOrders_2\"",
+              "sql" : "SELECT *\nFROM \"ExcludedOrders_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "FilteredOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"FilteredOrders_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "FilteredOrdersByProduct",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"FilteredOrdersByProduct_4\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -675,7 +911,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Orders_3\"",
+              "sql" : "SELECT *\nFROM \"Orders_5\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -686,63 +922,9 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
         {
           "type" : "args",
           "parentType" : "Query",
-          "fieldName" : "AdminOrderCustomers",
+          "fieldName" : "Product",
           "exec" : {
             "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "customerId"
-              },
-              {
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "path" : "hasOrders"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE ($1 IS NULL OR $1 = 0 OR \"customerid\" = $1) AND ($2 IS FALSE OR NOT EXISTS (SELECT *\n    FROM \"_SpecialOrders_4\"\n    WHERE \"customerid\" = \"Customer_10\".\"customerid\" AND \"isSpecialorder\")) AND $3",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "path" : "customerId"
-                },
-                {
-                  "type" : "arg",
-                  "path" : "hasOrders"
-                },
-                {
-                  "type" : "metadata",
-                  "metadata" : {
-                    "metadataType" : "AUTH",
-                    "name" : "is_admin",
-                    "required" : true
-                  }
-                }
-              ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Query",
-          "fieldName" : "CustomerOrderCount",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "customerid"
-              },
               {
                 "type" : "variable",
                 "path" : "limit"
@@ -754,47 +936,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"name\", COALESCE((((SELECT COUNT(*)\n      FROM \"Orders_3\"\n      WHERE \"customerid\" = $1))) - 1, 0) AS \"num_orders\"\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "path" : "customerid"
-                }
-              ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Query",
-          "fieldName" : "SimilarOrders",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "name"
-              },
-              {
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT \"id\", \"customerid\", \"time\", \"entries\", COALESCE(\"customerid\" - (((SELECT \"customerid\"\n      FROM \"Customer_1\"\n      WHERE \"name\" = $1))), 0) AS \"similarity\"\nFROM \"Orders_3\"\nORDER BY COALESCE(\"customerid\" - (((SELECT \"customerid\"\n      FROM \"Customer_1\"\n      WHERE \"name\" = $1))), 0) DESC NULLS LAST\nFETCH NEXT 10 ROWS ONLY",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "path" : "name"
-                }
-              ],
+              "sql" : "SELECT *\nFROM \"Product_6\"",
+              "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
               "database" : "POSTGRES"
@@ -833,7 +976,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
         },
         {
           "function" : {
-            "name" : "GetCustomerWithOrders",
+            "name" : "GetExcludedOrders",
             "parameters" : {
               "type" : "object",
               "properties" : {
@@ -849,13 +992,65 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query CustomerWithOrders($limit: Int = 10, $offset: Int = 0) {\nCustomerWithOrders(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "CustomerWithOrders",
+            "query" : "query ExcludedOrders($limit: Int = 10, $offset: Int = 0) {\nExcludedOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\n}\n\n}",
+            "queryName" : "ExcludedOrders",
             "operationType" : "QUERY"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerWithOrders{?offset,limit}"
+          "uriTemplate" : "queries/ExcludedOrders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetFilteredOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query FilteredOrders($limit: Int = 10, $offset: Int = 0) {\nFilteredOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\n}\n\n}",
+            "queryName" : "FilteredOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/FilteredOrders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetFilteredOrdersByProduct",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query FilteredOrdersByProduct($limit: Int = 10, $offset: Int = 0) {\nFilteredOrdersByProduct(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\n}\n\n}",
+            "queryName" : "FilteredOrdersByProduct",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/FilteredOrdersByProduct{?offset,limit}"
         },
         {
           "function" : {
@@ -885,105 +1080,34 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
         },
         {
           "function" : {
-            "name" : "GetAdminOrderCustomers",
+            "name" : "GetProduct",
             "parameters" : {
               "type" : "object",
               "properties" : {
                 "offset" : {
                   "type" : "integer"
                 },
-                "customerId" : {
-                  "type" : "integer"
-                },
-                "limit" : {
-                  "type" : "integer"
-                },
-                "hasOrders" : {
-                  "type" : "boolean"
-                }
-              },
-              "required" : [
-                "customerId",
-                "hasOrders"
-              ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query AdminOrderCustomers($customerId: Long!, $hasOrders: Boolean!, $limit: Int = 10, $offset: Int = 0) {\nAdminOrderCustomers(customerId: $customerId, hasOrders: $hasOrders, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "AdminOrderCustomers",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/AdminOrderCustomers{?offset,customerId,limit,hasOrders}"
-        },
-        {
-          "function" : {
-            "name" : "GetCustomerOrderCount",
-            "parameters" : {
-              "type" : "object",
-              "properties" : {
-                "offset" : {
-                  "type" : "integer"
-                },
-                "customerid" : {
-                  "type" : "integer"
-                },
                 "limit" : {
                   "type" : "integer"
                 }
               },
-              "required" : [
-                "customerid"
-              ]
+              "required" : [ ]
             }
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query CustomerOrderCount($customerid: Long!, $limit: Int = 10, $offset: Int = 0) {\nCustomerOrderCount(customerid: $customerid, limit: $limit, offset: $offset) {\nname\nnum_orders\n}\n\n}",
-            "queryName" : "CustomerOrderCount",
+            "query" : "query Product($limit: Int = 10, $offset: Int = 0) {\nProduct(limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
+            "queryName" : "Product",
             "operationType" : "QUERY"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerOrderCount{?offset,customerid,limit}"
-        },
-        {
-          "function" : {
-            "name" : "GetSimilarOrders",
-            "parameters" : {
-              "type" : "object",
-              "properties" : {
-                "offset" : {
-                  "type" : "integer"
-                },
-                "name" : {
-                  "type" : "string"
-                },
-                "limit" : {
-                  "type" : "integer"
-                }
-              },
-              "required" : [
-                "name"
-              ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query SimilarOrders($name: String!, $limit: Int = 10, $offset: Int = 0) {\nSimilarOrders(name: $name, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\nsimilarity\n}\n\n}",
-            "queryName" : "SimilarOrders",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SimilarOrders{?offset,name,limit}"
+          "uriTemplate" : "queries/Product{?offset,limit}"
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type AdminOrderCustomers {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerOrderCount {\n  name: String!\n  num_orders: Long!\n}\n\ntype CustomerWithOrders {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerWithOrders(limit: Int = 10, offset: Int = 0): [CustomerWithOrders!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  AdminOrderCustomers(customerId: Long!, hasOrders: Boolean!, limit: Int = 10, offset: Int = 0): [AdminOrderCustomers!]\n  CustomerOrderCount(customerid: Long!, limit: Int = 10, offset: Int = 0): [CustomerOrderCount!]\n  SimilarOrders(name: String!, limit: Int = 10, offset: Int = 0): [SimilarOrders!]\n}\n\ntype SimilarOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [SimilarOrders_entriesOutput]!\n  similarity: Long!\n}\n\ntype SimilarOrders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype ExcludedOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n}\n\ntype FilteredOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n}\n\ntype FilteredOrdersByProduct {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Product {\n  productid: Long!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  ExcludedOrders(limit: Int = 10, offset: Int = 0): [ExcludedOrders!]\n  FilteredOrders(limit: Int = 10, offset: Int = 0): [FilteredOrders!]\n  FilteredOrdersByProduct(limit: Int = 10, offset: Int = 0): [FilteredOrdersByProduct!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

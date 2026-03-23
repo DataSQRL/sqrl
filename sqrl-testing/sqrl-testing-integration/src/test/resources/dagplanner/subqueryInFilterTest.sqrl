@@ -1,0 +1,21 @@
+IMPORT ecommerceTs.orders;
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.product;
+
+-- Table referenced only inside IN subquery should be detected as source
+FilteredOrders :=
+SELECT o.id, o.customerid, o.`time` FROM Orders o
+WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name IS NOT NULL);
+
+-- Nested subquery inside IN with a different source table
+FilteredOrdersByProduct :=
+SELECT o.id, o.customerid, o.`time` FROM Orders o
+WHERE o.id IN (
+    SELECT e.productid FROM (
+        SELECT p.productid, p.name FROM Product p WHERE p.category = 'electronics'
+    ) e
+);
+
+-- NOT IN with a subquery referencing a different source
+ExcludedOrders := SELECT o.id, o.customerid, o.`time` FROM Orders o
+WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.email IS NULL);

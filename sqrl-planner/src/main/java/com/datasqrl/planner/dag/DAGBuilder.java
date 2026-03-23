@@ -15,6 +15,9 @@
  */
 package com.datasqrl.planner.dag;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis.UniqueIdentifier;
 import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.PipelineNode;
@@ -25,7 +28,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
@@ -45,12 +47,11 @@ public class DAGBuilder {
     if (priorNode != null) {
       dagInputs.removeAll(priorNode);
     }
-    node.getTableAnalysis()
-        .getFromTables()
-        .forEach(
-            inputTable ->
-                dagInputs.put(
-                    node, Objects.requireNonNull(nodeLookup.get(inputTable.getIdentifier()))));
+
+    var fromTables = node.getTableAnalysis().getFromTables();
+    for (var inputTable : fromTables) {
+      addInputTable(node, inputTable);
+    }
   }
 
   public void add(TableFunctionNode node) {
@@ -60,14 +61,13 @@ public class DAGBuilder {
       // function/relationship
       dagInputs.removeAll(node);
     }
+
     nodeLookup.put(node.getIdentifier(), node);
-    function
-        .getFunctionAnalysis()
-        .getFromTables()
-        .forEach(
-            inputTable ->
-                dagInputs.put(
-                    node, Objects.requireNonNull(nodeLookup.get(inputTable.getIdentifier()))));
+
+    var fromTables = function.getFunctionAnalysis().getFromTables();
+    for (var inputTable : fromTables) {
+      addInputTable(node, inputTable);
+    }
   }
 
   public PipelineDAG getDag() {
@@ -83,6 +83,13 @@ public class DAGBuilder {
   }
 
   public void addExport(ExportNode node, TableNode inputNode) {
+    dagInputs.put(node, inputNode);
+  }
+
+  private void addInputTable(PlannedNode node, TableOrFunctionAnalysis inputTable) {
+    var inputNode = nodeLookup.get(inputTable.getIdentifier());
+    checkNotNull(inputNode, "Planned node not found by id: " + inputTable.getIdentifier());
+
     dagInputs.put(node, inputNode);
   }
 }

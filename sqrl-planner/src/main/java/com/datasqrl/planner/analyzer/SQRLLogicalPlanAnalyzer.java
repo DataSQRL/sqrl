@@ -264,8 +264,16 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     return tableAnalysis.toRelNode(scan);
   }
 
-  private RelShuttleImpl subQueryRelShuttle =
+  private final RelShuttleImpl subQueryRelShuttle =
       new RelShuttleImpl() {
+        @Override
+        public RelNode visit(TableScan tableScan) {
+          var tableAnalysis = tableLookup.lookupView(tableScan);
+          return tableAnalysis
+              .map(analysis -> fromSource(analysis, tableScan).relNode)
+              .orElse(tableScan);
+        }
+
         @Override
         protected RelNode visitChild(RelNode parent, int i, RelNode child) {
           if (i == 0) {
@@ -282,7 +290,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       };
 
   /** To process sub-queries inside RexNodes */
-  private RexShuttle subQueryRexShuttle =
+  private final RexShuttle subQueryRexShuttle =
       new RexShuttle() {
 
         @Override
