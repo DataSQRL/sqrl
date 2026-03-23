@@ -93,8 +93,8 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
   //  }
 
   public Set<E> getAllInputsFromSource(Collection<E> elements, boolean includeElements) {
-    Set<E> reached = new HashSet<>();
-    Deque<E> next = new ArrayDeque<>(elements);
+    var reached = new HashSet<E>();
+    var next = new ArrayDeque<>(elements);
     while (!next.isEmpty()) {
       var n = next.removeFirst();
       if (!reached.contains(n)) {

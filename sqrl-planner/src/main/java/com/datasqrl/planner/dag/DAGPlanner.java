@@ -78,6 +78,7 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.calcite.util.Pair;
@@ -559,11 +560,7 @@ public class DAGPlanner {
 
   public record InputTableKey(ExecutionStage stage, ObjectIdentifier tableId) {}
 
-  /**
-   * Expands the views in a query that are executed in the same execution stage.
-   *
-   * <p>TODO: handle sub-queries
-   */
+  /** Expands the views in a query that are executed in the same execution stage. */
   @AllArgsConstructor
   private class QueryExpansionRelShuttle extends RelShuttleImpl {
 
@@ -633,7 +630,7 @@ public class DAGPlanner {
       List<Pair<RexNode, String>> newProjects =
           project.getNamedProjects().stream()
               .map(pair -> Pair.of(pair.left.accept(typeAdjustingShuttle), pair.right))
-              .collect(Collectors.toList());
+              .toList();
       var typeBuilder = CalciteUtil.getRelTypeBuilder(sqrlEnv.getTypeFactory());
       newProjects.forEach(pair -> typeBuilder.add(pair.right, pair.left.getType()));
       return project.copy(
@@ -725,6 +722,12 @@ public class DAGPlanner {
         } else {
           return super.visitCall(call);
         }
+      }
+
+      @Override
+      public RexNode visitSubQuery(RexSubQuery subQuery) {
+        var rewritten = subQuery.rel.accept(QueryExpansionRelShuttle.this);
+        return subQuery.clone(rewritten);
       }
     }
   }

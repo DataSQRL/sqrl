@@ -41,9 +41,14 @@ import java.util.Set;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.logical.LogicalFilter;
+import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
@@ -83,49 +88,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
   public QueryResult createQuery(
       Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap) {
     var relNode = query.relNode();
-    var replaced =
-        relNode.accept(
-            new RelShuttleImpl() {
-              @Override
-              public RelNode visit(TableScan scan) {
-                var tableId = scan.getTable().getQualifiedName().get(2);
-                var createTable = tableIdMap.get(tableId);
-                var connector = createTable.table().getConnectorOptions();
-
-                var warehouse = connector.get(ICEBERG_WAREHOUSE_KEY);
-                var databaseName =
-                    connector.getOrDefault(ICEBERG_CATALOG_DATABASE_KEY, FLINK_DEFAULT_DATABASE);
-                // Adapt DB name in case of Glue catalog
-                if (ICEBERG_GLUE_CATALOG_IMPL.equals(connector.get(ICEBERG_CATALOG_IMPL_KEY))) {
-                  databaseName += ".db";
-                }
-                var rexBuilder = new RexBuilder(new TypeFactory());
-                if (warehouse.startsWith("file://")) {
-                  warehouse = warehouse.substring(7);
-                }
-
-                var allowMovedPaths =
-                    rexBuilder.makeCall(
-                        SqlStdOperatorTable.EQUALS,
-                        rexBuilder.makeFlag(Params.ALLOW_MOVED_PATHS),
-                        rexBuilder.makeLiteral(true));
-                var rexNode =
-                    rexBuilder.makeCall(
-                        lightweightOp("iceberg_scan"),
-                        rexBuilder.makeLiteral(
-                            warehouse + "/" + databaseName + "/" + createTable.tableName()),
-                        allowMovedPaths);
-
-                return new LogicalTableFunctionScan(
-                    scan.getCluster(),
-                    scan.getTraitSet(),
-                    List.of(),
-                    rexNode,
-                    Object.class,
-                    scan.getRowType(),
-                    Set.of());
-              }
-            });
+    var replaced = relNode.accept(new IcebergTableScanRewriter(tableIdMap));
 
     return createQueryInternal(
         query.function().getSimpleName(),
@@ -140,7 +103,75 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
     throw new UnsupportedOperationException("DuckDB does not support indexes");
   }
 
-  enum Params {
-    ALLOW_MOVED_PATHS
+  private static class IcebergTableScanRewriter extends RelShuttleImpl {
+
+    private final Map<String, JdbcEngineCreateTable> tableIdMap;
+    private final RexShuttle subQueryRexShuttle =
+        new RexShuttle() {
+          @Override
+          public RexNode visitSubQuery(RexSubQuery subQuery) {
+            var rewritten = subQuery.rel.accept(IcebergTableScanRewriter.this);
+            return subQuery.clone(rewritten);
+          }
+        };
+
+    IcebergTableScanRewriter(Map<String, JdbcEngineCreateTable> tableIdMap) {
+      this.tableIdMap = tableIdMap;
+    }
+
+    @Override
+    public RelNode visit(TableScan scan) {
+      var tableId = scan.getTable().getQualifiedName().get(2);
+      var createTable = tableIdMap.get(tableId);
+      var connector = createTable.table().getConnectorOptions();
+
+      var warehouse = connector.get(ICEBERG_WAREHOUSE_KEY);
+      var databaseName =
+          connector.getOrDefault(ICEBERG_CATALOG_DATABASE_KEY, FLINK_DEFAULT_DATABASE);
+      if (ICEBERG_GLUE_CATALOG_IMPL.equals(connector.get(ICEBERG_CATALOG_IMPL_KEY))) {
+        databaseName += ".db";
+      }
+      var rexBuilder = new RexBuilder(new TypeFactory());
+      if (warehouse.startsWith("file://")) {
+        warehouse = warehouse.substring(7);
+      }
+
+      var allowMovedPaths =
+          rexBuilder.makeCall(
+              SqlStdOperatorTable.EQUALS,
+              rexBuilder.makeFlag(Params.ALLOW_MOVED_PATHS),
+              rexBuilder.makeLiteral(true));
+      var rexNode =
+          rexBuilder.makeCall(
+              lightweightOp("iceberg_scan"),
+              rexBuilder.makeLiteral(
+                  warehouse + "/" + databaseName + "/" + createTable.tableName()),
+              allowMovedPaths);
+
+      return new LogicalTableFunctionScan(
+          scan.getCluster(),
+          scan.getTraitSet(),
+          List.of(),
+          rexNode,
+          Object.class,
+          scan.getRowType(),
+          Set.of());
+    }
+
+    @Override
+    public RelNode visit(LogicalFilter filter) {
+      var visited = (LogicalFilter) super.visit(filter);
+      return visited.accept(subQueryRexShuttle);
+    }
+
+    @Override
+    public RelNode visit(LogicalProject project) {
+      var visited = (LogicalProject) super.visit(project);
+      return visited.accept(subQueryRexShuttle);
+    }
+
+    enum Params {
+      ALLOW_MOVED_PATHS
+    }
   }
 }
