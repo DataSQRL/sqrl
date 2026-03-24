@@ -21,3 +21,13 @@ NEXT_BATCH;
 INSERT INTO TableB SELECT * FROM Src;
 
 EXPORT Src TO tables.sink_b;
+
+NEXT_BATCH;
+
+CREATE TABLE TableC (
+  recordCount INT
+) WITH (
+  'connector' = 'print'
+);
+
+INSERT INTO TableC SELECT * FROM Src;

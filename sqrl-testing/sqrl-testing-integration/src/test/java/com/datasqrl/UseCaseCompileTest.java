@@ -40,7 +40,6 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   @SneakyThrows
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
-  //  @Disabled("Intended for manual usage")
   void testUseCase(Path packageFile) {
     super.testUseCase(packageFile);
   }
@@ -48,9 +47,8 @@ public class UseCaseCompileTest extends AbstractUseCaseTest {
   @Test
   @Disabled("Intended for manual usage")
   void runTestCaseByName() {
-    var pkg = USECASE_DIR.resolve("complex-mutation").resolve("package-invalid.json");
+    var pkg = USECASE_DIR.resolve("multi-batch-compile").resolve("package.json");
     super.testUseCase(pkg);
-    System.out.println("Done");
   }
 
   static class UseCaseFiles extends ArgumentsProviders.PackageProvider {
