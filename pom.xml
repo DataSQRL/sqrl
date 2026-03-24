@@ -167,7 +167,7 @@
     <snowflake-jdbc.version>4.0.2</snowflake-jdbc.version>
     <snakeyaml.version>2.6</snakeyaml.version>
     <swagger-core.version>2.2.45</swagger-core.version>
-    <testcontainers.version>2.0.3</testcontainers.version>
+    <testcontainers.version>2.0.4</testcontainers.version>
     <vertx.version>5.0.8</vertx.version>
 
     <!-- Plugin versions -->
