@@ -178,6 +178,27 @@ All dependency versions should be centralized as properties in the root pom.xml 
 - **Co-authorship**: Do not add Claude as co-author unless explicitly requested
 - **Commit Best Practice**: Always use `-s` and `-S` flags when committing to sign-off and sign commits cryptographically
 
+## Pull Request Titles
+
+PR titles are enforced by CI (`.github/workflows/lint-pr-title.yml`) using the Conventional Commits format. Titles must start with one of the following prefixes:
+
+- `feat` – new feature
+- `fix` – bug fix
+- `chore` – maintenance / housekeeping
+- `test` – test additions or changes
+- `docs` – documentation
+- `refactor` – code refactoring
+- `ci` – CI/CD changes
+- `build` – build system changes
+- `perf` – performance improvements
+- `revert` – reverting a previous change
+
+A `!` after the type denotes a breaking change (e.g., `feat!: Remove legacy auth middleware`).
+
+**Example**: `feat: Add support for Iceberg sink`
+
+Note: The linter skips Dependabot PRs automatically.
+
 ## Key Configuration
 
 - **Main POM**: `/pom.xml` - All dependencies and build configuration
