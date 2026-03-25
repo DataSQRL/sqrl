@@ -81,7 +81,7 @@ class PredicatePushdownTest extends AbstractAssetSnapshotTest {
   @ParameterizedTest
   @EnumSource(PredicatePushdownRules.class)
   void testSingleFile(PredicatePushdownRules rules) throws Exception {
-    var sqlFile = SCRIPT_DIR.resolve("project-join-transpose.sql");
+    var sqlFile = SCRIPT_DIR.resolve("table-source-filter-pushdown.sql");
     assertThat(sqlFile).isRegularFile();
 
     executeTest(sqlFile, rules);

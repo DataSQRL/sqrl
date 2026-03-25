@@ -6,6 +6,9 @@ CREATE CATALOG ctl WITH (
 
 USE CATALOG ctl;
 
+CREATE DATABASE IF NOT EXISTS my_database;
+USE my_database;
+
 DROP TABLE IF EXISTS items;
 CREATE TABLE items (
     id INT,
