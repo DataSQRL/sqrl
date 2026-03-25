@@ -23,7 +23,9 @@ import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.util.CompiledPlanCondenser;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ListMultimap;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -65,6 +67,8 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
   @JsonIgnore Optional<String> explainedPlan;
   @JsonIgnore List<String> flinkSqlNoFunctions;
   @JsonIgnore Configuration config;
+  @JsonIgnore ListMultimap<Integer, String> flinkSqlBatched;
+  @JsonIgnore ListMultimap<Integer, String> flinkSqlNoFunctionsBatched;
 
   @Override
   public List<DeploymentArtifact> getDeploymentArtifacts() {
@@ -76,6 +80,9 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
             "-sql-no-functions.sql", DeploymentArtifact.toSqlString(flinkSqlNoFunctions)),
         new DeploymentArtifact("-functions.sql", DeploymentArtifact.toSqlString(functions)));
 
+    convertNestedList(flinkSqlBatched, "-sql").ifPresent(builder::addAll);
+    convertNestedList(flinkSqlNoFunctionsBatched, "-sql-no-functions").ifPresent(builder::addAll);
+
     compiledPlan.map(plan -> builder.add(new DeploymentArtifact("-compiled-plan.json", plan)));
     compiledPlan
         .map(CompiledPlanCondenser::condense)
@@ -83,6 +90,34 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     explainedPlan.map(plan -> builder.add(new DeploymentArtifact("-explained-plan.txt", plan)));
 
     return builder.build();
+  }
+
+  /**
+   * Converts a nested list of SQL statement batches into numbered deployment artifacts. Returns
+   * empty if the list contains fewer than 2 batches, as a single batch does not require splitting.
+   *
+   * @param sqlBatches list of SQL statement batches to convert
+   * @param suffixName suffix used to name each artifact (e.g. "-sql" produces "-sql-0.sql")
+   * @return an optional list of deployment artifacts, one per batch
+   */
+  private static Optional<List<DeploymentArtifact>> convertNestedList(
+      ListMultimap<Integer, String> sqlBatches, String suffixName) {
+
+    var batchNum = sqlBatches.keySet().size();
+    if (batchNum < 2) {
+      return Optional.empty();
+    }
+
+    var res = new ArrayList<DeploymentArtifact>(batchNum);
+    for (var batchIdx : sqlBatches.keys()) {
+      var sql = sqlBatches.get(batchIdx);
+
+      res.add(
+          new DeploymentArtifact(
+              suffixName + "-" + batchIdx + ".sql", DeploymentArtifact.toSqlString(sql)));
+    }
+
+    return Optional.of(res);
   }
 
   @Getter
@@ -94,6 +129,9 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     private final Set<String> formats = new HashSet<>();
     private final Set<String> fullyResolvedFunctions = new HashSet<>();
     private final List<List<RichSqlInsert>> statementSets = new ArrayList<>();
+    private final ArrayListMultimap<Integer, String> flinkSqlBatched = ArrayListMultimap.create();
+    private final ArrayListMultimap<Integer, String> flinkSqlNoFunctionsBatched =
+        ArrayListMultimap.create();
 
     private Configuration config;
 
@@ -112,11 +150,19 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
     }
 
     public void nextBatch() {
+      var nextIdx = statementSets.size();
+
       statementSets.add(new ArrayList<>());
+
+      // Replay all previous batches DDL statements
+      if (nextIdx > 0) {
+        flinkSqlBatched.putAll(nextIdx, flinkSqlBatched.get(nextIdx - 1));
+        flinkSqlNoFunctionsBatched.putAll(nextIdx, flinkSqlNoFunctionsBatched.get(nextIdx - 1));
+      }
     }
 
     public void add(SqlNode sqlNode) {
-      add(sqlNode, RelToFlinkSql.convertToString(sqlNode));
+      add(sqlNode, RelToFlinkSql.convertToString(sqlNode), currentBatch());
     }
 
     public void addFullyResolvedFunction(String createFunction) {
@@ -127,13 +173,15 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       checkArgument(nodeSqls.size() == nodes.size(), "Node and SQL size mismatch during planning");
 
       for (int i = 0; i < nodes.size(); i++) {
-        add(nodes.get(i), nodeSqls.get(i));
+        add(nodes.get(i), nodeSqls.get(i), i);
       }
     }
 
-    public void add(SqlNode node, String nodeSql) {
+    private void add(SqlNode node, String nodeSql, int batchIdx) {
       flinkSql.add(nodeSql);
+      flinkSqlBatched.put(batchIdx, nodeSql);
       nodes.add(node);
+
       if (node instanceof SqlCreateTable table) {
         for (SqlNode option : table.getPropertyList().getList()) {
           var sqlTableOption = (SqlTableOption) option;
@@ -150,8 +198,10 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
           }
         }
       }
+
       if (!(node instanceof SqlCreateFunction)) {
         flinkSqlNoFunctions.add(nodeSql);
+        flinkSqlNoFunctionsBatched.put(batchIdx, nodeSql);
       }
     }
 
@@ -191,7 +241,9 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
           compiledPlan.map(CompiledPlan::asJsonString),
           explainedPlan,
           flinkSqlNoFunctions,
-          config);
+          config,
+          flinkSqlBatched,
+          flinkSqlNoFunctionsBatched);
     }
 
     private boolean hasSink() {

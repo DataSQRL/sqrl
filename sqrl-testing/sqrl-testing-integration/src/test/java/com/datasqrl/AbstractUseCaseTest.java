@@ -88,7 +88,7 @@ public class AbstractUseCaseTest extends AbstractAssetSnapshotTest {
   public Predicate<Path> getPlanDirFilter() {
     return path -> {
       var fileName = path.getFileName().toString();
-      if (fileName.equals("flink-sql-no-functions.sql")) {
+      if (fileName.startsWith("flink-sql-no-functions")) {
         return true;
       }
 
