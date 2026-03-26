@@ -74,7 +74,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
   @Disabled
   @Test
   void specificScript() {
-    var script = SCRIPT_DIR.resolve("unionDifferentKeysAndOrder.sqrl");
+    var script = SCRIPT_DIR.resolve("mutationHintMissing-fail.sqrl");
     scripts(script);
   }
 

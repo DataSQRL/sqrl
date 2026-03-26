@@ -1,0 +1,16 @@
+/*+ engine(kafka) */
+CREATE TABLE _SensorsValid (
+    sensorid INT,
+    machineid INT,
+    updatedTime TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+    PRIMARY KEY (sensorid) NOT ENFORCED
+);
+
+CREATE TABLE _SensorsInvalid (
+    sensorid INT,
+    machineid INT,
+    updatedTime TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+    PRIMARY KEY (sensorid) NOT ENFORCED
+);
+
+Sensors := SELECT * FROM _Sensors;
