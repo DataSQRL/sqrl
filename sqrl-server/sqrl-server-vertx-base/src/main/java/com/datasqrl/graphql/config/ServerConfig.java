@@ -15,12 +15,13 @@
  */
 package com.datasqrl.graphql.config;
 
-import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
-
 import com.datasqrl.env.EnvVariableNames;
 import com.datasqrl.env.GlobalEnvironmentStore;
+import com.datasqrl.graphql.SqrlObjectMapper;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -29,15 +30,20 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
 import java.util.Map;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.SneakyThrows;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServerConfig {
+
+  @Getter(AccessLevel.NONE)
+  private final ObjectMapper MAPPER = SqrlObjectMapper.getMapperWithEnvVarResolver(null);
 
   private ServletConfig servletConfig = new ServletConfig();
   private GraphQLHandlerOptions graphQLHandlerOptions = new GraphQLHandlerOptions();
@@ -47,7 +53,7 @@ public class ServerConfig {
   private PoolOptions poolOptions = new PoolOptions();
   private CorsHandlerOptions corsHandlerOptions = new CorsHandlerOptions();
   private SwaggerConfig swaggerConfig = new SwaggerConfig();
-  private JWTAuthOptions jwtAuth;
+  private Map<String, Object> jwtAuth;
   private OAuthConfig oauthConfig;
 
   private KafkaConfig.KafkaMutationConfig kafkaMutationConfig;
@@ -88,6 +94,24 @@ public class ServerConfig {
     return this;
   }
 
+  /**
+   * Returns the JWT authentication options with environment variables resolved. This custom getter
+   * exists because {@code jwtAuth} is stored as a raw JSON string to defer environment variable
+   * resolution before runtime, causing init failure in {@link JWTAuthOptions}.
+   */
+  @JsonIgnore
+  @SneakyThrows
+  public JWTAuthOptions getJwtAuthOptions() {
+    if (jwtAuth == null) {
+      return null;
+    }
+
+    var jsonStr = MAPPER.writeValueAsString(jwtAuth);
+    var jsonObj = MAPPER.readValue(jsonStr, JsonObject.class);
+
+    return new JWTAuthOptions(jsonObj);
+  }
+
   ////////////////////////////////////////////////////////////////////////////////
   // Custom JSON setters for Jackson deserialization of Vert.x classes
   ////////////////////////////////////////////////////////////////////////////////
@@ -116,11 +140,6 @@ public class ServerConfig {
   public void setGraphiQLHandlerOptionsFromJson(Map<String, Object> options) {
     this.graphiQLHandlerOptions =
         options == null ? null : new GraphiQLHandlerOptions(new JsonObject(options));
-  }
-
-  @JsonSetter("jwtAuth")
-  public void setJwtAuthFromJson(Map<String, Object> options) {
-    this.jwtAuth = options == null ? null : new JWTAuthOptions(new JsonObject(options));
   }
 
   ////////////////////////////////////////////////////////////////////////////////

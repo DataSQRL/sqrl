@@ -317,7 +317,7 @@ public class HttpServerVerticle extends AbstractVerticle {
       log.info("Configuring JWT authentication");
       providerFutures.add(
           Future.succeededFuture(
-              (AuthenticationProvider) JWTAuth.create(vertx, config.getJwtAuth())));
+              (AuthenticationProvider) JWTAuth.create(vertx, config.getJwtAuthOptions())));
     }
 
     if (providerFutures.isEmpty()) {

@@ -34,9 +34,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.WebSocketConnectOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
-import io.vertx.ext.auth.PubSecKeyOptions;
 import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.junit5.VertxExtension;
@@ -117,8 +115,7 @@ class GraphQLJwtHandlerIT {
     // Create server config with JWT auth and Kafka settings
     serverConfig = new ServerConfig();
     serverConfig.setJwtAuth(
-        new JWTAuthOptions()
-            .addPubSecKey(new PubSecKeyOptions().setAlgorithm("HS256").setBuffer("dGVzdA==")));
+        Map.of("pubSecKeys", List.of(Map.of("algorithm", "HS256", "buffer", "dGVzdA=="))));
     serverConfig.setPoolOptions(new PoolOptions());
     serverConfig.setServletConfig(new ServletConfig());
     serverConfig.setCorsHandlerOptions(new CorsHandlerOptions());
@@ -171,7 +168,7 @@ class GraphQLJwtHandlerIT {
     var authProviders =
         List.of(
             (io.vertx.ext.auth.authentication.AuthenticationProvider)
-                io.vertx.ext.auth.jwt.JWTAuth.create(vertx, serverConfig.getJwtAuth()));
+                io.vertx.ext.auth.jwt.JWTAuth.create(vertx, serverConfig.getJwtAuthOptions()));
     graphQLServerVerticle =
         new GraphQLServerVerticle(
             router, serverConfig, "v1", model, authProviders, Optional.empty());
@@ -208,7 +205,7 @@ class GraphQLJwtHandlerIT {
 
   @Test
   void jwtAuthentication(VertxTestContext testContext) {
-    var provider = JWTAuth.create(vertx, this.serverConfig.getJwtAuth());
+    var provider = JWTAuth.create(vertx, this.serverConfig.getJwtAuthOptions());
 
     // Generate token
     var token = provider.generateToken(new JsonObject(), new JWTOptions().setExpiresInSeconds(60));

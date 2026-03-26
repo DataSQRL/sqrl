@@ -39,15 +39,15 @@ class GenericJavaServerEngineTest {
     var config = getConfigMap();
 
     var defaultConfig = underTest.readDefaultConfig();
-    assertThat(defaultConfig.getJwtAuth()).isNull();
+    assertThat(defaultConfig.getJwtAuthOptions()).isNull();
 
     var result = ServerConfigUtil.mergeConfigs(defaultConfig, config);
 
     assertThat(result).isNotNull();
-    assertThat(result.getJwtAuth()).isNotNull();
-    assertThat(result.getJwtAuth().getPubSecKeys()).isNotNull().isNotEmpty();
-    assertThat(result.getJwtAuth().getJWTOptions()).isNotNull();
-    assertThat(result.getJwtAuth().getJWTOptions().getIssuer()).isEqualTo("my-test-issuer");
+    assertThat(result.getJwtAuthOptions()).isNotNull();
+    assertThat(result.getJwtAuthOptions().getPubSecKeys()).isNotNull().isNotEmpty();
+    assertThat(result.getJwtAuthOptions().getJWTOptions()).isNotNull();
+    assertThat(result.getJwtAuthOptions().getJWTOptions().getIssuer()).isEqualTo("my-test-issuer");
   }
 
   @Test
