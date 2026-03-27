@@ -864,7 +864,10 @@ public class Sqrl2FlinkSQLTranslator {
       mutationBld = mutationBuilder.get().createMutation(origTableName, tableBuilder, null);
       fullTable = tableBuilder.buildSql(false);
     }
+
     var tableOp = (CreateTableOperation) executeSqlNode(fullTable);
+    validateMutationHints(tableOp, mutationBuilder);
+
     // Create table analysis
     var flinkSchema = ((ResolvedCatalogTable) tableOp.getCatalogTable()).getResolvedSchema();
     // Map primary key
@@ -1131,6 +1134,19 @@ public class Sqrl2FlinkSQLTranslator {
       // Means there is no lib directory
     }
     return urls;
+  }
+
+  private static void validateMutationHints(
+      CreateTableOperation tableOp, Optional<MutationBuilder> mutationBuilder) {
+    var tableName = tableOp.getTableIdentifier().getObjectName();
+    var options = tableOp.getCatalogTable().getOptions();
+
+    // TODO: Collect supported engines dynamically in a sane way
+    if (!tableName.endsWith("_schema") && options.isEmpty() && mutationBuilder.isEmpty()) {
+      throw new StatementParserException(
+          "Mutation engine hint \"/*+ engine(...) */\" is required for internal CREATE TABLE statements."
+              + " Supported engines: \"kafka\", \"iceberg\".");
+    }
   }
 
   public record ParsedRelDataTypeResult(
