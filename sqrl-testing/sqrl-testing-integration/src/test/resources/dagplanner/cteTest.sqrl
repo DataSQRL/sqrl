@@ -1,0 +1,17 @@
+IMPORT ecommerceTs.orders;
+
+SpecialOrderSummary := WITH SpecialOrders AS (
+    SELECT *, id > 1000 AS isSpecialOrder FROM Orders WHERE id < 1000000
+)
+SELECT customerid, COUNT(*) AS num_special_orders
+FROM SpecialOrders
+GROUP BY customerid;
+
+
+/*+engine(database) */
+SpecialOrderSummaryDatabase := WITH SpecialOrders AS (
+    SELECT *, id > 1000 AS isSpecialOrder FROM Orders WHERE id < 1000000
+)
+SELECT customerid, COUNT(*) AS num_special_orders
+FROM SpecialOrders
+GROUP BY customerid;
