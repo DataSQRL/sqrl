@@ -17,6 +17,7 @@ package com.datasqrl.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -86,7 +87,11 @@ public class UdfCompiler {
       compile(processedSources, classpath, classOutputDir);
       packageJar(classOutputDir, resolvedDeps, targetJar);
     } finally {
-      deleteRecursive(classOutputDir);
+      try {
+        FileUtil.deleteDirectory(classOutputDir);
+      } catch (IOException e) {
+        log.debug("Failed to clean up temp directory: {}", classOutputDir, e);
+      }
     }
   }
 
@@ -99,25 +104,19 @@ public class UdfCompiler {
     }
 
     var diagnostics = new DiagnosticCollector<JavaFileObject>();
-    var fileManager = compiler.getStandardFileManager(diagnostics, null, null);
 
-    var compilationUnits =
-        sources.stream()
-            .map(src -> new InMemoryJavaSource(src.file.getFileName().toString(), src.content))
-            .collect(Collectors.toList());
+    boolean success;
+    try (var fileManager = compiler.getStandardFileManager(diagnostics, null, null)) {
+      var compilationUnits =
+          sources.stream()
+              .map(src -> new InMemoryJavaSource(src.file.getFileName().toString(), src.content))
+              .collect(Collectors.toList());
 
-    var options = new ArrayList<String>();
-    options.add("-classpath");
-    options.add(classpath);
-    options.add("-d");
-    options.add(outputDir.toString());
-    options.add("--release");
-    options.add("17");
+      var options = List.of("-classpath", classpath, "-d", outputDir.toString(), "--release", "17");
 
-    var task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
-    var success = task.call();
-
-    fileManager.close();
+      var task = compiler.getTask(null, fileManager, diagnostics, options, null, compilationUnits);
+      success = task.call();
+    }
 
     if (!success) {
       var errors = new StringBuilder("UDF compilation failed:\n");
@@ -165,7 +164,7 @@ public class UdfCompiler {
 
       // Add dependency JAR entries
       for (var depJar : depJars) {
-        if (!Files.exists(depJar) || !depJar.toString().endsWith(".jar")) {
+        if (!depJar.toString().endsWith(".jar")) {
           continue;
         }
         try (var jar = new JarFile(depJar.toFile())) {
@@ -252,29 +251,6 @@ public class UdfCompiler {
     return content;
   }
 
-  private static void deleteRecursive(Path dir) {
-    try {
-      Files.walkFileTree(
-          dir,
-          new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
-                throws IOException {
-              Files.delete(file);
-              return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path d, IOException exc) throws IOException {
-              Files.delete(d);
-              return FileVisitResult.CONTINUE;
-            }
-          });
-    } catch (IOException e) {
-      log.debug("Failed to clean up temp directory: {}", dir, e);
-    }
-  }
-
   private record SourceFile(Path file, String content) {}
 
   private static class InMemoryJavaSource extends SimpleJavaFileObject {
@@ -282,7 +258,7 @@ public class UdfCompiler {
     private final String code;
 
     InMemoryJavaSource(String fileName, String code) {
-      super(java.net.URI.create("string:///" + fileName), Kind.SOURCE);
+      super(URI.create("string:///" + fileName), Kind.SOURCE);
       this.code = code;
     }
 
