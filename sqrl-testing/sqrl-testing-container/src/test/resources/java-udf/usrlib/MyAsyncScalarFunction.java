@@ -1,3 +1,5 @@
+//JDEPS org.apache.commons:commons-lang3:3.17.0
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.table.functions.AsyncScalarFunction;
 import org.apache.flink.table.functions.FunctionContext;
 
@@ -29,7 +31,7 @@ public class MyAsyncScalarFunction extends AsyncScalarFunction {
         executor.submit(() -> {
             try {
                 Thread.sleep(1000);
-                String response = "Processed " + param1 + " with " + param2;
+                String response = "Processed " + StringUtils.capitalize(param1) + " with " + param2;
                 result.complete(response);
             } catch (Exception e) {
                 result.completeExceptionally(e);
