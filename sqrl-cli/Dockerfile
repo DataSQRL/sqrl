@@ -25,7 +25,6 @@ COPY target/sqrl-cli.jar /opt/sqrl/sqrl-cli.jar
 COPY entrypoint.sh /opt/sqrl/entrypoint.sh
 COPY core-site.xml /opt/sqrl/hadoop-conf/core-site.xml
 
-ENV PATH="/opt/jbang/bin:${PATH}"
 ENV HADOOP_CONF_DIR="/opt/sqrl/hadoop-conf"
 ENV SQRL_JVM_TOOL_OPTS="--add-exports=java.base/sun.net.util=ALL-UNNAMED \
   --add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED \
