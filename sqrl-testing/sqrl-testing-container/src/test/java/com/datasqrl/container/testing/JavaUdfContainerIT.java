@@ -23,7 +23,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 class JavaUdfContainerIT {
 
-  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("jbang");
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("java-udf");
 
   @Test
   void givenProjectWithJavaUdf_whenTestCommandExecuted_thenCompileAndTestSuccessful()
