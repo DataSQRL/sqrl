@@ -17,20 +17,17 @@ package com.datasqrl;
 
 import com.datasqrl.AbstractAssetSnapshotTest.TestNameModifier;
 import com.datasqrl.util.ArgumentsProviders;
-import com.datasqrl.util.TestShardingExtension;
 import java.nio.file.Path;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.support.ParameterDeclarations;
 
 /**
@@ -41,18 +38,20 @@ import org.junit.jupiter.params.support.ParameterDeclarations;
  * <p>Note, that this test is resource intensive and slow.
  */
 @Slf4j
-@ExtendWith({MiniClusterExtension.class, TestShardingExtension.class})
 public class FullUseCaseIT extends AbstractFullUseCaseTest {
 
   private static final Path USE_CASES = Path.of("src/test/resources/usecases");
 
-  @Test
+  @ParameterizedTest
+  @MethodSource("specificUseCaseProvider")
   @Disabled("Intended for manual usage")
-  void specificUseCase() {
-    var pkg = USE_CASES.resolve("repository").resolve("package.json");
-
-    var param = new UseCaseParam(pkg);
+  void specificUseCase(UseCaseParam param) {
     fullUseCaseTest(param);
+  }
+
+  /** Ad-hoc debugging entry point. Change the path below to run a single use case manually. */
+  static Stream<UseCaseParam> specificUseCaseProvider() {
+    return Stream.of(new UseCaseParam(USE_CASES.resolve("repository").resolve("package.json")));
   }
 
   @ParameterizedTest

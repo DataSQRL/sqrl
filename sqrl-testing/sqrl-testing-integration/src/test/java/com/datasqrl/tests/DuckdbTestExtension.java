@@ -15,49 +15,61 @@
  */
 package com.datasqrl.tests;
 
+import com.datasqrl.UseCaseParam;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.stream.Stream;
 import lombok.SneakyThrows;
 
-public class DuckdbTestExtension implements TestExtension {
-  Path path = Path.of("/tmp/duckdb");
+public class DuckdbTestExtension extends AbstractUseCaseExtension {
+  private final Path path = Path.of("/tmp/duckdb");
 
   private void deleteDirectory(Path directory) throws IOException {
-    Files.walk(directory)
-        .sorted(
-            (path1, path2) -> path2.compareTo(path1)) // Sort in reverse order to delete files first
-        .forEach(
-            path -> {
-              try {
-                Files.delete(path);
-              } catch (IOException e) {
-                throw new RuntimeException("Failed to delete " + path, e);
-              }
-            });
+    if (!Files.exists(directory)) {
+      return;
+    }
+    try (Stream<Path> paths = Files.walk(directory)) {
+      paths
+          .sorted(Comparator.reverseOrder())
+          .forEach(
+              path -> {
+                try {
+                  Files.delete(path);
+                } catch (IOException e) {
+                  throw new RuntimeException("Failed to delete " + path, e);
+                }
+              });
+    }
   }
 
   @SneakyThrows
   public void createDir() {
-
     Files.createDirectories(path);
   }
 
   @Override
-  public void setup() {
+  protected boolean supports(UseCaseParam param) {
+    return param.getUseCaseName().equals("duckdb")
+        || param.getUseCaseName().equals("analytics-only");
+  }
+
+  @Override
+  protected void setup(UseCaseParam param) {
     try {
       deleteDirectory(path);
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
 
     createDir();
   }
 
   @Override
-  public void teardown() {
+  protected void teardown(UseCaseParam param) {
     try {
       deleteDirectory(path);
-    } catch (Exception e) {
+    } catch (Exception ignored) {
     }
   }
 }
