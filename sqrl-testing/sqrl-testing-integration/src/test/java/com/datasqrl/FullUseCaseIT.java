@@ -16,13 +16,19 @@
 package com.datasqrl;
 
 import com.datasqrl.AbstractAssetSnapshotTest.TestNameModifier;
+import com.datasqrl.tests.DuckdbTestExtension;
+import com.datasqrl.tests.IcebergTestExtension;
+import com.datasqrl.tests.SnowflakeTestExtension;
 import com.datasqrl.util.ArgumentsProviders;
+import com.datasqrl.util.TestShardingExtension;
 import java.nio.file.Path;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -38,6 +44,14 @@ import org.junit.jupiter.params.support.ParameterDeclarations;
  * <p>Note, that this test is resource intensive and slow.
  */
 @Slf4j
+@ExtendWith({
+  // Keep sharding first so skipped invocations do not trigger use-case setup.
+  TestShardingExtension.class,
+  MiniClusterExtension.class,
+  DuckdbTestExtension.class,
+  IcebergTestExtension.class,
+  SnowflakeTestExtension.class
+})
 public class FullUseCaseIT extends AbstractFullUseCaseTest {
 
   private static final Path USE_CASES = Path.of("src/test/resources/usecases");

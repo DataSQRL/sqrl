@@ -29,13 +29,9 @@ import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.engines.TestEngine.EngineFactory;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.tests.DuckdbTestExtension;
-import com.datasqrl.tests.IcebergTestExtension;
-import com.datasqrl.tests.SnowflakeTestExtension;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.datasqrl.util.SqrlScriptExecutor;
-import com.datasqrl.util.TestShardingExtension;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashMap;
@@ -46,22 +42,12 @@ import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.DeploymentOptions;
 import org.apache.flink.configuration.RestartStrategyOptions;
-import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.extension.ExtendWith;
 
 /** Abstract base class to run a full test on a given project in form of {@link UseCaseParam}. */
 @Slf4j
-@ExtendWith({
-  // Keep sharding first so skipped invocations do not trigger use-case setup.
-  TestShardingExtension.class,
-  MiniClusterExtension.class,
-  DuckdbTestExtension.class,
-  IcebergTestExtension.class,
-  SnowflakeTestExtension.class
-})
 abstract class AbstractFullUseCaseTest {
 
   private static TestContainerHook containerHook;
