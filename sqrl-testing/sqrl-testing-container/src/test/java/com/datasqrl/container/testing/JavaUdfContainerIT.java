@@ -24,7 +24,7 @@ class JavaUdfContainerIT extends SqrlContainerTestBase {
 
   @Override
   protected String getTestCaseName() {
-    return "jbang";
+    return "java-udf";
   }
 
   @Test
