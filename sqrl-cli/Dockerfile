@@ -29,7 +29,6 @@ COPY core-site.xml /opt/sqrl/hadoop-conf/core-site.xml
 RUN wget -q -P /opt/sqrl \
     https://github.com/DataSQRL/flink-sql-runner/raw/refs/heads/release-0.9/flink-sql-runner/artifact/flink-sql-connector-sqlserver-cdc-sqrl.jar
 
-ENV PATH="/opt/jbang/bin:${PATH}"
 ENV HADOOP_CONF_DIR="/opt/sqrl/hadoop-conf"
 ENV SQRL_JVM_TOOL_OPTS="--add-exports=java.base/sun.net.util=ALL-UNNAMED \
   --add-exports=java.rmi/sun.rmi.registry=ALL-UNNAMED \
