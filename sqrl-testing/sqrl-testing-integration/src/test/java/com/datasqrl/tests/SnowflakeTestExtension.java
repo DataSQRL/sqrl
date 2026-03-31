@@ -15,6 +15,7 @@
  */
 package com.datasqrl.tests;
 
+import com.datasqrl.UseCaseParam;
 import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.glue.GlueClient;
@@ -28,10 +29,15 @@ import software.amazon.awssdk.services.s3.model.ListObjectsV2Request;
 import software.amazon.awssdk.services.s3.model.ListObjectsV2Response;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
-public class SnowflakeTestExtension implements TestExtension {
+public class SnowflakeTestExtension extends AbstractUseCaseExtension {
 
-  Region region = Region.US_EAST_1;
-  String databaseName = "mydatabase";
+  private final Region region = Region.US_EAST_1;
+  private final String databaseName = "mydatabase";
+
+  @Override
+  protected boolean supports(UseCaseParam param) {
+    return param.getUseCaseName().equals("snowflake");
+  }
 
   public void eraseGlue() {
 
@@ -106,13 +112,13 @@ public class SnowflakeTestExtension implements TestExtension {
   }
 
   @Override
-  public void teardown() {
+  protected void teardown(UseCaseParam param) {
     eraseGlue();
     eraseS3();
   }
 
   @Override
-  public void setup() {
+  protected void setup(UseCaseParam param) {
     eraseGlue();
     eraseS3();
   }

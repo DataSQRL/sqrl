@@ -29,8 +29,6 @@ import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.engines.TestEngine.EngineFactory;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.tests.TestExtension;
-import com.datasqrl.tests.UseCaseTestExtensions;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.datasqrl.util.SqrlScriptExecutor;
@@ -53,8 +51,6 @@ import org.junit.jupiter.api.BeforeAll;
 abstract class AbstractFullUseCaseTest {
 
   private static TestContainerHook containerHook;
-
-  UseCaseTestExtensions testExtensions = new UseCaseTestExtensions();
 
   @BeforeAll
   static void beforeAll() {
@@ -87,78 +83,71 @@ abstract class AbstractFullUseCaseTest {
             param.getUseCaseName(),
             param.getPackageJsonName().substring(0, param.getPackageJsonName().length() - 5));
 
-    TestExtension testExtension = testExtensions.create(param.getUseCaseName());
+    // Execute compile phase
+    SqrlScriptExecutor executor = new SqrlScriptExecutor(param.packageJsonPath(), param.goal());
+    AssertStatusHook hook = new AssertStatusHook();
     try {
-      testExtension.setup();
-
-      // Execute compile phase
-      SqrlScriptExecutor executor = new SqrlScriptExecutor(param.packageJsonPath(), param.goal());
-      AssertStatusHook hook = new AssertStatusHook();
-      try {
-        executor.execute(hook);
-      } catch (Throwable e) {
-        if (hook.failure() != null) {
-          e.addSuppressed(hook.failure());
-        }
-        throw e;
+      executor.execute(hook);
+    } catch (Throwable e) {
+      if (hook.failure() != null) {
+        e.addSuppressed(hook.failure());
       }
+      throw e;
+    }
 
-      Path rootDir = param.packageJsonPath().getParent();
+    Path rootDir = param.packageJsonPath().getParent();
 
-      log.info(
-          """
-        The test parameters
-        Test name: {}
-        Test path: {}
-        Test package file: {}
-        """,
-          param.getUseCaseName(),
-          rootDir,
-          param.getPackageJsonName());
+    log.info(
+        """
+      The test parameters
+      Test name: {}
+      Test path: {}
+      Test package file: {}
+      """,
+        param.getUseCaseName(),
+        rootDir,
+        param.getPackageJsonName());
 
-      // Execute the test phase manually via DatasqrlTest
-      PackageJson packageJson =
-          ConfigLoaderUtils.loadResolvedConfig(
-              ErrorCollector.root(), rootDir.resolve(BUILD_DIR_NAME));
+    // Execute the test phase manually via DatasqrlTest
+    PackageJson packageJson =
+        ConfigLoaderUtils.loadResolvedConfig(
+            ErrorCollector.root(), rootDir.resolve(BUILD_DIR_NAME));
 
-      var env = new HashMap<>(containerHook.getEnv());
-      env.putAll(System.getenv());
-      env.putAll(GlobalEnvironmentStore.getAll());
-      env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
-      env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
+    var env = new HashMap<>(containerHook.getEnv());
+    env.putAll(System.getenv());
+    env.putAll(GlobalEnvironmentStore.getAll());
+    env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
+    env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
 
-      var planDir =
-          rootDir
-              .resolve(SqrlConstants.BUILD_DIR_NAME)
-              .resolve(SqrlConstants.DEPLOY_DIR_NAME)
-              .resolve(SqrlConstants.PLAN_DIR);
-      var flinkConfig = loadInternalTestFlinkConfig(planDir, env);
-      var outputMgr = new TestOutputManager(rootDir);
-      var test =
-          new DatasqrlTest(
-              rootDir,
-              planDir,
-              packageJson,
-              flinkConfig,
-              env,
-              outputMgr,
-              new DefaultOutputFormatter(rootDir, false));
-      try {
-        var run = test.run();
-        if (run != 0) {
-          fail(
-              "Test runner returned error code while running test case '%s'. Check above for failed snapshot tests (in red) or exceptions"
-                  .formatted(param.getUseCaseName()));
-        }
-      } catch (Exception e) {
+    var planDir =
+        rootDir
+            .resolve(SqrlConstants.BUILD_DIR_NAME)
+            .resolve(SqrlConstants.DEPLOY_DIR_NAME)
+            .resolve(SqrlConstants.PLAN_DIR);
+    var flinkConfig = loadInternalTestFlinkConfig(planDir, env);
+    var outputMgr = new TestOutputManager(rootDir);
+    var test =
+        new DatasqrlTest(
+            rootDir,
+            planDir,
+            packageJson,
+            flinkConfig,
+            env,
+            outputMgr,
+            new DefaultOutputFormatter(rootDir, false));
+    try {
+      var run = test.run();
+      if (run != 0) {
         fail(
-            "Test runner threw exception while running test case '%s'"
-                .formatted(param.getUseCaseName()),
-            e);
+            "Test runner returned error code while running test case '%s'. Check above for failed snapshot tests (in red) or exceptions"
+                .formatted(param.getUseCaseName()));
       }
-
+    } catch (Exception e) {
+      fail(
+          "Test runner threw exception while running test case '%s'"
+              .formatted(param.getUseCaseName()),
+          e);
     } finally {
-      testExtension.teardown();
       containerHook.clear();
     }
 

@@ -17,23 +17,24 @@ package com.datasqrl.tests;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.UseCaseParam;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class IcebergTestExtension extends DuckdbTestExtension {
 
   @Override
-  public void setup() {
-    super.setup();
+  protected boolean supports(UseCaseParam param) {
+    return param.getUseCaseName().equals("iceberg-export");
   }
 
   @Override
-  public void teardown() {
+  protected void teardown(UseCaseParam param) {
     // assert that there is a 'my-table' iceberg table
     assertThat(
             Files.exists(
                 Path.of("/tmp/duckdb/default_database/my-table/metadata/v1.metadata.json")))
         .isTrue();
-    super.teardown();
+    super.teardown(param);
   }
 }
