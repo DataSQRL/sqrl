@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
+import java.util.function.Consumer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.HttpGet;
@@ -29,6 +30,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -41,7 +43,9 @@ import org.testcontainers.utility.DockerImageName;
  */
 @Testcontainers
 @Slf4j
-class McpOAuthIT extends SqrlContainerTestBase {
+class McpOAuthIT {
+  @RegisterExtension
+  static SqrlContainerExtension sqrl = new SqrlContainerExtension("oauth-authorized-compile");
 
   private static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:26.0";
   private static final String KEYCLOAK_ADMIN = "admin";
@@ -58,16 +62,18 @@ class McpOAuthIT extends SqrlContainerTestBase {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  @Override
-  protected String getTestCaseName() {
-    return "oauth-authorized-compile";
+  private static Consumer<GenericContainer<?>> keycloakEnv() {
+    return c -> {
+      c.withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/");
+      c.withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
+    };
   }
 
   @BeforeAll
   static void startKeycloak() {
     keycloak =
         new GenericContainer<>(DockerImageName.parse(KEYCLOAK_IMAGE))
-            .withNetwork(sharedNetwork)
+            .withNetwork(sqrl.getNetwork())
             .withNetworkAliases("keycloak")
             .withExposedPorts(8080)
             .withEnv("KC_BOOTSTRAP_ADMIN_USERNAME", KEYCLOAK_ADMIN)
@@ -126,11 +132,11 @@ class McpOAuthIT extends SqrlContainerTestBase {
                 + KEYCLOAK_PASSWORD,
             ContentType.APPLICATION_FORM_URLENCODED));
 
-    var response = sharedHttpClient.execute(request);
-    var body = EntityUtils.toString(response.getEntity());
-    var json = new ObjectMapper().readTree(body);
-
-    return json.get("access_token").asText();
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      var body = EntityUtils.toString(response.getEntity());
+      var json = new ObjectMapper().readTree(body);
+      return json.get("access_token").asText();
+    }
   }
 
   @SneakyThrows
@@ -152,14 +158,15 @@ class McpOAuthIT extends SqrlContainerTestBase {
     request.setHeader("Authorization", "Bearer " + adminToken);
     request.setEntity(new StringEntity(realmConfig, ContentType.APPLICATION_JSON));
 
-    var response = sharedHttpClient.execute(request);
-    var statusCode = response.getStatusLine().getStatusCode();
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      var statusCode = response.getStatusLine().getStatusCode();
 
-    if (statusCode == 409) {
-      log.info("Realm '{}' already exists", REALM_NAME);
-    } else if (statusCode != 201) {
-      var body = EntityUtils.toString(response.getEntity());
-      throw new RuntimeException("Failed to create realm: " + statusCode + " - " + body);
+      if (statusCode == 409) {
+        log.info("Realm '{}' already exists", REALM_NAME);
+      } else if (statusCode != 201) {
+        var body = EntityUtils.toString(response.getEntity());
+        throw new RuntimeException("Failed to create realm: " + statusCode + " - " + body);
+      }
     }
   }
 
@@ -189,14 +196,14 @@ class McpOAuthIT extends SqrlContainerTestBase {
     request.setHeader("Authorization", "Bearer " + adminToken);
     request.setEntity(new StringEntity(clientConfig, ContentType.APPLICATION_JSON));
 
-    var response = sharedHttpClient.execute(request);
-    var statusCode = response.getStatusLine().getStatusCode();
-
-    if (statusCode == 409) {
-      log.info("Client '{}' already exists", CLIENT_ID);
-    } else if (statusCode != 201) {
-      var body = EntityUtils.toString(response.getEntity());
-      throw new RuntimeException("Failed to create client: " + statusCode + " - " + body);
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      var statusCode = response.getStatusLine().getStatusCode();
+      if (statusCode == 409) {
+        log.info("Client '{}' already exists", CLIENT_ID);
+      } else if (statusCode != 201) {
+        var body = EntityUtils.toString(response.getEntity());
+        throw new RuntimeException("Failed to create client: " + statusCode + " - " + body);
+      }
     }
   }
 
@@ -223,14 +230,14 @@ class McpOAuthIT extends SqrlContainerTestBase {
     request.setHeader("Authorization", "Bearer " + adminToken);
     request.setEntity(new StringEntity(userConfig, ContentType.APPLICATION_JSON));
 
-    var response = sharedHttpClient.execute(request);
-    var statusCode = response.getStatusLine().getStatusCode();
-
-    if (statusCode == 409) {
-      log.info("User '{}' already exists", TEST_USER);
-    } else if (statusCode != 201) {
-      var body = EntityUtils.toString(response.getEntity());
-      throw new RuntimeException("Failed to create user: " + statusCode + " - " + body);
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      var statusCode = response.getStatusLine().getStatusCode();
+      if (statusCode == 409) {
+        log.info("User '{}' already exists", TEST_USER);
+      } else if (statusCode != 201) {
+        var body = EntityUtils.toString(response.getEntity());
+        throw new RuntimeException("Failed to create user: " + statusCode + " - " + body);
+      }
     }
   }
 
@@ -248,41 +255,30 @@ class McpOAuthIT extends SqrlContainerTestBase {
                 CLIENT_ID, CLIENT_SECRET, TEST_USER, TEST_PASSWORD),
             ContentType.APPLICATION_FORM_URLENCODED));
 
-    var response = sharedHttpClient.execute(request);
-    var body = EntityUtils.toString(response.getEntity());
-    var json = objectMapper.readTree(body);
-
-    return json.get("access_token").asText();
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      var body = EntityUtils.toString(response.getEntity());
+      var json = objectMapper.readTree(body);
+      return json.get("access_token").asText();
+    }
   }
 
   @Test
   @SneakyThrows
   void givenOAuthConfig_whenFetchDiscoveryEndpoint_thenReturnsProtectedResourceMetadata() {
-    compileSqrlProject(
-        testDir,
-        c -> {
-          c.withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/");
-          c.withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
-        });
+    var env = keycloakEnv();
+    sqrl.compileSqrlProject(null, env);
+    sqrl.startGraphQLServer(env);
 
-    startGraphQLServer(
-        testDir,
-        c -> {
-          c.withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/");
-          c.withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
-        });
-
-    var discoveryUrl = getBaseUrl() + "/.well-known/oauth-protected-resource";
+    var discoveryUrl = sqrl.getBaseUrl() + "/.well-known/oauth-protected-resource";
     log.info("Testing OAuth discovery endpoint: {}", discoveryUrl);
 
-    var request = new HttpGet(discoveryUrl);
-    var response = sharedHttpClient.execute(request);
+    String body;
+    try (var response = sqrl.getHttpClient().execute(new HttpGet(discoveryUrl))) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+      body = EntityUtils.toString(response.getEntity());
+    }
 
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-
-    var body = EntityUtils.toString(response.getEntity());
     log.info("Discovery response: {}", body);
-
     var json = objectMapper.readTree(body);
 
     assertThat(json.has("authorization_servers")).isTrue();
@@ -303,21 +299,11 @@ class McpOAuthIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenOAuthConfig_whenMcpRequestWithoutToken_thenReturns401WithWWWAuthenticate() {
-    compileSqrlProject(
-        testDir,
-        c -> {
-          c.withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/");
-          c.withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
-        });
+    var env = keycloakEnv();
+    sqrl.compileSqrlProject(null, env);
+    sqrl.startGraphQLServer(env);
 
-    startGraphQLServer(
-        testDir,
-        c -> {
-          c.withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/");
-          c.withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
-        });
-
-    var mcpUrl = getBaseUrl() + "/v1/mcp";
+    var mcpUrl = sqrl.getBaseUrl() + "/v1/mcp";
     log.info("Testing MCP endpoint without token: {}", mcpUrl);
 
     var request = new HttpPost(mcpUrl);
@@ -326,41 +312,12 @@ class McpOAuthIT extends SqrlContainerTestBase {
             "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\",\"id\":1}",
             ContentType.APPLICATION_JSON));
 
-    var response = sharedHttpClient.execute(request);
-
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
-
-    var wwwAuth = response.getFirstHeader("WWW-Authenticate");
-    assertThat(wwwAuth).isNotNull();
-    assertThat(wwwAuth.getValue()).contains("resource_metadata=");
-    assertThat(wwwAuth.getValue()).contains(".well-known/oauth-protected-resource");
-  }
-
-  /** Compiles the SQRL project with environment variable support. */
-  protected void compileSqrlProject(
-      java.nio.file.Path workingDir, java.util.function.Consumer<GenericContainer<?>> customizer) {
-    cmd = createCmdContainer(workingDir).withCommand("compile", "package.json");
-    customizer.accept(cmd);
-    cmd.start();
-
-    org.awaitility.Awaitility.await().atMost(Duration.ofMinutes(5)).until(() -> !cmd.isRunning());
-
-    var exitCode = cmd.getCurrentContainerInfo().getState().getExitCodeLong();
-    var logs = cmd.getLogs();
-    if (exitCode != 0) {
-      log.error("SQRL compilation failed with exit code {}\n{}", exitCode, logs);
-      throw new ContainerError("SQRL compilation failed", exitCode, logs);
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
+      var wwwAuth = response.getFirstHeader("WWW-Authenticate");
+      assertThat(wwwAuth).isNotNull();
+      assertThat(wwwAuth.getValue()).contains("resource_metadata=");
+      assertThat(wwwAuth.getValue()).contains(".well-known/oauth-protected-resource");
     }
-
-    log.info("SQRL script compiled successfully");
-  }
-
-  /** Starts the GraphQL server with custom environment variables. */
-  protected void startGraphQLServer(
-      java.nio.file.Path workingDir, java.util.function.Consumer<GenericContainer<?>> customizer) {
-    serverContainer = createServerContainer(workingDir);
-    customizer.accept(serverContainer);
-    serverContainer.start();
-    log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
   }
 }

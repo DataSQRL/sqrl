@@ -25,19 +25,19 @@ import lombok.SneakyThrows;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class SwaggerContainerIT extends SqrlContainerTestBase {
+public class SwaggerContainerIT {
 
-  @Override
-  protected String getTestCaseName() {
-    return "avro-schema";
-  }
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("avro-schema");
+
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @Test
   @SneakyThrows
   void givenSwaggerTest_whenCompiledAndServerStarted_thenSwaggerEndpointsAvailable() {
     // Compile and start the server
-    compileAndStartServer(testDir);
+    sqrl.compileAndStartServer();
 
     // Test Swagger JSON endpoint
     testSwaggerJsonEndpoint();
@@ -48,23 +48,25 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
 
   @SneakyThrows
   private void testSwaggerJsonEndpoint() {
-    var swaggerJsonUrl = getBaseUrl() + "/v1/swagger";
+    var swaggerJsonUrl = sqrl.getBaseUrl() + "/v1/swagger";
     var request = new HttpGet(swaggerJsonUrl);
-    var response = sharedHttpClient.execute(request);
+    String responseBody;
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      // Verify response status
+      assertThat(response.getStatusLine().getStatusCode())
+          .as("Swagger JSON endpoint should return 200")
+          .isEqualTo(200);
 
-    // Verify response status
-    assertThat(response.getStatusLine().getStatusCode())
-        .as("Swagger JSON endpoint should return 200")
-        .isEqualTo(200);
+      // Verify content type
+      assertThat(response.getEntity().getContentType().getValue())
+          .as("Swagger JSON should have correct content type")
+          .isEqualTo("application/json");
 
-    // Verify content type
-    assertThat(response.getEntity().getContentType().getValue())
-        .as("Swagger JSON should have correct content type")
-        .isEqualTo("application/json");
+      responseBody = EntityUtils.toString(response.getEntity());
+    }
 
     // Parse and validate JSON structure
-    var responseBody = EntityUtils.toString(response.getEntity());
-    var jsonResponse = objectMapper.readTree(responseBody);
+    var jsonResponse = new ObjectMapper().readTree(responseBody);
 
     // Verify OpenAPI structure
     assertThat(jsonResponse.has("openapi")).as("Response should contain OpenAPI version").isTrue();
@@ -91,40 +93,40 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
 
   @SneakyThrows
   private void testSwaggerUIEndpoint() {
-    var swaggerUIUrl = getBaseUrl() + "/v1/swagger-ui";
+    var swaggerUIUrl = sqrl.getBaseUrl() + "/v1/swagger-ui";
     var request = new HttpGet(swaggerUIUrl);
-    var response = sharedHttpClient.execute(request);
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      // Verify response status
+      assertThat(response.getStatusLine().getStatusCode())
+          .as("Swagger UI endpoint should return 200")
+          .isEqualTo(200);
 
-    // Verify response status
-    assertThat(response.getStatusLine().getStatusCode())
-        .as("Swagger UI endpoint should return 200")
-        .isEqualTo(200);
+      // Verify content type
+      assertThat(response.getEntity().getContentType().getValue())
+          .as("Swagger UI should have HTML content type")
+          .isEqualTo("text/html");
 
-    // Verify content type
-    assertThat(response.getEntity().getContentType().getValue())
-        .as("Swagger UI should have HTML content type")
-        .isEqualTo("text/html");
-
-    // Verify HTML content contains Swagger UI
-    var responseBody = EntityUtils.toString(response.getEntity());
-    assertThat(responseBody)
-        .as("Response should contain Swagger UI HTML")
-        .contains("swagger-ui")
-        .contains("SwaggerUIBundle")
-        .contains("DataSQRL REST API");
+      // Verify HTML content contains Swagger UI
+      var responseBody = EntityUtils.toString(response.getEntity());
+      assertThat(responseBody)
+          .as("Response should contain Swagger UI HTML")
+          .contains("swagger-ui")
+          .contains("SwaggerUIBundle")
+          .contains("DataSQRL REST API");
+    }
   }
 
   @Test
   @SneakyThrows
   void givenDisabledSwaggerConfig_whenCompiledAndServerStarted_thenSwaggerEndpointsNotAvailable() {
     // Compile the script first
-    compileSqrlProject(testDir);
+    sqrl.compileSqrlProject();
 
     // Modify the server configuration to disable Swagger
-    disableSwaggerInConfiguration(testDir);
+    disableSwaggerInConfiguration(sqrl.getTestDir());
 
     // Start the server with modified configuration
-    startGraphQLServer(testDir);
+    sqrl.startGraphQLServer();
 
     // Test that Swagger JSON endpoint returns 404
     testSwaggerEndpointNotAvailable("/swagger");
@@ -139,11 +141,10 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
 
     // Read the existing configuration
     var configContent = Files.readString(vertxConfigPath);
-    var mapper = new ObjectMapper();
-    var configNode = (ObjectNode) mapper.readTree(configContent);
+    var configNode = (ObjectNode) OBJECT_MAPPER.readTree(configContent);
 
     // Add disabled Swagger configuration
-    var swaggerConfig = mapper.createObjectNode();
+    var swaggerConfig = OBJECT_MAPPER.createObjectNode();
     swaggerConfig.put("enabled", false);
     swaggerConfig.put("endpoint", "/swagger");
     swaggerConfig.put("uiEndpoint", "/swagger-ui");
@@ -151,18 +152,19 @@ public class SwaggerContainerIT extends SqrlContainerTestBase {
 
     // Write back the modified configuration
     Files.writeString(
-        vertxConfigPath, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(configNode));
+        vertxConfigPath,
+        OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(configNode));
   }
 
   @SneakyThrows
   private void testSwaggerEndpointNotAvailable(String endpoint) {
-    var url = getBaseUrl() + endpoint;
+    var url = sqrl.getBaseUrl() + endpoint;
     var request = new HttpGet(url);
-    var response = sharedHttpClient.execute(request);
-
-    // Verify response status is 404 (not found)
-    assertThat(response.getStatusLine().getStatusCode())
-        .as("Swagger endpoint %s should return 404 when disabled", endpoint)
-        .isEqualTo(404);
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      // Verify response status is 404 (not found)
+      assertThat(response.getStatusLine().getStatusCode())
+          .as("Swagger endpoint %s should return 404 when disabled", endpoint)
+          .isEqualTo(404);
+    }
   }
 }

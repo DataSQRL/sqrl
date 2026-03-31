@@ -19,22 +19,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-class JBangContainerIT extends SqrlContainerTestBase {
+class JBangContainerIT {
 
-  @Override
-  protected String getTestCaseName() {
-    return "jbang";
-  }
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("jbang");
 
   @Test
   void givenProjectWithJBangJarExport_whenTestCommandExecuted_thenCompileAndTestSuccessful()
       throws Exception {
-    var res = sqrlCmd(testDir, "test", "package.json");
+    var res = sqrl.sqrlCmd("test", "package.json");
 
     assertThat(res.logs()).contains("MyTableTest", "MyAsyncTableTest", "BUILD SUCCESS");
 
-    var fatJar = testDir.resolve("build/deploy/flink/lib/jbang-udfs.jar");
+    var fatJar = sqrl.getTestDir().resolve("build/deploy/flink/lib/jbang-udfs.jar");
     assertThat(fatJar).exists().isRegularFile();
     assertThat(Files.size(fatJar))
         .as("Fat JAR should only contain UDF classes and declared //DEPS, not the entire classpath")

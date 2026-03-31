@@ -26,23 +26,19 @@ import java.util.Map;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.images.PullPolicy;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
-@Testcontainers
 @Slf4j
-class McpValidationIT extends SqrlContainerTestBase {
+class McpValidationIT {
+
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("udf");
 
   private final ObjectMapper objectMapper = new ObjectMapper();
-
-  @Override
-  protected String getTestCaseName() {
-    return "udf";
-  }
 
   private String getMcpInspectorImage() {
     var mcpVersion = System.getProperty("mcp.inspector.version");
@@ -67,21 +63,23 @@ class McpValidationIT extends SqrlContainerTestBase {
   void givenUdfTestCase_whenMcpServerStarted_thenMcpInspectorValidatesSuccessfully()
       throws Exception {
     // Compile first
-    compileSqrlProject(testDir);
+    sqrl.compileSqrlProject();
 
     // Create server container with network alias
     var serverAlias = "sqrl-server";
-    serverContainer = createServerContainer(testDir);
-    serverContainer.withNetworkAliases(serverAlias);
-    serverContainer.start();
-    log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+    sqrl.createServerContainer();
+    sqrl.getServerContainer().withNetworkAliases(serverAlias);
+    sqrl.getServerContainer().start();
+    log.info(
+        "HTTP server started on port {}",
+        sqrl.getServerContainer().getMappedPort(SqrlContainerExtension.HTTP_SERVER_PORT));
 
     var mcpUrl = String.format("http://%s:8888/v1/mcp", serverAlias);
     log.info("Testing MCP endpoint: {}", mcpUrl);
 
     var mcpInspector =
         createMcpInspectorContainer(getMcpInspectorImage())
-            .withNetwork(sharedNetwork)
+            .withNetwork(sqrl.getNetwork())
             .withCommand(
                 "sh",
                 "-c",
@@ -131,20 +129,20 @@ class McpValidationIT extends SqrlContainerTestBase {
   void givenUdfTestCase_whenMcpServerStarted_thenDetailedProtocolValidationPasses()
       throws Exception {
     // Compile first
-    compileSqrlProject(testDir);
+    sqrl.compileSqrlProject();
 
     // Create server container with network alias
     var serverAlias = "sqrl-server";
-    serverContainer = createServerContainer(testDir);
-    serverContainer.withNetworkAliases(serverAlias);
-    serverContainer.start();
-    log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+    sqrl.createServerContainer().withNetworkAliases(serverAlias).start();
+    log.info(
+        "HTTP server started on port {}",
+        sqrl.getServerContainer().getMappedPort(SqrlContainerExtension.HTTP_SERVER_PORT));
 
     var mcpUrl = String.format("http://%s:8888/v1/mcp", serverAlias);
 
     var validatorContainer =
         createMcpInspectorContainer(getMcpInspectorImage())
-            .withNetwork(sharedNetwork)
+            .withNetwork(sqrl.getNetwork())
             .withCommand(
                 "sh",
                 "-c",
@@ -195,12 +193,13 @@ class McpValidationIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenUdfTestCase_whenUnauthenticatedMcp_thenSucceeds() {
-    compileSqrlProject(testDir);
-    startGraphQLServer(testDir);
+    sqrl.compileSqrlProject();
+    sqrl.startGraphQLServer();
 
     var mcpUrl =
         String.format(
-            "http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+            "http://localhost:%d/v1/mcp",
+            sqrl.getServerContainer().getMappedPort(SqrlContainerExtension.HTTP_SERVER_PORT));
     log.info("Testing MCP endpoint without JWT: {}", mcpUrl);
 
     // Create MCP client without authentication
@@ -260,7 +259,7 @@ class McpValidationIT extends SqrlContainerTestBase {
       client.close();
     } finally {
       // Print server logs when test fails to help debug
-      var serverLogs = serverContainer.getLogs();
+      var serverLogs = sqrl.getServerContainer().getLogs();
       log.error("=== SERVER LOGS ON MCP CLIENT ERROR ===");
       System.out.println(serverLogs);
       log.error("=== END SERVER LOGS ===");

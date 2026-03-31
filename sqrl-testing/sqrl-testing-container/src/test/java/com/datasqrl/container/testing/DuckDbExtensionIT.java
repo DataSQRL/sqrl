@@ -19,18 +19,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class DuckDbExtensionIT extends SqrlContainerTestBase {
+public class DuckDbExtensionIT {
 
-  @Override
-  protected String getTestCaseName() {
-    return "duckdb";
-  }
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("duckdb");
 
   @Test
   @SneakyThrows
   void givenUdfScript_whenCompiledAndServerStarted_thenApiRespondsCorrectly() {
-    var res = sqrlCmd(testDir, "test", "package.json");
+    var res = sqrl.sqrlCmd("test", "package.json");
 
     // Verify the expected success messages are present in the logs
     assertThat(res.logs())

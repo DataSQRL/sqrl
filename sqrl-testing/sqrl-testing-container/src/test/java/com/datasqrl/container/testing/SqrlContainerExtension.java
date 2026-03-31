@@ -21,95 +21,86 @@ import static org.assertj.core.api.SoftAssertions.assertSoftly;
 import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Consumer;
-import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.lifecycle.Startable;
 import org.testcontainers.utility.DockerImageName;
 
-@Testcontainers
 @Slf4j
-public abstract class SqrlContainerTestBase {
+public class SqrlContainerExtension
+    implements BeforeAllCallback, AfterAllCallback, BeforeEachCallback, AfterEachCallback {
 
-  protected Path testDir;
+  public static final String SQRL_CMD_IMAGE = "datasqrl/cmd";
+  public static final String SQRL_SERVER_IMAGE = "datasqrl/sqrl-server";
+  public static final String BUILD_DIR = "/build";
+  public static final int HTTP_SERVER_PORT = 8888;
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+  private final String testCaseName;
+
+  @Getter private Network network;
+  @Getter private CloseableHttpClient httpClient;
+  @Getter private Path testDir;
+  @Getter private GenericContainer<?> serverContainer;
+
+  private List<GenericContainer<?>> commandContainers = new ArrayList<>();
   private long testStartTime;
   private String currentTestName;
 
-  protected abstract String getTestCaseName();
-
-  @BeforeEach
-  void setupBeforeEach(TestInfo testInfo) {
-    currentTestName = testInfo.getDisplayName();
-    testStartTime = System.currentTimeMillis();
-    log.info(">>> Starting: {}", currentTestName);
-    testDir = itPath(getTestCaseName());
+  public SqrlContainerExtension(String testCaseName) {
+    this.testCaseName = testCaseName;
   }
 
-  @AfterEach
-  protected void commonTearDown() {
-    cleanupContainers();
-    var elapsed = System.currentTimeMillis() - testStartTime;
-    log.info("<<< Finished: {} ({}ms)", currentTestName, elapsed);
-  }
-
-  protected static final String SQRL_CMD_IMAGE = "datasqrl/cmd";
-  protected static final String SQRL_SERVER_IMAGE = "datasqrl/sqrl-server";
-  protected static final String BUILD_DIR = "/build";
-  protected static final int HTTP_SERVER_PORT = 8888;
-
-  protected static Network sharedNetwork;
-  protected static CloseableHttpClient sharedHttpClient;
-  protected static final ObjectMapper objectMapper = new ObjectMapper();
-
-  protected GenericContainer<?> cmd;
-  protected GenericContainer<?> serverContainer;
-
-  @BeforeAll
-  static void setUpSharedResources() {
-    sharedNetwork = Network.newNetwork();
+  @Override
+  public void beforeAll(ExtensionContext context) {
+    network = Network.newNetwork();
     var requestConfig =
         RequestConfig.custom()
             .setConnectTimeout(10_000)
             .setSocketTimeout(30_000)
             .setConnectionRequestTimeout(5_000)
             .build();
-    sharedHttpClient = HttpClients.custom().setDefaultRequestConfig(requestConfig).build();
+    httpClient = HttpClients.custom().setDefaultRequestConfig(requestConfig).build();
     log.info("Shared test resources initialized");
   }
 
-  @AfterAll
-  static void tearDownSharedResources() {
+  @Override
+  public void afterAll(ExtensionContext context) {
     try {
-      if (sharedHttpClient != null) {
-        sharedHttpClient.close();
+      if (httpClient != null) {
+        httpClient.close();
       }
-      if (sharedNetwork != null) {
-        sharedNetwork.close();
+      if (network != null) {
+        network.close();
       }
       log.info("Shared test resources cleaned up");
     } catch (Exception e) {
@@ -117,59 +108,94 @@ public abstract class SqrlContainerTestBase {
     }
   }
 
-  protected GenericContainer<?> createCmdContainer(Path workingDir) {
-    return createCmdContainer(workingDir, true);
+  @Override
+  public void beforeEach(ExtensionContext context) {
+    currentTestName = context.getDisplayName();
+    testStartTime = System.currentTimeMillis();
+    log.info(">>> Starting: {}", currentTestName);
+    testDir = itPath(testCaseName);
   }
 
-  protected GenericContainer<?> createCmdContainer(Path workingDir, boolean debug) {
-    assertThat(workingDir).exists().isDirectory();
+  @Override
+  public void afterEach(ExtensionContext context) {
+    cleanupContainers();
+    var elapsed = System.currentTimeMillis() - testStartTime;
+    log.info("<<< Finished: {} ({}ms)", currentTestName, elapsed);
+  }
 
-    var container =
+  public GenericContainer<?> createCmdContainer() {
+    return createCmdContainer(true);
+  }
+
+  public GenericContainer<?> createCmdContainer(boolean debug) {
+    assertThat(testDir).exists().isDirectory();
+
+    var cmd =
         new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
             .withWorkingDirectory(BUILD_DIR)
-            .withFileSystemBind(workingDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
+            .withFileSystemBind(testDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
             .withEnv("TZ", "America/Los_Angeles");
-
     if (debug) {
-      container = container.withEnv("SQRL_DEBUG", "1");
+      cmd = cmd.withEnv("SQRL_DEBUG", "1");
     }
 
-    return container;
+    commandContainers.add(cmd);
+    return cmd;
   }
 
   @SuppressWarnings("resource")
-  protected GenericContainer<?> createServerContainer(Path workingDir) {
-    var deployPlanPath = workingDir.resolve("build/deploy/plan");
+  public GenericContainer<?> createServerContainer() {
+    var deployPlanPath = testDir.resolve("build/deploy/plan");
     assertThat(deployPlanPath).exists().isDirectory();
 
-    return new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + getImageTag()))
-        .withNetwork(sharedNetwork)
-        .withExposedPorts(HTTP_SERVER_PORT)
-        .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
-        .withEnv("SQRL_DEBUG", "1")
-        .waitingFor(
-            Wait.forLogMessage(".*HTTP server listening on port 8888.*", 1)
-                .withStartupTimeout(Duration.ofSeconds(30)));
+    assertThat(serverContainer).as("serverContainer is already set.").isNull();
+    serverContainer =
+        new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + getImageTag()))
+            .withNetwork(network)
+            .withExposedPorts(HTTP_SERVER_PORT)
+            .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
+            .withEnv("SQRL_DEBUG", "1")
+            .waitingFor(
+                Wait.forLogMessage(".*HTTP server listening on port 8888.*", 1)
+                    .withStartupTimeout(Duration.ofSeconds(30)));
+
+    return serverContainer;
   }
 
-  protected void compileSqrlProject(Path workingDir) {
-    compileSqrlProject(workingDir, null);
+  public void compileSqrlProject() {
+    compileSqrlProject(null);
   }
 
-  protected void compileSqrlProject(Path workingDir, @Nullable String packageFile) {
-    sqrlCmd(workingDir, "compile", packageFile != null ? packageFile : "package.json");
+  public void compileSqrlProject(@Nullable String packageFile) {
+    var result = sqrlCmd("compile", packageFile != null ? packageFile : "package.json");
+    validatePlan(result.logs());
+    assertBuildNotOwnedByRoot(testDir, result.logs());
   }
 
-  protected ContainerResult sqrlCmd(Path workingDir, String... command) {
-    return sqrlCmd(workingDir, true, command);
+  public void compileSqrlProject(
+      @Nullable String packageFile, Consumer<GenericContainer<?>> customizer) {
+    var result =
+        sqrlCmd(customizer, true, "compile", packageFile != null ? packageFile : "package.json");
+    validatePlan(result.logs());
+    assertBuildNotOwnedByRoot(testDir, result.logs());
   }
 
-  protected ContainerResult sqrlCmd(Path workingDir, boolean debug, String... command) {
-    cmd = createCmdContainer(workingDir, debug).withCommand(command);
+  public ContainerResult sqrlCmd(String... command) {
+    return sqrlCmd(true, command);
+  }
 
-    log.info("Docker run command to reproduce:");
-    log.info(getDockerRunCommand(cmd, workingDir));
+  public ContainerResult sqrlCmd(boolean debug, String... command) {
+    return sqrlCmd(c -> {}, debug, command);
+  }
 
+  public ContainerResult sqrlCmd(
+      Consumer<GenericContainer<?>> customizer, boolean debug, String... command) {
+    var cmd = createCmdContainer(debug).withCommand(command);
+    customizer.accept(cmd);
+
+    log.info("Docker run command to reproduce cmd:\n{}", getDockerRunCommand(cmd));
+
+    commandContainers.add(cmd);
     cmd.start();
 
     // Wait for the container to finish running
@@ -177,43 +203,18 @@ public abstract class SqrlContainerTestBase {
 
     var exitCode = cmd.getCurrentContainerInfo().getState().getExitCodeLong();
     var logs = cmd.getLogs();
-    if (exitCode != 0) {
+    if (exitCode == null || exitCode != 0) {
       log.error("SQRL compilation failed with exit code {}\n{}", exitCode, logs);
       throw new ContainerError("SQRL compilation failed", exitCode, logs);
     }
 
-    log.info("SQRL script {} compiled successfully", Arrays.toString(command));
-    validatePlan(workingDir, logs);
-    assertBuildNotOwnedByRoot(testDir, logs);
+    log.info("SQRL command {} completed successfully", Arrays.toString(command));
 
     return new ContainerResult(cmd, exitCode, logs);
   }
 
-  protected record ContainerResult(GenericContainer<?> cmd, Long exitCode, String logs) {}
-
-  @Getter
-  public static class ContainerError extends RuntimeException {
-
-    private static final long serialVersionUID = -2159257606710389109L;
-
-    private final Long exitCode;
-    private final String logs;
-
-    public ContainerError(String message, Long exitCode, String logs, Throwable cause) {
-      super(message, cause);
-      this.exitCode = exitCode;
-      this.logs = logs;
-    }
-
-    public ContainerError(String message, Long exitCode, String logs) {
-      super(message);
-      this.exitCode = exitCode;
-      this.logs = logs;
-    }
-  }
-
-  private void validatePlan(Path workingDir, String logs) {
-    var planDir = workingDir.resolve("build/deploy/plan");
+  private void validatePlan(String logs) {
+    var planDir = testDir.resolve("build/deploy/plan");
     assertThat(planDir).as("Compiler output:\n%s", logs).exists().isDirectory();
 
     assertSoftly(
@@ -226,18 +227,16 @@ public abstract class SqrlContainerTestBase {
         });
   }
 
-  protected void startGraphQLServer(Path workingDir) {
-    startGraphQLServer(workingDir, c -> {});
+  public void startGraphQLServer() {
+    startGraphQLServer(c -> {});
   }
 
-  protected void startGraphQLServer(
-      Path workingDir, Consumer<GenericContainer<?>> containerCustomizer) {
-    serverContainer = createServerContainer(workingDir);
+  public void startGraphQLServer(Consumer<GenericContainer<?>> containerCustomizer) {
+    serverContainer = createServerContainer();
 
     containerCustomizer.accept(serverContainer);
 
-    log.info("Docker run command to reproduce:");
-    log.info(getDockerRunCommand(serverContainer, workingDir));
+    log.info("Docker run command to reproduce server:\n{}", getDockerRunCommand(serverContainer));
 
     try {
       serverContainer.start();
@@ -265,51 +264,33 @@ public abstract class SqrlContainerTestBase {
     }
   }
 
-  protected String getBaseUrl() {
+  public String getBaseUrl() {
     if (serverContainer == null || !serverContainer.isRunning()) {
       throw new IllegalStateException("Server container is not running");
     }
     return "http://localhost:" + serverContainer.getMappedPort(HTTP_SERVER_PORT);
   }
 
-  protected String getGraphQLEndpoint() {
+  public String getGraphQLEndpoint() {
     return getBaseUrl() + "/v1/graphql";
   }
 
-  protected String getMetricsEndpoint() {
+  public String getMetricsEndpoint() {
     return getBaseUrl() + "/metrics";
   }
 
-  protected String getHealthEndpoint() {
+  public String getHealthEndpoint() {
     return getBaseUrl() + "/health";
-  }
-
-  protected void verifyNoSlfWarnings(GenericContainer<?> container) {
-    var logs = container.getLogs();
-    var slf4jWarningPattern = Pattern.compile("(log4j:WARN|SLF4J\\(W\\)|SLF4J:WARN)");
-
-    if (slf4jWarningPattern.matcher(logs).find()) {
-      throw new AssertionError("SLF4J / log4j warnings detected in container logs: " + logs);
-    }
-  }
-
-  protected void verifyLogContains(GenericContainer<?> container, String expectedPattern) {
-    var logs = container.getLogs();
-    if (!logs.contains(expectedPattern)) {
-      throw new AssertionError(
-          "Expected log entry '" + expectedPattern + "' not found in: " + logs);
-    }
   }
 
   private String getImageTag() {
     return System.getProperty("docker.image.tag", "local");
   }
 
-  protected String getDockerRunCommand(GenericContainer<?> container, Path workingDir) {
+  public String getDockerRunCommand(GenericContainer<?> container) {
     var sb = new StringBuilder();
     sb.append("docker run -it --rm");
 
-    // Extract ports
     var exposedPorts = container.getExposedPorts();
     if (exposedPorts != null && !exposedPorts.isEmpty()) {
       for (var port : exposedPorts) {
@@ -317,12 +298,9 @@ public abstract class SqrlContainerTestBase {
       }
     }
 
-    // Extract volume binds
     var binds = container.getBinds();
     if (binds != null && !binds.isEmpty()) {
       for (var bind : binds) {
-        // Parse the bind string which should be in format "hostPath:containerPath" or
-        // "hostPath:containerPath:mode"
         var bindString = bind.getPath();
         var parts = bindString.split(":");
         if (parts.length >= 2) {
@@ -337,7 +315,6 @@ public abstract class SqrlContainerTestBase {
       }
     }
 
-    // Extract environment variables
     var env = container.getEnvMap();
     if (env != null && !env.isEmpty()) {
       for (var entry : env.entrySet()) {
@@ -345,17 +322,14 @@ public abstract class SqrlContainerTestBase {
       }
     }
 
-    // Extract network
-    var network = container.getNetwork();
-    if (network != null) {
-      sb.append(" --network ").append(network.getId());
+    var containerNetwork = container.getNetwork();
+    if (containerNetwork != null) {
+      sb.append(" --network ").append(containerNetwork.getId());
     }
 
-    // Extract image name
     var dockerImageName = container.getDockerImageName();
     sb.append(" ").append(dockerImageName);
 
-    // Extract command
     var command = container.getCommandParts();
     if (command != null) {
       for (String part : command) {
@@ -367,7 +341,7 @@ public abstract class SqrlContainerTestBase {
   }
 
   @SneakyThrows
-  protected static Path itPath(String relativePath) {
+  public static Path itPath(String relativePath) {
     var directLocalPath = Paths.get("src/test/resources", relativePath).toAbsolutePath();
     if (Files.exists(directLocalPath) && Files.isDirectory(directLocalPath)) {
       return directLocalPath.toRealPath();
@@ -385,50 +359,50 @@ public abstract class SqrlContainerTestBase {
     return integrationPath.toRealPath();
   }
 
-  protected static void assertBuildNotOwnedByRoot(Path testDir, String logs) {
+  public static void assertBuildNotOwnedByRoot(Path testDir, String logs) {
     var buildPath = testDir.resolve("build");
     assertThat(buildPath).exists();
 
     assertOwner(buildPath, logs);
   }
 
-  protected static void assertOwner(Path path, String logs) {
+  public static void assertOwner(Path path, String logs) {
     try {
       var owner = Files.getOwner(path);
       assertThat(owner.getName())
           .as("Build directory should not be owned by root user: %s\n%s", path, logs)
           .isNotEqualTo("root");
       log.debug("Build directory {} is owned by: {}", path, owner.getName());
-    } catch (Exception e) {
+    } catch (IOException e) {
       fail("Failed to check build directory ownership: " + e.getMessage(), e);
     }
   }
 
-  protected void validateBasicGraphQLResponse(HttpResponse response) throws Exception {
+  public void validateBasicGraphQLResponse(HttpResponse response) throws Exception {
     assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
 
     var responseBody = EntityUtils.toString(response.getEntity());
-    var jsonResponse = objectMapper.readTree(responseBody);
+    var jsonResponse = OBJECT_MAPPER.readTree(responseBody);
 
     assertThat(jsonResponse.has("data")).isTrue();
     assertThat(jsonResponse.get("data").has("__typename")).isTrue();
     assertThat(jsonResponse.get("data").get("__typename").asText()).isEqualTo("Query");
   }
 
-  protected void compileAndStartServer(Path testDir) {
-    compileAndStartServer(testDir, null);
+  public void compileAndStartServer() {
+    compileAndStartServer(null);
   }
 
-  protected void compileAndStartServer(Path testDir, @Nullable String packageFile) {
-    compileSqrlProject(testDir, packageFile);
-    startGraphQLServer(testDir);
+  public void compileAndStartServer(@Nullable String packageFile) {
+    compileSqrlProject(packageFile);
+    startGraphQLServer();
   }
 
-  protected HttpResponse executeGraphQLQuery(String query) throws Exception {
+  public CloseableHttpResponse executeGraphQLQuery(String query) throws Exception {
     return executeGraphQLQuery(query, null);
   }
 
-  protected HttpResponse executeGraphQLQuery(String query, String jwtToken) throws Exception {
+  public CloseableHttpResponse executeGraphQLQuery(String query, String jwtToken) throws Exception {
     var request = new HttpPost(getGraphQLEndpoint());
     request.setEntity(new StringEntity(query, ContentType.APPLICATION_JSON));
 
@@ -436,10 +410,10 @@ public abstract class SqrlContainerTestBase {
       request.setHeader("Authorization", "Bearer " + jwtToken);
     }
 
-    return sharedHttpClient.execute(request);
+    return httpClient.execute(request);
   }
 
-  protected void assertLogFiles(String logs, Path testDir) {
+  public void assertLogFiles(String logs) {
     var logsDir = testDir.resolve("build/logs");
     assertThat(logsDir).as("Logs directory should exist\n%s", logs).exists().isDirectory();
 
@@ -462,14 +436,12 @@ public abstract class SqrlContainerTestBase {
                     ? cliLogContent.substring(0, 500) + "..."
                     : cliLogContent);
 
-            // Validate that log files are not owned by root
             var cliLogOwner = Files.getOwner(cliLogFile);
             softAssertions
                 .assertThat(cliLogOwner.getName())
                 .as("CLI log file should not be owned by root\n%s", logs)
                 .isNotEqualTo("root");
 
-            // Check for service log files if they exist
             var redpandaLogFile = logsDir.resolve("redpanda.log");
             if (Files.exists(redpandaLogFile)) {
               var redpandaLogContent = Files.readString(redpandaLogFile);
@@ -502,20 +474,18 @@ public abstract class SqrlContainerTestBase {
                   .isNotEqualTo("root");
             }
 
-          } catch (Exception e) {
+          } catch (IOException e) {
             softAssertions.fail("Failed to read log files: " + e.getMessage() + "\n" + logs);
           }
         });
   }
 
-  protected void cleanupContainers() {
-    if (serverContainer != null && serverContainer.isRunning()) {
+  public void cleanupContainers() {
+    if (serverContainer != null) {
       serverContainer.stop();
       serverContainer = null;
     }
-    if (cmd != null && cmd.isRunning()) {
-      cmd.stop();
-      cmd = null;
-    }
+    commandContainers.forEach(Startable::close);
+    commandContainers = new ArrayList<>();
   }
 }

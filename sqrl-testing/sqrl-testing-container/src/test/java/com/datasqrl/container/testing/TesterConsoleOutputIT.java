@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * Integration test that verifies warnings and errors during test execution are properly surfaced in
@@ -30,19 +31,17 @@ import org.junit.jupiter.api.Test;
  * test reports, failure details) is visible to help users debug issues.
  */
 @Slf4j
-public class TesterConsoleOutputIT extends SqrlContainerTestBase {
+public class TesterConsoleOutputIT {
 
-  @Override
-  protected String getTestCaseName() {
-    return "null-timestamp";
-  }
+  @RegisterExtension
+  static SqrlContainerExtension sqrl = new SqrlContainerExtension("null-timestamp");
 
   @Test
   @SneakyThrows
   void givenNullTimestampAndPrintLogger_whenTestExecuted_thenErrorIsCapturedAndDisplayed() {
     ContainerError exception =
         (ContainerError)
-            assertThatThrownBy(() -> sqrlCmd(testDir, "test package.json".split(" ")))
+            assertThatThrownBy(() -> sqrl.sqrlCmd("test package.json".split(" ")))
                 .isInstanceOf(ContainerError.class)
                 .hasMessageContaining("SQRL compilation failed")
                 .actual();

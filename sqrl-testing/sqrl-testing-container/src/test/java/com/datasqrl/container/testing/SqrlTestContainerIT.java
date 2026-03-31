@@ -22,19 +22,17 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 @Slf4j
-public class SqrlTestContainerIT extends SqrlContainerTestBase {
+public class SqrlTestContainerIT {
 
-  @Override
-  protected String getTestCaseName() {
-    return "avro-schema";
-  }
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("avro-schema");
 
   @Test
   @SneakyThrows
   void givenAvroSchemaScript_whenTestCommandExecuted_thenSnapshotsValidateSuccessfully() {
-    var result = sqrlCmd(testDir, "test package.json".split(" "));
+    var result = sqrl.sqrlCmd("test package.json".split(" "));
 
     var logs = result.logs();
     log.info("SQRL test command executed successfully");
@@ -54,7 +52,7 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
         .doesNotContain("SLF4J: See http://www.slf4j.org/codes.html");
 
     // Validate log files are present and have content
-    assertLogFiles(logs, testDir);
+    sqrl.assertLogFiles(logs);
 
     log.info("All snapshot validations passed successfully");
   }
@@ -62,13 +60,13 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenAvroPackage_whenTestCommandExecuted_thenSnapshotsValidateSuccessfully() {
-    var snapshots = testDir.resolve("snapshots-tmp");
+    var snapshots = sqrl.getTestDir().resolve("snapshots-tmp");
     FileUtils.deleteDirectory(snapshots.toFile());
 
     // Assert that the test command throws a RuntimeException and capture the exception
     ContainerError exception =
         (ContainerError)
-            assertThatThrownBy(() -> sqrlCmd(testDir, "test package-no-snapshots.json".split(" ")))
+            assertThatThrownBy(() -> sqrl.sqrlCmd("test package-no-snapshots.json".split(" ")))
                 .isInstanceOf(ContainerError.class)
                 .hasMessageContaining("SQRL compilation failed")
                 .actual();
@@ -79,14 +77,14 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
     // Assert that the logs contain the expected error messages
     assertThat(logs).contains("Snapshot created for test:");
 
-    assertOwner(snapshots, logs);
+    SqrlContainerExtension.assertOwner(snapshots, logs);
     FileUtils.deleteDirectory(snapshots.toFile());
   }
 
   @Test
   @SneakyThrows
   void givenAvroSchemaScript_whenTestCommandExecutedWithoutDebug_thenNoBashDebugLogsPresent() {
-    var result = sqrlCmd(testDir, false, "test package.json".split(" "));
+    var result = sqrl.sqrlCmd(false, "test package.json".split(" "));
 
     var logs = result.logs();
     log.info("SQRL test command executed without DEBUG=1");
@@ -107,7 +105,7 @@ public class SqrlTestContainerIT extends SqrlContainerTestBase {
         .doesNotContain("set +x");
 
     // Validate log files are present and have content
-    assertLogFiles(logs, testDir);
+    sqrl.assertLogFiles(logs);
 
     log.info("Test completed successfully without bash debug logs");
   }
