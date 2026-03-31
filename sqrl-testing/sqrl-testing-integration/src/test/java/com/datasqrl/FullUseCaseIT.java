@@ -26,7 +26,6 @@ import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.flink.test.junit5.MiniClusterExtension;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -47,7 +46,6 @@ import org.junit.jupiter.params.support.ParameterDeclarations;
 @ExtendWith({
   // Keep sharding first so skipped invocations do not trigger use-case setup.
   TestShardingExtension.class,
-  MiniClusterExtension.class,
   DuckdbTestExtension.class,
   IcebergTestExtension.class,
   SnowflakeTestExtension.class
