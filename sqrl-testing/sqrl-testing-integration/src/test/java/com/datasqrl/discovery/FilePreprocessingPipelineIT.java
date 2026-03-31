@@ -15,9 +15,10 @@
  */
 package com.datasqrl.discovery;
 
+import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.AbstractAssetSnapshotTest;
+import com.datasqrl.SnapshotDirectoryExtension;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.FilePreprocessingPipeline;
@@ -37,21 +38,23 @@ import java.util.zip.GZIPInputStream;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-class FilePreprocessingPipelineIT extends AbstractAssetSnapshotTest {
+class FilePreprocessingPipelineIT {
 
   private static final Path FILES_DIR = getResourcesDirectory("preprocessor-test-project");
 
+  @RegisterExtension
+  final SnapshotDirectoryExtension snapshotExtension =
+      new SnapshotDirectoryExtension(Path.of("build"));
+
   private ErrorCollector errorCollector;
   private BuildPath buildPath;
-
-  public FilePreprocessingPipelineIT() {
-    super(FILES_DIR.resolve("build"));
-    super.buildDir = super.outputDir;
-  }
+  private Path outputDir;
 
   @BeforeEach
   void setup() {
+    outputDir = snapshotExtension.getOutputDir();
     errorCollector = ErrorCollector.root();
     buildPath = new BuildPath(outputDir, outputDir);
   }

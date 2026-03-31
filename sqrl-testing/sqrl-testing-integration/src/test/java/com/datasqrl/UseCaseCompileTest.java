@@ -15,11 +15,13 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
+
 import com.datasqrl.util.ArgumentsProviders;
 import java.nio.file.Path;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -32,23 +34,34 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  * `-warn` are expected to produce warnings which are snapshotted. SQRL scripts ending in -disabled`
  * are ignored.
  */
-public class UseCaseCompileTest extends AbstractUseCaseTest {
+public class UseCaseCompileTest {
 
   private static final Path USECASE_DIR = getResourcesDirectory("usecases");
 
-  @Override
-  @SneakyThrows
+  @RegisterExtension
+  final SnapshotDirectoryExtension snapshotExtension = new SnapshotDirectoryExtension();
+
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
   void testUseCase(Path packageFile) {
-    super.testUseCase(packageFile);
+    UseCaseTestHelper.testUseCase(
+        snapshotExtension,
+        getClass(),
+        packageFile,
+        UseCaseTestHelper.defaultBuildDirFilter(),
+        UseCaseTestHelper.defaultPlanDirFilter());
   }
 
   @Test
   @Disabled("Intended for manual usage")
   void runTestCaseByName() {
     var pkg = USECASE_DIR.resolve("multi-batch-compile").resolve("package.json");
-    super.testUseCase(pkg);
+    UseCaseTestHelper.testUseCase(
+        snapshotExtension,
+        getClass(),
+        pkg,
+        UseCaseTestHelper.defaultBuildDirFilter(),
+        UseCaseTestHelper.defaultPlanDirFilter());
   }
 
   static class UseCaseFiles extends ArgumentsProviders.PackageProvider {

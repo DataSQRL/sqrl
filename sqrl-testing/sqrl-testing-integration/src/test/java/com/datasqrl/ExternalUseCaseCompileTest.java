@@ -18,12 +18,21 @@ package com.datasqrl;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 @Disabled
-public class ExternalUseCaseCompileTest extends AbstractUseCaseTest {
+public class ExternalUseCaseCompileTest {
+
+  @RegisterExtension
+  final SnapshotDirectoryExtension snapshotExtension = new SnapshotDirectoryExtension();
 
   @Test
   public void testIndividual() {
-    super.testUseCase(Path.of("/your/path/package.json"));
+    UseCaseTestHelper.testUseCase(
+        snapshotExtension,
+        getClass(),
+        Path.of("/your/path/package.json"),
+        UseCaseTestHelper.defaultBuildDirFilter(),
+        UseCaseTestHelper.defaultPlanDirFilter());
   }
 }

@@ -15,10 +15,10 @@
  */
 package com.datasqrl.discovery;
 
-import static com.datasqrl.AbstractAssetSnapshotTest.getDisplayName;
+import static com.datasqrl.SnapshotTestSupport.getDisplayName;
+import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.AbstractAssetSnapshotTest;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
@@ -39,8 +39,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class FlexibleSchemaDiscoveryTest {
 
-  public static final Path FILES_DIR =
-      AbstractAssetSnapshotTest.getResourcesDirectory("discoveryfiles");
+  public static final Path FILES_DIR = getResourcesDirectory("discoveryfiles");
 
   ErrorCollector errors = ErrorCollector.root();
   SchemaLoader schemaLoader;

@@ -15,14 +15,18 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.SnapshotTestSupport.getDisplayName;
+import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.SnapshotTestSupport.TestNameModifier;
 import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Path;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
@@ -35,39 +39,39 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  * `-warn` are expected to produce warnings which are snapshotted. SQRL scripts ending in -disabled`
  * are ignored.
  */
-public class DAGPlannerTest extends AbstractAssetSnapshotTest {
+public class DAGPlannerTest {
 
   public static final Path SCRIPT_DIR = getResourcesDirectory("dagplanner");
 
-  protected DAGPlannerTest() {
-    super(SCRIPT_DIR.resolve("plan-output"));
-  }
+  @RegisterExtension
+  final SnapshotDirectoryExtension snapshotExtension =
+      new SnapshotDirectoryExtension(Path.of("plan-output"));
 
   @ParameterizedTest
   @ArgumentsSource(DagPlannerSQRLFiles.class)
   void scripts(Path script) {
     assertThat(script).isRegularFile();
-    writeTempPackage(script, "__SQRL_SCRIPT__");
+    snapshotExtension.writeTempPackage(script, "__SQRL_SCRIPT__");
 
     var testModifier = TestNameModifier.of(script);
     var expectFailure = testModifier == TestNameModifier.fail;
     var printMessages =
         testModifier == TestNameModifier.fail || testModifier == TestNameModifier.warn;
-    this.snapshot = Snapshot.of(getDisplayName(script), getClass());
+    snapshotExtension.setSnapshot(Snapshot.of(getDisplayName(script), getClass()));
     var hook =
-        execute(
+        snapshotExtension.execute(
             SCRIPT_DIR,
             "compile",
-            tempPackage.getFileName().toString(),
+            snapshotExtension.getTempPackage().getFileName().toString(),
             "-t",
-            outputDir.getFileName().toString());
+            snapshotExtension.getOutputDir().toAbsolutePath().toString());
 
     assertThat(hook.isFailed()).as(hook.getMessages()).isEqualTo(expectFailure);
 
     if (printMessages) {
-      createMessageSnapshot(hook.getMessages());
+      snapshotExtension.createMessageSnapshot(hook.getMessages());
     } else {
-      createSnapshot();
+      snapshotExtension.createSnapshot(getBuildDirFilter(), getOutputDirFilter(), path -> true);
     }
   }
 
@@ -78,8 +82,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
     scripts(script);
   }
 
-  @Override
-  public Predicate<Path> getBuildDirFilter() {
+  private Predicate<Path> getBuildDirFilter() {
     return file -> {
       switch (file.getFileName().toString()) {
         case "pipeline_explain.txt":
@@ -89,8 +92,7 @@ public class DAGPlannerTest extends AbstractAssetSnapshotTest {
     };
   }
 
-  @Override
-  public Predicate<Path> getOutputDirFilter() {
+  private Predicate<Path> getOutputDirFilter() {
     return path -> {
       if (path.getFileName().toString().equals("flink-sql-no-functions.sql")) {
         return true;

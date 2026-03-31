@@ -15,6 +15,7 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -32,6 +33,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.table.api.ExplainFormat;
@@ -46,19 +48,16 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.support.ParameterDeclarations;
 
-class PredicatePushdownTest extends AbstractAssetSnapshotTest {
+class PredicatePushdownTest {
 
   public static final Path SCRIPT_DIR = getResourcesDirectory("predicate-pushdown");
 
   @TempDir private Path tempDir;
 
-  PredicatePushdownTest() {
-    super(null);
-  }
+  private SnapshotTest.Snapshot snapshot;
 
   @AfterEach
-  @Override
-  public void cleanup() throws IOException {
+  void cleanup() throws IOException {
     // Force GC to release file handles held by Flink/Iceberg
     System.gc();
     // Give Flink/Iceberg time to release file handles before temp dir cleanup
@@ -67,8 +66,10 @@ class PredicatePushdownTest extends AbstractAssetSnapshotTest {
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
     }
-    super.cleanup();
-    clearDir(Path.of("/tmp", "pp-tests"));
+    var ppTestsDir = Path.of("/tmp", "pp-tests");
+    if (ppTestsDir.toFile().isDirectory()) {
+      FileUtils.deleteDirectory(ppTestsDir.toFile());
+    }
   }
 
   @ParameterizedTest
@@ -117,7 +118,7 @@ class PredicatePushdownTest extends AbstractAssetSnapshotTest {
         new SnapshotTest.Snapshot(
             PredicatePushdownTest.class.getName(), snapshotName, new StringBuilder(planText));
 
-    createSnapshot();
+    snapshot.createOrValidate();
   }
 
   private List<ParsedObject<String>> parseStatements(Path sqlFile) throws Exception {

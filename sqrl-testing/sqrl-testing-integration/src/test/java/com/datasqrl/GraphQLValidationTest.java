@@ -15,33 +15,42 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.SnapshotTestSupport.getDisplayName;
+import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
+
 import com.datasqrl.compile.DagWriter;
 import com.datasqrl.util.ArgumentsProviders;
 import java.nio.file.Path;
 import java.util.function.Predicate;
-import lombok.SneakyThrows;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /**
  * Validates the schemas based on comprehensiveTest.sqrl script and snapshots the deployment assets
  */
-public class GraphQLValidationTest extends AbstractUseCaseTest {
+public class GraphQLValidationTest {
 
   private static final Path USECASE_DIR = getResourcesDirectory("graphql-validation");
 
-  @Override
-  @SneakyThrows
+  @RegisterExtension
+  final SnapshotDirectoryExtension snapshotExtension = new SnapshotDirectoryExtension();
+
   @ParameterizedTest
   @ArgumentsSource(GraphQLSchemas.class)
   void testUseCase(Path graphQLSchema) {
-    writeTempPackage(graphQLSchema, "__GRAPHQL_SCHEMA__");
+    snapshotExtension.writeTempPackage(graphQLSchema, "__GRAPHQL_SCHEMA__");
 
-    super.testUseCase(tempPackage, getDisplayName(graphQLSchema));
+    UseCaseTestHelper.testUseCase(
+        snapshotExtension,
+        getClass(),
+        snapshotExtension.getTempPackage(),
+        getDisplayName(graphQLSchema),
+        getBuildDirFilter(),
+        UseCaseTestHelper.defaultPlanDirFilter());
   }
 
-  @Override
-  public Predicate<Path> getBuildDirFilter() {
+  private Predicate<Path> getBuildDirFilter() {
     return file -> {
       var fileName = file.getFileName().toString();
       return fileName.equals(DagWriter.EXPLAIN_TEXT_FILENAME) || fileName.endsWith(".graphqls");
