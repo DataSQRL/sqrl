@@ -44,8 +44,8 @@ public class DAGPlannerTest {
   public static final Path SCRIPT_DIR = getResourcesDirectory("dagplanner");
 
   @RegisterExtension
-  final SnapshotDirectoryExtension snapshotExtension =
-      new SnapshotDirectoryExtension(Path.of("plan-output"));
+  final CliCompileTestExtension snapshotExtension =
+      new CliCompileTestExtension(Path.of("plan-output"));
 
   @ParameterizedTest
   @ArgumentsSource(DagPlannerSQRLFiles.class)
@@ -71,7 +71,7 @@ public class DAGPlannerTest {
     if (printMessages) {
       snapshotExtension.createMessageSnapshot(hook.getMessages());
     } else {
-      snapshotExtension.createSnapshot(getBuildDirFilter(), getOutputDirFilter(), path -> true);
+      snapshotExtension.createSnapshot(getBuildDirFilter(), getOutputDirFilter(), planDir -> true);
     }
   }
 

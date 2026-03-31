@@ -24,7 +24,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 public class ExternalUseCaseCompileTest {
 
   @RegisterExtension
-  final SnapshotDirectoryExtension snapshotExtension = new SnapshotDirectoryExtension();
+  final CliCompileTestExtension snapshotExtension = new CliCompileTestExtension();
 
   @Test
   public void testIndividual() {

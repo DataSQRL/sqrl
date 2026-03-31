@@ -39,7 +39,7 @@ public class UseCaseCompileTest {
   private static final Path USECASE_DIR = getResourcesDirectory("usecases");
 
   @RegisterExtension
-  final SnapshotDirectoryExtension snapshotExtension = new SnapshotDirectoryExtension();
+  final CliCompileTestExtension snapshotExtension = new CliCompileTestExtension();
 
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)

@@ -62,7 +62,7 @@ public final class UseCaseTestHelper {
 
   /** Compiles the given package file and creates/validates a snapshot of the results. */
   public static void testUseCase(
-      SnapshotDirectoryExtension ext,
+      CliCompileTestExtension ext,
       Class<?> testClass,
       Path packageFile,
       Predicate<Path> buildDirFilter,
@@ -75,7 +75,7 @@ public final class UseCaseTestHelper {
    * testName} is null, one is derived from the package file path.
    */
   public static void testUseCase(
-      SnapshotDirectoryExtension ext,
+      CliCompileTestExtension ext,
       Class<?> testClass,
       Path packageFile,
       @Nullable String testName,
@@ -111,7 +111,7 @@ public final class UseCaseTestHelper {
    * message (if it failed).
    */
   public static void snapshot(
-      SnapshotDirectoryExtension ext,
+      CliCompileTestExtension ext,
       Class<?> testClass,
       String testname,
       AssertStatusHook hook,
@@ -121,7 +121,7 @@ public final class UseCaseTestHelper {
     if (hook.isFailed()) {
       ext.createMessageSnapshot(hook.getMessages());
     } else {
-      ext.createSnapshot(buildDirFilter, path -> false, planDirFilter);
+      ext.createSnapshot(buildDirFilter, outputDir -> false, planDirFilter);
     }
   }
 }

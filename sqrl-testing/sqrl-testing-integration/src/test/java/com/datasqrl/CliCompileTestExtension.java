@@ -40,7 +40,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
  * directory lifecycle (creation before each test, cleanup after each test), CLI execution, temp
  * package file management, and snapshot assembly.
  */
-public class SnapshotDirectoryExtension implements BeforeEachCallback, AfterEachCallback {
+public class CliCompileTestExtension implements BeforeEachCallback, AfterEachCallback {
 
   private final @Nullable Path outputDirName;
 
@@ -52,7 +52,7 @@ public class SnapshotDirectoryExtension implements BeforeEachCallback, AfterEach
   private Path tempRoot;
 
   /** Creates an extension with no separate output directory. */
-  public SnapshotDirectoryExtension() {
+  public CliCompileTestExtension() {
     this(null);
   }
 
@@ -62,7 +62,7 @@ public class SnapshotDirectoryExtension implements BeforeEachCallback, AfterEach
    *
    * @param outputDirName relative name for the output directory, or null for no output directory
    */
-  public SnapshotDirectoryExtension(@Nullable Path outputDirName) {
+  public CliCompileTestExtension(@Nullable Path outputDirName) {
     this.outputDirName = outputDirName;
   }
 

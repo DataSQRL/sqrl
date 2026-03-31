@@ -18,7 +18,7 @@ package com.datasqrl.discovery;
 import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.SnapshotDirectoryExtension;
+import com.datasqrl.CliCompileTestExtension;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.FilePreprocessingPipeline;
@@ -45,8 +45,7 @@ class FilePreprocessingPipelineIT {
   private static final Path FILES_DIR = getResourcesDirectory("preprocessor-test-project");
 
   @RegisterExtension
-  final SnapshotDirectoryExtension snapshotExtension =
-      new SnapshotDirectoryExtension(Path.of("build"));
+  final CliCompileTestExtension snapshotExtension = new CliCompileTestExtension(Path.of("build"));
 
   private ErrorCollector errorCollector;
   private BuildPath buildPath;

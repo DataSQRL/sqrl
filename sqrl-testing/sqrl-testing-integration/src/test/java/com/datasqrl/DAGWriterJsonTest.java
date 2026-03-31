@@ -37,7 +37,7 @@ public class DAGWriterJsonTest {
           getResourcesDirectory("usecases/analytics-only"));
 
   @RegisterExtension
-  final SnapshotDirectoryExtension snapshotExtension = new SnapshotDirectoryExtension();
+  final CliCompileTestExtension snapshotExtension = new CliCompileTestExtension();
 
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)

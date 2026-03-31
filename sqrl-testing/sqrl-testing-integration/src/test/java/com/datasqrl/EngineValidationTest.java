@@ -30,8 +30,8 @@ class EngineValidationTest {
   public static final Path PROJECT_DIR = getResourcesDirectory("engine-validation");
 
   @RegisterExtension
-  final SnapshotDirectoryExtension snapshotExtension =
-      new SnapshotDirectoryExtension(Path.of("plan-output"));
+  final CliCompileTestExtension snapshotExtension =
+      new CliCompileTestExtension(Path.of("plan-output"));
 
   @Test
   void testInvalidEngine() {
@@ -54,7 +54,7 @@ class EngineValidationTest {
     if (printMessages) {
       snapshotExtension.createMessageSnapshot(hook.getMessages());
     } else {
-      snapshotExtension.createSnapshot(path -> false, path -> false, path -> true);
+      snapshotExtension.createSnapshot(buildDir -> false, outputDir -> false, planDir -> true);
     }
   }
 }

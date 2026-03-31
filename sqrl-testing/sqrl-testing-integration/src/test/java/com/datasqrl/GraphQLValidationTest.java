@@ -34,7 +34,7 @@ public class GraphQLValidationTest {
   private static final Path USECASE_DIR = getResourcesDirectory("graphql-validation");
 
   @RegisterExtension
-  final SnapshotDirectoryExtension snapshotExtension = new SnapshotDirectoryExtension();
+  final CliCompileTestExtension snapshotExtension = new CliCompileTestExtension();
 
   @ParameterizedTest
   @ArgumentsSource(GraphQLSchemas.class)
