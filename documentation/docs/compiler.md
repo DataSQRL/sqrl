@@ -238,7 +238,7 @@ services by your preferred cloud provider.
 
 ## Test Command
 
-The test command compiles and runs the data pipeline, then executes the provided test API queries and API endpoints
+The `test` command compiles and runs the data pipeline, then executes the provided test API queries and API endpoints
 for all tables annotated with `/*+ test */` to snapshot the results.
 
 When you first run the test command or add additional test cases, it will create the snapshots and fail.
@@ -287,24 +287,26 @@ Subscriptions can only be tested in conjunction with mutations at this time.
 
 ## Exec Command
 
-The exec command executes an already compiled SQRL project using its existing build artifacts, without recompiling.
+The `exec` command executes an already compiled SQRL project using its existing build artifacts, without recompiling.
 This is useful when you want to run a previously compiled pipeline.
 
 ```bash
 run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/build datasqrl/cmd exec -h
 ```
 
+:::warning
+Be aware that `exec` does not apply all run-specific Flink configuration that we previously described at [run command](#run-command).
+It only sets `execution.target` to `local` if it is missing to be able to deploy, but other than that takes the configuration from the `build/deploy` folder as is.
+:::
+
 ```
-Usage: sqrl exec [-BhV] [-t=<targetFolder>] [<packageFiles>...]
+Usage: sqrl exec [-hV] [-t=<targetFolder>]
 Executes an already compiled SQRL script using its existing build artifacts.
-      [<packageFiles>...]   Package configuration file(s) of the project.
-                              Default: "package.json".
-  -B, --batch-output        Run in batch output mode (disables colored output).
-  -h, --help                Show this help message and exit.
+  -h, --help      Show this help message and exit.
   -t, --target=<targetFolder>
-                            Target folder for deployment artifacts and plans.
-                              Default: "build/deploy".
-  -V, --version             Print version information and exit.
+                  Target folder for deployment artifacts and plans. Default:
+                    "build/deploy".
+  -V, --version   Print version information and exit.
 ```
 
 ### Example

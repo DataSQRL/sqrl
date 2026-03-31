@@ -19,6 +19,10 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigLoaderUtils;
+import java.io.IOException;
+import java.nio.file.Path;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.DeploymentOptions;
 import picocli.CommandLine.Command;
 
 @Command(
@@ -26,7 +30,7 @@ import picocli.CommandLine.Command;
     description = "Executes an already compiled SQRL script using its existing build artifacts.",
     mixinStandardHelpOptions = true,
     versionProvider = CliVersionProvider.class)
-public class ExecCmd extends BasePackageConfCmd {
+public class ExecCmd extends BaseOsProcessManagerCmd {
 
   @Override
   protected void runInternal(ErrorCollector errors) throws Exception {
@@ -38,9 +42,23 @@ public class ExecCmd extends BasePackageConfCmd {
 
     var env = GlobalEnvironmentStore.getAll();
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
-    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+    var flinkConfig = getFlinkConfig(planDir);
 
     var sqrlRun = DatasqrlRun.blocking(planDir, sqrlConfig, flinkConfig, env);
     sqrlRun.run();
+  }
+
+  /**
+   * Loads the Flink configuration from the plan directory. If no deployment target is configured,
+   * defaults to local attached execution.
+   */
+  private Configuration getFlinkConfig(Path planDir) throws IOException {
+    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+    if (!flinkConfig.contains(DeploymentOptions.TARGET)) {
+      flinkConfig.set(DeploymentOptions.TARGET, "local");
+      flinkConfig.set(DeploymentOptions.ATTACHED, true);
+    }
+
+    return flinkConfig;
   }
 }

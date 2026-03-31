@@ -18,8 +18,6 @@ package com.datasqrl.cli;
 import com.datasqrl.cli.output.DefaultOutputFormatter;
 import com.datasqrl.cli.output.NoOutputFormatter;
 import com.datasqrl.cli.output.OutputFormatter;
-import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.util.OsProcessManager;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -27,10 +25,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-public abstract class BasePackageConfCmd extends BaseCmd {
-
-  protected static final Path DEFAULT_TARGET =
-      Path.of(SqrlConstants.BUILD_DIR_NAME, SqrlConstants.DEPLOY_DIR_NAME);
+public abstract class BasePackageConfCmd extends BaseOsProcessManagerCmd {
 
   @Parameters(
       arity = "0..*",
@@ -39,37 +34,13 @@ public abstract class BasePackageConfCmd extends BaseCmd {
   protected List<Path> packageFiles = Collections.emptyList();
 
   @Option(
-      names = {"-t", "--target"},
-      description = "Target folder for deployment artifacts and plans. Default: \"build/deploy\".")
-  protected Path targetFolder = DEFAULT_TARGET;
-
-  @Option(
       names = {"-B", "--batch-output"},
       description = "Run in batch output mode (disables colored output).")
   protected boolean batchMode = false;
-
-  @Override
-  protected void teardown() {
-    if (!cli.internalTestExec) {
-      getOsProcessManager().teardown(getBuildDir());
-    }
-  }
 
   protected OutputFormatter getOutputFormatter() {
     return cli.internalTestExec
         ? new NoOutputFormatter()
         : new DefaultOutputFormatter(cli.rootDir, batchMode);
-  }
-
-  protected OsProcessManager getOsProcessManager() {
-    return new OsProcessManager(System.getenv());
-  }
-
-  protected Path getTargetFolder() {
-    if (targetFolder.isAbsolute()) {
-      return targetFolder;
-    }
-
-    return cli.rootDir.resolve(targetFolder);
   }
 }
