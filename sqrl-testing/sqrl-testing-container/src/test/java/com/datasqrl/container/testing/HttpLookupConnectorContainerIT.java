@@ -21,22 +21,31 @@ import static org.awaitility.Awaitility.await;
 import java.time.Duration;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 @Slf4j
-public class HttpLookupConnectorContainerIT extends SqrlContainerTestBase {
+public class HttpLookupConnectorContainerIT {
+
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("http-lookup");
 
   private static final String HTTP_LOOKUP_MOCK_ALIAS = "http-lookup-mock";
   private static final int HTTP_LOOKUP_MOCK_PORT = 18080;
 
   private GenericContainer<?> httpLookupMock;
 
-  @Override
-  protected String getTestCaseName() {
-    return "http-lookup";
+  @AfterEach
+  void tearDown() {
+    sqrl.cleanupContainers();
+
+    if (httpLookupMock != null && httpLookupMock.isRunning()) {
+      httpLookupMock.stop();
+      httpLookupMock = null;
+    }
   }
 
   @Test
@@ -44,14 +53,14 @@ public class HttpLookupConnectorContainerIT extends SqrlContainerTestBase {
   void givenSqrlWithHttpLookup_whenRun_thenHttpLookupInvokesMockServer() {
     startHttpLookupMock();
 
-    cmd =
-        createCmdContainer(testDir)
-            .withNetwork(sharedNetwork)
+    var cmd =
+        sqrl.createCmdContainer()
+            .withNetwork(sqrl.getNetwork())
             .withCommand("test", "package.json")
-            .withExposedPorts(HTTP_SERVER_PORT)
+            .withExposedPorts(SqrlContainerExtension.HTTP_SERVER_PORT)
             .waitingFor(
                 Wait.forHttp("/health")
-                    .forPort(HTTP_SERVER_PORT)
+                    .forPort(SqrlContainerExtension.HTTP_SERVER_PORT)
                     .forStatusCode(204)
                     .withStartupTimeout(Duration.ofMinutes(3)));
 
@@ -112,22 +121,12 @@ public class HttpLookupConnectorContainerIT extends SqrlContainerTestBase {
 
     httpLookupMock =
         new GenericContainer<>(DockerImageName.parse("python:3.12-alpine"))
-            .withNetwork(sharedNetwork)
+            .withNetwork(sqrl.getNetwork())
             .withNetworkAliases(HTTP_LOOKUP_MOCK_ALIAS)
             .withExposedPorts(HTTP_LOOKUP_MOCK_PORT)
             .withCommand("python", "-u", "-c", python)
             .waitingFor(Wait.forListeningPort().withStartupTimeout(Duration.ofSeconds(30)));
 
     httpLookupMock.start();
-  }
-
-  @Override
-  protected void cleanupContainers() {
-    super.cleanupContainers();
-
-    if (httpLookupMock != null && httpLookupMock.isRunning()) {
-      httpLookupMock.stop();
-      httpLookupMock = null;
-    }
   }
 }

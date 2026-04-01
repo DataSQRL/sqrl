@@ -21,66 +21,74 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_HOST;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
-import java.nio.file.Path;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Objects;
 import javax.annotation.Nullable;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 
-/**
- * Abstract base class for container tests that require a PostgreSQL database. Extends {@link
- * SqrlContainerTestBase} and adds PostgreSQL container management.
- */
 @Slf4j
-public abstract class SqrlWithPostgresContainerTestBase extends SqrlContainerTestBase {
+public class PostgresContainerExtension implements AfterEachCallback {
 
-  protected PostgreSQLContainer postgresql;
+  private final SqrlContainerExtension sqrl;
+  private final StatementConsumer schemaInitializer;
 
-  /**
-   * Abstract method that subclasses must implement to create and populate their specific test
-   * tables in the PostgreSQL database.
-   */
-  protected abstract void executeStatements(Statement stmt) throws SQLException;
+  @Getter private PostgreSQLContainer postgresql;
 
-  /**
-   * Starts the PostgreSQL container if not already running.
-   *
-   * <p>After starting the container, calls {@link #executeStatements(Statement)} to initialize the
-   * database schema.
-   */
+  @FunctionalInterface
+  public interface StatementConsumer {
+    void accept(Statement stmt) throws SQLException;
+  }
+
+  public PostgresContainerExtension(
+      SqrlContainerExtension sqrl, StatementConsumer schemaInitializer) {
+    this.sqrl = Objects.requireNonNull(sqrl);
+    this.schemaInitializer = Objects.requireNonNull(schemaInitializer);
+  }
+
   @SneakyThrows
-  protected void startPostgreSQLContainer() {
+  public void startPostgreSQLContainer() {
     if (postgresql == null) {
+      var network = sqrl.getNetwork();
+      if (network == null) {
+        throw new IllegalStateException(
+            "SqrlContainerExtension must be declared before PostgresContainerExtension "
+                + "so that the shared Docker network is initialized before Postgres starts.");
+      }
       postgresql =
-          new PostgreSQLContainer("postgres:17")
+          new PostgreSQLContainer(DockerImageName.parse("postgres:17"))
               .withDatabaseName("datasqrl")
               .withUsername("datasqrl")
               .withPassword("password")
-              .withNetwork(sharedNetwork)
+              .withNetwork(network)
               .withNetworkAliases("postgresql");
       postgresql.start();
       log.info("PostgreSQL container started on port {}", postgresql.getMappedPort(5432));
 
       try (var connection = postgresql.createConnection("")) {
         try (var stmt = connection.createStatement()) {
-          executeStatements(stmt);
+          schemaInitializer.accept(stmt);
         }
       }
+      log.info("Schema initialized");
     }
   }
 
-  protected void compileAndStartServerWithDatabase(Path workingDir) {
-    compileAndStartServerWithDatabase(workingDir, null);
+  public void compileAndStartServerWithDatabase() {
+    compileAndStartServerWithDatabase(null);
   }
 
-  protected void compileAndStartServerWithDatabase(Path workingDir, @Nullable String packageFile) {
+  public void compileAndStartServerWithDatabase(@Nullable String packageFile) {
     startPostgreSQLContainer();
-    compileSqrlProject(workingDir, packageFile);
+    sqrl.compileSqrlProject(packageFile);
 
-    startGraphQLServer(
-        workingDir,
+    sqrl.startGraphQLServer(
         container ->
             container
                 .withEnv(POSTGRES_HOST, "postgresql")
@@ -91,8 +99,7 @@ public abstract class SqrlWithPostgresContainerTestBase extends SqrlContainerTes
   }
 
   @Override
-  protected void commonTearDown() {
-    super.commonTearDown();
+  public void afterEach(ExtensionContext context) {
     if (postgresql != null) {
       postgresql.stop();
       postgresql = null;

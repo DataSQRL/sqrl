@@ -24,18 +24,23 @@ import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import java.time.Duration;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.MinIOContainer;
 
-public class S3ContainerIT extends SqrlContainerTestBase {
+public class S3ContainerIT {
+
+  @RegisterExtension
+  static SqrlContainerExtension sqrl = new SqrlContainerExtension("seedshop-tutorial");
 
   private static final String BUCKET_NAME = "test";
   private static final String CRED = "minioadmin";
 
   private final MinIOContainer minioContainer =
       new MinIOContainer("minio/minio:RELEASE.2023-12-20T01-00-02Z")
-          .withNetwork(sharedNetwork)
+          .withNetwork(sqrl.getNetwork())
           .withNetworkAliases("minio")
           .withUserName(CRED)
           .withPassword(CRED)
@@ -64,9 +69,9 @@ public class S3ContainerIT extends SqrlContainerTestBase {
     s3Client.createBucket(BUCKET_NAME);
   }
 
-  @Override
-  protected void cleanupContainers() {
-    super.cleanupContainers();
+  @AfterEach
+  void tearDown() {
+    sqrl.cleanupContainers();
 
     if (s3Client != null) {
       s3Client.shutdown();
@@ -77,20 +82,14 @@ public class S3ContainerIT extends SqrlContainerTestBase {
     }
   }
 
-  @Override
-  protected String getTestCaseName() {
-    return "seedshop-tutorial";
-  }
-
   @Test
   void test() {
-    cmd =
-        createCmdContainer(testDir)
-            .withNetwork(sharedNetwork)
+    var cmd =
+        sqrl.createCmdContainer()
+            .withNetwork(sqrl.getNetwork())
             .withEnv("AWS_ACCESS_KEY_ID", CRED)
             .withEnv("AWS_SECRET_KEY", CRED)
             .withCommand("test", "package-s3.json");
-
     cmd.start();
 
     await().atMost(Duration.ofSeconds(90)).until(() -> !cmd.isRunning());
