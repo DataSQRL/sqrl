@@ -15,16 +15,19 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
+
 import com.datasqrl.compile.DagWriter;
 import com.datasqrl.util.ArgumentsProviders;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.function.Predicate;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 
 /** Creates and snapshots a DAG plan and complete script printout for a few use cases */
-public class DAGWriterJsonTest extends AbstractUseCaseTest {
+public class DAGWriterJsonTest {
 
   public static final List<Path> USECASE_DIRS =
       List.of(
@@ -33,15 +36,17 @@ public class DAGWriterJsonTest extends AbstractUseCaseTest {
           getResourcesDirectory("usecases/multi-batch-compile"),
           getResourcesDirectory("usecases/analytics-only"));
 
-  @Override
+  @RegisterExtension
+  final CliCompileTestExtension snapshotExtension = new CliCompileTestExtension();
+
   @ParameterizedTest
   @ArgumentsSource(UseCaseFiles.class)
   void testUseCase(Path packageFile) {
-    super.testUseCase(packageFile);
+    UseCaseTestHelper.testUseCase(
+        snapshotExtension, getClass(), packageFile, getBuildDirFilter(), getPlanDirFilter());
   }
 
-  @Override
-  public Predicate<Path> getBuildDirFilter() {
+  private Predicate<Path> getBuildDirFilter() {
     return path -> {
       var fileName = path.getFileName().toString();
       return fileName.endsWith(DagWriter.EXPLAIN_JSON_FILENAME)
@@ -49,8 +54,7 @@ public class DAGWriterJsonTest extends AbstractUseCaseTest {
     };
   }
 
-  @Override
-  public Predicate<Path> getPlanDirFilter() {
+  private Predicate<Path> getPlanDirFilter() {
     return path -> false;
   }
 
