@@ -15,7 +15,7 @@
  */
 package com.datasqrl;
 
-import com.datasqrl.AbstractAssetSnapshotTest.TestNameModifier;
+import com.datasqrl.SnapshotTestSupport.TestNameModifier;
 import com.datasqrl.tests.DuckdbTestExtension;
 import com.datasqrl.tests.IcebergTestExtension;
 import com.datasqrl.tests.SnowflakeTestExtension;
