@@ -44,9 +44,17 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 @Slf4j
-public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
+public class JwtContainerIT {
+
+  @RegisterExtension
+  static SqrlContainerExtension sqrl = new SqrlContainerExtension("jwt-authorized");
+
+  @RegisterExtension
+  static PostgresContainerExtension postgres =
+      new PostgresContainerExtension(sqrl, JwtContainerIT::executeStatements);
 
   // Response types for REST endpoints
   static class MyTableItem {
@@ -67,13 +75,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
     MyTableResponse getAuthMyTableWithAuth(@Param("token") String token, @Param("limit") int limit);
   }
 
-  @Override
-  protected String getTestCaseName() {
-    return "jwt-authorized";
-  }
-
-  @Override
-  protected void executeStatements(Statement stmt) throws SQLException {
+  private static void executeStatements(Statement stmt) throws SQLException {
     // Create and populate tables as defined in jwt-authorized-base.sqrl
 
     // Create MyTable and populate with values 1-10
@@ -91,100 +93,97 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenUnauthenticatedGraphQL_thenReturns401() {
-    compileAndStartServer(testDir, "package-base.json");
+    sqrl.compileAndStartServer("package-base.json");
 
-    var response = executeGraphQLQuery("{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}");
-
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
+    try (var response =
+        sqrl.executeGraphQLQuery("{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}")) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
+    }
   }
 
   @Test
   @SneakyThrows
   void givenJwt_whenAuthenticatedGraphQL_thenSucceeds() {
-    compileAndStartServerWithDatabase(testDir, "package-base.json");
+    postgres.compileAndStartServerWithDatabase("package-base.json");
 
-    var response =
-        executeGraphQLQuery(
-            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", generateJwtToken());
-
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-    var responseBody = EntityUtils.toString(response.getEntity());
-    assertThat(responseBody).contains("\"data\"");
-    assertThat(responseBody).contains("\"AuthMyTable\"");
+    try (var response =
+        sqrl.executeGraphQLQuery(
+            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", generateJwtToken())) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+      var responseBody = EntityUtils.toString(response.getEntity());
+      assertThat(responseBody).contains("\"data\"");
+      assertThat(responseBody).contains("\"AuthMyTable\"");
+    }
   }
 
   @Test
   @SneakyThrows
   void givenJwt_whenBadToken_thenReturns401() {
-    compileAndStartServer(testDir, "package-base.json");
+    sqrl.compileAndStartServer("package-base.json");
 
     // Generate token with RS256 algorithm while server expects HS256
-    var response =
-        executeGraphQLQuery(
-            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", generateRS256JwtToken());
+    try (var response =
+        sqrl.executeGraphQLQuery(
+            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", generateRS256JwtToken())) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
 
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
-
-    // Verify the response contains detailed error information in JSON format
-    var responseBody = EntityUtils.toString(response.getEntity());
-    assertThat(responseBody).contains("\"error\"");
-    assertThat(responseBody).contains("\"JWT auth failed\"");
-    assertThat(responseBody).contains("\"cause\"");
-    assertThat(responseBody).contains("\"NoSuchKeyIdException: algorithm [RS256]: <null>\"");
+      // Verify the response contains detailed error information in JSON format
+      var responseBody = EntityUtils.toString(response.getEntity());
+      assertThat(responseBody).contains("\"error\"");
+      assertThat(responseBody).contains("\"JWT auth failed\"");
+      assertThat(responseBody).contains("\"cause\"");
+      assertThat(responseBody).contains("\"NoSuchKeyIdException: algorithm [RS256]: <null>\"");
+    }
   }
 
   @Test
   @SneakyThrows
   void givenJwt_whenCorruptedToken_thenReturns401() {
-    compileAndStartServer(testDir, "package-base.json");
+    sqrl.compileAndStartServer("package-base.json");
 
     // Generate token with RS256 algorithm while server expects HS256
-    var response =
-        executeGraphQLQuery(
-            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", "dummy-invalid-jwt");
+    try (var response =
+        sqrl.executeGraphQLQuery(
+            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", "dummy-invalid-jwt")) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
 
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
-
-    // Verify the response contains detailed error information in JSON format
-    var responseBody = EntityUtils.toString(response.getEntity());
-    System.out.println(responseBody);
-    assertThat(responseBody).contains("\"error\"");
-    assertThat(responseBody).contains("\"JWT auth failed\"");
-    assertThat(responseBody).contains("\"cause\"");
-    assertThat(responseBody).contains("\"IllegalArgumentException: Invalid format for JWT\"");
+      // Verify the response contains detailed error information in JSON format
+      var responseBody = EntityUtils.toString(response.getEntity());
+      System.out.println(responseBody);
+      assertThat(responseBody).contains("\"error\"");
+      assertThat(responseBody).contains("\"JWT auth failed\"");
+      assertThat(responseBody).contains("\"cause\"");
+      assertThat(responseBody).contains("\"IllegalArgumentException: Invalid format for JWT\"");
+    }
   }
 
   @Test
   @SneakyThrows
   void givenJwt_whenMissingRequiredClaims_thenReturns403() {
-    compileAndStartServer(testDir, "package-base.json");
+    sqrl.compileAndStartServer("package-base.json");
 
-    try {
-      // Generate valid JWT token but with empty claims (missing required claims)
-      var response =
-          executeGraphQLQuery(
-              "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}",
-              generateJwtToken(Map.of()));
-
+    try (var response =
+        sqrl.executeGraphQLQuery(
+            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}",
+            generateJwtToken(Map.of()))) {
       // Valid token but missing required claims should return 403 Forbidden
       var responseBody = EntityUtils.toString(response.getEntity());
       assertThat(response.getStatusLine().getStatusCode()).isEqualTo(403);
       assertThat(responseBody).contains("\"errors\"");
     } finally {
-      var logs = serverContainer.getLogs();
-      log.info("Detailed server logs:");
-      System.out.println(logs);
+      log.info("Detailed server logs:\n{}", sqrl.getServerContainer().getLogs());
     }
   }
 
   @Test
   @SneakyThrows
   void givenJwt_whenUnauthenticatedMcp_thenFails() {
-    compileAndStartServer(testDir, "package-base.json");
+    sqrl.compileAndStartServer("package-base.json");
 
     var mcpUrl =
         String.format(
-            "http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+            "http://localhost:%d/v1/mcp",
+            sqrl.getServerContainer().getMappedPort(SqrlContainerExtension.HTTP_SERVER_PORT));
     log.info("Testing MCP endpoint without JWT: {}", mcpUrl);
 
     // Create MCP client without authentication
@@ -193,7 +192,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
 
     // Should fail when trying to initialize due to lack of authentication
     // MCP uses OAuthFailureHandler which returns "authentication_required" error
-    assertThatThrownBy(() -> client.initialize())
+    assertThatThrownBy(client::initialize)
         .satisfies(
             ex -> {
               var fullMessage = getFullExceptionMessage(ex);
@@ -206,11 +205,12 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenAuthenticatedMcp_thenSucceeds() {
-    compileAndStartServerWithDatabase(testDir, "package-base.json");
+    postgres.compileAndStartServerWithDatabase("package-base.json");
 
     var mcpUrl =
         String.format(
-            "http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+            "http://localhost:%d/v1/mcp",
+            sqrl.getServerContainer().getMappedPort(SqrlContainerExtension.HTTP_SERVER_PORT));
     var jwtToken = generateJwtToken();
     log.info("Testing MCP endpoint with valid JWT: {}", mcpUrl);
 
@@ -221,7 +221,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
             .endpoint("/v1/mcp")
             .build();
 
-    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build(); ) {
+    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build()) {
       // Should succeed with proper JWT
       client.initialize();
 
@@ -252,20 +252,20 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
       assertThat(toolResult.isError()).isFalse();
       assertThat(toolResult.content()).isNotNull();
     } finally {
-      var logs = serverContainer.getLogs();
-      log.info("Detailed MCP Validation Results:");
-      System.out.println(logs);
+      var logs = sqrl.getServerContainer().getLogs();
+      log.info("Detailed MCP Validation Results:\n{}", logs);
     }
   }
 
   @Test
   @SneakyThrows
   void givenJwt_whenMissingRequiredClaimsMcp_thenFails() {
-    compileAndStartServer(testDir, "package-base.json");
+    sqrl.compileAndStartServer("package-base.json");
 
     var mcpUrl =
         String.format(
-            "http://localhost:%d/v1/mcp", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+            "http://localhost:%d/v1/mcp",
+            sqrl.getServerContainer().getMappedPort(SqrlContainerExtension.HTTP_SERVER_PORT));
     var jwtToken = generateJwtToken(Map.of());
     log.info("Testing MCP endpoint with JWT missing claims: {}", mcpUrl);
 
@@ -276,7 +276,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
             .endpoint("/v1/mcp")
             .build();
 
-    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build(); ) {
+    try (var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build()) {
       // Should succeed with proper JWT - authentication passes
       client.initialize();
 
@@ -311,10 +311,12 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenUnauthenticatedRest_thenReturns401() {
-    compileAndStartServer(testDir, "package-base.json");
+    sqrl.compileAndStartServer("package-base.json");
 
     var restUrl =
-        String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+        String.format(
+            "http://localhost:%d",
+            sqrl.getServerContainer().getMappedPort(SqrlContainerExtension.HTTP_SERVER_PORT));
     log.info("Testing REST endpoint without auth: {}", restUrl);
 
     var restClient =
@@ -332,10 +334,12 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenAuthenticatedRest_thenSucceeds() {
-    compileAndStartServerWithDatabase(testDir, "package-base.json");
+    postgres.compileAndStartServerWithDatabase("package-base.json");
 
     var restUrl =
-        String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+        String.format(
+            "http://localhost:%d",
+            sqrl.getServerContainer().getMappedPort(SqrlContainerExtension.HTTP_SERVER_PORT));
     var jwtToken = generateJwtToken();
     log.info("Testing REST endpoint with valid JWT: {}", restUrl);
 
@@ -358,10 +362,12 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
   @Test
   @SneakyThrows
   void givenJwt_whenMissingRequiredClaimsRest_thenReturns403() {
-    compileAndStartServer(testDir, "package-base.json");
+    sqrl.compileAndStartServer("package-base.json");
 
     var restUrl =
-        String.format("http://localhost:%d", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+        String.format(
+            "http://localhost:%d",
+            sqrl.getServerContainer().getMappedPort(SqrlContainerExtension.HTTP_SERVER_PORT));
     var jwtToken = generateJwtToken(Map.of());
     log.info("Testing REST endpoint with JWT missing claims: {}", restUrl);
 
@@ -376,9 +382,8 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
       assertThatThrownBy(() -> restClient.getAuthMyTableWithAuth(jwtToken, 5))
           .isInstanceOf(FeignException.Forbidden.class);
     } finally {
-      var logs = serverContainer.getLogs();
-      log.info("Detailed MCP Validation Results:");
-      System.out.println(logs);
+      var logs = sqrl.getServerContainer().getLogs();
+      log.info("Detailed MCP Validation Results:\n{}", logs);
     }
   }
 
@@ -437,7 +442,7 @@ public class JwtContainerIT extends SqrlWithPostgresContainerTestBase {
     var current = throwable;
     while (current != null) {
       if (current.getMessage() != null) {
-        if (messages.length() > 0) {
+        if (!messages.isEmpty()) {
           messages.append(" -> ");
         }
         messages.append(current.getMessage());

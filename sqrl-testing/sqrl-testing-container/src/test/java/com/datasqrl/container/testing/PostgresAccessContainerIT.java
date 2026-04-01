@@ -20,18 +20,25 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Duration;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 @Slf4j
-public class PostgresAccessContainerIT extends SqrlContainerTestBase {
+public class PostgresAccessContainerIT {
+
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("avro-schema");
 
   private GenericContainer<?> runContainer;
 
-  @Override
-  protected String getTestCaseName() {
-    return "avro-schema";
+  @AfterEach
+  void tearDown() {
+    if (runContainer != null && runContainer.isRunning()) {
+      runContainer.stop();
+      runContainer = null;
+    }
   }
 
   @Test
@@ -39,12 +46,12 @@ public class PostgresAccessContainerIT extends SqrlContainerTestBase {
   void givenRunningContainer_whenExecutePostgresVersionQuery_thenReturnsPostgresVersion() {
     // Start the run container which compiles and runs the server
     runContainer =
-        createCmdContainer(testDir)
+        sqrl.createCmdContainer()
             .withCommand("run")
-            .withExposedPorts(HTTP_SERVER_PORT)
+            .withExposedPorts(SqrlContainerExtension.HTTP_SERVER_PORT)
             .waitingFor(
                 Wait.forHttp("/health")
-                    .forPort(HTTP_SERVER_PORT)
+                    .forPort(SqrlContainerExtension.HTTP_SERVER_PORT)
                     .forStatusCode(204)
                     .withStartupTimeout(Duration.ofSeconds(30)));
 
@@ -76,14 +83,5 @@ public class PostgresAccessContainerIT extends SqrlContainerTestBase {
         .containsPattern("PostgreSQL\\s+\\d+\\.\\d+");
 
     log.info("PostgreSQL version verification completed successfully");
-  }
-
-  @Override
-  protected void cleanupContainers() {
-    super.cleanupContainers();
-    if (runContainer != null && runContainer.isRunning()) {
-      runContainer.stop();
-      runContainer = null;
-    }
   }
 }

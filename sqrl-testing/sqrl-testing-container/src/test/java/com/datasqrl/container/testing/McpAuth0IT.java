@@ -16,12 +16,9 @@
 package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.nio.file.Path;
-import java.time.Duration;
 import java.util.function.Consumer;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +30,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -56,7 +54,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @Disabled("Intended for manual usage")
 @Testcontainers
 @Slf4j
-class McpAuth0IT extends SqrlContainerTestBase {
+class McpAuth0IT {
+  @RegisterExtension
+  static SqrlContainerExtension sqrl = new SqrlContainerExtension("oauth-authorized-compile");
 
   private static final String AUTH0_DOMAIN = ""; // Set Auth0 domain to test
   private static final String AUTH0_ISSUER_URL = "https://" + AUTH0_DOMAIN + "/";
@@ -68,11 +68,6 @@ class McpAuth0IT extends SqrlContainerTestBase {
   private static final String AUDIENCE = System.getenv("AUTH0_AUDIENCE");
 
   private final ObjectMapper objectMapper = new ObjectMapper();
-
-  @Override
-  protected String getTestCaseName() {
-    return "oauth-authorized-compile";
-  }
 
   @BeforeEach
   void requireAuth0Credentials() {
@@ -106,9 +101,12 @@ class McpAuth0IT extends SqrlContainerTestBase {
     var request = new HttpPost(AUTH0_TOKEN_URL);
     request.setEntity(new StringEntity(requestBody, ContentType.APPLICATION_JSON));
 
-    var response = sharedHttpClient.execute(request);
-    var body = EntityUtils.toString(response.getEntity());
-    var statusCode = response.getStatusLine().getStatusCode();
+    String body;
+    int statusCode;
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      body = EntityUtils.toString(response.getEntity());
+      statusCode = response.getStatusLine().getStatusCode();
+    }
 
     if (statusCode != 200) {
       throw new RuntimeException("Failed to obtain Auth0 token: HTTP " + statusCode + " — " + body);
@@ -127,24 +125,6 @@ class McpAuth0IT extends SqrlContainerTestBase {
     return json.get("access_token").asText();
   }
 
-  private void compileSqrlProjectWithAuth0(
-      Path workingDir, Consumer<GenericContainer<?>> customizer) {
-    cmd = createCmdContainer(workingDir).withCommand("compile", "package.json");
-    customizer.accept(cmd);
-    cmd.start();
-
-    await().atMost(Duration.ofMinutes(5)).until(() -> !cmd.isRunning());
-
-    var exitCode = cmd.getCurrentContainerInfo().getState().getExitCodeLong();
-    var logs = cmd.getLogs();
-    if (exitCode != 0) {
-      log.error("SQRL compilation failed with exit code {}\n{}", exitCode, logs);
-      throw new ContainerError("SQRL compilation failed", exitCode, logs);
-    }
-
-    log.info("SQRL script compiled successfully with Auth0 config");
-  }
-
   private void compileAndStartServerWithAuth0() {
     Consumer<GenericContainer<?>> auth0Env =
         c -> {
@@ -154,8 +134,8 @@ class McpAuth0IT extends SqrlContainerTestBase {
           c.withEnv("KEYCLOAK_EXTERNAL_URL", AUTH0_ISSUER_URL);
         };
 
-    compileSqrlProjectWithAuth0(testDir, auth0Env);
-    startGraphQLServer(testDir, auth0Env);
+    sqrl.compileSqrlProject(null, auth0Env);
+    sqrl.startGraphQLServer(auth0Env);
   }
 
   @Test
@@ -163,14 +143,15 @@ class McpAuth0IT extends SqrlContainerTestBase {
   void givenAuth0Config_whenFetchDiscoveryEndpoint_thenReturnsProtectedResourceMetadata() {
     compileAndStartServerWithAuth0();
 
-    var discoveryUrl = getBaseUrl() + "/.well-known/oauth-protected-resource";
+    var discoveryUrl = sqrl.getBaseUrl() + "/.well-known/oauth-protected-resource";
     log.info("Testing OAuth discovery endpoint: {}", discoveryUrl);
 
-    var response = sharedHttpClient.execute(new HttpGet(discoveryUrl));
+    String body;
+    try (var response = sqrl.getHttpClient().execute(new HttpGet(discoveryUrl))) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+      body = EntityUtils.toString(response.getEntity());
+    }
 
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-
-    var body = EntityUtils.toString(response.getEntity());
     log.info("Discovery response: {}", body);
 
     var json = objectMapper.readTree(body);
@@ -193,7 +174,7 @@ class McpAuth0IT extends SqrlContainerTestBase {
   void givenAuth0Config_whenMcpRequestWithoutToken_thenReturns401WithWWWAuthenticate() {
     compileAndStartServerWithAuth0();
 
-    var mcpUrl = getBaseUrl() + "/v1/mcp";
+    var mcpUrl = sqrl.getBaseUrl() + "/v1/mcp";
     log.info("Testing MCP endpoint without token: {}", mcpUrl);
 
     var request = new HttpPost(mcpUrl);
@@ -202,14 +183,14 @@ class McpAuth0IT extends SqrlContainerTestBase {
             "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\",\"id\":1}",
             ContentType.APPLICATION_JSON));
 
-    var response = sharedHttpClient.execute(request);
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
 
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
-
-    var wwwAuth = response.getFirstHeader("WWW-Authenticate");
-    assertThat(wwwAuth).isNotNull();
-    assertThat(wwwAuth.getValue()).contains("resource_metadata=");
-    assertThat(wwwAuth.getValue()).contains(".well-known/oauth-protected-resource");
+      var wwwAuth = response.getFirstHeader("WWW-Authenticate");
+      assertThat(wwwAuth).isNotNull();
+      assertThat(wwwAuth.getValue()).contains("resource_metadata=");
+      assertThat(wwwAuth.getValue()).contains(".well-known/oauth-protected-resource");
+    }
   }
 
   @Test
@@ -219,7 +200,7 @@ class McpAuth0IT extends SqrlContainerTestBase {
 
     var token = getAuth0Token();
 
-    var mcpUrl = getBaseUrl() + "/v1/mcp";
+    var mcpUrl = sqrl.getBaseUrl() + "/v1/mcp";
     log.info("Testing MCP endpoint with valid Auth0 token: {}", mcpUrl);
 
     var request = new HttpPost(mcpUrl);
@@ -229,11 +210,12 @@ class McpAuth0IT extends SqrlContainerTestBase {
             "{\"jsonrpc\":\"2.0\",\"method\":\"tools/list\",\"id\":1}",
             ContentType.APPLICATION_JSON));
 
-    var response = sharedHttpClient.execute(request);
-    var body = EntityUtils.toString(response.getEntity());
-    log.info("MCP response status: {}, body: {}", response.getStatusLine().getStatusCode(), body);
-
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+    String body;
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      body = EntityUtils.toString(response.getEntity());
+      log.info("MCP response status: {}, body: {}", response.getStatusLine().getStatusCode(), body);
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+    }
 
     var json = objectMapper.readTree(body);
     assertThat(json.has("result")).isTrue();
