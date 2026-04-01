@@ -17,60 +17,65 @@ package com.datasqrl.flinkrunner;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import com.datasqrl.cli.AssertStatusHook;
-import com.datasqrl.cli.DatasqrlCli;
 import com.nextbreakpoint.flink.client.api.ApiException;
 import com.nextbreakpoint.flink.client.api.FlinkApi;
 import com.nextbreakpoint.flink.client.model.TerminationMode;
-import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
-import lombok.SneakyThrows;
-import org.awaitility.core.ThrowingRunnable;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import java.util.Objects;
+import lombok.Getter;
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
-public class AbstractITSupport {
+public class FlinkContainerExtension implements BeforeEachCallback, AfterEachCallback {
 
-  protected GenericContainer<?> flinkContainer;
+  private static final int FLINK_REST_PORT = 8081;
+
+  @Getter private GenericContainer<?> container;
+  @Getter private FlinkApi client;
 
   @SuppressWarnings("resource")
-  @BeforeEach
-  void startFlink() {
+  @Override
+  public void beforeEach(ExtensionContext context) throws Exception {
     var imgRepo = System.getProperty("flinkrunner.image.repo", "ghcr.io");
     var tag = System.getProperty("flinkrunner.version", "latest");
     if (!tag.equals("latest") && !tag.toLowerCase().endsWith("snapshot")) {
       tag += "-flink-2.2";
     }
 
-    flinkContainer =
+    container =
         new GenericContainer<>(DockerImageName.parse(imgRepo + "/datasqrl/flink-sql-runner:" + tag))
-            .withExposedPorts(8081)
+            .withExposedPorts(FLINK_REST_PORT)
             .withFileSystemBind("target/test-classes/usecases", "/flink/sql", BindMode.READ_ONLY)
             .withCommand("bash", "-c", "bin/start-cluster.sh && tail -f /dev/null");
-    flinkContainer.start();
+    container.start();
+
+    client = createClient(container.getMappedPort(FLINK_REST_PORT));
   }
 
-  @AfterEach
-  void stopFlink() {
-    flinkContainer.stop();
+  @Override
+  public void afterEach(ExtensionContext context) {
+    client = null;
+    if (container != null) {
+      container.stop();
+      container = null;
+    }
   }
 
-  protected FlinkApi createClient(int serverPort) throws ApiException {
+  private FlinkApi createClient(int serverPort) throws ApiException {
     var serverUrl = "http://localhost:" + serverPort;
-    var client = new FlinkApi();
-    client.getApiClient().setBasePath(serverUrl);
+    var flinkClient = new FlinkApi();
+    flinkClient.getApiClient().setBasePath(serverUrl);
 
-    client
+    flinkClient
         .getApiClient()
         .setHttpClient(
-            client
+            flinkClient
                 .getApiClient()
                 .getHttpClient()
                 .newBuilder()
@@ -83,47 +88,19 @@ public class AbstractITSupport {
         .atMost(100, SECONDS)
         .pollInterval(500, MILLISECONDS)
         .ignoreExceptions()
-        .until(() -> client.getJobsOverview() != null);
+        .until(flinkClient::getJobsOverview, Objects::nonNull);
 
-    final var statusOverview = client.getJobIdsWithStatusesOverview();
+    var statusOverview = flinkClient.getJobIdsWithStatusesOverview();
     statusOverview
         .getJobs()
         .forEach(
             jobIdWithStatus -> {
               try {
-                client.cancelJob(jobIdWithStatus.getId(), TerminationMode.CANCEL);
+                flinkClient.cancelJob(jobIdWithStatus.getId(), TerminationMode.CANCEL);
               } catch (ApiException ignored) {
               }
             });
 
-    return client;
-  }
-
-  public void untilAssert(ThrowingRunnable assertion) {
-    await()
-        .atMost(20, SECONDS)
-        .pollInterval(100, MILLISECONDS)
-        .ignoreExceptions()
-        .untilAsserted(assertion);
-  }
-
-  @SneakyThrows
-  public Path compilePlan(String name) {
-    var pkg = Path.of("target/test-classes/usecases", name, "package.json").toAbsolutePath();
-    assertThat(pkg).isRegularFile();
-
-    var baseDir = pkg.getParent();
-    var args = new ArrayList<String>();
-    args.add("compile");
-    args.add(pkg.getFileName().toString());
-    var statusHook = new AssertStatusHook();
-    var code =
-        new DatasqrlCli(baseDir, statusHook, true).getCmd().execute(args.toArray(String[]::new));
-
-    assertThat(statusHook.failure()).isNull();
-    assertThat(statusHook.isSuccess());
-    assertThat(code).isZero();
-
-    return Path.of("target/test-classes/usecases", name, "deploy/plan/flink-compiled-plan.json");
+    return flinkClient;
   }
 }
