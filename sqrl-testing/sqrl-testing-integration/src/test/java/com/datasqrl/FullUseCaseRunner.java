@@ -22,11 +22,8 @@ import com.datasqrl.cli.AssertStatusHook;
 import com.datasqrl.cli.DatasqrlTest;
 import com.datasqrl.cli.output.DefaultOutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
-import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.engines.TestContainersForTestGoal;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
-import com.datasqrl.engines.TestEngine.EngineFactory;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigLoaderUtils;
@@ -36,56 +33,39 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.DeploymentOptions;
 import org.apache.flink.configuration.RestartStrategyOptions;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 
-/** Abstract base class to run a full test on a given project in form of {@link UseCaseParam}. */
+/**
+ * Static utility class that executes a full use-case test: compile phase followed by test phase.
+ */
 @Slf4j
-abstract class AbstractFullUseCaseTest {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class FullUseCaseRunner {
 
-  private static TestContainerHook containerHook;
-
-  @BeforeAll
-  static void beforeAll() {
-    var engines = new EngineFactory().createAll();
-
-    containerHook = engines.accept(new TestContainersForTestGoal(), null);
-    containerHook.start();
-  }
-
-  @AfterAll
-  static void afterAll() {
-    if (containerHook != null) {
-      containerHook.teardown();
-    }
-  }
-
-  @AfterEach
-  void afterEach() {
-    if (containerHook != null) {
-      containerHook.clear();
-    }
-  }
-
-  void fullUseCaseTest(UseCaseParam param) {
+  /**
+   * Compiles and runs a full use-case test for the given {@link UseCaseParam}, using the supplied
+   * {@link TestContainerHook} to obtain environment variables (e.g. Postgres/Kafka connection
+   * details).
+   */
+  public static void run(UseCaseParam param, TestContainerHook containerHook) {
     log.info("Testing {}", param.getPackageJsonName());
 
     var snapshot =
         Snapshot.of(
-            AbstractFullUseCaseTest.class,
+            FullUseCaseRunner.class,
             param.getUseCaseName(),
             param.getPackageJsonName().substring(0, param.getPackageJsonName().length() - 5));
 
     // Execute compile phase
-    SqrlScriptExecutor executor = new SqrlScriptExecutor(param.packageJsonPath(), param.goal());
-    AssertStatusHook hook = new AssertStatusHook();
+    var executor = new SqrlScriptExecutor(param.packageJsonPath(), param.goal());
+    var hook = new AssertStatusHook();
     try {
       executor.execute(hook);
     } catch (Throwable e) {
@@ -95,21 +75,21 @@ abstract class AbstractFullUseCaseTest {
       throw e;
     }
 
-    Path rootDir = param.packageJsonPath().getParent();
+    var rootDir = param.packageJsonPath().getParent();
 
     log.info(
         """
-      The test parameters
-      Test name: {}
-      Test path: {}
-      Test package file: {}
-      """,
+        The test parameters
+        Test name: {}
+        Test path: {}
+        Test package file: {}
+        """,
         param.getUseCaseName(),
         rootDir,
         param.getPackageJsonName());
 
     // Execute the test phase manually via DatasqrlTest
-    PackageJson packageJson =
+    var packageJson =
         ConfigLoaderUtils.loadResolvedConfig(
             ErrorCollector.root(), rootDir.resolve(BUILD_DIR_NAME));
 
@@ -156,8 +136,9 @@ abstract class AbstractFullUseCaseTest {
     }
   }
 
+  /** Loads Flink configuration for a local mini-cluster test run. */
   @SneakyThrows
-  static Configuration loadInternalTestFlinkConfig(Path planDir, Map<String, String> env) {
+  public static Configuration loadInternalTestFlinkConfig(Path planDir, Map<String, String> env) {
     var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
 
     flinkConfig.set(DeploymentOptions.TARGET, "local");
