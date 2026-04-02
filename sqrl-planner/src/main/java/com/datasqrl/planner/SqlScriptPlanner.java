@@ -53,6 +53,7 @@ import com.datasqrl.plan.rules.EngineCapability.Feature;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.AddTableResult;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.MutationBuilder;
+import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.MutationEngineMissingException;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.analyzer.cost.CostModel;
@@ -307,12 +308,16 @@ public class SqlScriptPlanner {
     } else if (stmt instanceof SqrlExportStatement statement) {
       addExport(statement, sqrlEnv);
     } else if (stmt instanceof SqrlCreateTableStatement statement) {
-      sqrlEnv
-          .createTable(
-              statement.toSql(),
-              getMutationBuilder(hintsAndDocs),
-              scriptContext.moduleLoader().getSchemaLoader())
-          .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+      try {
+        sqrlEnv
+            .createTable(
+                statement.toSql(),
+                getMutationBuilder(hintsAndDocs),
+                scriptContext.moduleLoader().getSchemaLoader())
+            .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+      } catch (MutationEngineMissingException e) {
+        throw new StatementParserException(statement.getCreateTable().getFileLocation(), e);
+      }
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
       var tablePath = sqrlDef.getPath();

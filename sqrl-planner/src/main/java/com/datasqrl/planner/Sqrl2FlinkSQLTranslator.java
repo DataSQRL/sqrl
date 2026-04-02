@@ -1141,14 +1141,21 @@ public class Sqrl2FlinkSQLTranslator {
     var tableName = tableOp.getTableIdentifier().getObjectName();
     var options = tableOp.getCatalogTable().getOptions();
 
-    // TODO: Collect supported engines dynamically in a sane way
     if (!tableName.endsWith("_schema") && options.isEmpty() && mutationBuilder.isEmpty()) {
-      throw new StatementParserException(
-          "Mutation engine hint \"/*+ engine(...) */\" is required for internal CREATE TABLE statements."
-              + " Supported engines: \"kafka\", \"iceberg\".");
+      throw new MutationEngineMissingException();
     }
   }
 
   public record ParsedRelDataTypeResult(
       RelDataTypeField field, Optional<String> metadata, Optional<FlinkExecFunction> function) {}
+
+  // TODO: Collect supported engines dynamically in a sane way
+  public static class MutationEngineMissingException extends RuntimeException {
+
+    public MutationEngineMissingException() {
+      super(
+          "Mutation engine hint \"/*+ engine(...) */\" is required for internal CREATE TABLE statements."
+              + " Supported engines: \"kafka\", \"iceberg\".");
+    }
+  }
 }
