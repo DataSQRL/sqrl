@@ -15,11 +15,12 @@
  */
 package com.datasqrl.planner.parser;
 
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
+import com.datasqrl.error.ErrorLocation;
 
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class SqrlNextBatch implements SqrlStatement {
+public record SqrlNextBatch(ParsedObject<String> sql) implements SqrlStatement {
 
-  public static final SqrlNextBatch INSTANCE = new SqrlNextBatch();
+  @Override
+  public ErrorLocation.FileLocation getDefaultLocation() {
+    return sql.getFileLocation();
+  }
 }

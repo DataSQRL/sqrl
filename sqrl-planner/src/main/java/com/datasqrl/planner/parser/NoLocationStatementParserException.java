@@ -15,27 +15,9 @@
  */
 package com.datasqrl.planner.parser;
 
-import com.datasqrl.error.ErrorLocation.FileLocation;
-import lombok.Value;
+public class NoLocationStatementParserException extends RuntimeException {
 
-/** Reprensets a CREATE TABLE statement */
-@Value
-public class SqrlCreateTableStatement implements SqrlDdlStatement {
-
-  ParsedObject<String> createTable;
-  SqrlComments comments;
-
-  public String toSql() {
-    return createTable.get();
-  }
-
-  @Override
-  public FileLocation mapSqlLocation(FileLocation location) {
-    return createTable.getFileLocation().add(location);
-  }
-
-  @Override
-  public FileLocation getDefaultLocation() {
-    return createTable.getFileLocation();
+  public NoLocationStatementParserException(String message) {
+    super(message);
   }
 }

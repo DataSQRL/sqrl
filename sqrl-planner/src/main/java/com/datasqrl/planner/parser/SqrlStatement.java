@@ -15,10 +15,14 @@
  */
 package com.datasqrl.planner.parser;
 
+import com.datasqrl.error.ErrorLocation.FileLocation;
+
 /** A SQRL specific statement */
 public interface SqrlStatement extends SQLStatement {
 
   default SqrlComments getComments() {
     return SqrlComments.EMPTY;
   }
+
+  FileLocation getDefaultLocation();
 }
