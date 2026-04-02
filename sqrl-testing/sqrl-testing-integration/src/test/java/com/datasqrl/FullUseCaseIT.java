@@ -16,6 +16,8 @@
 package com.datasqrl;
 
 import com.datasqrl.SnapshotTestSupport.TestNameModifier;
+import com.datasqrl.engines.FullPipelineContainerExtension;
+import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.tests.DuckdbTestExtension;
 import com.datasqrl.tests.IcebergTestExtension;
 import com.datasqrl.tests.SnowflakeTestExtension;
@@ -46,19 +48,20 @@ import org.junit.jupiter.params.support.ParameterDeclarations;
 @ExtendWith({
   // Keep sharding first so skipped invocations do not trigger use-case setup.
   TestShardingExtension.class,
+  FullPipelineContainerExtension.class,
   DuckdbTestExtension.class,
   IcebergTestExtension.class,
   SnowflakeTestExtension.class
 })
-public class FullUseCaseIT extends AbstractFullUseCaseTest {
+public class FullUseCaseIT {
 
   private static final Path USE_CASES = Path.of("src/test/resources/usecases");
 
   @ParameterizedTest
   @MethodSource("specificUseCaseProvider")
   @Disabled("Intended for manual usage")
-  void specificUseCase(UseCaseParam param) {
-    fullUseCaseTest(param);
+  void specificUseCase(UseCaseParam param, TestContainerHook hook) {
+    FullUseCaseRunner.run(param, hook);
   }
 
   /** Ad-hoc debugging entry point. Change the path below to run a single use case manually. */
@@ -68,8 +71,8 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
 
   @ParameterizedTest
   @ArgumentsSource(UseCaseParams.class)
-  void useCase(UseCaseParam param) {
-    fullUseCaseTest(param);
+  void useCase(UseCaseParam param, TestContainerHook hook) {
+    FullUseCaseRunner.run(param, hook);
   }
 
   static class UseCaseParams extends ArgumentsProviders.PackageProvider {
