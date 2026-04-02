@@ -18,7 +18,7 @@ package com.datasqrl.util;
 import static com.datasqrl.config.SqrlConstants.GRAPHQL_SCHEMA_EXTENSION;
 import static com.datasqrl.config.SqrlConstants.SQRL_EXTENSION;
 
-import com.datasqrl.AbstractAssetSnapshotTest.TestNameModifier;
+import com.datasqrl.SnapshotTestSupport.TestNameModifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;

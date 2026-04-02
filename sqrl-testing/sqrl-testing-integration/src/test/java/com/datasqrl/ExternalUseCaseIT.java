@@ -15,24 +15,36 @@
  */
 package com.datasqrl;
 
+import com.datasqrl.engines.FullPipelineContainerExtension;
+import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
+import com.datasqrl.tests.DuckdbTestExtension;
+import com.datasqrl.tests.IcebergTestExtension;
+import com.datasqrl.tests.SnowflakeTestExtension;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 /** Tests external use cases manually, provided via {@code externalUseCaseProvider}. */
 @Slf4j
 @Disabled
-public class ExternalUseCaseIT extends AbstractFullUseCaseTest {
+@ExtendWith({
+  FullPipelineContainerExtension.class,
+  DuckdbTestExtension.class,
+  IcebergTestExtension.class,
+  SnowflakeTestExtension.class
+})
+public class ExternalUseCaseIT {
 
   @ParameterizedTest
   @MethodSource("externalUseCaseProvider")
-  void testCase(UseCaseParam param) {
-    fullUseCaseTest(param);
+  void testCase(UseCaseParam param, TestContainerHook hook) {
+    FullUseCaseRunner.run(param, hook);
   }
 
   static Stream<UseCaseParam> externalUseCaseProvider() {

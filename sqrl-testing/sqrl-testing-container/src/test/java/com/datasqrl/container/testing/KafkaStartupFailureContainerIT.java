@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.containers.output.ToStringConsumer;
 
@@ -28,34 +29,31 @@ import org.testcontainers.containers.output.ToStringConsumer;
  * missing, instead of continuing to run in a broken state.
  */
 @Slf4j
-public class KafkaStartupFailureContainerIT extends SqrlContainerTestBase {
+public class KafkaStartupFailureContainerIT {
 
-  @Override
-  protected String getTestCaseName() {
-    return "sensors-mutation";
-  }
+  @RegisterExtension
+  static SqrlContainerExtension sqrl = new SqrlContainerExtension("sensors-mutation");
 
   @Test
   void givenMissingKafkaEnvVar_whenServerStarts_thenServiceTerminatesCleanly() {
     // First compile the SQRL script that uses Kafka
-    compileSqrlProject(testDir);
+    sqrl.compileSqrlProject();
 
     // Create a server container but don't set the KAFKA_BOOTSTRAP_SERVERS env var
     // which should cause the service to fail and terminate
-    var deployPlanPath = testDir.resolve("build/deploy/plan");
+    var deployPlanPath = sqrl.getTestDir().resolve("build/deploy/plan");
     assertThat(deployPlanPath).exists().isDirectory();
 
     // Use ToStringConsumer to capture logs even if container fails
     var logConsumer = new ToStringConsumer();
 
-    serverContainer =
-        createServerContainer(testDir)
-            .withEnv("SQRL_DEBUG", "1")
-            // Set an invalid bootstrap server URL
-            .withEnv("KAFKA_BOOTSTRAP_SERVERS", "${KAFKA_BOOTSTRAP_SERVERS}")
-            .withLogConsumer(logConsumer);
+    sqrl.createServerContainer()
+        .withEnv("SQRL_DEBUG", "1")
+        // Set an invalid bootstrap server URL
+        .withEnv("KAFKA_BOOTSTRAP_SERVERS", "${KAFKA_BOOTSTRAP_SERVERS}")
+        .withLogConsumer(logConsumer);
 
-    assertThatThrownBy(() -> serverContainer.start())
+    assertThatThrownBy(() -> sqrl.getServerContainer().start())
         .isInstanceOfAny(ContainerLaunchException.class, IllegalStateException.class)
         .hasMessageContaining("failed");
 
@@ -64,7 +62,7 @@ public class KafkaStartupFailureContainerIT extends SqrlContainerTestBase {
     log.info("Container logs:\n{}", logs);
 
     // Verify the container is not running
-    assertThat(serverContainer.isRunning()).isFalse();
+    assertThat(sqrl.getServerContainer().isRunning()).isFalse();
 
     // Verify the expected error messages are present
     assertThat(logs).contains("Invalid url in bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS}");
@@ -75,23 +73,22 @@ public class KafkaStartupFailureContainerIT extends SqrlContainerTestBase {
   @Test
   void givenInvalidKafkaBootstrapServers_whenServerStarts_thenServiceTerminatesCleanly() {
     // First compile the SQRL script that uses Kafka
-    compileSqrlProject(testDir);
+    sqrl.compileSqrlProject();
 
     // Create a server container with an invalid Kafka bootstrap server address
-    var deployPlanPath = testDir.resolve("build/deploy/plan");
+    var deployPlanPath = sqrl.getTestDir().resolve("build/deploy/plan");
     assertThat(deployPlanPath).exists().isDirectory();
 
     // Use ToStringConsumer to capture logs even if container fails
     var logConsumer = new ToStringConsumer();
 
-    serverContainer =
-        createServerContainer(testDir)
-            .withEnv("SQRL_DEBUG", "1")
-            // Set an invalid bootstrap server URL
-            .withEnv("KAFKA_BOOTSTRAP_SERVERS", "not-a-valid-url:definitely-not-a-port")
-            .withLogConsumer(logConsumer);
+    sqrl.createServerContainer()
+        .withEnv("SQRL_DEBUG", "1")
+        // Set an invalid bootstrap server URL
+        .withEnv("KAFKA_BOOTSTRAP_SERVERS", "not-a-valid-url:definitely-not-a-port")
+        .withLogConsumer(logConsumer);
 
-    assertThatThrownBy(() -> serverContainer.start())
+    assertThatThrownBy(() -> sqrl.getServerContainer().start())
         .isInstanceOfAny(ContainerLaunchException.class, IllegalStateException.class)
         .hasMessageContaining("failed");
 
@@ -100,7 +97,7 @@ public class KafkaStartupFailureContainerIT extends SqrlContainerTestBase {
     log.info("Container logs:\n{}", logs);
 
     // Verify the container is not running
-    assertThat(serverContainer.isRunning()).isFalse();
+    assertThat(sqrl.getServerContainer().isRunning()).isFalse();
 
     // Verify error messages
     assertThat(logs).contains("Invalid url in bootstrap.servers");

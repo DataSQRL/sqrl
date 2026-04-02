@@ -15,22 +15,22 @@
  */
 package com.datasqrl.cli;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.OsProcessManager;
 import java.nio.file.Path;
+import java.util.Map;
 import org.apache.flink.configuration.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
-import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -39,6 +39,8 @@ class ExecCmdTest {
 
   @Mock private ErrorCollector errors;
   @Mock private Configuration flinkConfig;
+  @Mock private OsProcessManager osProcessManager;
+  @Mock private DatasqrlRun datasqrlRun;
 
   private ExecCmd execCmd;
 
@@ -47,6 +49,7 @@ class ExecCmdTest {
   @BeforeEach
   void setup() {
     execCmd = spy(new ExecCmd());
+    doReturn(osProcessManager).when(execCmd).getOsProcessManager();
   }
 
   @Test
@@ -56,36 +59,32 @@ class ExecCmdTest {
     Path buildDir = execCmd.getBuildDir();
     Path planDir = execCmd.getTargetFolder().resolve(SqrlConstants.PLAN_DIR);
 
-    // Mock static methods and verify arguments
-    try (MockedStatic<ConfigLoaderUtils> mocked = mockStatic(ConfigLoaderUtils.class)) {
+    var mockSqrlConfig = mock(PackageJson.class);
+    var mockEnv = Map.of("key", "value");
 
-      var mockSqrlConfig = mock(PackageJson.class);
-      mocked
+    try (MockedStatic<ConfigLoaderUtils> configMocked = mockStatic(ConfigLoaderUtils.class);
+        MockedStatic<GlobalEnvironmentStore> envMocked = mockStatic(GlobalEnvironmentStore.class);
+        MockedStatic<DatasqrlRun> runMocked = mockStatic(DatasqrlRun.class)) {
+
+      configMocked
           .when(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir))
           .thenReturn(mockSqrlConfig);
+      configMocked.when(() -> ConfigLoaderUtils.loadFlinkConfig(planDir)).thenReturn(flinkConfig);
+      envMocked.when(GlobalEnvironmentStore::getAll).thenReturn(mockEnv);
+      runMocked
+          .when(() -> DatasqrlRun.blocking(eq(planDir), eq(mockSqrlConfig), any(), eq(mockEnv)))
+          .thenReturn(datasqrlRun);
+      when(datasqrlRun.run()).thenReturn(null);
 
-      mocked.when(() -> ConfigLoaderUtils.loadFlinkConfig(planDir)).thenReturn(flinkConfig);
+      execCmd.runInternal(errors);
 
-      try (MockedConstruction<OsProcessManager> serviceManagerMocked =
-              mockConstruction(OsProcessManager.class);
-          MockedConstruction<DatasqrlRun> datasqrlRunMocked =
-              mockConstruction(
-                  DatasqrlRun.class, (mock, context) -> when(mock.run()).thenReturn(null))) {
-
-        execCmd.runInternal(errors);
-
-        // Verify service manager was created and started
-        assertThat(serviceManagerMocked.constructed()).hasSize(1);
-        OsProcessManager serviceManager = serviceManagerMocked.constructed().get(0);
-        verify(serviceManager).startDependentServices(planDir);
-
-        // Verify exact arguments
-        mocked.verify(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir));
-        mocked.verify(() -> ConfigLoaderUtils.loadFlinkConfig(planDir));
-
-        DatasqrlRun constructed = datasqrlRunMocked.constructed().get(0);
-        verify(constructed).run();
-      }
+      verify(osProcessManager).startDependentServices(planDir);
+      configMocked.verify(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir));
+      configMocked.verify(() -> ConfigLoaderUtils.loadFlinkConfig(planDir));
+      envMocked.verify(GlobalEnvironmentStore::getAll);
+      runMocked.verify(
+          () -> DatasqrlRun.blocking(eq(planDir), eq(mockSqrlConfig), any(), eq(mockEnv)));
+      verify(datasqrlRun).run();
     }
   }
 }

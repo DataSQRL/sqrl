@@ -1,0 +1,157 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datasqrl;
+
+import static com.datasqrl.config.SqrlConstants.BUILD_DIR_NAME;
+import static org.assertj.core.api.Assertions.fail;
+
+import com.datasqrl.cli.AssertStatusHook;
+import com.datasqrl.cli.DatasqrlTest;
+import com.datasqrl.cli.output.DefaultOutputFormatter;
+import com.datasqrl.cli.output.TestOutputManager;
+import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
+import com.datasqrl.env.GlobalEnvironmentStore;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.ConfigLoaderUtils;
+import com.datasqrl.util.SnapshotTest.Snapshot;
+import com.datasqrl.util.SqrlScriptExecutor;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.configuration.CheckpointingOptions;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.DeploymentOptions;
+import org.apache.flink.configuration.RestartStrategyOptions;
+
+/**
+ * Static utility class that executes a full use-case test: compile phase followed by test phase.
+ */
+@Slf4j
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class FullUseCaseRunner {
+
+  /**
+   * Compiles and runs a full use-case test for the given {@link UseCaseParam}, using the supplied
+   * {@link TestContainerHook} to obtain environment variables (e.g. Postgres/Kafka connection
+   * details).
+   */
+  public static void run(UseCaseParam param, TestContainerHook containerHook) {
+    log.info("Testing {}", param.getPackageJsonName());
+
+    var snapshot =
+        Snapshot.of(
+            FullUseCaseRunner.class,
+            param.getUseCaseName(),
+            param.getPackageJsonName().substring(0, param.getPackageJsonName().length() - 5));
+
+    // Execute compile phase
+    var executor = new SqrlScriptExecutor(param.packageJsonPath(), param.goal());
+    var hook = new AssertStatusHook();
+    try {
+      executor.execute(hook);
+    } catch (Throwable e) {
+      if (hook.failure() != null) {
+        e.addSuppressed(hook.failure());
+      }
+      throw e;
+    }
+
+    var rootDir = param.packageJsonPath().getParent();
+
+    log.info(
+        """
+        The test parameters
+        Test name: {}
+        Test path: {}
+        Test package file: {}
+        """,
+        param.getUseCaseName(),
+        rootDir,
+        param.getPackageJsonName());
+
+    // Execute the test phase manually via DatasqrlTest
+    var packageJson =
+        ConfigLoaderUtils.loadResolvedConfig(
+            ErrorCollector.root(), rootDir.resolve(BUILD_DIR_NAME));
+
+    var env = new HashMap<>(containerHook.getEnv());
+    env.putAll(System.getenv());
+    env.putAll(GlobalEnvironmentStore.getAll());
+    env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
+    env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
+
+    var planDir =
+        rootDir
+            .resolve(SqrlConstants.BUILD_DIR_NAME)
+            .resolve(SqrlConstants.DEPLOY_DIR_NAME)
+            .resolve(SqrlConstants.PLAN_DIR);
+    var flinkConfig = loadInternalTestFlinkConfig(planDir, env);
+    var outputMgr = new TestOutputManager(rootDir);
+    var test =
+        new DatasqrlTest(
+            rootDir,
+            planDir,
+            packageJson,
+            flinkConfig,
+            env,
+            outputMgr,
+            new DefaultOutputFormatter(rootDir, false));
+    try {
+      var run = test.run();
+      if (run != 0) {
+        fail(
+            "Test runner returned error code while running test case '%s'. Check above for failed snapshot tests (in red) or exceptions"
+                .formatted(param.getUseCaseName()));
+      }
+    } catch (Exception e) {
+      fail(
+          "Test runner threw exception while running test case '%s'"
+              .formatted(param.getUseCaseName()),
+          e);
+    } finally {
+      containerHook.clear();
+    }
+
+    if (snapshot.hasContent()) {
+      snapshot.createOrValidate();
+    }
+  }
+
+  /** Loads Flink configuration for a local mini-cluster test run. */
+  @SneakyThrows
+  public static Configuration loadInternalTestFlinkConfig(Path planDir, Map<String, String> env) {
+    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+
+    flinkConfig.set(DeploymentOptions.TARGET, "local");
+    if (env.get("FLINK_RESTART_STRATEGY") != null) {
+      flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY, "fixed-delay");
+      flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_ATTEMPTS, 0);
+      flinkConfig.set(
+          RestartStrategyOptions.RESTART_STRATEGY_FIXED_DELAY_DELAY, Duration.ofSeconds(5));
+    }
+
+    flinkConfig.removeConfig(CheckpointingOptions.CHECKPOINTS_DIRECTORY);
+    flinkConfig.removeConfig(CheckpointingOptions.SAVEPOINT_DIRECTORY);
+
+    return flinkConfig;
+  }
+}

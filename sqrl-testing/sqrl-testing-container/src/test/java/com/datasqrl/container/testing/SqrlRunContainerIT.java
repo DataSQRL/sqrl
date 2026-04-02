@@ -20,23 +20,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Duration;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 @Slf4j
-public class SqrlRunContainerIT extends SqrlContainerTestBase {
+public class SqrlRunContainerIT {
+
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("avro-schema");
 
   private GenericContainer<?> runContainer;
 
-  @Override
-  protected String getTestCaseName() {
-    return "avro-schema";
+  @AfterEach
+  void tearDown() {
+    if (runContainer != null && runContainer.isRunning()) {
+      runContainer.stop();
+      runContainer = null;
+    }
   }
 
   @Test
@@ -44,12 +51,12 @@ public class SqrlRunContainerIT extends SqrlContainerTestBase {
   void givenAvroSchemaScript_whenRunCommandExecuted_thenServerStartsAndRespondsToGraphQL() {
     // Start the run container which compiles and runs the server all in one
     runContainer =
-        createCmdContainer(testDir)
+        sqrl.createCmdContainer()
             .withCommand("run")
-            .withExposedPorts(HTTP_SERVER_PORT)
+            .withExposedPorts(SqrlContainerExtension.HTTP_SERVER_PORT)
             .waitingFor(
                 Wait.forHttp("/health")
-                    .forPort(HTTP_SERVER_PORT)
+                    .forPort(SqrlContainerExtension.HTTP_SERVER_PORT)
                     .forStatusCode(204)
                     .withStartupTimeout(Duration.ofSeconds(30)));
 
@@ -63,39 +70,34 @@ public class SqrlRunContainerIT extends SqrlContainerTestBase {
     assertThat(logs).contains("GraphQL verticle deployed successfully");
 
     // Test GraphQL endpoint
-    var baseUrl = "http://localhost:" + runContainer.getMappedPort(HTTP_SERVER_PORT);
+    var baseUrl =
+        "http://localhost:" + runContainer.getMappedPort(SqrlContainerExtension.HTTP_SERVER_PORT);
     var graphqlEndpoint = baseUrl + "/v1/graphql";
 
-    var response =
-        executeGraphQLQueryToRunContainer(graphqlEndpoint, "{\"query\":\"query { __typename }\"}");
-    validateBasicGraphQLResponse(response);
+    try (var response =
+        executeGraphQLQueryToRunContainer(
+            graphqlEndpoint, "{\"query\":\"query { __typename }\"}")) {
+      sqrl.validateBasicGraphQLResponse(response);
+    }
 
     // Verify health endpoint
     var healthEndpoint = baseUrl + "/health";
-    var healthResponse = executeHealthCheck(healthEndpoint);
-    assertThat(healthResponse.getStatusLine().getStatusCode()).isEqualTo(204);
+    try (var healthResponse = executeHealthCheck(healthEndpoint)) {
+      assertThat(healthResponse.getStatusLine().getStatusCode()).isEqualTo(204);
+    }
 
     log.info("All endpoint validations passed successfully");
   }
 
-  @Override
-  protected void cleanupContainers() {
-    super.cleanupContainers();
-    if (runContainer != null && runContainer.isRunning()) {
-      runContainer.stop();
-      runContainer = null;
-    }
-  }
-
-  private HttpResponse executeGraphQLQueryToRunContainer(String endpoint, String query)
+  private CloseableHttpResponse executeGraphQLQueryToRunContainer(String endpoint, String query)
       throws Exception {
     var request = new HttpPost(endpoint);
     request.setEntity(new StringEntity(query, ContentType.APPLICATION_JSON));
-    return sharedHttpClient.execute(request);
+    return sqrl.getHttpClient().execute(request);
   }
 
-  private HttpResponse executeHealthCheck(String endpoint) throws Exception {
+  private CloseableHttpResponse executeHealthCheck(String endpoint) throws Exception {
     var request = new HttpGet(endpoint);
-    return sharedHttpClient.execute(request);
+    return sqrl.getHttpClient().execute(request);
   }
 }

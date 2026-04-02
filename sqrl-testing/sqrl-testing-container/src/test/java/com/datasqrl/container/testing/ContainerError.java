@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.tests;
+package com.datasqrl.container.testing;
 
-public interface TestExtension {
-  TestExtension NOOP =
-      new TestExtension() {
+import lombok.Getter;
 
-        @Override
-        public void setup() {}
+@Getter
+public class ContainerError extends RuntimeException {
 
-        @Override
-        public void teardown() {}
-      };
+  private static final long serialVersionUID = -2159257606710389109L;
 
-  void setup();
+  private final Long exitCode;
+  private final String logs;
 
-  void teardown();
+  public ContainerError(String message, Long exitCode, String logs) {
+    super(message);
+    this.exitCode = exitCode;
+    this.logs = logs;
+  }
 }

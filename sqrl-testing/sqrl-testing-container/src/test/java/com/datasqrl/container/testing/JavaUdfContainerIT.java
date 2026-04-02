@@ -19,26 +19,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-class JavaUdfContainerIT extends SqrlContainerTestBase {
+class JavaUdfContainerIT {
 
-  @Override
-  protected String getTestCaseName() {
-    return "java-udf";
-  }
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("java-udf");
 
   @Test
   void givenProjectWithJavaUdf_whenTestCommandExecuted_thenCompileAndTestSuccessful()
       throws Exception {
-    var res = sqrlCmd(testDir, "test", "package.json");
+    var res = sqrl.sqrlCmd("test", "package.json");
 
     assertThat(res.logs()).contains("MyTableTest", "MyAsyncTableTest", "BUILD SUCCESS");
 
-    var udfJar = testDir.resolve("build/deploy/flink/lib/sqrl-udfs.jar");
-    assertThat(udfJar).exists().isRegularFile();
-    assertThat(Files.size(udfJar))
-        .as(
-            "UDF JAR should only contain UDF classes and declared //JDEPS, not the entire classpath")
+    var fatJar = sqrl.getTestDir().resolve("build/deploy/flink/lib/sqrl-udfs.jar");
+    assertThat(fatJar).exists().isRegularFile();
+    assertThat(Files.size(fatJar))
+        .as("Fat JAR should only contain UDF classes and declared //DEPS, not the entire classpath")
         .isLessThan(10_000_000L);
   }
 }

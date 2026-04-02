@@ -13,20 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.tests;
+package com.datasqrl.container.testing;
 
-public class UseCaseTestExtensions {
+import org.testcontainers.containers.GenericContainer;
 
-  public TestExtension create(String scriptName) {
-    if (scriptName.equals("snowflake")) {
-      return new SnowflakeTestExtension();
-    }
-    if (scriptName.equals("duckdb") || scriptName.equals("analytics-only")) {
-      return new DuckdbTestExtension();
-    }
-    if (scriptName.equals("iceberg-export")) {
-      return new IcebergTestExtension();
-    }
-    return TestExtension.NOOP;
-  }
-}
+public record ContainerResult(GenericContainer<?> cmd, Long exitCode, String logs) {}

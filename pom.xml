@@ -112,20 +112,20 @@
     <flink-client.version>1.1.4</flink-client.version>
 
     <!-- Dependency versions -->
-    <agroal.version>3.0</agroal.version>
+    <agroal.version>3.0.1</agroal.version>
     <antlr.version>4.13.2</antlr.version>
     <assertj.version>3.27.7</assertj.version>
     <autoservice.version>1.1.1</autoservice.version>
     <avro.version>1.12.1</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
     <aws-msk-iam-auth.version>2.3.5</aws-msk-iam-auth.version>
-    <aws-sdk-bom.version>2.42.19</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.42.24</aws-sdk-bom.version>
     <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-csv.version>1.14.1</commons-csv.version>
     <commons-exec.version>1.6.0</commons-exec.version>
     <mima.version>2.4.25</mima.version>
     <commons-io.version>2.21.0</commons-io.version>
-    <duckdb.version>1.5.0.0</duckdb.version>
+    <duckdb.version>1.5.1.0</duckdb.version>
     <feign.version>13.11</feign.version>
     <freemarker.version>2.3.34</freemarker.version>
     <glassfish.version>3.0.0</glassfish.version>
@@ -150,7 +150,7 @@
     <json-schema.version>2.0.1</json-schema.version>
     <junit.jupiter.version>6.0.3</junit.jupiter.version>
     <kafka.version>3.9.1</kafka.version>
-    <log4j.version>2.25.3</log4j.version>
+    <log4j.version>2.25.4</log4j.version>
     <lombok.version>1.18.44</lombok.version>
     <mcp-sdk.version>0.17.2</mcp-sdk.version>
     <micrometer.version>1.16.4</micrometer.version>
@@ -169,7 +169,7 @@
     <snakeyaml.version>2.6</snakeyaml.version>
     <swagger-core.version>2.2.45</swagger-core.version>
     <testcontainers.version>2.0.4</testcontainers.version>
-    <vertx.version>5.0.8</vertx.version>
+    <vertx.version>5.0.10</vertx.version>
 
     <!-- Plugin versions -->
     <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
@@ -535,7 +535,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec</artifactId>
-        <version>4.2.10.Final</version>
+        <version>4.2.12.Final</version>
       </dependency>
       <dependency>
         <groupId>org.postgresql</groupId>

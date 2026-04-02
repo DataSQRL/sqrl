@@ -39,6 +39,7 @@ import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
 import org.testcontainers.containers.wait.strategy.Wait;
@@ -51,7 +52,13 @@ import org.testcontainers.utility.DockerImageName;
  */
 @Testcontainers
 @Slf4j
-class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
+class JwtOAuthCombinedIT {
+  @RegisterExtension
+  static SqrlContainerExtension sqrl = new SqrlContainerExtension("jwt-oauth-combined");
+
+  @RegisterExtension
+  static PostgresContainerExtension postgres =
+      new PostgresContainerExtension(sqrl, JwtOAuthCombinedIT::executeStatements);
 
   private static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:26.0";
   private static final String KEYCLOAK_ADMIN = "admin";
@@ -69,13 +76,7 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
 
   private final ObjectMapper objectMapper = new ObjectMapper();
 
-  @Override
-  protected String getTestCaseName() {
-    return "jwt-oauth-combined";
-  }
-
-  @Override
-  protected void executeStatements(Statement stmt) throws SQLException {
+  private static void executeStatements(Statement stmt) throws SQLException {
     stmt.execute("CREATE TABLE IF NOT EXISTS \"MyTable\" (val INTEGER)");
     stmt.execute(
         "INSERT INTO \"MyTable\" (val) VALUES (1), (2), (3), (4), (5), (6), (7), (8), (9), (10)");
@@ -86,7 +87,7 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
   static void startKeycloak() {
     keycloak =
         new GenericContainer<>(DockerImageName.parse(KEYCLOAK_IMAGE))
-            .withNetwork(sharedNetwork)
+            .withNetwork(sqrl.getNetwork())
             .withNetworkAliases("keycloak")
             .withExposedPorts(8080)
             .withEnv("KC_BOOTSTRAP_ADMIN_USERNAME", KEYCLOAK_ADMIN)
@@ -146,11 +147,11 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
                 + KEYCLOAK_PASSWORD,
             ContentType.APPLICATION_FORM_URLENCODED));
 
-    var response = sharedHttpClient.execute(request);
-    var body = EntityUtils.toString(response.getEntity());
-    var json = new ObjectMapper().readTree(body);
-
-    return json.get("access_token").asText();
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      var body = EntityUtils.toString(response.getEntity());
+      var json = new ObjectMapper().readTree(body);
+      return json.get("access_token").asText();
+    }
   }
 
   @SneakyThrows
@@ -175,14 +176,14 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
     request.setHeader("Authorization", "Bearer " + adminToken);
     request.setEntity(new StringEntity(realmConfig, ContentType.APPLICATION_JSON));
 
-    var response = sharedHttpClient.execute(request);
-    var statusCode = response.getStatusLine().getStatusCode();
-
-    if (statusCode == 409) {
-      log.info("Realm '{}' already exists", REALM_NAME);
-    } else if (statusCode != 201) {
-      var body = EntityUtils.toString(response.getEntity());
-      throw new RuntimeException("Failed to create realm: " + statusCode + " - " + body);
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      var statusCode = response.getStatusLine().getStatusCode();
+      if (statusCode == 409) {
+        log.info("Realm '{}' already exists", REALM_NAME);
+      } else if (statusCode != 201) {
+        var body = EntityUtils.toString(response.getEntity());
+        throw new RuntimeException("Failed to create realm: " + statusCode + " - " + body);
+      }
     }
   }
 
@@ -212,17 +213,17 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
     request.setHeader("Authorization", "Bearer " + adminToken);
     request.setEntity(new StringEntity(clientConfig, ContentType.APPLICATION_JSON));
 
-    var response = sharedHttpClient.execute(request);
-    var statusCode = response.getStatusLine().getStatusCode();
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      var statusCode = response.getStatusLine().getStatusCode();
+      if (statusCode == 409) {
+        log.info("Client '{}' already exists", CLIENT_ID);
+      } else if (statusCode != 201) {
+        var body = EntityUtils.toString(response.getEntity());
+        throw new RuntimeException("Failed to create client: " + statusCode + " - " + body);
+      }
 
-    if (statusCode == 409) {
-      log.info("Client '{}' already exists", CLIENT_ID);
-    } else if (statusCode != 201) {
-      var body = EntityUtils.toString(response.getEntity());
-      throw new RuntimeException("Failed to create client: " + statusCode + " - " + body);
+      return getClientUuid(keycloakUrl, adminToken);
     }
-
-    return getClientUuid(keycloakUrl, adminToken);
   }
 
   @SneakyThrows
@@ -232,11 +233,11 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
     var request = new HttpGet(clientUrl);
     request.setHeader("Authorization", "Bearer " + adminToken);
 
-    var response = sharedHttpClient.execute(request);
-    var body = EntityUtils.toString(response.getEntity());
-    var json = new ObjectMapper().readTree(body);
-
-    return json.get(0).get("id").asText();
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      var body = EntityUtils.toString(response.getEntity());
+      var json = new ObjectMapper().readTree(body);
+      return json.get(0).get("id").asText();
+    }
   }
 
   @SneakyThrows
@@ -273,16 +274,17 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
     request.setHeader("Authorization", "Bearer " + adminToken);
     request.setEntity(new StringEntity(mapperConfig, ContentType.APPLICATION_JSON));
 
-    var response = sharedHttpClient.execute(request);
-    var statusCode = response.getStatusLine().getStatusCode();
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      var statusCode = response.getStatusLine().getStatusCode();
 
-    if (statusCode == 409) {
-      log.info("Claim mapper already exists");
-    } else if (statusCode != 201) {
-      var body = EntityUtils.toString(response.getEntity());
-      throw new RuntimeException("Failed to create claim mapper: " + statusCode + " - " + body);
-    } else {
-      log.info("Added 'val' claim mapper with value {} to client", CLAIM_VAL);
+      if (statusCode == 409) {
+        log.info("Claim mapper already exists");
+      } else if (statusCode != 201) {
+        var body = EntityUtils.toString(response.getEntity());
+        throw new RuntimeException("Failed to create claim mapper: " + statusCode + " - " + body);
+      } else {
+        log.info("Added 'val' claim mapper with value {} to client", CLAIM_VAL);
+      }
     }
   }
 
@@ -314,14 +316,14 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
     request.setHeader("Authorization", "Bearer " + adminToken);
     request.setEntity(new StringEntity(userConfig, ContentType.APPLICATION_JSON));
 
-    var response = sharedHttpClient.execute(request);
-    var statusCode = response.getStatusLine().getStatusCode();
-
-    if (statusCode == 409) {
-      log.info("User '{}' already exists", TEST_USER);
-    } else if (statusCode != 201) {
-      var body = EntityUtils.toString(response.getEntity());
-      throw new RuntimeException("Failed to create user: " + statusCode + " - " + body);
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      var statusCode = response.getStatusLine().getStatusCode();
+      if (statusCode == 409) {
+        log.info("User '{}' already exists", TEST_USER);
+      } else if (statusCode != 201) {
+        var body = EntityUtils.toString(response.getEntity());
+        throw new RuntimeException("Failed to create user: " + statusCode + " - " + body);
+      }
     }
   }
 
@@ -341,9 +343,11 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
                 CLIENT_ID, CLIENT_SECRET, TEST_USER, TEST_PASSWORD),
             ContentType.APPLICATION_FORM_URLENCODED));
 
-    var response = sharedHttpClient.execute(request);
-    var body = EntityUtils.toString(response.getEntity());
-    log.info("Token response status: {}", response.getStatusLine().getStatusCode());
+    String body;
+    try (var response = sqrl.getHttpClient().execute(request)) {
+      body = EntityUtils.toString(response.getEntity());
+      log.info("Token response status: {}", response.getStatusLine().getStatusCode());
+    }
 
     var json = objectMapper.readTree(body);
     if (json.has("error")) {
@@ -358,14 +362,14 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
   }
 
   private void compileAndStartServerWithKeycloak() {
-    startPostgreSQLContainer();
+    postgres.startPostgreSQLContainer();
     compileSqrlProjectWithKeycloak();
     startGraphQLServerWithKeycloak();
   }
 
   private void compileSqrlProjectWithKeycloak() {
-    cmd =
-        createCmdContainer(testDir)
+    var cmd =
+        sqrl.createCmdContainer()
             .withCommand("compile", "package.json")
             .withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/")
             .withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
@@ -375,7 +379,7 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
 
     var exitCode = cmd.getCurrentContainerInfo().getState().getExitCodeLong();
     var logs = cmd.getLogs();
-    if (exitCode != 0) {
+    if (exitCode == null || exitCode != 0) {
       log.error("SQRL compilation failed with exit code {}\n{}", exitCode, logs);
       throw new ContainerError("SQRL compilation failed", exitCode, logs);
     }
@@ -384,17 +388,19 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
   }
 
   private void startGraphQLServerWithKeycloak() {
-    serverContainer =
-        createServerContainer(testDir)
+    var serverContainer =
+        sqrl.createServerContainer()
             .withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/")
             .withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/")
             .withEnv("POSTGRES_HOST", "postgresql")
-            .withEnv("POSTGRES_USERNAME", postgresql.getUsername())
-            .withEnv("POSTGRES_PASSWORD", postgresql.getPassword())
-            .withEnv("POSTGRES_DATABASE", postgresql.getDatabaseName())
+            .withEnv("POSTGRES_USERNAME", postgres.getPostgresql().getUsername())
+            .withEnv("POSTGRES_PASSWORD", postgres.getPostgresql().getPassword())
+            .withEnv("POSTGRES_DATABASE", postgres.getPostgresql().getDatabaseName())
             .withEnv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092");
     serverContainer.start();
-    log.info("HTTP server started on port {}", serverContainer.getMappedPort(HTTP_SERVER_PORT));
+    log.info(
+        "HTTP server started on port {}",
+        serverContainer.getMappedPort(SqrlContainerExtension.HTTP_SERVER_PORT));
   }
 
   @Test
@@ -402,9 +408,10 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
   void givenCombinedAuth_whenUnauthenticated_thenReturns401() {
     compileAndStartServerWithKeycloak();
 
-    var response = executeGraphQLQuery("{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}");
-
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
+    try (var response =
+        sqrl.executeGraphQLQuery("{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}")) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(401);
+    }
     log.info("Unauthenticated request correctly rejected with 401");
   }
 
@@ -414,15 +421,16 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
     compileAndStartServerWithKeycloak();
 
     var jwtToken = generateHmacJwtToken(Map.of("val", CLAIM_VAL));
-    var response =
-        executeGraphQLQuery("{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", jwtToken);
-
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-    var responseBody = EntityUtils.toString(response.getEntity());
-    assertThat(responseBody).contains("\"data\"");
-    assertThat(responseBody).contains("\"AuthMyTable\"");
-    assertThat(responseBody).contains("\"val\":" + CLAIM_VAL);
-    log.info("JWT with claim succeeded, response: {}", responseBody);
+    try (var response =
+        sqrl.executeGraphQLQuery(
+            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", jwtToken)) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+      var responseBody = EntityUtils.toString(response.getEntity());
+      assertThat(responseBody).contains("\"data\"");
+      assertThat(responseBody).contains("\"AuthMyTable\"");
+      assertThat(responseBody).contains("\"val\":" + CLAIM_VAL);
+      log.info("JWT with claim succeeded, response: {}", responseBody);
+    }
   }
 
   @Test
@@ -433,20 +441,18 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
     var keycloakToken = getKeycloakToken();
     log.info("Obtained Keycloak token with 'val' claim");
 
-    var response =
-        executeGraphQLQuery(
-            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", keycloakToken);
+    try (var response =
+        sqrl.executeGraphQLQuery(
+            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", keycloakToken)) {
+      var statusCode = response.getStatusLine().getStatusCode();
+      var responseBody = EntityUtils.toString(response.getEntity());
+      log.info("OAuth response status: {}, body: {}", statusCode, responseBody);
 
-    var responseBody = EntityUtils.toString(response.getEntity());
-    log.info(
-        "OAuth response status: {}, body: {}",
-        response.getStatusLine().getStatusCode(),
-        responseBody);
-
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-    assertThat(responseBody).contains("\"data\"");
-    assertThat(responseBody).contains("\"AuthMyTable\"");
-    assertThat(responseBody).contains("\"val\":" + CLAIM_VAL);
+      assertThat(statusCode).isEqualTo(200);
+      assertThat(responseBody).contains("\"data\"");
+      assertThat(responseBody).contains("\"AuthMyTable\"");
+      assertThat(responseBody).contains("\"val\":" + CLAIM_VAL);
+    }
     log.info("OAuth with claim succeeded");
   }
 
@@ -457,21 +463,24 @@ class JwtOAuthCombinedIT extends SqrlWithPostgresContainerTestBase {
 
     // Test JWT with claim
     var jwtToken = generateHmacJwtToken(Map.of("val", CLAIM_VAL));
-    var jwtResponse =
-        executeGraphQLQuery("{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", jwtToken);
-    assertThat(jwtResponse.getStatusLine().getStatusCode()).isEqualTo(200);
-    var jwtBody = EntityUtils.toString(jwtResponse.getEntity());
-    assertThat(jwtBody).contains("\"val\":" + CLAIM_VAL);
+    try (var jwtResponse =
+        sqrl.executeGraphQLQuery(
+            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", jwtToken)) {
+      assertThat(jwtResponse.getStatusLine().getStatusCode()).isEqualTo(200);
+      var jwtBody = EntityUtils.toString(jwtResponse.getEntity());
+      assertThat(jwtBody).contains("\"val\":" + CLAIM_VAL);
+    }
     log.info("JWT token with claim accepted");
 
     // Test OAuth with claim
     var keycloakToken = getKeycloakToken();
-    var oauthResponse =
-        executeGraphQLQuery(
-            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", keycloakToken);
-    assertThat(oauthResponse.getStatusLine().getStatusCode()).isEqualTo(200);
-    var oauthBody = EntityUtils.toString(oauthResponse.getEntity());
-    assertThat(oauthBody).contains("\"val\":" + CLAIM_VAL);
+    try (var oauthResponse =
+        sqrl.executeGraphQLQuery(
+            "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}", keycloakToken)) {
+      assertThat(oauthResponse.getStatusLine().getStatusCode()).isEqualTo(200);
+      var oauthBody = EntityUtils.toString(oauthResponse.getEntity());
+      assertThat(oauthBody).contains("\"val\":" + CLAIM_VAL);
+    }
     log.info("OAuth token with claim accepted");
 
     log.info("Both JWT and OAuth tokens with claims work correctly");

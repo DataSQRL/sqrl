@@ -17,17 +17,18 @@ package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class MetricsContainerIT extends SqrlContainerTestBase {
+public class MetricsContainerIT {
 
-  @Override
-  protected String getTestCaseName() {
-    return "udf";
-  }
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("udf");
+
+  private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   @Test
   void givenRunningServer_whenAccessingMetricsEndpoint_thenReturnsMetrics() {
@@ -71,44 +72,40 @@ public class MetricsContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenRunningServer_whenAccessingHealthEndpoint_thenReturnsHealthStatus() {
-    compileAndStartServer(testDir);
+    sqrl.compileAndStartServer();
 
-    var response = sharedHttpClient.execute(new HttpGet(getHealthEndpoint()));
+    try (var response = sqrl.getHttpClient().execute(new HttpGet(sqrl.getHealthEndpoint()))) {
+      var statusCode = response.getStatusLine().getStatusCode();
 
-    var statusCode = response.getStatusLine().getStatusCode();
+      // Health endpoint can return either 200 (with JSON) or 204 (no content) - both indicate
+      // healthy
+      assertThat(statusCode)
+          .as("Health endpoint should return either 200 (with JSON) or 204 (no content)")
+          .isIn(200, 204);
 
-    // Health endpoint can return either 200 (with JSON) or 204 (no content) - both indicate healthy
-    assertThat(statusCode)
-        .as("Health endpoint should return either 200 (with JSON) or 204 (no content)")
-        .isIn(200, 204);
+      if (statusCode == 200) {
+        var responseBody = EntityUtils.toString(response.getEntity());
+        var jsonResponse = OBJECT_MAPPER.readTree(responseBody);
 
-    if (statusCode == 200) {
-      var responseBody = EntityUtils.toString(response.getEntity());
-      var jsonResponse = objectMapper.readTree(responseBody);
-
-      assertThat(jsonResponse.has("status")).isTrue();
-      assertThat(jsonResponse.get("status").asText()).isEqualTo("UP");
+        assertThat(jsonResponse.has("status")).isTrue();
+        assertThat(jsonResponse.get("status").asText()).isEqualTo("UP");
+      }
+      // 204 No Content indicates healthy server with no registered health checks
     }
-    // 204 No Content indicates healthy server with no registered health checks
   }
 
   @SneakyThrows
   private String getMetricsResult() {
-    compileAndStartServer(testDir);
+    sqrl.compileAndStartServer();
 
-    var response = sharedHttpClient.execute(new HttpGet(getMetricsEndpoint()));
+    try (var response = sqrl.getHttpClient().execute(new HttpGet(sqrl.getMetricsEndpoint()))) {
+      assertThat(response.getStatusLine().getStatusCode())
+          .as(
+              "Status code check for /metrics endpoint: %s"
+                  .formatted(sqrl.getServerContainer().getLogs()))
+          .isEqualTo(200);
 
-    var statusCode = response.getStatusLine().getStatusCode();
-
-    if (statusCode == 200) {
-      // Metrics endpoint is available
       return EntityUtils.toString(response.getEntity());
-
-    } else {
-      throw new AssertionError(
-          "Unexpected status code for /metrics endpoint: "
-              + statusCode
-              + serverContainer.getLogs());
     }
   }
 }

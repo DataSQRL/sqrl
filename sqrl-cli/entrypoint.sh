@@ -32,5 +32,4 @@ export UDF_PATH=/build/build/deploy/flink/lib
 export BUILD_UID=$(stat -c '%u' /build)
 export BUILD_GID=$(stat -c '%g' /build)
 
-# TODO: Remove the patched SQL server JAR when CDC supports Flink 2.x
-exec java $SQRL_JVM_TOOL_OPTS $SQRL_JVM_ARGS -cp /opt/sqrl/sqrl-cli.jar:/opt/sqrl/flink-sql-connector-sqlserver-cdc-sqrl.jar com.datasqrl.cli.DatasqrlCli "${@}"
+exec java $SQRL_JVM_TOOL_OPTS $SQRL_JVM_ARGS -jar /opt/sqrl/sqrl-cli.jar "${@}"

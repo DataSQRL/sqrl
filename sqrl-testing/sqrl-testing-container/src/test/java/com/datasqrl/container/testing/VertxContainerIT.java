@@ -27,31 +27,31 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class VertxContainerIT extends SqrlContainerTestBase {
+public class VertxContainerIT {
 
-  @Override
-  protected String getTestCaseName() {
-    return "udf";
-  }
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("udf");
 
   @Test
   @SneakyThrows
   void givenUdfScript_whenCompiledAndServerStarted_thenApiRespondsCorrectly() {
-    compileAndStartServer(testDir);
+    sqrl.compileAndStartServer();
 
-    var response = executeGraphQLQuery("{\"query\":\"query { __typename }\"}");
-    validateBasicGraphQLResponse(response);
+    try (var response = sqrl.executeGraphQLQuery("{\"query\":\"query { __typename }\"}")) {
+      sqrl.validateBasicGraphQLResponse(response);
+    }
   }
 
   @Test
   @SneakyThrows
   void givenTraceRequestsEnabled_whenGraphQLRequestSent_thenRequestBodyLoggedInServerLogs() {
-    compileAndStartServer(testDir);
+    sqrl.compileAndStartServer();
 
     var testQuery = "{\"query\":\"query { __typename }\"}";
-    var response = executeGraphQLQuery(testQuery);
-    validateBasicGraphQLResponse(response);
+    try (var response = sqrl.executeGraphQLQuery(testQuery)) {
+      sqrl.validateBasicGraphQLResponse(response);
+    }
 
     assertTraceLogContains("ReqBody:");
   }
@@ -59,31 +59,34 @@ public class VertxContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenTraceRequestsEnabled_whenHttpRequestsMade_thenLogPathAndBody() {
-    compileAndStartServer(testDir);
+    sqrl.compileAndStartServer();
 
     var testQuery = "{\"query\":\"query { __typename }\"}";
-    var response = executeGraphQLQuery(testQuery);
-    validateBasicGraphQLResponse(response);
+    try (var response = sqrl.executeGraphQLQuery(testQuery)) {
+      sqrl.validateBasicGraphQLResponse(response);
+    }
 
     assertTraceLogContains("ReqBody:", testQuery, "/v1/graphql");
 
     var randomPath = "/random/test/path/12345";
     var testBody = "{\"test\":\"data\",\"random\":\"content\"}";
 
-    var randomRequest = new HttpPost(getBaseUrl() + randomPath);
+    var randomRequest = new HttpPost(sqrl.getBaseUrl() + randomPath);
     randomRequest.setEntity(new StringEntity(testBody, ContentType.APPLICATION_JSON));
 
-    var randomResponse = sharedHttpClient.execute(randomRequest);
-    EntityUtils.consume(randomResponse.getEntity());
+    try (var randomResponse = sqrl.getHttpClient().execute(randomRequest)) {
+      EntityUtils.consume(randomResponse.getEntity());
+    }
 
     assertTraceLogContains("ReqBody:", testBody, randomPath);
 
-    var graphiqlResponse = sharedHttpClient.execute(new HttpGet(getBaseUrl() + "/v1/graphiql/"));
-
-    assertThat(graphiqlResponse.getStatusLine().getStatusCode()).isEqualTo(200);
-    assertThat(graphiqlResponse.getFirstHeader("Content-Type").getValue()).contains("text/html");
-
-    var graphiql = EntityUtils.toString(graphiqlResponse.getEntity());
+    String graphiql;
+    try (var graphiqlResponse =
+        sqrl.getHttpClient().execute(new HttpGet(sqrl.getBaseUrl() + "/v1/graphiql/"))) {
+      assertThat(graphiqlResponse.getStatusLine().getStatusCode()).isEqualTo(200);
+      assertThat(graphiqlResponse.getFirstHeader("Content-Type").getValue()).contains("text/html");
+      graphiql = EntityUtils.toString(graphiqlResponse.getEntity());
+    }
 
     assertThat(graphiql)
         .contains("<!doctype html>")
@@ -104,11 +107,12 @@ public class VertxContainerIT extends SqrlContainerTestBase {
   @Test
   @SneakyThrows
   void givenTraceRequestsEnabled_whenRequestsMade_thenLogsContainRequestPrefix() {
-    compileAndStartServer(testDir);
+    sqrl.compileAndStartServer();
 
     var testQuery = "{\"query\":\"query { __typename }\"}";
-    var response = executeGraphQLQuery(testQuery);
-    validateBasicGraphQLResponse(response);
+    try (var response = sqrl.executeGraphQLQuery(testQuery)) {
+      sqrl.validateBasicGraphQLResponse(response);
+    }
 
     // Verify that log entries contain request ID prefix and all key elements in single line
     assertTraceLogMatchesPattern("\\[REQ-\\d+-\\d+\\] POST /v1/graphql \\| Status: \\d+");
@@ -150,7 +154,7 @@ public class VertxContainerIT extends SqrlContainerTestBase {
     var logPath = "/opt/sqrl/logs/request-trace.log";
 
     // Copy log file from container to temp location and read it
-    var result = serverContainer.execInContainer("cat", logPath);
+    var result = sqrl.getServerContainer().execInContainer("cat", logPath);
     if (result.getExitCode() != 0) {
       throw new RuntimeException("Failed to read request trace log: " + result.getStderr());
     }

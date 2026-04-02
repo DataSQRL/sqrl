@@ -15,19 +15,23 @@
  */
 package com.datasqrl;
 
+import static com.datasqrl.SnapshotTestSupport.getDisplayName;
+import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.SnapshotTestSupport.TestNameModifier;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-class EngineValidationTest extends AbstractAssetSnapshotTest {
+class EngineValidationTest {
 
   public static final Path PROJECT_DIR = getResourcesDirectory("engine-validation");
 
-  protected EngineValidationTest() {
-    super(PROJECT_DIR.resolve("plan-output"));
-  }
+  @RegisterExtension
+  final CliCompileTestExtension snapshotExtension =
+      new CliCompileTestExtension(Path.of("plan-output"));
 
   @Test
   void testInvalidEngine() {
@@ -38,19 +42,19 @@ class EngineValidationTest extends AbstractAssetSnapshotTest {
     var expectFailure = testModifier == TestNameModifier.fail;
     var printMessages =
         testModifier == TestNameModifier.fail || testModifier == TestNameModifier.warn;
-    this.snapshot = Snapshot.of(getDisplayName(pkg), getClass());
+    snapshotExtension.setSnapshot(Snapshot.of(getDisplayName(pkg), getClass()));
     var hook =
-        execute(
+        snapshotExtension.execute(
             PROJECT_DIR,
             "compile",
             pkg.getFileName().toString(),
             "-t",
-            outputDir.getFileName().toString());
+            snapshotExtension.getOutputDir().toAbsolutePath().toString());
     assertThat(hook.isFailed()).as(hook.getMessages()).isEqualTo(expectFailure);
     if (printMessages) {
-      createMessageSnapshot(hook.getMessages());
+      snapshotExtension.createMessageSnapshot(hook.getMessages());
     } else {
-      createSnapshot();
+      snapshotExtension.createSnapshot(buildDir -> false, outputDir -> false, planDir -> true);
     }
   }
 }

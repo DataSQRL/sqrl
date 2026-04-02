@@ -22,16 +22,18 @@ import java.sql.Statement;
 import lombok.SneakyThrows;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
-public class ServerFunctionContainerIT extends SqrlWithPostgresContainerTestBase {
+public class ServerFunctionContainerIT {
 
-  @Override
-  protected String getTestCaseName() {
-    return "server-functions";
-  }
+  @RegisterExtension
+  static SqrlContainerExtension sqrl = new SqrlContainerExtension("server-functions");
 
-  @Override
-  protected void executeStatements(Statement stmt) throws SQLException {
+  @RegisterExtension
+  static PostgresContainerExtension postgres =
+      new PostgresContainerExtension(sqrl, ServerFunctionContainerIT::executeStatements);
+
+  private static void executeStatements(Statement stmt) throws SQLException {
     // Create MyTable and populate with values 1-10
     stmt.execute(
         "CREATE TABLE IF NOT EXISTS \"Customers\" ("
@@ -49,14 +51,14 @@ public class ServerFunctionContainerIT extends SqrlWithPostgresContainerTestBase
   @Test
   @SneakyThrows
   void givenScript_whenCompiledAndServerStarted_thenApiRespondsCorrectly() {
-    compileAndStartServerWithDatabase(testDir);
-    var response =
-        executeGraphQLQuery(
-            "{\"query\":\"query { CustomersByName(inputName: \\\"Bobasd\\\") { customerid, name } }\"}");
+    postgres.compileAndStartServerWithDatabase();
+    try (var response =
+        sqrl.executeGraphQLQuery(
+            "{\"query\":\"query { CustomersByName(inputName: \\\"Bobasd\\\") { customerid, name } }\"}")) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
 
-    assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
-
-    var responseBody = EntityUtils.toString(response.getEntity());
-    assertThat(responseBody).contains("Bob Jones");
+      var responseBody = EntityUtils.toString(response.getEntity());
+      assertThat(responseBody).contains("Bob Jones");
+    }
   }
 }
