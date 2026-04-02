@@ -16,6 +16,7 @@
 package com.datasqrl;
 
 import com.datasqrl.engines.FullPipelineContainerExtension;
+import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.tests.DuckdbTestExtension;
 import com.datasqrl.tests.IcebergTestExtension;
 import com.datasqrl.tests.SnowflakeTestExtension;
@@ -42,8 +43,8 @@ public class ExternalUseCaseIT {
 
   @ParameterizedTest
   @MethodSource("externalUseCaseProvider")
-  void testCase(UseCaseParam param) {
-    FullUseCaseRunner.run(param, FullPipelineContainerExtension.getHook());
+  void testCase(UseCaseParam param, TestContainerHook hook) {
+    FullUseCaseRunner.run(param, hook);
   }
 
   static Stream<UseCaseParam> externalUseCaseProvider() {

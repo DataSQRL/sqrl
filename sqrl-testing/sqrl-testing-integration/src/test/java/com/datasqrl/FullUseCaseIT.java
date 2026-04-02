@@ -17,6 +17,7 @@ package com.datasqrl;
 
 import com.datasqrl.SnapshotTestSupport.TestNameModifier;
 import com.datasqrl.engines.FullPipelineContainerExtension;
+import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.tests.DuckdbTestExtension;
 import com.datasqrl.tests.IcebergTestExtension;
 import com.datasqrl.tests.SnowflakeTestExtension;
@@ -59,8 +60,8 @@ public class FullUseCaseIT {
   @ParameterizedTest
   @MethodSource("specificUseCaseProvider")
   @Disabled("Intended for manual usage")
-  void specificUseCase(UseCaseParam param) {
-    FullUseCaseRunner.run(param, FullPipelineContainerExtension.getHook());
+  void specificUseCase(UseCaseParam param, TestContainerHook hook) {
+    FullUseCaseRunner.run(param, hook);
   }
 
   /** Ad-hoc debugging entry point. Change the path below to run a single use case manually. */
@@ -70,8 +71,8 @@ public class FullUseCaseIT {
 
   @ParameterizedTest
   @ArgumentsSource(UseCaseParams.class)
-  void useCase(UseCaseParam param) {
-    FullUseCaseRunner.run(param, FullPipelineContainerExtension.getHook());
+  void useCase(UseCaseParam param, TestContainerHook hook) {
+    FullUseCaseRunner.run(param, hook);
   }
 
   static class UseCaseParams extends ArgumentsProviders.PackageProvider {
