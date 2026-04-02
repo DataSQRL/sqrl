@@ -21,18 +21,18 @@ import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-class JBangContainerIT {
+class JavaUdfContainerIT {
 
-  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("jbang");
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("java-udf");
 
   @Test
-  void givenProjectWithJBangJarExport_whenTestCommandExecuted_thenCompileAndTestSuccessful()
+  void givenProjectWithJavaUdf_whenTestCommandExecuted_thenCompileAndTestSuccessful()
       throws Exception {
     var res = sqrl.sqrlCmd("test", "package.json");
 
     assertThat(res.logs()).contains("MyTableTest", "MyAsyncTableTest", "BUILD SUCCESS");
 
-    var fatJar = sqrl.getTestDir().resolve("build/deploy/flink/lib/jbang-udfs.jar");
+    var fatJar = sqrl.getTestDir().resolve("build/deploy/flink/lib/sqrl-udfs.jar");
     assertThat(fatJar).exists().isRegularFile();
     assertThat(Files.size(fatJar))
         .as("Fat JAR should only contain UDF classes and declared //DEPS, not the entire classpath")
