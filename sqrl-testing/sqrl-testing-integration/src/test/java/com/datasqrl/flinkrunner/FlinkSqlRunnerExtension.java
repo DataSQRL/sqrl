@@ -32,7 +32,7 @@ import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
-public class FlinkContainerExtension implements BeforeEachCallback, AfterEachCallback {
+public class FlinkSqlRunnerExtension implements BeforeEachCallback, AfterEachCallback {
 
   private static final int FLINK_REST_PORT = 8081;
 

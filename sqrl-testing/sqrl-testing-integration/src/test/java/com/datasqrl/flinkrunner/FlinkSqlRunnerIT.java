@@ -33,7 +33,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 @Slf4j
 class FlinkSqlRunnerIT {
 
-  @RegisterExtension final FlinkContainerExtension flink = new FlinkContainerExtension();
+  @RegisterExtension final FlinkSqlRunnerExtension flink = new FlinkSqlRunnerExtension();
 
   @Test
   void givenPlan_whenInvokingFormatFunction_thenSuccess() throws Exception {
