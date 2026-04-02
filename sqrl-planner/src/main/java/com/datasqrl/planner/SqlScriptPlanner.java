@@ -72,6 +72,7 @@ import com.datasqrl.planner.hint.TestHint;
 import com.datasqrl.planner.hint.TtlHint;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.parser.FlinkSQLStatement;
+import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.ParsedStatement;
@@ -219,7 +220,8 @@ public class SqlScriptPlanner {
   public void planMain(MainScript mainScript, Sqrl2FlinkSQLTranslator sqrlEnv) {
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
     var statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
-    List<StackableStatement> statementStack = new ArrayList<>();
+    var statementStack = new ArrayList<StackableStatement>();
+
     for (ParsedStatement sourceStmt : statements) {
       var statement = sourceStmt.statement();
       var lineErrors = scriptErrors.atFile(statement.getFileLocation());
@@ -228,6 +230,9 @@ public class SqlScriptPlanner {
         planStatement(sqlStatement, statementStack, sqrlEnv, lineErrors);
       } catch (CollectedException e) {
         throw e;
+      } catch (NoLocationStatementParserException e) {
+        var location = e.getFileLocationFn().apply(statement);
+        throw lineErrors.handle(new StatementParserException(location, e));
       } catch (Throwable e) {
         // Map errors from the Flink parser/planner by adjusting the line numbers
         var converted = ParsePosUtil.convertFlinkParserException(e);

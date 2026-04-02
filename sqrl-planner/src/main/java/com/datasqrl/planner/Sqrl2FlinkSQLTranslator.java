@@ -42,10 +42,12 @@ import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable.MutationTableBuilder;
 import com.datasqrl.planner.hint.PlannerHints;
+import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsePosUtil.MessageLocation;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SQLStatement;
+import com.datasqrl.planner.parser.SqrlCreateTableStatement;
 import com.datasqrl.planner.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
@@ -1141,9 +1143,13 @@ public class Sqrl2FlinkSQLTranslator {
     var tableName = tableOp.getTableIdentifier().getObjectName();
     var options = tableOp.getCatalogTable().getOptions();
 
-    // TODO: Collect supported engines dynamically in a sane way
     if (!tableName.endsWith("_schema") && options.isEmpty() && mutationBuilder.isEmpty()) {
-      throw new StatementParserException(
+      Function<ParsedObject<SqrlCreateTableStatement>, FileLocation> createTableLocationFn =
+          obj -> obj.get().getCreateTable().getFileLocation();
+
+      // TODO: Collect supported engines dynamically in a sane way
+      throw new NoLocationStatementParserException(
+          createTableLocationFn,
           "Mutation engine hint \"/*+ engine(...) */\" is required for internal CREATE TABLE statements."
               + " Supported engines: \"kafka\", \"iceberg\".");
     }
