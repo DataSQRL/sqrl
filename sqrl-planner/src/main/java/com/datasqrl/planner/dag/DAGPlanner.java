@@ -193,6 +193,7 @@ public class DAGPlanner {
     var mutationTables =
         dag.allNodesByClass(PipelineNode.class)
             .flatMap(p -> p.getMutationTable().stream())
+            .distinct()
             .collect(Collectors.toMap(MutationTable::getName, Function.identity()));
     planBuilder.mutationTables(mutationTables);
     mutationTables.entrySet().stream()
