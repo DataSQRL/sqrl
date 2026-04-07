@@ -31,6 +31,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.flink.configuration.Configuration;
@@ -98,7 +99,7 @@ class PredicatePushdownTest extends AbstractAssetSnapshotTest {
       var stmt = it.next();
 
       if (it.hasNext()) {
-        tEnv.executeSql(stmt.get());
+        tEnv.executeSql(stmt.get()).await(60, TimeUnit.MINUTES);
       } else {
         // Explain the last SELECT to get the physical plan
         planText = tEnv.explainSql(stmt.get(), ExplainFormat.TEXT);
