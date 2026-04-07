@@ -35,7 +35,8 @@ class JavaUdfContainerIT {
     var udfJar = sqrl.getTestDir().resolve("build/deploy/flink/lib/sqrl-udfs.jar");
     assertThat(udfJar).exists().isRegularFile();
     assertThat(Files.size(udfJar))
-        .as("UDF JAR should only contain UDF classes and declared //JDEPS, not the entire classpath")
+        .as(
+            "UDF JAR should only contain UDF classes and declared //JDEPS, not the entire classpath")
         .isLessThan(10_000_000L);
   }
 }
