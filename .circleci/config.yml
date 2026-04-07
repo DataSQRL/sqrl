@@ -298,6 +298,7 @@ jobs:
   unit-tests:
     docker:
       - image: cimg/openjdk:17.0
+    resource_class: large
     steps:
       - checkout-and-version
       - skip-if-docs-only
