@@ -307,7 +307,11 @@ jobs:
       - generate-settings
       - run:
           name: Run Unit Tests
-          command: mvn -U -T2 -B install -DonlyUTs
+          command: |
+            export MAVEN_OPTS="-Xmx3g -XX:MaxMetaspaceSize=768m -Djava.awt.headless=true"
+            mvn -U -T1 -B install \
+            -DonlyUTs \
+            -DargLine="@{argLine} -Xmx2g -XX:MaxMetaspaceSize=512m"
       - save-test-results
 
   integration-tests:
@@ -330,7 +334,7 @@ jobs:
       - install-jdk
       - run:
           name: Run Integration Tests
-          command: mvn -U -T2 -B install -DonlyITs -Dfailsafe.rerunFailingTestsCount=1
+          command: mvn -U -T2 -B install -DonlyITs
       - save-test-results
 
   container-e2e-test:
