@@ -1,4 +1,5 @@
-///usr/bin/env jbang "$0" "$@" ; exit $?
+//JDEPS org.apache.commons:commons-lang3:3.17.0
+import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.table.functions.AsyncScalarFunction;
 import org.apache.flink.table.functions.FunctionContext;
 
@@ -13,13 +14,11 @@ public class MyAsyncScalarFunction extends AsyncScalarFunction {
 
     @Override
     public void open(FunctionContext context) throws Exception {
-        // Configure the thread pool to handle asynchronous calls
         this.executor = Executors.newFixedThreadPool(10);
     }
 
     @Override
     public void close() throws Exception {
-        // Properly shut down the executor service
         if (executor != null && !executor.isShutdown()) {
             executor.shutdown();
             if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
@@ -31,12 +30,11 @@ public class MyAsyncScalarFunction extends AsyncScalarFunction {
     public void eval(CompletableFuture<String> result, String param1, int param2) {
         executor.submit(() -> {
             try {
-                // Simulate a delay to mimic an I/O-bound operation
                 Thread.sleep(1000);
-                String response = "Processed " + param1 + " with " + param2;
-                result.complete(response); // Complete the future with the response
+                String response = "Processed " + StringUtils.capitalize(param1) + " with " + param2;
+                result.complete(response);
             } catch (Exception e) {
-                result.completeExceptionally(e); // Complete exceptionally if an error occurs
+                result.completeExceptionally(e);
             }
         });
     }
