@@ -1,7 +1,7 @@
 [FATAL] Mutation engine hint "/*+ engine(...) */" is required for internal CREATE TABLE statements. Supported engines: "kafka", "iceberg".
-in script:mutationHintMissing-fail.sqrl [9:1]:
-);
-
+in script:mutationHintMissing-fail.sqrl [12:1]:
+  Multi-line doc comment
+  */
 CREATE TABLE _SensorsInvalid (
 ^
 

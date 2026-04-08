@@ -42,6 +42,7 @@ import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable.MutationTableBuilder;
 import com.datasqrl.planner.hint.PlannerHints;
+import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsePosUtil.MessageLocation;
 import com.datasqrl.planner.parser.ParsedObject;
@@ -1143,7 +1144,7 @@ public class Sqrl2FlinkSQLTranslator {
 
     // TODO: Collect supported engines dynamically in a sane way
     if (!tableName.endsWith("_schema") && options.isEmpty() && mutationBuilder.isEmpty()) {
-      throw new StatementParserException(
+      throw new NoLocationStatementParserException(
           "Mutation engine hint \"/*+ engine(...) */\" is required for internal CREATE TABLE statements."
               + " Supported engines: \"kafka\", \"iceberg\".");
     }
