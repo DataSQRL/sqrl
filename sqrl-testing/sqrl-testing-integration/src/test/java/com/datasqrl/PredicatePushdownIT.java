@@ -49,7 +49,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.support.ParameterDeclarations;
 
-class PredicatePushdownTest {
+class PredicatePushdownIT {
 
   public static final Path SCRIPT_DIR = getResourcesDirectory("predicate-pushdown");
 
@@ -117,7 +117,7 @@ class PredicatePushdownTest {
 
     snapshot =
         new SnapshotTest.Snapshot(
-            PredicatePushdownTest.class.getName(), snapshotName, new StringBuilder(planText));
+            PredicatePushdownIT.class.getName(), snapshotName, new StringBuilder(planText));
 
     snapshot.createOrValidate();
   }
