@@ -77,4 +77,9 @@ public abstract class SqrlDefinition implements SqrlStatement {
         .getFileLocation()
         .add(SQLStatement.removeFirstRowOffset(location, getPrefix().length()));
   }
+
+  @Override
+  public FileLocation getDefaultLocation() {
+    return tableName.getFileLocation();
+  }
 }
