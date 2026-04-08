@@ -1,0 +1,8 @@
+query GetEnrichedSensorReadingByPlacement {
+    EnrichedSensorReadingByPlacement(placement: DOWNSTAIRS, limit: 10, offset: 0) {
+    sensorid
+    temperature
+    placement
+    sensor_name
+  }
+}
