@@ -298,7 +298,6 @@ jobs:
   unit-tests:
     docker:
       - image: cimg/openjdk:17.0
-    resource_class: large
     steps:
       - checkout-and-version
       - skip-if-docs-only
@@ -308,7 +307,11 @@ jobs:
       - generate-settings
       - run:
           name: Run Unit Tests
-          command: mvn -U -T2 -B install -DonlyUTs
+          command: |
+            export MAVEN_OPTS="-Xmx3g -XX:MaxMetaspaceSize=768m -Djava.awt.headless=true"
+            mvn -U -T1 -B install \
+            -DonlyUTs \
+            -DargLine="@{argLine} -Xmx2G -XX:MaxMetaspaceSize=512m"
       - save-test-results
 
   integration-tests:
