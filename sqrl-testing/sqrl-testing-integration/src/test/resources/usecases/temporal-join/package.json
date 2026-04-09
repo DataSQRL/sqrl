@@ -2,7 +2,8 @@
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
   "script": {
-    "main": "temporal-join.sqrl"
+    "main": "temporal-join.sqrl",
+    "graphql": "temporal-join.graphqls"
   },
   "engines": {
     "flink" : {
@@ -13,6 +14,7 @@
   },
   "test-runner": {
     "delay-sec": 30,
-    "mutation-delay-sec": 1
+    "mutation-delay-sec": 1,
+    "use-inferred-schema": false
   }
 }

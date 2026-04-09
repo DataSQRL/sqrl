@@ -1,23 +1,29 @@
 mutation SensorReadings {
     add1: SensorReading(event: {
         sensorid: 101,
-        temperature: 23.5
+        temperature: 23.5,
+        placement: DOWNSTAIRS
     }) {
         sensorid
         temperature
+        placement
     }
     add2: SensorReading(event: {
         sensorid: 101,
         temperature: 33.5
+        placement: DOWNSTAIRS
     }) {
         sensorid
         temperature
+        placement
     }
     add3: SensorReading(event: {
         sensorid: 111,
         temperature: 13.5
+        placement: UPSTAIRS
     }) {
         sensorid
         temperature
+        placement
     }
 }

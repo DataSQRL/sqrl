@@ -2,6 +2,7 @@ query GetEnrichedSensorReadings {
   EnrichedSensorReading(limit: 10, offset: 0) {
     sensorid
     temperature
+    placement
     sensor_name
   }
 }
