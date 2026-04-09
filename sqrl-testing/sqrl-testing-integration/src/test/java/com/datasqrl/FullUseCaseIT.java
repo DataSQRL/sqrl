@@ -63,7 +63,7 @@ public class FullUseCaseIT extends AbstractFullUseCaseTest {
 
   /** Ad-hoc debugging entry point. Change the path below to run a single use case manually. */
   static Stream<UseCaseParam> specificUseCaseProvider() {
-    return Stream.of(new UseCaseParam(USE_CASES.resolve("repository").resolve("package.json")));
+    return Stream.of(new UseCaseParam(USE_CASES.resolve("temporal-join").resolve("package.json")));
   }
 
   @ParameterizedTest
