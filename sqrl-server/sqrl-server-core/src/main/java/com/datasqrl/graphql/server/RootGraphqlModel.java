@@ -133,7 +133,7 @@ public class RootGraphqlModel {
     protected String fieldName;
     protected boolean returnList;
     protected String topic;
-    protected Set<String> keyColumns;
+    protected List<String> keyColumns;
     protected Map<String, ResolvedMetadata> computedColumns;
     protected boolean transactional;
     protected Map<String, String> sinkConfig;

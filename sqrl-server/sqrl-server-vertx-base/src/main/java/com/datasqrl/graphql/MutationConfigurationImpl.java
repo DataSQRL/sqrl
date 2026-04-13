@@ -40,7 +40,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -66,9 +65,9 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
           KafkaProducer.create(
               vertx, config.getKafkaMutationConfig().asMap(coords.isTransactional()));
 
-      SinkProducer emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
-      Set<String> keyColumns = coords.getKeyColumns();
-      final Map<String, ComputeInputColumns> computedInputColumns = new HashMap<>();
+      var emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
+      var keyColumns = coords.getKeyColumns();
+      final var computedInputColumns = new HashMap<String, ComputeInputColumns>();
 
       coords
           .getComputedColumns()
@@ -123,7 +122,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
 
   private List<SinkProducer.Record> getRecords(
       DataFetchingEnvironment env,
-      Set<String> keyColumns,
+      List<String> keyColumns,
       Map<String, ComputeInputColumns> computedColumns) {
     // Rules:
     // - Only one argument is allowed, it doesn't matter the name

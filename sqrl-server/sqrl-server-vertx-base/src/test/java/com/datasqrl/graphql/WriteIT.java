@@ -53,7 +53,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.NewTopic;
@@ -177,7 +176,7 @@ class WriteIT {
                 .build())
         .mutation(
             new KafkaMutationCoords(
-                "addCustomer", false, topicName, Set.of(), Map.of(), false, Map.of()))
+                "addCustomer", false, topicName, List.of(), Map.of(), false, Map.of()))
         .build();
   }
 

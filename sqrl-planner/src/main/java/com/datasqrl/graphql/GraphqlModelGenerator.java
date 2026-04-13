@@ -106,7 +106,6 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
       FieldDefinition atField, TypeDefinitionRegistry registry, MutationTable mutation) {
 
     var computedCols = mutation.getComputedColumns();
-    var keysCols = mutation.getTableBuilder().getPrimaryKey().orElse(List.of());
     var returnList = GraphqlSchemaUtil.isListType(atField.getType());
 
     if (mutation.getCreateTable() instanceof KafkaLogEngine.Table mutationTopic) {
@@ -115,7 +114,7 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
               atField.getName(),
               returnList,
               mutationTopic.topicName(),
-              Set.copyOf(keysCols),
+              mutationTopic.messageKeys(),
               computedCols,
               mutation.getInsertType() == MutationInsertType.TRANSACTION,
               Map.of()));
