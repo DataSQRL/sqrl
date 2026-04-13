@@ -17,10 +17,10 @@ CREATE TABLE SensorUpdates (
 EXPORT SensorReading TO logger.SensorReading;
 EXPORT SensorUpdates TO logger.SensorUpdates;
 
-SensorDistinct := DISTINCT SensorUpdates ON sensorid ORDER BY lastUpdated DESC;
+_SensorDistinct := DISTINCT SensorUpdates ON sensorid ORDER BY lastUpdated DESC;
 
 EnrichedSensorReading := SELECT r.sensorid, r.temperature, r.placement, r.event_time, u.sensor_name
-                         FROM SensorReading r LEFT JOIN SensorDistinct FOR SYSTEM_TIME AS OF r.event_time u on r.sensorid = u.sensorid
+                         FROM SensorReading r LEFT JOIN _SensorDistinct FOR SYSTEM_TIME AS OF r.event_time u on r.sensorid = u.sensorid
                          ORDER BY r.event_time ASC;
 
 EnrichedSensorReadingByPlacement(placement STRING NOT NULL) :=
