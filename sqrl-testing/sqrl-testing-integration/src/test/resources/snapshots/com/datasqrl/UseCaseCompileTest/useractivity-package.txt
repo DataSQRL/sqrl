@@ -368,6 +368,7 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
           "fieldName" : "UserTokens",
           "returnList" : false,
           "topic" : "UserTokens",
+          "keyColumns" : [ ],
           "computedColumns" : {
             "request_time" : {
               "metadataType" : "TIMESTAMP",

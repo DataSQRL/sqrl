@@ -13,8 +13,8 @@ Schema:
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Inputs:
+ - default_catalog.default_database.SensorDistinct
  - default_catalog.default_database.SensorReading
- - default_catalog.default_database._SensorDistinct
 Annotations:
  - sort: [3 ASC-nulls-first]
 
@@ -28,6 +28,20 @@ Inputs:
 Annotations:
  - parameters: placement
  - base-table: EnrichedSensorReading
+
+=== SensorDistinct
+ID:          default_catalog.default_database.SensorDistinct
+Type:        state
+Stage:       flink
+Primary key: sensorid
+Timestamp:   lastUpdated
+---
+Schema:
+ - sensorid: INTEGER NOT NULL
+ - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorUpdates
 
 === SensorReading
 ID:          default_catalog.default_database.SensorReading
@@ -46,20 +60,6 @@ Inputs:
 
 === SensorUpdates
 ID:          default_catalog.default_database.SensorUpdates
-Type:        stream
-Stage:       flink
-Primary key: -
-Timestamp:   lastUpdated
----
-Schema:
- - sensorid: INTEGER NOT NULL
- - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - lastUpdated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Inputs:
- - default_catalog.default_database.SensorUpdates__base
-
-=== _SensorDistinct
-ID:          default_catalog.default_database._SensorDistinct
 Type:        state
 Stage:       flink
 Primary key: sensorid
@@ -70,9 +70,7 @@ Schema:
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
- - default_catalog.default_database.SensorUpdates
-Annotations:
- - mostRecentDistinct: true
+ - default_catalog.default_database.SensorUpdates__base
 
 === Result
 ID:          logger.Result
@@ -118,17 +116,20 @@ CREATE TABLE `SensorUpdates` (
   `sensorid` INTEGER NOT NULL,
   `sensor_name` STRING NOT NULL,
   `lastUpdated` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  PRIMARY KEY (`sensorid`) NOT ENFORCED,
   WATERMARK FOR `lastUpdated` AS `lastUpdated` - INTERVAL '0.0' SECOND
 )
 WITH (
-  'connector' = 'kafka',
-  'format' = 'flexible-json',
+  'connector' = 'upsert-kafka',
+  'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'topic' = 'SensorUpdates'
+  'topic' = 'SensorUpdates',
+  'value.fields-include' = 'ALL',
+  'value.format' = 'flexible-json'
 );
-CREATE VIEW `_SensorDistinct`
+CREATE VIEW `SensorDistinct`
 AS
 SELECT `sensorid`, `sensor_name`, `lastUpdated`
 FROM (SELECT `sensorid`, `sensor_name`, `lastUpdated`, ROW_NUMBER() OVER (PARTITION BY `sensorid` ORDER BY `lastUpdated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
@@ -138,7 +139,7 @@ CREATE VIEW `EnrichedSensorReading`
 AS
 SELECT `r`.`sensorid`, `r`.`temperature`, `r`.`placement`, `r`.`event_time`, `u`.`sensor_name`
 FROM `SensorReading` AS `r`
- LEFT JOIN `_SensorDistinct` FOR SYSTEM_TIME AS OF `r`.`event_time` AS `u` ON `r`.`sensorid` = `u`.`sensorid`;
+ LEFT JOIN `SensorDistinct` FOR SYSTEM_TIME AS OF `r`.`event_time` AS `u` ON `r`.`sensorid` = `u`.`sensorid`;
 CREATE TABLE `Result_1` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
@@ -167,7 +168,21 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `SensorReading_3` (
+CREATE TABLE `SensorDistinct_3` (
+  `sensorid` INTEGER NOT NULL,
+  `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`sensorid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'SensorDistinct',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `SensorReading_4` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
   `placement` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -177,7 +192,7 @@ WITH (
   'connector' = 'print',
   'print-identifier' = 'SensorReading'
 );
-CREATE TABLE `SensorReading_4` (
+CREATE TABLE `SensorReading_5` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
   `placement` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -193,21 +208,21 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `SensorUpdates_5` (
+CREATE TABLE `SensorUpdates_6` (
   `sensorid` INTEGER NOT NULL,
   `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `lastUpdated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`sensorid`) NOT ENFORCED
 )
 WITH (
   'connector' = 'print',
   'print-identifier' = 'SensorUpdates'
 );
-CREATE TABLE `SensorUpdates_6` (
+CREATE TABLE `SensorUpdates_7` (
   `sensorid` INTEGER NOT NULL,
   `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
-  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+  PRIMARY KEY (`sensorid`) NOT ENFORCED
 )
 WITH (
   'connector' = 'jdbc-sqrl',
@@ -226,23 +241,27 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
  SELECT `sensorid`, `temperature`, `placement`, `event_time`, `sensor_name`, `hash_columns`(`sensorid`, `temperature`, `placement`, `event_time`, `sensor_name`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`EnrichedSensorReading`
  ;
- INSERT INTO `default_catalog`.`default_database`.`SensorReading_3`
+ INSERT INTO `default_catalog`.`default_database`.`SensorDistinct_3`
   SELECT *
-   FROM `default_catalog`.`default_database`.`SensorReading`
+   FROM `default_catalog`.`default_database`.`SensorDistinct`
   ;
   INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
-   SELECT `sensorid`, `temperature`, `placement`, `event_time`, `hash_columns`(`sensorid`, `temperature`, `placement`, `event_time`) AS `__pk_hash`
+   SELECT *
     FROM `default_catalog`.`default_database`.`SensorReading`
    ;
-   INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_5`
-    SELECT *
-     FROM `default_catalog`.`default_database`.`SensorUpdates`
+   INSERT INTO `default_catalog`.`default_database`.`SensorReading_5`
+    SELECT `sensorid`, `temperature`, `placement`, `event_time`, `hash_columns`(`sensorid`, `temperature`, `placement`, `event_time`) AS `__pk_hash`
+     FROM `default_catalog`.`default_database`.`SensorReading`
     ;
     INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_6`
-     SELECT `sensorid`, `sensor_name`, `lastUpdated`, `hash_columns`(`sensorid`, `sensor_name`, `lastUpdated`) AS `__pk_hash`
+     SELECT *
       FROM `default_catalog`.`default_database`.`SensorUpdates`
      ;
-     END
+     INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_7`
+      SELECT *
+       FROM `default_catalog`.`default_database`.`SensorUpdates`
+      ;
+      END
 >>>kafka.json
 {
   "topics" : [
@@ -264,7 +283,9 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
-      "messageKeys" : [ ],
+      "messageKeys" : [
+        "sensorid"
+      ],
       "messageSchema" : "",
       "config" : { }
     }
@@ -273,8 +294,9 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "EnrichedSensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "placement" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "sensor_name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorDistinct" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid"));
 CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "placement" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -349,7 +371,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"sensorid\", \"sensor_name\", \"lastUpdated\"\nFROM \"SensorUpdates\"",
+              "sql" : "SELECT *\nFROM \"SensorUpdates\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -398,6 +420,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
           "fieldName" : "SensorReading",
           "returnList" : false,
           "topic" : "SensorReading",
+          "keyColumns" : [ ],
           "computedColumns" : {
             "event_time" : {
               "metadataType" : "TIMESTAMP",
@@ -413,6 +436,9 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
           "fieldName" : "SensorUpdates",
           "returnList" : false,
           "topic" : "SensorUpdates",
+          "keyColumns" : [
+            "sensorid"
+          ],
           "computedColumns" : {
             "lastUpdated" : {
               "metadataType" : "TIMESTAMP",
