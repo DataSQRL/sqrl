@@ -34,10 +34,13 @@ import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -62,8 +65,11 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       KafkaProducer<String, String> producer =
           KafkaProducer.create(
               vertx, config.getKafkaMutationConfig().asMap(coords.isTransactional()));
+
       SinkProducer emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
+      Set<String> keyColumns = coords.getKeyColumns();
       final Map<String, ComputeInputColumns> computedInputColumns = new HashMap<>();
+
       coords
           .getComputedColumns()
           .forEach(
@@ -81,6 +87,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
                     };
                 if (fct != null) computedInputColumns.put(colName, fct);
               });
+
       final List<String> timestampColumns =
           coords.getComputedColumns().entrySet().stream()
               .filter(e -> e.getValue().metadataType() == MetadataType.TIMESTAMP)
@@ -88,15 +95,16 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
               .collect(Collectors.toList());
 
       checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
+
       return env -> {
-        var entries = getEntries(env, computedInputColumns);
-        var cf = new CompletableFuture<Object>();
+        var records = getRecords(env, keyColumns, computedInputColumns);
+        var cf = new CompletableFuture<>();
 
         Future<List<Object>> sendFuture =
             coords.isTransactional()
-                ? sendMessagesTransactionally(producer, entries, emitter, timestampColumns)
+                ? sendMessagesTransactionally(producer, emitter, records, timestampColumns)
                 : sendMessagesNonTransactionally(
-                    createSendFutures(entries, emitter, timestampColumns));
+                    createSendFutures(emitter, records, timestampColumns));
 
         sendFuture
             .onSuccess(results -> completeWithResults(cf, results, coords.isReturnList()))
@@ -113,8 +121,10 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
     Object compute(DataFetchingEnvironment env);
   }
 
-  private List<Map> getEntries(
-      DataFetchingEnvironment env, Map<String, ComputeInputColumns> computedColumns) {
+  private List<SinkProducer.Record> getRecords(
+      DataFetchingEnvironment env,
+      Set<String> keyColumns,
+      Map<String, ComputeInputColumns> computedColumns) {
     // Rules:
     // - Only one argument is allowed, it doesn't matter the name
     // - input argument cannot be null.
@@ -129,6 +139,20 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       entries = List.of((Map) argument);
     }
 
+    // Construct keys if necessary (null if no key cols)
+    var keys = new Map[entries.size()];
+    if (!keyColumns.isEmpty()) {
+      for (int i = 0; i < entries.size(); i++) {
+        var filtered = new LinkedHashMap();
+        for (var key : keyColumns) {
+          if (entries.get(i).containsKey(key)) {
+            filtered.put(key, entries.get(i).get(key));
+          }
+        }
+        keys[i] = filtered;
+      }
+    }
+
     if (!computedColumns.isEmpty()) {
       // Add UUID for event for the computed uuid columns
       entries.forEach(
@@ -140,26 +164,13 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
                 });
           });
     }
-    return entries;
-  }
 
-  private List<Future<Map>> createSendFutures(
-      List<Map> entries, SinkProducer emitter, List<String> timestampColumns) {
-    return entries.stream()
-        .map(
-            entry ->
-                emitter
-                    .send(entry)
-                    .map(
-                        sinkResult -> {
-                          // Add timestamp from sink to result
-                          var dateTime =
-                              ZonedDateTime.ofInstant(sinkResult.sourceTime(), ZoneOffset.UTC);
-                          timestampColumns.forEach(
-                              colName -> entry.put(colName, dateTime.toOffsetDateTime()));
-                          return entry;
-                        }))
-        .collect(Collectors.toList());
+    var records = new ArrayList<SinkProducer.Record>();
+    for (int i = 0; i < entries.size(); i++) {
+      records.add(new SinkProducer.Record(keys[i], entries.get(i)));
+    }
+
+    return records;
   }
 
   private void completeWithResults(
@@ -173,16 +184,17 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
 
   private Future<List<Object>> sendMessagesTransactionally(
       KafkaProducer<String, String> producer,
-      List<Map> entries,
       SinkProducer emitter,
+      List<SinkProducer.Record> records,
       List<String> timestampColumns) {
+
     return producer
         .initTransactions()
         .compose(v -> producer.beginTransaction())
         .compose(
             v -> {
               // Create send futures only after transaction is initialized and begun
-              var futures = createSendFutures(entries, emitter, timestampColumns);
+              var futures = createSendFutures(emitter, records, timestampColumns);
               return Future.join(futures);
             })
         .compose(compositeFuture -> producer.commitTransaction().map(v -> compositeFuture.list()))
@@ -192,5 +204,24 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
 
   private Future<List<Object>> sendMessagesNonTransactionally(List<Future<Map>> futures) {
     return Future.join(futures).map(CompositeFuture::list);
+  }
+
+  private List<Future<Map>> createSendFutures(
+      SinkProducer emitter, List<SinkProducer.Record> records, List<String> timestampColumns) {
+    return records.stream()
+        .map(
+            rec ->
+                emitter
+                    .send(rec)
+                    .map(
+                        sinkResult -> {
+                          // Add timestamp from sink to result
+                          var dateTime =
+                              ZonedDateTime.ofInstant(sinkResult.sourceTime(), ZoneOffset.UTC);
+                          timestampColumns.forEach(
+                              colName -> rec.value().put(colName, dateTime.toOffsetDateTime()));
+                          return rec.value();
+                        }))
+        .collect(Collectors.toList());
   }
 }

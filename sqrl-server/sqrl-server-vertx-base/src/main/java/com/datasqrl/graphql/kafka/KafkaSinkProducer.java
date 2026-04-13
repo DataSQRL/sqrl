@@ -22,7 +22,6 @@ import io.vertx.kafka.client.producer.KafkaProducer;
 import io.vertx.kafka.client.producer.KafkaProducerRecord;
 import io.vertx.kafka.client.producer.RecordMetadata;
 import java.time.Instant;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -32,11 +31,11 @@ public class KafkaSinkProducer<OUT> implements SinkProducer {
   private final KafkaProducer<String, OUT> kafkaProducer;
 
   @Override
-  public Future<SinkResult> send(Map entry) {
+  public Future<SinkResult> send(Record record) {
     final KafkaProducerRecord producerRecord;
 
     try {
-      producerRecord = KafkaProducerRecord.create(topic, entry);
+      producerRecord = KafkaProducerRecord.create(topic, record.key(), record.value());
     } catch (Exception e) {
       return Future.failedFuture(e);
     }
