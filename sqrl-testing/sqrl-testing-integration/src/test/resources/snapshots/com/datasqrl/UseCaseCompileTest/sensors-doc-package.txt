@@ -360,6 +360,7 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
           "fieldName" : "SensorReading",
           "returnList" : false,
           "topic" : "SensorReading",
+          "keyColumns" : [ ],
           "computedColumns" : {
             "uuid" : {
               "metadataType" : "UUID",

@@ -1243,6 +1243,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
           "fieldName" : "SimpleOrders",
           "returnList" : false,
           "topic" : "kafka-mutation-SimpleOrders",
+          "keyColumns" : [ ],
           "computedColumns" : {
             "orderTime" : {
               "metadataType" : "TIMESTAMP",

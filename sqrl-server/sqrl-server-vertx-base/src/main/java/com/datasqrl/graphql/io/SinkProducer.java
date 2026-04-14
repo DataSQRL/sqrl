@@ -20,5 +20,8 @@ import java.util.Map;
 
 /** Sending records to a sink (such as a Kafka topic) */
 public interface SinkProducer {
-  public Future<SinkResult> send(Map entry);
+
+  Future<SinkResult> send(Record record);
+
+  record Record(Map key, Map value) {}
 }
