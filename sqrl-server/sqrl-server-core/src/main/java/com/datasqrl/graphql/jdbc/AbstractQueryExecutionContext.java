@@ -35,10 +35,11 @@ public abstract class AbstractQueryExecutionContext<C extends Context>
   }
 
   public static String addLimitOffsetToQuery(String sqlQuery, String limit, String offset) {
-    return "SELECT * FROM (%s) x LIMIT %s OFFSET %s".formatted(sqlQuery, limit, offset);
+    var query = "SELECT * FROM (%s) x LIMIT %s OFFSET %s".formatted(sqlQuery, limit, offset);
+    return query;
   }
 
-  protected Object mapParamArgumentType(Object param) {
+  protected Object mapParamArgumentType(int pos, Object param) {
     // By default, do nothing
     return param;
   }
@@ -46,12 +47,15 @@ public abstract class AbstractQueryExecutionContext<C extends Context>
   protected CompletableFuture<List<Object>> getParamArgumentsFuture(
       List<RootGraphqlModel.QueryParameterHandler> parameters) {
 
-    var paramFutures =
-        parameters.stream()
-            .map(param -> param.accept(this, this))
-            .map(this::wrapToFuture)
-            .map(future -> future.thenApply(this::mapParamArgumentType))
-            .toArray(CompletableFuture[]::new);
+    var paramFutures = new CompletableFuture[parameters.size()];
+    for (int i = 0; i < parameters.size(); i++) {
+      var param = parameters.get(i);
+      var paramValue = param.accept(this, this);
+      var paramFuture = wrapToFuture(paramValue);
+
+      var pos = i;
+      paramFutures[i] = paramFuture.thenApply(obj -> mapParamArgumentType(pos, obj));
+    }
 
     return CompletableFuture.allOf(paramFutures)
         .thenApply(

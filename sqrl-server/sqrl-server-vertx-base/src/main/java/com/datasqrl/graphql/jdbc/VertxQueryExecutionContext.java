@@ -23,12 +23,17 @@ import com.datasqrl.graphql.VertxContext;
 import com.datasqrl.graphql.jdbc.VertxJdbcClient.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
+import graphql.language.ListType;
+import graphql.language.NonNullType;
+import graphql.language.Type;
+import graphql.language.TypeName;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import io.vertx.sqlclient.data.NullValue;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -71,7 +76,15 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
   }
 
   @Override
-  protected Object mapParamArgumentType(Object param) {
+  protected Object mapParamArgumentType(int pos, Object param) {
+    if (param == null) {
+      var argList = getEnvironment().getFieldDefinition().getArguments();
+      var arg = argList.get(pos);
+      var type = arg.getDefinition().getType();
+
+      return NullValue.of(graphqlTypeToJavaClass(type));
+    }
+
     if (param instanceof List<?> l) {
       return l.toArray();
     }
@@ -141,6 +154,23 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
               cf.completeExceptionally(f);
             });
     return cf;
+  }
+
+  // TODO: map all relevant types properly
+  private static Class<?> graphqlTypeToJavaClass(Type<?> type) {
+    while (type instanceof NonNullType nnt) {
+      type = nnt.getType();
+    }
+    if (type instanceof ListType) {
+      return Object[].class;
+    }
+    var name = ((TypeName) type).getName();
+    return switch (name) {
+      case "Int" -> Integer.class;
+      case "Float" -> Double.class;
+      case "Boolean" -> Boolean.class;
+      default -> String.class;
+    };
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {

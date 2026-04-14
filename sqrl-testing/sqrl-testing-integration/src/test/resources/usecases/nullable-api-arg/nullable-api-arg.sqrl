@@ -1,0 +1,3 @@
+IMPORT tables.product.*;
+
+Discount(discount INT) := SELECT * FROM Product WHERE :discount IS NULL OR discount = :discount;

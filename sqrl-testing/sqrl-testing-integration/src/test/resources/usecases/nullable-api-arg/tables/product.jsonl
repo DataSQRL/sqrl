@@ -1,0 +1,20 @@
+{"id":1,"name":"Laptop","category":"electronics","price":999.99,"discount":10,"timestamp":"2024-01-01T10:00:00.000Z"}
+{"id":2,"name":"Headphones","category":"electronics","price":79.99,"discount":5,"timestamp":"2024-01-01T10:01:00.000Z"}
+{"id":3,"name":"Desk Chair","category":"furniture","price":349.00,"discount":null,"timestamp":"2024-01-01T10:02:00.000Z"}
+{"id":4,"name":"Monitor","category":"electronics","price":449.99,"discount":15,"timestamp":"2024-01-01T10:03:00.000Z"}
+{"id":5,"name":"Keyboard","category":"electronics","price":129.99,"discount":null,"timestamp":"2024-01-01T10:04:00.000Z"}
+{"id":6,"name":"Bookshelf","category":"furniture","price":199.00,"discount":20,"timestamp":"2024-01-01T10:05:00.000Z"}
+{"id":7,"name":"Mouse","category":"electronics","price":49.99,"discount":3,"timestamp":"2024-01-01T10:06:00.000Z"}
+{"id":8,"name":"Standing Desk","category":"furniture","price":599.00,"discount":null,"timestamp":"2024-01-01T10:07:00.000Z"}
+{"id":9,"name":"Webcam","category":"electronics","price":89.99,"discount":8,"timestamp":"2024-01-01T10:08:00.000Z"}
+{"id":10,"name":"Coffee Table","category":"furniture","price":249.00,"discount":12,"timestamp":"2024-01-01T10:09:00.000Z"}
+{"id":11,"name":"USB Hub","category":"electronics","price":34.99,"discount":null,"timestamp":"2024-01-01T10:10:00.000Z"}
+{"id":12,"name":"Lamp","category":"furniture","price":59.99,"discount":5,"timestamp":"2024-01-01T10:11:00.000Z"}
+{"id":13,"name":"Tablet","category":"electronics","price":499.99,"discount":25,"timestamp":"2024-01-01T10:12:00.000Z"}
+{"id":14,"name":"Couch","category":"furniture","price":899.00,"discount":null,"timestamp":"2024-01-01T10:13:00.000Z"}
+{"id":15,"name":"Charger","category":"electronics","price":29.99,"discount":2,"timestamp":"2024-01-01T10:14:00.000Z"}
+{"id":16,"name":"Rug","category":"furniture","price":179.00,"discount":10,"timestamp":"2024-01-01T10:15:00.000Z"}
+{"id":17,"name":"Printer","category":"electronics","price":199.99,"discount":null,"timestamp":"2024-01-01T10:16:00.000Z"}
+{"id":18,"name":"Nightstand","category":"furniture","price":149.00,"discount":7,"timestamp":"2024-01-01T10:17:00.000Z"}
+{"id":19,"name":"Speaker","category":"electronics","price":149.99,"discount":10,"timestamp":"2024-01-01T10:18:00.000Z"}
+{"id":20,"name":"Mirror","category":"furniture","price":89.00,"discount":null,"timestamp":"2024-01-01T10:19:00.000Z"}

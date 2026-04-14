@@ -1,0 +1,9 @@
+query {
+    Discount(discount: 10) {
+        id
+        name
+        category
+        price
+        discount
+    }
+}
