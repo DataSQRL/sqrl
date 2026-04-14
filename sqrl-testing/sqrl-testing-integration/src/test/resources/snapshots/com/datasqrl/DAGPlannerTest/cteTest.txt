@@ -1,0 +1,467 @@
+>>>pipeline_explain.txt
+=== Orders
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders
+Plan:
+LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE TEMPORARY TABLE `Orders__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+)
+WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Orders` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Orders__schema`
+=== SpecialOrderSummary
+ID:          default_catalog.default_database.SpecialOrderSummary
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   -
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - num_special_orders: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
+Plan:
+LogicalAggregate(group=[{0}], num_special_orders=[COUNT()])
+  LogicalProject(customerid=[$1])
+    LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], isSpecialOrder=[>($0, 1000)])
+      LogicalFilter(condition=[<($0, 1000000)])
+        LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `SpecialOrderSummary` AS  WITH SpecialOrders AS (
+    SELECT *, id > 1000 AS isSpecialOrder FROM Orders WHERE id < 1000000
+)
+SELECT customerid, COUNT(*) AS num_special_orders
+FROM SpecialOrders
+GROUP BY customerid;
+
+=== SpecialOrderSummaryDatabase
+ID:          default_catalog.default_database.SpecialOrderSummaryDatabase
+Type:        state
+Stage:       postgres
+Primary key: customerid
+Timestamp:   -
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - num_special_orders: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders
+Plan:
+LogicalAggregate(group=[{0}], num_special_orders=[COUNT()])
+  LogicalProject(customerid=[$1])
+    LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], isSpecialOrder=[>($0, 1000)])
+      LogicalFilter(condition=[<($0, 1000000)])
+        LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `SpecialOrderSummaryDatabase` AS  WITH SpecialOrders AS (
+    SELECT *, id > 1000 AS isSpecialOrder FROM Orders WHERE id < 1000000
+)
+SELECT customerid, COUNT(*) AS num_special_orders
+FROM SpecialOrders
+GROUP BY customerid;
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Orders__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
+)
+WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `Orders` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Orders__schema`;
+CREATE VIEW `SpecialOrderSummary`
+AS
+WITH `SpecialOrders` AS (SELECT *, `id` > 1000 AS `isSpecialOrder`
+  FROM `Orders`
+  WHERE `id` < 1000000) SELECT `customerid`, COUNT(*) AS `num_special_orders`
+  FROM `SpecialOrders`
+  GROUP BY `customerid`;
+CREATE VIEW `SpecialOrderSummaryDatabase`
+AS
+WITH `SpecialOrders` AS (SELECT *, `id` > 1000 AS `isSpecialOrder`
+  FROM `Orders`
+  WHERE `id` < 1000000) SELECT `customerid`, COUNT(*) AS `num_special_orders`
+  FROM `SpecialOrders`
+  GROUP BY `customerid`;
+CREATE TABLE `Orders_1` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Orders_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `SpecialOrderSummary_2` (
+  `customerid` BIGINT NOT NULL,
+  `num_special_orders` BIGINT NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'SpecialOrderSummary_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Orders_1`
+SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+ FROM `default_catalog`.`default_database`.`Orders`
+;
+INSERT INTO `default_catalog`.`default_database`.`SpecialOrderSummary_2`
+ SELECT *
+  FROM `default_catalog`.`default_database`.`SpecialOrderSummary`
+ ;
+ END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Orders_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "SpecialOrderSummary_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SpecialOrderSummary_2\" (\"customerid\" BIGINT NOT NULL, \"num_special_orders\" BIGINT NOT NULL, PRIMARY KEY (\"customerid\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "num_special_orders",
+          "type" : "BIGINT",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "customerid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "Orders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_1\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "SpecialOrderSummary",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"SpecialOrderSummary\"(\"customerid\", \"num_special_orders\") AS SELECT *\nFROM \"SpecialOrderSummary_2\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "num_special_orders",
+          "type" : "BIGINT",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "SpecialOrderSummaryDatabase",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"SpecialOrderSummaryDatabase\"(\"customerid\", \"num_special_orders\") AS SELECT \"customerid\", COUNT(*) AS \"num_special_orders\"\nFROM \"Orders_1\"\nWHERE \"id\" < 1000000\nGROUP BY \"customerid\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "num_special_orders",
+          "type" : "BIGINT",
+          "nullable" : false
+        }
+      ]
+    }
+  ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Orders_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SpecialOrderSummary",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SpecialOrderSummary_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SpecialOrderSummaryDatabase",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customerid\", COUNT(*) AS \"num_special_orders\"\nFROM \"Orders_1\"\nWHERE \"id\" < 1000000\nGROUP BY \"customerid\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSpecialOrderSummary",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SpecialOrderSummary($limit: Int = 10, $offset: Int = 0) {\nSpecialOrderSummary(limit: $limit, offset: $offset) {\ncustomerid\nnum_special_orders\n}\n\n}",
+            "queryName" : "SpecialOrderSummary",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SpecialOrderSummary{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSpecialOrderSummaryDatabase",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SpecialOrderSummaryDatabase($limit: Int = 10, $offset: Int = 0) {\nSpecialOrderSummaryDatabase(limit: $limit, offset: $offset) {\ncustomerid\nnum_special_orders\n}\n\n}",
+            "queryName" : "SpecialOrderSummaryDatabase",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SpecialOrderSummaryDatabase{?offset,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  SpecialOrderSummary(limit: Int = 10, offset: Int = 0): [SpecialOrderSummary!]\n  SpecialOrderSummaryDatabase(limit: Int = 10, offset: Int = 0): [SpecialOrderSummaryDatabase!]\n}\n\ntype SpecialOrderSummary {\n  customerid: Long!\n  num_special_orders: Long!\n}\n\ntype SpecialOrderSummaryDatabase {\n  customerid: Long!\n  num_special_orders: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
