@@ -463,6 +463,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
           "fieldName" : "AuthInputData",
           "returnList" : false,
           "topic" : "AuthInputData",
+          "keyColumns" : [ ],
           "computedColumns" : {
             "val" : {
               "metadataType" : "AUTH",

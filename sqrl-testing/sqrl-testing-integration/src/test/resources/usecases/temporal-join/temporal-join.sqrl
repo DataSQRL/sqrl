@@ -4,13 +4,14 @@ CREATE TABLE SensorReading (
    temperature FLOAT NOT NULL,
    placement STRING NOT NULL,
    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
-);
+) PARTITIONED BY (placement, temperature);
 
 /*+engine(kafka) */
 CREATE TABLE SensorUpdates (
     sensorid INT NOT NULL,
     sensor_name STRING NOT NULL,
-    lastUpdated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+    lastUpdated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+    PRIMARY KEY (sensorid) NOT ENFORCED
 );
 
 EXPORT SensorReading TO logger.SensorReading;

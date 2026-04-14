@@ -879,6 +879,7 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerExport`
           "fieldName" : "CustomerExport",
           "returnList" : false,
           "topic" : "kafka-mutation-CustomerExport",
+          "keyColumns" : [ ],
           "computedColumns" : {
             "timestamp" : {
               "metadataType" : "TIMESTAMP",
