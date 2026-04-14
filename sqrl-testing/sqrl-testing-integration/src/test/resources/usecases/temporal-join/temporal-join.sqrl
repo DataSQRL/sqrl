@@ -2,14 +2,16 @@
 CREATE TABLE SensorReading (
    sensorid INT NOT NULL,
    temperature FLOAT NOT NULL,
+   placement STRING NOT NULL,
    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
-);
+) PARTITIONED BY (placement, temperature);
 
 /*+engine(kafka) */
 CREATE TABLE SensorUpdates (
     sensorid INT NOT NULL,
     sensor_name STRING NOT NULL,
-    lastUpdated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+    lastUpdated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+    PRIMARY KEY (sensorid) NOT ENFORCED
 );
 
 EXPORT SensorReading TO logger.SensorReading;
@@ -17,8 +19,11 @@ EXPORT SensorUpdates TO logger.SensorUpdates;
 
 _SensorDistinct := DISTINCT SensorUpdates ON sensorid ORDER BY lastUpdated DESC;
 
-EnrichedSensorReading := SELECT r.sensorid, r.temperature, r.event_time, u.sensor_name
+EnrichedSensorReading := SELECT r.sensorid, r.temperature, r.placement, r.event_time, u.sensor_name
                          FROM SensorReading r LEFT JOIN _SensorDistinct FOR SYSTEM_TIME AS OF r.event_time u on r.sensorid = u.sensorid
                          ORDER BY r.event_time ASC;
+
+EnrichedSensorReadingByPlacement(placement STRING NOT NULL) :=
+    SELECT * FROM EnrichedSensorReading WHERE placement = :placement;
 
 EXPORT EnrichedSensorReading TO logger.Result;

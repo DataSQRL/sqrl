@@ -6,6 +6,9 @@ CREATE TABLE _SensorsValid (
     PRIMARY KEY (sensorid) NOT ENFORCED
 );
 
+/**
+  Multi-line doc comment
+  */
 CREATE TABLE _SensorsInvalid (
     sensorid INT,
     machineid INT,
@@ -13,4 +16,4 @@ CREATE TABLE _SensorsInvalid (
     PRIMARY KEY (sensorid) NOT ENFORCED
 );
 
-Sensors := SELECT * FROM _Sensors;
+Sensors := SELECT * FROM _SensorsValid;

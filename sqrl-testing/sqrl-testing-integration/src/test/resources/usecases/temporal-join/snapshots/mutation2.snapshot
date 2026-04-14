@@ -2,15 +2,18 @@
   "data" : {
     "add1" : {
       "sensorid" : 101,
-      "temperature" : 23.5
+      "temperature" : 23.5,
+      "placement" : "DOWNSTAIRS"
     },
     "add2" : {
       "sensorid" : 101,
-      "temperature" : 33.5
+      "temperature" : 33.5,
+      "placement" : "DOWNSTAIRS"
     },
     "add3" : {
       "sensorid" : 111,
-      "temperature" : 13.5
+      "temperature" : 13.5,
+      "placement" : "UPSTAIRS"
     }
   }
 }

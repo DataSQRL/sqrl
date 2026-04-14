@@ -366,6 +366,7 @@ INSERT INTO `default_catalog`.`default_database`.`_Input_2`
           "fieldName" : "SimpleInput",
           "returnList" : false,
           "topic" : "kafka-mutation-SimpleInput",
+          "keyColumns" : [ ],
           "computedColumns" : {
             "_uuid" : {
               "metadataType" : "UUID",

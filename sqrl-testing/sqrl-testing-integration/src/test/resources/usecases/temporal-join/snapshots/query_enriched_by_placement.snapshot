@@ -1,6 +1,6 @@
 {
   "data" : {
-    "EnrichedSensorReading" : [ {
+    "EnrichedSensorReadingByPlacement" : [ {
       "sensorid" : 101,
       "temperature" : 23.5,
       "placement" : "DOWNSTAIRS",
@@ -10,11 +10,6 @@
       "temperature" : 33.5,
       "placement" : "DOWNSTAIRS",
       "sensor_name" : "Living Room Sensor"
-    }, {
-      "sensorid" : 111,
-      "temperature" : 13.5,
-      "placement" : "UPSTAIRS",
-      "sensor_name" : "Dining Room Sensor"
     } ]
   }
 }

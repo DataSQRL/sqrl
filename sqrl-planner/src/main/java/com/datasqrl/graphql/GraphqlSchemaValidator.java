@@ -205,9 +205,10 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
         return null;
       } else if (inputTypeDef instanceof EnumTypeDefinition) {
         checkState(
-            outputTypeDef instanceof EnumTypeDefinition
-                || outputTypeDef instanceof ScalarTypeDefinition
-                    && inputTypeDef.getName().equals(outputTypeDef.getName()),
+            (outputTypeDef instanceof EnumTypeDefinition
+                    && inputTypeDef.getName().equals(outputTypeDef.getName()))
+                || (outputTypeDef instanceof ScalarTypeDefinition
+                    && outputTypeDef.getName().equals("String")),
             inputType.getSourceLocation(),
             "Enum types not matching for field %s %s: found %s but wanted %s",
             outputField.getName(),

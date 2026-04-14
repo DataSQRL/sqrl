@@ -72,6 +72,7 @@ import com.datasqrl.planner.hint.TestHint;
 import com.datasqrl.planner.hint.TtlHint;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.parser.FlinkSQLStatement;
+import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.ParsedStatement;
@@ -219,15 +220,29 @@ public class SqlScriptPlanner {
   public void planMain(MainScript mainScript, Sqrl2FlinkSQLTranslator sqrlEnv) {
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
     var statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
-    List<StackableStatement> statementStack = new ArrayList<>();
+    var statementStack = new ArrayList<StackableStatement>();
+
     for (ParsedStatement sourceStmt : statements) {
       var statement = sourceStmt.statement();
       var lineErrors = scriptErrors.atFile(statement.getFileLocation());
       var sqlStatement = statement.get();
+
       try {
         planStatement(sqlStatement, statementStack, sqrlEnv, lineErrors);
+
       } catch (CollectedException e) {
         throw e;
+
+      } catch (NoLocationStatementParserException e) {
+        FileLocation location;
+        if (sqlStatement instanceof SqrlStatement sqrlStmt) {
+          location = sqrlStmt.getDefaultLocation();
+        } else {
+          location = statement.getFileLocation();
+        }
+
+        throw lineErrors.handle(new StatementParserException(location, e));
+
       } catch (Throwable e) {
         // Map errors from the Flink parser/planner by adjusting the line numbers
         var converted = ParsePosUtil.convertFlinkParserException(e);
@@ -256,9 +271,11 @@ public class SqlScriptPlanner {
         // Use registered error handlers
         throw lineErrors.handle(e);
       }
+
       if (!(sqlStatement instanceof SqrlImportStatement)) {
         completeScript.append(sourceStmt.source());
       }
+
       /*Some SQRL statements extend previous statements, so we stack them to keep
       of the lineage as needed for planning
        */
@@ -826,6 +843,7 @@ public class SqlScriptPlanner {
     NamePath aliasPath = null;
     if (importStmt.getAlias().isPresent()) {
       aliasPath = importStmt.getAlias().get();
+      ;
       checkFatal(
           aliasPath.size() == 1,
           ErrorCode.INVALID_IMPORT,

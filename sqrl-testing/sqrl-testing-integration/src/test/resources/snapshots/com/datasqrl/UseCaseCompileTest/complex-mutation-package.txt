@@ -259,6 +259,7 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
           "fieldName" : "InputTable",
           "returnList" : false,
           "topic" : "InputTable",
+          "keyColumns" : [ ],
           "computedColumns" : {
             "event_time" : {
               "metadataType" : "TIMESTAMP",

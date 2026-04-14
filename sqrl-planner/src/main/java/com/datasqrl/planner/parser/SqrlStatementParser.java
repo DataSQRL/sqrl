@@ -304,7 +304,7 @@ public class SqrlStatementParser {
     // #4: Next Batch
     var nextBatch = NEXT_BATCH_PARSER.matcher(statement);
     if (nextBatch.find()) {
-      return SqrlNextBatch.INSTANCE;
+      return new SqrlNextBatch(new ParsedObject<>(statement, FileLocation.START));
     }
 
     // #5: If none of the regex match, we assume it's a Flink SQL statement

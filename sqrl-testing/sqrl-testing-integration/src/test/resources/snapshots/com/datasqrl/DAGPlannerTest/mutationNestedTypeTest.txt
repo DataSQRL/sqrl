@@ -473,6 +473,9 @@ INSERT INTO `default_catalog`.`default_database`.`NestedCustomers_2`
           "fieldName" : "NestedCustomers",
           "returnList" : false,
           "topic" : "kafka-mutation-NestedCustomers",
+          "keyColumns" : [
+            "customerid"
+          ],
           "computedColumns" : {
             "updatedTime" : {
               "metadataType" : "TIMESTAMP",

@@ -1,85 +1,3 @@
->>>inferred_schema.graphqls
-"An RFC-3339 compliant Full Date Scalar"
-scalar Date
-
-"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
-scalar DateTime
-
-type EnrichedSensorReading {
-  sensorid: Int!
-  temperature: Float!
-  event_time: DateTime!
-  sensor_name: String
-}
-
-"A JSON scalar"
-scalar JSON
-
-"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
-scalar LocalTime
-
-"A 64-bit signed integer"
-scalar Long
-
-type Mutation {
-  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!
-  SensorUpdates(event: SensorUpdatesInput!): SensorUpdatesResultOutput!
-}
-
-type Query {
-  EnrichedSensorReading(limit: Int = 10, offset: Int = 0): [EnrichedSensorReading!]
-  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]
-  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]
-}
-
-type SensorReading {
-  sensorid: Int!
-  temperature: Float!
-  event_time: DateTime!
-}
-
-input SensorReadingInput {
-  sensorid: Int!
-  temperature: Float!
-}
-
-type SensorReadingResultOutput {
-  sensorid: Int!
-  temperature: Float!
-  event_time: DateTime!
-}
-
-type SensorUpdates {
-  sensorid: Int!
-  sensor_name: String!
-  lastUpdated: DateTime!
-}
-
-input SensorUpdatesInput {
-  sensorid: Int!
-  sensor_name: String!
-}
-
-type SensorUpdatesResultOutput {
-  sensorid: Int!
-  sensor_name: String!
-  lastUpdated: DateTime!
-}
-
-enum _McpMethodType {
-  NONE
-  TOOL
-  RESOURCE
-}
-
-enum _RestMethodType {
-  NONE
-  GET
-  POST
-}
-
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
-
 >>>pipeline_explain.txt
 === EnrichedSensorReading
 ID:          default_catalog.default_database.EnrichedSensorReading
@@ -91,13 +9,25 @@ Timestamp:   event_time
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
+ - placement: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Inputs:
  - default_catalog.default_database.SensorReading
  - default_catalog.default_database._SensorDistinct
 Annotations:
- - sort: [2 ASC-nulls-first]
+ - sort: [3 ASC-nulls-first]
+
+=== EnrichedSensorReadingByPlacement
+ID:          default_catalog.default_database.EnrichedSensorReadingByPlacement
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.EnrichedSensorReading
+Annotations:
+ - parameters: placement
+ - base-table: EnrichedSensorReading
 
 === SensorReading
 ID:          default_catalog.default_database.SensorReading
@@ -109,15 +39,16 @@ Timestamp:   event_time
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
+ - placement: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.SensorReading__base
 
 === SensorUpdates
 ID:          default_catalog.default_database.SensorUpdates
-Type:        stream
+Type:        state
 Stage:       flink
-Primary key: -
+Primary key: sensorid
 Timestamp:   lastUpdated
 ---
 Schema:
@@ -140,8 +71,6 @@ Schema:
  - lastUpdated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.SensorUpdates
-Annotations:
- - mostRecentDistinct: true
 
 === Result
 ID:          logger.Result
@@ -171,30 +100,38 @@ Inputs:
 CREATE TABLE `SensorReading` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
+  `placement` STRING NOT NULL,
   `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
 )
+PARTITIONED BY (`placement`, `temperature`)
 WITH (
   'connector' = 'kafka',
-  'format' = 'flexible-json',
+  'key.fields' = 'placement;temperature',
+  'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'topic' = 'SensorReading'
+  'topic' = 'SensorReading',
+  'value.fields-include' = 'ALL',
+  'value.format' = 'flexible-json'
 );
 CREATE TABLE `SensorUpdates` (
   `sensorid` INTEGER NOT NULL,
   `sensor_name` STRING NOT NULL,
   `lastUpdated` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  PRIMARY KEY (`sensorid`) NOT ENFORCED,
   WATERMARK FOR `lastUpdated` AS `lastUpdated` - INTERVAL '0.0' SECOND
 )
 WITH (
-  'connector' = 'kafka',
-  'format' = 'flexible-json',
+  'connector' = 'upsert-kafka',
+  'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
-  'topic' = 'SensorUpdates'
+  'topic' = 'SensorUpdates',
+  'value.fields-include' = 'ALL',
+  'value.format' = 'flexible-json'
 );
 CREATE VIEW `_SensorDistinct`
 AS
@@ -204,12 +141,13 @@ FROM (SELECT `sensorid`, `sensor_name`, `lastUpdated`, ROW_NUMBER() OVER (PARTIT
 WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `EnrichedSensorReading`
 AS
-SELECT `r`.`sensorid`, `r`.`temperature`, `r`.`event_time`, `u`.`sensor_name`
+SELECT `r`.`sensorid`, `r`.`temperature`, `r`.`placement`, `r`.`event_time`, `u`.`sensor_name`
 FROM `SensorReading` AS `r`
  LEFT JOIN `_SensorDistinct` FOR SYSTEM_TIME AS OF `r`.`event_time` AS `u` ON `r`.`sensorid` = `u`.`sensorid`;
 CREATE TABLE `Result_1` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
+  `placement` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`
 )
@@ -220,6 +158,7 @@ WITH (
 CREATE TABLE `EnrichedSensorReading_2` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
+  `placement` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
@@ -236,6 +175,7 @@ WITH (
 CREATE TABLE `SensorReading_3` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
+  `placement` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
@@ -245,6 +185,7 @@ WITH (
 CREATE TABLE `SensorReading_4` (
   `sensorid` INTEGER NOT NULL,
   `temperature` FLOAT NOT NULL,
+  `placement` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
@@ -260,7 +201,8 @@ WITH (
 CREATE TABLE `SensorUpdates_5` (
   `sensorid` INTEGER NOT NULL,
   `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+  `lastUpdated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`sensorid`) NOT ENFORCED
 )
 WITH (
   'connector' = 'print',
@@ -270,8 +212,7 @@ CREATE TABLE `SensorUpdates_6` (
   `sensorid` INTEGER NOT NULL,
   `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `lastUpdated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
-  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+  PRIMARY KEY (`sensorid`) NOT ENFORCED
 )
 WITH (
   'connector' = 'jdbc-sqrl',
@@ -287,7 +228,7 @@ SELECT *
  FROM `default_catalog`.`default_database`.`EnrichedSensorReading`
 ;
 INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
- SELECT `sensorid`, `temperature`, `event_time`, `sensor_name`, `hash_columns`(`sensorid`, `temperature`, `event_time`, `sensor_name`) AS `__pk_hash`
+ SELECT `sensorid`, `temperature`, `placement`, `event_time`, `sensor_name`, `hash_columns`(`sensorid`, `temperature`, `placement`, `event_time`, `sensor_name`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`EnrichedSensorReading`
  ;
  INSERT INTO `default_catalog`.`default_database`.`SensorReading_3`
@@ -295,7 +236,7 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
    FROM `default_catalog`.`default_database`.`SensorReading`
   ;
   INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
-   SELECT `sensorid`, `temperature`, `event_time`, `hash_columns`(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
+   SELECT `sensorid`, `temperature`, `placement`, `event_time`, `hash_columns`(`sensorid`, `temperature`, `placement`, `event_time`) AS `__pk_hash`
     FROM `default_catalog`.`default_database`.`SensorReading`
    ;
    INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_5`
@@ -303,7 +244,7 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
      FROM `default_catalog`.`default_database`.`SensorUpdates`
     ;
     INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_6`
-     SELECT `sensorid`, `sensor_name`, `lastUpdated`, `hash_columns`(`sensorid`, `sensor_name`, `lastUpdated`) AS `__pk_hash`
+     SELECT *
       FROM `default_catalog`.`default_database`.`SensorUpdates`
      ;
      END
@@ -317,7 +258,10 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
-      "messageKeys" : [ ],
+      "messageKeys" : [
+        "placement",
+        "temperature"
+      ],
       "messageSchema" : "",
       "config" : { }
     },
@@ -328,7 +272,9 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
       "numPartitions" : 1,
       "replicationFactor" : 3,
       "type" : "MUTATION",
-      "messageKeys" : [ ],
+      "messageKeys" : [
+        "sensorid"
+      ],
       "messageSchema" : "",
       "config" : { }
     }
@@ -336,9 +282,9 @@ INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "EnrichedSensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "sensor_name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
+CREATE TABLE IF NOT EXISTS "EnrichedSensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "placement" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "sensor_name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "placement" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -363,7 +309,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"event_time\", \"sensor_name\"\n  FROM \"EnrichedSensorReading\"\n  ORDER BY \"event_time\" NULLS FIRST) AS \"t0\"",
+              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"placement\", \"event_time\", \"sensor_name\"\n  FROM \"EnrichedSensorReading\"\n  ORDER BY \"event_time\" NULLS FIRST) AS \"t0\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -388,7 +334,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"SensorReading\"",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"placement\", \"event_time\"\nFROM \"SensorReading\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -413,8 +359,42 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"sensorid\", \"sensor_name\", \"lastUpdated\"\nFROM \"SensorUpdates\"",
+              "sql" : "SELECT *\nFROM \"SensorUpdates\"",
               "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "EnrichedSensorReadingByPlacement",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "placement"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"sensorid\", \"temperature\", \"placement\", \"event_time\", \"sensor_name\"\n  FROM \"EnrichedSensorReading\"\n  ORDER BY \"event_time\" NULLS FIRST) AS \"t0\"\nWHERE \"placement\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "placement"
+                }
+              ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
               "database" : "POSTGRES"
@@ -428,6 +408,10 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
           "fieldName" : "SensorReading",
           "returnList" : false,
           "topic" : "SensorReading",
+          "keyColumns" : [
+            "placement",
+            "temperature"
+          ],
           "computedColumns" : {
             "event_time" : {
               "metadataType" : "TIMESTAMP",
@@ -443,6 +427,9 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
           "fieldName" : "SensorUpdates",
           "returnList" : false,
           "topic" : "SensorUpdates",
+          "keyColumns" : [
+            "sensorid"
+          ],
           "computedColumns" : {
             "lastUpdated" : {
               "metadataType" : "TIMESTAMP",
@@ -474,7 +461,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query EnrichedSensorReading($limit: Int = 10, $offset: Int = 0) {\nEnrichedSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nsensor_name\n}\n\n}",
+            "query" : "query EnrichedSensorReading($limit: Int = 10, $offset: Int = 0) {\nEnrichedSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nplacement\nevent_time\nsensor_name\n}\n\n}",
             "queryName" : "EnrichedSensorReading",
             "operationType" : "QUERY"
           },
@@ -500,7 +487,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nplacement\nevent_time\n}\n\n}",
             "queryName" : "SensorReading",
             "operationType" : "QUERY"
           },
@@ -536,6 +523,41 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
         },
         {
           "function" : {
+            "name" : "GetEnrichedSensorReadingByPlacement",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "placement" : {
+                  "type" : "string",
+                  "enum" : [
+                    "DOWNSTAIRS",
+                    "UPSTAIRS"
+                  ]
+                }
+              },
+              "required" : [
+                "placement"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query EnrichedSensorReadingByPlacement($placement: Placements!, $limit: Int = 10, $offset: Int = 0) {\nEnrichedSensorReadingByPlacement(placement: $placement, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nplacement\nevent_time\nsensor_name\n}\n\n}",
+            "queryName" : "EnrichedSensorReadingByPlacement",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/EnrichedSensorReadingByPlacement{?offset,limit,placement}"
+        },
+        {
+          "function" : {
             "name" : "AddSensorReading",
             "parameters" : {
               "type" : "object",
@@ -543,19 +565,27 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
                 "temperature" : {
                   "type" : "number"
                 },
+                "placement" : {
+                  "type" : "string",
+                  "enum" : [
+                    "DOWNSTAIRS",
+                    "UPSTAIRS"
+                  ]
+                },
                 "sensorid" : {
                   "type" : "integer"
                 }
               },
               "required" : [
                 "sensorid",
-                "temperature"
+                "temperature",
+                "placement"
               ]
             }
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!, $placement: Placements!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature, placement: $placement }) {\nsensorid\ntemperature\nplacement\nevent_time\n}\n\n}",
             "queryName" : "SensorReading",
             "operationType" : "MUTATION"
           },
@@ -595,7 +625,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype EnrichedSensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n  sensor_name: String\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n  SensorUpdates(event: SensorUpdatesInput!): SensorUpdatesResultOutput!\n}\n\ntype Query {\n  EnrichedSensorReading(limit: Int = 10, offset: Int = 0): [EnrichedSensorReading!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ntype SensorUpdates {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n\ninput SensorUpdatesInput {\n  sensorid: Int!\n  sensor_name: String!\n}\n\ntype SensorUpdatesResultOutput {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype EnrichedSensorReading {\n  sensorid: Int!\n  temperature: Float!\n  placement: String!\n  event_time: DateTime!\n  sensor_name: String\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SensorReading(event: SensorReadingInput!): SensorReadingResultOutput!\n  SensorUpdates(event: SensorUpdatesInput!): SensorUpdatesResultOutput!\n}\n\ntype Query {\n  EnrichedSensorReading(limit: Int = 10, offset: Int = 0): [EnrichedSensorReading!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]\n  EnrichedSensorReadingByPlacement(placement: Placements!, limit: Int = 10, offset: Int = 0): [EnrichedSensorReading!]\n}\n\nenum Placements {\n    DOWNSTAIRS\n    UPSTAIRS\n}\n\ntype SensorReading {\n  sensorid: Int!\n  temperature: Float!\n  placement: Placements!\n  event_time: DateTime!\n}\n\ninput SensorReadingInput {\n  sensorid: Int!\n  temperature: Float!\n  placement: Placements!\n}\n\ntype SensorReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  placement: Placements!\n  event_time: DateTime!\n}\n\ntype SensorUpdates {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n\ninput SensorUpdatesInput {\n  sensorid: Int!\n  sensor_name: String!\n}\n\ntype SensorUpdatesResultOutput {\n  sensorid: Int!\n  sensor_name: String!\n  lastUpdated: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

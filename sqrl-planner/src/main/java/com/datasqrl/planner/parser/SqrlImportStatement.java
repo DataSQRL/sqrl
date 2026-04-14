@@ -16,6 +16,7 @@
 package com.datasqrl.planner.parser;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.ErrorLocation;
 import lombok.Value;
 
 /** Represents an EXPORT statement */
@@ -25,4 +26,9 @@ public class SqrlImportStatement implements SqrlDdlStatement {
   ParsedObject<NamePath> packageIdentifier;
   ParsedObject<NamePath> alias;
   SqrlComments comments;
+
+  @Override
+  public ErrorLocation.FileLocation getDefaultLocation() {
+    return packageIdentifier.getFileLocation();
+  }
 }

@@ -7,7 +7,7 @@ tags: [Flink]
 
 <head>
   <meta property="og:image" content="/img/blog/subgraph_elimination_after.png" />
-  <meta name="twitter:image" content="/img/diagrams/subgraph_elimination_after.png" />
+  <meta name="twitter:image" content="/img/blog/subgraph_elimination_after.png" />
 </head>
 
 # Avoiding Duplicate Processing in Flink SQL Streaming Jobs

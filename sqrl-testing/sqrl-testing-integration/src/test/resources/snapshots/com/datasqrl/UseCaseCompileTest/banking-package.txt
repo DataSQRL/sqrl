@@ -1199,6 +1199,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
           "fieldName" : "AddChatMessage",
           "returnList" : false,
           "topic" : "AddChatMessage",
+          "keyColumns" : [ ],
           "computedColumns" : {
             "_uuid" : {
               "metadataType" : "UUID",
@@ -1219,6 +1220,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
           "fieldName" : "ApplicationUpdates",
           "returnList" : true,
           "topic" : "ApplicationUpdates",
+          "keyColumns" : [ ],
           "computedColumns" : {
             "_uuid" : {
               "metadataType" : "UUID",

@@ -124,6 +124,7 @@ public class RootGraphqlModel {
   }
 
   @Getter
+  @AllArgsConstructor
   @NoArgsConstructor
   public static class KafkaMutationCoords extends MutationCoords {
 
@@ -132,24 +133,10 @@ public class RootGraphqlModel {
     protected String fieldName;
     protected boolean returnList;
     protected String topic;
+    protected List<String> keyColumns;
     protected Map<String, ResolvedMetadata> computedColumns;
     protected boolean transactional;
     protected Map<String, String> sinkConfig;
-
-    public KafkaMutationCoords(
-        String fieldName,
-        boolean returnList,
-        String topic,
-        Map<String, ResolvedMetadata> computedColumns,
-        boolean transactional,
-        Map<String, String> sinkConfig) {
-      this.fieldName = fieldName;
-      this.returnList = returnList;
-      this.topic = topic;
-      this.computedColumns = computedColumns;
-      this.transactional = transactional;
-      this.sinkConfig = sinkConfig;
-    }
 
     @Override
     public <R, C> R accept(MutationCoordsVisitor<R, C> visitor, C context) {

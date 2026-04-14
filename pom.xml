@@ -119,13 +119,13 @@
     <avro.version>1.12.1</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
     <aws-msk-iam-auth.version>2.3.5</aws-msk-iam-auth.version>
-    <aws-sdk-bom.version>2.42.29</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.42.34</aws-sdk-bom.version>
     <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-csv.version>1.14.1</commons-csv.version>
     <commons-exec.version>1.6.0</commons-exec.version>
     <mima.version>2.4.25</mima.version>
     <commons-io.version>2.21.0</commons-io.version>
-    <duckdb.version>1.5.1.0</duckdb.version>
+    <duckdb.version>1.5.2.0</duckdb.version>
     <feign.version>13.11</feign.version>
     <freemarker.version>2.3.34</freemarker.version>
     <glassfish.version>3.0.0</glassfish.version>
@@ -153,7 +153,7 @@
     <log4j.version>2.25.4</log4j.version>
     <lombok.version>1.18.44</lombok.version>
     <mcp-sdk.version>0.18.1</mcp-sdk.version>
-    <micrometer.version>1.16.4</micrometer.version>
+    <micrometer.version>1.16.5</micrometer.version>
     <mockito.version>4.8.0</mockito.version>
     <mustache.version>0.9.14</mustache.version>
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
@@ -165,9 +165,9 @@
     <scala.version>2.12</scala.version>
     <scram.version>2.1</scram.version>
     <slf4j.version>1.7.36</slf4j.version>
-    <snowflake-jdbc.version>4.0.2</snowflake-jdbc.version>
+    <snowflake-jdbc.version>4.1.0</snowflake-jdbc.version>
     <snakeyaml.version>2.6</snakeyaml.version>
-    <swagger-core.version>2.2.46</swagger-core.version>
+    <swagger-core.version>2.2.48</swagger-core.version>
     <testcontainers.version>2.0.4</testcontainers.version>
     <vertx.version>5.0.10</vertx.version>
 
