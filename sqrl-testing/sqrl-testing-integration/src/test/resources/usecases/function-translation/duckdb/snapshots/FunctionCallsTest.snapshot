@@ -20,6 +20,8 @@
       "regexp_extract_group_example" : "123",
       "regexp_extract_all_example" : [ "1", "2", "3" ],
       "regexp_replace_example" : "aXbXcX",
+      "regexp_count_example" : 3,
+      "regexp_instr_example" : 5,
       "decode_example" : "hi",
       "encode_example" : true,
       "from_base64_example" : "aGVsbG8",
