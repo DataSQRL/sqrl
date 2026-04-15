@@ -23,10 +23,6 @@ import com.datasqrl.graphql.VertxContext;
 import com.datasqrl.graphql.jdbc.VertxJdbcClient.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
-import graphql.language.ListType;
-import graphql.language.NonNullType;
-import graphql.language.Type;
-import graphql.language.TypeName;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -76,13 +72,9 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
   }
 
   @Override
-  protected Object mapParamArgumentType(int pos, Object param) {
-    if (param == null) {
-      var argList = getEnvironment().getFieldDefinition().getArguments();
-      var arg = argList.get(pos);
-      var type = arg.getDefinition().getType();
-
-      return NullValue.of(graphqlTypeToJavaClass(type));
+  protected Object mapParamArgumentType(Object param, Optional<String> sqlType) {
+    if (param == null && sqlType.isPresent()) {
+      return NullValue.of(sqlTypeNameToJavaClass(sqlType.get()));
     }
 
     if (param instanceof List<?> l) {
@@ -156,19 +148,20 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
     return cf;
   }
 
-  // TODO: map all relevant types properly
-  private static Class<?> graphqlTypeToJavaClass(Type<?> type) {
-    while (type instanceof NonNullType nnt) {
-      type = nnt.getType();
+  private static Class<?> sqlTypeNameToJavaClass(String sqlTypeName) {
+    if (sqlTypeName == null) {
+      return String.class;
     }
-    if (type instanceof ListType) {
-      return Object[].class;
-    }
-    var name = ((TypeName) type).getName();
-    return switch (name) {
-      case "Int" -> Integer.class;
-      case "Float" -> Double.class;
-      case "Boolean" -> Boolean.class;
+    return switch (sqlTypeName) {
+      case "VARCHAR", "CHAR" -> String.class;
+      case "INTEGER" -> Integer.class;
+      case "BIGINT" -> Long.class;
+      case "SMALLINT" -> Short.class;
+      case "TINYINT" -> Byte.class;
+      case "FLOAT", "REAL" -> Float.class;
+      case "DOUBLE" -> Double.class;
+      case "DECIMAL" -> java.math.BigDecimal.class;
+      case "BOOLEAN" -> Boolean.class;
       default -> String.class;
     };
   }
