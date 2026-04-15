@@ -621,11 +621,13 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "time"
+                  "path" : "time",
+                  "sqlType" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE"
                 },
                 {
                   "type" : "arg",
-                  "path" : "customerid"
+                  "path" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -671,19 +673,23 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "name"
+                  "path" : "name",
+                  "sqlType" : "VARCHAR"
                 },
                 {
                   "type" : "arg",
-                  "path" : "description"
+                  "path" : "description",
+                  "sqlType" : "VARCHAR"
                 },
                 {
                   "type" : "arg",
-                  "path" : "category"
+                  "path" : "category",
+                  "sqlType" : "VARCHAR"
                 },
                 {
                   "type" : "arg",
-                  "path" : "_ingest_time"
+                  "path" : "_ingest_time",
+                  "sqlType" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -717,7 +723,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "id"
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -755,11 +762,13 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "time"
+                  "path" : "time",
+                  "sqlType" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE"
                 },
                 {
                   "type" : "arg",
-                  "path" : "customerid"
+                  "path" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

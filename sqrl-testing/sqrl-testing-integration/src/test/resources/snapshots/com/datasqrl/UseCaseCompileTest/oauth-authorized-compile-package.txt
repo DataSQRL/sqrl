@@ -157,7 +157,8 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "maxResults"
+                  "path" : "maxResults",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

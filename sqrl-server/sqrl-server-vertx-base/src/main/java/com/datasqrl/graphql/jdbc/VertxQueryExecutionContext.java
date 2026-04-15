@@ -152,8 +152,8 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
     if (sqlTypeName == null) {
       return String.class;
     }
+
     return switch (sqlTypeName) {
-      case "VARCHAR", "CHAR" -> String.class;
       case "INTEGER" -> Integer.class;
       case "BIGINT" -> Long.class;
       case "SMALLINT" -> Short.class;

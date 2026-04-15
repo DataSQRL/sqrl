@@ -543,7 +543,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerVectorEmbed_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "inputName"
+                  "path" : "inputName",
+                  "sqlType" : "VARCHAR"
                 },
                 {
                   "type" : "computed",
@@ -581,7 +582,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerVectorEmbed_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "name"
+                  "path" : "name",
+                  "sqlType" : "VARCHAR"
                 },
                 {
                   "type" : "computed",

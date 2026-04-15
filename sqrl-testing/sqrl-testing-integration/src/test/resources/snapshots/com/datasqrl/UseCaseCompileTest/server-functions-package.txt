@@ -200,11 +200,13 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "a"
+                  "path" : "a",
+                  "sqlType" : "BIGINT"
                 },
                 {
                   "type" : "arg",
-                  "path" : "b"
+                  "path" : "b",
+                  "sqlType" : "BIGINT"
                 },
                 {
                   "type" : "computed",
@@ -242,7 +244,8 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "inputName"
+                  "path" : "inputName",
+                  "sqlType" : "VARCHAR"
                 },
                 {
                   "type" : "computed",

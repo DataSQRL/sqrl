@@ -310,7 +310,8 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "sensorid"
+                  "path" : "sensorid",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -344,7 +345,8 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "sensorid"
+                  "path" : "sensorid",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

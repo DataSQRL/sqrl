@@ -1034,7 +1034,8 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "minAmount"
+                  "path" : "minAmount",
+                  "sqlType" : "FLOAT"
                 },
                 {
                   "type" : "source",
@@ -1227,7 +1228,8 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "customerid"
+                  "path" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -1269,7 +1271,8 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
           "equalityConditions" : {
             "customerid" : {
               "type" : "arg",
-              "path" : "customerid"
+              "path" : "customerid",
+              "sqlType" : "BIGINT"
             }
           }
         }

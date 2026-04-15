@@ -269,7 +269,8 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "sensorid"
+                  "path" : "sensorid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -303,7 +304,8 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "sensorid"
+                  "path" : "sensorid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

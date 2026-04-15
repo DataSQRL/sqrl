@@ -394,7 +394,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerMessage_2`
                 },
                 {
                   "type" : "arg",
-                  "path" : "fromTime"
+                  "path" : "fromTime",
+                  "sqlType" : "TIMESTAMP"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
