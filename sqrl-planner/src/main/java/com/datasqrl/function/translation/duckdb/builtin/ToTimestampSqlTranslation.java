@@ -26,25 +26,28 @@ import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
 @AutoService(SqlTranslation.class)
-public class DateFormatSqlTranslation extends DuckDbSqlTranslation {
+public class ToTimestampSqlTranslation extends DuckDbSqlTranslation {
 
-  public DateFormatSqlTranslation() {
-    super(CalciteFunctionUtil.lightweightOp("DATE_FORMAT"));
+  public ToTimestampSqlTranslation() {
+    super(CalciteFunctionUtil.lightweightOp("TO_TIMESTAMP"));
   }
 
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
+    var operandCount = call.operandCount();
     var operands = new ArrayList<>(call.getOperandList());
 
-    // Flink DATE_FORMAT(ts, 'yyyy-MM-dd HH:mm:ss') uses Java-style patterns.
-    // DuckDB strftime(ts, '%Y-%m-%d %H:%M:%S') uses strftime-style patterns.
-    if (operands.size() >= 2 && operands.get(1) instanceof SqlLiteral literal) {
+    if (operandCount == 1) {
+      var cast = writer.startFunCall("CAST");
+      operands.get(0).unparse(writer, 0, 0);
+      writer.print(" AS TIMESTAMP");
+      writer.endFunCall(cast);
+
+    } else if (operandCount >= 2 && operands.get(1) instanceof SqlLiteral literal) {
       var duckDbPattern = DuckDbSqlTranslationUtils.flinkDateFormatToDuckDb(literal);
       operands.set(1, SqlLiteral.createCharString(duckDbPattern, SqlParserPos.ZERO));
-    }
 
-    CalciteFunctionUtil.lightweightOp("strftime")
-        .createCall(SqlParserPos.ZERO, operands)
-        .unparse(writer, leftPrec, rightPrec);
+      CalciteFunctionUtil.writeFunction("strptime", writer, operands);
+    }
   }
 }
