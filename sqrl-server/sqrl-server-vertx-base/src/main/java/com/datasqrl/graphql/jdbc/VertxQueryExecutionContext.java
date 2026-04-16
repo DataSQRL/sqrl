@@ -23,6 +23,7 @@ import com.datasqrl.graphql.VertxContext;
 import com.datasqrl.graphql.jdbc.VertxJdbcClient.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
+import com.datasqrl.graphql.util.SqlTypeConverter;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
@@ -74,7 +75,8 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
   @Override
   protected Object mapParamArgumentType(Object param, Optional<String> sqlType) {
     if (param == null && sqlType.isPresent()) {
-      return NullValue.of(sqlTypeNameToJavaClass(sqlType.get()));
+      var cls = SqlTypeConverter.sqlTypeNameToJavaClass(sqlType.get());
+      return NullValue.of(cls);
     }
 
     if (param instanceof List<?> l) {
@@ -146,24 +148,6 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
               cf.completeExceptionally(f);
             });
     return cf;
-  }
-
-  private static Class<?> sqlTypeNameToJavaClass(String sqlTypeName) {
-    if (sqlTypeName == null) {
-      return String.class;
-    }
-
-    return switch (sqlTypeName) {
-      case "INTEGER" -> Integer.class;
-      case "BIGINT" -> Long.class;
-      case "SMALLINT" -> Short.class;
-      case "TINYINT" -> Byte.class;
-      case "FLOAT", "REAL" -> Float.class;
-      case "DOUBLE" -> Double.class;
-      case "DECIMAL" -> java.math.BigDecimal.class;
-      case "BOOLEAN" -> Boolean.class;
-      default -> String.class;
-    };
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {
