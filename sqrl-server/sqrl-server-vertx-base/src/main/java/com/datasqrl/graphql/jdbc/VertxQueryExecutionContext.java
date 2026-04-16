@@ -23,12 +23,14 @@ import com.datasqrl.graphql.VertxContext;
 import com.datasqrl.graphql.jdbc.VertxJdbcClient.PreparedSqrlQueryImpl;
 import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import com.datasqrl.graphql.server.RootGraphqlModel.ResolvedSqlQuery;
+import com.datasqrl.graphql.util.SqlTypeConverter;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
+import io.vertx.sqlclient.data.NullValue;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -71,7 +73,12 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
   }
 
   @Override
-  protected Object mapParamArgumentType(Object param) {
+  protected Object mapParamArgumentType(Object param, Optional<String> sqlType) {
+    if (param == null && sqlType.isPresent()) {
+      var cls = SqlTypeConverter.sqlTypeNameToJavaClass(sqlType.get());
+      return NullValue.of(cls);
+    }
+
     if (param instanceof List<?> l) {
       return l.toArray();
     }

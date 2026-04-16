@@ -491,7 +491,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "i"
+                  "path" : "i",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -525,7 +526,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "i"
+                  "path" : "i",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

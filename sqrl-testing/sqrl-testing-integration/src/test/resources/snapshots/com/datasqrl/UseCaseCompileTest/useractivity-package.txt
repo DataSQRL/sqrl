@@ -310,7 +310,8 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "userid"
+                  "path" : "userid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -348,11 +349,13 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "minTokens"
+                  "path" : "minTokens",
+                  "sqlType" : "BIGINT"
                 },
                 {
                   "type" : "arg",
-                  "path" : "maxTokens"
+                  "path" : "maxTokens",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

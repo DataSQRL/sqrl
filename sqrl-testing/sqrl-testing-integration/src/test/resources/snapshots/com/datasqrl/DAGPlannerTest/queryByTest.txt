@@ -391,15 +391,18 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "id"
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
                 },
                 {
                   "type" : "arg",
-                  "path" : "time"
+                  "path" : "time",
+                  "sqlType" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE"
                 },
                 {
                   "type" : "arg",
-                  "path" : "customerid"
+                  "path" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -441,15 +444,18 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "id"
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
                 },
                 {
                   "type" : "arg",
-                  "path" : "time"
+                  "path" : "time",
+                  "sqlType" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE"
                 },
                 {
                   "type" : "arg",
-                  "path" : "customerid"
+                  "path" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

@@ -360,7 +360,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "customerid"
+                  "path" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

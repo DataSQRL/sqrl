@@ -230,7 +230,8 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "sensorid"
+                  "path" : "sensorid",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

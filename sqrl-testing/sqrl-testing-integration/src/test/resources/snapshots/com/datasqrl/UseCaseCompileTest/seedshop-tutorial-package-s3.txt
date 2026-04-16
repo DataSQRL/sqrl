@@ -803,11 +803,13 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "id"
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
                 },
                 {
                   "type" : "arg",
-                  "path" : "email"
+                  "path" : "email",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -1046,7 +1048,8 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "id"
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -1080,7 +1083,8 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "productid"
+                  "path" : "productid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -1114,7 +1118,8 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "query"
+                  "path" : "query",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -1152,11 +1157,13 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "query"
+                  "path" : "query",
+                  "sqlType" : "VARCHAR"
                 },
                 {
                   "type" : "arg",
-                  "path" : "id"
+                  "path" : "id",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

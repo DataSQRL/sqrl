@@ -203,7 +203,8 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
       return new ComputedParameter(sqrlParam.getFunction().get().getFunctionId());
     }
 
-    return new ArgumentParameter(sqrlParam.getName());
+    return new ArgumentParameter(
+        sqrlParam.getName(), sqrlParam.getRelDataType().getSqlTypeName().getName());
   }
 
   private static Set<Argument> createArguments(FieldDefinition field) {

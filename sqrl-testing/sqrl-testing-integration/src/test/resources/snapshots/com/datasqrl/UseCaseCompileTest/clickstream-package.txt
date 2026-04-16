@@ -291,7 +291,8 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "url"
+                  "path" : "url",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
