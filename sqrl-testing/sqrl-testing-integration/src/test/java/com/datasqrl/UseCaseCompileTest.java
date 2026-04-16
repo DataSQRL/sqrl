@@ -55,7 +55,7 @@ public class UseCaseCompileTest {
   @Test
   @Disabled("Intended for manual usage")
   void runTestCaseByName() {
-    var pkg = USECASE_DIR.resolve("function-translation/duckdb").resolve("package.json");
+    var pkg = USECASE_DIR.resolve("nullable-api-arg").resolve("package.json");
     UseCaseTestHelper.testUseCase(
         snapshotExtension,
         getClass(),

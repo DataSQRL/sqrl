@@ -424,6 +424,7 @@ public class RootGraphqlModel {
 
     static final String type = "arg";
     String path;
+    String sqlType;
 
     @Override
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {
@@ -473,7 +474,7 @@ public class RootGraphqlModel {
 
     QueryBase getQuery();
 
-    public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context);
+    <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context);
   }
 
   @AllArgsConstructor

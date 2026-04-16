@@ -607,7 +607,8 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "id"
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -671,7 +672,8 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "userid"
+                  "path" : "userid",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -709,11 +711,13 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "query"
+                  "path" : "query",
+                  "sqlType" : "VARCHAR"
                 },
                 {
                   "type" : "arg",
-                  "path" : "userid"
+                  "path" : "userid",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -747,7 +751,8 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "userid"
+                  "path" : "userid",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

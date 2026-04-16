@@ -244,11 +244,13 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "employeeid"
+                  "path" : "employeeid",
+                  "sqlType" : "BIGINT"
                 },
                 {
                   "type" : "arg",
-                  "path" : "name"
+                  "path" : "name",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

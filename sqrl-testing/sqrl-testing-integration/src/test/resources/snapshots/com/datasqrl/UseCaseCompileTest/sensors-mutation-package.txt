@@ -387,7 +387,8 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
           "equalityConditions" : {
             "sensorid" : {
               "type" : "arg",
-              "path" : "sensorid"
+              "path" : "sensorid",
+              "sqlType" : "INTEGER"
             }
           }
         }

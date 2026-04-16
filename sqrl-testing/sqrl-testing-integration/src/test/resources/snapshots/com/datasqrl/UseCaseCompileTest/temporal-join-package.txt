@@ -392,7 +392,8 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "placement"
+                  "path" : "placement",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
