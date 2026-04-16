@@ -1,12 +1,16 @@
 ARG IMG_REPO=datasqrl
 ARG DUCKDB_EXTENSIONS_TAG=latest
 
+FROM --platform=linux/amd64 jbangdev/jbang:0.138.0 AS jbang
 FROM ${IMG_REPO}/duckdb-extensions:${DUCKDB_EXTENSIONS_TAG}
 
 ARG POSTGRES_VERSION=17
 
 ENV TZ=America/Los_Angeles
 ENV POSTGRES_VERSION=${POSTGRES_VERSION}
+ENV JBANG_DIR=/opt/jbang
+
+COPY --from=jbang /jbang-*/ /opt/jbang/
 
 # Install dependencies, PostgreSQL, and Redpanda
 RUN apt-get update \

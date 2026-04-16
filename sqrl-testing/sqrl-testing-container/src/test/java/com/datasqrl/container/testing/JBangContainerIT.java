@@ -17,26 +17,21 @@ package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.nio.file.Files;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-class JavaUdfContainerIT {
+class JBangContainerIT {
 
-  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("java-udf");
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("jbang");
 
   @Test
-  void givenProjectWithJavaUdf_whenTestCommandExecuted_thenCompileAndTestSuccessful()
+  void givenProjectWithJBangJarExport_whenTestCommandExecuted_thenCompileAndTestSuccessful()
       throws Exception {
     var res = sqrl.sqrlCmd("test", "package.json");
 
     assertThat(res.logs()).contains("MyTableTest", "MyAsyncTableTest", "BUILD SUCCESS");
 
-    var udfJar = sqrl.getTestDir().resolve("build/deploy/flink/lib/sqrl-udfs.jar");
-    assertThat(udfJar).exists().isRegularFile();
-    assertThat(Files.size(udfJar))
-        .as(
-            "UDF JAR should only contain UDF classes and declared //JDEPS, not the entire classpath")
-        .isLessThan(10_000_000L);
+    var fatJar = sqrl.getTestDir().resolve("build/deploy/flink/lib/jbang-udfs.jar");
+    assertThat(fatJar).exists().isRegularFile();
   }
 }

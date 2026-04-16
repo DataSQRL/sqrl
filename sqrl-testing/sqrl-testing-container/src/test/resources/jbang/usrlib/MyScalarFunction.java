@@ -1,4 +1,6 @@
-//JDEPS com.google.code.gson:gson:2.11.0
+///usr/bin/env jbang "$0" "$@" ; exit $?
+//DEPS com.google.code.gson:gson:2.11.0
+//DEPS org.apache.flink:flink-table-api-java:2.2.0
 import com.google.gson.JsonPrimitive;
 import org.apache.flink.table.functions.ScalarFunction;
 

@@ -59,15 +59,8 @@ public class SqrlInjector {
   }
 
   @Bean
-  public MavenDependencyResolver mavenDependencyResolver() {
-    return new MavenDependencyResolver();
-  }
-
-  @Bean
-  public UdfCompiler udfCompiler(
-      @Qualifier("internalTestExec") Boolean internalTestExec,
-      MavenDependencyResolver mavenDependencyResolver) {
-    return internalTestExec ? UdfCompiler.disabled() : UdfCompiler.create(mavenDependencyResolver);
+  public JBangRunner jBangRunner(@Qualifier("internalTestExec") Boolean internalTestExec) {
+    return internalTestExec ? JBangRunner.disabled() : JBangRunner.create();
   }
 
   @Bean

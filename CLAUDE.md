@@ -319,15 +319,14 @@ Multi-database support through `SqlClient` interface:
 - `snowflake-config.json`: Optional Snowflake-specific configuration
 - `log4j2.properties`: Logging configuration
 
-## Java UDF Files
+## JBang UDF Files
 
-User-defined functions (UDFs) are detected by the `JavaUdfPreprocessor` by auto-detecting `.java` files that extend a Flink UDF class (e.g., `ScalarFunction`, `AggregateFunction`, `AsyncScalarFunction`):
+JBang-based user-defined functions (UDFs) are detected by the `JBangPreprocessor` using a shebang-based opt-in mechanism:
 
-- No special marker or shebang is needed — any `.java` file extending a Flink UDF class is compiled automatically
-- UDFs are compiled at build time using `javax.tools.JavaCompiler` (in-process, no external tools needed)
-- External dependencies are declared via `//JDEPS group:artifact:version` comments and resolved using Mima (embedded Maven resolver)
-- Flink dependencies are provided automatically via classpath — declaring Flink `//JDEPS` (e.g., `//JDEPS org.apache.flink:...`) will cause a build error
-- Old JBang shebang lines (`///usr/bin/env jbang ...`) are automatically stripped for backward compatibility
+- JBang UDF files **must** start with `///usr/bin/env jbang "$0" "$@" ; exit $?` as their first line
+- `.java` files without the shebang are ignored by the preprocessor, even if they extend a Flink UDF class
+- `//DEPS` for Flink is **not required** — Flink dependencies are provided automatically via classpath
+- Declaring Flink `//DEPS` (e.g., `//DEPS org.apache.flink:...`) will cause a build error
 
 ## Important Development Notes
 

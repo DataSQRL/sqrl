@@ -1,7 +1,7 @@
 {
   "version": "1",
   "script": {
-    "main": "java-udf.sqrl"
+    "main": "jbang-udf.sqrl"
   },
   "compiler": {
     "compile-flink-plan": false

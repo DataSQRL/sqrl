@@ -16,8 +16,7 @@
 package com.datasqrl.packager.preprocess;
 
 import com.datasqrl.packager.FilePreprocessingPipeline;
-import com.datasqrl.util.MavenDependencyResolver;
-import com.datasqrl.util.UdfCompiler;
+import com.datasqrl.util.JBangRunner;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,33 +26,31 @@ import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.exec.ExecuteException;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class JavaUdfPreprocessor extends UdfManifestPreprocessor {
+public class JBangPreprocessor extends UdfManifestPreprocessor {
 
   private static final Pattern PACKAGE_PATTERN = Pattern.compile("package\\s+([\\w.]+);");
   private static final Pattern CLASS_EXTENDS_PATTERN =
       Pattern.compile("public\\s+class\\s+(\\w+)\\s+extends\\s+(\\w+)", Pattern.DOTALL);
+  private static final String JBANG_SHEBANG = "///usr/bin/env jbang \"$0\" \"$@\" ; exit $?";
+  static final String JBANG_JAR_NAME = "jbang-udfs.jar";
 
-  static final String UDF_JAR_NAME = "sqrl-udfs.jar";
-
-  private final UdfCompiler udfCompiler;
-  private final MavenDependencyResolver dependencyResolver;
-  private final List<UdfFileInfo> collectedFiles = new ArrayList<>();
+  private final JBangRunner jBangRunner;
+  private final List<JBangFileInfo> collectedFiles = new ArrayList<>();
   private FilePreprocessingPipeline.Context ctx;
 
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
-    if (!isJavaFile(file)) {
+    if (!jBangRunner.isJBangAvailable() || !isJBangFile(file)) {
       return;
     }
 
     var content = readFileContent(file);
-
-    dependencyResolver.validateNoFlinkJdeps(file, content);
 
     var udfClassName = parseUdfClassName(file, content);
     if (udfClassName == null) {
@@ -61,7 +58,7 @@ public class JavaUdfPreprocessor extends UdfManifestPreprocessor {
     }
 
     this.ctx = ctx;
-    collectedFiles.add(new UdfFileInfo(file, udfClassName));
+    collectedFiles.add(new JBangFileInfo(file, udfClassName));
   }
 
   @Override
@@ -70,22 +67,33 @@ public class JavaUdfPreprocessor extends UdfManifestPreprocessor {
       return;
     }
 
-    var targetPath = ctx.libDir().resolve(UDF_JAR_NAME);
-    var allPaths = collectedFiles.stream().map(UdfFileInfo::file).toList();
-    var allClassNames = collectedFiles.stream().map(UdfFileInfo::udfClassName).toList();
+    var targetPath = ctx.libDir().resolve(JBANG_JAR_NAME);
+    var allPaths = collectedFiles.stream().map(JBangFileInfo::file).toList();
+    var allClassNames = collectedFiles.stream().map(JBangFileInfo::udfClassName).toList();
 
     try {
-      udfCompiler.compileAndPackage(allPaths, targetPath);
-      createUdfManifests(allClassNames, UDF_JAR_NAME, ctx);
+      jBangRunner.exportFatJar(allPaths, targetPath);
+      createUdfManifests(allClassNames, JBANG_JAR_NAME, ctx);
+    } catch (ExecuteException e) {
+      log.warn("JBang export failed with exit code: {}", e.getExitValue());
     } catch (IOException e) {
-      log.warn("UDF compilation failed", e);
+      log.warn("Failed to execute JBang export", e);
     }
   }
 
-  private record UdfFileInfo(Path file, String udfClassName) {}
+  private record JBangFileInfo(Path file, String udfClassName) {}
 
   private boolean isJavaFile(Path file) {
     return file.getFileName().toString().endsWith(".java");
+  }
+
+  @SneakyThrows
+  private boolean isJBangFile(Path file) {
+    if (!isJavaFile(file)) {
+      return false;
+    }
+    var firstLine = Files.readAllLines(file).get(0).trim();
+    return JBANG_SHEBANG.equals(firstLine);
   }
 
   @SneakyThrows
@@ -111,8 +119,10 @@ public class JavaUdfPreprocessor extends UdfManifestPreprocessor {
     }
 
     var classMatcherRes = results.get(0);
-    var extendedClass = classMatcherRes.group(2);
 
+    var extendedClass = classMatcherRes.group(2); // group 2 is the extended class
+
+    // Match against both canonical and simple class name
     var extendsUdfClass =
         FLINK_UDFS.stream()
             .anyMatch(
@@ -126,10 +136,11 @@ public class JavaUdfPreprocessor extends UdfManifestPreprocessor {
       return null;
     }
 
+    // Extract package (optional in JBang files)
     var packageMatcher = PACKAGE_PATTERN.matcher(content);
     var packageName = packageMatcher.find() ? packageMatcher.group(1) + "." : "";
 
-    var className = classMatcherRes.group(1);
+    var className = classMatcherRes.group(1); // group 1 is the class name
 
     return packageName + className;
   }
