@@ -19,8 +19,14 @@ import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.vertx.core.Vertx;
+import io.vertx.ext.healthchecks.Status;
+import io.vertx.ext.web.Router;
+import io.vertx.ext.web.client.WebClient;
+import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.junit5.VertxExtension;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -51,6 +57,47 @@ class KafkaHealthTrackerTest {
       }
       assertThat(tracker.isHealthy()).isFalse();
       assertThat(tracker.lastError()).isNotBlank();
+    }
+  }
+
+  @Test
+  void givenUnhealthyTracker_whenHealthEndpointHit_thenReturns503() throws Exception {
+    var config = Map.of(BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:1");
+    try (var tracker = new KafkaHealthTracker(vertx, config, 200L, 500L)) {
+      var deadline = System.currentTimeMillis() + 10_000L;
+      while (tracker.isHealthy() && System.currentTimeMillis() < deadline) {
+        Thread.sleep(100);
+      }
+      assertThat(tracker.isHealthy()).isFalse();
+
+      var router = Router.router(vertx);
+      var handler = HealthCheckHandler.create(vertx);
+      handler.register(
+          "kafka", promise -> promise.complete(tracker.isHealthy() ? Status.OK() : Status.KO()));
+      router.get("/health*").handler(handler);
+
+      var server =
+          vertx
+              .createHttpServer()
+              .requestHandler(router)
+              .listen(0)
+              .toCompletionStage()
+              .toCompletableFuture()
+              .get(5, TimeUnit.SECONDS);
+
+      var client = WebClient.create(vertx);
+      var responseFuture = new CompletableFuture<Integer>();
+      client
+          .get(server.actualPort(), "127.0.0.1", "/health")
+          .send()
+          .onSuccess(resp -> responseFuture.complete(resp.statusCode()))
+          .onFailure(responseFuture::completeExceptionally);
+
+      var statusCode = responseFuture.get(5, TimeUnit.SECONDS);
+      assertThat(statusCode).isEqualTo(503);
+
+      client.close();
+      server.close();
     }
   }
 }
