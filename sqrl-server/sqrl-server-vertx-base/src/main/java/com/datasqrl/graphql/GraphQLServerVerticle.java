@@ -25,7 +25,6 @@ import com.datasqrl.graphql.exec.FlinkFunctionExecutor;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.jdbc.JdbcClientsConfig;
 import com.datasqrl.graphql.jdbc.VertxJdbcClient;
-import com.datasqrl.graphql.kafka.KafkaHealthTracker;
 import com.datasqrl.graphql.server.CustomScalars;
 import com.datasqrl.graphql.server.FunctionExecutor;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
@@ -68,7 +67,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   private final RootGraphqlModel model;
   private final List<AuthenticationProvider> authProviders;
   private final Optional<FlinkExecFunctionPlan> execFunctionPlan;
-  private final KafkaHealthTracker kafkaHealthTracker;
 
   private GraphQL graphQLEngine;
 
@@ -192,8 +190,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       var graphQL =
           model.accept(
               new GraphQLEngineBuilder.Builder()
-                  .withMutationConfiguration(
-                      new MutationConfigurationImpl(vertx, config, kafkaHealthTracker))
+                  .withMutationConfiguration(new MutationConfigurationImpl(vertx, config))
                   .withSubscriptionConfiguration(subscriptionConfig)
                   .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
                   .build(),

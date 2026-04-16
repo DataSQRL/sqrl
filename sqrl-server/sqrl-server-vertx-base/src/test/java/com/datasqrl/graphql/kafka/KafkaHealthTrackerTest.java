@@ -15,100 +15,42 @@
  */
 package com.datasqrl.graphql.kafka;
 
+import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
+import io.vertx.core.Vertx;
+import io.vertx.junit5.VertxExtension;
+import java.util.Map;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 
+@ExtendWith(VertxExtension.class)
 class KafkaHealthTrackerTest {
 
-  private static class MutableClock extends Clock {
-    private Instant now;
+  private Vertx vertx;
 
-    MutableClock(Instant now) {
-      this.now = now;
-    }
+  @BeforeEach
+  void setUp() {
+    vertx = Vertx.vertx();
+  }
 
-    void advanceMillis(long ms) {
-      now = now.plusMillis(ms);
-    }
-
-    @Override
-    public ZoneOffset getZone() {
-      return ZoneOffset.UTC;
-    }
-
-    @Override
-    public Clock withZone(java.time.ZoneId zone) {
-      return this;
-    }
-
-    @Override
-    public Instant instant() {
-      return now;
-    }
+  @AfterEach
+  void tearDown() {
+    vertx.close();
   }
 
   @Test
-  void givenNoActivity_whenIsHealthy_thenReturnsTrue() {
-    var tracker = new KafkaHealthTracker(3, 10_000, new MutableClock(Instant.EPOCH));
-
-    assertThat(tracker.isHealthy()).isTrue();
-  }
-
-  @Test
-  void givenFailuresBelowThreshold_whenIsHealthy_thenReturnsTrue() {
-    var tracker = new KafkaHealthTracker(3, 10_000, new MutableClock(Instant.EPOCH));
-
-    tracker.recordFailure();
-    tracker.recordFailure();
-
-    assertThat(tracker.isHealthy()).isTrue();
-  }
-
-  @Test
-  void givenFailuresAtThresholdWithinWindow_whenIsHealthy_thenReturnsTrue() {
-    var clock = new MutableClock(Instant.EPOCH);
-    var tracker = new KafkaHealthTracker(3, 10_000, clock);
-    tracker.recordSuccess();
-
-    clock.advanceMillis(1_000);
-    tracker.recordFailure();
-    tracker.recordFailure();
-    tracker.recordFailure();
-
-    assertThat(tracker.isHealthy()).isTrue();
-  }
-
-  @Test
-  void givenFailuresAtThresholdBeyondWindow_whenIsHealthy_thenReturnsFalse() {
-    var clock = new MutableClock(Instant.EPOCH);
-    var tracker = new KafkaHealthTracker(3, 10_000, clock);
-    tracker.recordSuccess();
-
-    clock.advanceMillis(15_000);
-    tracker.recordFailure();
-    tracker.recordFailure();
-    tracker.recordFailure();
-
-    assertThat(tracker.isHealthy()).isFalse();
-    assertThat(tracker.getConsecutiveFailures()).isEqualTo(3);
-  }
-
-  @Test
-  void givenSuccessAfterFailures_whenIsHealthy_thenReturnsTrue() {
-    var clock = new MutableClock(Instant.EPOCH);
-    var tracker = new KafkaHealthTracker(3, 10_000, clock);
-
-    clock.advanceMillis(15_000);
-    tracker.recordFailure();
-    tracker.recordFailure();
-    tracker.recordFailure();
-    tracker.recordSuccess();
-
-    assertThat(tracker.isHealthy()).isTrue();
-    assertThat(tracker.getConsecutiveFailures()).isZero();
+  void givenUnreachableBroker_whenProbeFires_thenTrackerReportsUnhealthy() throws Exception {
+    var config = Map.of(BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:1");
+    try (var tracker = new KafkaHealthTracker(vertx, config, 200L, 500L)) {
+      var deadline = System.currentTimeMillis() + 10_000L;
+      while (tracker.isHealthy() && System.currentTimeMillis() < deadline) {
+        Thread.sleep(100);
+      }
+      assertThat(tracker.isHealthy()).isFalse();
+      assertThat(tracker.lastError()).isNotBlank();
+    }
   }
 }

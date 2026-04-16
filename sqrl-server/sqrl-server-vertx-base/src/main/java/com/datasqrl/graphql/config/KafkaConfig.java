@@ -18,10 +18,7 @@ package com.datasqrl.graphql.config;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.MAX_BLOCK_MS_CONFIG;
-import static org.apache.kafka.clients.producer.ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG;
 import static org.apache.kafka.clients.producer.ProducerConfig.TRANSACTIONAL_ID_CONFIG;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -82,20 +79,12 @@ public abstract class KafkaConfig {
   @NoArgsConstructor
   public static class KafkaMutationConfig extends KafkaConfig {
 
-    static final String DEFAULT_MAX_BLOCK_MS = "5000";
-    static final String DEFAULT_REQUEST_TIMEOUT_MS = "5000";
-    static final String DEFAULT_DELIVERY_TIMEOUT_MS = "10000";
-
     public KafkaMutationConfig(Map<String, String> config) {
       super(config);
     }
 
     public Map<String, String> asMap(boolean transactional) {
       var finalConfig = new HashMap<>(config);
-
-      finalConfig.putIfAbsent(MAX_BLOCK_MS_CONFIG, DEFAULT_MAX_BLOCK_MS);
-      finalConfig.putIfAbsent(REQUEST_TIMEOUT_MS_CONFIG, DEFAULT_REQUEST_TIMEOUT_MS);
-      finalConfig.putIfAbsent(DELIVERY_TIMEOUT_MS_CONFIG, DEFAULT_DELIVERY_TIMEOUT_MS);
 
       if (transactional) {
         finalConfig.put(TRANSACTIONAL_ID_CONFIG, "sqrl-mutation-" + UUID.randomUUID());

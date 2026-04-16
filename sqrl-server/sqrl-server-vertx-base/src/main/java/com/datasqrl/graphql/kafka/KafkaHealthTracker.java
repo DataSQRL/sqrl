@@ -15,55 +15,75 @@
  */
 package com.datasqrl.graphql.kafka;
 
-import java.time.Clock;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
+import static org.apache.kafka.clients.admin.AdminClientConfig.DEFAULT_API_TIMEOUT_MS_CONFIG;
+import static org.apache.kafka.clients.admin.AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG;
+
+import io.vertx.core.Vertx;
+import io.vertx.kafka.admin.KafkaAdminClient;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * Tracks recent Kafka send failures so the /health endpoint can report unhealthy when the broker
- * becomes unreachable. Marks unhealthy only when both the failure threshold is reached and there
- * has been no successful send within the configured window — this absorbs broker rolling restarts
- * while still tripping on sustained outages (e.g. DNS resolution failures).
+ * Self-monitoring Kafka health probe used by the {@code /health} endpoint. Periodically calls
+ * {@link KafkaAdminClient#listTopics()} on a dedicated admin client with short timeouts; the latest
+ * probe outcome is cached so the health endpoint never blocks. Self-heals: once the broker becomes
+ * reachable again, the next probe flips the cached state back to healthy without depending on user
+ * traffic.
  */
-public class KafkaHealthTracker {
+@Slf4j
+public class KafkaHealthTracker implements AutoCloseable {
 
-  public static final int DEFAULT_FAILURE_THRESHOLD = 10;
-  public static final long DEFAULT_WINDOW_MS = 30_000L;
+  public static final long DEFAULT_PROBE_INTERVAL_MS = 10_000L;
+  public static final long DEFAULT_PROBE_TIMEOUT_MS = 5_000L;
 
-  private final int failureThreshold;
-  private final long windowMs;
-  private final Clock clock;
-  private final AtomicInteger consecutiveFailures = new AtomicInteger(0);
-  private final AtomicLong lastSuccessTime;
+  private final KafkaAdminClient adminClient;
+  private final long timerId;
+  private final Vertx vertx;
+  private final AtomicReference<HealthState> state =
+      new AtomicReference<>(new HealthState(true, "initial"));
 
-  public KafkaHealthTracker() {
-    this(DEFAULT_FAILURE_THRESHOLD, DEFAULT_WINDOW_MS, Clock.systemUTC());
+  public KafkaHealthTracker(Vertx vertx, Map<String, String> baseKafkaConfig) {
+    this(vertx, baseKafkaConfig, DEFAULT_PROBE_INTERVAL_MS, DEFAULT_PROBE_TIMEOUT_MS);
   }
 
-  public KafkaHealthTracker(int failureThreshold, long windowMs, Clock clock) {
-    this.failureThreshold = failureThreshold;
-    this.windowMs = windowMs;
-    this.clock = clock;
-    this.lastSuccessTime = new AtomicLong(clock.millis());
+  public KafkaHealthTracker(
+      Vertx vertx, Map<String, String> baseKafkaConfig, long probeIntervalMs, long probeTimeoutMs) {
+    this.vertx = vertx;
+    var probeConfig = new HashMap<>(baseKafkaConfig);
+    probeConfig.put(REQUEST_TIMEOUT_MS_CONFIG, String.valueOf(probeTimeoutMs));
+    probeConfig.put(DEFAULT_API_TIMEOUT_MS_CONFIG, String.valueOf(probeTimeoutMs));
+    this.adminClient = KafkaAdminClient.create(vertx, probeConfig);
+    probe();
+    this.timerId = vertx.setPeriodic(probeIntervalMs, id -> probe());
   }
 
-  public void recordFailure() {
-    consecutiveFailures.incrementAndGet();
-  }
-
-  public void recordSuccess() {
-    consecutiveFailures.set(0);
-    lastSuccessTime.set(clock.millis());
+  private void probe() {
+    adminClient
+        .listTopics()
+        .onSuccess(topics -> state.set(new HealthState(true, "ok")))
+        .onFailure(
+            err -> {
+              log.warn("Kafka health probe failed: {}", err.getMessage());
+              state.set(new HealthState(false, err.getMessage()));
+            });
   }
 
   public boolean isHealthy() {
-    if (consecutiveFailures.get() < failureThreshold) {
-      return true;
-    }
-    return clock.millis() - lastSuccessTime.get() < windowMs;
+    return state.get().healthy();
   }
 
-  public int getConsecutiveFailures() {
-    return consecutiveFailures.get();
+  public String lastError() {
+    var s = state.get();
+    return s.healthy() ? null : s.detail();
   }
+
+  @Override
+  public void close() {
+    vertx.cancelTimer(timerId);
+    adminClient.close();
+  }
+
+  private record HealthState(boolean healthy, String detail) {}
 }

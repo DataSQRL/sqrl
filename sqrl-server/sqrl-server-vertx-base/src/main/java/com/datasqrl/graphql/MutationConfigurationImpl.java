@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.io.SinkProducer;
-import com.datasqrl.graphql.kafka.KafkaHealthTracker;
 import com.datasqrl.graphql.kafka.KafkaSinkProducer;
 import com.datasqrl.graphql.server.Context;
 import com.datasqrl.graphql.server.MetadataReader;
@@ -58,7 +57,6 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
 
   private Vertx vertx;
   private ServerConfig config;
-  private KafkaHealthTracker healthTracker;
 
   @Override
   public MutationCoordsVisitor<DataFetcher<?>, Context> createSinkFetcherVisitor() {
@@ -67,7 +65,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
           KafkaProducer.create(
               vertx, config.getKafkaMutationConfig().asMap(coords.isTransactional()));
 
-      var emitter = new KafkaSinkProducer<>(coords.getTopic(), producer, healthTracker);
+      var emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
       var keyColumns = coords.getKeyColumns();
       final var computedInputColumns = new HashMap<String, ComputeInputColumns>();
 

@@ -30,7 +30,6 @@ import com.datasqrl.graphql.config.KafkaConfig;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.graphql.jdbc.VertxJdbcClient;
-import com.datasqrl.graphql.kafka.KafkaHealthTracker;
 import com.datasqrl.graphql.server.GraphQLEngineBuilder;
 import com.datasqrl.graphql.server.PaginationType;
 import com.datasqrl.graphql.server.RootGraphqlModel;
@@ -206,8 +205,7 @@ class WriteIT {
         model
             .accept(
                 new GraphQLEngineBuilder.Builder()
-                    .withMutationConfiguration(
-                        new MutationConfigurationImpl(vertx, config, new KafkaHealthTracker()))
+                    .withMutationConfiguration(new MutationConfigurationImpl(vertx, config))
                     .withSubscriptionConfiguration(new SubscriptionConfigurationImpl(vertx, config))
                     .build(),
                 new VertxContext(
