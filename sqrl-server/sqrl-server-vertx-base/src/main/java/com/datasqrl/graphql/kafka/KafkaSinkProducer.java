@@ -29,6 +29,7 @@ public class KafkaSinkProducer<OUT> implements SinkProducer {
 
   private final String topic;
   private final KafkaProducer<String, OUT> kafkaProducer;
+  private final KafkaHealthTracker healthTracker;
 
   @Override
   public Future<SinkResult> send(Record record) {
@@ -37,11 +38,14 @@ public class KafkaSinkProducer<OUT> implements SinkProducer {
     try {
       producerRecord = KafkaProducerRecord.create(topic, record.key(), record.value());
     } catch (Exception e) {
+      healthTracker.recordFailure();
       return Future.failedFuture(e);
     }
     // TODO: generate UUID server side
     return kafkaProducer
         .send(producerRecord)
+        .onSuccess(r -> healthTracker.recordSuccess())
+        .onFailure(t -> healthTracker.recordFailure())
         .map(
             result ->
                 new SinkResult(Instant.ofEpochMilli(((RecordMetadata) result).getTimestamp())));

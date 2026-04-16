@@ -21,6 +21,7 @@ import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.exec.FlinkExecFunctionPlan;
+import com.datasqrl.graphql.kafka.KafkaHealthTracker;
 import com.datasqrl.graphql.server.ModelContainer;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
@@ -38,6 +39,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -75,6 +77,8 @@ public class HttpServerVerticle extends AbstractVerticle {
   private Map<String, RootGraphqlModel> models;
 
   @Nullable private Path configDir;
+
+  private final KafkaHealthTracker kafkaHealthTracker = new KafkaHealthTracker();
 
   // ---------------------------------------------------------------------------
   // Lifecyle
@@ -173,7 +177,23 @@ public class HttpServerVerticle extends AbstractVerticle {
     }
 
     // ── Health checks ────────────────────────────────────────────────────────
-    router.get("/health*").handler(HealthCheckHandler.create(vertx));
+    var healthCheckHandler = HealthCheckHandler.create(vertx);
+    if (config.getKafkaMutationConfig() != null) {
+      healthCheckHandler.register(
+          "kafka-mutation",
+          promise -> {
+            if (kafkaHealthTracker.isHealthy()) {
+              promise.complete(Status.OK());
+            } else {
+              promise.complete(
+                  Status.KO(
+                      new JsonObject()
+                          .put("consecutiveFailures", kafkaHealthTracker.getConsecutiveFailures())
+                          .put("reason", "Kafka mutation producer has sustained send failures")));
+            }
+          });
+    }
+    router.get("/health*").handler(healthCheckHandler);
 
     // ── OAuth Discovery Endpoints (RFC 9728) ─────────────────────────────────
     var oauthDiscovery = new OAuthDiscoveryHandler(config);
@@ -248,7 +268,13 @@ public class HttpServerVerticle extends AbstractVerticle {
 
               var graphQLVerticle =
                   new GraphQLServerVerticle(
-                      router, config, modelVersion, model, authProviders, execFunctionPlan);
+                      router,
+                      config,
+                      modelVersion,
+                      model,
+                      authProviders,
+                      execFunctionPlan,
+                      kafkaHealthTracker);
 
               return vertx
                   .deployVerticle(graphQLVerticle, childOpts)

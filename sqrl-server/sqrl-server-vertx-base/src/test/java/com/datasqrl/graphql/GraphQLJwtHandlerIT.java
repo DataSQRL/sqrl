@@ -23,6 +23,7 @@ import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.KafkaConfig;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServletConfig;
+import com.datasqrl.graphql.kafka.KafkaHealthTracker;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.RootGraphqlModel.KafkaSubscriptionCoords;
 import com.datasqrl.graphql.server.RootGraphqlModel.StringSchema;
@@ -171,7 +172,13 @@ class GraphQLJwtHandlerIT {
                 io.vertx.ext.auth.jwt.JWTAuth.create(vertx, serverConfig.getJwtAuthOptions()));
     graphQLServerVerticle =
         new GraphQLServerVerticle(
-            router, serverConfig, "v1", model, authProviders, Optional.empty());
+            router,
+            serverConfig,
+            "v1",
+            model,
+            authProviders,
+            Optional.empty(),
+            new KafkaHealthTracker());
 
     vertx
         .deployVerticle(graphQLServerVerticle)
