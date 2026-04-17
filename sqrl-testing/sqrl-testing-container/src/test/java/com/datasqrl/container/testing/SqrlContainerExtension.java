@@ -151,15 +151,21 @@ public class SqrlContainerExtension
     return cmd;
   }
 
-  @SuppressWarnings("resource")
   public GenericContainer<?> createServerContainer() {
+    return createServerContainer(true);
+  }
+
+  @SuppressWarnings("resource")
+  public GenericContainer<?> createServerContainer(boolean withRedpanda) {
     var deployPlanPath = testDir.resolve("build/deploy/plan");
     assertThat(deployPlanPath).exists().isDirectory();
 
-    assertThat(redpandaContainer).as("redpandaContainer is already set.").isNull();
-    assertThat(serverContainer).as("serverContainer is already set.").isNull();
+    if (withRedpanda) {
+      assertThat(redpandaContainer).as("redpandaContainer is already set.").isNull();
+      startRedpandaContainer();
+    }
 
-    startRedpandaContainer();
+    assertThat(serverContainer).as("serverContainer is already set.").isNull();
 
     serverContainer =
         new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + getImageTag()))
@@ -167,10 +173,14 @@ public class SqrlContainerExtension
             .withExposedPorts(HTTP_SERVER_PORT)
             .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
             .withEnv("SQRL_DEBUG", "1")
-            .withEnv(KAFKA_BOOTSTRAP_SERVERS, REDPANDA_INTERNAL_BOOTSTRAP)
             .waitingFor(
                 Wait.forLogMessage(".*HTTP server listening on port 8888.*", 1)
                     .withStartupTimeout(Duration.ofSeconds(30)));
+
+    if (withRedpanda) {
+      serverContainer =
+          serverContainer.withEnv(KAFKA_BOOTSTRAP_SERVERS, REDPANDA_INTERNAL_BOOTSTRAP);
+    }
 
     return serverContainer;
   }
@@ -245,7 +255,12 @@ public class SqrlContainerExtension
   }
 
   public void startGraphQLServer(Consumer<GenericContainer<?>> containerCustomizer) {
-    serverContainer = createServerContainer();
+    startGraphQLServer(containerCustomizer, true);
+  }
+
+  public void startGraphQLServer(
+      Consumer<GenericContainer<?>> containerCustomizer, boolean withRedpanda) {
+    serverContainer = createServerContainer(withRedpanda);
 
     containerCustomizer.accept(serverContainer);
 
@@ -287,8 +302,40 @@ public class SqrlContainerExtension
                     .asCompatibleSubstituteFor("docker.redpanda.com/redpandadata/redpanda"))
             .withNetwork(network)
             .withNetworkAliases(REDPANDA_NETWORK_ALIAS)
-            .withListener(REDPANDA_INTERNAL_BOOTSTRAP);
+            .withListener(REDPANDA_INTERNAL_BOOTSTRAP)
+            .withCommand(
+                "redpanda",
+                "start",
+                "--overprovisioned",
+                "--smp",
+                "1",
+                "--memory",
+                "1G",
+                "--reserve-memory",
+                "0M",
+                "--node-id",
+                "0",
+                "--kafka-addr",
+                "0.0.0.0:" + REDPANDA_INTERNAL_PORT,
+                "--advertise-kafka-addr",
+                REDPANDA_NETWORK_ALIAS + ":" + REDPANDA_INTERNAL_PORT,
+                "--pandaproxy-addr",
+                "0.0.0.0:8082",
+                "--advertise-pandaproxy-addr",
+                REDPANDA_NETWORK_ALIAS + ":8082",
+                "--schema-registry-addr",
+                "0.0.0.0:8081",
+                "--rpc-addr",
+                "0.0.0.0:33145",
+                "--advertise-rpc-addr",
+                REDPANDA_NETWORK_ALIAS + ":33145",
+                "--check=false")
+            .waitingFor(
+                Wait.forLogMessage(".*Successfully started Redpanda!.*", 1)
+                    .withStartupTimeout(Duration.ofMinutes(2)));
+
     redpandaContainer.start();
+
     log.info(
         "Redpanda container started — internal={}, external={}",
         REDPANDA_INTERNAL_BOOTSTRAP,
