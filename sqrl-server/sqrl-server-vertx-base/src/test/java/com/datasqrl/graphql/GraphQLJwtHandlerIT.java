@@ -171,7 +171,7 @@ class GraphQLJwtHandlerIT {
                 io.vertx.ext.auth.jwt.JWTAuth.create(vertx, serverConfig.getJwtAuthOptions()));
     graphQLServerVerticle =
         new GraphQLServerVerticle(
-            router, serverConfig, "v1", model, authProviders, Optional.empty());
+            router, serverConfig, "v1", model, authProviders, Optional.empty(), null);
 
     vertx
         .deployVerticle(graphQLServerVerticle)

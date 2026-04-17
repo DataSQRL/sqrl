@@ -21,16 +21,21 @@ import static org.apache.kafka.clients.admin.AdminClientConfig.REQUEST_TIMEOUT_M
 import io.vertx.core.Vertx;
 import io.vertx.kafka.admin.KafkaAdminClient;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Self-monitoring Kafka health probe used by the {@code /health} endpoint. Periodically calls
- * {@link KafkaAdminClient#listTopics()} on a dedicated admin client with short timeouts; the latest
- * probe outcome is cached so the health endpoint never blocks. Self-heals: once the broker becomes
- * reachable again, the next probe flips the cached state back to healthy without depending on user
- * traffic.
+ * {@link KafkaAdminClient#describeTopics} on a dedicated admin client with short timeouts; the
+ * latest probe outcome is cached so the health endpoint never blocks. Self-heals: once the broker
+ * becomes reachable again, the next probe flips the cached state back to healthy without depending
+ * on user traffic.
+ *
+ * <p>The probe target is the first topic handed to {@link #registerTopic(String)} (typically by
+ * {@code MutationConfigurationImpl} when it wires up a sink). Until a topic is registered the
+ * tracker reports healthy, so {@code /health} does not flap during startup.
  */
 @Slf4j
 public class KafkaHealthTracker implements AutoCloseable {
@@ -38,11 +43,15 @@ public class KafkaHealthTracker implements AutoCloseable {
   public static final long DEFAULT_PROBE_INTERVAL_MS = 10_000L;
   public static final long DEFAULT_PROBE_TIMEOUT_MS = 5_000L;
 
-  private final KafkaAdminClient adminClient;
-  private final long timerId;
-  private final Vertx vertx;
+  private final AtomicReference<String> probeTopic = new AtomicReference<>();
   private final AtomicReference<HealthState> state =
-      new AtomicReference<>(new HealthState(true, "initial"));
+      new AtomicReference<>(new HealthState(true, "no topics registered yet"));
+
+  private final Vertx vertx;
+  private final long probeIntervalMs;
+  private final KafkaAdminClient adminClient;
+
+  private Long timerId;
 
   public KafkaHealthTracker(Vertx vertx, Map<String, String> baseKafkaConfig) {
     this(vertx, baseKafkaConfig, DEFAULT_PROBE_INTERVAL_MS, DEFAULT_PROBE_TIMEOUT_MS);
@@ -51,18 +60,35 @@ public class KafkaHealthTracker implements AutoCloseable {
   public KafkaHealthTracker(
       Vertx vertx, Map<String, String> baseKafkaConfig, long probeIntervalMs, long probeTimeoutMs) {
     this.vertx = vertx;
+    this.probeIntervalMs = probeIntervalMs;
+
     var probeConfig = new HashMap<>(baseKafkaConfig);
     probeConfig.put(REQUEST_TIMEOUT_MS_CONFIG, String.valueOf(probeTimeoutMs));
     probeConfig.put(DEFAULT_API_TIMEOUT_MS_CONFIG, String.valueOf(probeTimeoutMs));
-    this.adminClient = KafkaAdminClient.create(vertx, probeConfig);
-    probe();
-    this.timerId = vertx.setPeriodic(probeIntervalMs, id -> probe());
+    adminClient = KafkaAdminClient.create(vertx, probeConfig);
+  }
+
+  /**
+   * Registers a topic to probe. First call wins; subsequent calls are ignored. Triggers an
+   * immediate probe so the cached health state reflects the new target without waiting for the next
+   * periodic tick.
+   */
+  public void registerTopic(String topic) {
+    if (probeTopic.compareAndSet(null, topic)) {
+      vertx.runOnContext(v -> probe());
+      timerId = vertx.setPeriodic(probeIntervalMs, id -> probe());
+    }
   }
 
   private void probe() {
+    var topic = probeTopic.get();
+    if (topic == null) {
+      return;
+    }
+
     adminClient
-        .listTopics()
-        .onSuccess(topics -> state.set(new HealthState(true, "ok")))
+        .describeTopics(List.of(topic))
+        .onSuccess(desc -> state.set(new HealthState(true, "ok")))
         .onFailure(
             err -> {
               log.warn("Kafka health probe failed: {}", err.getMessage());
@@ -81,7 +107,9 @@ public class KafkaHealthTracker implements AutoCloseable {
 
   @Override
   public void close() {
-    vertx.cancelTimer(timerId);
+    if (timerId != null) {
+      vertx.cancelTimer(timerId);
+    }
     adminClient.close();
   }
 

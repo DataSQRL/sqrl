@@ -78,6 +78,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   @Nullable private Path configDir;
 
+  @Nullable private KafkaHealthTracker kafkaHealthTracker;
+
   // ---------------------------------------------------------------------------
   // Lifecyle
   // ---------------------------------------------------------------------------
@@ -177,19 +179,20 @@ public class HttpServerVerticle extends AbstractVerticle {
     // ── Health checks ────────────────────────────────────────────────────────
     var healthCheckHandler = HealthCheckHandler.create(vertx);
     if (config.getKafkaMutationConfig() != null) {
-      var tracker = new KafkaHealthTracker(vertx, config.getKafkaMutationConfig().asMap(false));
-      closeables.add(tracker);
+      kafkaHealthTracker =
+          new KafkaHealthTracker(vertx, config.getKafkaMutationConfig().asMap(false));
+      closeables.add(kafkaHealthTracker);
       healthCheckHandler.register(
           "kafka",
           promise -> {
-            if (tracker.isHealthy()) {
+            if (kafkaHealthTracker.isHealthy()) {
               promise.complete(Status.OK());
             } else {
               promise.complete(
                   Status.KO(
                       new JsonObject()
                           .put("reason", "Kafka broker probe failed")
-                          .put("error", tracker.lastError())));
+                          .put("error", kafkaHealthTracker.lastError())));
             }
           });
     }
@@ -268,7 +271,13 @@ public class HttpServerVerticle extends AbstractVerticle {
 
               var graphQLVerticle =
                   new GraphQLServerVerticle(
-                      router, config, modelVersion, model, authProviders, execFunctionPlan);
+                      router,
+                      config,
+                      modelVersion,
+                      model,
+                      authProviders,
+                      execFunctionPlan,
+                      kafkaHealthTracker);
 
               return vertx
                   .deployVerticle(graphQLVerticle, childOpts)

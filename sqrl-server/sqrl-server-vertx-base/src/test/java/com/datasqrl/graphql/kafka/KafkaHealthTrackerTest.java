@@ -17,6 +17,7 @@ package com.datasqrl.graphql.kafka;
 
 import static org.apache.kafka.clients.admin.AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import io.vertx.core.Vertx;
 import io.vertx.ext.healthchecks.Status;
@@ -24,6 +25,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.healthchecks.HealthCheckHandler;
 import io.vertx.junit5.VertxExtension;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -48,15 +50,32 @@ class KafkaHealthTrackerTest {
   }
 
   @Test
-  void givenUnreachableBroker_whenProbeFires_thenTrackerReportsUnhealthy() throws Exception {
+  void givenNoTopicRegistered_whenProbeFires_thenTrackerStaysHealthy() {
     var config = Map.of(BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:1");
     try (var tracker = new KafkaHealthTracker(vertx, config, 200L, 500L)) {
-      var deadline = System.currentTimeMillis() + 10_000L;
-      while (tracker.isHealthy() && System.currentTimeMillis() < deadline) {
-        Thread.sleep(100);
-      }
-      assertThat(tracker.isHealthy()).isFalse();
-      assertThat(tracker.lastError()).isNotBlank();
+      await()
+          .during(Duration.ofSeconds(1))
+          .atMost(Duration.ofSeconds(2))
+          .untilAsserted(
+              () -> {
+                assertThat(tracker.isHealthy()).isTrue();
+                assertThat(tracker.lastError()).isNull();
+              });
+    }
+  }
+
+  @Test
+  void givenUnreachableBroker_whenTopicRegistered_thenTrackerReportsUnhealthy() {
+    var config = Map.of(BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:1");
+    try (var tracker = new KafkaHealthTracker(vertx, config, 200L, 500L)) {
+      tracker.registerTopic("probe-topic");
+      await()
+          .atMost(Duration.ofSeconds(10))
+          .untilAsserted(
+              () -> {
+                assertThat(tracker.isHealthy()).isFalse();
+                assertThat(tracker.lastError()).isNotBlank();
+              });
     }
   }
 
@@ -64,11 +83,8 @@ class KafkaHealthTrackerTest {
   void givenUnhealthyTracker_whenHealthEndpointHit_thenReturns503() throws Exception {
     var config = Map.of(BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:1");
     try (var tracker = new KafkaHealthTracker(vertx, config, 200L, 500L)) {
-      var deadline = System.currentTimeMillis() + 10_000L;
-      while (tracker.isHealthy() && System.currentTimeMillis() < deadline) {
-        Thread.sleep(100);
-      }
-      assertThat(tracker.isHealthy()).isFalse();
+      tracker.registerTopic("probe-topic");
+      await().atMost(Duration.ofSeconds(10)).until(() -> !tracker.isHealthy());
 
       var router = Router.router(vertx);
       var handler = HealthCheckHandler.create(vertx);
