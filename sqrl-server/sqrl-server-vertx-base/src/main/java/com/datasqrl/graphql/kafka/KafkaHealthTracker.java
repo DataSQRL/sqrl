@@ -27,16 +27,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Self-monitoring Kafka health probe used by the {@code /health} endpoint. Periodically calls
- * {@link KafkaAdminClient#describeTopics} on a dedicated admin client with short timeouts; the
- * latest probe outcome is cached so the health endpoint never blocks. Self-heals: once the broker
- * becomes reachable again, the next probe flips the cached state back to healthy without depending
- * on user traffic.
+ * Self-monitoring Kafka health probe for the {@code /health} endpoint. Periodically calls {@link
+ * KafkaAdminClient#describeTopics} on a dedicated admin client with short timeouts and caches the
+ * result, so the endpoint never blocks and the tracker self-heals once the broker recovers.
  *
- * <p>The probe target — topic and Kafka client config — is supplied at construction via {@link
- * Context} (wired by {@code HttpServerVerticle} from the first Kafka mutation or subscription topic
- * it finds in the compiled model). A probe runs immediately from the constructor; until that first
- * probe completes the tracker reports healthy, so {@code /health} does not flap during startup.
+ * <p>Topic and Kafka client config come from {@link Context} at construction. A probe fires
+ * immediately then on a timer; the tracker reports healthy until that first probe returns, so
+ * {@code /health} doesn't flap on startup. If admin-client construction itself fails, the tracker
+ * starts unhealthy with the failure reason and no probes are scheduled.
  */
 @Slf4j
 public class KafkaHealthTracker implements AutoCloseable {
