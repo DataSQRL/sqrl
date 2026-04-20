@@ -17,62 +17,85 @@ package com.datasqrl.config;
 
 import static com.datasqrl.graphql.ApiSources.DEFAULT_API_VERSION;
 
+import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.graphql.ApiSource;
 import com.datasqrl.graphql.ApiSources;
+import com.datasqrl.graphql.GraphqlSchemaHandler;
 import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.loaders.resolver.ResourceResolver;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 @Component
 @Lazy
-@Value
+@RequiredArgsConstructor
 public class GraphqlSourceLoader {
 
-  Map<String, ApiSources> apiByVersion;
-  List<ApiSources> apiVersions;
+  private final ScriptFiles scriptFiles;
+  private final ResourceResolver resolver;
+  private final GraphqlSchemaHandler graphqlSchemaHandler;
+  private final PackageJson config;
+  private final ExecutionGoal executionGoal;
 
-  public GraphqlSourceLoader(ScriptFiles scriptFiles, ResourceResolver resolver) {
+  public record LoadResult(List<ApiSources> apiVersions, Optional<String> inferredSchema) {}
+
+  public LoadResult load(ServerPhysicalPlan serverPlan) {
+    List<ApiSources> apiVersions;
+
     if (!scriptFiles.getApiConfigs().isEmpty()) {
+      apiVersions =
+          scriptFiles.getApiConfigs().stream()
+              .map(
+                  apiConf ->
+                      createApiSources(
+                          apiConf.getVersion(),
+                          apiConf.getSchema(),
+                          apiConf.getOperations(),
+                          resolver))
+              .toList();
 
-      var apis = ImmutableList.<ApiSources>builder();
-      var builder = ImmutableMap.<String, ApiSources>builder();
-      for (var apiConf : scriptFiles.getApiConfigs()) {
-        var sources =
-            createApiSources(
-                apiConf.getVersion(), apiConf.getSchema(), apiConf.getOperations(), resolver);
-        builder.put(apiConf.getVersion(), sources);
-        apis.add(sources);
-      }
-
-      apiVersions = apis.build();
-      apiByVersion = builder.build();
-      return;
-    }
-
-    if (scriptFiles.getGraphql().isEmpty()) {
+    } else if (scriptFiles.getGraphql().isEmpty()) {
       apiVersions = List.of();
-      apiByVersion = Map.of();
-      return;
+
+    } else {
+      var sources =
+          createApiSources(
+              DEFAULT_API_VERSION,
+              scriptFiles.getGraphql().get(),
+              scriptFiles.getOperations(),
+              resolver);
+      apiVersions = List.of(sources);
     }
 
-    var sources =
-        createApiSources(
-            DEFAULT_API_VERSION,
-            scriptFiles.getGraphql().get(),
-            scriptFiles.getOperations(),
-            resolver);
+    if (!shouldUseInferredSchema(apiVersions)) {
+      apiVersions.forEach(
+          apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));
+      return new LoadResult(apiVersions, Optional.empty());
+    }
 
-    apiVersions = List.of(sources);
-    apiByVersion = Map.of(DEFAULT_API_VERSION, sources);
+    List<ApiSource> operations;
+    if (apiVersions.isEmpty()) {
+      operations =
+          scriptFiles.getOperations().stream().map(file -> resolvePath(file, resolver)).toList();
+    } else {
+      operations = apiVersions.stream().flatMap(a -> a.operations().stream()).toList();
+    }
+
+    var inferredSchema = graphqlSchemaHandler.inferGraphQLSchema(serverPlan);
+    return new LoadResult(
+        List.of(new ApiSources(inferredSchema, operations)), Optional.of(inferredSchema));
+  }
+
+  private boolean shouldUseInferredSchema(List<ApiSources> apiVersions) {
+    return apiVersions.isEmpty()
+        || (executionGoal == ExecutionGoal.TEST && config.getTestConfig().useInferredSchema());
   }
 
   private static ApiSources createApiSources(
