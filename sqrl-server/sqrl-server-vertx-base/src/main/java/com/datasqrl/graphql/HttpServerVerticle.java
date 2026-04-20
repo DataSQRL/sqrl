@@ -21,7 +21,9 @@ import com.datasqrl.graphql.config.CorsHandlerOptions;
 import com.datasqrl.graphql.config.ServerConfig;
 import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.exec.FlinkExecFunctionPlan;
+import com.datasqrl.graphql.kafka.KafkaHealthTracker;
 import com.datasqrl.graphql.server.ModelContainer;
+import com.datasqrl.graphql.server.ModelUtils;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,6 +40,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
@@ -77,7 +80,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   @Nullable private Path configDir;
 
   // ---------------------------------------------------------------------------
-  // Lifecyle
+  // Lifecycle
   // ---------------------------------------------------------------------------
 
   @SuppressWarnings("unused")
@@ -173,7 +176,48 @@ public class HttpServerVerticle extends AbstractVerticle {
     }
 
     // ── Health checks ────────────────────────────────────────────────────────
-    router.get("/health*").handler(HealthCheckHandler.create(vertx));
+    var healthCheckHandler = HealthCheckHandler.create(vertx);
+
+    var kafkaHealthTrackerCtx = Optional.<KafkaHealthTracker.Context>empty();
+    for (var model : models.values()) {
+      var topic = ModelUtils.findFirstKafkaMutationTopic(model);
+      if (topic.isPresent()) {
+        kafkaHealthTrackerCtx =
+            Optional.of(
+                new KafkaHealthTracker.Context(
+                    topic.get(), config.getKafkaMutationConfig().asMap(false)));
+        break;
+      }
+
+      topic = ModelUtils.findFirstKafkaSubscriptionTopic(model);
+      if (topic.isPresent()) {
+        kafkaHealthTrackerCtx =
+            Optional.of(
+                new KafkaHealthTracker.Context(
+                    topic.get(), config.getKafkaSubscriptionConfig().asMap()));
+      }
+    }
+
+    if (kafkaHealthTrackerCtx.isPresent()) {
+      var kafkaHealthTracker = new KafkaHealthTracker(vertx, kafkaHealthTrackerCtx.get());
+      closeables.add(kafkaHealthTracker);
+
+      healthCheckHandler.register(
+          "kafka",
+          promise -> {
+            if (kafkaHealthTracker.isHealthy()) {
+              promise.complete(Status.OK());
+            } else {
+              promise.complete(
+                  Status.KO(
+                      new JsonObject()
+                          .put("reason", "Kafka broker probe failed")
+                          .put("error", kafkaHealthTracker.lastError())));
+            }
+          });
+    }
+
+    router.get("/health*").handler(healthCheckHandler);
 
     // ── OAuth Discovery Endpoints (RFC 9728) ─────────────────────────────────
     var oauthDiscovery = new OAuthDiscoveryHandler(config);
