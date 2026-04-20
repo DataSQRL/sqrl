@@ -74,23 +74,28 @@ public class GraphqlSourceLoader {
       apiVersions = List.of(sources);
     }
 
-    if (apiVersions.isEmpty()
-        || (executionGoal == ExecutionGoal.TEST && config.getTestConfig().useInferredSchema())) {
-
-      var inferredSchema = graphqlSchemaHandler.inferGraphQLSchema(serverPlan);
-      List<ApiSource> operations;
-      if (apiVersions.isEmpty()) {
-        operations =
-            scriptFiles.getOperations().stream().map(file -> resolvePath(file, resolver)).toList();
-      } else {
-        operations = apiVersions.stream().flatMap(a -> a.operations().stream()).toList();
-      }
-      apiVersions = List.of(new ApiSources(inferredSchema, operations));
-      return new LoadResult(apiVersions, Optional.of(inferredSchema));
+    if (!shouldUseInferredSchema(apiVersions)) {
+      apiVersions.forEach(
+          apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));
+      return new LoadResult(apiVersions, Optional.empty());
     }
 
-    apiVersions.forEach(apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));
-    return new LoadResult(apiVersions, Optional.empty());
+    List<ApiSource> operations;
+    if (apiVersions.isEmpty()) {
+      operations =
+          scriptFiles.getOperations().stream().map(file -> resolvePath(file, resolver)).toList();
+    } else {
+      operations = apiVersions.stream().flatMap(a -> a.operations().stream()).toList();
+    }
+
+    var inferredSchema = graphqlSchemaHandler.inferGraphQLSchema(serverPlan);
+    return new LoadResult(
+        List.of(new ApiSources(inferredSchema, operations)), Optional.of(inferredSchema));
+  }
+
+  private boolean shouldUseInferredSchema(List<ApiSources> apiVersions) {
+    return apiVersions.isEmpty()
+        || (executionGoal == ExecutionGoal.TEST && config.getTestConfig().useInferredSchema());
   }
 
   private static ApiSources createApiSources(
