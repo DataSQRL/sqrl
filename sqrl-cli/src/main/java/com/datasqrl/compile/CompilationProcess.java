@@ -25,7 +25,6 @@ import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.ApiSources;
 import com.datasqrl.graphql.GenerateServerModel;
 import com.datasqrl.graphql.GraphqlSchemaHandler;
 import com.datasqrl.plan.MainScript;
@@ -93,7 +92,7 @@ public class CompilationProcess {
           || (executionGoal == ExecutionGoal.TEST && config.getTestConfig().useInferredSchema())) {
 
         var inferredSchema = graphqlSchemaHandler.inferGraphQLSchema(serverPlan);
-        apiVersions = List.of(new ApiSources(inferredSchema));
+        apiVersions = List.of(graphqlSourceLoader.createInferredApiSources(inferredSchema));
 
         // Write out the inferred API schema to the build dir
         writeDeploymentArtifactsHook.writeInferredSchema(inferredSchema);

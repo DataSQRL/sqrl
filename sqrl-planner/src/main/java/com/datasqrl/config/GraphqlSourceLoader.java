@@ -39,6 +39,7 @@ public class GraphqlSourceLoader {
 
   Map<String, ApiSources> apiByVersion;
   List<ApiSources> apiVersions;
+  List<ApiSource> defaultOperations;
 
   public GraphqlSourceLoader(ScriptFiles scriptFiles, ResourceResolver resolver) {
     if (!scriptFiles.getApiConfigs().isEmpty()) {
@@ -55,12 +56,15 @@ public class GraphqlSourceLoader {
 
       apiVersions = apis.build();
       apiByVersion = builder.build();
+      defaultOperations = List.of();
       return;
     }
 
     if (scriptFiles.getGraphql().isEmpty()) {
       apiVersions = List.of();
       apiByVersion = Map.of();
+      defaultOperations =
+          scriptFiles.getOperations().stream().map(file -> resolvePath(file, resolver)).toList();
       return;
     }
 
@@ -73,6 +77,7 @@ public class GraphqlSourceLoader {
 
     apiVersions = List.of(sources);
     apiByVersion = Map.of(DEFAULT_API_VERSION, sources);
+    defaultOperations = List.of();
   }
 
   private static ApiSources createApiSources(
@@ -82,6 +87,14 @@ public class GraphqlSourceLoader {
     var opSrc = operations.stream().map(file -> resolvePath(file, resolver)).toList();
 
     return new ApiSources(version, schemaSrc, opSrc);
+  }
+
+  public ApiSources createInferredApiSources(String inferredSchema) {
+    var operations =
+        apiVersions.isEmpty()
+            ? defaultOperations
+            : apiVersions.stream().flatMap(a -> a.operations().stream()).toList();
+    return new ApiSources(inferredSchema, operations);
   }
 
   @SneakyThrows
