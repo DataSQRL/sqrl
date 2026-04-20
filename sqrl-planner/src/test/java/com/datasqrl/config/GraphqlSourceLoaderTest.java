@@ -17,230 +17,198 @@ package com.datasqrl.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.datasqrl.config.PackageJson.ScriptApiConfig;
-import com.datasqrl.config.PackageJson.ScriptConfig;
+import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.graphql.ApiSource;
+import com.datasqrl.graphql.GraphqlSchemaHandler;
 import com.datasqrl.graphql.ScriptFiles;
-import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import javax.annotation.Nullable;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class GraphqlSourceLoaderTest {
 
   @TempDir Path tempDir;
 
-  private ResourceResolver resolver;
+  @Mock ScriptFiles scriptFiles;
+  @Mock ResourceResolver resolver;
+  @Mock GraphqlSchemaHandler graphqlSchemaHandler;
+  @Mock ServerPhysicalPlan serverPlan;
 
-  @BeforeEach
-  void setUp() {
-    resolver = new FileResourceResolver(tempDir);
+  private final PackageJson config = createConfig(true);
+
+  private static PackageJson createConfig(boolean useInferredSchema) {
+    var sqrlConfig = SqrlConfig.createCurrentVersion();
+    sqrlConfig.setProperty("test-runner.use-inferred-schema", useInferredSchema);
+    return new PackageJsonImpl(sqrlConfig);
   }
 
   @Test
-  void givenGraphqlAndOperations_whenConstruct_thenDefaultOperationsEmpty() throws IOException {
-    Files.writeString(tempDir.resolve("schema.graphqls"), "type Query { foo: String }");
-    Files.writeString(tempDir.resolve("op.graphql"), "query Foo { foo }");
-    var scriptFiles = scriptFiles("schema.graphqls", List.of("op.graphql"), List.of());
-
-    var loader = new GraphqlSourceLoader(scriptFiles, resolver);
-
-    assertThat(loader.getApiVersions()).hasSize(1);
-    assertThat(loader.getApiVersions().get(0).operations())
-        .extracting(ApiSource::getDefinition)
-        .containsExactly("query Foo { foo }");
-    assertThat(loader.getDefaultOperations()).isEmpty();
-  }
-
-  @Test
-  void givenApiConfigs_whenConstruct_thenDefaultOperationsEmpty() throws IOException {
-    Files.writeString(tempDir.resolve("v1-schema.graphqls"), "type Query { foo: String }");
-    var apiConfig = apiConfig(List.of());
-    var scriptFiles = scriptFiles(null, List.of("ignored.graphql"), List.of(apiConfig));
-
-    var loader = new GraphqlSourceLoader(scriptFiles, resolver);
-
-    assertThat(loader.getApiVersions()).hasSize(1);
-    assertThat(loader.getApiByVersion()).containsOnlyKeys("v1");
-    assertThat(loader.getDefaultOperations()).isEmpty();
-  }
-
-  @Test
-  void givenOperationsWithoutGraphql_whenCreateInferred_thenUsesDefaultOperations()
+  void givenExplicitSchemaAndOperations_whenLoad_thenValidatesAndReturnsExplicitVersions()
       throws IOException {
-    Files.writeString(tempDir.resolve("op.graphql"), "query Foo { foo }");
-    var scriptFiles = scriptFiles(null, List.of("op.graphql"), List.of());
-    var loader = new GraphqlSourceLoader(scriptFiles, resolver);
+    var schemaPath = writeFile("schema.graphqls", "type Query { foo: String }");
+    var opPath = writeFile("op.graphql", "query Foo { foo }");
+    when(scriptFiles.getApiConfigs()).thenReturn(List.of());
+    when(scriptFiles.getGraphql()).thenReturn(Optional.of("schema.graphqls"));
+    when(scriptFiles.getOperations()).thenReturn(List.of("op.graphql"));
+    when(resolver.resolveFile(Path.of("schema.graphqls"))).thenReturn(Optional.of(schemaPath));
+    when(resolver.resolveFile(Path.of("op.graphql"))).thenReturn(Optional.of(opPath));
 
-    var result = loader.createInferredApiSources("type Query { foo: String }");
+    var loader =
+        new GraphqlSourceLoader(
+            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+    var result = loader.load(serverPlan);
 
-    assertThat(result.schema().getDefinition()).isEqualTo("type Query { foo: String }");
-    assertThat(result.operations())
+    assertThat(result.apiVersions()).hasSize(1);
+    assertThat(result.apiVersions().get(0).schema().getDefinition())
+        .isEqualTo("type Query { foo: String }");
+    assertThat(result.apiVersions().get(0).operations())
         .extracting(ApiSource::getDefinition)
         .containsExactly("query Foo { foo }");
+    assertThat(result.inferredSchema()).isEmpty();
+    verify(graphqlSchemaHandler).validateSchema(result.apiVersions().get(0), serverPlan);
+    verify(graphqlSchemaHandler, never()).inferGraphQLSchema(any());
   }
 
   @Test
-  void givenGraphqlAndOperations_whenCreateInferred_thenPreservesExistingOperations()
+  void givenApiConfigs_whenLoad_thenValidatesConfiguredVersions() throws IOException {
+    var schemaPath = writeFile("v1-schema.graphqls", "type Query { foo: String }");
+    when(scriptFiles.getApiConfigs())
+        .thenReturn(
+            List.of(
+                new ScriptApiConfig() {
+                  @Override
+                  public String getVersion() {
+                    return "v1";
+                  }
+
+                  @Override
+                  public String getSchema() {
+                    return "v1-schema.graphqls";
+                  }
+
+                  @Override
+                  public List<String> getOperations() {
+                    return List.of();
+                  }
+                }));
+    when(resolver.resolveFile(Path.of("v1-schema.graphqls"))).thenReturn(Optional.of(schemaPath));
+
+    var loader =
+        new GraphqlSourceLoader(
+            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+    var result = loader.load(serverPlan);
+
+    assertThat(result.apiVersions()).hasSize(1);
+    assertThat(result.apiVersions().get(0).version()).isEqualTo("v1");
+    assertThat(result.inferredSchema()).isEmpty();
+    verify(graphqlSchemaHandler).validateSchema(result.apiVersions().get(0), serverPlan);
+  }
+
+  @Test
+  void givenNoSchemaWithOperations_whenLoad_thenInfersSchemaAndIncludesOperations()
       throws IOException {
-    Files.writeString(tempDir.resolve("schema.graphqls"), "type Query { foo: String }");
-    Files.writeString(tempDir.resolve("op.graphql"), "query Foo { foo }");
-    var scriptFiles = scriptFiles("schema.graphqls", List.of("op.graphql"), List.of());
-    var loader = new GraphqlSourceLoader(scriptFiles, resolver);
+    var opPath = writeFile("op.graphql", "query Foo { foo }");
+    when(scriptFiles.getApiConfigs()).thenReturn(List.of());
+    when(scriptFiles.getGraphql()).thenReturn(Optional.empty());
+    when(scriptFiles.getOperations()).thenReturn(List.of("op.graphql"));
+    when(resolver.resolveFile(Path.of("op.graphql"))).thenReturn(Optional.of(opPath));
+    when(graphqlSchemaHandler.inferGraphQLSchema(serverPlan))
+        .thenReturn("type Query { foo: String }");
 
-    var result = loader.createInferredApiSources("type Query { bar: String }");
+    var loader =
+        new GraphqlSourceLoader(
+            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+    var result = loader.load(serverPlan);
 
-    assertThat(result.schema().getDefinition()).isEqualTo("type Query { bar: String }");
-    assertThat(result.operations())
+    assertThat(result.inferredSchema()).contains("type Query { foo: String }");
+    assertThat(result.apiVersions()).hasSize(1);
+    assertThat(result.apiVersions().get(0).operations())
         .extracting(ApiSource::getDefinition)
         .containsExactly("query Foo { foo }");
+    verify(graphqlSchemaHandler, never()).validateSchema(any(), any());
   }
 
   @Test
-  void givenNoOperations_whenCreateInferred_thenOperationsEmpty() {
-    var scriptFiles = scriptFiles(null, List.of(), List.of());
-    var loader = new GraphqlSourceLoader(scriptFiles, resolver);
+  void givenNoSchemaNoOperations_whenLoad_thenInfersSchemaWithEmptyOperations() {
+    when(scriptFiles.getApiConfigs()).thenReturn(List.of());
+    when(scriptFiles.getGraphql()).thenReturn(Optional.empty());
+    when(scriptFiles.getOperations()).thenReturn(List.of());
+    when(graphqlSchemaHandler.inferGraphQLSchema(serverPlan))
+        .thenReturn("type Query { foo: String }");
 
-    var result = loader.createInferredApiSources("type Query { foo: String }");
+    var loader =
+        new GraphqlSourceLoader(
+            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+    var result = loader.load(serverPlan);
 
-    assertThat(result.schema().getDefinition()).isEqualTo("type Query { foo: String }");
-    assertThat(result.operations()).isEmpty();
+    assertThat(result.inferredSchema()).contains("type Query { foo: String }");
+    assertThat(result.apiVersions()).hasSize(1);
+    assertThat(result.apiVersions().get(0).operations()).isEmpty();
   }
 
   @Test
-  void givenMissingOperationFile_whenConstruct_thenThrowsIllegalArgument() {
-    var scriptFiles = scriptFiles(null, List.of("does-not-exist.graphql"), List.of());
+  void givenExplicitSchemaInTestMode_whenUseInferredSchema_thenOverridesWithInferred()
+      throws IOException {
+    var schemaPath = writeFile("schema.graphqls", "type Query { foo: String }");
+    var opPath = writeFile("op.graphql", "query Foo { foo }");
+    when(scriptFiles.getApiConfigs()).thenReturn(List.of());
+    when(scriptFiles.getGraphql()).thenReturn(Optional.of("schema.graphqls"));
+    when(scriptFiles.getOperations()).thenReturn(List.of("op.graphql"));
+    when(resolver.resolveFile(Path.of("schema.graphqls"))).thenReturn(Optional.of(schemaPath));
+    when(resolver.resolveFile(Path.of("op.graphql"))).thenReturn(Optional.of(opPath));
+    when(graphqlSchemaHandler.inferGraphQLSchema(serverPlan))
+        .thenReturn("type Query { bar: String }");
 
-    assertThatThrownBy(() -> new GraphqlSourceLoader(scriptFiles, resolver))
+    var loader =
+        new GraphqlSourceLoader(
+            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.TEST);
+    var result = loader.load(serverPlan);
+
+    assertThat(result.inferredSchema()).contains("type Query { bar: String }");
+    assertThat(result.apiVersions()).hasSize(1);
+    assertThat(result.apiVersions().get(0).schema().getDefinition())
+        .isEqualTo("type Query { bar: String }");
+    assertThat(result.apiVersions().get(0).operations())
+        .extracting(ApiSource::getDefinition)
+        .containsExactly("query Foo { foo }");
+    verify(graphqlSchemaHandler, never()).validateSchema(any(), any());
+  }
+
+  @Test
+  void givenMissingFile_whenLoad_thenThrowsIllegalArgument() {
+    when(scriptFiles.getApiConfigs()).thenReturn(List.of());
+    when(scriptFiles.getGraphql()).thenReturn(Optional.empty());
+    when(scriptFiles.getOperations()).thenReturn(List.of("does-not-exist.graphql"));
+    when(resolver.resolveFile(Path.of("does-not-exist.graphql"))).thenReturn(Optional.empty());
+
+    var loader =
+        new GraphqlSourceLoader(
+            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+
+    assertThatThrownBy(() -> loader.load(serverPlan))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("does-not-exist.graphql");
   }
 
-  private static ScriptFiles scriptFiles(
-      @Nullable String graphql, List<String> operations, List<ScriptApiConfig> apiConfigs) {
-    return new ScriptFiles(stubPackageJson(graphql, operations, apiConfigs));
-  }
-
-  private static PackageJson stubPackageJson(
-      @Nullable String graphql, List<String> operations, List<ScriptApiConfig> apiConfigs) {
-    var scriptConfig =
-        new ScriptConfig() {
-          @Override
-          public Optional<String> getMainScript() {
-            return Optional.empty();
-          }
-
-          @Override
-          public List<ScriptApiConfig> getScriptApiConfigs() {
-            return apiConfigs;
-          }
-
-          @Override
-          public Optional<String> getGraphql() {
-            return Optional.ofNullable(graphql);
-          }
-
-          @Override
-          public List<String> getOperations() {
-            return operations;
-          }
-
-          @Override
-          public Map<String, Object> getConfig() {
-            return Map.of();
-          }
-
-          @Override
-          public Optional<String> getDatabase() {
-            return Optional.empty();
-          }
-
-          @Override
-          public void setMainScript(String script) {}
-
-          @Override
-          public void setGraphql(String g) {}
-        };
-
-    return new PackageJson() {
-      @Override
-      public List<String> getEnabledEngines() {
-        return List.of();
-      }
-
-      @Override
-      public void setEnabledEngines(List<String> enabledEngines) {}
-
-      @Override
-      public EnginesConfig getEngines() {
-        return null;
-      }
-
-      @Override
-      public ConnectorsConfig getConnectors() {
-        return null;
-      }
-
-      @Override
-      public DiscoveryConfig getDiscovery() {
-        return null;
-      }
-
-      @Override
-      public void toFile(Path path, boolean pretty) {}
-
-      @Override
-      public ScriptConfig getScriptConfig() {
-        return scriptConfig;
-      }
-
-      @Override
-      public CompilerConfig getCompilerConfig() {
-        return null;
-      }
-
-      @Override
-      public int getVersion() {
-        return 1;
-      }
-
-      @Override
-      public boolean hasScriptKey() {
-        return true;
-      }
-
-      @Override
-      public TestRunnerConfiguration getTestConfig() {
-        return null;
-      }
-    };
-  }
-
-  private static ScriptApiConfig apiConfig(List<String> operations) {
-    return new ScriptApiConfig() {
-      @Override
-      public String getVersion() {
-        return "v1";
-      }
-
-      @Override
-      public String getSchema() {
-        return "v1-schema.graphqls";
-      }
-
-      @Override
-      public List<String> getOperations() {
-        return operations;
-      }
-    };
+  private Path writeFile(String name, String content) throws IOException {
+    var path = tempDir.resolve(name);
+    Files.writeString(path, content);
+    return path;
   }
 }

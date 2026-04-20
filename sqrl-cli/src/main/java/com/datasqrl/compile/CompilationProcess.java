@@ -26,7 +26,6 @@ import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.graphql.GenerateServerModel;
-import com.datasqrl.graphql.GraphqlSchemaHandler;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.validate.ExecutionGoal;
@@ -53,7 +52,6 @@ public class CompilationProcess {
   private final MainScript mainScript;
   private final PackageJson config;
   private final GenerateServerModel generateServerModel;
-  private final GraphqlSchemaHandler graphqlSchemaHandler;
   private final DagWriter writeDeploymentArtifactsHook;
   private final GraphqlSourceLoader graphqlSourceLoader;
   private final ExecutionGoal executionGoal;
@@ -87,19 +85,10 @@ public class CompilationProcess {
           serverPlan.getFunctions().size(),
           serverPlan.getMutations().size());
 
-      var apiVersions = graphqlSourceLoader.getApiVersions();
-      if (apiVersions.isEmpty()
-          || (executionGoal == ExecutionGoal.TEST && config.getTestConfig().useInferredSchema())) {
+      var loadResult = graphqlSourceLoader.load(serverPlan);
+      var apiVersions = loadResult.apiVersions();
 
-        var inferredSchema = graphqlSchemaHandler.inferGraphQLSchema(serverPlan);
-        apiVersions = List.of(graphqlSourceLoader.createInferredApiSources(inferredSchema));
-
-        // Write out the inferred API schema to the build dir
-        writeDeploymentArtifactsHook.writeInferredSchema(inferredSchema);
-      } else {
-        apiVersions.forEach(
-            apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));
-      }
+      loadResult.inferredSchema().ifPresent(writeDeploymentArtifactsHook::writeInferredSchema);
 
       apiVersions.forEach(
           api -> {
