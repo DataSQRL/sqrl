@@ -50,25 +50,11 @@ class KafkaHealthTrackerTest {
   }
 
   @Test
-  void givenNoTopicRegistered_whenProbeFires_thenTrackerStaysHealthy() {
-    var config = Map.of(BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:1");
-    try (var tracker = new KafkaHealthTracker(vertx, config, 200L, 500L)) {
-      await()
-          .during(Duration.ofSeconds(1))
-          .atMost(Duration.ofSeconds(2))
-          .untilAsserted(
-              () -> {
-                assertThat(tracker.isHealthy()).isTrue();
-                assertThat(tracker.lastError()).isNull();
-              });
-    }
-  }
-
-  @Test
-  void givenUnreachableBroker_whenTopicRegistered_thenTrackerReportsUnhealthy() {
-    var config = Map.of(BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:1");
-    try (var tracker = new KafkaHealthTracker(vertx, config, 200L, 500L)) {
-      tracker.registerTopic("probe-topic");
+  void givenUnreachableBroker_whenProbeFires_thenTrackerReportsUnhealthy() {
+    var ctx =
+        new KafkaHealthTracker.Context(
+            "probe-topic", Map.of(BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:1"));
+    try (var tracker = new KafkaHealthTracker(vertx, ctx, 200L, 500L)) {
       await()
           .atMost(Duration.ofSeconds(10))
           .untilAsserted(
@@ -81,9 +67,10 @@ class KafkaHealthTrackerTest {
 
   @Test
   void givenUnhealthyTracker_whenHealthEndpointHit_thenReturns503() throws Exception {
-    var config = Map.of(BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:1");
-    try (var tracker = new KafkaHealthTracker(vertx, config, 200L, 500L)) {
-      tracker.registerTopic("probe-topic");
+    var ctx =
+        new KafkaHealthTracker.Context(
+            "probe-topic", Map.of(BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:1"));
+    try (var tracker = new KafkaHealthTracker(vertx, ctx, 200L, 500L)) {
       await().atMost(Duration.ofSeconds(10)).until(() -> !tracker.isHealthy());
 
       var router = Router.router(vertx);

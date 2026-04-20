@@ -205,7 +205,7 @@ class WriteIT {
         model
             .accept(
                 new GraphQLEngineBuilder.Builder()
-                    .withMutationConfiguration(new MutationConfigurationImpl(vertx, config, null))
+                    .withMutationConfiguration(new MutationConfigurationImpl(vertx, config))
                     .withSubscriptionConfiguration(new SubscriptionConfigurationImpl(vertx, config))
                     .build(),
                 new VertxContext(

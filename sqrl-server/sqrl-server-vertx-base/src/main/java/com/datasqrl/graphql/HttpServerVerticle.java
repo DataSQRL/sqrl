@@ -23,6 +23,7 @@ import com.datasqrl.graphql.config.ServerConfigUtil;
 import com.datasqrl.graphql.exec.FlinkExecFunctionPlan;
 import com.datasqrl.graphql.kafka.KafkaHealthTracker;
 import com.datasqrl.graphql.server.ModelContainer;
+import com.datasqrl.graphql.server.ModelUtils;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -78,10 +79,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   @Nullable private Path configDir;
 
-  @Nullable private KafkaHealthTracker kafkaHealthTracker;
-
   // ---------------------------------------------------------------------------
-  // Lifecyle
+  // Lifecycle
   // ---------------------------------------------------------------------------
 
   @SuppressWarnings("unused")
@@ -178,10 +177,31 @@ public class HttpServerVerticle extends AbstractVerticle {
 
     // ── Health checks ────────────────────────────────────────────────────────
     var healthCheckHandler = HealthCheckHandler.create(vertx);
-    if (config.getKafkaMutationConfig() != null) {
-      kafkaHealthTracker =
-          new KafkaHealthTracker(vertx, config.getKafkaMutationConfig().asMap(false));
+
+    var kafkaHealthTrackerCtx = Optional.<KafkaHealthTracker.Context>empty();
+    for (var model : models.values()) {
+      var topic = ModelUtils.findFirstKafkaMutationTopic(model);
+      if (topic.isPresent()) {
+        kafkaHealthTrackerCtx =
+            Optional.of(
+                new KafkaHealthTracker.Context(
+                    topic.get(), config.getKafkaMutationConfig().asMap(false)));
+        break;
+      }
+
+      topic = ModelUtils.findFirstKafkaSubscriptionTopic(model);
+      if (topic.isPresent()) {
+        kafkaHealthTrackerCtx =
+            Optional.of(
+                new KafkaHealthTracker.Context(
+                    topic.get(), config.getKafkaSubscriptionConfig().asMap()));
+      }
+    }
+
+    if (kafkaHealthTrackerCtx.isPresent()) {
+      var kafkaHealthTracker = new KafkaHealthTracker(vertx, kafkaHealthTrackerCtx.get());
       closeables.add(kafkaHealthTracker);
+
       healthCheckHandler.register(
           "kafka",
           promise -> {
@@ -196,6 +216,7 @@ public class HttpServerVerticle extends AbstractVerticle {
             }
           });
     }
+
     router.get("/health*").handler(healthCheckHandler);
 
     // ── OAuth Discovery Endpoints (RFC 9728) ─────────────────────────────────
@@ -271,13 +292,7 @@ public class HttpServerVerticle extends AbstractVerticle {
 
               var graphQLVerticle =
                   new GraphQLServerVerticle(
-                      router,
-                      config,
-                      modelVersion,
-                      model,
-                      authProviders,
-                      execFunctionPlan,
-                      kafkaHealthTracker);
+                      router, config, modelVersion, model, authProviders, execFunctionPlan);
 
               return vertx
                   .deployVerticle(graphQLVerticle, childOpts)
