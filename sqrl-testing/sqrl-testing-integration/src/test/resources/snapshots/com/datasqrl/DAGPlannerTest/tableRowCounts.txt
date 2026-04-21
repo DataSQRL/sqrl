@@ -5,7 +5,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   event_time
-Row count: ~2e15
+Row count: ~9e11
 ---
 Schema:
  - sensorid: INTEGER
@@ -34,7 +34,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   time_hour
-Row count: ~1e7
+Row count: ~9e7
 ---
 Schema:
  - machineid: INTEGER
