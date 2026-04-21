@@ -1,11 +1,37 @@
 >>>pipeline_explain.txt
+=== MachineIntervalJoin
+ID:          default_catalog.default_database.MachineIntervalJoin
+Type:        state
+Stage:       postgres
+Primary key: -
+Timestamp:   event_time
+Row count: ~2e11
+---
+Schema:
+ - sensorid: INTEGER
+ - temperature: FLOAT
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+ - machineid: INTEGER
+Inputs:
+ - default_catalog.default_database._SensorReading
+ - default_catalog.default_database._Sensors
+Plan:
+LogicalProject(sensorid=[$1], temperature=[$2], event_time=[$3], machineid=[$5])
+  LogicalJoin(condition=[AND(=($1, $4), >=($3, $6), <($3, +($6, 600000:INTERVAL MINUTE)))], joinType=[inner])
+    LogicalTableScan(table=[[default_catalog, default_database, _SensorReading]])
+    LogicalTableScan(table=[[default_catalog, default_database, _Sensors]])
+SQL:
+CREATE VIEW `MachineIntervalJoin` AS  SELECT r.sensorid, r.temperature, r.event_time, s.machineid
+                       FROM _SensorReading r JOIN _Sensors s ON r.sensorid = s.sensorid
+                           AND r.event_time >= s.updatedTime AND r.event_time < s.updatedTime + INTERVAL '10' MINUTE;
+
 === MachineReading
 ID:          default_catalog.default_database.MachineReading
 Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   event_time
-Row count: ~9e11
+Row count: ~2e7
 ---
 Schema:
  - sensorid: INTEGER
@@ -34,7 +60,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   time_hour
-Row count: ~9e7
+Row count: ~2e7
 ---
 Schema:
  - machineid: INTEGER
@@ -173,6 +199,11 @@ AS
 SELECT `machineid`, `window_time` AS `time_hour`, AVG(`temperature`) AS `avg_temperature`
 FROM TABLE(TUMBLE(TABLE `MachineReading`, DESCRIPTOR(`event_time`), INTERVAL '60' MINUTE))
 GROUP BY `machineid`, `window_start`, `window_end`, `window_time`;
+CREATE VIEW `MachineIntervalJoin`
+AS
+SELECT `r`.`sensorid`, `r`.`temperature`, `r`.`event_time`, `s`.`machineid`
+FROM `_SensorReading` AS `r`
+ INNER JOIN `_Sensors` AS `s` ON `r`.`sensorid` = `s`.`sensorid` AND `r`.`event_time` >= `s`.`updatedTime` AND `r`.`event_time` < `s`.`updatedTime` + INTERVAL '10' MINUTE;
 CREATE TABLE `MachineReading_1` (
   `sensorid` INTEGER,
   `temperature` FLOAT,
@@ -204,6 +235,35 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
+CREATE TABLE `_SensorReading_3` (
+  `event_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sensorid` INTEGER,
+  `temperature` FLOAT,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`event_id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = '_SensorReading_3',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `_Sensors_4` (
+  `sensorid` INTEGER NOT NULL,
+  `machineid` INTEGER,
+  `updatedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`sensorid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = '_Sensors_4',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MachineReading_1`
 SELECT `sensorid`, `temperature`, `event_time`, `machineid`, `hash_columns`(`sensorid`, `temperature`, `event_time`, `machineid`) AS `__pk_hash`
@@ -213,7 +273,15 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
  SELECT `machineid`, `time_hour`, `avg_temperature`, `hash_columns`(`machineid`, `time_hour`, `avg_temperature`) AS `__pk_hash`
   FROM `default_catalog`.`default_database`.`MachineTempByHour`
  ;
- END
+ INSERT INTO `default_catalog`.`default_database`.`_SensorReading_3`
+  SELECT *
+   FROM `default_catalog`.`default_database`.`_SensorReading`
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`_Sensors_4`
+   SELECT *
+    FROM `default_catalog`.`default_database`.`_Sensors`
+   ;
+   END
 >>>kafka.json
 {
   "topics" : [
@@ -321,6 +389,96 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "ttl" : 0.0
     },
     {
+      "name" : "_SensorReading_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"_SensorReading_3\" (\"event_id\" TEXT NOT NULL, \"sensorid\" INTEGER, \"temperature\" FLOAT, \"event_time\" TIMESTAMP WITH TIME ZONE, PRIMARY KEY (\"event_id\"))",
+      "fields" : [
+        {
+          "name" : "event_id",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "sensorid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "temperature",
+          "type" : "FLOAT",
+          "nullable" : true
+        },
+        {
+          "name" : "event_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "event_id"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "_Sensors_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"_Sensors_4\" (\"sensorid\" INTEGER NOT NULL, \"machineid\" INTEGER, \"updatedTime\" TIMESTAMP WITH TIME ZONE, PRIMARY KEY (\"sensorid\"))",
+      "fields" : [
+        {
+          "name" : "sensorid",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "machineid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "updatedTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "sensorid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "MachineIntervalJoin",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"MachineIntervalJoin\"(\"sensorid\", \"temperature\", \"event_time\", \"machineid\") AS SELECT \"_SensorReading_32\".\"sensorid\", \"_SensorReading_32\".\"temperature\", \"_SensorReading_32\".\"event_time\", \"_Sensors_42\".\"machineid\"\nFROM \"_SensorReading_3\" AS \"_SensorReading_32\"\n INNER JOIN \"_Sensors_4\" AS \"_Sensors_42\" ON \"_SensorReading_32\".\"sensorid\" = \"_Sensors_42\".\"sensorid\" AND \"_SensorReading_32\".\"event_time\" >= \"_Sensors_42\".\"updatedTime\" AND \"_SensorReading_32\".\"event_time\" < \"_Sensors_42\".\"updatedTime\" + INTERVAL '10' MINUTE",
+      "fields" : [
+        {
+          "name" : "sensorid",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "temperature",
+          "type" : "FLOAT",
+          "nullable" : true
+        },
+        {
+          "name" : "event_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        },
+        {
+          "name" : "machineid",
+          "type" : "INTEGER",
+          "nullable" : true
+        }
+      ]
+    },
+    {
       "name" : "MachineReading",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"MachineReading\"(\"sensorid\", \"temperature\", \"event_time\", \"machineid\") AS SELECT \"sensorid\", \"temperature\", \"event_time\", \"machineid\"\nFROM \"MachineReading_1\"",
@@ -376,6 +534,31 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
   "models" : {
     "v1" : {
       "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MachineIntervalJoin",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"_SensorReading_30\".\"sensorid\", \"_SensorReading_30\".\"temperature\", \"_SensorReading_30\".\"event_time\", \"_Sensors_40\".\"machineid\"\nFROM \"_SensorReading_3\" AS \"_SensorReading_30\"\n INNER JOIN \"_Sensors_4\" AS \"_Sensors_40\" ON \"_SensorReading_30\".\"sensorid\" = \"_Sensors_40\".\"sensorid\" AND \"_SensorReading_30\".\"event_time\" >= \"_Sensors_40\".\"updatedTime\" AND \"_SensorReading_30\".\"event_time\" < \"_Sensors_40\".\"updatedTime\" + INTERVAL '10' MINUTE",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
         {
           "type" : "args",
           "parentType" : "Query",
@@ -472,6 +655,32 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "operations" : [
         {
           "function" : {
+            "name" : "GetMachineIntervalJoin",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MachineIntervalJoin($limit: Int = 10, $offset: Int = 0) {\nMachineIntervalJoin(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nmachineid\n}\n\n}",
+            "queryName" : "MachineIntervalJoin",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MachineIntervalJoin{?offset,limit}"
+        },
+        {
+          "function" : {
             "name" : "GetMachineReading",
             "parameters" : {
               "type" : "object",
@@ -525,7 +734,7 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MachineReading {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineTempByHour {\n  machineid: Int\n  time_hour: DateTime!\n  avg_temperature: Float\n}\n\ntype Mutation {\n  _SensorReading(event: _SensorReadingInput!): _SensorReadingResultOutput!\n  _Sensors(event: _SensorsInput!): _SensorsResultOutput!\n}\n\ntype Query {\n  MachineReading(limit: Int = 10, offset: Int = 0): [MachineReading!]\n  MachineTempByHour(limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ninput _SensorReadingInput {\n  sensorid: Int\n  temperature: Float\n}\n\ntype _SensorReadingResultOutput {\n  event_id: String!\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n}\n\ninput _SensorsInput {\n  sensorid: Int!\n  machineid: Int\n}\n\ntype _SensorsResultOutput {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MachineIntervalJoin {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineReading {\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n  machineid: Int\n}\n\ntype MachineTempByHour {\n  machineid: Int\n  time_hour: DateTime!\n  avg_temperature: Float\n}\n\ntype Mutation {\n  _SensorReading(event: _SensorReadingInput!): _SensorReadingResultOutput!\n  _Sensors(event: _SensorsInput!): _SensorsResultOutput!\n}\n\ntype Query {\n  MachineIntervalJoin(limit: Int = 10, offset: Int = 0): [MachineIntervalJoin!]\n  MachineReading(limit: Int = 10, offset: Int = 0): [MachineReading!]\n  MachineTempByHour(limit: Int = 10, offset: Int = 0): [MachineTempByHour!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ninput _SensorReadingInput {\n  sensorid: Int\n  temperature: Float\n}\n\ntype _SensorReadingResultOutput {\n  event_id: String!\n  sensorid: Int\n  temperature: Float\n  event_time: DateTime\n}\n\ninput _SensorsInput {\n  sensorid: Int!\n  machineid: Int\n}\n\ntype _SensorsResultOutput {\n  sensorid: Int!\n  machineid: Int\n  updatedTime: DateTime\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

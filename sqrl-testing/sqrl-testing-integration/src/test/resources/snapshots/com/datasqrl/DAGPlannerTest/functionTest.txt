@@ -5,7 +5,6 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   -
-Row count: ~1e8
 ---
 Schema:
  - searchResult: DOUBLE NOT NULL
@@ -28,7 +27,6 @@ Type:        stream
 Stage:       flink
 Primary key: productid, name, description, category
 Timestamp:   _ingest_time
-Row count: ~1e8
 ---
 Schema:
  - productid: BIGINT NOT NULL

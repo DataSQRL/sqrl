@@ -5,7 +5,6 @@ Type:        stream
 Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
-Row count: ~1e8
 ---
 Schema:
  - customerid: BIGINT NOT NULL
@@ -49,7 +48,6 @@ Type:        stream
 Stage:       flink
 Primary key: event_id
 Timestamp:   event_time
-Row count: ~5e7
 ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -112,7 +110,6 @@ Type:        stream
 Stage:       flink
 Primary key: event_id
 Timestamp:   event_time
-Row count: ~1e8
 ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

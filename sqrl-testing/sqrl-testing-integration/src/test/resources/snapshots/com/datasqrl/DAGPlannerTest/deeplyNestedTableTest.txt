@@ -5,7 +5,6 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   -
-Row count: ~1e8
 ---
 Schema:
  - customer_id: BIGINT

@@ -5,7 +5,6 @@ Type:        stream
 Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
-Row count: ~1e8
 ---
 Schema:
  - customerid: BIGINT NOT NULL
@@ -49,7 +48,6 @@ Type:        stream
 Stage:       postgres
 Primary key: -
 Timestamp:   -
-Row count: ~2e15
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -72,7 +70,6 @@ Type:        stream
 Stage:       postgres
 Primary key: -
 Timestamp:   time
-Row count: ~1e14
 ---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -96,7 +93,6 @@ Type:        state
 Stage:       postgres
 Primary key: -
 Timestamp:   -
-Row count: ~2e15
 ---
 Schema:
  - cid: BIGINT NOT NULL
@@ -121,7 +117,6 @@ Type:        state
 Stage:       postgres
 Primary key: id, time
 Timestamp:   time
-Row count: ~9e13
 ---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -145,7 +140,6 @@ Type:        stream
 Stage:       flink
 Primary key: id, time
 Timestamp:   time
-Row count: ~8e13
 ---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -170,7 +164,6 @@ Type:        state
 Stage:       postgres
 Primary key: -
 Timestamp:   otime
-Row count: ~2e15
 ---
 Schema:
  - ouuid: BIGINT NOT NULL
@@ -195,7 +188,6 @@ Type:        state
 Stage:       postgres
 Primary key: lastUpdated
 Timestamp:   -
-Row count: ~9e13
 ---
 Schema:
  - lastUpdated: BIGINT NOT NULL
@@ -219,7 +211,6 @@ Type:        stream
 Stage:       flink
 Primary key: id, time
 Timestamp:   time
-Row count: ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -261,7 +252,6 @@ Type:        stream
 Stage:       flink
 Primary key: window_start, window_end
 Timestamp:   -
-Row count: ~8e7
 ---
 Schema:
  - total: BIGINT NOT NULL
