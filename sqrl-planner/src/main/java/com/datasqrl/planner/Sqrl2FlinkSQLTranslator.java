@@ -34,7 +34,6 @@ import com.datasqrl.graphql.exec.FlinkExecFunctionFactory;
 import com.datasqrl.graphql.server.MetadataType;
 import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.schema.SchemaLoader;
-import com.datasqrl.plan.rules.SqrlRelMdRowCount;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.FlinkPhysicalPlan.Builder;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
@@ -78,10 +77,7 @@ import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.prepare.CalciteCatalogReader;
-import org.apache.calcite.rel.metadata.ChainedRelMetadataProvider;
-import org.apache.calcite.rel.metadata.RelMetadataProvider;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -183,7 +179,6 @@ public class Sqrl2FlinkSQLTranslator {
   private final FlinkPhysicalPlan.Builder planBuilder;
   @Getter private final FlinkTypeFactory typeFactory;
   @Getter private final FlinkExecFunctionFactory execFnFactory;
-  private final RelMetadataProvider rowCountMetadataProvider;
 
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
 
@@ -222,17 +217,7 @@ public class Sqrl2FlinkSQLTranslator {
     this.tEnv = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(sEnv, tEnvSettings);
 
     // Extract a number of classes we need access to for planning
-    Supplier<FlinkPlannerImpl> basePlannerSupplier =
-        ((PlannerBase) tEnv.getPlanner())::createFlinkPlanner;
-    // Create custom row count metadata provider that uses tableLookup for statistics
-    this.rowCountMetadataProvider = new SqrlRelMdRowCount(tableLookup).getMetadataProvider();
-    // Wrap the planner supplier to register our metadata provider on each new cluster
-    this.validatorSupplier =
-        () -> {
-          var flinkPlanner = basePlannerSupplier.get();
-          registerMetadataProvider(flinkPlanner.cluster());
-          return flinkPlanner;
-        };
+    this.validatorSupplier = ((PlannerBase) tEnv.getPlanner())::createFlinkPlanner;
     var planner = this.validatorSupplier.get();
     typeFactory = (FlinkTypeFactory) planner.getOrCreateSqlValidator().getTypeFactory();
     // Initialize function catalog (custom)
@@ -258,14 +243,6 @@ public class Sqrl2FlinkSQLTranslator {
 
   public SqrlRexUtil getRexUtil() {
     return new SqrlRexUtil(typeFactory);
-  }
-
-  private void registerMetadataProvider(RelOptCluster cluster) {
-    var existingProvider = cluster.getMetadataProvider();
-    var chainedProvider =
-        ChainedRelMetadataProvider.of(List.of(rowCountMetadataProvider, existingProvider));
-    cluster.setMetadataProvider(chainedProvider);
-    cluster.invalidateMetadataQuery();
   }
 
   public SqlNode parseSQL(String sqlStatement) {

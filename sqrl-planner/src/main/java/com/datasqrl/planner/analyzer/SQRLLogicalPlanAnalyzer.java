@@ -80,7 +80,7 @@ import org.apache.calcite.rel.logical.LogicalSort;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.logical.LogicalUnion;
 import org.apache.calcite.rel.logical.LogicalValues;
-import org.apache.calcite.rel.metadata.RelMetadataQuery;
+import com.datasqrl.plan.rules.SqrlRelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
@@ -209,7 +209,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     if (rowCountHint.isPresent()) {
       tableStatistic = TableStatistic.fromHint(rowCountHint.get().getRowCount());
     } else {
-      final RelMetadataQuery mq = originalRelnode.getCluster().getMetadataQuery();
+      // Use our custom metadata query that can look up statistics from tableLookup
+      final var mq = new SqrlRelMetadataQuery(tableLookup);
       var rowCount = mq.getRowCount(analysis.relNode);
       tableStatistic =
           rowCount != null ? TableStatistic.fromEstimate(rowCount) : TableStatistic.UNKNOWN;

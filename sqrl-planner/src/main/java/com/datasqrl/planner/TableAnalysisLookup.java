@@ -16,6 +16,7 @@
 package com.datasqrl.planner;
 
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.CorrelationId;
+import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalCorrelate;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
@@ -38,12 +40,15 @@ import org.apache.calcite.rex.RexCorrelVariable;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexSubQuery;
+import org.apache.flink.table.catalog.CatalogTable;
 import org.apache.flink.table.catalog.ContextResolvedFunction;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionIdentifier;
 import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
+import org.apache.flink.table.planner.plan.schema.CatalogSourceTable;
+import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.types.inference.SystemTypeInference;
 
 /**
@@ -66,6 +71,22 @@ public class TableAnalysisLookup {
 
   public TableAnalysis lookupSourceTable(@Nullable ObjectIdentifier objectId) {
     return id2SourceTable.get(objectId);
+  }
+
+  @Nullable
+  public TableAnalysis lookupViewFromScan(@Nullable TableScan tableScan) {
+    var table = tableScan.getTable();
+    ObjectIdentifier oid = null;
+    if (table instanceof TableSourceTable tblSourceTable) {
+      oid = tblSourceTable.contextResolvedTable().getIdentifier();
+    } else if (table instanceof CatalogSourceTable catalogTable) {
+      var identifier = catalogTable.getQualifiedName();
+      if (identifier.size() == 3) {
+        oid = ObjectIdentifier.of(identifier.get(0), identifier.get(1), identifier.get(2));
+      }
+    }
+    if (oid == null) return null;
+    return id2View.get(oid);
   }
 
   public Optional<TableAnalysis> lookupView(RelNode originalRelnode) {

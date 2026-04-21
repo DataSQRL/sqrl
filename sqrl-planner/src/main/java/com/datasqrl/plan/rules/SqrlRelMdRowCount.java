@@ -59,27 +59,13 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
       return super.getRowCount(scan, mq);
     }
 
-    var tableAnalysis = lookupTableAnalysis(scan);
+    var tableAnalysis = tableLookup.lookupViewFromScan(scan);
     if (tableAnalysis != null
         && tableAnalysis.getTableStatistic() != null
         && !tableAnalysis.getTableStatistic().isUnknown()) {
       return tableAnalysis.getTableStatistic().getRowCount();
     }
     return super.getRowCount(scan, mq);
-  }
-
-  @Nullable
-  private TableAnalysis lookupTableAnalysis(TableScan scan) {
-    var table = scan.getTable();
-    if (table instanceof TableSourceTable sourceTable) {
-      ObjectIdentifier tableId = sourceTable.contextResolvedTable().getIdentifier();
-      var sourceTableAnalysis = tableLookup.lookupSourceTable(tableId);
-      if (sourceTableAnalysis != null) {
-        return sourceTableAnalysis;
-      }
-      return tableLookup.lookupView(tableId);
-    }
-    return tableLookup.lookupView(scan).orElse(null);
   }
 
   @Override

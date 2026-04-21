@@ -15,12 +15,14 @@
  */
 package com.datasqrl.plan.rules;
 
+import com.datasqrl.planner.TableAnalysisLookup;
+import javax.annotation.Nullable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.metadata.BuiltInMetadata;
 import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
 import org.apache.calcite.rel.metadata.RelMdUtil;
-import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rel.metadata.RelMetadataQuery;
 
 public class SqrlRelMetadataQuery extends RelMetadataQuery {
 
@@ -28,8 +30,12 @@ public class SqrlRelMetadataQuery extends RelMetadataQuery {
   BuiltInMetadata.Selectivity.Handler selectivityHandler;
 
   public SqrlRelMetadataQuery() {
+    this(null);
+  }
+
+  public SqrlRelMetadataQuery(@Nullable TableAnalysisLookup tableLookup) {
     super();
-    this.rowCountHandler = new SqrlRelMdRowCount();
+    this.rowCountHandler = new SqrlRelMdRowCount(tableLookup);
     this.selectivityHandler = new SqrlRelMdSelectivity();
   }
 
