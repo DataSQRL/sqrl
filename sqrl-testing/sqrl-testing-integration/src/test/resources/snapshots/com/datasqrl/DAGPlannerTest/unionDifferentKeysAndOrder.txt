@@ -5,6 +5,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   -
+Row count: ~2e8
 ---
 Schema:
  - id_a: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -27,6 +28,7 @@ Type:        stream
 Stage:       flink
 Primary key: id_a
 Timestamp:   -
+Row count: ~1e8
 ---
 Schema:
  - id_a: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -52,6 +54,7 @@ Type:        stream
 Stage:       flink
 Primary key: id_b
 Timestamp:   -
+Row count: ~1e8
 ---
 Schema:
  - id_b: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

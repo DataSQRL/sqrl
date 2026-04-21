@@ -23,37 +23,45 @@ import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.SingleRel;
 import org.apache.calcite.rel.core.Aggregate;
+import org.apache.calcite.rel.core.Calc;
 import org.apache.calcite.rel.core.Correlate;
+import org.apache.calcite.rel.core.Exchange;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Intersect;
 import org.apache.calcite.rel.core.Join;
+import org.apache.calcite.rel.core.JoinRelType;
 import org.apache.calcite.rel.core.Minus;
 import org.apache.calcite.rel.core.Project;
-import org.apache.calcite.rel.core.SetOp;
 import org.apache.calcite.rel.core.Snapshot;
 import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.core.Union;
+import org.apache.calcite.rel.core.Values;
+import org.apache.calcite.rel.core.Window;
 import org.apache.calcite.rel.metadata.BuiltInMetadata;
 import org.apache.calcite.rel.metadata.ReflectiveRelMetadataProvider;
 import org.apache.calcite.rel.metadata.RelMdRowCount;
 import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
+import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexLiteral;
+import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.BuiltInMethod;
-import org.apache.calcite.util.NumberUtil;
+import org.apache.calcite.util.ImmutableBitSet;
+import org.apache.calcite.util.ImmutableIntList;
 
+/**
+ * Row count estimation handler adapted from Flink's FlinkRelMdRowCount. Provides improved row count
+ * estimates for various relational operators.
+ */
 public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.RowCount.Handler {
 
-  // Row count estimation multipliers for window aggregations
+  // Row count estimation multipliers for window aggregations (from Flink)
   private static final double TUMBLE_WINDOW_FACTOR = 2.0;
   private static final double SESSION_WINDOW_FACTOR = 2.0;
-  private static final double SLIDING_WINDOW_FACTOR = 4.0;
-
-  // Default aggregation ratio when NDV is unknown
-  private static final double DEFAULT_AGGREGATION_RATIO = 0.1;
+  private static final double SLIDING_WINDOW_OVERLAP_FACTOR = 4.0;
 
   public static final RelMetadataProvider SOURCE =
       ReflectiveRelMetadataProvider.reflectiveSource(
@@ -73,9 +81,11 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
     return ReflectiveRelMetadataProvider.reflectiveSource(BuiltInMethod.ROW_COUNT.method, this);
   }
 
+  // ==================== TableScan ====================
+
   public Double getRowCount(TableScan scan, RelMetadataQuery mq) {
     if (tableLookup == null) {
-      return super.getRowCount(scan, mq);
+      return scan.estimateRowCount(mq);
     }
 
     var tableAnalysis = tableLookup.lookupViewFromScan(scan);
@@ -84,65 +94,52 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
         && !tableAnalysis.getTableStatistic().isUnknown()) {
       return tableAnalysis.getTableStatistic().getRowCount();
     }
-    return super.getRowCount(scan, mq);
+    return scan.estimateRowCount(mq);
   }
+
+  // ==================== Values ====================
+
+  /** Row count for Values is the number of tuples. */
+  public Double getRowCount(Values rel, RelMetadataQuery mq) {
+    return rel.estimateRowCount(mq);
+  }
+
+  // ==================== Project ====================
+
+  /** Project passes through row count unchanged. */
+  public Double getRowCount(Project rel, RelMetadataQuery mq) {
+    return mq.getRowCount(rel.getInput());
+  }
+
+  // ==================== Filter ====================
 
   @Override
-  public Double getRowCount(Join rel, RelMetadataQuery mq) {
-    double rowCount = super.getRowCount(rel, mq);
-    if (rel instanceof EnumerableNestedLoopJoin) {
-      rowCount = rowCount + 2 * mq.getRowCount(rel.getLeft());
-      // Undo the factor 10 penalty from EnumerableNestedLoopJoin
-      rowCount = rowCount / 100;
-    }
-    return rowCount;
+  public Double getRowCount(Filter rel, RelMetadataQuery mq) {
+    return RelMdUtil.estimateFilteredRows(rel.getInput(), rel.getCondition(), mq);
   }
 
-  /**
-   * Estimates row count for Correlate (lateral join). For temporal joins (Correlate with Snapshot),
-   * the row count is approximately the left input.
-   */
-  public Double getRowCount(Correlate rel, RelMetadataQuery mq) {
-    Double leftRowCount = mq.getRowCount(rel.getLeft());
-    if (leftRowCount == null) {
-      return null;
-    }
+  // ==================== Calc (Filter + Project) ====================
 
-    // Check if this is a temporal join pattern (right side contains Snapshot)
-    if (containsSnapshot(rel.getRight())) {
-      // Temporal join: row count is approximately the left (stream) side
-      // Apply a small selectivity for the join condition
-      return leftRowCount * 0.9;
+  /** Calc combines Filter and Project - estimate filtered rows based on condition. */
+  public Double getRowCount(Calc rel, RelMetadataQuery mq) {
+    var program = rel.getProgram();
+    if (program.getCondition() != null) {
+      var condition = program.expandLocalRef(program.getCondition());
+      return RelMdUtil.estimateFilteredRows(rel.getInput(), condition, mq);
     }
-
-    // For regular correlates, estimate based on right side row count
-    Double rightRowCount = mq.getRowCount(rel.getRight());
-    if (rightRowCount == null) {
-      return leftRowCount;
-    }
-
-    // Use a conservative estimate: left * sqrt(right) for correlated subqueries
-    return leftRowCount * Math.sqrt(rightRowCount);
+    return mq.getRowCount(rel.getInput());
   }
 
-  /** Checks if the given RelNode tree contains a Snapshot (used in temporal joins). */
-  private boolean containsSnapshot(RelNode rel) {
-    if (rel instanceof Snapshot) {
-      return true;
-    }
-    for (RelNode input : rel.getInputs()) {
-      if (containsSnapshot(input)) {
-        return true;
-      }
-    }
-    // Also check single-input nodes
-    if (rel instanceof SingleRel singleRel) {
-      return containsSnapshot(singleRel.getInput());
-    }
-    return false;
+  // ==================== Exchange ====================
+
+  /** Exchange passes through row count - data redistribution doesn't change cardinality. */
+  public Double getRowCount(Exchange rel, RelMetadataQuery mq) {
+    return mq.getRowCount(rel.getInput());
   }
 
-  /** Estimates row count for Sort with optional LIMIT and OFFSET. */
+  // ==================== Sort/Limit ====================
+
+  /** Sort with optional LIMIT and OFFSET. Formula: min(fetch, max(0, inputRowCount - offset)) */
   public Double getRowCount(Sort rel, RelMetadataQuery mq) {
     Double inputRowCount = mq.getRowCount(rel.getInput());
     if (inputRowCount == null) {
@@ -151,13 +148,13 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
 
     double rowCount = inputRowCount;
 
-    // Apply offset
+    // Apply offset: max(inputRowCount - offset, 0)
     if (rel.offset != null && rel.offset instanceof RexLiteral) {
       long offset = RexLiteral.intValue(rel.offset);
       rowCount = Math.max(0, rowCount - offset);
     }
 
-    // Apply fetch (limit)
+    // Apply fetch (limit): min(rowCount, fetch)
     if (rel.fetch != null && rel.fetch instanceof RexLiteral) {
       long fetch = RexLiteral.intValue(rel.fetch);
       rowCount = Math.min(rowCount, fetch);
@@ -166,9 +163,11 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
     return rowCount;
   }
 
+  // ==================== Aggregate ====================
+
   /**
-   * Estimates row count for Aggregate based on grouping columns. For window aggregations (aggregate
-   * over TableFunctionScan), applies window-specific multipliers.
+   * Aggregate row count estimation. - No grouping: returns 1.0 - With grouping: distinctRowCount *
+   * groupSetsCount - Fallback: inputRowCount * aggregationRatio
    */
   public Double getRowCount(Aggregate rel, RelMetadataQuery mq) {
     Double inputRowCount = mq.getRowCount(rel.getInput());
@@ -176,15 +175,17 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
       return null;
     }
 
-    // For aggregates without grouping, result is always 1 row (or 0 if input is empty)
-    if (rel.getGroupCount() == 0) {
-      return inputRowCount > 0 ? 1.0 : 0.0;
+    int groupCount = rel.getGroupCount();
+
+    // For aggregates without grouping, result is always 1 row
+    if (groupCount == 0) {
+      return 1.0;
     }
 
-    // Check if this is a window aggregation (input is a window table function)
+    // Check if this is a window aggregation
     boolean isWindowAggregation = isWindowTableFunction(rel.getInput());
 
-    // Estimate distinct values for grouping columns
+    // Try to get distinct row count for grouping columns
     Double distinctRowCount = null;
     try {
       distinctRowCount = mq.getDistinctRowCount(rel.getInput(), rel.getGroupSet(), null);
@@ -194,21 +195,20 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
 
     double rowCount;
     if (distinctRowCount != null && distinctRowCount > 0) {
-      // Use distinct values estimate, capped at input row count
       rowCount = Math.min(distinctRowCount, inputRowCount);
     } else {
-      // Use default aggregation ratio
-      rowCount = inputRowCount * DEFAULT_AGGREGATION_RATIO;
+      // Flink's fallback: aggregationRatio based on group count
+      double aggregationRatio = getAggregationRatioIfNdvUnavailable(groupCount);
+      rowCount = inputRowCount * aggregationRatio;
     }
 
-    // Apply window-specific multiplier if this is a window aggregation
+    // Apply window-specific multiplier
     if (isWindowAggregation) {
-      // For tumbling windows, the multiplier accounts for multiple windows over time
-      // The actual number depends on window size vs data time range
-      rowCount = Math.min(rowCount * TUMBLE_WINDOW_FACTOR, inputRowCount);
+      double windowFactor = getWindowExpansionFactor(rel.getInput());
+      rowCount = Math.min(rowCount * windowFactor, inputRowCount);
     }
 
-    // Multiply by number of group sets (for GROUPING SETS, ROLLUP, CUBE)
+    // Multiply by number of group sets (GROUPING SETS, ROLLUP, CUBE)
     int groupSetsCount = rel.getGroupSets().size();
     if (groupSetsCount > 1) {
       rowCount = rowCount * groupSetsCount;
@@ -217,40 +217,240 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
     return Math.max(1.0, rowCount);
   }
 
-  /** Checks if the input is a window table function (TUMBLE, HOP, SESSION, CUMULATE). */
+  /** Flink's aggregation ratio when NDV is unavailable. Decreases as group count increases. */
+  private double getAggregationRatioIfNdvUnavailable(int groupCount) {
+    if (groupCount == 0) {
+      return 1.0;
+    }
+    // Flink uses a decreasing ratio based on group count
+    // More grouping columns = more distinct groups = higher ratio
+    return Math.min(1.0, 0.1 * Math.pow(1.5, groupCount - 1));
+  }
+
+  /**
+   * Get window expansion factor based on window type. - Tumbling: 2.0 - Session: 2.0 - Sliding with
+   * overlap: 4.0 - Sliding without overlap: 2.0
+   */
+  private double getWindowExpansionFactor(RelNode input) {
+    RelNode current = input;
+    while (current instanceof Project) {
+      current = ((Project) current).getInput();
+    }
+
+    if (current instanceof TableFunctionScan scan) {
+      RexNode call = scan.getCall();
+      if (call instanceof RexCall rexCall) {
+        String funcName = rexCall.getOperator().getName().toUpperCase();
+        if (funcName.contains("HOP") || funcName.contains("SLIDE")) {
+          // Check for overlap - if slide < window size, use higher factor
+          return SLIDING_WINDOW_OVERLAP_FACTOR;
+        } else if (funcName.contains("SESSION")) {
+          return SESSION_WINDOW_FACTOR;
+        }
+      }
+    }
+    return TUMBLE_WINDOW_FACTOR;
+  }
+
+  /** Checks if the input contains a window table function (TUMBLE, HOP, SESSION, CUMULATE). */
   private boolean isWindowTableFunction(RelNode rel) {
-    // Skip through Projects to find the TableFunctionScan
     RelNode current = rel;
     while (current instanceof Project) {
       current = ((Project) current).getInput();
     }
-    if (current instanceof TableFunctionScan) {
-      // Window functions are table functions with specific names
+    return current instanceof TableFunctionScan;
+  }
+
+  // ==================== Window (Over) ====================
+
+  /** Window/Over aggregate returns input row count unchanged. */
+  public Double getRowCount(Window rel, RelMetadataQuery mq) {
+    return mq.getRowCount(rel.getInput());
+  }
+
+  // ==================== TableFunctionScan ====================
+
+  /** TableFunctionScan - for window functions, row count equals input. */
+  public Double getRowCount(TableFunctionScan rel, RelMetadataQuery mq) {
+    if (rel.getInputs().isEmpty()) {
+      return rel.estimateRowCount(mq);
+    }
+    // Window table functions preserve input row count
+    Double inputRowCount = mq.getRowCount(rel.getInput(0));
+    return inputRowCount != null ? inputRowCount : rel.estimateRowCount(mq);
+  }
+
+  // ==================== Join ====================
+
+  @Override
+  public Double getRowCount(Join rel, RelMetadataQuery mq) {
+    Double leftRowCount = mq.getRowCount(rel.getLeft());
+    Double rightRowCount = mq.getRowCount(rel.getRight());
+
+    if (leftRowCount == null || rightRowCount == null) {
+      return null;
+    }
+
+    // Handle EnumerableNestedLoopJoin specially
+    if (rel instanceof EnumerableNestedLoopJoin) {
+      double rowCount = leftRowCount * rightRowCount;
+      rowCount = rowCount + 2 * leftRowCount;
+      return rowCount / 100;
+    }
+
+    // Get join info for equi-join analysis
+    var joinInfo = rel.analyzeCondition();
+    RexNode condition = rel.getCondition();
+
+    // Calculate inner join row count
+    double innerJoinRowCount;
+
+    if (!joinInfo.leftKeys.isEmpty()) {
+      // Equi-join: use NDV-based estimation
+      innerJoinRowCount =
+          estimateEquiJoinRowCount(
+              rel, leftRowCount, rightRowCount, joinInfo.leftKeys, joinInfo.rightKeys, mq);
+
+      // Apply selectivity for non-equi conditions
+      if (joinInfo.nonEquiConditions != null && !joinInfo.nonEquiConditions.isEmpty()) {
+        for (RexNode nonEquiCond : joinInfo.nonEquiConditions) {
+          Double selectivity = mq.getSelectivity(rel, nonEquiCond);
+          if (selectivity != null) {
+            innerJoinRowCount *= selectivity;
+          }
+        }
+      }
+    } else {
+      // Non-equi join: use selectivity-based estimation
+      Double selectivity = mq.getSelectivity(rel, condition);
+      if (selectivity == null) {
+        selectivity = RelMdUtil.guessSelectivity(condition);
+      }
+      innerJoinRowCount = leftRowCount * rightRowCount * selectivity;
+    }
+
+    // Adjust based on join type
+    return adjustForJoinType(rel.getJoinType(), leftRowCount, rightRowCount, innerJoinRowCount);
+  }
+
+  /**
+   * Estimate equi-join row count using NDV. Formula: leftRowCount * rightRowCount * (1 /
+   * max(leftNdv, rightNdv))
+   */
+  private double estimateEquiJoinRowCount(
+      Join rel,
+      double leftRowCount,
+      double rightRowCount,
+      ImmutableIntList leftKeys,
+      ImmutableIntList rightKeys,
+      RelMetadataQuery mq) {
+
+    // Convert key lists to bitsets for NDV query
+    ImmutableBitSet leftKeySet = ImmutableBitSet.of(leftKeys);
+    ImmutableBitSet rightKeySet = ImmutableBitSet.of(rightKeys);
+
+    // Get NDV for join keys
+    Double leftNdv = null;
+    Double rightNdv = null;
+
+    try {
+      leftNdv = mq.getDistinctRowCount(rel.getLeft(), leftKeySet, null);
+      rightNdv = mq.getDistinctRowCount(rel.getRight(), rightKeySet, null);
+    } catch (Exception e) {
+      // Ignore
+    }
+
+    if (leftNdv == null) leftNdv = leftRowCount;
+    if (rightNdv == null) rightNdv = rightRowCount;
+
+    // Equi-join selectivity: 1 / max(leftNdv, rightNdv)
+    double maxNdv = Math.max(leftNdv, rightNdv);
+    double selectivity = maxNdv > 0 ? Math.min(1.0, 1.0 / maxNdv) : 1.0;
+
+    return leftRowCount * rightRowCount * selectivity;
+  }
+
+  /**
+   * Adjust row count based on join type. - INNER: innerJoinRowCount - LEFT: max(leftRowCount,
+   * innerJoinRowCount) - RIGHT: max(rightRowCount, innerJoinRowCount) - FULL: max(left, inner) +
+   * max(right, inner) - inner
+   */
+  private double adjustForJoinType(
+      JoinRelType joinType, double leftRowCount, double rightRowCount, double innerJoinRowCount) {
+
+    switch (joinType) {
+      case INNER:
+        return innerJoinRowCount;
+      case LEFT:
+        return Math.max(leftRowCount, innerJoinRowCount);
+      case RIGHT:
+        return Math.max(rightRowCount, innerJoinRowCount);
+      case FULL:
+        return Math.max(leftRowCount, innerJoinRowCount)
+            + Math.max(rightRowCount, innerJoinRowCount)
+            - innerJoinRowCount;
+      case SEMI:
+      case ANTI:
+        // Semi/Anti join: at most left row count
+        return leftRowCount * RelMdUtil.guessSelectivity(null);
+      default:
+        return innerJoinRowCount;
+    }
+  }
+
+  // ==================== Correlate ====================
+
+  /**
+   * Correlate (lateral join) estimation. For temporal joins (with Snapshot), row count approximates
+   * stream side.
+   */
+  public Double getRowCount(Correlate rel, RelMetadataQuery mq) {
+    Double leftRowCount = mq.getRowCount(rel.getLeft());
+    if (leftRowCount == null) {
+      return null;
+    }
+
+    // Temporal join pattern: row count ≈ left (stream) side
+    if (containsSnapshot(rel.getRight())) {
+      return leftRowCount * 0.9;
+    }
+
+    // Regular correlate: estimate based on right side
+    Double rightRowCount = mq.getRowCount(rel.getRight());
+    if (rightRowCount == null) {
+      return leftRowCount;
+    }
+
+    // Conservative: left * sqrt(right)
+    return leftRowCount * Math.sqrt(rightRowCount);
+  }
+
+  /** Checks if the RelNode tree contains a Snapshot (temporal join pattern). */
+  private boolean containsSnapshot(RelNode rel) {
+    if (rel instanceof Snapshot) {
       return true;
+    }
+    for (RelNode input : rel.getInputs()) {
+      if (containsSnapshot(input)) {
+        return true;
+      }
+    }
+    if (rel instanceof SingleRel singleRel) {
+      return containsSnapshot(singleRel.getInput());
     }
     return false;
   }
 
-  /**
-   * Estimates row count for TableFunctionScan. For window functions, the row count is approximately
-   * the same as input.
-   */
-  public Double getRowCount(TableFunctionScan rel, RelMetadataQuery mq) {
-    if (rel.getInputs().isEmpty()) {
-      // No inputs - use default
-      return super.getRowCount(rel, mq);
-    }
+  // ==================== Snapshot ====================
 
-    // For window table functions, row count is approximately the input row count
-    Double inputRowCount = mq.getRowCount(rel.getInput(0));
-    if (inputRowCount != null) {
-      return inputRowCount;
-    }
-
-    return super.getRowCount(rel, mq);
+  /** Snapshot: row count equals input (point-in-time view). */
+  public Double getRowCount(Snapshot rel, RelMetadataQuery mq) {
+    return mq.getRowCount(rel.getInput());
   }
 
-  /** Estimates row count for Union: sum of all inputs. */
+  // ==================== Set Operations ====================
+
+  /** Union: sum of all inputs. */
   public Double getRowCount(Union rel, RelMetadataQuery mq) {
     double rowCount = 0.0;
     for (RelNode input : rel.getInputs()) {
@@ -260,14 +460,14 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
       }
       rowCount += inputRowCount;
     }
-    // For UNION DISTINCT (not ALL), apply a reduction factor
+    // UNION DISTINCT may have duplicates removed
     if (!rel.all) {
       rowCount = rowCount * 0.9;
     }
     return rowCount;
   }
 
-  /** Estimates row count for Intersect: minimum of all inputs. */
+  /** Intersect: minimum of all inputs. */
   public Double getRowCount(Intersect rel, RelMetadataQuery mq) {
     double minRowCount = Double.MAX_VALUE;
     for (RelNode input : rel.getInputs()) {
@@ -277,53 +477,50 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
       }
       minRowCount = Math.min(minRowCount, inputRowCount);
     }
-    // Intersect results in at most the smaller input
     return minRowCount == Double.MAX_VALUE ? null : minRowCount;
   }
 
-  /** Estimates row count for Minus (EXCEPT): minimum of all inputs. */
+  /** Minus (EXCEPT): at most first input, reduced by overlap with others. */
   public Double getRowCount(Minus rel, RelMetadataQuery mq) {
     if (rel.getInputs().isEmpty()) {
       return null;
     }
-    // Minus can produce at most as many rows as the first input
     Double firstInputRowCount = mq.getRowCount(rel.getInput(0));
     if (firstInputRowCount == null) {
       return null;
     }
-    // Conservative estimate: apply reduction based on other inputs
+    // Conservative: reduce by estimated overlap
     double factor = 1.0;
     for (int i = 1; i < rel.getInputs().size(); i++) {
       Double inputRowCount = mq.getRowCount(rel.getInput(i));
       if (inputRowCount != null && firstInputRowCount > 0) {
-        // Reduce by estimated overlap
         factor *= Math.max(0.5, 1.0 - inputRowCount / firstInputRowCount);
       }
     }
     return firstInputRowCount * factor;
   }
 
-  /**
-   * Estimates row count for Snapshot (temporal table). Row count is the same as input since
-   * Snapshot just provides a point-in-time view.
-   */
-  public Double getRowCount(Snapshot rel, RelMetadataQuery mq) {
-    return mq.getRowCount(rel.getInput());
-  }
+  // ==================== Dispatcher ====================
 
   @Override
   public Double getRowCount(RelNode rel, RelMetadataQuery mq) {
     if (rel instanceof TableScan scan) {
       return getRowCount(scan, mq);
     }
-    if (rel instanceof Join join) {
-      return getRowCount(join, mq);
+    if (rel instanceof Values values) {
+      return getRowCount(values, mq);
+    }
+    if (rel instanceof Project project) {
+      return getRowCount(project, mq);
     }
     if (rel instanceof Filter filter) {
       return getRowCount(filter, mq);
     }
-    if (rel instanceof Correlate correlate) {
-      return getRowCount(correlate, mq);
+    if (rel instanceof Calc calc) {
+      return getRowCount(calc, mq);
+    }
+    if (rel instanceof Exchange exchange) {
+      return getRowCount(exchange, mq);
     }
     if (rel instanceof Sort sort) {
       return getRowCount(sort, mq);
@@ -331,8 +528,20 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
     if (rel instanceof Aggregate aggregate) {
       return getRowCount(aggregate, mq);
     }
+    if (rel instanceof Window window) {
+      return getRowCount(window, mq);
+    }
     if (rel instanceof TableFunctionScan tableFunctionScan) {
       return getRowCount(tableFunctionScan, mq);
+    }
+    if (rel instanceof Join join) {
+      return getRowCount(join, mq);
+    }
+    if (rel instanceof Correlate correlate) {
+      return getRowCount(correlate, mq);
+    }
+    if (rel instanceof Snapshot snapshot) {
+      return getRowCount(snapshot, mq);
     }
     if (rel instanceof Union union) {
       return getRowCount(union, mq);
@@ -343,16 +552,10 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
     if (rel instanceof Minus minus) {
       return getRowCount(minus, mq);
     }
-    if (rel instanceof Snapshot snapshot) {
-      return getRowCount(snapshot, mq);
-    }
     return super.getRowCount(rel, mq);
   }
 
-  @Override
-  public Double getRowCount(Filter rel, RelMetadataQuery mq) {
-    return RelMdUtil.estimateFilteredRows(rel.getInput(), rel.getCondition(), mq);
-  }
+  // ==================== Static Utility Methods ====================
 
   public static Double getRowCount(TableAnalysis table, QueryIndexSummary constraints) {
     var equalCols = constraints.getEqualityColumns();
