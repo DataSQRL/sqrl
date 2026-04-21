@@ -23,5 +23,8 @@ MachineTempByHour := SELECT machineid, window_time as time_hour, AVG(temperature
                      GROUP BY machineid, window_start, window_end, window_time;
 
 MachineIntervalJoin := SELECT r.sensorid, r.temperature, r.event_time, s.machineid
+                       FROM _SensorReading r JOIN _Sensors s ON r.sensorid = s.sensorid;
+
+MachineIntervalJoinLimit := SELECT r.sensorid, r.temperature, r.event_time, s.machineid
                        FROM _SensorReading r JOIN _Sensors s ON r.sensorid = s.sensorid
                            AND r.event_time >= s.updatedTime AND r.event_time < s.updatedTime + INTERVAL '10' MINUTE;

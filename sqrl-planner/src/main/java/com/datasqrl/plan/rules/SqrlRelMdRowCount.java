@@ -334,8 +334,14 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
   }
 
   /**
-   * Estimate equi-join row count using NDV. Formula: leftRowCount * rightRowCount * (1 /
-   * max(leftNdv, rightNdv))
+   * Estimate equi-join row count using NDV and unique key detection.
+   *
+   * <p>When one side has unique keys on join columns (e.g., PK join): - Right unique: result ≈
+   * leftRowCount (each left row matches at most 1 right) - Left unique: result ≈ rightRowCount
+   * (each right row matches at most 1 left) - Both unique: result ≈ min(leftRowCount,
+   * rightRowCount)
+   *
+   * <p>Otherwise: leftRowCount * rightRowCount * (1 / max(leftNdv, rightNdv))
    */
   private double estimateEquiJoinRowCount(
       Join rel,
@@ -345,11 +351,34 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
       ImmutableIntList rightKeys,
       RelMetadataQuery mq) {
 
-    // Convert key lists to bitsets for NDV query
+    // Convert key lists to bitsets for queries
     ImmutableBitSet leftKeySet = ImmutableBitSet.of(leftKeys);
     ImmutableBitSet rightKeySet = ImmutableBitSet.of(rightKeys);
 
-    // Get NDV for join keys
+    // Check for unique keys on join columns
+    Boolean leftUnique = null;
+    Boolean rightUnique = null;
+    try {
+      leftUnique = mq.areColumnsUnique(rel.getLeft(), leftKeySet);
+      rightUnique = mq.areColumnsUnique(rel.getRight(), rightKeySet);
+    } catch (Exception e) {
+      // Ignore - will use NDV-based estimation
+    }
+
+    // Handle unique key cases (PK/FK joins)
+    if (Boolean.TRUE.equals(leftUnique) && Boolean.TRUE.equals(rightUnique)) {
+      // Both sides unique: result is at most min of both
+      return Math.min(leftRowCount, rightRowCount);
+    } else if (Boolean.TRUE.equals(rightUnique)) {
+      // Right side unique (e.g., joining to PK): each left row matches at most 1 right
+      // Result is approximately left row count (with some selectivity for non-matches)
+      return leftRowCount * 0.95;
+    } else if (Boolean.TRUE.equals(leftUnique)) {
+      // Left side unique: each right row matches at most 1 left
+      return rightRowCount * 0.95;
+    }
+
+    // Fall back to NDV-based estimation
     Double leftNdv = null;
     Double rightNdv = null;
 
