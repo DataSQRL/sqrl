@@ -133,7 +133,7 @@
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
     <guava.version>33.5.0-jre</guava.version>
     <h2.version>2.4.240</h2.version>
-    <spring-framework.version>7.0.6</spring-framework.version>
+    <spring-framework.version>7.0.7</spring-framework.version>
     <hikari.version>7.0.2</hikari.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
