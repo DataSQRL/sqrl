@@ -833,6 +833,7 @@
                 <build>
                   <contextDir>${project.basedir}</contextDir>
                   <dockerFile>Dockerfile</dockerFile>
+                  <filter>false</filter>
                   <args>
                     <IMG_REPO>${docker.image.repo}</IMG_REPO>
                     <BASE_TAG>${docker.image.base.tag}</BASE_TAG>
