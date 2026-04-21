@@ -171,7 +171,7 @@
     <vertx.version>5.0.10</vertx.version>
 
     <!-- Plugin versions -->
-    <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
+    <docker-maven-plugin.version>0.46.0</docker-maven-plugin.version>
     <easy-jacoco-maven-plugin.version>0.1.4</easy-jacoco-maven-plugin.version>
     <git-code-format-maven-plugin.version>5.6</git-code-format-maven-plugin.version>
     <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
@@ -823,21 +823,24 @@
           <version>3.6.3</version>
         </plugin>
         <plugin>
-          <groupId>com.spotify</groupId>
-          <artifactId>dockerfile-maven-plugin</artifactId>
-          <version>${dockerfile-maven-plugin.version}</version>
+          <groupId>io.fabric8</groupId>
+          <artifactId>docker-maven-plugin</artifactId>
+          <version>${docker-maven-plugin.version}</version>
           <configuration>
-            <repository>${docker.image.name}</repository>
-            <tag>${docker.image.tag}</tag>
-            <dockerfile>Dockerfile</dockerfile>
-            <buildArgs>
-              <IMG_REPO>${docker.image.repo}</IMG_REPO>
-              <BASE_TAG>${docker.image.base.tag}</BASE_TAG>
-              <DUCKDB_EXTENSIONS_TAG>${docker.image.duckdb.tag}</DUCKDB_EXTENSIONS_TAG>
-            </buildArgs>
-            <contextDirectory>${project.basedir}</contextDirectory>
-            <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
-            <pullNewerImage>false</pullNewerImage>
+            <images>
+              <image>
+                <name>${docker.image.name}:${docker.image.tag}</name>
+                <build>
+                  <contextDir>${project.basedir}</contextDir>
+                  <dockerFile>Dockerfile</dockerFile>
+                  <args>
+                    <IMG_REPO>${docker.image.repo}</IMG_REPO>
+                    <BASE_TAG>${docker.image.base.tag}</BASE_TAG>
+                    <DUCKDB_EXTENSIONS_TAG>${docker.image.duckdb.tag}</DUCKDB_EXTENSIONS_TAG>
+                  </args>
+                </build>
+              </image>
+            </images>
           </configuration>
         </plugin>
       </plugins>
@@ -1113,8 +1116,8 @@
             </configuration>
           </plugin>
           <plugin>
-            <groupId>com.spotify</groupId>
-            <artifactId>dockerfile-maven-plugin</artifactId>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
             <configuration>
               <skip>true</skip>
             </configuration>
@@ -1357,8 +1360,8 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>com.spotify</groupId>
-            <artifactId>dockerfile-maven-plugin</artifactId>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
             <configuration>
               <skip>true</skip>
             </configuration>
@@ -1377,7 +1380,7 @@
       </activation>
       <properties>
         <skipITs>true</skipITs>
-        <dockerfile.skip>true</dockerfile.skip>
+        <docker.skip>true</docker.skip>
         <maven.test.excludeProjects>sqrl-testing-container</maven.test.excludeProjects>
       </properties>
       <build>
@@ -1408,7 +1411,7 @@
         </property>
       </activation>
       <properties>
-        <dockerfile.skip>true</dockerfile.skip>
+        <docker.skip>true</docker.skip>
         <maven.test.excludeProjects>sqrl-testing-container</maven.test.excludeProjects>
       </properties>
       <build>
@@ -1474,7 +1477,7 @@
       <properties>
         <skipTests>true</skipTests>
         <skipITs>true</skipITs>
-        <dockerfile.skip>true</dockerfile.skip>
+        <docker.skip>true</docker.skip>
       </properties>
     </profile>
   </profiles>
