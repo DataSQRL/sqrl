@@ -131,7 +131,7 @@
     <graphql-java-extended-scalars.version>24.0</graphql-java-extended-scalars.version>
     <graphql-java.version>25.0</graphql-java.version>
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
-    <guava.version>33.5.0-jre</guava.version>
+    <guava.version>33.6.0-jre</guava.version>
     <h2.version>2.4.240</h2.version>
     <spring-framework.version>7.0.6</spring-framework.version>
     <hikari.version>7.0.2</hikari.version>
