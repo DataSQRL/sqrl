@@ -110,6 +110,7 @@ public class PipelineDAGExporter {
                               .map(fields::get)
                               .map(RelDataTypeField::getName)
                               .toList())
+                  .rowCount(getRowCount(table))
                   .timestamp(
                       timestampIdx.map(fields::get).map(RelDataTypeField::getName).orElse(N_A))
                   .schema(
@@ -169,6 +170,24 @@ public class PipelineDAGExporter {
       return null;
     }
     return tableAnalysis.getOriginalSql();
+  }
+
+  private String getRowCount(TableAnalysis tableAnalysis) {
+    var stats = tableAnalysis.getTableStatistic();
+    if (stats.isUnknown()) return null;
+    String rowCount = formatRowCount(stats.getRowCount());
+    if (stats.isEstimated()) rowCount = "~" + rowCount;
+    return rowCount;
+  }
+
+  public static String formatRowCount(double value) {
+    if (value <= 0) return "0";
+    if (value < 1) return "1";
+
+    int exp = (int) Math.floor(Math.log10(value));
+    if (exp == 0) return String.valueOf((int) value);
+
+    return String.format("%.0e", value).replaceAll("e\\+0*(\\d+)", "e$1");
   }
 
   private String explain(RelNode relNode) {
@@ -374,6 +393,9 @@ public class PipelineDAGExporter {
     @JsonProperty("primary_key")
     List<String> primaryKey;
 
+    @JsonProperty("row_count")
+    String rowCount;
+
     String timestamp;
     List<SchemaColumn> schema;
 
@@ -385,6 +407,7 @@ public class PipelineDAGExporter {
       s.append(getBaseHeaderString());
       s.append("Primary key: ").append(pKey).append(LINEBREAK);
       s.append("Timestamp:   ").append(timestamp).append(LINEBREAK);
+      s.append("Row count: ").append(rowCount == null ? N_A : rowCount).append(LINEBREAK);
       s.append("---").append(LINEBREAK);
       s.append("Schema:").append(LINEBREAK);
       toListString(s, schema);

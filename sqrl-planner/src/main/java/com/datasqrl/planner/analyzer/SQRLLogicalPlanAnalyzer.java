@@ -29,6 +29,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.Side;
 import com.datasqrl.plan.rules.SqrlRelShuttle;
+import com.datasqrl.plan.table.TableStatistic;
 import com.datasqrl.plan.util.IndexMap;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.TableAnalysisLookup;
@@ -36,6 +37,7 @@ import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.analyzer.cost.JoinCostAnalysis;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.PrimaryKeyHint;
+import com.datasqrl.planner.hint.RowCountHint;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
@@ -78,6 +80,7 @@ import org.apache.calcite.rel.logical.LogicalSort;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.logical.LogicalUnion;
 import org.apache.calcite.rel.logical.LogicalValues;
+import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
@@ -196,6 +199,22 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
               .primaryKey(PrimaryKeyMap.of(pkHint.get().getColumnIndexes()))
               .build();
     }
+    // Retrieve row count from hint or estimate via metadata query
+    var rowCountHint =
+        hints
+            .getHints(RowCountHint.class)
+            .filter(hint -> hint.getColumnNames().isEmpty())
+            .findFirst();
+    TableStatistic tableStatistic;
+    if (rowCountHint.isPresent()) {
+      tableStatistic = TableStatistic.fromHint(rowCountHint.get().getRowCount());
+    } else {
+      final RelMetadataQuery mq = originalRelnode.getCluster().getMetadataQuery();
+      var rowCount = mq.getRowCount(analysis.relNode);
+      tableStatistic =
+          rowCount != null ? TableStatistic.fromEstimate(rowCount) : TableStatistic.UNKNOWN;
+    }
+
     // To "be" a most recent distinct is must have one and not change the selected columns on a
     // stream.
     var isMostRecentDistinct =
@@ -228,6 +247,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .requiredCapabilities(capabilityAnalysis.getRequiredCapabilities())
             .costs(costAnalyses)
             .hints(hints)
+            .tableStatistic(tableStatistic)
             .errors(errors);
     return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis, hasMostRecentDistinct);
   }

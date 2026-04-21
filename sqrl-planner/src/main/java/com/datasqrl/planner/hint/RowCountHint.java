@@ -23,59 +23,54 @@ import com.google.auto.service.AutoService;
 import java.util.List;
 import lombok.Getter;
 
-/** Defines the vector dimension for a vector column for indexing. */
-public class VectorDimensionHint extends ColumnNamesHint implements DataTypeHint {
+/**
+ * Annotates a table with a distinct row count for a set columns - or total row count if column list
+ * is empty
+ */
+public class RowCountHint extends ColumnNamesHint {
 
-  public static final String HINT_NAME = "vector_dim";
+  public static final String HINT_NAME = "row_count";
 
-  @Getter private final int dimensions;
+  @Getter private final double rowCount;
 
-  protected VectorDimensionHint(ParsedObject<SqrlHint> source, String column, int dimension) {
-    super(source, Type.DAG, List.of(column));
-    this.dimensions = dimension;
-  }
-
-  @Override
-  public String getColumnName() {
-    return super.getColumnNames().get(0);
-  }
-
-  @Override
-  public int getColumnIndex() {
-    return super.getColumnIndexes().get(0);
+  protected RowCountHint(ParsedObject<SqrlHint> source, List<String> columns, double rowCount) {
+    super(source, Type.DAG, columns);
+    this.rowCount = rowCount;
   }
 
   @AutoService(Factory.class)
-  public static class VectorDimensionFactory implements Factory {
+  public static class RowCountHintFactory implements Factory {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      if (source.get().getOptions().size() != 2) {
+      var options = source.get().getOptions();
+      if (options.isEmpty()) {
         throw new StatementParserException(
             ErrorLabel.GENERIC,
             source.getFileLocation(),
-            "Vector dimension hint requires two arguments: the name of the vector column and the number of dimensions.");
+            "row_count hint must have at least one number argument");
       }
-      String dimensionsString = source.get().getOptions().get(1);
-      int dimensions;
+      var rowCountStr = options.get(options.size() - 1);
+      double rowCount;
       try {
-        dimensions = Integer.parseInt(dimensionsString);
+        rowCount = Double.parseDouble(rowCountStr);
       } catch (NumberFormatException e) {
         throw new StatementParserException(
             ErrorLabel.GENERIC,
             source.getFileLocation(),
-            "Vector dimension must be a valid number: %s (%s).",
-            dimensionsString,
+            "row_count must be a valid number: %s (%s).",
+            rowCountStr,
             e.getMessage());
       }
-      if (dimensions <= 0) {
+      if (rowCount <= 0) {
         throw new StatementParserException(
             ErrorLabel.GENERIC,
             source.getFileLocation(),
-            "Vector dimension must be a positive number: %s.",
-            dimensionsString);
+            "row_count must be a positive number: %s.",
+            rowCountStr);
       }
-      return new VectorDimensionHint(source, source.get().getOptions().get(0), dimensions);
+      var columnNames = options.subList(0, options.size() - 1);
+      return new RowCountHint(source, columnNames, rowCount);
     }
 
     @Override

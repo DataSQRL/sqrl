@@ -120,6 +120,12 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   @Builder.Default PlannerHints hints = PlannerHints.EMPTY;
 
   /**
+   * The statistics for the table, either estimated by planner or provided as hints on the
+   * definition
+   */
+  @Builder.Default TableStatistic tableStatistic = TableStatistic.UNKNOWN;
+
+  /**
    * The error collector for the corresponding table definition for when we need to produce table
    * specific errors
    */
@@ -158,22 +164,12 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
     return topLevelSort.flatMap(CalciteUtil::getLimit);
   }
 
-  /**
-   * Returns the statistics for this table. TODO: this is currently hardcoded and should be produced
-   * by analyzer and extracted from table definition (if available) on import
-   *
-   * @return
-   */
-  public TableStatistic getTableStatistic() {
-    return TableStatistic.of(10000);
-  }
-
   @Override
   public RelNode getRelNode() {
     return collapsedRelnode;
   }
 
-  public static TableAnalysis of(
+  public static TableAnalysis makeRootSourceTable(
       @NonNull ObjectIdentifier identifier,
       @NonNull SourceSinkTableAnalysis sourceTable,
       @NonNull TableType type,

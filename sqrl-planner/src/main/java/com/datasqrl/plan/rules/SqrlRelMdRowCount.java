@@ -16,11 +16,14 @@
 package com.datasqrl.plan.rules;
 
 import com.datasqrl.plan.global.QueryIndexSummary;
+import com.datasqrl.planner.TableAnalysisLookup;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import javax.annotation.Nullable;
 import org.apache.calcite.adapter.enumerable.EnumerableNestedLoopJoin;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Filter;
 import org.apache.calcite.rel.core.Join;
+import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.metadata.BuiltInMetadata;
 import org.apache.calcite.rel.metadata.ReflectiveRelMetadataProvider;
 import org.apache.calcite.rel.metadata.RelMdRowCount;
@@ -28,12 +31,56 @@ import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataProvider;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.util.BuiltInMethod;
+import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 
 public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.RowCount.Handler {
 
   public static final RelMetadataProvider SOURCE =
       ReflectiveRelMetadataProvider.reflectiveSource(
-          BuiltInMethod.ROW_COUNT.method, new SqrlRelMdRowCount());
+          BuiltInMethod.ROW_COUNT.method, new SqrlRelMdRowCount(null));
+
+  @Nullable private final TableAnalysisLookup tableLookup;
+
+  public SqrlRelMdRowCount() {
+    this(null);
+  }
+
+  public SqrlRelMdRowCount(@Nullable TableAnalysisLookup tableLookup) {
+    this.tableLookup = tableLookup;
+  }
+
+  public RelMetadataProvider getMetadataProvider() {
+    return ReflectiveRelMetadataProvider.reflectiveSource(BuiltInMethod.ROW_COUNT.method, this);
+  }
+
+  public Double getRowCount(TableScan scan, RelMetadataQuery mq) {
+    if (tableLookup == null) {
+      return super.getRowCount(scan, mq);
+    }
+
+    var tableAnalysis = lookupTableAnalysis(scan);
+    if (tableAnalysis != null
+        && tableAnalysis.getTableStatistic() != null
+        && !tableAnalysis.getTableStatistic().isUnknown()) {
+      return tableAnalysis.getTableStatistic().getRowCount();
+    }
+    return super.getRowCount(scan, mq);
+  }
+
+  @Nullable
+  private TableAnalysis lookupTableAnalysis(TableScan scan) {
+    var table = scan.getTable();
+    if (table instanceof TableSourceTable sourceTable) {
+      ObjectIdentifier tableId = sourceTable.contextResolvedTable().getIdentifier();
+      var sourceTableAnalysis = tableLookup.lookupSourceTable(tableId);
+      if (sourceTableAnalysis != null) {
+        return sourceTableAnalysis;
+      }
+      return tableLookup.lookupView(tableId);
+    }
+    return tableLookup.lookupView(scan).orElse(null);
+  }
 
   @Override
   public Double getRowCount(Join rel, RelMetadataQuery mq) {
@@ -48,6 +95,9 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
 
   @Override
   public Double getRowCount(RelNode rel, RelMetadataQuery mq) {
+    if (rel instanceof TableScan scan) {
+      return getRowCount(scan, mq);
+    }
     if (rel instanceof Join join) {
       return getRowCount(join, mq);
     }
