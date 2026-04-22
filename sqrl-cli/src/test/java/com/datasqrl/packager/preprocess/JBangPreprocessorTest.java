@@ -15,7 +15,6 @@
  */
 package com.datasqrl.packager.preprocess;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -275,7 +274,7 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_javaFileWithFlinkDeps_when_process_then_throwsError() throws IOException {
+  void given_javaFileWithFlinkDeps_when_process_then_accepted() throws IOException {
     var content =
         """
         ///usr/bin/env jbang "$0" "$@" ; exit $?
@@ -286,9 +285,10 @@ class JBangPreprocessorTest {
         """;
     var javaFile = createJavaFile("MyUDF.java", content);
 
-    assertThatThrownBy(() -> underTest.process(javaFile, context))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("Flink dependencies are provided automatically via classpath");
+    underTest.process(javaFile, context);
+    underTest.complete();
+
+    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
   }
 
   @Test
