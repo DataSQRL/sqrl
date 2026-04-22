@@ -23,6 +23,7 @@ import com.datasqrl.graphql.server.RootGraphqlModel.Argument;
 import graphql.schema.DataFetchingEnvironment;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
@@ -38,7 +39,7 @@ public abstract class AbstractQueryExecutionContext<C extends Context>
     return "SELECT * FROM (%s) x LIMIT %s OFFSET %s".formatted(sqlQuery, limit, offset);
   }
 
-  protected Object mapParamArgumentType(Object param) {
+  protected Object mapParamArgumentType(Object param, Optional<String> sqlType) {
     // By default, do nothing
     return param;
   }
@@ -46,12 +47,21 @@ public abstract class AbstractQueryExecutionContext<C extends Context>
   protected CompletableFuture<List<Object>> getParamArgumentsFuture(
       List<RootGraphqlModel.QueryParameterHandler> parameters) {
 
-    var paramFutures =
-        parameters.stream()
-            .map(param -> param.accept(this, this))
-            .map(this::wrapToFuture)
-            .map(future -> future.thenApply(this::mapParamArgumentType))
-            .toArray(CompletableFuture[]::new);
+    var paramFutures = new CompletableFuture[parameters.size()];
+    for (int i = 0; i < parameters.size(); i++) {
+      var param = parameters.get(i);
+      var paramValue = param.accept(this, this);
+
+      Optional<String> paramSqlType;
+      if (param instanceof RootGraphqlModel.ArgumentParameter argParam) {
+        paramSqlType = Optional.of(argParam.getSqlType());
+      } else {
+        paramSqlType = Optional.empty();
+      }
+
+      var paramFuture = wrapToFuture(paramValue);
+      paramFutures[i] = paramFuture.thenApply(obj -> mapParamArgumentType(obj, paramSqlType));
+    }
 
     return CompletableFuture.allOf(paramFutures)
         .thenApply(

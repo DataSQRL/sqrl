@@ -319,7 +319,8 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "name"
+                  "path" : "name",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -378,11 +379,13 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "version"
+                  "path" : "version",
+                  "sqlType" : "VARCHAR"
                 },
                 {
                   "type" : "arg",
-                  "path" : "variant"
+                  "path" : "variant",
+                  "sqlType" : "VARCHAR"
                 },
                 {
                   "type" : "source",
@@ -420,7 +423,8 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "topicName"
+                  "path" : "topicName",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -454,7 +458,8 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "topicName"
+                  "path" : "topicName",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

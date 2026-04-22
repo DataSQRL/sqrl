@@ -370,11 +370,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "email"
+                  "path" : "email",
+                  "sqlType" : "VARCHAR"
                 },
                 {
                   "type" : "arg",
-                  "path" : "id"
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -408,7 +410,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "ids"
+                  "path" : "ids",
+                  "sqlType" : "ARRAY"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -446,11 +449,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "customerid"
+                  "path" : "customerid",
+                  "sqlType" : "BIGINT"
                 },
                 {
                   "type" : "arg",
-                  "path" : "fromTime"
+                  "path" : "fromTime",
+                  "sqlType" : "TIMESTAMP"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -484,7 +489,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerByNothing_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "id"
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

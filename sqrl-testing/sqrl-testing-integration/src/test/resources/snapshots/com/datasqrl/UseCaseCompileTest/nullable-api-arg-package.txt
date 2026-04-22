@@ -1,0 +1,267 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Product {
+  id: Long!
+  name: String!
+  category: String!
+  price: Float!
+  discount: Long
+  timestamp: DateTime!
+}
+
+type Query {
+  Product(limit: Int = 10, offset: Int = 0): [Product!]
+  Discount(discount: Int, limit: Int = 10, offset: Int = 0): [Product!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Discount
+ID:          default_catalog.default_database.Discount
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Product
+Annotations:
+ - stream-root: Product
+ - parameters: discount
+ - base-table: Product
+
+=== Product
+ID:          default_catalog.default_database.Product
+Type:        stream
+Stage:       flink
+Primary key: id
+Timestamp:   timestamp
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - category: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - price: DOUBLE NOT NULL
+ - discount: BIGINT
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Product__base
+Annotations:
+ - stream-root: Product
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Product__schema` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `price` DOUBLE NOT NULL,
+  `discount` BIGINT,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/product.jsonl'
+);
+CREATE TABLE `Product` (
+  PRIMARY KEY (`id`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/product.jsonl',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
+LIKE `Product__schema`;
+CREATE TABLE `Product_1` (
+  `id` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `price` DOUBLE NOT NULL,
+  `discount` BIGINT,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Product',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Product_1`
+SELECT *
+ FROM `default_catalog`.`default_database`.`Product`
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Product" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "category" TEXT NOT NULL, "price" DOUBLE PRECISION NOT NULL, "discount" BIGINT, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+
+CREATE INDEX IF NOT EXISTS "Product_hash_c4" ON "Product" USING hash ("discount")
+>>>postgres-views.sql
+
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Product",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Product\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Discount",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "discount"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Product\"\nWHERE $1 IS NULL OR \"discount\" = $1\nORDER BY \"id\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "discount",
+                  "sqlType" : "INTEGER"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetProduct",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Product($limit: Int = 10, $offset: Int = 0) {\nProduct(limit: $limit, offset: $offset) {\nid\nname\ncategory\nprice\ndiscount\ntimestamp\n}\n\n}",
+            "queryName" : "Product",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Product{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetDiscount",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "discount" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Discount($discount: Int, $limit: Int = 10, $offset: Int = 0) {\nDiscount(discount: $discount, limit: $limit, offset: $offset) {\nid\nname\ncategory\nprice\ndiscount\ntimestamp\n}\n\n}",
+            "queryName" : "Discount",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Discount{?offset,limit,discount}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Product {\n  id: Long!\n  name: String!\n  category: String!\n  price: Float!\n  discount: Long\n  timestamp: DateTime!\n}\n\ntype Query {\n  Product(limit: Int = 10, offset: Int = 0): [Product!]\n  Discount(discount: Int, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

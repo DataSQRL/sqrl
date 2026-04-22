@@ -119,21 +119,21 @@
     <avro.version>1.12.1</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
     <aws-msk-iam-auth.version>2.3.5</aws-msk-iam-auth.version>
-    <aws-sdk-bom.version>2.42.34</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.42.37</aws-sdk-bom.version>
     <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-csv.version>1.14.1</commons-csv.version>
     <commons-exec.version>1.6.0</commons-exec.version>
     <commons-io.version>2.21.0</commons-io.version>
     <duckdb.version>1.5.2.0</duckdb.version>
-    <feign.version>13.11</feign.version>
+    <feign.version>13.12</feign.version>
     <freemarker.version>2.3.34</freemarker.version>
     <glassfish.version>3.0.0</glassfish.version>
     <graphql-java-extended-scalars.version>24.0</graphql-java-extended-scalars.version>
     <graphql-java.version>25.0</graphql-java.version>
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
-    <guava.version>33.5.0-jre</guava.version>
+    <guava.version>33.6.0-jre</guava.version>
     <h2.version>2.4.240</h2.version>
-    <spring-framework.version>7.0.6</spring-framework.version>
+    <spring-framework.version>7.0.7</spring-framework.version>
     <hikari.version>7.0.2</hikari.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
@@ -159,7 +159,7 @@
     <opencsv.version>5.12.0</opencsv.version>
     <picocli.version>4.7.7</picocli.version>
     <postgres.version>42.7.10</postgres.version>
-    <projectreactor.version>3.8.4</projectreactor.version>
+    <projectreactor.version>3.8.5</projectreactor.version>
     <protobuf.version>4.34.1</protobuf.version>
     <scala.version>2.12</scala.version>
     <scram.version>2.1</scram.version>
@@ -167,11 +167,11 @@
     <snowflake-jdbc.version>4.1.0</snowflake-jdbc.version>
     <snakeyaml.version>2.6</snakeyaml.version>
     <swagger-core.version>2.2.48</swagger-core.version>
-    <testcontainers.version>2.0.4</testcontainers.version>
+    <testcontainers.version>2.0.5</testcontainers.version>
     <vertx.version>5.0.10</vertx.version>
 
     <!-- Plugin versions -->
-    <dockerfile-maven-plugin.version>1.4.13</dockerfile-maven-plugin.version>
+    <docker-maven-plugin.version>0.46.0</docker-maven-plugin.version>
     <easy-jacoco-maven-plugin.version>0.1.4</easy-jacoco-maven-plugin.version>
     <git-code-format-maven-plugin.version>5.6</git-code-format-maven-plugin.version>
     <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
@@ -587,6 +587,12 @@
 
       <!-- testing -->
       <dependency>
+        <groupId>org.awaitility</groupId>
+        <artifactId>awaitility</artifactId>
+        <version>${awaitility.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
         <version>${mockito.version}</version>
@@ -626,6 +632,12 @@
       <dependency>
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers-kafka</artifactId>
+        <version>${testcontainers.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-redpanda</artifactId>
         <version>${testcontainers.version}</version>
         <scope>test</scope>
       </dependency>
@@ -811,21 +823,25 @@
           <version>3.6.3</version>
         </plugin>
         <plugin>
-          <groupId>com.spotify</groupId>
-          <artifactId>dockerfile-maven-plugin</artifactId>
-          <version>${dockerfile-maven-plugin.version}</version>
+          <groupId>io.fabric8</groupId>
+          <artifactId>docker-maven-plugin</artifactId>
+          <version>${docker-maven-plugin.version}</version>
           <configuration>
-            <repository>${docker.image.name}</repository>
-            <tag>${docker.image.tag}</tag>
-            <dockerfile>Dockerfile</dockerfile>
-            <buildArgs>
-              <IMG_REPO>${docker.image.repo}</IMG_REPO>
-              <BASE_TAG>${docker.image.base.tag}</BASE_TAG>
-              <DUCKDB_EXTENSIONS_TAG>${docker.image.duckdb.tag}</DUCKDB_EXTENSIONS_TAG>
-            </buildArgs>
-            <contextDirectory>${project.basedir}</contextDirectory>
-            <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
-            <pullNewerImage>false</pullNewerImage>
+            <images>
+              <image>
+                <name>${docker.image.name}:${docker.image.tag}</name>
+                <build>
+                  <contextDir>${project.basedir}</contextDir>
+                  <dockerFile>Dockerfile</dockerFile>
+                  <filter>false</filter>
+                  <args>
+                    <IMG_REPO>${docker.image.repo}</IMG_REPO>
+                    <BASE_TAG>${docker.image.base.tag}</BASE_TAG>
+                    <DUCKDB_EXTENSIONS_TAG>${docker.image.duckdb.tag}</DUCKDB_EXTENSIONS_TAG>
+                  </args>
+                </build>
+              </image>
+            </images>
           </configuration>
         </plugin>
       </plugins>
@@ -1101,8 +1117,8 @@
             </configuration>
           </plugin>
           <plugin>
-            <groupId>com.spotify</groupId>
-            <artifactId>dockerfile-maven-plugin</artifactId>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
             <configuration>
               <skip>true</skip>
             </configuration>
@@ -1345,8 +1361,8 @@
       <build>
         <plugins>
           <plugin>
-            <groupId>com.spotify</groupId>
-            <artifactId>dockerfile-maven-plugin</artifactId>
+            <groupId>io.fabric8</groupId>
+            <artifactId>docker-maven-plugin</artifactId>
             <configuration>
               <skip>true</skip>
             </configuration>
@@ -1365,7 +1381,7 @@
       </activation>
       <properties>
         <skipITs>true</skipITs>
-        <dockerfile.skip>true</dockerfile.skip>
+        <docker.skip>true</docker.skip>
         <maven.test.excludeProjects>sqrl-testing-container</maven.test.excludeProjects>
       </properties>
       <build>
@@ -1396,7 +1412,7 @@
         </property>
       </activation>
       <properties>
-        <dockerfile.skip>true</dockerfile.skip>
+        <docker.skip>true</docker.skip>
         <maven.test.excludeProjects>sqrl-testing-container</maven.test.excludeProjects>
       </properties>
       <build>
@@ -1462,7 +1478,7 @@
       <properties>
         <skipTests>true</skipTests>
         <skipITs>true</skipITs>
-        <dockerfile.skip>true</dockerfile.skip>
+        <docker.skip>true</docker.skip>
       </properties>
     </profile>
   </profiles>

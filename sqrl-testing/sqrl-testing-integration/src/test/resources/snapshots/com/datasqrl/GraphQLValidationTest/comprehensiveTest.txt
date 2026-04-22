@@ -1604,7 +1604,8 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "length"
+                  "path" : "length",
+                  "sqlType" : "INTEGER"
                 },
                 {
                   "type" : "source",
@@ -1992,7 +1993,8 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "minId"
+                  "path" : "minId",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -2026,7 +2028,8 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "id"
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -2064,11 +2067,13 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "arg1"
+                  "path" : "arg1",
+                  "sqlType" : "INTEGER"
                 },
                 {
                   "type" : "arg",
-                  "path" : "arg2"
+                  "path" : "arg2",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -2108,7 +2113,8 @@ FROM "ExternalOrders" AS "ExternalOrders0"
           "equalityConditions" : {
             "customerid" : {
               "type" : "arg",
-              "path" : "minId"
+              "path" : "minId",
+              "sqlType" : "INTEGER"
             }
           }
         }

@@ -197,7 +197,8 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "category_id"
+                  "path" : "category_id",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -256,7 +257,8 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "doc_id"
+                  "path" : "doc_id",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -290,7 +292,8 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "doc_id"
+                  "path" : "doc_id",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

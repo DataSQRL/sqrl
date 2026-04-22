@@ -47,7 +47,7 @@ public class KafkaStartupFailureContainerIT {
     // Use ToStringConsumer to capture logs even if container fails
     var logConsumer = new ToStringConsumer();
 
-    sqrl.createServerContainer()
+    sqrl.createServerContainer(false)
         .withEnv("SQRL_DEBUG", "1")
         // Set an invalid bootstrap server URL
         .withEnv("KAFKA_BOOTSTRAP_SERVERS", "${KAFKA_BOOTSTRAP_SERVERS}")
@@ -82,7 +82,7 @@ public class KafkaStartupFailureContainerIT {
     // Use ToStringConsumer to capture logs even if container fails
     var logConsumer = new ToStringConsumer();
 
-    sqrl.createServerContainer()
+    sqrl.createServerContainer(false)
         .withEnv("SQRL_DEBUG", "1")
         // Set an invalid bootstrap server URL
         .withEnv("KAFKA_BOOTSTRAP_SERVERS", "not-a-valid-url:definitely-not-a-port")

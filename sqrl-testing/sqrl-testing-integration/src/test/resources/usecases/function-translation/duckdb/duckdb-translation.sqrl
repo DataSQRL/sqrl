@@ -31,6 +31,8 @@ FunctionCalls := SELECT
     REGEXP_EXTRACT('abc-123-def', '(\d+)', 1)        AS regexp_extract_group_example,
     REGEXP_EXTRACT_ALL('a1b2c3', '(\d)', 1)          AS regexp_extract_all_example,
     REGEXP_REPLACE('a1b2c3', '[0-9]', 'X')           AS regexp_replace_example,
+    REGEXP_COUNT('a1b2c3', '[0-9]')                  AS regexp_count_example,
+    REGEXP_INSTR('a1b2c3', 'c')                      AS regexp_instr_example,
     DECODE(ENCODE('hi', 'UTF-8'), 'UTF-8')           AS decode_example,
     ENCODE('hi', 'UTF-8') IS NOT NULL                AS encode_example,
     FROM_BASE64(TO_BASE64('hello'))                  AS from_base64_example,
@@ -81,11 +83,26 @@ FunctionCalls := SELECT
     CAST(
         TIMESTAMPADD(DAY, 2, TIMESTAMP '2024-01-02 03:04:05')
     AS TIMESTAMP (3))                                          AS timestampadd_example,
---     TIMESTAMPDIFF(
---         DAY,
---         TIMESTAMP '2024-01-01 00:00:00',
---         TIMESTAMP '2024-01-02 00:00:00'
---     )                                                          AS timestampdiff_example,
+    TIMESTAMPDIFF(
+        HOUR,
+        TIMESTAMP '2024-01-01 00:00:00',
+        TIMESTAMP '2024-01-02 05:00:00'
+    )                                                          AS timestampdiff_hour_example,
+    TIMESTAMPDIFF(
+        DAY,
+        TIMESTAMP '2024-01-01 00:00:00',
+        TIMESTAMP '2024-01-03 00:00:00'
+    )                                                          AS timestampdiff_day_example,
+    TIMESTAMPDIFF(
+        SECOND,
+        TIMESTAMP '2024-01-01 00:00:00',
+        TIMESTAMP '2024-01-01 00:00:30'
+    )                                                          AS timestampdiff_second_example,
+    TIMESTAMPDIFF(
+        MONTH,
+        TIMESTAMP '2024-01-01 00:00:00',
+        TIMESTAMP '2024-04-01 00:00:00'
+    )                                                          AS timestampdiff_month_example,
     CONVERT_TZ('2024-01-02 03:04:05', 'UTC', 'America/Los_Angeles')
                                                                AS convert_tz_example,
 --     FROM_UNIXTIME(1700000000, 'yyyy-MM-dd HH:mm:ss')           AS from_unixtime_example,
@@ -95,9 +112,10 @@ FunctionCalls := SELECT
 --     TO_TIMESTAMP_LTZ(1700000000, 0)                            AS to_timestamp_ltz_epoch_example,
 --     TO_TIMESTAMP_LTZ('2024-01-02 03:04:05', 'yyyy-MM-dd HH:mm:ss')
 --                                                             AS to_timestamp_ltz_str_example,
---     TO_TIMESTAMP('2024-01-02 03:04:05', 'yyyy-MM-dd HH:mm:ss')
---                                                             AS to_timestamp_func_example,
-
+    TO_TIMESTAMP('2024-01-02')
+                                                            AS to_timestamp_example,
+    TO_TIMESTAMP('2024-01-02 03:04', 'yyyy-MM-dd HH:mm')
+                                                            AS to_timestamp_pattern_example,
     IF(1 < 2, 'yes', 'no')                                     AS if_example,
     IFNULL(CAST(NULL AS STRING), 'fallback')                   AS ifnull_example,
     IS_ALPHA('OnlyLetters')                                    AS is_alpha_example,

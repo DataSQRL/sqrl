@@ -712,11 +712,13 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "customerId"
+                  "path" : "customerId",
+                  "sqlType" : "BIGINT"
                 },
                 {
                   "type" : "arg",
-                  "path" : "hasOrders"
+                  "path" : "hasOrders",
+                  "sqlType" : "BOOLEAN"
                 },
                 {
                   "type" : "metadata",
@@ -758,7 +760,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "customerid"
+                  "path" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -792,7 +795,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "name"
+                  "path" : "name",
+                  "sqlType" : "VARCHAR"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

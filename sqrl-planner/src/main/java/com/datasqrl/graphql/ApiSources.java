@@ -21,7 +21,7 @@ public record ApiSources(String version, ApiSource schema, List<ApiSource> opera
 
   public static final String DEFAULT_API_VERSION = "v1";
 
-  public ApiSources(String inferredSchema) {
-    this(DEFAULT_API_VERSION, new ApiSource(inferredSchema), List.of());
+  public ApiSources(String inferredSchema, List<ApiSource> operations) {
+    this(DEFAULT_API_VERSION, new ApiSource(inferredSchema), operations);
   }
 }

@@ -764,7 +764,8 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               "parameters" : [
                 {
                   "type" : "arg",
-                  "path" : "temp"
+                  "path" : "temp",
+                  "sqlType" : "INTEGER"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

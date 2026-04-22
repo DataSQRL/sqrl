@@ -113,7 +113,8 @@ public class ExternalRedpandaContainerIT {
         container ->
             container
                 .withEnv("KAFKA_BOOTSTRAP_SERVERS", bootstrapServers)
-                .withNetwork(sqrl.getNetwork()));
+                .withNetwork(sqrl.getNetwork()),
+        false);
 
     // Verify server is running and can execute GraphQL queries
     assertThat(sqrl.getServerContainer().isRunning()).isTrue();
