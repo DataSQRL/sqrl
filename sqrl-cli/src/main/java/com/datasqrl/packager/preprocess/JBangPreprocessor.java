@@ -37,8 +37,6 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
   private static final Pattern PACKAGE_PATTERN = Pattern.compile("package\\s+([\\w.]+);");
   private static final Pattern CLASS_EXTENDS_PATTERN =
       Pattern.compile("public\\s+class\\s+(\\w+)\\s+extends\\s+(\\w+)", Pattern.DOTALL);
-  private static final Pattern FLINK_DEPS_PATTERN =
-      Pattern.compile("^//DEPS\\s+org\\.apache\\.flink:", Pattern.MULTILINE);
   private static final String JBANG_SHEBANG = "///usr/bin/env jbang \"$0\" \"$@\" ; exit $?";
   static final String JBANG_JAR_NAME = "jbang-udfs.jar";
 
@@ -53,8 +51,6 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     }
 
     var content = readFileContent(file);
-
-    validateNoFlinkDeps(file, content);
 
     var udfClassName = parseUdfClassName(file, content);
     if (udfClassName == null) {
@@ -98,16 +94,6 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     }
     var firstLine = Files.readAllLines(file).get(0).trim();
     return JBANG_SHEBANG.equals(firstLine);
-  }
-
-  private void validateNoFlinkDeps(Path file, String content) {
-    if (FLINK_DEPS_PATTERN.matcher(content).find()) {
-      throw new IllegalArgumentException(
-          "File "
-              + file
-              + " declares a Flink //DEPS dependency. "
-              + "Flink dependencies are provided automatically via classpath and must not be declared in //DEPS.");
-    }
   }
 
   @SneakyThrows

@@ -17,8 +17,6 @@ package com.datasqrl.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assumptions.assumeThat;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,28 +32,6 @@ import org.junit.jupiter.api.io.TempDir;
 class JBangRunnerTest {
 
   @TempDir private Path tempDir;
-
-  @Test
-  void given_runningFromClassesDirectory_when_resolveCliJarPath_then_returnsEmpty() {
-    var result = JBangRunner.resolveCliJarPath();
-    assertThat(result).isEmpty();
-  }
-
-  @Test
-  void given_runningFromClassesDirectory_when_resolveClasspath_then_throwsIllegalState() {
-    var runner = JBangRunner.create();
-
-    assertThatThrownBy(runner::resolveClasspath)
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Cannot resolve sqrl-cli.jar path");
-  }
-
-  @Test
-  void given_withClasspath_when_resolveClasspath_then_returnsOverride() {
-    var runner = JBangRunner.withClasspath("/some/custom.jar");
-
-    assertThat(runner.resolveClasspath()).isEqualTo("/some/custom.jar");
-  }
 
   @Test
   void given_disabledRunner_when_isJBangAvailable_then_returnsFalse() {
@@ -75,124 +51,20 @@ class JBangRunnerTest {
   }
 
   @Test
-  void given_jbangUnavailable_when_exportFatJar_then_skipsWithoutError() {
-    var runner = JBangRunner.create();
-    assumeThat(runner.isJBangAvailable()).isFalse();
-
-    var src = tempDir.resolve("Dummy.java");
-    var target = tempDir.resolve("Dummy.jar");
-
-    assertThatCode(() -> runner.exportFatJar(List.of(src), target)).doesNotThrowAnyException();
-    assertThat(target).doesNotExist();
-  }
-
-  @Test
-  void given_noClasspathOverride_when_exportFatJar_then_throwsBecauseNoJar() {
-    var runner = JBangRunner.create();
-    assumeThat(runner.isJBangAvailable()).isTrue();
-
-    var src = tempDir.resolve("Dummy.java");
-    var target = tempDir.resolve("Dummy.jar");
-
-    assertThatThrownBy(() -> runner.exportFatJar(List.of(src), target))
-        .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("Cannot resolve sqrl-cli.jar path");
-  }
-
-  @Test
-  void given_testClasspath_when_exportFatJar_then_producesJar() throws IOException {
-    var runner = JBangRunner.withClasspath(System.getProperty("java.class.path"));
-    assumeThat(runner.isJBangAvailable()).isTrue();
-
-    var src = tempDir.resolve("TestUDF.java");
-    Files.writeString(
-        src,
-        """
-        import org.apache.flink.table.functions.ScalarFunction;
-
-        public class TestUDF extends ScalarFunction {
-          public String eval(String input) {
-            return input;
-          }
-        }
-        """);
-    var target = tempDir.resolve("TestUDF.jar");
-
-    runner.exportFatJar(List.of(src), target);
-
-    assertThat(target).exists().isRegularFile();
-    assertThat(Files.size(target)).isGreaterThan(0);
-  }
-
-  @Test
-  void given_fatJarWithClasspathEntries_when_stripClasspathEntries_then_removesOverlap()
-      throws IOException {
-    var cpJar = tempDir.resolve("classpath.jar");
-    try (var out = new JarOutputStream(Files.newOutputStream(cpJar))) {
-      out.putNextEntry(new JarEntry("org/apache/flink/Function.class"));
-      out.write(new byte[] {1, 2, 3});
-      out.closeEntry();
-      out.putNextEntry(new JarEntry("org/apache/kafka/Client.class"));
-      out.write(new byte[] {4, 5, 6});
-      out.closeEntry();
-    }
-
+  void given_fatJarWithSignatureFiles_when_cleanFatJar_then_signaturesRemoved() throws IOException {
     var fatJar = tempDir.resolve("fat.jar");
     try (var out = new JarOutputStream(Files.newOutputStream(fatJar))) {
       out.putNextEntry(new JarEntry("META-INF/MANIFEST.MF"));
       out.write("Manifest-Version: 1.0\n".getBytes());
       out.closeEntry();
-      out.putNextEntry(new JarEntry("MyUDF.class"));
-      out.write(new byte[] {10, 20, 30});
+      out.putNextEntry(new JarEntry("META-INF/SIG-VENDOR.SF"));
+      out.write(new byte[] {1});
       out.closeEntry();
-      out.putNextEntry(new JarEntry("com/google/gson/Gson.class"));
-      out.write(new byte[] {40, 50, 60});
+      out.putNextEntry(new JarEntry("META-INF/SIG-VENDOR.DSA"));
+      out.write(new byte[] {2});
       out.closeEntry();
-      out.putNextEntry(new JarEntry("org/apache/flink/Function.class"));
-      out.write(new byte[] {1, 2, 3});
-      out.closeEntry();
-      out.putNextEntry(new JarEntry("org/apache/kafka/Client.class"));
-      out.write(new byte[] {4, 5, 6});
-      out.closeEntry();
-    }
-
-    var runner = JBangRunner.withClasspath(cpJar.toString());
-    runner.stripClasspathEntries(fatJar, cpJar.toString());
-
-    try (var jar = new JarFile(fatJar.toFile())) {
-      var entryNames = new HashSet<String>();
-      jar.entries().asIterator().forEachRemaining(e -> entryNames.add(e.getName()));
-
-      assertThat(entryNames)
-          .contains("META-INF/MANIFEST.MF", "MyUDF.class", "com/google/gson/Gson.class");
-      assertThat(entryNames)
-          .doesNotContain("org/apache/flink/Function.class", "org/apache/kafka/Client.class");
-    }
-  }
-
-  @Test
-  void given_fatJarWithMetaInfFromClasspath_when_stripClasspathEntries_then_stripsNonManifest()
-      throws IOException {
-    var cpJar = tempDir.resolve("classpath.jar");
-    try (var out = new JarOutputStream(Files.newOutputStream(cpJar))) {
-      out.putNextEntry(new JarEntry("META-INF/native/libsnowflake.so"));
-      out.write(new byte[] {1, 2, 3, 4, 5});
-      out.closeEntry();
-      out.putNextEntry(new JarEntry("META-INF/services/some.Service"));
-      out.write("com.example.Impl\n".getBytes());
-      out.closeEntry();
-      out.putNextEntry(new JarEntry("org/apache/flink/Function.class"));
-      out.write(new byte[] {1, 2, 3});
-      out.closeEntry();
-    }
-
-    var fatJar = tempDir.resolve("fat.jar");
-    try (var out = new JarOutputStream(Files.newOutputStream(fatJar))) {
-      out.putNextEntry(new JarEntry("META-INF/MANIFEST.MF"));
-      out.write("Manifest-Version: 1.0\n".getBytes());
-      out.closeEntry();
-      out.putNextEntry(new JarEntry("META-INF/native/libsnowflake.so"));
-      out.write(new byte[] {1, 2, 3, 4, 5});
+      out.putNextEntry(new JarEntry("META-INF/SIG-VENDOR.RSA"));
+      out.write(new byte[] {3});
       out.closeEntry();
       out.putNextEntry(new JarEntry("META-INF/services/some.Service"));
       out.write("com.example.Impl\n".getBytes());
@@ -200,42 +72,40 @@ class JBangRunnerTest {
       out.putNextEntry(new JarEntry("MyUDF.class"));
       out.write(new byte[] {10, 20, 30});
       out.closeEntry();
-      out.putNextEntry(new JarEntry("org/apache/flink/Function.class"));
-      out.write(new byte[] {1, 2, 3});
-      out.closeEntry();
     }
 
-    var runner = JBangRunner.withClasspath(cpJar.toString());
-    runner.stripClasspathEntries(fatJar, cpJar.toString());
+    JBangRunner.create().cleanFatJar(fatJar);
 
     try (var jar = new JarFile(fatJar.toFile())) {
       var entryNames = new HashSet<String>();
       jar.entries().asIterator().forEachRemaining(e -> entryNames.add(e.getName()));
 
-      assertThat(entryNames).contains("META-INF/MANIFEST.MF", "MyUDF.class");
+      assertThat(entryNames)
+          .contains("META-INF/MANIFEST.MF", "META-INF/services/some.Service", "MyUDF.class");
       assertThat(entryNames)
           .doesNotContain(
-              "META-INF/native/libsnowflake.so",
-              "META-INF/services/some.Service",
-              "org/apache/flink/Function.class");
+              "META-INF/SIG-VENDOR.SF", "META-INF/SIG-VENDOR.DSA", "META-INF/SIG-VENDOR.RSA");
     }
   }
 
   @Test
-  void given_emptyClasspath_when_stripClasspathEntries_then_leavesJarUnchanged()
-      throws IOException {
+  void given_fatJarWithDirectoryEntry_when_cleanFatJar_then_directoryDropped() throws IOException {
     var fatJar = tempDir.resolve("fat.jar");
     try (var out = new JarOutputStream(Files.newOutputStream(fatJar))) {
+      out.putNextEntry(new JarEntry("com/"));
+      out.closeEntry();
       out.putNextEntry(new JarEntry("MyUDF.class"));
       out.write(new byte[] {10, 20, 30});
       out.closeEntry();
     }
 
-    var originalSize = Files.size(fatJar);
+    JBangRunner.create().cleanFatJar(fatJar);
 
-    var runner = JBangRunner.withClasspath("/nonexistent/path.jar");
-    runner.stripClasspathEntries(fatJar, "/nonexistent/path.jar");
+    try (var jar = new JarFile(fatJar.toFile())) {
+      var entryNames = new HashSet<String>();
+      jar.entries().asIterator().forEachRemaining(e -> entryNames.add(e.getName()));
 
-    assertThat(Files.size(fatJar)).isEqualTo(originalSize);
+      assertThat(entryNames).contains("MyUDF.class").doesNotContain("com/");
+    }
   }
 }

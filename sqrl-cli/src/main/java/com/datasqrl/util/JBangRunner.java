@@ -15,16 +15,12 @@
  */
 package com.datasqrl.util;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
-import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
@@ -38,19 +34,12 @@ import org.apache.commons.exec.DefaultExecutor;
 @Slf4j
 public class JBangRunner {
 
+  private static final String META_INF_PREFIX = "META-INF/";
+
   private volatile Boolean available = null;
 
   public static JBangRunner create() {
     return new JBangRunner();
-  }
-
-  public static JBangRunner withClasspath(String classpath) {
-    return new JBangRunner() {
-      @Override
-      String resolveClasspath() {
-        return classpath;
-      }
-    };
   }
 
   public static JBangRunner disabled() {
@@ -71,10 +60,6 @@ public class JBangRunner {
             .addArgument("--output")
             .addArgument(targetFile.toString());
 
-    var classpath = resolveClasspath();
-    cmdLine.addArgument("--class-path");
-    cmdLine.addArgument(classpath, false);
-
     for (int i = 1; i < srcFiles.size(); i++) {
       cmdLine.addArgument("--sources");
       cmdLine.addArgument(srcFiles.get(i).toString());
@@ -87,87 +72,57 @@ public class JBangRunner {
     executor.execute(cmdLine);
 
     try {
-      stripClasspathEntries(targetFile, classpath);
+      cleanFatJar(targetFile);
     } catch (IOException e) {
-      log.warn("Failed to strip classpath entries from fat JAR", e);
+      log.warn("Failed to clean fat JAR", e);
     }
   }
 
-  // FIXME remove when https://github.com/jbangdev/jbang/issues/1749 is fixed (#1877)
-  // JBang doesn't support provided scope, so --class-path entries get bundled into the fat JAR.
-  // This strips them out, keeping only UDF classes and declared //DEPS.
-  void stripClasspathEntries(Path fatJar, String classpath) throws IOException {
-    var classpathEntryNames = collectJarEntryNames(classpath);
-    if (classpathEntryNames.isEmpty()) {
-      return;
-    }
-
+  // Rebuild the JBang fat JAR to drop signed-jar signature files and deduplicate entries,
+  // which otherwise trigger SecurityException / ZipException when Flink loads the UDF JAR.
+  void cleanFatJar(Path fatJar) throws IOException {
     var tempJar = fatJar.resolveSibling(fatJar.getFileName().toString() + ".tmp");
+    var addedEntries = new HashSet<String>();
     try (var inJar = new JarFile(fatJar.toFile());
         var outJar = new JarOutputStream(Files.newOutputStream(tempJar))) {
       var entries = inJar.entries();
       while (entries.hasMoreElements()) {
         var entry = entries.nextElement();
-        if (entry.getName().equals("META-INF/MANIFEST.MF")
-            || !classpathEntryNames.contains(entry.getName())) {
-          outJar.putNextEntry(new JarEntry(entry.getName()));
-          try (var is = inJar.getInputStream(entry)) {
-            is.transferTo(outJar);
-          }
-          outJar.closeEntry();
+        var name = entry.getName();
+
+        if (entry.isDirectory()) {
+          continue;
         }
+        if (isSignatureFile(name)) {
+          continue;
+        }
+        if (!addedEntries.add(name)) {
+          continue;
+        }
+
+        outJar.putNextEntry(new JarEntry(name));
+        try (var is = inJar.getInputStream(entry)) {
+          is.transferTo(outJar);
+        }
+        outJar.closeEntry();
       }
     }
 
     var originalSize = Files.size(fatJar);
     Files.move(tempJar, fatJar, StandardCopyOption.REPLACE_EXISTING);
     var newSize = Files.size(fatJar);
-    log.debug("Stripped classpath entries from fat JAR: {} -> {} bytes", originalSize, newSize);
+    log.debug("Cleaned fat JAR: {} -> {} bytes", originalSize, newSize);
   }
 
-  private Set<String> collectJarEntryNames(String classpath) throws IOException {
-    var entryNames = new HashSet<String>();
-    for (var cpEntry : classpath.split(File.pathSeparator)) {
-      var cpPath = Path.of(cpEntry);
-      if (Files.exists(cpPath) && cpPath.toString().endsWith(".jar")) {
-        try (var jar = new JarFile(cpPath.toFile())) {
-          var jarEntries = jar.entries();
-          while (jarEntries.hasMoreElements()) {
-            entryNames.add(jarEntries.nextElement().getName());
-          }
-        }
-      }
+  private static boolean isSignatureFile(String entryName) {
+    if (!entryName.startsWith(META_INF_PREFIX)) {
+      return false;
     }
-    return entryNames;
-  }
-
-  String resolveClasspath() {
-    return resolveCliJarPath()
-        .map(Path::toString)
-        .orElseThrow(
-            () ->
-                new IllegalStateException(
-                    "Cannot resolve sqrl-cli.jar path. "
-                        + "JBang UDF compilation requires the CLI fat JAR on the classpath to provide Flink dependencies."));
-  }
-
-  static Optional<Path> resolveCliJarPath() {
-    try {
-      var codeSource = JBangRunner.class.getProtectionDomain().getCodeSource();
-      if (codeSource == null) {
-        return Optional.empty();
-      }
-
-      var location = Path.of(codeSource.getLocation().toURI());
-      if (!location.toString().endsWith(".jar")) {
-        return Optional.empty();
-      }
-
-      return Optional.of(location);
-    } catch (URISyntaxException e) {
-      log.debug("Failed to resolve CLI jar path", e);
-      return Optional.empty();
+    var name = entryName.substring(META_INF_PREFIX.length());
+    if (name.contains("/")) {
+      return false;
     }
+    return name.endsWith(".SF") || name.endsWith(".DSA") || name.endsWith(".RSA");
   }
 
   public boolean isJBangAvailable() {
