@@ -1,5 +1,5 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
-//DEPS org.apache.flink:flink-table-api-java:2.2.0
+//DEPS org.apache.flink:flink-table-common:2.2.0
 import org.apache.flink.table.functions.AsyncScalarFunction;
 import org.apache.flink.table.functions.FunctionContext;
 
