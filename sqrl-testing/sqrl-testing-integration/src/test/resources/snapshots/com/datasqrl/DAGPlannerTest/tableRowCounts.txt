@@ -5,7 +5,7 @@ Type:        state
 Stage:       postgres
 Primary key: -
 Timestamp:   event_time
-Row count: ~2e7
+Row count:   ~2e7
 ---
 Schema:
  - sensorid: INTEGER
@@ -30,7 +30,7 @@ Type:        state
 Stage:       postgres
 Primary key: -
 Timestamp:   event_time
-Row count: ~5e6
+Row count:   ~5e6
 ---
 Schema:
  - sensorid: INTEGER
@@ -56,7 +56,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   event_time
-Row count: ~2e7
+Row count:   ~2e7
 ---
 Schema:
  - sensorid: INTEGER
@@ -85,7 +85,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   time_hour
-Row count: ~7e7
+Row count:   ~7e7
 ---
 Schema:
  - machineid: INTEGER
@@ -114,7 +114,7 @@ Type:        stream
 Stage:       flink
 Primary key: event_id
 Timestamp:   event_time
-Row count: 2e7
+Row count:   2e7
 ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -151,7 +151,7 @@ Type:        state
 Stage:       flink
 Primary key: sensorid
 Timestamp:   updatedTime
-Row count: 3e5
+Row count:   3e5
 ---
 Schema:
  - sensorid: INTEGER NOT NULL
