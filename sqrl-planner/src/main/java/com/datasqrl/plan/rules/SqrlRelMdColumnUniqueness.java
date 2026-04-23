@@ -17,7 +17,6 @@ package com.datasqrl.plan.rules;
 
 import com.datasqrl.planner.TableAnalysisLookup;
 import java.util.HashSet;
-import java.util.Set;
 import javax.annotation.Nullable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Aggregate;
@@ -29,12 +28,11 @@ import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.metadata.BuiltInMetadata;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rex.RexInputRef;
-import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.util.ImmutableBitSet;
 
 /**
- * Column uniqueness handler that uses TableAnalysisLookup to detect primary keys. This enables
- * proper join cardinality estimation when joining on primary key columns.
+ * Column uniqueness handler that uses {@link TableAnalysisLookup} to detect primary keys. This
+ * enables proper join cardinality estimation when joining on primary key columns.
  */
 public class SqrlRelMdColumnUniqueness implements BuiltInMetadata.ColumnUniqueness.Handler {
 
@@ -48,7 +46,42 @@ public class SqrlRelMdColumnUniqueness implements BuiltInMetadata.ColumnUniquene
     this.tableLookup = tableLookup;
   }
 
-  /** Checks if columns are unique for a TableScan by looking up primary key from TableAnalysis. */
+  /** Generic dispatcher for RelNode. */
+  @Override
+  public Boolean areColumnsUnique(
+      RelNode rel, RelMetadataQuery mq, ImmutableBitSet columns, boolean ignoreNulls) {
+
+    if (rel instanceof TableScan scan) {
+      return areColumnsUnique(scan, mq, columns, ignoreNulls);
+    }
+
+    if (rel instanceof Filter filter) {
+      return areColumnsUnique(filter, mq, columns, ignoreNulls);
+    }
+
+    if (rel instanceof Sort sort) {
+      return areColumnsUnique(sort, mq, columns, ignoreNulls);
+    }
+
+    if (rel instanceof Exchange exchange) {
+      return areColumnsUnique(exchange, mq, columns, ignoreNulls);
+    }
+
+    if (rel instanceof Project project) {
+      return areColumnsUnique(project, mq, columns, ignoreNulls);
+    }
+
+    if (rel instanceof Aggregate aggregate) {
+      return areColumnsUnique(aggregate, mq, columns, ignoreNulls);
+    }
+
+    // For unknown operators, return null (unknown)
+    return null;
+  }
+
+  /**
+   * Checks if columns are unique for a TableScan by looking up the primary key from TableAnalysis.
+   */
   public Boolean areColumnsUnique(
       TableScan scan, RelMetadataQuery mq, ImmutableBitSet columns, boolean ignoreNulls) {
     if (tableLookup == null) {
@@ -60,7 +93,7 @@ public class SqrlRelMdColumnUniqueness implements BuiltInMetadata.ColumnUniquene
       var primaryKey = tableAnalysis.getPrimaryKey();
       if (primaryKey.isDefined()) {
         // Check if the provided columns cover the primary key
-        Set<Integer> columnSet = new HashSet<>(columns.toList());
+        var columnSet = new HashSet<>(columns.toList());
         if (primaryKey.coveredBy(columnSet)) {
           return true;
         }
@@ -71,31 +104,34 @@ public class SqrlRelMdColumnUniqueness implements BuiltInMetadata.ColumnUniquene
   }
 
   /** Filter preserves uniqueness from input. */
-  public Boolean areColumnsUnique(
+  Boolean areColumnsUnique(
       Filter rel, RelMetadataQuery mq, ImmutableBitSet columns, boolean ignoreNulls) {
+
     return mq.areColumnsUnique(rel.getInput(), columns, ignoreNulls);
   }
 
   /** Sort preserves uniqueness from input. */
-  public Boolean areColumnsUnique(
+  Boolean areColumnsUnique(
       Sort rel, RelMetadataQuery mq, ImmutableBitSet columns, boolean ignoreNulls) {
+
     return mq.areColumnsUnique(rel.getInput(), columns, ignoreNulls);
   }
 
   /** Exchange preserves uniqueness from input. */
-  public Boolean areColumnsUnique(
+  Boolean areColumnsUnique(
       Exchange rel, RelMetadataQuery mq, ImmutableBitSet columns, boolean ignoreNulls) {
+
     return mq.areColumnsUnique(rel.getInput(), columns, ignoreNulls);
   }
 
   /** Project: map columns back to input and check uniqueness. */
-  public Boolean areColumnsUnique(
+  Boolean areColumnsUnique(
       Project rel, RelMetadataQuery mq, ImmutableBitSet columns, boolean ignoreNulls) {
     // Map output columns back to input columns
-    ImmutableBitSet.Builder inputColumnsBuilder = ImmutableBitSet.builder();
-    for (int col : columns) {
+    var inputColumnsBuilder = ImmutableBitSet.builder();
+    for (var col : columns) {
       if (col < rel.getProjects().size()) {
-        RexNode expr = rel.getProjects().get(col);
+        var expr = rel.getProjects().get(col);
         if (expr instanceof RexInputRef inputRef) {
           inputColumnsBuilder.set(inputRef.getIndex());
         } else {
@@ -104,49 +140,25 @@ public class SqrlRelMdColumnUniqueness implements BuiltInMetadata.ColumnUniquene
         }
       }
     }
-    ImmutableBitSet inputColumns = inputColumnsBuilder.build();
+
+    var inputColumns = inputColumnsBuilder.build();
     if (inputColumns.isEmpty()) {
       return null;
     }
+
     return mq.areColumnsUnique(rel.getInput(), inputColumns, ignoreNulls);
   }
 
   /** Aggregate: grouping columns are unique if they cover the entire group set. */
-  public Boolean areColumnsUnique(
+  Boolean areColumnsUnique(
       Aggregate rel, RelMetadataQuery mq, ImmutableBitSet columns, boolean ignoreNulls) {
     // The grouping columns form a unique key for the aggregate output
-    ImmutableBitSet groupSet = rel.getGroupSet();
+    var groupSet = rel.getGroupSet();
     if (columns.contains(groupSet)) {
       return true;
     }
     // If columns don't fully cover the group set, check if they include
     // columns that were unique in the input
-    return null;
-  }
-
-  /** Generic dispatcher for RelNode. */
-  @Override
-  public Boolean areColumnsUnique(
-      RelNode rel, RelMetadataQuery mq, ImmutableBitSet columns, boolean ignoreNulls) {
-    if (rel instanceof TableScan scan) {
-      return areColumnsUnique(scan, mq, columns, ignoreNulls);
-    }
-    if (rel instanceof Filter filter) {
-      return areColumnsUnique(filter, mq, columns, ignoreNulls);
-    }
-    if (rel instanceof Sort sort) {
-      return areColumnsUnique(sort, mq, columns, ignoreNulls);
-    }
-    if (rel instanceof Exchange exchange) {
-      return areColumnsUnique(exchange, mq, columns, ignoreNulls);
-    }
-    if (rel instanceof Project project) {
-      return areColumnsUnique(project, mq, columns, ignoreNulls);
-    }
-    if (rel instanceof Aggregate aggregate) {
-      return areColumnsUnique(aggregate, mq, columns, ignoreNulls);
-    }
-    // For unknown operators, return null (unknown)
     return null;
   }
 }

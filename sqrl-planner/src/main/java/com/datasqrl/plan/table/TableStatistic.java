@@ -15,7 +15,6 @@
  */
 package com.datasqrl.plan.table;
 
-import com.datasqrl.planner.hint.PlannerHints;
 import lombok.Value;
 
 @Value

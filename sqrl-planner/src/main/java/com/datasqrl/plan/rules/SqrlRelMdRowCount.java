@@ -407,24 +407,18 @@ public class SqrlRelMdRowCount extends RelMdRowCount implements BuiltInMetadata.
   private double adjustForJoinType(
       JoinRelType joinType, double leftRowCount, double rightRowCount, double innerJoinRowCount) {
 
-    switch (joinType) {
-      case INNER:
-        return innerJoinRowCount;
-      case LEFT:
-        return Math.max(leftRowCount, innerJoinRowCount);
-      case RIGHT:
-        return Math.max(rightRowCount, innerJoinRowCount);
-      case FULL:
-        return Math.max(leftRowCount, innerJoinRowCount)
-            + Math.max(rightRowCount, innerJoinRowCount)
-            - innerJoinRowCount;
-      case SEMI:
-      case ANTI:
-        // Semi/Anti join: at most left row count
-        return leftRowCount * RelMdUtil.guessSelectivity(null);
-      default:
-        return innerJoinRowCount;
-    }
+    return switch (joinType) {
+      case INNER -> innerJoinRowCount;
+      case LEFT -> Math.max(leftRowCount, innerJoinRowCount);
+      case RIGHT -> Math.max(rightRowCount, innerJoinRowCount);
+      case FULL ->
+          Math.max(leftRowCount, innerJoinRowCount)
+              + Math.max(rightRowCount, innerJoinRowCount)
+              - innerJoinRowCount;
+      case SEMI, ANTI ->
+          // Semi/Anti join: at most left row count
+          leftRowCount * RelMdUtil.guessSelectivity(null);
+    };
   }
 
   // ==================== Correlate ====================
