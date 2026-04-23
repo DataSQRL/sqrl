@@ -200,12 +200,14 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
               .build();
     }
     // Retrieve row count from hint or estimate via metadata query
-    var rowCountHint = hints.getHints(RowCountHint.class).findFirst();
-
+    var rowCountHint =
+        hints
+            .getHints(RowCountHint.class)
+            .filter(hint -> hint.getColumnNames().isEmpty())
+            .findFirst();
     TableStatistic tableStatistic;
     if (rowCountHint.isPresent()) {
       tableStatistic = TableStatistic.fromHint(rowCountHint.get().getRowCount());
-
     } else {
       // Use our custom metadata query that can look up statistics from tableLookup
       final var mq = new SqrlRelMetadataQuery(tableLookup);

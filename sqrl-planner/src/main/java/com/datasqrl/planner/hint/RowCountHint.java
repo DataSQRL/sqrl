@@ -20,50 +20,22 @@ import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
 import com.datasqrl.planner.parser.StatementParserException;
 import com.google.auto.service.AutoService;
+import java.util.List;
 import lombok.Getter;
 
 /**
  * Annotates a table with a distinct row count for a set columns - or total row count if column list
  * is empty
  */
-public class RowCountHint extends PlannerHint {
+public class RowCountHint extends ColumnNamesHint {
 
   public static final String HINT_NAME = "row_count";
 
   @Getter private final double rowCount;
 
-  protected RowCountHint(ParsedObject<SqrlHint> source, double rowCount) {
-    super(source, Type.DAG);
+  protected RowCountHint(ParsedObject<SqrlHint> source, List<String> columns, double rowCount) {
+    super(source, Type.DAG, columns);
     this.rowCount = rowCount;
-  }
-
-  private static double parseRowCountStr(ParsedObject<SqrlHint> source) {
-    var args = source.get().getOptions();
-    if (args == null || args.size() != 1 || args.get(0) == null) {
-      throw new StatementParserException(
-          ErrorLabel.GENERIC,
-          source.getFileLocation(),
-          "row_count hint must have exactly one numeric argument");
-    }
-
-    var rowCountStr = args.get(0);
-    double rowCount;
-    try {
-      rowCount = Double.parseDouble(rowCountStr);
-    } catch (NumberFormatException e) {
-      throw new StatementParserException(
-          ErrorLabel.GENERIC, source.getFileLocation(), "row_count must be a valid number");
-    }
-
-    if (rowCount <= 0) {
-      throw new StatementParserException(
-          ErrorLabel.GENERIC,
-          source.getFileLocation(),
-          "row_count must be a positive number",
-          rowCountStr);
-    }
-
-    return rowCount;
   }
 
   @AutoService(Factory.class)
@@ -71,12 +43,48 @@ public class RowCountHint extends PlannerHint {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      return new RowCountHint(source, parseRowCountStr(source));
+      var args = source.get().getOptions();
+      if (args.isEmpty()) {
+        throw new StatementParserException(
+            ErrorLabel.GENERIC,
+            source.getFileLocation(),
+            "The row_count hint must have at least one numeric argument. If column names are present, the numeric count must appear at the end.");
+      }
+
+      var rowCount = parseRowCountStr(source, args);
+      var columnNames = args.subList(0, args.size() - 1);
+
+      return new RowCountHint(source, columnNames, rowCount);
     }
 
     @Override
     public String getName() {
       return HINT_NAME;
+    }
+
+    private static double parseRowCountStr(ParsedObject<SqrlHint> source, List<String> args) {
+      var rowCountStr = args.get(args.size() - 1);
+      double rowCount;
+
+      try {
+        rowCount = Double.parseDouble(rowCountStr);
+      } catch (NumberFormatException e) {
+        throw new StatementParserException(
+            ErrorLabel.GENERIC,
+            source.getFileLocation(),
+            "The row_count must be a valid number. Got: %s",
+            rowCountStr);
+      }
+
+      if (rowCount <= 0) {
+        throw new StatementParserException(
+            ErrorLabel.GENERIC,
+            source.getFileLocation(),
+            "The row_count must be a positive number. Got: %s",
+            rowCountStr);
+      }
+
+      return rowCount;
     }
   }
 }
