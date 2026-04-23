@@ -1,0 +1,5 @@
+[FATAL] row_count hint must have exactly one numeric argument
+in script:parserError-rowCountHintNumMissing-fail.sqrl [1:19]:
+/*+engine(kafka), row_count */
+------------------^
+

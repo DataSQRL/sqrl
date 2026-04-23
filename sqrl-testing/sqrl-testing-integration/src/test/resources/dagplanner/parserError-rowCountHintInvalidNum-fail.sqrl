@@ -1,0 +1,9 @@
+IMPORT ecommerceTs.customer;
+
+/*+engine(kafka), row_count(asd) */
+CREATE TABLE _Sensors (
+    sensorid INT,
+    machineid INT,
+    updatedTime TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+    PRIMARY KEY (sensorid) NOT ENFORCED
+);

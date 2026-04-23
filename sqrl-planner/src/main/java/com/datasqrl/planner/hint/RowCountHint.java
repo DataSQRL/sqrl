@@ -52,18 +52,14 @@ public class RowCountHint extends PlannerHint {
       rowCount = Double.parseDouble(rowCountStr);
     } catch (NumberFormatException e) {
       throw new StatementParserException(
-          ErrorLabel.GENERIC,
-          source.getFileLocation(),
-          "row_count must be a valid number: %s (%s).",
-          rowCountStr,
-          e.getMessage());
+          ErrorLabel.GENERIC, source.getFileLocation(), "row_count must be a valid number");
     }
 
     if (rowCount <= 0) {
       throw new StatementParserException(
           ErrorLabel.GENERIC,
           source.getFileLocation(),
-          "row_count must be a positive number: %s.",
+          "row_count must be a positive number",
           rowCountStr);
     }
 

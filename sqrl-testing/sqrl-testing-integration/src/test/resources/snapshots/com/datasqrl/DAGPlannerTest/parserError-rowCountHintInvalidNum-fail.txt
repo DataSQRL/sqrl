@@ -1,0 +1,7 @@
+[FATAL] row_count must be a valid number
+in script:parserError-rowCountHintInvalidNum-fail.sqrl [3:19]:
+IMPORT ecommerceTs.customer;
+
+/*+engine(kafka), row_count(asd) */
+------------------^
+
