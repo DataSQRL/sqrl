@@ -44,6 +44,7 @@ Type:        state
 Stage:       flink
 Primary key: id
 Timestamp:   -
+Row count:   ~2
 ---
 Schema:
  - id: INTEGER NOT NULL

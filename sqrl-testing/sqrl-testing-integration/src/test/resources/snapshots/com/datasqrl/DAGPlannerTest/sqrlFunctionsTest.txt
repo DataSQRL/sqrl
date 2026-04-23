@@ -5,7 +5,7 @@ Type:        state
 Stage:       flink
 Primary key: val
 Timestamp:   -
-Row count: ~2
+Row count:   ~2
 ---
 Schema:
  - val: INTEGER NOT NULL
@@ -23,7 +23,7 @@ Type:        state
 Stage:       flink
 Primary key: val
 Timestamp:   -
-Row count: ~2
+Row count:   ~2
 ---
 Schema:
  - val: INTEGER NOT NULL

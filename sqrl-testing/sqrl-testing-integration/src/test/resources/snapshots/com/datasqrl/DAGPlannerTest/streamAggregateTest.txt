@@ -5,7 +5,7 @@ Type:        state
 Stage:       flink
 Primary key: customer
 Timestamp:   -
-Row count: ~1e7
+Row count:   ~1e7
 ---
 Schema:
  - customer: BIGINT NOT NULL
@@ -25,7 +25,7 @@ Type:        state
 Stage:       flink
 Primary key: -
 Timestamp:   -
-Row count: ~1
+Row count:   ~1
 ---
 Schema:
  - order_count: BIGINT NOT NULL
@@ -43,7 +43,7 @@ Type:        stream
 Stage:       flink
 Primary key: id, time
 Timestamp:   time
-Row count: ~1e8
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL

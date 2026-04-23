@@ -81,7 +81,8 @@
     "name" : "userid",
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   } ],
-  "primary_key" : [ "url", "userid", "timestamp" ]
+  "primary_key" : [ "url", "userid", "timestamp" ],
+  "row_count" : "~1e8"
 }, {
   "id" : "default_catalog.default_database.Click__base",
   "name" : "Click",
@@ -118,7 +119,8 @@
     "name" : "frequency",
     "type" : "BIGINT NOT NULL"
   } ],
-  "primary_key" : [ "url", "rec" ]
+  "primary_key" : [ "url", "rec" ],
+  "row_count" : "~2e7"
 }, {
   "id" : "default_catalog.default_database.Trending",
   "name" : "Trending",
@@ -140,7 +142,8 @@
     "name" : "total",
     "type" : "BIGINT NOT NULL"
   } ],
-  "primary_key" : [ "url" ]
+  "primary_key" : [ "url" ],
+  "row_count" : "~1e7"
 }, {
   "id" : "default_catalog.default_database.VisitAfter",
   "name" : "VisitAfter",
@@ -161,7 +164,8 @@
   }, {
     "name" : "timestamp",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
-  } ]
+  } ],
+  "row_count" : "~3e7"
 } ]
 >>>pipeline_source.sqrl
 CREATE TEMPORARY TABLE `Click__schema` (

@@ -5,7 +5,7 @@ Type:        state
 Stage:       flink
 Primary key: userid
 Timestamp:   event_time
-Row count: ~2e7
+Row count:   ~2e7
 ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -35,7 +35,7 @@ Type:        state
 Stage:       postgres
 Primary key: userid, _uuid0, unique_id0
 Timestamp:   event_time
-Row count: ~1e8
+Row count:   ~1e8
 ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -63,7 +63,7 @@ Type:        stream
 Stage:       flink
 Primary key: _uuid
 Timestamp:   event_time
-Row count: ~1e8
+Row count:   ~1e8
 ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -98,7 +98,7 @@ Type:        stream
 Stage:       flink
 Primary key: _uuid, unique_id
 Timestamp:   event_time
-Row count: ~1e8
+Row count:   ~1e8
 ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

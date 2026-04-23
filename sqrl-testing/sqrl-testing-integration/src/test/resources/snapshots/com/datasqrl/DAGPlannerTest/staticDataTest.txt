@@ -5,7 +5,7 @@ Type:        state
 Stage:       flink
 Primary key: id
 Timestamp:   -
-Row count: ~5
+Row count:   ~5
 ---
 Schema:
  - id: INTEGER NOT NULL
@@ -21,7 +21,7 @@ Type:        state
 Stage:       flink
 Primary key: id
 Timestamp:   -
-Row count: ~5
+Row count:   ~5
 ---
 Schema:
  - id: INTEGER NOT NULL
@@ -37,7 +37,7 @@ Type:        state
 Stage:       flink
 Primary key: id
 Timestamp:   -
-Row count: ~1e3
+Row count:   ~1e3
 ---
 Schema:
  - id: INTEGER NOT NULL
@@ -54,7 +54,7 @@ Type:        stream
 Stage:       postgres
 Primary key: id, time
 Timestamp:   time
-Row count: ~1e8
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -80,7 +80,7 @@ Type:        stream
 Stage:       postgres
 Primary key: id, time
 Timestamp:   time
-Row count: ~5
+Row count:   ~5
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -105,7 +105,7 @@ Type:        stream
 Stage:       postgres
 Primary key: id, time, otherid
 Timestamp:   time
-Row count: ~5e8
+Row count:   ~5e8
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -129,7 +129,7 @@ Type:        stream
 Stage:       postgres
 Primary key: id, time, pk
 Timestamp:   time
-Row count: ~5e8
+Row count:   ~5e8
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -153,7 +153,7 @@ Type:        stream
 Stage:       flink
 Primary key: id, time
 Timestamp:   time
-Row count: ~1e8
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL

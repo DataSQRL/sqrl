@@ -5,7 +5,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   event_time
-Row count: ~9e7
+Row count:   ~9e7
 ---
 Schema:
  - sensorid: INTEGER
@@ -34,7 +34,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   time_hour
-Row count: ~7e7
+Row count:   ~7e7
 ---
 Schema:
  - machineid: INTEGER
@@ -63,7 +63,7 @@ Type:        state
 Stage:       flink
 Primary key: sensorid
 Timestamp:   updatedTime
-Row count: ~1e8
+Row count:   ~1e8
 ---
 Schema:
  - sensorid: INTEGER NOT NULL
@@ -100,7 +100,7 @@ Type:        stream
 Stage:       flink
 Primary key: event_id
 Timestamp:   event_time
-Row count: ~1e8
+Row count:   ~1e8
 ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

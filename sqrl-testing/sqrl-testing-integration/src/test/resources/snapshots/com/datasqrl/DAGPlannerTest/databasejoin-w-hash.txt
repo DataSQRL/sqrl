@@ -5,7 +5,7 @@ Type:        stream
 Stage:       postgres
 Primary key: -
 Timestamp:   -
-Row count: ~1e8
+Row count:   ~1e8
 ---
 Schema:
  - id1: BIGINT NOT NULL
@@ -28,7 +28,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   time
-Row count: ~1e8
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -57,7 +57,7 @@ Type:        stream
 Stage:       flink
 Primary key: id, time
 Timestamp:   time
-Row count: ~1e8
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL

@@ -50,6 +50,7 @@ Type:        relation
 Stage:       flink
 Primary key: k, v_sum
 Timestamp:   -
+Row count:   ~3
 ---
 Schema:
  - k: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
@@ -61,6 +62,7 @@ Type:        state
 Stage:       flink
 Primary key: k
 Timestamp:   -
+Row count:   ~1e7
 ---
 Schema:
  - k: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
@@ -74,6 +76,7 @@ Type:        state
 Stage:       flink
 Primary key: k
 Timestamp:   -
+Row count:   ~1e1
 ---
 Schema:
  - k: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL

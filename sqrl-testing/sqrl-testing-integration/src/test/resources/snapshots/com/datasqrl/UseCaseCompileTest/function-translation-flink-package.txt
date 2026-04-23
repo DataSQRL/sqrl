@@ -5,6 +5,7 @@ Type:        state
 Stage:       flink
 Primary key: -
 Timestamp:   -
+Row count:   ~1e8
 ---
 Schema:
  - log2_example: DOUBLE NOT NULL
@@ -119,6 +120,7 @@ Type:        state
 Stage:       flink
 Primary key: -
 Timestamp:   -
+Row count:   ~1
 ---
 Schema:
  - dummy: INTEGER NOT NULL

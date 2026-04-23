@@ -54,6 +54,7 @@ Type:        state
 Stage:       flink
 Primary key: employeeid
 Timestamp:   updatedDate
+Row count:   ~2e7
 ---
 Schema:
  - employeeid: BIGINT NOT NULL
@@ -71,6 +72,7 @@ Type:        state
 Stage:       flink
 Primary key: employeeid, managerid
 Timestamp:   updatedDate
+Row count:   ~2e7
 ---
 Schema:
  - employeeid: BIGINT NOT NULL
@@ -87,6 +89,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   updatedDate
+Row count:   ~1e8
 ---
 Schema:
  - employeeid: BIGINT NOT NULL
@@ -102,6 +105,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   updatedDate
+Row count:   ~1e8
 ---
 Schema:
  - employeeid: BIGINT NOT NULL
