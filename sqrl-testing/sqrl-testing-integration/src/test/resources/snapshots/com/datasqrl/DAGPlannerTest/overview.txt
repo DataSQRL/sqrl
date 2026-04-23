@@ -5,6 +5,7 @@ Type:        state
 Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
+Row count:   ~2e7
 ---
 Schema:
  - customerid: BIGINT NOT NULL
@@ -53,6 +54,7 @@ Type:        stream
 Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
+Row count:   ~1e8
 ---
 Schema:
  - customerid: BIGINT NOT NULL
@@ -114,6 +116,7 @@ Type:        stream
 Stage:       flink
 Primary key: _uuid
 Timestamp:   orderTime
+Row count:   ~5e7
 ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -138,6 +141,7 @@ Type:        stream
 Stage:       flink
 Primary key: id, time
 Timestamp:   time
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -179,6 +183,7 @@ Type:        stream
 Stage:       flink
 Primary key: _uuid
 Timestamp:   orderTime
+Row count:   ~1e8
 ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -217,6 +222,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   time
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL

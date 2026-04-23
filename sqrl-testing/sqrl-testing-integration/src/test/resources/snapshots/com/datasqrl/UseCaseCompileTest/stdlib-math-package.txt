@@ -56,6 +56,7 @@ Type:        state
 Stage:       flink
 Primary key: d
 Timestamp:   -
+Row count:   ~1e1
 ---
 Schema:
  - d: DECIMAL(3, 1) NOT NULL

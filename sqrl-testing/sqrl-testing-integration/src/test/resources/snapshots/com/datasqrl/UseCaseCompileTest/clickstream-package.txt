@@ -65,6 +65,7 @@ Type:        stream
 Stage:       flink
 Primary key: url, userid, timestamp
 Timestamp:   timestamp
+Row count:   ~1e8
 ---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -81,6 +82,7 @@ Type:        state
 Stage:       flink
 Primary key: url, rec
 Timestamp:   -
+Row count:   ~2e7
 ---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -97,6 +99,7 @@ Type:        state
 Stage:       flink
 Primary key: url
 Timestamp:   -
+Row count:   ~1e7
 ---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -112,6 +115,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   timestamp
+Row count:   ~3e7
 ---
 Schema:
  - beforeURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

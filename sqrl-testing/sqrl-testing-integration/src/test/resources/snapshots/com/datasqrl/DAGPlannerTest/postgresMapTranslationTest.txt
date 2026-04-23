@@ -5,6 +5,7 @@ Type:        state
 Stage:       postgres
 Primary key: user_id
 Timestamp:   -
+Row count:   ~2
 ---
 Schema:
  - user_id: INTEGER NOT NULL
@@ -24,6 +25,7 @@ Type:        state
 Stage:       flink
 Primary key: -
 Timestamp:   -
+Row count:   ~1
 ---
 Schema:
  - num: INTEGER NOT NULL

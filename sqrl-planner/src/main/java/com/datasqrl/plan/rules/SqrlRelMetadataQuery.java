@@ -15,22 +15,36 @@
  */
 package com.datasqrl.plan.rules;
 
+import com.datasqrl.planner.TableAnalysisLookup;
+import javax.annotation.Nullable;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.metadata.BuiltInMetadata;
 import org.apache.calcite.rel.metadata.JaninoRelMetadataProvider;
 import org.apache.calcite.rel.metadata.RelMdUtil;
 import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.util.ImmutableBitSet;
 
+/**
+ * Custom metadata query that uses TableAnalysisLookup for improved statistics. Provides row count,
+ * selectivity, and column uniqueness estimates based on table analysis information including
+ * primary keys and row count hints.
+ */
 public class SqrlRelMetadataQuery extends RelMetadataQuery {
 
   BuiltInMetadata.RowCount.Handler rowCountHandler;
   BuiltInMetadata.Selectivity.Handler selectivityHandler;
+  BuiltInMetadata.ColumnUniqueness.Handler columnUniquenessHandler;
 
   public SqrlRelMetadataQuery() {
+    this(null);
+  }
+
+  public SqrlRelMetadataQuery(@Nullable TableAnalysisLookup tableLookup) {
     super();
-    this.rowCountHandler = new SqrlRelMdRowCount();
+    this.rowCountHandler = new SqrlRelMdRowCount(tableLookup);
     this.selectivityHandler = new SqrlRelMdSelectivity();
+    this.columnUniquenessHandler = new SqrlRelMdColumnUniqueness(tableLookup);
   }
 
   @Override
@@ -53,6 +67,17 @@ public class SqrlRelMetadataQuery extends RelMetadataQuery {
         return RelMdUtil.validatePercentage(result);
       } catch (JaninoRelMetadataProvider.NoHandler e) {
         selectivityHandler = revise(e.relClass, BuiltInMetadata.Selectivity.DEF);
+      }
+    }
+  }
+
+  @Override
+  public Boolean areColumnsUnique(RelNode rel, ImmutableBitSet columns, boolean ignoreNulls) {
+    for (; ; ) {
+      try {
+        return columnUniquenessHandler.areColumnsUnique(rel, this, columns, ignoreNulls);
+      } catch (JaninoRelMetadataProvider.NoHandler e) {
+        columnUniquenessHandler = revise(e.relClass, BuiltInMetadata.ColumnUniqueness.DEF);
       }
     }
   }

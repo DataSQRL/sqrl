@@ -50,6 +50,7 @@ Type:        state
 Stage:       flink
 Primary key: -
 Timestamp:   -
+Row count:   ~1
 ---
 Schema:
  - val: INTEGER NOT NULL
@@ -60,6 +61,7 @@ Type:        state
 Stage:       flink
 Primary key: -
 Timestamp:   -
+Row count:   ~1e8
 ---
 Schema:
  - completions_result: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"

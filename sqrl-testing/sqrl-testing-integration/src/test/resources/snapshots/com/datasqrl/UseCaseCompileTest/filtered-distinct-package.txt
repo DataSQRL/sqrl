@@ -58,6 +58,7 @@ Type:        state
 Stage:       flink
 Primary key: id
 Timestamp:   _ingest_time
+Row count:   ~2e6
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -78,6 +79,7 @@ Type:        stream
 Stage:       flink
 Primary key: id, customerid, time
 Timestamp:   _ingest_time
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL

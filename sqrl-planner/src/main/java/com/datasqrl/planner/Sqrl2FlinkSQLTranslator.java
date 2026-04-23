@@ -633,6 +633,7 @@ public class Sqrl2FlinkSQLTranslator {
             .fromTables(List.of(baseTable))
             .hints(baseTable.getHints())
             .errors(baseTable.getErrors())
+            .tableStatistic(baseTable.getTableStatistic())
             .collapsedRelnode(relNode)
             .objectIdentifier(identifier)
             .build();
@@ -708,9 +709,10 @@ public class Sqrl2FlinkSQLTranslator {
       Function<String, String> tableNameModifier,
       String tableDefinition,
       SchemaLoader schemaLoader,
-      Optional<MutationBuilder> mutationBuilder) {
+      Optional<MutationBuilder> mutationBuilder,
+      PlannerHints hints) {
     return addSourceTable(
-        addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder));
+        addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder), hints);
   }
 
   public AddTableResult addExternalExport(
@@ -724,9 +726,10 @@ public class Sqrl2FlinkSQLTranslator {
   public Optional<TableAnalysis> createTable(
       String tableDefinition,
       Optional<MutationBuilder> mutationBuilder,
-      SchemaLoader schemaLoader) {
+      SchemaLoader schemaLoader,
+      PlannerHints hints) {
     var result = addTable(Function.identity(), tableDefinition, schemaLoader, mutationBuilder);
-    if (result.isSourceTable()) return Optional.of(addSourceTable(result));
+    if (result.isSourceTable()) return Optional.of(addSourceTable(result, hints));
     else return Optional.empty();
   }
 
@@ -747,10 +750,10 @@ public class Sqrl2FlinkSQLTranslator {
    * @param addResult
    * @return
    */
-  private TableAnalysis addSourceTable(AddTableResult addResult) {
+  private TableAnalysis addSourceTable(AddTableResult addResult, PlannerHints hints) {
     var view =
         createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
-    var viewAnalysis = analyzeView(view, false, PlannerHints.EMPTY, ErrorCollector.root());
+    var viewAnalysis = analyzeView(view, false, hints, ErrorCollector.root());
     TableAnalysis.TableAnalysisBuilder tbBuilder = viewAnalysis.tableAnalysis();
     tbBuilder
         .objectIdentifier(addResult.baseTableIdentifier)
@@ -923,7 +926,7 @@ public class Sqrl2FlinkSQLTranslator {
             tableOp.getCatalogTable().getOptions(),
             catalogManager.getCatalog(tableId.getCatalogName()));
     var tableAnalysis =
-        TableAnalysis.of(
+        TableAnalysis.makeRootSourceTable(
             tableId,
             new SourceSinkTableAnalysis(
                 connector, flinkSchema, mutationBld != null ? mutationBld.build() : null),

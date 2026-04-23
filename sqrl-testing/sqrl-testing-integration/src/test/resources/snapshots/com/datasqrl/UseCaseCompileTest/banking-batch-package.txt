@@ -75,6 +75,7 @@ Type:        stream
 Stage:       flink
 Primary key: loan_application_id, event_time
 Timestamp:   -
+Row count:   ~1e8
 ---
 Schema:
  - loan_application_id: BIGINT NOT NULL
@@ -92,6 +93,7 @@ Type:        state
 Stage:       flink
 Primary key: id
 Timestamp:   -
+Row count:   ~2e7
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -112,6 +114,7 @@ Type:        state
 Stage:       flink
 Primary key: customer_id
 Timestamp:   -
+Row count:   ~1e7
 ---
 Schema:
  - customer_id: BIGINT NOT NULL
@@ -127,6 +130,7 @@ Type:        state
 Stage:       flink
 Primary key: id
 Timestamp:   -
+Row count:   ~2e7
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -148,6 +152,7 @@ Type:        stream
 Stage:       flink
 Primary key: id, updated_at
 Timestamp:   -
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -168,6 +173,7 @@ Type:        stream
 Stage:       flink
 Primary key: id, updated_at
 Timestamp:   -
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL

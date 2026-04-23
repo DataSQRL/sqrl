@@ -5,6 +5,7 @@ Type:        stream
 Stage:       flink
 Primary key: uuid
 Timestamp:   event_time
+Row count:   ~5e7
 ---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -22,6 +23,7 @@ Type:        state
 Stage:       flink
 Primary key: sensorid
 Timestamp:   -
+Row count:   ~1e7
 ---
 Schema:
  - sensorid: INTEGER NOT NULL
@@ -51,6 +53,7 @@ Type:        state
 Stage:       flink
 Primary key: sensorid
 Timestamp:   endOfMin
+Row count:   ~2e7
 ---
 Schema:
  - sensorid: INTEGER NOT NULL
@@ -68,6 +71,7 @@ Type:        stream
 Stage:       flink
 Primary key: uuid
 Timestamp:   event_time
+Row count:   ~1e8
 ---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -97,6 +101,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   endOfMin
+Row count:   ~1e8
 ---
 Schema:
  - sensorid: INTEGER NOT NULL

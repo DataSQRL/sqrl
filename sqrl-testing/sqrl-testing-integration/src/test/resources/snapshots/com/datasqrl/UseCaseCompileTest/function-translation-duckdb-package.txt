@@ -137,6 +137,7 @@ Type:        state
 Stage:       iceberg
 Primary key: -
 Timestamp:   -
+Row count:   ~1
 ---
 Schema:
  - listagg_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -150,6 +151,7 @@ Type:        stream
 Stage:       iceberg
 Primary key: -
 Timestamp:   -
+Row count:   ~1e8
 ---
 Schema:
  - log2_example: DOUBLE NOT NULL
@@ -251,6 +253,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   -
+Row count:   ~1e8
 ---
 Schema:
  - id: INTEGER
@@ -264,6 +267,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   -
+Row count:   ~1e8
 ---
 Schema:
  - dummy: INTEGER

@@ -23,7 +23,7 @@ import com.google.auto.service.AutoService;
 import java.util.List;
 import lombok.Getter;
 
-/** Assigns a partition key to a table that is persisted into a data system engine. */
+/** Defines the vector dimension for a vector column for indexing. */
 public class VectorDimensionHint extends ColumnNamesHint implements DataTypeHint {
 
   public static final String HINT_NAME = "vector_dim";

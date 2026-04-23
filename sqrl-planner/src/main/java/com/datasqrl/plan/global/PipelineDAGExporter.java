@@ -30,9 +30,11 @@ import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.CalciteHacks;
 import com.datasqrl.util.StreamUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -91,7 +93,6 @@ public class PipelineDAGExporter {
                   .build());
         } else {
           var fields = table.getRowType().getFieldList();
-          var timestampIdx = table.getRowTime();
           result.add(
               Table.builder()
                   .id(table.getObjectIdentifier().asSummaryString())
@@ -110,8 +111,13 @@ public class PipelineDAGExporter {
                               .map(fields::get)
                               .map(RelDataTypeField::getName)
                               .toList())
+                  .rowCount(getRowCount(table).orElse(N_A))
                   .timestamp(
-                      timestampIdx.map(fields::get).map(RelDataTypeField::getName).orElse(N_A))
+                      table
+                          .getRowTime()
+                          .map(fields::get)
+                          .map(RelDataTypeField::getName)
+                          .orElse(N_A))
                   .schema(
                       fields.stream()
                           .map(
@@ -169,6 +175,31 @@ public class PipelineDAGExporter {
       return null;
     }
     return tableAnalysis.getOriginalSql();
+  }
+
+  private Optional<String> getRowCount(TableAnalysis tableAnalysis) {
+    var stats = tableAnalysis.getTableStatistic();
+    if (stats.isUnknown()) {
+      return Optional.empty();
+    }
+
+    var rowCount = stats.getRowCount();
+    String rowCountStr;
+    if (rowCount < 1) {
+      rowCountStr = "1";
+
+    } else if (rowCount < 10) {
+      rowCountStr = String.valueOf((int) rowCount);
+
+    } else {
+      rowCountStr = new DecimalFormat("0E0").format(rowCount).toLowerCase();
+    }
+
+    if (stats.isEstimated()) {
+      rowCountStr = "~" + rowCountStr;
+    }
+
+    return Optional.of(rowCountStr);
   }
 
   private String explain(RelNode relNode) {
@@ -374,6 +405,9 @@ public class PipelineDAGExporter {
     @JsonProperty("primary_key")
     List<String> primaryKey;
 
+    @JsonProperty("row_count")
+    String rowCount;
+
     String timestamp;
     List<SchemaColumn> schema;
 
@@ -385,6 +419,7 @@ public class PipelineDAGExporter {
       s.append(getBaseHeaderString());
       s.append("Primary key: ").append(pKey).append(LINEBREAK);
       s.append("Timestamp:   ").append(timestamp).append(LINEBREAK);
+      s.append("Row count:   ").append(rowCount).append(LINEBREAK);
       s.append("---").append(LINEBREAK);
       s.append("Schema:").append(LINEBREAK);
       toListString(s, schema);

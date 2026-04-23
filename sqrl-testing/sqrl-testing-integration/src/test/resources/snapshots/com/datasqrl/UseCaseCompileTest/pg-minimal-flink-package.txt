@@ -53,6 +53,7 @@ Type:        state
 Stage:       postgres
 Primary key: sensorid
 Timestamp:   -
+Row count:   ~1e7
 ---
 Schema:
  - sensorid: INTEGER NOT NULL
@@ -69,6 +70,7 @@ Type:        stream
 Stage:       flink
 Primary key: sensorid, event_time
 Timestamp:   -
+Row count:   ~1e8
 ---
 Schema:
  - sensorid: INTEGER NOT NULL
