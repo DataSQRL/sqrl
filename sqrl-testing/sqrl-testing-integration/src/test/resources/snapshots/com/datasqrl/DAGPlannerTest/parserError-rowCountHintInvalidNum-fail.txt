@@ -1,4 +1,4 @@
-[FATAL] row_count must be a valid number
+[FATAL] The row_count must be a valid number. Got: asd
 in script:parserError-rowCountHintInvalidNum-fail.sqrl [3:19]:
 IMPORT ecommerceTs.customer;
 
