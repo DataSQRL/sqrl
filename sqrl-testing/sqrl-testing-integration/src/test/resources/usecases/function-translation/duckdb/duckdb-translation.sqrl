@@ -84,6 +84,16 @@ FunctionCalls := SELECT
         TIMESTAMPADD(DAY, 2, TIMESTAMP '2024-01-02 03:04:05')
     AS TIMESTAMP (3))                                          AS timestampadd_example,
     TIMESTAMPDIFF(
+        SECOND,
+        TIMESTAMP '2024-01-01 00:00:00',
+        TIMESTAMP '2024-01-01 00:00:30'
+    )                                                          AS timestampdiff_second_example,
+    TIMESTAMPDIFF(
+        MINUTE,
+        TIMESTAMP '2024-01-01 00:00:00',
+        TIMESTAMP '2024-01-01 00:15:00'
+    )                                                          AS timestampdiff_minute_example,
+    TIMESTAMPDIFF(
         HOUR,
         TIMESTAMP '2024-01-01 00:00:00',
         TIMESTAMP '2024-01-02 05:00:00'
@@ -94,15 +104,25 @@ FunctionCalls := SELECT
         TIMESTAMP '2024-01-03 00:00:00'
     )                                                          AS timestampdiff_day_example,
     TIMESTAMPDIFF(
-        SECOND,
+        WEEK,
         TIMESTAMP '2024-01-01 00:00:00',
-        TIMESTAMP '2024-01-01 00:00:30'
-    )                                                          AS timestampdiff_second_example,
+        TIMESTAMP '2024-01-22 00:00:00'
+    )                                                          AS timestampdiff_week_example,
     TIMESTAMPDIFF(
         MONTH,
         TIMESTAMP '2024-01-01 00:00:00',
         TIMESTAMP '2024-04-01 00:00:00'
     )                                                          AS timestampdiff_month_example,
+    TIMESTAMPDIFF(
+        QUARTER,
+        TIMESTAMP '2024-01-01 00:00:00',
+        TIMESTAMP '2024-10-01 00:00:00'
+    )                                                          AS timestampdiff_quarter_example,
+    TIMESTAMPDIFF(
+        YEAR,
+        TIMESTAMP '2024-01-01 00:00:00',
+        TIMESTAMP '2027-01-01 00:00:00'
+    )                                                          AS timestampdiff_year_example,
     CONVERT_TZ('2024-01-02 03:04:05', 'UTC', 'America/Los_Angeles')
                                                                AS convert_tz_example,
 --     FROM_UNIXTIME(1700000000, 'yyyy-MM-dd HH:mm:ss')           AS from_unixtime_example,

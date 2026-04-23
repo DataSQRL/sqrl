@@ -25,23 +25,38 @@ import org.apache.calcite.sql.SqlNode;
 final class DuckDbSqlTranslationUtils {
 
   /**
-   * Maps the divisor value produced by Calcite's {@code RexBuilder.multiplyDivide} back to a DuckDB
-   * time unit string. The divisor corresponds to {@code TimeUnit.multiplier} for each unit.
+   * Maps a {@code (innerUnit, divisor)} pair to the DuckDB time unit it represents. The outer key
+   * is the unit of the value being divided:
+   *
+   * <ul>
+   *   <li>{@code "millisecond"} / {@code "month"} for raw {@code Reinterpret(MINUS_DATE(…))} values
+   *       — Calcite stores day-time intervals as ms and year-month intervals as months.
+   *   <li>{@code "second"} / {@code "month"} for {@code date_diff(unit, …)} calls produced by an
+   *       earlier rewrite pass — used to collapse Calcite's WEEK/QUARTER decomposition (which it
+   *       emits as a SECOND/MONTH diff wrapped in an extra {@code DIVIDE_INTEGER}) back into a
+   *       single native call.
+   * </ul>
    */
-  private static final Map<BigDecimal, String> DIVISOR_TO_UNIT =
+  private static final Map<String, Map<BigDecimal, String>> DIVISOR_TO_UNIT =
       Map.of(
-          new BigDecimal("86400000"), "day",
-          new BigDecimal("3600000"), "hour",
-          new BigDecimal("60000"), "minute",
-          new BigDecimal("1000"), "second",
-          new BigDecimal("12"), "year");
+          "millisecond",
+              Map.of(
+                  new BigDecimal("86400000"), "day",
+                  new BigDecimal("3600000"), "hour",
+                  new BigDecimal("60000"), "minute",
+                  new BigDecimal("1000"), "second"),
+          "second", Map.of(new BigDecimal("604800"), "week"),
+          "month",
+              Map.of(
+                  new BigDecimal("12"), "year",
+                  new BigDecimal("3"), "quarter"));
 
   /**
-   * Returns the DuckDB time unit string for the given Calcite divisor value, or {@code null} if the
-   * divisor does not correspond to a known time unit.
+   * Returns the DuckDB time unit produced by dividing a value of {@code innerUnit} by {@code
+   * divisor}, or {@code null} if the pair is not a known time-unit conversion.
    */
-  static String divisorToTimeUnit(BigDecimal divisor) {
-    return DIVISOR_TO_UNIT.get(divisor);
+  static String divisorToTimeUnit(String innerUnit, BigDecimal divisor) {
+    return DIVISOR_TO_UNIT.getOrDefault(innerUnit, Map.of()).get(divisor);
   }
 
   /** Converts a Calcite {@link TimeUnit} enum to a DuckDB time unit string. */
