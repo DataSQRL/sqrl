@@ -20,6 +20,7 @@ import com.datasqrl.calcite.convert.SimpleCallTransform;
 import com.datasqrl.calcite.function.OperatorRuleTransform;
 import com.google.auto.service.AutoService;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.calcite.plan.RelRule;
 import org.apache.calcite.rex.RexCall;
@@ -27,6 +28,7 @@ import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlKind;
+import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.SqlWriter;
@@ -42,9 +44,34 @@ import org.apache.calcite.tools.RelBuilder;
  * <p>Calcite's {@code TimestampDiffConvertlet} decomposes {@code TIMESTAMPDIFF(DAY, ts1, ts2)} into
  * {@code multiplyDivide(CAST(Reinterpret(MINUS_DATE(ts2, ts1))), multiplier, divisor)}. The time
  * unit is encoded as the divisor constant. This rule detects that pattern and reconstructs it.
+ *
+ * <p>WEEK and QUARTER are emitted by Calcite as a SECOND/MONTH diff wrapped in an extra {@code
+ * DIVIDE_INTEGER}. A second rule recognises {@code /INT(date_diff(unit, …), N)} and collapses it
+ * into {@code date_diff(largerUnit, …)}.
  */
 @AutoService(OperatorRuleTransform.class)
 public class TimestampDiffSqlTranslation implements OperatorRuleTransform {
+
+  private static final SqlOperator DATE_DIFF =
+      new SqlSpecialOperator(
+          "date_diff",
+          SqlKind.OTHER_FUNCTION,
+          0,
+          false,
+          ReturnTypes.explicit(SqlTypeName.INTEGER),
+          null,
+          null) {
+        @Override
+        public void unparse(SqlWriter writer, SqlCall call, int leftPrec, int rightPrec) {
+          var frame = writer.startFunCall("date_diff");
+          writer.print("'" + ((SqlLiteral) call.operand(0)).toValue() + "'");
+          writer.sep(",", true);
+          call.operand(1).unparse(writer, 0, 0);
+          writer.sep(",", true);
+          call.operand(2).unparse(writer, 0, 0);
+          writer.endFunCall(frame);
+        }
+      };
 
   @Override
   public List<RelRule> transform(SqlOperator operator) {
@@ -55,6 +82,11 @@ public class TimestampDiffSqlTranslation implements OperatorRuleTransform {
         (RelRule)
             SimpleCallTransform.SimpleCallTransformConfig.createConfig(
                     SqlStdOperatorTable.CAST, TimestampDiffSqlTranslation::rewriteCast)
+                .toRule(),
+        // Collapses /INT(date_diff(unit, a, b), N) → date_diff(largerUnit, a, b) for WEEK/QUARTER.
+        (RelRule)
+            SimpleCallTransform.SimpleCallTransformConfig.createConfig(
+                    SqlStdOperatorTable.DIVIDE_INTEGER, TimestampDiffSqlTranslation::rewriteDivide)
                 .toRule());
   }
 
@@ -70,53 +102,101 @@ public class TimestampDiffSqlTranslation implements OperatorRuleTransform {
 
   /**
    * Rewrites Calcite's TIMESTAMPDIFF decomposition back into {@code date_diff('unit', ts1, ts2)}.
-   * Handles two patterns:
+   * Walks through any number of nested {@code CAST}/{@code DIVIDE_INTEGER} layers, collecting the
+   * divisors, then resolves the final unit by applying the divisors innermost-first against the
+   * unified {@code (innerUnit, divisor) → outerUnit} table. This handles:
    *
    * <ul>
-   *   <li>{@code CAST(/INT(Reinterpret(MINUS_DATE(ts2, ts1)), divisor))} — most units
-   *   <li>{@code CAST(Reinterpret(MINUS_DATE(ts2, ts1)))} — SECOND, MONTH (no division)
+   *   <li>{@code CAST(/INT(Reinterpret, divisor))} — most units (DAY, HOUR, MINUTE, SECOND, YEAR).
+   *   <li>{@code CAST(Reinterpret)} — bare reinterpret (MONTH); unit comes from the qualifier.
+   *   <li>{@code CAST(/INT(CAST(/INT(Reinterpret, d1)), d2))} — Calcite's split decomposition for
+   *       WEEK and (when wrapped in an outer user CAST) QUARTER, plus an extra outer user CAST.
    * </ul>
    */
   private static RexNode rewriteCast(RelBuilder relBuilder, RexCall call) {
     if (call.getOperands().isEmpty()) {
       return call;
     }
-    var inner = call.getOperands().get(0);
-    if (!(inner instanceof RexCall innerCall)) {
+    if (!(call.getOperands().get(0) instanceof RexCall current)) {
       return call;
     }
 
-    // Unwrap nested CASTs — Calcite may produce CAST(CAST(/INT(Reinterpret(...), d)))
-    while (innerCall.getKind() == SqlKind.CAST
-        && !innerCall.getOperands().isEmpty()
-        && innerCall.getOperands().get(0) instanceof RexCall nested) {
-      innerCall = nested;
-    }
-
-    // Pattern 1: CAST(/INT(Reinterpret(MINUS_DATE(...)), divisor))
-    if (innerCall.getKind() == SqlKind.DIVIDE
-        && innerCall.getOperands().size() == 2
-        && innerCall.getOperands().get(1) instanceof RexLiteral divisorLit) {
-      var divisorValue = divisorLit.getValueAs(BigDecimal.class);
-      var unit = DuckDbSqlTranslationUtils.divisorToTimeUnit(divisorValue);
-      if (unit != null) {
-        var minusDate = extractMinusDateFromReinterpret(innerCall.getOperands().get(0));
-        if (minusDate != null) {
-          return buildDateDiff(unit, minusDate, relBuilder, call);
-        }
+    var divisors = new ArrayList<BigDecimal>();
+    while (true) {
+      // Unwrap consecutive CASTs — Calcite layers them between intermediate /INT operations.
+      while (current.getKind() == SqlKind.CAST
+          && !current.getOperands().isEmpty()
+          && current.getOperands().get(0) instanceof RexCall nested) {
+        current = nested;
       }
+
+      // Record the divisor of an /INT layer and descend into its left operand.
+      if (current.getKind() == SqlKind.DIVIDE
+          && current.getOperands().size() == 2
+          && current.getOperands().get(1) instanceof RexLiteral divisorLit
+          && current.getOperands().get(0) instanceof RexCall divChild) {
+        divisors.add(divisorLit.getValueAs(BigDecimal.class));
+        current = divChild;
+        continue;
+      }
+
+      break;
     }
 
-    // Pattern 2: CAST(Reinterpret(MINUS_DATE(...))) — no division
-    var minusDate = extractMinusDateFromReinterpret(innerCall);
-    if (minusDate != null) {
+    var minusDate = extractMinusDateFromReinterpret(current);
+    if (minusDate == null) {
+      return call;
+    }
+
+    // Bare Reinterpret (no /INT) — unit is fixed by the interval qualifier (e.g. MONTH).
+    if (divisors.isEmpty()) {
       var unit =
           DuckDbSqlTranslationUtils.extractTimeUnit(
               minusDate.getType().getIntervalQualifier().getStartUnit());
       return buildDateDiff(unit, minusDate, relBuilder, call);
     }
 
-    return call;
+    // Reinterpret of a day-time interval yields ms; year-month yields months.
+    var unit = minusDate.getType().getIntervalQualifier().isYearMonth() ? "month" : "millisecond";
+    for (var i = divisors.size() - 1; i >= 0; i--) {
+      var next = DuckDbSqlTranslationUtils.divisorToTimeUnit(unit, divisors.get(i));
+      if (next == null) {
+        return call;
+      }
+      unit = next;
+    }
+    return buildDateDiff(unit, minusDate, relBuilder, call);
+  }
+
+  /**
+   * Collapses {@code /INT(date_diff(innerUnit, a, b), N)} into {@code date_diff(outerUnit, a, b)}
+   * when {@code innerUnit * N} is a unit DuckDB knows natively (WEEK, QUARTER).
+   */
+  private static RexNode rewriteDivide(RelBuilder relBuilder, RexCall call) {
+    if (call.getOperands().size() != 2
+        || !(call.getOperands().get(0) instanceof RexCall innerCall)
+        || !(call.getOperands().get(1) instanceof RexLiteral divisorLit)
+        || innerCall.getOperator() != DATE_DIFF
+        || innerCall.getOperands().size() != 3
+        || !(innerCall.getOperands().get(0) instanceof RexLiteral innerUnitLit)) {
+      return call;
+    }
+
+    var outerUnit =
+        DuckDbSqlTranslationUtils.divisorToTimeUnit(
+            innerUnitLit.getValueAs(String.class), divisorLit.getValueAs(BigDecimal.class));
+    if (outerUnit == null) {
+      return call;
+    }
+
+    var rexBuilder = relBuilder.getRexBuilder();
+    return rexBuilder.makeCall(
+        call.getType(),
+        DATE_DIFF,
+        List.of(
+            rexBuilder.makeLiteral(outerUnit),
+            innerCall.getOperands().get(1),
+            innerCall.getOperands().get(2)));
   }
 
   /** Extracts MINUS_DATE from {@code Reinterpret(MINUS_DATE(ts2, ts1))}. */
@@ -142,30 +222,9 @@ public class TimestampDiffSqlTranslation implements OperatorRuleTransform {
       String unit, RexCall minusDate, RelBuilder relBuilder, RexCall originalCall) {
     var end = minusDate.getOperands().get(0);
     var start = minusDate.getOperands().get(1);
-    var dateDiffOp = createDateDiffOperator(unit);
     var rexBuilder = relBuilder.getRexBuilder();
-    return (RexCall) rexBuilder.makeCall(originalCall.getType(), dateDiffOp, List.of(start, end));
-  }
-
-  private static SqlOperator createDateDiffOperator(String unit) {
-    return new SqlSpecialOperator(
-        "date_diff",
-        SqlKind.OTHER_FUNCTION,
-        0,
-        false,
-        ReturnTypes.explicit(SqlTypeName.INTEGER),
-        null,
-        null) {
-      @Override
-      public void unparse(SqlWriter writer, SqlCall call, int leftPrec, int rightPrec) {
-        var frame = writer.startFunCall("date_diff");
-        writer.print("'" + unit + "'");
-        writer.sep(",", true);
-        call.operand(0).unparse(writer, 0, 0);
-        writer.sep(",", true);
-        call.operand(1).unparse(writer, 0, 0);
-        writer.endFunCall(frame);
-      }
-    };
+    return (RexCall)
+        rexBuilder.makeCall(
+            originalCall.getType(), DATE_DIFF, List.of(rexBuilder.makeLiteral(unit), start, end));
   }
 }

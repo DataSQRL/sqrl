@@ -31,7 +31,8 @@ public class ExternalUseCaseCompileTest {
     UseCaseTestHelper.testUseCase(
         snapshotExtension,
         getClass(),
-        Path.of("/your/path/package.json"),
+        Path.of(
+            "/Users/refrnc/dev/datasqrl/customers/medidata-workbench/query-converter/converter-package.json"),
         UseCaseTestHelper.defaultBuildDirFilter(),
         UseCaseTestHelper.defaultPlanDirFilter());
   }
