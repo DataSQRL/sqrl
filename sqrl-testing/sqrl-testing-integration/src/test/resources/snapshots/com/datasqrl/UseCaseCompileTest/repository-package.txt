@@ -5,6 +5,7 @@ Type:        state
 Stage:       flink
 Primary key: name
 Timestamp:   -
+Row count:   ~1e7
 ---
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -17,6 +18,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   event_time
+Row count:   ~1e8
 ---
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -48,6 +50,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   -
+Row count:   ~1e8
 ---
 Schema:
  - pkgName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -62,6 +65,7 @@ Type:        state
 Stage:       flink
 Primary key: pkgName, topicName
 Timestamp:   -
+Row count:   ~2e7
 ---
 Schema:
  - pkgName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -79,6 +83,7 @@ Type:        state
 Stage:       flink
 Primary key: topicName
 Timestamp:   -
+Row count:   ~1e7
 ---
 Schema:
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -94,6 +99,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   event_time
+Row count:   ~1e8
 ---
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

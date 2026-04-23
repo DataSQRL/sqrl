@@ -5,6 +5,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   timestamp
+Row count:   ~1e8
 ---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -45,6 +46,7 @@ Type:        stream
 Stage:       flink
 Primary key: sensorid, time_hour
 Timestamp:   time_hour
+Row count:   ~7e7
 ---
 Schema:
  - sensorid: BIGINT NOT NULL

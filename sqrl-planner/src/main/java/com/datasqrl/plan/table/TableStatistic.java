@@ -22,13 +22,18 @@ public class TableStatistic {
 
   private static final double DEFAULT_ROW_COUNT = 1e15;
 
-  public static final TableStatistic UNKNOWN = new TableStatistic(Double.NaN);
+  public static final TableStatistic UNKNOWN = new TableStatistic(Double.NaN, true);
   public static final double DEFAULT_NESTED_MULTIPLIER = 2.0;
 
   private final double rowCount;
+  private final boolean isEstimated;
 
-  public static TableStatistic of(double rowCount) {
-    return new TableStatistic(rowCount);
+  public static TableStatistic fromEstimate(double rowCount) {
+    return new TableStatistic(rowCount, true);
+  }
+
+  public static TableStatistic fromHint(double rowCount) {
+    return new TableStatistic(rowCount, false);
   }
 
   @Override
@@ -48,7 +53,7 @@ public class TableStatistic {
     if (isUnknown()) {
       return UNKNOWN;
     }
-    return new TableStatistic(rowCount * multiplier);
+    return new TableStatistic(rowCount * multiplier, isEstimated);
   }
 
   public double getRowCount() {

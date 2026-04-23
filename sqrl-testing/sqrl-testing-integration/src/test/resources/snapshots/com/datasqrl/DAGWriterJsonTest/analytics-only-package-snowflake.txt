@@ -64,7 +64,8 @@
     "name" : "id2",
     "type" : "BIGINT"
   } ],
-  "primary_key" : [ "id", "loan_type_id" ]
+  "primary_key" : [ "id", "loan_type_id" ],
+  "row_count" : "~1e8"
 }, {
   "id" : "default_catalog.default_database.ApplicationStatus",
   "name" : "ApplicationStatus",
@@ -107,7 +108,8 @@
     "name" : "min_amount",
     "type" : "DOUBLE NOT NULL"
   } ],
-  "primary_key" : [ "customer_id" ]
+  "primary_key" : [ "customer_id" ],
+  "row_count" : "~8e7"
 }, {
   "id" : "default_catalog.default_database._Applications",
   "name" : "_Applications",
@@ -147,7 +149,8 @@
     "name" : "updated_at",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
-  "primary_key" : [ "id", "loan_type_id" ]
+  "primary_key" : [ "id", "loan_type_id" ],
+  "row_count" : "~2e7"
 }, {
   "id" : "default_catalog.default_database._LoanTypes",
   "name" : "_LoanTypes",
@@ -193,7 +196,8 @@
     "name" : "updated_at",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
-  "primary_key" : [ "id" ]
+  "primary_key" : [ "id" ],
+  "row_count" : "~2e7"
 }, {
   "id" : "default_catalog.sources.ApplicationUpdates",
   "name" : "ApplicationUpdates",
@@ -217,7 +221,8 @@
   }, {
     "name" : "event_time",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
-  } ]
+  } ],
+  "row_count" : "~1e8"
 }, {
   "id" : "default_catalog.sources.ApplicationUpdates__base",
   "name" : "ApplicationUpdates",
@@ -265,7 +270,8 @@
     "name" : "updated_at",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
-  "primary_key" : [ "id", "updated_at" ]
+  "primary_key" : [ "id", "updated_at" ],
+  "row_count" : "~1e8"
 }, {
   "id" : "default_catalog.sources.ApplicationsStream__base",
   "name" : "ApplicationsStream",
@@ -320,7 +326,8 @@
     "name" : "updated_at",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
-  "primary_key" : [ "id", "updated_at" ]
+  "primary_key" : [ "id", "updated_at" ],
+  "row_count" : "~1e8"
 }, {
   "id" : "default_catalog.sources.LoanTypesStream__base",
   "name" : "LoanTypesStream",

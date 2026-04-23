@@ -45,6 +45,7 @@ Type:        stream
 Stage:       flink
 Primary key: uuidField, timestampMillisField
 Timestamp:   timestampMillisField
+Row count:   ~1e8
 ---
 Schema:
  - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -62,6 +63,7 @@ Type:        stream
 Stage:       flink
 Primary key: uuidField, timestampMillisField
 Timestamp:   timestampMillisField
+Row count:   ~1e8
 ---
 Schema:
  - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

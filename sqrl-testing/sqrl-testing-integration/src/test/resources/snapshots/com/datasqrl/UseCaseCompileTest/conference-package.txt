@@ -114,6 +114,7 @@ Type:        state
 Stage:       flink
 Primary key: eventid
 Timestamp:   -
+Row count:   ~3e6
 ---
 Schema:
  - eventid: BIGINT NOT NULL
@@ -128,6 +129,7 @@ Type:        state
 Stage:       flink
 Primary key: id
 Timestamp:   last_updated
+Row count:   ~2e7
 ---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -191,6 +193,7 @@ Type:        stream
 Stage:       flink
 Primary key: _uuid
 Timestamp:   event_time
+Row count:   ~1e8
 ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -209,6 +212,7 @@ Type:        stream
 Stage:       flink
 Primary key: _uuid
 Timestamp:   event_time
+Row count:   ~1e8
 ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -226,6 +230,7 @@ Type:        stream
 Stage:       flink
 Primary key: url, last_updated
 Timestamp:   last_updated
+Row count:   ~1e8
 ---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -248,6 +253,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   event_time
+Row count:   ~2e7
 ---
 Schema:
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -268,6 +274,7 @@ Type:        stream
 Stage:       flink
 Primary key: _uuid
 Timestamp:   event_time
+Row count:   ~1e8
 ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -286,6 +293,7 @@ Type:        stream
 Stage:       flink
 Primary key: url, last_updated
 Timestamp:   last_updated
+Row count:   ~1e8
 ---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -312,6 +320,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   event_time
+Row count:   ~2e8
 ---
 Schema:
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -327,6 +336,7 @@ Type:        state
 Stage:       flink
 Primary key: userid
 Timestamp:   -
+Row count:   ~1e7
 ---
 Schema:
  - userid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -340,6 +350,7 @@ Type:        state
 Stage:       flink
 Primary key: userid, eventid
 Timestamp:   event_time
+Row count:   ~2e7
 ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

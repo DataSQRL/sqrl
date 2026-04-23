@@ -5,6 +5,7 @@ Type:        state
 Stage:       flink
 Primary key: id
 Timestamp:   -
+Row count:   ~4
 ---
 Schema:
  - id: INTEGER NOT NULL
@@ -16,6 +17,7 @@ Type:        state
 Stage:       flink
 Primary key: id
 Timestamp:   -
+Row count:   ~2
 ---
 Schema:
  - id: INTEGER NOT NULL
@@ -27,6 +29,7 @@ Type:        state
 Stage:       flink
 Primary key: id
 Timestamp:   -
+Row count:   ~4
 ---
 Schema:
  - id: INTEGER NOT NULL
@@ -49,6 +52,7 @@ Type:        state
 Stage:       flink
 Primary key: val
 Timestamp:   -
+Row count:   ~3
 ---
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL

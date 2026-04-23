@@ -5,6 +5,7 @@ Type:        stream
 Stage:       flink
 Primary key: id, time
 Timestamp:   time
+Row count:   ~5e7
 ---
 Schema:
  - id: BIGINT NOT NULL
@@ -28,6 +29,7 @@ Type:        stream
 Stage:       flink
 Primary key: id, time
 Timestamp:   time
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL

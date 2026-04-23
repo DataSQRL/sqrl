@@ -68,6 +68,7 @@ Type:        state
 Stage:       flink
 Primary key: sensorid, timeStart, timeEnd, timeSec
 Timestamp:   timeSec
+Row count:   ~7e7
 ---
 Schema:
  - sensorid: BIGINT NOT NULL
@@ -88,6 +89,7 @@ Type:        state
 Stage:       flink
 Primary key: sensorid
 Timestamp:   window_time
+Row count:   ~2e7
 ---
 Schema:
  - sensorid: BIGINT NOT NULL
@@ -102,6 +104,7 @@ Type:        stream
 Stage:       flink
 Primary key: sensorid, time
 Timestamp:   timestamp
+Row count:   ~1e8
 ---
 Schema:
  - sensorid: BIGINT NOT NULL
@@ -120,6 +123,7 @@ Type:        state
 Stage:       flink
 Primary key: -
 Timestamp:   window_time
+Row count:   ~1e8
 ---
 Schema:
  - sensorid: BIGINT NOT NULL

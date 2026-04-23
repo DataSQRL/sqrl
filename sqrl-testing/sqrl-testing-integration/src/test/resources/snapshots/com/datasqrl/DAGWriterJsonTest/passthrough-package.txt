@@ -74,7 +74,8 @@
     "name" : "updatedDate",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
-  "primary_key" : [ "employeeid" ]
+  "primary_key" : [ "employeeid" ],
+  "row_count" : "~2e7"
 }, {
   "id" : "default_catalog.default_database.Reporting",
   "name" : "Reporting",
@@ -99,7 +100,8 @@
     "name" : "updatedDate",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
-  "primary_key" : [ "employeeid", "managerid" ]
+  "primary_key" : [ "employeeid", "managerid" ],
+  "row_count" : "~2e7"
 }, {
   "id" : "default_catalog.hr.Employees",
   "name" : "Employees",
@@ -123,7 +125,8 @@
   }, {
     "name" : "updatedDate",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
-  } ]
+  } ],
+  "row_count" : "~1e8"
 }, {
   "id" : "default_catalog.hr.Employees__base",
   "name" : "Employees",
@@ -156,7 +159,8 @@
   }, {
     "name" : "updatedDate",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
-  } ]
+  } ],
+  "row_count" : "~1e8"
 }, {
   "id" : "default_catalog.hr.Reporting__base",
   "name" : "Reporting",

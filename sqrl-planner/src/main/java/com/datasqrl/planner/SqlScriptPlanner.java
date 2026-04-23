@@ -328,7 +328,8 @@ public class SqlScriptPlanner {
           .createTable(
               statement.toSql(),
               getMutationBuilder(hintsAndDocs),
-              scriptContext.moduleLoader().getSchemaLoader())
+              scriptContext.moduleLoader().getSchemaLoader(),
+              hints)
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
@@ -559,7 +560,8 @@ public class SqlScriptPlanner {
             .createTable(
                 flinkStmt.sql().get(),
                 getMutationBuilder(hintsAndDocs),
-                scriptContext.moduleLoader().getSchemaLoader())
+                scriptContext.moduleLoader().getSchemaLoader(),
+                hints)
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
         /*TODO: We are not currently adding these to the DAG (and hence no analysis/visualization based on the DAG)
@@ -908,7 +910,8 @@ public class SqlScriptPlanner {
                 importNameModifier,
                 flinkTable.sqlCreateTable,
                 flinkTable.schemaLoader(),
-                getMutationBuilder(hintsAndDocs));
+                getMutationBuilder(hintsAndDocs),
+                hintsAndDocs.hints);
         hintsAndDocs.hints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());

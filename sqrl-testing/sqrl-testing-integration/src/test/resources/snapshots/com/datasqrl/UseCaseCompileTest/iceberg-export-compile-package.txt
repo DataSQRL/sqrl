@@ -5,6 +5,7 @@ Type:        stream
 Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
+Row count:   ~1e8
 ---
 Schema:
  - id: BIGINT NOT NULL

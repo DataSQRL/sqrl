@@ -5,6 +5,7 @@ Type:        state
 Stage:       flink
 Primary key: orgid
 Timestamp:   -
+Row count:   ~1e7
 ---
 Schema:
  - orgid: BIGINT NOT NULL
@@ -30,6 +31,7 @@ Type:        state
 Stage:       flink
 Primary key: userid
 Timestamp:   -
+Row count:   ~1e7
 ---
 Schema:
  - userid: BIGINT NOT NULL
@@ -44,6 +46,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   request_time
+Row count:   ~5e7
 ---
 Schema:
  - userid: BIGINT NOT NULL
@@ -58,6 +61,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   request_time
+Row count:   ~1e8
 ---
 Schema:
  - userid: BIGINT NOT NULL
@@ -72,6 +76,7 @@ Type:        state
 Stage:       flink
 Primary key: userid
 Timestamp:   event_time
+Row count:   ~2e7
 ---
 Schema:
  - userid: BIGINT NOT NULL
@@ -87,6 +92,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   request_time
+Row count:   ~9e7
 ---
 Schema:
  - userid: BIGINT NOT NULL
@@ -103,6 +109,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   event_time
+Row count:   ~1e8
 ---
 Schema:
  - userid: BIGINT NOT NULL

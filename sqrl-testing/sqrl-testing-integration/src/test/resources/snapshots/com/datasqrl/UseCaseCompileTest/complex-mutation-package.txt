@@ -61,6 +61,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   event_time
+Row count:   ~1e8
 ---
 Schema:
  - userid: INTEGER NOT NULL
@@ -75,6 +76,7 @@ Type:        state
 Stage:       flink
 Primary key: userid
 Timestamp:   window_time
+Row count:   ~2e7
 ---
 Schema:
  - userid: INTEGER NOT NULL
@@ -92,6 +94,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   window_time
+Row count:   ~7e7
 ---
 Schema:
  - userid: INTEGER NOT NULL

@@ -1,0 +1,7 @@
+Improve the implementation of @sqrl-planner/src/main/java/com/datasqrl/plan/rules/SqrlRelMdRowCount.java and
+@sqrl-planner/src/main/java/com/datasqrl/plan/rules/SqrlRelMdSelectivity.java to produce better row count estimates for this SQRL test case: @sqrl-testing/sqrl-testing-integration/src/test/resources/dagplanner/tableRowCounts.sqrl. You can execute this test with @sqrl-testing/sqrl-testing-integration/src/test/java/com/datasqrl/DAGPlannerTest.java and using just this test case as the parameter. The resulting snapshot is written to @sqrl-testing/sqrl-testing-integration/src/test/resources/snapshots/com/datasqrl/DAGPlannerTest/tableRowCounts.txt. 
+
+Your goal is to make sure that the estimates are more realistic given the SQL script and what can be inferred from it, including hints. Specifically, note that @sqrl-planner/src/main/java/com/datasqrl/planner/analyzer/TableAnalysis.java has a lot of information about the source/scan tables that can be used to improve the estimate.
+
+
+Run test to ensure it works and produces the expected results. You need to delete existing snapshots and run the test to see the updated snapshots. Running the tests against the old snapshots produces errors for any differences detected.
