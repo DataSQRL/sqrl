@@ -957,7 +957,6 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>3.5.5</version>
         <configuration>
-          <rerunFailingTestsCount>2</rerunFailingTestsCount>
           <includes>
             <include>**/*Test.java</include>
           </includes>
