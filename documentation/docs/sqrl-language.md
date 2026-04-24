@@ -319,6 +319,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **maintenance**             | `maintenance(type)`                                                        | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                 |
 | **test**                    | `test`                                                                     | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                       |
 | **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                    |
+| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                  | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                  |
 
 This example configures a primary key and vector index for the `SensorTempByHour` table:
 

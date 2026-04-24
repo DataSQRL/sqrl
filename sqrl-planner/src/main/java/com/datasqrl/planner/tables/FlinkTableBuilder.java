@@ -37,8 +37,10 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
+import org.apache.flink.sql.parser.ddl.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableLike;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 
@@ -62,6 +64,8 @@ public class FlinkTableBuilder {
   private SqlNodeList partitionKeyList = SqlNodeList.EMPTY;
 
   private SqlWatermark watermark = null;
+
+  private SqlTableLike tableLike = null;
 
   public FlinkTableBuilder setName(Name name) {
     setName(name.getDisplay());
@@ -188,7 +192,26 @@ public class FlinkTableBuilder {
     return getPrimaryKey().isPresent();
   }
 
+  public boolean hasLike() {
+    return tableLike != null;
+  }
+
   public SqlCreateTable buildSql(boolean isTemporary) {
+    if (tableLike != null) {
+      return new SqlCreateTableLike(
+          SqlParserPos.ZERO,
+          tableName,
+          columnList,
+          tableConstraints,
+          propertyList,
+          FlinkSqlNodeFactory.NO_DISTRIBUTION,
+          partitionKeyList,
+          watermark,
+          null,
+          tableLike,
+          isTemporary,
+          false);
+    }
     return new SqlCreateTable(
         SqlParserPos.ZERO,
         tableName,
@@ -204,12 +227,17 @@ public class FlinkTableBuilder {
   }
 
   public static FlinkTableBuilder toBuilder(SqlCreateTable table) {
+    SqlTableLike likeClause = null;
+    if (table instanceof SqlCreateTableLike likeTable) {
+      likeClause = likeTable.getTableLike();
+    }
     return new FlinkTableBuilder(
         table.getTableName(),
         table.getColumnList(),
         table.getPropertyList(),
         table.getTableConstraints(),
         table.getPartitionKeyList(),
-        table.getWatermark().orElse(null));
+        table.getWatermark().orElse(null),
+        likeClause);
   }
 }
