@@ -25,7 +25,9 @@ import lombok.Getter;
 
 /**
  * Annotates a table with a distinct row count for a set columns - or total row count if column list
- * is empty
+ * is empty. Examples: - row_count(1e6): this tables has approximately a million rows -
+ * row_count(col1, col2, 2e3): there are 2000 unique combinations of (col1, col2) values in this
+ * table
  */
 public class RowCountHint extends ColumnNamesHint {
 
