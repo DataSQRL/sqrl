@@ -21,3 +21,10 @@ CREATE TABLE SensorReading (
       'fields.temperature.kind' = 'random'
       )
 LIKE _SensorReading_schema;
+
+/*+engine(kafka) */
+CREATE TABLE SensorReadingMutation (
+    testField DOUBLE,
+    recordedTime TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+
+) LIKE _SensorReading_schema;
