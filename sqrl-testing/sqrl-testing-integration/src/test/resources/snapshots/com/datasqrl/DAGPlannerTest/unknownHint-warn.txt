@@ -1,0 +1,7 @@
+[WARN] Unrecognized hint: [another]
+in script:unknownHint-warn.sqrl [3:30]:
+IMPORT ecommerceTs.customer;
+
+/*+ primary_key(customerid), another(key) */
+-----------------------------^
+

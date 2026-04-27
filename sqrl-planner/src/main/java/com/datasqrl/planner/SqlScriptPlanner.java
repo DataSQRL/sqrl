@@ -308,7 +308,7 @@ public class SqlScriptPlanner {
     Optional<String> documentation = Optional.empty();
     if (stmt instanceof SqrlStatement statement) {
       var comments = statement.getComments();
-      hints = PlannerHints.fromHints(comments);
+      hints = PlannerHints.fromHints(comments, errors);
       if (!comments.documentation().isEmpty()) {
         documentation =
             Optional.of(
