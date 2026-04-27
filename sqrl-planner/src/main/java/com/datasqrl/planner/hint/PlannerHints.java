@@ -15,13 +15,13 @@
  */
 package com.datasqrl.planner.hint;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.planner.parser.SqrlComments;
 import com.datasqrl.planner.parser.StatementParserException;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -34,8 +34,7 @@ public class PlannerHints {
   List<PlannerHint> hints;
 
   public Optional<ColumnNamesHint> getQueryByHint() {
-    List<PlannerHint> queryby =
-        hints.stream().filter(QueryByHint.class::isInstance).collect(Collectors.toList());
+    List<PlannerHint> queryby = hints.stream().filter(QueryByHint.class::isInstance).toList();
     if (queryby.size() > 1) {
       throw new StatementParserException(
           ErrorLabel.GENERIC,
@@ -65,9 +64,13 @@ public class PlannerHints {
     getHints(ColumnNamesHint.class).forEach(hint -> hint.validateAndUpdate(fieldByIndex));
   }
 
-  public static PlannerHints fromHints(SqrlComments comments) {
-    List<PlannerHint> hints =
-        comments.hints().stream().map(PlannerHint::from).collect(Collectors.toUnmodifiableList());
+  public static PlannerHints fromHints(SqrlComments comments, ErrorCollector errors) {
+    var hints =
+        comments.hints().stream()
+            .map(c -> PlannerHint.from(c, errors))
+            .flatMap(Optional::stream)
+            .toList();
+
     return new PlannerHints(hints);
   }
 }
