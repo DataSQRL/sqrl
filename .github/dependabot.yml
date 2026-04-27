@@ -9,22 +9,34 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "UTC"
     open-pull-requests-limit: 20
 
   - package-ecosystem: "docker"
     directory: "/sqrl-cli"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "UTC"
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "UTC"
 
   - package-ecosystem: "npm"
     directory: "/documentation"
     schedule:
       interval: "monthly"
+      day: "monday"
+      time: "10:00"
+      timezone: "UTC"
     groups:
       docusaurus:
         patterns:
