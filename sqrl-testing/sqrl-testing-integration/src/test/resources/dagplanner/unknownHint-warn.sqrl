@@ -1,0 +1,4 @@
+IMPORT ecommerceTs.customer;
+
+/*+ primary_key(customerid), another(key) */
+SelectCustomers := SELECT * From Customer WHERE customerid > 0 ORDER BY `timestamp` DESC LIMIT 10;
