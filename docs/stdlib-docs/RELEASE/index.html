@@ -2,18 +2,18 @@
 <html lang="en" dir="ltr" class="docs-wrapper plugin-docs plugin-id-default docs-version-current docs-doc-page docs-doc-id-stdlib-docs/RELEASE" data-has-hydrated="false">
 <head>
 <meta charset="UTF-8">
-<meta name="generator" content="Docusaurus v3.10.0">
+<meta name="generator" content="Docusaurus v3.9.2">
 <title data-rh="true">Release Process for Flink SQL Runner | DataSQRL</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" property="og:image" content="https://docs.datasqrl.com/img/datasqrl-social-card.jpg"><meta data-rh="true" name="twitter:image" content="https://docs.datasqrl.com/img/datasqrl-social-card.jpg"><meta data-rh="true" property="og:url" content="https://docs.datasqrl.com/docs/stdlib-docs/RELEASE"><meta data-rh="true" property="og:locale" content="en"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="keywords" content="data, API, SQRL, DataSQRL, data product, data pipeline, database, streaming, real-time analytics"><meta data-rh="true" name="twitter:card" content="summary"><meta data-rh="true" name="twitter:site" content="@DataSQRL"><meta data-rh="true" name="docusaurus_version" content="current"><meta data-rh="true" name="docusaurus_tag" content="docs-default-current"><meta data-rh="true" name="docsearch:version" content="current"><meta data-rh="true" name="docsearch:docusaurus_tag" content="docs-default-current"><meta data-rh="true" property="og:title" content="Release Process for Flink SQL Runner | DataSQRL"><meta data-rh="true" name="description" content="Releasing a new version of flink-sql-runner is simple and fully automated via GitHub Actions."><meta data-rh="true" property="og:description" content="Releasing a new version of flink-sql-runner is simple and fully automated via GitHub Actions."><link data-rh="true" rel="icon" href="/img/favicon.ico"><link data-rh="true" rel="canonical" href="https://docs.datasqrl.com/docs/stdlib-docs/RELEASE"><link data-rh="true" rel="alternate" href="https://docs.datasqrl.com/docs/stdlib-docs/RELEASE" hreflang="en"><link data-rh="true" rel="alternate" href="https://docs.datasqrl.com/docs/stdlib-docs/RELEASE" hreflang="x-default"><link rel="alternate" type="application/rss+xml" href="/blog/rss.xml" title="DataSQRL RSS Feed">
 <link rel="alternate" type="application/atom+xml" href="/blog/atom.xml" title="DataSQRL Atom Feed">
 
 <link rel="preconnect" href="https://www.google-analytics.com">
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
-<script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.11c193f7.css">
-<script src="/assets/js/runtime~main.ffea1b9d.js" defer="defer"></script>
-<script src="/assets/js/main.0b2a1ce2.js" defer="defer"></script>
+<script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.608cf89e.css">
+<script src="/assets/js/runtime~main.8e2b975e.js" defer="defer"></script>
+<script src="/assets/js/main.3896da71.js" defer="defer"></script>
 </head>
-<body>
+<body class="navigation-with-keyboard">
 <svg style="display: none;"><defs>
 <symbol id="theme-svg-external-link" viewBox="0 0 24 24"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"/></symbol>
 </defs></svg>
@@ -25,7 +25,7 @@ The <code>main</code> branch points to the next upcoming minor (or major) versio
 <ol>
 <li class="">If you release a patch version, make sure all the necessary commits are present on the relevant <code>release-x.y</code> branch</li>
 <li class="">Create a new signed <strong>tag</strong> using <a href="https://semver.org/" target="_blank" rel="noopener noreferrer" class="">SemVer</a> (for example <code>1.0.0</code>, or <code>1.0.0-alpha.1</code>)<!-- -->
-<div class="language-sh codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-sh codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token plain">git tag -s 1.0.0 -m &#x27;Release version 1.0.0&#x27;</span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">git push origin 1.0.0</span><br></div></code></pre></div></div>
+<div class="language-sh codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-sh codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token plain">git tag -s 1.0.0 -m &#x27;Release version 1.0.0&#x27;</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">git push origin 1.0.0</span><br></span></code></pre></div></div>
 </li>
 <li class="">Go to the <a href="https://github.com/DataSQRL/flink-sql-runner/releases/new" target="_blank" rel="noopener noreferrer" class="">GitHub Releases page</a></li>
 <li class="">Fill in the release title and changelog (optional but recommended)</li>
