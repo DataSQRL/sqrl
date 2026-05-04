@@ -45,19 +45,10 @@ class FlinkSqlRunnerIT {
         flink
             .getContainer()
             .execInContainer(
-                "flink",
-                "run",
-                "./plugins/flink-sql-runner/flink-sql-runner.uber.jar",
+                "sql-runner",
                 "--planfile",
                 "/flink/sql/" + testCase + "/build/deploy/plan/flink-compiled-plan.json")
             .getStdout();
-
-    //    assertThat(output)
-    //        // check for flink runner functions
-    //        .contains(text_search.class.getName())
-    //        // check for sqrl specific functions
-    //        .contains(Noop.class.getName())
-    //        .contains(HashColumns.class.getName());
 
     log.info("Container output: {}", output);
 
