@@ -166,7 +166,7 @@
     <slf4j.version>1.7.36</slf4j.version>
     <snowflake-jdbc.version>4.1.0</snowflake-jdbc.version>
     <snakeyaml.version>2.6</snakeyaml.version>
-    <swagger-core.version>2.2.48</swagger-core.version>
+    <swagger-core.version>2.2.49</swagger-core.version>
     <testcontainers.version>2.0.5</testcontainers.version>
     <vertx.version>5.0.11</vertx.version>
 
