@@ -104,6 +104,7 @@
     "webSocketClosingTimeout" : 10,
     "tracingPolicy" : "ALWAYS",
     "registerWebSocketWriteHandlers" : false,
+    "http2MaxSmallContinuationFrames" : 16,
     "http2RstFloodMaxRstFramePerWindow" : 200,
     "http2RstFloodWindowDuration" : 30,
     "http2RstFloodWindowDurationTimeUnit" : "SECONDS",
