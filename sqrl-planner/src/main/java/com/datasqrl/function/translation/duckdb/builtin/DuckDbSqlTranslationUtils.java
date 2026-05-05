@@ -21,6 +21,8 @@ import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.SqlWriter;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 final class DuckDbSqlTranslationUtils {
 
@@ -159,6 +161,17 @@ final class DuckDbSqlTranslationUtils {
     }
 
     return out.toString();
+  }
+
+  static void writeNullIfEmptyVarchar(SqlWriter writer, SqlNode operand) {
+    var nullIf = writer.startFunCall("NULLIF");
+    var cast = writer.startFunCall("CAST");
+    operand.unparse(writer, 0, 0);
+    writer.print(" AS VARCHAR");
+    writer.endFunCall(cast);
+    writer.sep(",", true);
+    SqlLiteral.createCharString("", SqlParserPos.ZERO).unparse(writer, 0, 0);
+    writer.endFunCall(nullIf);
   }
 
   private static void appendLiteral(StringBuilder out, char ch) {
