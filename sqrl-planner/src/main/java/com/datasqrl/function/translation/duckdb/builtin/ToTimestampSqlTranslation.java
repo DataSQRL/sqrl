@@ -15,13 +15,15 @@
  */
 package com.datasqrl.function.translation.duckdb.builtin;
 
+import static com.datasqrl.function.translation.duckdb.builtin.DuckDbSqlTranslationUtils.writeNullIfEmptyVarchar;
+
 import com.datasqrl.function.CalciteFunctionUtil;
 import com.datasqrl.function.translation.DuckDbSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
-import java.util.ArrayList;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
@@ -35,19 +37,25 @@ public class ToTimestampSqlTranslation extends DuckDbSqlTranslation {
   @Override
   public void unparse(SqlCall call, SqlWriter writer, int leftPrec, int rightPrec) {
     var operandCount = call.operandCount();
-    var operands = new ArrayList<>(call.getOperandList());
 
     if (operandCount == 1) {
-      var cast = writer.startFunCall("CAST");
-      operands.get(0).unparse(writer, 0, 0);
-      writer.print(" AS TIMESTAMP");
-      writer.endFunCall(cast);
+      writeTimestampCast(writer, call.operand(0));
 
-    } else if (operandCount >= 2 && operands.get(1) instanceof SqlLiteral literal) {
+    } else if (operandCount >= 2 && call.operand(1) instanceof SqlLiteral literal) {
       var duckDbPattern = DuckDbSqlTranslationUtils.flinkDateFormatToDuckDb(literal);
-      operands.set(1, SqlLiteral.createCharString(duckDbPattern, SqlParserPos.ZERO));
 
-      CalciteFunctionUtil.writeFunction("strptime", writer, operands);
+      var fn = writer.startFunCall("strptime");
+      writeNullIfEmptyVarchar(writer, call.operand(0));
+      writer.sep(",", true);
+      SqlLiteral.createCharString(duckDbPattern, SqlParserPos.ZERO).unparse(writer, 0, 0);
+      writer.endFunCall(fn);
     }
+  }
+
+  private static void writeTimestampCast(SqlWriter writer, SqlNode operand) {
+    var cast = writer.startFunCall("CAST");
+    writeNullIfEmptyVarchar(writer, operand);
+    writer.print(" AS TIMESTAMP");
+    writer.endFunCall(cast);
   }
 }

@@ -80,6 +80,8 @@ FunctionCalls := SELECT
 --     CEIL(TIMESTAMP '2024-01-02 03:04:05' TO MINUTE)  AS ceil_minute_example,
 
     DATE_FORMAT(TIMESTAMP '2024-01-02 03:04:05', 'yyyy-MM-dd') AS date_format_example,
+    DATE_FORMAT('', 'yyyy-MM-dd')                              AS date_format_empty_example,
+    DATE_FORMAT(CAST(NULL AS TIMESTAMP), 'yyyy-MM-dd')         AS date_format_null_example,
     CAST(
         TIMESTAMPADD(DAY, 2, TIMESTAMP '2024-01-02 03:04:05')
     AS TIMESTAMP (3))                                          AS timestampadd_example,
@@ -132,10 +134,12 @@ FunctionCalls := SELECT
 --     TO_TIMESTAMP_LTZ(1700000000, 0)                            AS to_timestamp_ltz_epoch_example,
 --     TO_TIMESTAMP_LTZ('2024-01-02 03:04:05', 'yyyy-MM-dd HH:mm:ss')
 --                                                             AS to_timestamp_ltz_str_example,
-    TO_TIMESTAMP('2024-01-02')
-                                                            AS to_timestamp_example,
-    TO_TIMESTAMP('2024-01-02 03:04', 'yyyy-MM-dd HH:mm')
-                                                            AS to_timestamp_pattern_example,
+    TO_TIMESTAMP('2024-01-02')                                 AS to_timestamp_example,
+    TO_TIMESTAMP('2024-01-02 03:04', 'yyyy-MM-dd HH:mm')       AS to_timestamp_pattern_example,
+    TO_TIMESTAMP('')                                           AS to_timestamp_empty_example,
+    TO_TIMESTAMP('', 'yyyy-MM-dd HH:mm')                       AS to_timestamp_empty_pattern_example,
+    TO_TIMESTAMP(CAST(NULL AS STRING))                         AS to_timestamp_null_example,
+    TO_TIMESTAMP(CAST(NULL AS STRING), 'yyyy-MM-dd HH:mm')     AS to_timestamp_null_pattern_example,
     IF(1 < 2, 'yes', 'no')                                     AS if_example,
     IFNULL(CAST(NULL AS STRING), 'fallback')                   AS ifnull_example,
     IS_ALPHA('OnlyLetters')                                    AS is_alpha_example,
