@@ -16,8 +16,11 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.OsProcessManager;
 import java.nio.file.Path;
+import lombok.SneakyThrows;
+import org.apache.flink.configuration.Configuration;
 import picocli.CommandLine.Option;
 
 public abstract class BaseOsProcessManagerCmd extends BaseCmd {
@@ -47,5 +50,16 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
     }
 
     return cli.rootDir.resolve(targetFolder);
+  }
+
+  /**
+   * Loads the Flink configuration generated for the plan directory.
+   *
+   * @param planDir directory containing the compiled plan artifacts
+   * @return loaded Flink configuration
+   */
+  @SneakyThrows
+  protected Configuration getFlinkConfig(Path planDir) {
+    return ConfigLoaderUtils.loadFlinkConfig(planDir);
   }
 }
