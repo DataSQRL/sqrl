@@ -45,7 +45,7 @@ public class RunCmd extends AbstractCompileCmd {
     // Run
     var env = GlobalEnvironmentStore.getAll();
     var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
-    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+    var flinkConfig = getFlinkConfig(planDir);
 
     var sqrlRun = DatasqrlRun.blocking(planDir, sqrlConfig, flinkConfig, env);
     sqrlRun.run();

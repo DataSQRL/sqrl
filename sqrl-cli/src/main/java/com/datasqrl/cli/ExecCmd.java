@@ -19,7 +19,6 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.util.ConfigLoaderUtils;
-import java.io.IOException;
 import java.nio.file.Path;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.DeploymentOptions;
@@ -49,11 +48,15 @@ public class ExecCmd extends BaseOsProcessManagerCmd {
   }
 
   /**
-   * Loads the Flink configuration from the plan directory. If no deployment target is configured,
-   * defaults to local attached execution.
+   * Loads the Flink configuration and defaults execution to local attached mode when no deployment
+   * target is configured.
+   *
+   * @param planDir directory containing the compiled plan artifacts
+   * @return Flink configuration for command execution
    */
-  private Configuration getFlinkConfig(Path planDir) throws IOException {
-    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+  @Override
+  protected Configuration getFlinkConfig(Path planDir) {
+    var flinkConfig = super.getFlinkConfig(planDir);
     if (!flinkConfig.contains(DeploymentOptions.TARGET)) {
       flinkConfig.set(DeploymentOptions.TARGET, "local");
       flinkConfig.set(DeploymentOptions.ATTACHED, true);

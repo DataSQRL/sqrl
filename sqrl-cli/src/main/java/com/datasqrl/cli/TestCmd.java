@@ -21,7 +21,11 @@ import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
+import org.apache.flink.configuration.ClusterOptions;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.RestartStrategyOptions;
 import picocli.CommandLine.Command;
 
 @Command(
@@ -54,7 +58,7 @@ public class TestCmd extends AbstractCompileCmd {
       // Test
       var env = GlobalEnvironmentStore.getAll();
       var sqrlConfig = ConfigLoaderUtils.loadResolvedConfig(errors, getBuildDir());
-      var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+      var flinkConfig = getFlinkConfig(planDir);
 
       var sqrlTest =
           new DatasqrlTest(
@@ -70,6 +74,23 @@ public class TestCmd extends AbstractCompileCmd {
         formatter.newline();
       }
     }
+  }
+
+  /**
+   * Loads the Flink configuration and disables job restarting for test runs.
+   *
+   * @param planDir directory containing the compiled plan artifacts
+   * @return Flink configuration for test execution
+   */
+  @Override
+  protected Configuration getFlinkConfig(Path planDir) {
+    var flinkConfig = super.getFlinkConfig(planDir);
+    flinkConfig.set(RestartStrategyOptions.RESTART_STRATEGY, "none");
+    flinkConfig.set(
+        ClusterOptions.UNCAUGHT_EXCEPTION_HANDLING,
+        ClusterOptions.UncaughtExceptionHandleMode.FAIL);
+
+    return flinkConfig;
   }
 
   @Override
