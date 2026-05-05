@@ -25,7 +25,9 @@ import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.OsProcessManager;
 import java.nio.file.Path;
+import org.apache.flink.configuration.ClusterOptions;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.RestartStrategyOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +41,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class TestCmdTest {
 
   @Mock private ErrorCollector errors;
-  @Mock private Configuration flinkConfig;
 
   private TestCmd testCmd;
 
@@ -71,6 +72,7 @@ class TestCmdTest {
     try (MockedStatic<ConfigLoaderUtils> mocked = mockStatic(ConfigLoaderUtils.class)) {
 
       var mockSqrlConfig = mock(PackageJson.class);
+      var flinkConfig = new Configuration();
       mocked
           .when(() -> ConfigLoaderUtils.loadResolvedConfig(errors, buildDir))
           .thenReturn(mockSqrlConfig);
@@ -96,6 +98,10 @@ class TestCmdTest {
 
         DatasqrlTest constructed = datasqrlTestMocked.constructed().get(0);
         verify(constructed).run();
+
+        assertThat(flinkConfig.get(RestartStrategyOptions.RESTART_STRATEGY)).isEqualTo("none");
+        assertThat(flinkConfig.get(ClusterOptions.UNCAUGHT_EXCEPTION_HANDLING))
+            .isEqualTo(ClusterOptions.UncaughtExceptionHandleMode.FAIL);
       }
     }
   }
