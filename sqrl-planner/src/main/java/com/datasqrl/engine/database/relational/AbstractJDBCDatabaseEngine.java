@@ -54,14 +54,6 @@ public abstract class AbstractJDBCDatabaseEngine extends AbstractJDBCEngine
     return tableBuilder.getConnectorOptions().get(CONNECTOR_TABLENAME_KEY);
   }
 
-  //  @Override
-  //  public boolean supports(FunctionDefinition function) {
-  //    //TODO: @Daniel: change to determining which functions are supported by dialect & database
-  // type
-  //    //This is a hack - we just check that it's not a tumble window function
-  //    return FunctionUtil.getSqrlTimeTumbleFunction(function).isEmpty();
-  //  }
-
   public IndexSelectorConfig getIndexSelectorConfig() {
     return IndexSelectorConfigByDialect.of(getDialect());
   }

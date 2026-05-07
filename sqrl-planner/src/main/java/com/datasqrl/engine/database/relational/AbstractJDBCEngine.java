@@ -105,8 +105,9 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
       tableBuilder.setPartition(List.of());
     }
 
-    var connectorOptions =
-        getConnectorOptions(originalTableName, tableBuilder.getTableName(), tableAnalysis);
+    var connCtxBuilder =
+        Context.builder().tableName(originalTableName).tableId(tableBuilder.getTableName());
+    var connectorOptions = getConnectorOptions(connCtxBuilder, tableAnalysis);
     // preserve any existing connector options
     connectorOptions.putAll(tableBuilder.getConnectorOptions());
     tableBuilder.setConnectorOptions(connectorOptions);
@@ -189,12 +190,10 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
   }
 
   protected Map<String, String> getConnectorOptions(
-      String originalTableName, String tableId, TableAnalysis tableAnalysis) {
+      Context.ContextBuilder ctxBuilder, TableAnalysis tableAnalysis) {
+
     return connector
-        .map(
-            connConf ->
-                connConf.toMapWithSubstitution(
-                    Context.builder().tableName(originalTableName).tableId(tableId).build()))
+        .map(connConf -> connConf.toMapWithSubstitution(ctxBuilder.build()))
         .orElseThrow(
             () ->
                 new IllegalArgumentException(

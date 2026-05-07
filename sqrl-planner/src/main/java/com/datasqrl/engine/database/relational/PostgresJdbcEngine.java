@@ -15,14 +15,21 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.jdbc.FlinkSqrlPostgresDataTypeMapper;
+import com.datasqrl.flinkrunner.connector.postgresql.jdbc.SqrlPostgresOptions;
+import com.datasqrl.flinkrunner.connector.postgresql.jdbc.SqrlPostgresOptions.OnConflictAction;
 import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 import jakarta.inject.Inject;
+import java.util.Map;
+import java.util.TreeMap;
 import lombok.NonNull;
+import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
 
 public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
 
@@ -52,5 +59,37 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
   @Override
   public JdbcStatementFactory getStatementFactory() {
     return new PostgresStatementFactory();
+  }
+
+  @Override
+  protected Map<String, String> getConnectorOptions(
+      ConnectorConf.Context.ContextBuilder ctxBuilder, TableAnalysis tableAnalysis) {
+
+    var connectorOptions = super.getConnectorOptions(ctxBuilder, tableAnalysis);
+    var mutableOptions = new TreeMap<>(connectorOptions);
+
+    var tableType = tableAnalysis.getType();
+    if (tableType.isStream()) {
+      mutableOptions.put(
+          SqrlPostgresOptions.SINK_ON_CONFLICT.key(), OnConflictAction.IGNORE.name());
+
+      return mutableOptions;
+    }
+
+    if (tableType.isState()) {
+      for (var field : tableAnalysis.getRowType().getFieldList()) {
+        var fieldName = field.getName();
+        if (field.getType() instanceof TimeIndicatorRelDataType) {
+          mutableOptions.put(
+              SqrlPostgresOptions.SINK_ON_CONFLICT.key(), OnConflictAction.TIMESTAMP.name());
+          mutableOptions.put(SqrlPostgresOptions.SINK_ON_CONFLICT_COLUMN.key(), fieldName);
+
+          return mutableOptions;
+        }
+      }
+    }
+
+    // No PG-specific change, return as is
+    return connectorOptions;
   }
 }
