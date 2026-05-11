@@ -165,10 +165,12 @@ final class DuckDbSqlTranslationUtils {
 
   static void writeNullIfEmptyVarchar(SqlWriter writer, SqlNode operand) {
     var nullIf = writer.startFunCall("NULLIF");
+    var trim = writer.startFunCall("TRIM");
     var cast = writer.startFunCall("CAST");
     operand.unparse(writer, 0, 0);
     writer.print(" AS VARCHAR");
     writer.endFunCall(cast);
+    writer.endFunCall(trim);
     writer.sep(",", true);
     SqlLiteral.createCharString("", SqlParserPos.ZERO).unparse(writer, 0, 0);
     writer.endFunCall(nullIf);
