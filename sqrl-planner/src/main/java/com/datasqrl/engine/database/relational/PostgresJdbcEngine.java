@@ -15,13 +15,15 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import static com.datasqrl.flinkrunner.connector.postgresql.jdbc.SqrlPostgresOptions.SINK_ON_CONFLICT;
+import static com.datasqrl.flinkrunner.connector.postgresql.jdbc.SqrlPostgresOptions.SINK_ON_CONFLICT_COLUMN;
+
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.jdbc.FlinkSqrlPostgresDataTypeMapper;
-import com.datasqrl.flinkrunner.connector.postgresql.jdbc.SqrlPostgresOptions;
 import com.datasqrl.flinkrunner.connector.postgresql.jdbc.SqrlPostgresOptions.OnConflictAction;
 import com.datasqrl.graphql.jdbc.DatabaseType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -29,7 +31,7 @@ import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.TreeMap;
 import lombok.NonNull;
-import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
+import org.apache.calcite.rel.type.RelDataTypeField;
 
 public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
 
@@ -70,22 +72,20 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
 
     var tableType = tableAnalysis.getType();
     if (tableType.isStream()) {
-      mutableOptions.put(
-          SqrlPostgresOptions.SINK_ON_CONFLICT.key(), OnConflictAction.IGNORE.name());
+      mutableOptions.putIfAbsent(SINK_ON_CONFLICT.key(), OnConflictAction.IGNORE.name());
 
       return mutableOptions;
     }
 
     if (tableType.isState()) {
-      for (var field : tableAnalysis.getRowType().getFieldList()) {
-        var fieldName = field.getName();
-        if (field.getType() instanceof TimeIndicatorRelDataType) {
-          mutableOptions.put(
-              SqrlPostgresOptions.SINK_ON_CONFLICT.key(), OnConflictAction.TIMESTAMP.name());
-          mutableOptions.put(SqrlPostgresOptions.SINK_ON_CONFLICT_COLUMN.key(), fieldName);
+      var tsCol =
+          tableAnalysis.getRowTime().map(tableAnalysis::getField).map(RelDataTypeField::getName);
 
-          return mutableOptions;
-        }
+      if (tsCol.isPresent() && !mutableOptions.containsKey(SINK_ON_CONFLICT.key())) {
+        mutableOptions.put(SINK_ON_CONFLICT.key(), OnConflictAction.TIMESTAMP.name());
+        mutableOptions.put(SINK_ON_CONFLICT_COLUMN.key(), tsCol.get());
+
+        return mutableOptions;
       }
     }
 
