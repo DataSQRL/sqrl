@@ -83,8 +83,8 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
 
   @Override
   protected Map<String, String> getConnectorOptions(
-      String originalTableName, String tableId, TableAnalysis tableAnalysis) {
-    var connectorOptions = super.getConnectorOptions(originalTableName, tableId, tableAnalysis);
+      Context.ContextBuilder ctxBuilder, TableAnalysis tableAnalysis) {
+    var connectorOptions = super.getConnectorOptions(ctxBuilder, tableAnalysis);
     var mutableOptions = new TreeMap<>(connectorOptions);
 
     if (isGlueCatalog(mutableOptions)) {
@@ -111,13 +111,7 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
             maintenanceType ->
                 mutableOptions.putAll(
                     maintenanceConnector
-                        .map(
-                            connConf ->
-                                connConf.toMapWithSubstitution(
-                                    Context.builder()
-                                        .tableName(originalTableName)
-                                        .tableId(tableId)
-                                        .build()))
+                        .map(connConf -> connConf.toMapWithSubstitution(ctxBuilder.build()))
                         .orElseThrow(
                             () ->
                                 new IllegalArgumentException(
