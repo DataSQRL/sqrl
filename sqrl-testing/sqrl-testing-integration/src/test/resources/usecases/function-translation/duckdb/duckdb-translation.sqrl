@@ -81,6 +81,7 @@ FunctionCalls := SELECT
 
     DATE_FORMAT(TIMESTAMP '2024-01-02 03:04:05', 'yyyy-MM-dd') AS date_format_example,
     DATE_FORMAT('', 'yyyy-MM-dd')                              AS date_format_empty_example,
+    DATE_FORMAT('  ', 'yyyy-MM-dd')                            AS date_format_blank_example,
     DATE_FORMAT(CAST(NULL AS TIMESTAMP), 'yyyy-MM-dd')         AS date_format_null_example,
     CAST(
         TIMESTAMPADD(DAY, 2, TIMESTAMP '2024-01-02 03:04:05')
@@ -138,6 +139,8 @@ FunctionCalls := SELECT
     TO_TIMESTAMP('2024-01-02 03:04', 'yyyy-MM-dd HH:mm')       AS to_timestamp_pattern_example,
     TO_TIMESTAMP('')                                           AS to_timestamp_empty_example,
     TO_TIMESTAMP('', 'yyyy-MM-dd HH:mm')                       AS to_timestamp_empty_pattern_example,
+    TO_TIMESTAMP('  ')                                         AS to_timestamp_blank_example,
+    TO_TIMESTAMP('  ', 'yyyy-MM-dd HH:mm')                     AS to_timestamp_blank_pattern_example,
     TO_TIMESTAMP(CAST(NULL AS STRING))                         AS to_timestamp_null_example,
     TO_TIMESTAMP(CAST(NULL AS STRING), 'yyyy-MM-dd HH:mm')     AS to_timestamp_null_pattern_example,
     IF(1 < 2, 'yes', 'no')                                     AS if_example,
