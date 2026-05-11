@@ -85,9 +85,10 @@ public final class SqlScriptStatementSplitter {
       current.append(rawLine);
       current.append(LINE_DELIMITER);
 
-      if (rawLine.trim().endsWith(STATEMENT_DELIMITER)) {
-        statements.add(
-            new ParsedObject<>(current.toString(), new FileLocation(statementLineNo, 1)));
+      if (!inStringLiteral && rawLine.trim().endsWith(STATEMENT_DELIMITER)) {
+        var fileLoc = new FileLocation(statementLineNo, 1);
+        var parsedObj = new ParsedObject<>(current.toString(), fileLoc);
+        statements.add(parsedObj);
         current = null;
       }
     }
