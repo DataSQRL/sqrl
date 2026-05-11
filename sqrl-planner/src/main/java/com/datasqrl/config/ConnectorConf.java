@@ -39,8 +39,6 @@ public interface ConnectorConf {
   class Context {
     String tableName;
     String tableId;
-    String filename;
-    String format;
     @Singular Map<String, String> variables;
 
     public Map<String, String> toVariables() {
@@ -50,12 +48,6 @@ public interface ConnectorConf {
       }
       if (tableId != null) {
         vars.put("table-id", tableId);
-      }
-      if (filename != null) {
-        vars.put("filename", filename);
-      }
-      if (format != null) {
-        vars.put("format", format);
       }
       return vars;
     }
