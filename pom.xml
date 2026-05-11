@@ -149,7 +149,7 @@
     <json-schema.version>2.0.1</json-schema.version>
     <junit.jupiter.version>6.0.3</junit.jupiter.version>
     <kafka.version>3.9.1</kafka.version>
-    <log4j.version>2.25.4</log4j.version>
+    <log4j.version>2.26.0</log4j.version>
     <lombok.version>1.18.46</lombok.version>
     <mcp-sdk.version>0.18.1</mcp-sdk.version>
     <micrometer.version>1.16.5</micrometer.version>
