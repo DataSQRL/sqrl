@@ -41,8 +41,8 @@ public final class SqlScriptStatementSplitter {
 
   private static final String STATEMENT_DELIMITER = ";"; // a statement should end with `;`
   private static final String LINE_DELIMITER = "\n";
+  private static final char SINGLE_QUOTE = '\'';
 
-  private static final Pattern LINE_COMMENT_PATTERN = Pattern.compile("--.*");
   // Matches block comments that are NOT hints or doc comments
   private static final Pattern BLOCK_COMMENT_PATTERN =
       Pattern.compile("/\\*(?!\\s*\\+)(?!\\*)[\\s\\S]*?\\*/");
@@ -66,10 +66,13 @@ public final class SqlScriptStatementSplitter {
     StringBuilder current = null;
     var statementLineNo = 0;
     var lineNo = 0;
+    var inStringLiteral = false;
     for (var line : formatted.split(LINE_DELIMITER)) {
       lineNo++;
 
-      var rawLine = LINE_COMMENT_PATTERN.matcher(line).replaceAll("");
+      var lineCommentResult = removeLineComment(line, inStringLiteral);
+      var rawLine = lineCommentResult.line();
+      inStringLiteral = lineCommentResult.inStringLiteral();
       if (rawLine.isBlank()) {
         continue;
       }
@@ -138,6 +141,51 @@ public final class SqlScriptStatementSplitter {
   }
 
   /**
+   * Removes a SQL line comment from a single line while preserving {@code --} inside SQL string
+   * literals.
+   *
+   * <p>The {@code inStringLiteral} argument carries parser state from the previous line so
+   * multiline string literals are handled correctly. Only single-quoted SQL string literals are
+   * recognized; escaped quotes are handled using SQL's doubled quote syntax ({@code ''}).
+   *
+   * @param line the line to scan
+   * @param inStringLiteral whether the previous line ended inside a single-quoted string literal
+   * @return the line without its trailing comment and the updated string-literal state
+   */
+  private static LineCommentResult removeLineComment(String line, boolean inStringLiteral) {
+    var lineEnd = line.length();
+
+    for (var i = 0; i < line.length(); i++) {
+      var ch = line.charAt(i);
+
+      if (ch == SINGLE_QUOTE) {
+        if (isEscapedSingleQuote(line, i, inStringLiteral)) {
+          i++;
+          continue;
+        }
+
+        inStringLiteral = !inStringLiteral;
+        continue;
+      }
+
+      if (!inStringLiteral && startsLineComment(line, i)) {
+        lineEnd = i;
+        break;
+      }
+    }
+
+    return new LineCommentResult(line.substring(0, lineEnd), inStringLiteral);
+  }
+
+  private static boolean isEscapedSingleQuote(String line, int pos, boolean inStringLiteral) {
+    return inStringLiteral && pos + 1 < line.length() && line.charAt(pos + 1) == SINGLE_QUOTE;
+  }
+
+  private static boolean startsLineComment(String line, int pos) {
+    return line.charAt(pos) == '-' && pos + 1 < line.length() && line.charAt(pos + 1) == '-';
+  }
+
+  /**
    * Removes block comments from SQL script while preserving SQL hints and doc comments.
    *
    * <p>Newlines within removed comments are preserved as blank lines to maintain accurate line
@@ -163,4 +211,6 @@ public final class SqlScriptStatementSplitter {
 
     return result.toString();
   }
+
+  private record LineCommentResult(String line, boolean inStringLiteral) {}
 }
