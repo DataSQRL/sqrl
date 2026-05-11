@@ -56,4 +56,25 @@ class SqlScriptStatementSplitterTest {
             SELECT 'hello -- not a comment' AS `val1`;
             """);
   }
+
+  @Test
+  void givenStatementDelimiterInMultilineStringLiteral_whenSplitStatements_thenPreservesLiteral() {
+    var script =
+        """
+        SELECT 'first line;
+                -- not a comment
+                last line' AS `val`
+        """;
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly(
+            """
+            SELECT 'first line;
+                    -- not a comment
+                    last line' AS `val`;
+            """);
+  }
 }
