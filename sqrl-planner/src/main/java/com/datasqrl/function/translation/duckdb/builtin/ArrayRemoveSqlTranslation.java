@@ -20,7 +20,10 @@ import com.datasqrl.function.translation.DuckDbSqlTranslation;
 import com.datasqrl.function.translation.SqlTranslation;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriter;
+import org.apache.calcite.sql.type.SqlTypeName;
 
 @AutoService(SqlTranslation.class)
 public class ArrayRemoveSqlTranslation extends DuckDbSqlTranslation {
@@ -34,14 +37,24 @@ public class ArrayRemoveSqlTranslation extends DuckDbSqlTranslation {
     var arr = call.operand(0);
     var elemToRemove = call.operand(1);
 
-    // list_filter(arr, x -> x <> elem_to_remove);
+    // Non-null elem to remove: list_filter(arr, x -> x <> elem_to_remove);
+    // Null as elem to remove:  list_filter(arr, x -> x IS NOT NULL);
     var listFilter = writer.startFunCall("list_filter");
     arr.unparse(writer, 0, 0);
     writer.sep(",", true);
 
-    writer.print("x -> x <>");
-    elemToRemove.unparse(writer, 0, 0);
+    if (isNullLiteral(elemToRemove)) {
+      writer.print("x -> x IS NOT NULL");
+
+    } else {
+      writer.print("x -> x <> ");
+      elemToRemove.unparse(writer, 0, 0);
+    }
 
     writer.endFunCall(listFilter);
+  }
+
+  private static boolean isNullLiteral(SqlNode node) {
+    return node instanceof SqlLiteral lit && lit.getTypeName() == SqlTypeName.NULL;
   }
 }
