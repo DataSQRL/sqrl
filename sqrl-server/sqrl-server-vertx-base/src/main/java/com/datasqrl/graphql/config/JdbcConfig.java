@@ -45,5 +45,8 @@ public class JdbcConfig {
 
     @JsonProperty("use-version-guessing")
     private boolean useVersionGuessing;
+
+    @JsonProperty("memory-limit")
+    private String memoryLimit;
   }
 }

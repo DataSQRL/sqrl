@@ -34,9 +34,15 @@ public final class DuckDbExtensions {
   public Optional<String> buildInitSql() {
     var extensionDir = System.getenv(DUCKDB_EXTENSIONS_DIR);
 
+    if (config.getMemoryLimit() != null && !config.getMemoryLimit().isBlank()) {
+      joiner.add("SET memory_limit='" + config.getMemoryLimit() + "'");
+    }
+
     if (extensionDir == null || extensionDir.trim().isEmpty()) {
-      log.warn("Environment variable {} is not set, extensions will not be loaded.", extensionDir);
-      return Optional.empty();
+      log.warn(
+          "Environment variable {} is not set, extensions will not be loaded.",
+          DUCKDB_EXTENSIONS_DIR);
+      return joiner.length() > 1 ? Optional.of(joiner.toString()) : Optional.empty();
     }
 
     joiner.add("SET extension_directory='" + extensionDir + "'");
