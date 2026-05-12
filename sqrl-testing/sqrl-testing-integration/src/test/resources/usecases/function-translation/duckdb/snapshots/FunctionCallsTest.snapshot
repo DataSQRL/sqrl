@@ -94,6 +94,8 @@
       "array_slice_example" : [ "b", "c", "d" ],
       "array_concat_example" : [ "a", "b", "c", "d", "e" ],
       "array_remove_example" : [ "a", "c" ],
+      "array_remove_null_example" : [ "a" ],
+      "array_remove_null_cast_example" : [ "a" ],
       "array_join_example" : "a--c",
       "split_example" : [ "a", "b", "c" ],
       "sha1_example" : "aaf4c61ddcc5e8a2dabede0f3b482cd9aea9434d",
