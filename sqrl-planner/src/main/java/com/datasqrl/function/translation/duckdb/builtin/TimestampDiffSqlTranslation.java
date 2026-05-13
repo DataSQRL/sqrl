@@ -113,7 +113,7 @@ public class TimestampDiffSqlTranslation implements OperatorRuleTransform {
    *       WEEK and (when wrapped in an outer user CAST) QUARTER, plus an extra outer user CAST.
    * </ul>
    */
-  private static RexNode rewriteCast(RelBuilder relBuilder, RexCall call) {
+  static RexNode rewriteCast(RelBuilder relBuilder, RexCall call) {
     if (call.getOperands().isEmpty()) {
       return call;
     }
