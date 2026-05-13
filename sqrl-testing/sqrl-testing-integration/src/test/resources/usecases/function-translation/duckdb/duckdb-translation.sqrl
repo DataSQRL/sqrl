@@ -56,6 +56,12 @@ FunctionCalls := SELECT
     TRY_CAST('2024-01-02 03:04:05' AS TIMESTAMP_LTZ(3)) IS NOT NULL
                                                      AS try_cast_to_timestamptz_example,
     TRY_CAST('abc' AS INT)                           AS try_cast_fail_example,
+    TRY_CAST(
+        TIMESTAMPDIFF(
+            MONTH,
+            CAST(DATE_FORMAT(TIMESTAMP '2024-01-02 03:04:05', 'yyyy-MM-01') AS TIMESTAMP),
+            CAST(DATE_FORMAT(TIMESTAMP '2024-03-02 03:04:05', 'yyyy-MM-01') AS TIMESTAMP))
+    AS DECIMAL(38, 2))                               AS try_cast_timestampdiff_decimal_example,
 
     NOW() IS NOT NULL                                AS now_example,
     LOCALTIME IS NOT NULL                            AS local_time_example,

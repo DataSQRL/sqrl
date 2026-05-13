@@ -24,12 +24,16 @@ import com.datasqrl.calcite.function.OperatorRuleTransform;
 import com.google.auto.service.AutoService;
 import java.util.List;
 import org.apache.calcite.plan.RelRule;
+import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexNode;
+import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSpecialOperator;
 import org.apache.calcite.sql.SqlWriter;
+import org.apache.calcite.tools.RelBuilder;
 
 /**
  * DuckDB has a TRY_CAST function, this is a workaround, cause currently Flink's
@@ -64,7 +68,7 @@ public class TryCastSqlTranslation implements OperatorRuleTransform {
                       var operands = call.getOperands();
                       checkArgument(operands.size() == 1);
 
-                      var value = operands.get(0);
+                      var value = rewriteTimestampDiffOperands(relBuilder, operands.get(0));
                       var targetType = call.getType();
                       var rexBuilder = relBuilder.getRexBuilder();
 
@@ -80,6 +84,22 @@ public class TryCastSqlTranslation implements OperatorRuleTransform {
                       return rexBuilder.makeCall(returnType, tryCast, List.of(value));
                     })
                 .toRule());
+  }
+
+  private static RexNode rewriteTimestampDiffOperands(RelBuilder relBuilder, RexNode value) {
+    return value.accept(
+        new RexShuttle() {
+          @Override
+          public RexNode visitCall(RexCall call) {
+            if (call.getKind() == SqlKind.CAST) {
+              var rewritten = TimestampDiffSqlTranslation.rewriteCast(relBuilder, call);
+              if (rewritten != call) {
+                return rewritten;
+              }
+            }
+            return super.visitCall(call);
+          }
+        });
   }
 
   @Override
