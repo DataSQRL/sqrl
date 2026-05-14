@@ -56,7 +56,7 @@ public class DateFormatSqlTranslation extends DuckDbSqlTranslation {
   }
 
   private static void writeTimestampCast(SqlWriter writer, SqlNode operand) {
-    var cast = writer.startFunCall("CAST");
+    var cast = writer.startFunCall("TRY_CAST");
     writeNullIfEmptyVarchar(writer, operand);
     writer.print(" AS TIMESTAMP");
     writer.endFunCall(cast);
