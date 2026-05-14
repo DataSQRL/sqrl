@@ -20,7 +20,6 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -43,10 +42,6 @@ public final class SqlScriptStatementSplitter {
   private static final String LINE_DELIMITER = "\n";
   private static final char SINGLE_QUOTE = '\'';
 
-  // Matches block comments that are NOT hints or doc comments
-  private static final Pattern BLOCK_COMMENT_PATTERN =
-      Pattern.compile("/\\*(?!\\s*\\+)(?!\\*)[\\s\\S]*?\\*/");
-
   /**
    * Parses SQL statements from a script.
    *
@@ -61,18 +56,21 @@ public final class SqlScriptStatementSplitter {
     var statements = new ArrayList<ParsedObject<String>>();
 
     var formatted = formatEndOfSqlFile(script);
-    formatted = removeBlockComments(formatted);
 
     StringBuilder current = null;
     var statementLineNo = 0;
     var lineNo = 0;
     var inStringLiteral = false;
+    var inPreservedBlockComment = false;
+    var inBlockComment = false;
     for (var line : formatted.split(LINE_DELIMITER)) {
       lineNo++;
 
-      var lineCommentResult = removeLineComment(line, inStringLiteral);
-      var rawLine = lineCommentResult.line();
-      inStringLiteral = lineCommentResult.inStringLiteral();
+      var parsedLine = parseLine(line, inStringLiteral, inPreservedBlockComment, inBlockComment);
+      var rawLine = parsedLine.line();
+      inStringLiteral = parsedLine.inStringLiteral();
+      inPreservedBlockComment = parsedLine.inPreservedBlockComment();
+      inBlockComment = parsedLine.inBlockComment();
       if (rawLine.isBlank()) {
         continue;
       }
@@ -85,7 +83,10 @@ public final class SqlScriptStatementSplitter {
       current.append(rawLine);
       current.append(LINE_DELIMITER);
 
-      if (!inStringLiteral && rawLine.trim().endsWith(STATEMENT_DELIMITER)) {
+      if (!inStringLiteral
+          && !inPreservedBlockComment
+          && !inBlockComment
+          && rawLine.trim().endsWith(STATEMENT_DELIMITER)) {
         var fileLoc = new FileLocation(statementLineNo, 1);
         var parsedObj = new ParsedObject<>(current.toString(), fileLoc);
         statements.add(parsedObj);
@@ -142,25 +143,62 @@ public final class SqlScriptStatementSplitter {
   }
 
   /**
-   * Removes a SQL line comment from a single line while preserving {@code --} inside SQL string
-   * literals.
+   * Parses a single line, removing SQL line comments and regular block comments while preserving
+   * comment markers in string literals, SQL hints, and doc comments.
    *
-   * <p>The {@code inStringLiteral} argument carries parser state from the previous line so
-   * multiline string literals are handled correctly. Only single-quoted SQL string literals are
+   * <p>The state arguments carry parser state from the previous line so multiline string literals
+   * and block comments are handled correctly. Only single-quoted SQL string literals are
    * recognized; escaped quotes are handled using SQL's doubled quote syntax ({@code ''}).
    *
-   * @param line the line to scan
+   * @param line the line to parse
    * @param inStringLiteral whether the previous line ended inside a single-quoted string literal
-   * @return the line without its trailing comment and the updated string-literal state
+   * @param inPreservedBlockComment whether the previous line ended inside a doc comment or SQL hint
+   * @param inBlockComment whether the previous line ended inside a regular block comment
+   * @return the parsed line and updated parser state
    */
-  private static LineCommentResult removeLineComment(String line, boolean inStringLiteral) {
-    var lineEnd = line.length();
+  private static ParsedLine parseLine(
+      String line,
+      boolean inStringLiteral,
+      boolean inPreservedBlockComment,
+      boolean inBlockComment) {
+    var parsed = new StringBuilder();
 
     for (var i = 0; i < line.length(); i++) {
+      if (inBlockComment) {
+        if (endsBlockComment(line, i)) {
+          inBlockComment = false;
+          i++;
+        }
+        continue;
+      }
+
+      if (inPreservedBlockComment) {
+        parsed.append(line.charAt(i));
+        if (endsBlockComment(line, i)) {
+          parsed.append(line.charAt(i + 1));
+          inPreservedBlockComment = false;
+          i++;
+        }
+        continue;
+      }
+
+      if (!inStringLiteral && startsBlockComment(line, i)) {
+        if (startsDocComment(line, i) || startsHintComment(line, i)) {
+          inPreservedBlockComment = true;
+          parsed.append(line.charAt(i));
+        } else {
+          inBlockComment = true;
+          i++;
+        }
+        continue;
+      }
+
       var ch = line.charAt(i);
 
       if (ch == SINGLE_QUOTE) {
+        parsed.append(ch);
         if (isEscapedSingleQuote(line, i, inStringLiteral)) {
+          parsed.append(line.charAt(i + 1));
           i++;
           continue;
         }
@@ -170,12 +208,14 @@ public final class SqlScriptStatementSplitter {
       }
 
       if (!inStringLiteral && startsLineComment(line, i)) {
-        lineEnd = i;
         break;
       }
+
+      parsed.append(ch);
     }
 
-    return new LineCommentResult(line.substring(0, lineEnd), inStringLiteral);
+    return new ParsedLine(
+        parsed.toString(), inStringLiteral, inPreservedBlockComment, inBlockComment);
   }
 
   private static boolean isEscapedSingleQuote(String line, int pos, boolean inStringLiteral) {
@@ -186,32 +226,31 @@ public final class SqlScriptStatementSplitter {
     return line.charAt(pos) == '-' && pos + 1 < line.length() && line.charAt(pos + 1) == '-';
   }
 
-  /**
-   * Removes block comments from SQL script while preserving SQL hints and doc comments.
-   *
-   * <p>Newlines within removed comments are preserved as blank lines to maintain accurate line
-   * numbering for error reporting.
-   *
-   * @param text The SQL script text.
-   * @return The text with regular block comments removed.
-   */
-  private static String removeBlockComments(String text) {
-    var matcher = BLOCK_COMMENT_PATTERN.matcher(text);
-    var result = new StringBuilder();
-    var lastEnd = 0;
-
-    while (matcher.find()) {
-      result.append(text, lastEnd, matcher.start());
-      // Count newlines in the comment and preserve them as blank lines
-      var comment = matcher.group();
-      var newlineCount = comment.chars().filter(ch -> ch == '\n').count();
-      result.append(LINE_DELIMITER.repeat((int) newlineCount));
-      lastEnd = matcher.end();
-    }
-    result.append(text.substring(lastEnd));
-
-    return result.toString();
+  private static boolean startsBlockComment(String text, int pos) {
+    return text.charAt(pos) == '/' && pos + 1 < text.length() && text.charAt(pos + 1) == '*';
   }
 
-  private record LineCommentResult(String line, boolean inStringLiteral) {}
+  private static boolean startsDocComment(String line, int pos) {
+    return line.charAt(pos) == '/'
+        && pos + 2 < line.length()
+        && line.charAt(pos + 1) == '*'
+        && line.charAt(pos + 2) == '*';
+  }
+
+  private static boolean startsHintComment(String text, int pos) {
+    return text.charAt(pos) == '/'
+        && pos + 2 < text.length()
+        && text.charAt(pos + 1) == '*'
+        && text.charAt(pos + 2) == '+';
+  }
+
+  private static boolean endsBlockComment(String line, int pos) {
+    return line.charAt(pos) == '*' && pos + 1 < line.length() && line.charAt(pos + 1) == '/';
+  }
+
+  private record ParsedLine(
+      String line,
+      boolean inStringLiteral,
+      boolean inPreservedBlockComment,
+      boolean inBlockComment) {}
 }
