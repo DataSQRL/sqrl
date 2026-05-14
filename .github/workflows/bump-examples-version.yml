@@ -33,13 +33,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: DataSQRL/datasqrl-examples
-          token: ${{ secrets.BOT_PAT }}
+          token: ${{ secrets.EXAMPLES_BOT_PAT }}
           path: datasqrl-examples
 
       - name: Bump SQRL_VERSION and open PR
         working-directory: datasqrl-examples
         env:
-          GH_TOKEN: ${{ secrets.BOT_PAT }}
+          GH_TOKEN: ${{ secrets.EXAMPLES_BOT_PAT }}
           VERSION: ${{ steps.version.outputs.version }}
         run: |
           set -euo pipefail
