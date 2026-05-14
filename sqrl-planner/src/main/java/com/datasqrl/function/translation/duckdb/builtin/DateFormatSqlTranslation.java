@@ -43,7 +43,10 @@ public class DateFormatSqlTranslation extends DuckDbSqlTranslation {
 
     // Flink DATE_FORMAT(ts, 'yyyy-MM-dd HH:mm:ss') uses Java-style patterns.
     // DuckDB strftime(ts, '%Y-%m-%d %H:%M:%S') uses strftime-style patterns.
-    var duckDbPattern = DuckDbSqlTranslationUtils.flinkDateFormatToDuckDb(call.operand(1));
+    var duckDbPattern =
+        DuckDbSqlTranslationUtils.flinkDateFormatToDuckDb(
+            call.operand(1),
+            DuckDbSqlTranslationUtils.getInputLiteralReplacements(call.operand(0)));
 
     var fn = writer.startFunCall("strftime");
     writeTimestampCast(writer, call.operand(0));
