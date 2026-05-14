@@ -18,6 +18,7 @@ package com.datasqrl.function.translation.duckdb.builtin;
 import java.math.BigDecimal;
 import java.util.Map;
 import org.apache.calcite.avatica.util.TimeUnit;
+import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
@@ -88,6 +89,11 @@ final class DuckDbSqlTranslationUtils {
   }
 
   static String flinkDateFormatToDuckDb(SqlLiteral patternLiteral) {
+    return flinkDateFormatToDuckDb(patternLiteral, Map.of());
+  }
+
+  static String flinkDateFormatToDuckDb(
+      SqlLiteral patternLiteral, Map<Character, String> literalReplacements) {
     var flinkPattern = patternLiteral.toValue();
 
     if (flinkPattern == null || flinkPattern.isEmpty()) {
@@ -96,6 +102,7 @@ final class DuckDbSqlTranslationUtils {
 
     var out = new StringBuilder(flinkPattern.length() + 8);
     boolean inQuote = false;
+    boolean inSqlEscapedQuote = false;
 
     for (int i = 0; i < flinkPattern.length(); ) {
       char ch = flinkPattern.charAt(i);
@@ -103,17 +110,32 @@ final class DuckDbSqlTranslationUtils {
       // Handle Java/SimpleDateFormat literal quoting using single quotes.
       if (ch == '\'') {
         if (i + 1 < flinkPattern.length() && flinkPattern.charAt(i + 1) == '\'') {
-          appendLiteral(out, '\'');
+          if (inQuote && inSqlEscapedQuote) {
+            inQuote = false;
+            inSqlEscapedQuote = false;
+            i += 2;
+            continue;
+          }
+
+          if (!inQuote && hasLaterEscapedQuote(flinkPattern, i + 2)) {
+            inQuote = true;
+            inSqlEscapedQuote = true;
+            i += 2;
+            continue;
+          }
+
+          appendLiteral(out, '\'', literalReplacements);
           i += 2;
           continue;
         }
         inQuote = !inQuote;
+        inSqlEscapedQuote = false;
         i++;
         continue;
       }
 
       if (inQuote) {
-        appendLiteral(out, ch);
+        appendLiteral(out, ch, literalReplacements);
         i++;
         continue;
       }
@@ -153,7 +175,7 @@ final class DuckDbSqlTranslationUtils {
       } else {
         // Non-pattern characters are passed through as literals.
         for (int k = 0; k < count; k++) {
-          appendLiteral(out, ch);
+          appendLiteral(out, ch, literalReplacements);
         }
       }
 
@@ -161,6 +183,27 @@ final class DuckDbSqlTranslationUtils {
     }
 
     return out.toString();
+  }
+
+  static Map<Character, String> getInputLiteralReplacements(SqlNode operand) {
+    if (!(operand instanceof SqlCall replaceCall)
+        || replaceCall.operandCount() != 3
+        || !replaceCall.getOperator().getName().equalsIgnoreCase("REPLACE")) {
+      return Map.of();
+    }
+
+    if (!(replaceCall.operand(1) instanceof SqlLiteral searchLiteral)
+        || !(replaceCall.operand(2) instanceof SqlLiteral replacementLiteral)) {
+      return Map.of();
+    }
+
+    var search = searchLiteral.toValue();
+    var replacement = replacementLiteral.toValue();
+    if (search == null || search.length() != 1 || replacement == null) {
+      return Map.of();
+    }
+
+    return Map.of(search.charAt(0), replacement);
   }
 
   static void writeNullIfEmptyVarchar(SqlWriter writer, SqlNode operand) {
@@ -177,12 +220,38 @@ final class DuckDbSqlTranslationUtils {
   }
 
   private static void appendLiteral(StringBuilder out, char ch) {
+    appendLiteral(out, ch, Map.of());
+  }
+
+  private static void appendLiteral(
+      StringBuilder out, char ch, Map<Character, String> literalReplacements) {
+    var replacement = literalReplacements.get(ch);
+    if (replacement != null) {
+      appendLiteral(out, replacement);
+      return;
+    }
+
     // DuckDB strftime uses % escapes; a literal % must become %%.
     if (ch == '%') {
       out.append("%%");
     } else {
       out.append(ch);
     }
+  }
+
+  private static void appendLiteral(StringBuilder out, String literal) {
+    for (int i = 0; i < literal.length(); i++) {
+      appendLiteral(out, literal.charAt(i));
+    }
+  }
+
+  private static boolean hasLaterEscapedQuote(String pattern, int fromIndex) {
+    for (int i = fromIndex; i + 1 < pattern.length(); i++) {
+      if (pattern.charAt(i) == '\'' && pattern.charAt(i + 1) == '\'') {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static String extractTimeUnit(String raw) {

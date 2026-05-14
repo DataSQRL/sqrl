@@ -42,7 +42,9 @@ public class ToTimestampSqlTranslation extends DuckDbSqlTranslation {
       writeTimestampCast(writer, call.operand(0));
 
     } else if (operandCount >= 2 && call.operand(1) instanceof SqlLiteral literal) {
-      var duckDbPattern = DuckDbSqlTranslationUtils.flinkDateFormatToDuckDb(literal);
+      var duckDbPattern =
+          DuckDbSqlTranslationUtils.flinkDateFormatToDuckDb(
+              literal, DuckDbSqlTranslationUtils.getInputLiteralReplacements(call.operand(0)));
 
       var fn = writer.startFunCall("strptime");
       writeNullIfEmptyVarchar(writer, call.operand(0));
