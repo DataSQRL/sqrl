@@ -400,10 +400,12 @@ jobs:
           name: Skip image generation
           command: |
             set -x
-            
-            # Push to Docker Hub for tagged releases and main=:dev.
-            if [ "$IS_RELEASE" != "true" ] && [ "$TAG_SUFFIX" != "dev" ]; then
-              echo "Skipping image publishing for TAG_SUFFIX=$TAG_SUFFIX (only tagged releases and main=:dev are published)."
+
+            # Push to Docker Hub for tagged releases (datasqrl/*) and main=:dev (datasqrl/*).
+            # Push PR images to ghcr.io/datasqrl/* so downstream CI (e.g. datasqrl-examples) can
+            # validate examples against the snapshot built from this PR.
+            if [ "$IS_RELEASE" != "true" ] && [ "$TAG_SUFFIX" != "dev" ] && [[ "$TAG_SUFFIX" != pr-* ]]; then
+              echo "Skipping image publishing for TAG_SUFFIX=$TAG_SUFFIX (only tagged releases, main=:dev, and pr-* are published)."
               circleci step halt
             fi
       - restore_cache:
@@ -553,6 +555,75 @@ jobs:
               -f sqrl-cli/Dockerfile.base \
               sqrl-cli
 
+  examples-validation:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - skip-if-docs-only
+      - determine-version
+      - run:
+          name: Install GitHub CLI
+          command: |
+            type -p gh >/dev/null && exit 0
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+              | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" \
+              | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            sudo apt-get update -qq
+            sudo apt-get install -y gh
+      - run:
+          name: Dispatch datasqrl-examples build against this image and wait
+          command: |
+            set -euo pipefail
+
+            # Resolve which image the downstream build should pull. Mirrors the
+            # logic in determine-version: PRs => ghcr.io/datasqrl/cmd:pr-N,
+            # main => datasqrl/cmd:dev, tags => datasqrl/cmd:<tag>.
+            if [ "$IS_RELEASE" = "true" ]; then
+              IMAGE="datasqrl/cmd:${CIRCLE_TAG}"
+            elif [ "$TAG_SUFFIX" = "dev" ]; then
+              IMAGE="datasqrl/cmd:dev"
+            else
+              IMAGE="ghcr.io/datasqrl/cmd:${TAG_SUFFIX}"
+            fi
+
+            CORRELATION_ID="sqrl-${CIRCLE_BUILD_NUM}-${CIRCLE_WORKFLOW_ID:0:8}"
+            EXPECTED_NAME="examples build [${CORRELATION_ID}]"
+
+            export GH_TOKEN="$EXAMPLES_BOT_PAT"
+
+            echo "Dispatching datasqrl-examples build:"
+            echo "  image=$IMAGE"
+            echo "  correlation_id=$CORRELATION_ID"
+
+            gh workflow run build.yml \
+              --repo DataSQRL/datasqrl-examples \
+              --ref main \
+              --field sqrl_image="$IMAGE" \
+              --field correlation_id="$CORRELATION_ID"
+
+            # workflow_dispatch is async and returns no run id, so locate by
+            # the run-name datasqrl-examples sets: "examples build [<id>]".
+            RUN_ID=""
+            for attempt in $(seq 1 30); do
+              RUN_ID=$(gh api \
+                "/repos/DataSQRL/datasqrl-examples/actions/workflows/build.yml/runs?event=workflow_dispatch&per_page=20" \
+                --jq ".workflow_runs[] | select(.display_title == \"${EXPECTED_NAME}\") | .id" \
+                | head -n1)
+              [ -n "$RUN_ID" ] && break
+              echo "Run not yet visible (attempt $attempt/30); sleeping 10s..."
+              sleep 10
+            done
+
+            if [ -z "$RUN_ID" ]; then
+              echo "Could not locate dispatched run for '${EXPECTED_NAME}'" >&2
+              exit 1
+            fi
+
+            echo "Watching https://github.com/DataSQRL/datasqrl-examples/actions/runs/${RUN_ID}"
+            gh run watch "$RUN_ID" --repo DataSQRL/datasqrl-examples --exit-status
+
   docker-build-mcp-inspector:
     machine:
       image: ubuntu-2404:current
@@ -637,6 +708,10 @@ workflows:
             - download-maven-dependencies
             - docker-build-duckdb-extensions
             - docker-build-base-image
+      - examples-validation:
+          <<: *job-defaults
+          requires:
+            - build-images
       - deploy:
           <<: *job-defaults
           requires:

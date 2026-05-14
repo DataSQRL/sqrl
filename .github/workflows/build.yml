@@ -87,6 +87,7 @@ jobs:
             "ci/circleci: integration-tests-1-2"
             "ci/circleci: container-e2e-test"
             "ci/circleci: build-images"
+            "ci/circleci: examples-validation"
             "ci/circleci: deploy"
           )
 
