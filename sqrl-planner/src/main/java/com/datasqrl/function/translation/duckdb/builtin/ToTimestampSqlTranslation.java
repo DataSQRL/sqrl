@@ -46,7 +46,7 @@ public class ToTimestampSqlTranslation extends DuckDbSqlTranslation {
           DuckDbSqlTranslationUtils.flinkDateFormatToDuckDb(
               literal, DuckDbSqlTranslationUtils.getInputLiteralReplacements(call.operand(0)));
 
-      var fn = writer.startFunCall("strptime");
+      var fn = writer.startFunCall("try_strptime");
       writeNullIfEmptyVarchar(writer, call.operand(0));
       writer.sep(",", true);
       SqlLiteral.createCharString(duckDbPattern, SqlParserPos.ZERO).unparse(writer, 0, 0);
@@ -55,7 +55,7 @@ public class ToTimestampSqlTranslation extends DuckDbSqlTranslation {
   }
 
   private static void writeTimestampCast(SqlWriter writer, SqlNode operand) {
-    var cast = writer.startFunCall("CAST");
+    var cast = writer.startFunCall("TRY_CAST");
     writeNullIfEmptyVarchar(writer, operand);
     writer.print(" AS TIMESTAMP");
     writer.endFunCall(cast);
