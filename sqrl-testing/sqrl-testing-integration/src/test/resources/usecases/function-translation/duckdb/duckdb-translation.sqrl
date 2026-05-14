@@ -91,6 +91,7 @@ FunctionCalls := SELECT
         'yyyy-MM-dd''T''HH:mm:ss')                             AS date_format_replace_t_space_pattern_example,
     DATE_FORMAT('', 'yyyy-MM-dd')                              AS date_format_empty_example,
     DATE_FORMAT('  ', 'yyyy-MM-dd')                            AS date_format_blank_example,
+    DATE_FORMAT('not-a-date', 'yyyy-MM-dd')                    AS date_format_invalid_example,
     DATE_FORMAT(CAST(NULL AS TIMESTAMP), 'yyyy-MM-dd')         AS date_format_null_example,
     CAST(
         TIMESTAMPADD(DAY, 2, TIMESTAMP '2024-01-02 03:04:05')
@@ -154,6 +155,8 @@ FunctionCalls := SELECT
     CAST(TO_TIMESTAMP(
         REPLACE('2024-01-01T23:10:07', 'T', ' '),
         'yyyy-MM-dd''T''HH:mm:ss') AS TIMESTAMP(3))            AS to_timestamp_replace_t_space_cast_example,
+    TO_TIMESTAMP('not-a-date')                                 AS to_timestamp_invalid_example,
+    TO_TIMESTAMP('2024/01/02 03:04', 'yyyy-MM-dd HH:mm')       AS to_timestamp_invalid_pattern_example,
     TO_TIMESTAMP('')                                           AS to_timestamp_empty_example,
     TO_TIMESTAMP('', 'yyyy-MM-dd HH:mm')                       AS to_timestamp_empty_pattern_example,
     TO_TIMESTAMP('  ')                                         AS to_timestamp_blank_example,
