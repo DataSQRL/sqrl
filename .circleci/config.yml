@@ -400,10 +400,12 @@ jobs:
           name: Skip image generation
           command: |
             set -x
-            
-            # Push to Docker Hub for tagged releases and main=:dev.
-            if [ "$IS_RELEASE" != "true" ] && [ "$TAG_SUFFIX" != "dev" ]; then
-              echo "Skipping image publishing for TAG_SUFFIX=$TAG_SUFFIX (only tagged releases and main=:dev are published)."
+
+            # Push to Docker Hub for tagged releases (datasqrl/*) and main=:dev (datasqrl/*).
+            # Push PR images to ghcr.io/datasqrl/* so downstream CI (e.g. datasqrl-examples) can
+            # validate examples against the snapshot built from this PR.
+            if [ "$IS_RELEASE" != "true" ] && [ "$TAG_SUFFIX" != "dev" ] && [[ "$TAG_SUFFIX" != pr-* ]]; then
+              echo "Skipping image publishing for TAG_SUFFIX=$TAG_SUFFIX (only tagged releases, main=:dev, and pr-* are published)."
               circleci step halt
             fi
       - restore_cache:

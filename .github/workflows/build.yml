@@ -141,3 +141,81 @@ jobs:
             echo "----------------------------------------"
             sleep 20
           done
+
+  examples-validation:
+    needs: [check-changes, build]
+    if: needs.check-changes.outputs.has-code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Determine SQRL image to validate
+        id: image
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            IMAGE="ghcr.io/datasqrl/cmd:pr-${{ github.event.pull_request.number }}"
+          else
+            IMAGE="datasqrl/cmd:dev"
+          fi
+          echo "image=$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger datasqrl-examples build
+        id: dispatch
+        env:
+          GH_TOKEN: ${{ secrets.BOT_PAT }}
+          SQRL_IMAGE: ${{ steps.image.outputs.image }}
+          CORRELATION_ID: ${{ github.repository }}-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          echo "Dispatching datasqrl-examples build with image=$SQRL_IMAGE correlation_id=$CORRELATION_ID"
+
+          gh workflow run build.yml \
+            --repo DataSQRL/datasqrl-examples \
+            --ref main \
+            --field sqrl_image="$SQRL_IMAGE" \
+            --field correlation_id="$CORRELATION_ID"
+
+          echo "correlation_id=$CORRELATION_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Locate dispatched run
+        id: locate
+        env:
+          GH_TOKEN: ${{ secrets.BOT_PAT }}
+          CORRELATION_ID: ${{ steps.dispatch.outputs.correlation_id }}
+        run: |
+          set -euo pipefail
+
+          # The workflow_dispatch endpoint is asynchronous and does not return a run id,
+          # so we look it up by the run-name we encoded in datasqrl-examples build.yml:
+          #   run-name: examples build [<correlation_id>]
+          EXPECTED_NAME="examples build [${CORRELATION_ID}]"
+
+          for attempt in $(seq 1 30); do
+            RUN_ID=$(gh api \
+              "/repos/DataSQRL/datasqrl-examples/actions/workflows/build.yml/runs?event=workflow_dispatch&per_page=20" \
+              --jq ".workflow_runs[] | select(.display_title == \"${EXPECTED_NAME}\") | .id" \
+              | head -n1)
+
+            if [ -n "$RUN_ID" ]; then
+              echo "Found run id: $RUN_ID"
+              echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            echo "Run not yet visible (attempt $attempt/30); waiting 10s..."
+            sleep 10
+          done
+
+          echo "Could not locate the dispatched workflow run with title '${EXPECTED_NAME}'" >&2
+          exit 1
+
+      - name: Wait for datasqrl-examples build to finish
+        env:
+          GH_TOKEN: ${{ secrets.BOT_PAT }}
+          RUN_ID: ${{ steps.locate.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          echo "Watching datasqrl-examples run https://github.com/DataSQRL/datasqrl-examples/actions/runs/${RUN_ID}"
+          gh run watch "$RUN_ID" \
+            --repo DataSQRL/datasqrl-examples \
+            --exit-status
