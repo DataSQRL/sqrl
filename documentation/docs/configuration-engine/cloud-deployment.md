@@ -65,11 +65,28 @@ The `dev` size is intended for development and testing with small amounts of dat
 
 #### Size Qualifiers
 
-Task manager sizes support qualifiers for specialized workloads:
+Task manager sizes support qualifiers for specialized workloads. There are two families:
 
-* **`.mem`**: Doubles memory (8x CPU). Use for state-heavy jobs. Example: `medium.mem` provides 16GB instead of 8GB.
-* **`.cpu`**: Doubles CPU with same memory. Use for CPU-intensive jobs. Example: `medium.cpu` provides 4 CPU instead of 2.
-* **`.mem-headroom`**: Triples memory (12x CPU). Use when running sidecar processes that require significant memory (e.g., DuckDB for query execution).
+* **`.mem-Nx`** scales the pod memory by `N` and gives Flink **proportionally more** memory (Flink heap+managed grows with `N`). Use for state-heavy jobs.
+* **`.mem-headroom-Nx`** scales the pod memory by `N` but keeps Flink's allocation at the **baseline** memory; the extra memory is reserved for sidecar / native consumers (e.g., DuckDB, JNI libs, page cache).
+* **`.cpu`** doubles CPU with the same memory.
+
+| Qualifier | Pod memory | Flink heap+managed | Typical use |
+| :--- | :--- | :--- | :--- |
+| `.cpu` | base | base × 0.80 | CPU-intensive jobs |
+| `.mem` / `.mem-2x` | base × 2 | base × 1.6 | State-heavy jobs |
+| `.mem-4x` | base × 4 | base × 3.2 | Large state |
+| `.mem-8x` | base × 8 | base × 6.4 | Very large state |
+| `.mem-headroom-2x` | base × 2 | base × 1 | Sidecars / native memory consumers |
+| `.mem-headroom-4x` | base × 4 | base × 1 | Larger sidecar headroom |
+| `.mem-headroom-8x` | base × 8 | base × 1 | Maximum sidecar headroom (e.g. DuckDB) |
+
+Examples:
+
+* `medium.mem-4x` → pod 32 GB / Flink heap+managed ≈ 25.6 GB.
+* `xlarge.mem-headroom-8x` → pod 256 GB / Flink heap+managed = 32 GB (baseline) / 224 GB headroom.
+
+`.mem` is an alias for `.mem-2x`. The legacy `.mem-headroom` qualifier (triple memory, Flink stays at baseline) is **deprecated** — use `.mem-headroom-Nx` instead.
 
 Size qualifiers do not apply to the `dev` instance.
 
