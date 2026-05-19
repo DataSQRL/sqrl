@@ -798,7 +798,7 @@ public class SqlScriptPlanner {
       fnBuilder.cacheDuration(getCacheDuration(hintsAndDocs));
       addFunctionToDag(
           fnBuilder.build(), hintsAndDocs.dropHints()); // hints don't apply to the function access
-    } else if (queryByHint.isPresent()) {
+    } else if (queryByHint.isPresent() && !(queryByHint.get() instanceof NoQueryHint)) {
       throw new StatementParserException(
           ErrorLabel.GENERIC,
           queryByHint.get().getSource().getFileLocation(),

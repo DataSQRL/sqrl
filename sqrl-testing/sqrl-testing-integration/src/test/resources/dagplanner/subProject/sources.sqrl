@@ -1,3 +1,4 @@
+/*+no_query */
 CREATE TABLE Customer (
     `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(lastUpdated, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
     PRIMARY KEY (customerid, lastUpdated) NOT ENFORCED,
