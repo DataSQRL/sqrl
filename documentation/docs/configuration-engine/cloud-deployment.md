@@ -65,7 +65,7 @@ The `dev` size is intended for development and testing with small amounts of dat
 
 #### Size Qualifiers
 
-Task manager sizes support qualifiers for specialized workloads. There are two families:
+Task manager sizes support qualifiers for specialized workloads. Qualifiers are grouped into memory-oriented and CPU-oriented variants:
 
 * **`.mem-Nx`** scales the pod memory by `N` and gives Flink **proportionally more** memory (Flink heap+managed grows with `N`). Use for state-heavy jobs.
 * **`.mem-headroom-Nx`** scales the pod memory by `N` but keeps Flink's allocation at the **baseline** memory; the extra memory is reserved for sidecar / native consumers (e.g., DuckDB, JNI libs, page cache).
