@@ -20,11 +20,8 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.LoggerContext;
 
 @RequiredArgsConstructor
 public class TestOutputManager implements AutoCloseable {
@@ -36,17 +33,21 @@ public class TestOutputManager implements AutoCloseable {
   private PrintStream originalOut;
   private PrintStream originalErr;
   private PrintStream logStream;
-  private ErrorCapturingStream errorCapturingStream;
+  private PrintStream errStream;
   private OutputStream fileOutputStream;
 
   public void redirectStd() {
+    if (originalOut != null) {
+      return;
+    }
+
     originalOut = System.out;
     originalErr = System.err;
 
     initLogStream();
 
     System.setOut(logStream);
-    System.setErr(logStream);
+    System.setErr(errStream);
   }
 
   public void restoreStd() {
@@ -61,17 +62,6 @@ public class TestOutputManager implements AutoCloseable {
     }
   }
 
-  public void disableConsoleLogs() {
-    var context = (LoggerContext) LogManager.getContext(false);
-    var config = context.getConfiguration();
-
-    for (var loggerConfig : config.getLoggers().values()) {
-      loggerConfig.removeAppender("Console");
-    }
-    config.getRootLogger().removeAppender("Console");
-    context.updateLoggers();
-  }
-
   @SneakyThrows
   private void initLogStream() {
     if (logStream != null) {
@@ -83,30 +73,8 @@ public class TestOutputManager implements AutoCloseable {
 
     var logFile = logsDir.resolve(TEST_LOG_FILE).toFile();
     fileOutputStream = new FileOutputStream(logFile, true);
-    errorCapturingStream = new ErrorCapturingStream(fileOutputStream);
-    logStream = new PrintStream(errorCapturingStream);
-  }
-
-  public List<String> getCapturedErrors() {
-    if (errorCapturingStream == null) {
-      return List.of();
-    }
-    return errorCapturingStream.getCapturedErrors();
-  }
-
-  public boolean hasErrors() {
-    return errorCapturingStream != null && errorCapturingStream.hasErrors();
-  }
-
-  public void printCapturedErrors(OutputFormatter formatter) {
-    if (!hasErrors()) {
-      return;
-    }
-
-    formatter.sectionHeader("Captured Errors");
-    for (var line : getCapturedErrors()) {
-      formatter.info(line);
-    }
+    logStream = new PrintStream(fileOutputStream, true);
+    errStream = new PrintStream(new TeeOutputStream(originalErr, fileOutputStream), true);
   }
 
   @Override
@@ -116,6 +84,9 @@ public class TestOutputManager implements AutoCloseable {
     }
     if (originalErr != null) {
       System.setErr(originalErr);
+    }
+    if (errStream != null) {
+      errStream.close();
     }
     if (logStream != null) {
       logStream.close();
