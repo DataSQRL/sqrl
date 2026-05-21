@@ -322,12 +322,12 @@ class ConfigLoaderUtilsTest {
     assertThat(result).isPresent();
     var kafkaPlan = result.get();
     assertThat(kafkaPlan.topics()).hasSize(2);
-    assertThat(kafkaPlan.topics().get(0).getTopicName()).isEqualTo("orders");
-    assertThat(kafkaPlan.topics().get(0).getNumPartitions()).isEqualTo(3);
-    assertThat(kafkaPlan.topics().get(1).getTopicName()).isEqualTo("customers");
-    assertThat(kafkaPlan.topics().get(1).getNumPartitions()).isEqualTo(1);
+    assertThat(kafkaPlan.topics().get(0).topicName()).isEqualTo("orders");
+    assertThat(kafkaPlan.topics().get(0).numPartitions()).isEqualTo(3);
+    assertThat(kafkaPlan.topics().get(1).topicName()).isEqualTo("customers");
+    assertThat(kafkaPlan.topics().get(1).numPartitions()).isEqualTo(1);
 
-    assertThat(kafkaPlan.testRunnerTopics().stream().map(NewTopic::getTopicName))
+    assertThat(kafkaPlan.testRunnerTopics().stream().map(NewTopic::topicName))
         .containsExactlyInAnyOrder("test-topic-1", "test-topic-2");
     assertThat(kafkaPlan.isEmpty()).isFalse();
   }

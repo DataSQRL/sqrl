@@ -87,6 +87,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final Optional<Duration> defaultTTL;
   private final Duration defaultWatermark;
   private final Duration transactionWatermark;
+  private final int numPartitions;
+  private final short replicationFactor;
   private final String format;
 
   @Inject
@@ -106,6 +108,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     defaultWatermark = TimeUtils.parseDuration(engineConfig.getSetting("watermark"));
     transactionWatermark =
         TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
+    numPartitions = Integer.parseInt(engineConfig.getSetting("num-partitions"));
+    replicationFactor = Short.parseShort(engineConfig.getSetting("replication-factor"));
     format =
         String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfigWrapper.FORMAT_KEY))
             .trim()
@@ -358,8 +362,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         table.topicName(),
         table.tableName(),
         table.format(),
-        1,
-        (short) 3,
+        numPartitions,
+        replicationFactor,
         type,
         table.messageKeys(),
         messageSchema,
