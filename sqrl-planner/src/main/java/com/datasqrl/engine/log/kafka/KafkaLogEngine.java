@@ -344,7 +344,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
     var testRunnerTopics =
         testRunnerConfig.getCreateTopics().stream()
-            .map(topicName -> new NewTopic(topicName, topicName, numPartitions, replicationFactor))
+            .map(topicName -> new NewTopic(topicName, topicName))
             .toList();
 
     return new KafkaPhysicalPlan(topics, testRunnerTopics);

@@ -31,11 +31,6 @@ public record NewTopic(
     Map<String, String> config)
     implements EngineCreateTable {
 
-  public enum Type {
-    MUTATION,
-    SUBSCRIPTION
-  }
-
   public NewTopic(String topicName, String tableName, int numPartitions, short replicationFactor) {
     this(
         topicName,
@@ -47,5 +42,14 @@ public record NewTopic(
         List.of(),
         "",
         Map.of());
+  }
+
+  public NewTopic(String topicName, String tableName) {
+    this(topicName, tableName, null, 1, (short) 1, Type.SUBSCRIPTION, List.of(), "", Map.of());
+  }
+
+  public enum Type {
+    MUTATION,
+    SUBSCRIPTION
   }
 }
