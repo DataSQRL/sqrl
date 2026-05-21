@@ -371,20 +371,10 @@ class OsProcessManagerTest {
       filesMocked.when(() -> Files.list(mockPath)).thenReturn(Stream.of(mockPath));
 
       // Mock that Kafka topics are found but no Postgres statements
-      var topic =
-          new NewTopic(
-              "topic",
-              "topic",
-              null,
-              1,
-              (short) 1,
-              NewTopic.Type.SUBSCRIPTION,
-              List.of(),
-              "",
-              Map.of());
+      var mockTopic = mock(NewTopic.class);
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(topic), List.of())));
+          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
@@ -495,20 +485,10 @@ class OsProcessManagerTest {
       filesMocked.when(() -> Files.list(any(Path.class))).thenReturn(Stream.of(mockPath));
 
       // Mock that both Kafka topics and Postgres statements are found
-      var topic =
-          new NewTopic(
-              "topic",
-              "topic",
-              null,
-              1,
-              (short) 1,
-              NewTopic.Type.SUBSCRIPTION,
-              List.of(),
-              "",
-              Map.of());
+      var mockTopic = mock(NewTopic.class);
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(topic), List.of())));
+          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
       var mockStatement =
           new GenericJdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
       var mockJdbcPlan = JdbcPhysicalPlan.builder().statement(mockStatement).build();

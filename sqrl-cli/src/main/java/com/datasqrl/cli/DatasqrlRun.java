@@ -21,6 +21,7 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.engine.log.kafka.NewTopic;
 import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.flinkrunner.EnvVarResolver;
 import com.datasqrl.flinkrunner.SqrlRunner;
@@ -46,6 +47,7 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -67,7 +69,6 @@ import org.apache.flink.core.execution.SavepointFormatType;
 import org.apache.flink.table.api.TableResult;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.NewTopic;
 
 @Slf4j
 public class DatasqrlRun {
@@ -212,8 +213,7 @@ public class DatasqrlRun {
     }
 
     var kafkaPlan = kafkaPlanOpt.get();
-    var topicsToCreate =
-        new java.util.LinkedHashMap<String, com.datasqrl.engine.log.kafka.NewTopic>();
+    var topicsToCreate = new LinkedHashMap<String, NewTopic>();
 
     Stream.concat(kafkaPlan.topics().stream(), kafkaPlan.testRunnerTopics().stream())
         .forEach(topic -> topicsToCreate.putIfAbsent(topic.topicName(), topic));
@@ -235,8 +235,9 @@ public class DatasqrlRun {
           continue;
         }
         var plannedTopic = entry.getValue();
-        NewTopic newTopic =
-            new NewTopic(topicName, plannedTopic.numPartitions(), plannedTopic.replicationFactor());
+        var newTopic =
+            new org.apache.kafka.clients.admin.NewTopic(
+                topicName, plannedTopic.numPartitions(), plannedTopic.replicationFactor());
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
     } catch (Exception e) {
