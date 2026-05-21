@@ -36,7 +36,16 @@ public record NewTopic(
     SUBSCRIPTION
   }
 
-  public NewTopic(String topicName, String tableName) {
-    this(topicName, tableName, null, 1, (short) 3, Type.SUBSCRIPTION, List.of(), "", Map.of());
+  public NewTopic(String topicName, String tableName, int numPartitions, short replicationFactor) {
+    this(
+        topicName,
+        tableName,
+        null,
+        numPartitions,
+        replicationFactor,
+        Type.SUBSCRIPTION,
+        List.of(),
+        "",
+        Map.of());
   }
 }
