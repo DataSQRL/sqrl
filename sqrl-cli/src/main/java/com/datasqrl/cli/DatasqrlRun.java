@@ -216,7 +216,7 @@ public class DatasqrlRun {
     var topicsToCreate = new HashSet<String>();
 
     Stream.concat(kafkaPlan.topics().stream(), kafkaPlan.testRunnerTopics().stream())
-        .map(com.datasqrl.engine.log.kafka.NewTopic::getTopicName)
+        .map(com.datasqrl.engine.log.kafka.NewTopic::topicName)
         .forEach(topicsToCreate::add);
 
     var bootstrapServers = getenv(KAFKA_BOOTSTRAP_SERVERS);
@@ -225,16 +225,18 @@ public class DatasqrlRun {
           "Failed to get Kafka 'bootstrap.servers', KAFKA_BOOTSTRAP_SERVERS is not set");
     }
 
-    Properties props = new Properties();
+    var props = new Properties();
     props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     props.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, TOPIC_CREATE_TIMEOUT_MS);
-    try (AdminClient adminClient = AdminClient.create(props)) {
+    try (var adminClient = AdminClient.create(props)) {
       Set<String> existingTopics = adminClient.listTopics().names().get();
-      for (String topicName : topicsToCreate) {
+      for (var topicName : topicsToCreate) {
         if (existingTopics.contains(topicName)) {
           continue;
         }
-        NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
+        // We need to limit both partitions and replication factor to 1 here,
+        // cause this will run on the Redpanda "cluster" inside the cmd image.
+        var newTopic = new NewTopic(topicName, 1, (short) 1);
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
     } catch (Exception e) {
