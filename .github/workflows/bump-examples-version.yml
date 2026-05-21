@@ -1,0 +1,84 @@
+name: Bump SQRL version in datasqrl-examples
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "SQRL version to set in datasqrl-examples (without leading v)"
+        required: true
+
+jobs:
+  open-bump-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Resolve version
+        id: version
+        run: |
+          if [ -n "${{ inputs.version }}" ]; then
+            RAW="${{ inputs.version }}"
+          else
+            RAW="${{ github.event.release.tag_name }}"
+          fi
+          VERSION="${RAW#v}"
+          if [ -z "$VERSION" ]; then
+            echo "Empty version, aborting." >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout datasqrl-examples
+        uses: actions/checkout@v4
+        with:
+          repository: DataSQRL/datasqrl-examples
+          token: ${{ secrets.EXAMPLES_BOT_PAT }}
+          path: datasqrl-examples
+
+      - name: Bump SQRL_VERSION and open PR
+        working-directory: datasqrl-examples
+        env:
+          GH_TOKEN: ${{ secrets.EXAMPLES_BOT_PAT }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          BRANCH="bump-sqrl-${VERSION}"
+
+          git config user.name "datasqrl-bot"
+          git config user.email "bot@datasqrl.com"
+
+          # If a PR for this version already exists, do nothing.
+          if gh pr list --state open --head "$BRANCH" --json number --jq 'length' | grep -q '^[1-9]'; then
+            echo "PR for branch $BRANCH already open; nothing to do."
+            exit 0
+          fi
+
+          # Recreate the branch fresh from default branch.
+          DEFAULT_BRANCH=$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name')
+          git fetch origin "$DEFAULT_BRANCH"
+          git checkout -B "$BRANCH" "origin/${DEFAULT_BRANCH}"
+
+          # Idempotent sed against the CI workflow env block.
+          sed -i -E "s/^(  SQRL_VERSION: ).*/\1'${VERSION}'/" .github/workflows/build.yml
+
+          if git diff --quiet .github/workflows/build.yml; then
+            echo "SQRL_VERSION already set to ${VERSION}; nothing to do."
+            exit 0
+          fi
+
+          git add .github/workflows/build.yml
+          git commit -s -m "Bump SQRL version to ${VERSION}"
+          git push --force-with-lease -u origin "$BRANCH"
+
+          gh pr create \
+            --title "Bump SQRL version to ${VERSION}" \
+            --body "## Summary
+          - Bump \`SQRL_VERSION\` in CI workflow from previous value to \`${VERSION}\`
+
+          Triggered automatically by the release of [\`${VERSION}\`](https://github.com/DataSQRL/sqrl/releases/tag/${VERSION}) in DataSQRL/sqrl.
+
+          ## Test plan
+          - [ ] CI build matrix passes against \`datasqrl/cmd:${VERSION}\`" \
+            --head "$BRANCH"
