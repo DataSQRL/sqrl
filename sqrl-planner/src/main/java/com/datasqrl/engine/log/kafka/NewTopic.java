@@ -35,4 +35,8 @@ public record NewTopic(
     MUTATION,
     SUBSCRIPTION
   }
+
+  public NewTopic(String topicName, String tableName) {
+    this(topicName, tableName, null, 1, (short) 3, Type.SUBSCRIPTION, List.of(), "", Map.of());
+  }
 }
