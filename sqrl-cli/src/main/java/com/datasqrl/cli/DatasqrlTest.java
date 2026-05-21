@@ -108,7 +108,7 @@ public class DatasqrlTest {
 
     // 2. Run the DataSQRL pipeline
     try {
-      formatter.phaseStart("Starting stream processor");
+      formatter.sectionHeader("Starting stream processor");
       var result = run.run();
       Thread.sleep(1000);
 
@@ -275,8 +275,6 @@ public class DatasqrlTest {
           result.printDetails(formatter, testDir);
         }
       }
-
-      outputManager.printCapturedErrors(formatter);
 
       formatter.sectionHeader("Test Reports");
       formatter.info("Test execution log: build/logs/test-execution.log");
