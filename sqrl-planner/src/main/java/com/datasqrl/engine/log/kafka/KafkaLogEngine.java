@@ -75,6 +75,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   public static final String UPSERT_FORMAT = "upsert-%s";
 
   public static final String DEFAULT_TTL_KEY = "retention";
+  public static final String NUM_PARTITIONS_KEY = "num-partitions";
+  public static final String REPLICATION_FACTOR_KEY = "replication-factor";
+  public static final int DEFAULT_NUM_PARTITIONS = 1;
+  public static final short DEFAULT_REPLICATION_FACTOR = 3;
 
   public static final EnumSet<EngineFeature> KAFKA_FEATURES = EnumSet.of(EngineFeature.MUTATIONS);
 
@@ -87,6 +91,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final Optional<Duration> defaultTTL;
   private final Duration defaultWatermark;
   private final Duration transactionWatermark;
+  private final int numPartitions;
+  private final short replicationFactor;
   private final String format;
 
   @Inject
@@ -106,6 +112,14 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     defaultWatermark = TimeUtils.parseDuration(engineConfig.getSetting("watermark"));
     transactionWatermark =
         TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
+    numPartitions =
+        Integer.parseInt(
+            engineConfig.getSetting(
+                NUM_PARTITIONS_KEY, Optional.of(String.valueOf(DEFAULT_NUM_PARTITIONS))));
+    replicationFactor =
+        Short.parseShort(
+            engineConfig.getSetting(
+                REPLICATION_FACTOR_KEY, Optional.of(String.valueOf(DEFAULT_REPLICATION_FACTOR))));
     format =
         String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfigWrapper.FORMAT_KEY))
             .trim()
@@ -340,7 +354,18 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
     var testRunnerTopics =
         testRunnerConfig.getCreateTopics().stream()
-            .map(topicName -> new NewTopic(topicName, topicName))
+            .map(
+                topicName ->
+                    new NewTopic(
+                        topicName,
+                        topicName,
+                        null,
+                        numPartitions,
+                        replicationFactor,
+                        NewTopic.Type.SUBSCRIPTION,
+                        List.of(),
+                        "",
+                        Map.of()))
             .toList();
 
     return new KafkaPhysicalPlan(topics, testRunnerTopics);
@@ -358,8 +383,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         table.topicName(),
         table.tableName(),
         table.format(),
-        1,
-        (short) 3,
+        numPartitions,
+        replicationFactor,
         type,
         table.messageKeys(),
         messageSchema,

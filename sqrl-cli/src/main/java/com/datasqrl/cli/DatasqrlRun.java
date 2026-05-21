@@ -46,7 +46,6 @@ import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -213,11 +212,11 @@ public class DatasqrlRun {
     }
 
     var kafkaPlan = kafkaPlanOpt.get();
-    var topicsToCreate = new HashSet<String>();
+    var topicsToCreate =
+        new java.util.LinkedHashMap<String, com.datasqrl.engine.log.kafka.NewTopic>();
 
     Stream.concat(kafkaPlan.topics().stream(), kafkaPlan.testRunnerTopics().stream())
-        .map(com.datasqrl.engine.log.kafka.NewTopic::getTopicName)
-        .forEach(topicsToCreate::add);
+        .forEach(topic -> topicsToCreate.putIfAbsent(topic.topicName(), topic));
 
     var bootstrapServers = getenv(KAFKA_BOOTSTRAP_SERVERS);
     if (bootstrapServers == null) {
@@ -230,11 +229,14 @@ public class DatasqrlRun {
     props.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, TOPIC_CREATE_TIMEOUT_MS);
     try (AdminClient adminClient = AdminClient.create(props)) {
       Set<String> existingTopics = adminClient.listTopics().names().get();
-      for (String topicName : topicsToCreate) {
+      for (var entry : topicsToCreate.entrySet()) {
+        var topicName = entry.getKey();
         if (existingTopics.contains(topicName)) {
           continue;
         }
-        NewTopic newTopic = new NewTopic(topicName, 1, (short) 1);
+        var plannedTopic = entry.getValue();
+        NewTopic newTopic =
+            new NewTopic(topicName, plannedTopic.numPartitions(), plannedTopic.replicationFactor());
         adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
       }
     } catch (Exception e) {
