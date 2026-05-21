@@ -40,7 +40,9 @@ The following is the [default configuration file](https://raw.githubusercontent.
     "kafka": {
       "retention": null,
       "watermark": "0 ms",
-      "transaction-watermark": "0 ms"
+      "transaction-watermark": "0 ms",
+      "num-partitions": 1,
+      "replication-factor": 3
   }
   },
   "connectors": {
