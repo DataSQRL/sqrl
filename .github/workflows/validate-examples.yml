@@ -1,0 +1,94 @@
+name: Validate datasqrl-examples
+
+on:
+  workflow_dispatch:
+    inputs:
+      sqrl_image:
+        description: "Full SQRL CLI image reference to validate, for example ghcr.io/datasqrl/cmd:pr-123 or datasqrl/cmd:dev"
+        required: false
+        default: datasqrl/cmd:dev
+      examples_ref:
+        description: "The datasqrl-examples ref to run"
+        required: false
+        default: main
+      correlation_id:
+        description: "Optional correlation ID for the dispatched datasqrl-examples run"
+        required: false
+        default: ""
+
+jobs:
+  validate-examples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Dispatch datasqrl-examples build and wait
+        env:
+          GH_TOKEN: ${{ secrets.EXAMPLES_BOT_PAT }}
+          SQRL_IMAGE: ${{ inputs.sqrl_image }}
+          EXAMPLES_REF: ${{ inputs.examples_ref }}
+          INPUT_CORRELATION_ID: ${{ inputs.correlation_id }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$GH_TOKEN" ]; then
+            echo "EXAMPLES_BOT_PAT is required to dispatch datasqrl-examples" >&2
+            exit 1
+          fi
+
+          if [ -z "$SQRL_IMAGE" ]; then
+            echo "sqrl_image is required" >&2
+            exit 1
+          fi
+
+          if [ -z "$EXAMPLES_REF" ]; then
+            echo "examples_ref is required" >&2
+            exit 1
+          fi
+
+          if [ -n "$INPUT_CORRELATION_ID" ]; then
+            CORRELATION_ID="$INPUT_CORRELATION_ID"
+          else
+            CORRELATION_ID="sqrl-gha-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          fi
+
+          if [[ ! "$CORRELATION_ID" =~ ^[A-Za-z0-9._:-]+$ ]]; then
+            echo "correlation_id may only contain letters, numbers, '.', '_', ':', and '-'" >&2
+            exit 1
+          fi
+
+          EXPECTED_NAME="examples build [${CORRELATION_ID}]"
+
+          echo "Dispatching datasqrl-examples build:"
+          echo "  sqrl_image=$SQRL_IMAGE"
+          echo "  examples_ref=$EXAMPLES_REF"
+          echo "  correlation_id=$CORRELATION_ID"
+
+          gh workflow run build.yml \
+            --repo DataSQRL/datasqrl-examples \
+            --ref "$EXAMPLES_REF" \
+            --field sqrl_image="$SQRL_IMAGE" \
+            --field correlation_id="$CORRELATION_ID"
+
+          # workflow_dispatch is async and returns no run id, so locate by the
+          # run-name datasqrl-examples sets: "examples build [<id>]".
+          RUN_ID=""
+          for attempt in $(seq 1 30); do
+            RUN_ID=$(gh api \
+              "/repos/DataSQRL/datasqrl-examples/actions/workflows/build.yml/runs?event=workflow_dispatch&per_page=100" \
+              --jq "[.workflow_runs[] | select(.display_title == \"${EXPECTED_NAME}\") | .id][0] // \"\"")
+
+            [ -n "$RUN_ID" ] && break
+
+            echo "Run not yet visible (attempt $attempt/30); sleeping 10s..."
+            sleep 10
+          done
+
+          if [ -z "$RUN_ID" ]; then
+            echo "Could not locate dispatched run for '${EXPECTED_NAME}'" >&2
+            exit 1
+          fi
+
+          echo "Watching https://github.com/DataSQRL/datasqrl-examples/actions/runs/${RUN_ID}"
+          gh run watch "$RUN_ID" --repo DataSQRL/datasqrl-examples --exit-status
