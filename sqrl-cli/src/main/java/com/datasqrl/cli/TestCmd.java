@@ -43,8 +43,6 @@ public class TestCmd extends AbstractCompileCmd {
     }
 
     try (var outputMgr = new TestOutputManager(cli.rootDir)) {
-      outputMgr.disableConsoleLogs();
-
       var formatter = getOutputFormatter();
       formatter.header("DataSQRL Test Execution");
 
@@ -52,7 +50,8 @@ public class TestCmd extends AbstractCompileCmd {
       var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
 
       // Start services before testing
-      formatter.phaseStart("Initializing test environment");
+      formatter.sectionHeader("Initializing test environment");
+      outputMgr.redirectStd();
       getOsProcessManager().startDependentServices(planDir);
 
       // Test
