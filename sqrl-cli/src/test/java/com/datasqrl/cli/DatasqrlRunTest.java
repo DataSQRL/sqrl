@@ -16,15 +16,20 @@
 package com.datasqrl.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Answers.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.config.PackageJson;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.ExecutionOptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -44,6 +49,27 @@ class DatasqrlRunTest {
     env = new HashMap<>();
 
     underTest = DatasqrlRun.nonBlocking(tempDir.resolve("plan"), null, flinkConfig, env);
+  }
+
+  @Test
+  void run_whenCompiledPlanReferencesMissingEnvVar_propagatesClearError() throws Exception {
+    var planDir = tempDir.resolve("plan");
+    Files.createDirectories(planDir);
+    Files.writeString(
+        planDir.resolve("flink-sql.sql"),
+        "CREATE TABLE t (id INT) WITH ('connector' = 'datagen', 'id' = '${DEPLOYMENT_ID}');\n");
+
+    var realFlinkConfig = new Configuration();
+    realFlinkConfig.set(ExecutionOptions.RUNTIME_MODE, RuntimeExecutionMode.BATCH);
+
+    var sqrlConfig = mock(PackageJson.class, RETURNS_DEEP_STUBS);
+    when(sqrlConfig.getCompilerConfig().compileFlinkPlan()).thenReturn(false);
+
+    var run = DatasqrlRun.nonBlocking(planDir, sqrlConfig, realFlinkConfig, new HashMap<>());
+
+    assertThatThrownBy(run::run)
+        .isInstanceOf(IllegalStateException.class)
+        .hasMessageContaining("DEPLOYMENT_ID");
   }
 
   @Test
