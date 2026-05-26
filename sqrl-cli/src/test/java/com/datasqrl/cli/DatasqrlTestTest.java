@@ -26,7 +26,7 @@ import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.config.PackageJson;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.flink.configuration.Configuration;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ class DatasqrlTestTest {
     // swallowed.
     Files.writeString(
         planDir.resolve("flink-sql.sql"),
-        "CREATE TABLE t (id INT) WITH ('connector' = 'datagen', 'id' = '${DEPLOYMENT_ID}');\n");
+        "CREATE TABLE t (id INT) WITH ('connector' = 'datagen', 'id' = '${NON_EXISTING_ENV_VAR}');\n");
 
     var sqrlConfig = mock(PackageJson.class, RETURNS_DEEP_STUBS);
     when(sqrlConfig.getCompilerConfig().compileFlinkPlan()).thenReturn(false);
@@ -61,12 +61,11 @@ class DatasqrlTestTest {
             planDir,
             sqrlConfig,
             new Configuration(),
-            new HashMap<>(),
+            Map.of(),
             new TestOutputManager(tempDir),
             new NoOutputFormatter());
 
     var exitCode = underTest.run();
-
     assertThat(exitCode).isNotZero();
   }
 }

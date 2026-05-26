@@ -117,11 +117,8 @@ public class DatasqrlRun {
     initPostgres();
     initKafka();
 
-    // Start the Flink job first: it validates the compiled plan (e.g. resolving environment
-    // variables) and throws synchronously on the calling thread. Deploying the server verticle
-    // afterwards keeps a Flink failure from masquerading as a generic verticle deployment error.
-    tableResult = runFlinkJob();
     startVertx();
+    tableResult = runFlinkJob();
 
     if (shutdownLatch != null) {
       Runtime.getRuntime().addShutdownHook(new Thread(this::stop, "flink-shutdown"));

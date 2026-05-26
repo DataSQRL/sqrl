@@ -57,7 +57,7 @@ class DatasqrlRunTest {
     Files.createDirectories(planDir);
     Files.writeString(
         planDir.resolve("flink-sql.sql"),
-        "CREATE TABLE t (id INT) WITH ('connector' = 'datagen', 'id' = '${DEPLOYMENT_ID}');\n");
+        "CREATE TABLE t (id INT) WITH ('connector' = 'datagen', 'id' = '${NON_EXISTING_ENV_VAR}');\n");
 
     var realFlinkConfig = new Configuration();
     realFlinkConfig.set(ExecutionOptions.RUNTIME_MODE, RuntimeExecutionMode.BATCH);
@@ -69,7 +69,7 @@ class DatasqrlRunTest {
 
     assertThatThrownBy(run::run)
         .isInstanceOf(IllegalStateException.class)
-        .hasMessageContaining("DEPLOYMENT_ID");
+        .hasMessageContaining("NON_EXISTING_ENV_VAR");
   }
 
   @Test
