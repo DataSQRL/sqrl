@@ -163,6 +163,10 @@ public abstract class TestResult {
       return new Failure("JDBC validation failed", cause);
     }
 
+    public static Failure pipeline(Throwable cause) {
+      return new Failure("Pipeline failed to start", cause);
+    }
+
     @Override
     public String getTestName() {
       return msg;
@@ -182,6 +186,13 @@ public abstract class TestResult {
     public void printDetails(OutputFormatter formatter, Optional<Path> testDir) {
       formatter.error(msg);
       if (cause != null) {
+        var rootCause = cause;
+        while (rootCause.getCause() != null && rootCause.getCause() != rootCause) {
+          rootCause = rootCause.getCause();
+        }
+        if (rootCause.getMessage() != null) {
+          formatter.error(rootCause.getMessage());
+        }
         cause.printStackTrace();
       }
     }
