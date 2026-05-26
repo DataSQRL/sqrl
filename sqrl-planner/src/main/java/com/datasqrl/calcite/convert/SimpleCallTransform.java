@@ -57,8 +57,11 @@ public class SimpleCallTransform extends RelRule<SimpleCallTransform.Config>
               @Override
               public RexNode visitCall(RexCall call) {
                 if (call.getOperator().equals(operator)) {
-                  hasTransformed.set(true);
-                  return transform.transform(relOptRuleCall.builder(), call);
+                  var transformed = transform.transform(relOptRuleCall.builder(), call);
+                  if (transformed != call) {
+                    hasTransformed.set(true);
+                    return transformed;
+                  }
                 }
 
                 return super.visitCall(call);
