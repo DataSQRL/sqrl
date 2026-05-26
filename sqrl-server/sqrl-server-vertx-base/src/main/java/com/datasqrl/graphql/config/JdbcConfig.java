@@ -45,5 +45,8 @@ public class JdbcConfig {
 
     @JsonProperty("use-version-guessing")
     private boolean useVersionGuessing;
+
+    @JsonProperty("use-credential-chain")
+    private boolean useCredentialChain;
   }
 }

@@ -18,6 +18,7 @@ package com.datasqrl.util;
 import static com.datasqrl.env.EnvVariableNames.DUCKDB_EXTENSIONS_DIR;
 
 import com.datasqrl.graphql.config.JdbcConfig;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import java.util.StringJoiner;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +28,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public final class DuckDbExtensions {
 
-  private final StringJoiner joiner = new StringJoiner(";", "", ";");
+  // The AWS SDK credential provider chain DuckDB walks; 'sts' is the web-identity provider that
+  // backs EKS IRSA, so it must stay in the list for in-cluster pods that only have a projected
+  // service-account token (no static AWS_ACCESS_KEY_ID/SECRET).
+  private static final String CREDENTIAL_CHAIN = "env;config;sts;sso;instance;process";
 
   private final JdbcConfig.DuckDbConfig config;
 
@@ -39,9 +43,25 @@ public final class DuckDbExtensions {
       return Optional.empty();
     }
 
+    return Optional.of(buildInitSql(extensionDir));
+  }
+
+  @VisibleForTesting
+  String buildInitSql(String extensionDir) {
+    var joiner = new StringJoiner(";", "", ";");
+
     joiner.add("SET extension_directory='" + extensionDir + "'");
     joiner.add("LOAD iceberg");
     joiner.add("LOAD httpfs");
+
+    if (config.isUseCredentialChain()) {
+      joiner.add("LOAD aws");
+      joiner.add(
+          "CREATE OR REPLACE SECRET sqrl_s3_credential_chain "
+              + "(TYPE S3, PROVIDER credential_chain, CHAIN '"
+              + CREDENTIAL_CHAIN
+              + "')");
+    }
 
     if (config.isUseDiskCache()) {
       joiner.add("LOAD cache_httpfs");
@@ -51,6 +71,6 @@ public final class DuckDbExtensions {
       joiner.add("SET unsafe_enable_version_guessing = true");
     }
 
-    return Optional.of(joiner.toString());
+    return joiner.toString();
   }
 }
