@@ -52,6 +52,9 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
@@ -74,6 +77,7 @@ import org.apache.kafka.clients.admin.NewTopic;
 public class DatasqrlRun {
 
   private static final int TOPIC_CREATE_TIMEOUT_MS = 8000;
+  private static final int VERTX_DEPLOY_TIMEOUT_SEC = 30;
 
   private final Path planDir;
   private final PackageJson sqrlConfig;
@@ -303,17 +307,25 @@ public class DatasqrlRun {
         new MicrometerMetricsFactory(prometheusMeterRegistry).newOptions().setEnabled(true);
 
     vertx = Vertx.vertx(new VertxOptions().setMetricsOptions(metricsOptions));
-    vertx
-        .deployVerticle(serverVerticle)
-        .onComplete(
-            res -> {
-              if (res.succeeded()) {
-                log.info("Vertx deployment succeeded. ID: {}", res.result());
-              } else {
-                log.error("Vertx deployment failed", res.cause());
-                vertx.close().onComplete(v -> System.exit(1));
-              }
-            });
+
+    // Block until the verticle is deployed so any deployment failure is thrown on the calling
+    // thread with its real cause, instead of being logged and exiting from a Vert.x event-loop
+    // thread (which masked the underlying error).
+    try {
+      var deploymentId =
+          vertx
+              .deployVerticle(serverVerticle)
+              .toCompletionStage()
+              .toCompletableFuture()
+              .get(VERTX_DEPLOY_TIMEOUT_SEC, TimeUnit.SECONDS);
+      log.info("Vertx deployment succeeded. ID: {}", deploymentId);
+    } catch (ExecutionException e) {
+      var cause = e.getCause() != null ? e.getCause() : e;
+      throw new IllegalStateException("Failed to deploy the GraphQL server verticle", cause);
+    } catch (TimeoutException e) {
+      throw new IllegalStateException(
+          "Timed out waiting for the GraphQL server verticle to deploy", e);
+    }
   }
 
   @SneakyThrows

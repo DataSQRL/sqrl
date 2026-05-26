@@ -170,12 +170,11 @@ public class DatasqrlTest {
                       var jobStatusCompletableFuture =
                           result.getJobClient().map(JobClient::getJobStatus).get();
                       var status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
-                      if (status == JobStatus.FAILED) {
-                        testResults.add(TestResult.Failure.flink(null));
-                        return true;
-                      }
-
-                      return status == JobStatus.FINISHED || status == JobStatus.CANCELED;
+                      // The real failure cause is fetched from getJobExecutionResult() below,
+                      // so a terminal state is enough to stop polling here.
+                      return status == JobStatus.FAILED
+                          || status == JobStatus.FINISHED
+                          || status == JobStatus.CANCELED;
 
                     } catch (Exception e) {
                       return true;
@@ -192,9 +191,11 @@ public class DatasqrlTest {
             .getJobExecutionResult()
             .get(2, TimeUnit.SECONDS); // flink will hold if the minicluster is stopped
       } catch (ExecutionException e) {
-        // try to catch the job failure if we can
-        testResults.add(TestResult.Failure.flink(e));
+        // The job reached a terminal failure state; surface its real root cause.
+        var cause = e.getCause() != null ? e.getCause() : e;
+        testResults.add(TestResult.Failure.flink(cause));
       } catch (Exception ignored) {
+        // Timed out or interrupted while the job is still running; nothing conclusive to report.
       }
 
       // 5. Validate JDBC views, run the API queries, finish subscriptions and snapshot the API
@@ -246,6 +247,11 @@ public class DatasqrlTest {
           }
         }
       }
+    } catch (Exception e) {
+      // The pipeline failed to start or run (e.g. a missing environment variable referenced by the
+      // compiled Flink plan). Record it as a real failure with its root cause so the message is
+      // printed and the exit code is non-zero, instead of being swallowed during cleanup.
+      testResults.add(TestResult.Failure.pipeline(e));
     } finally {
       run.cancel();
       Thread.sleep(1000); // wait for log lines to clear out
