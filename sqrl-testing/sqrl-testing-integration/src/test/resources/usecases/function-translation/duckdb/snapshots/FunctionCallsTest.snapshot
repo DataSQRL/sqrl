@@ -42,6 +42,8 @@
       "try_cast_to_timestamptz_example" : true,
       "try_cast_fail_example" : null,
       "try_cast_timestampdiff_decimal_example" : 2.0,
+      "cast_timestampdiff_decimal_example" : 2.0,
+      "case_timestampdiff_nullif_example" : 5.0,
       "now_example" : true,
       "local_time_example" : true,
       "local_timestamp_example" : true,

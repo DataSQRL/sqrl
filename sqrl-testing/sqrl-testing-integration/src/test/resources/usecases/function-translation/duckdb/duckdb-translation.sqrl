@@ -62,6 +62,26 @@ FunctionCalls := SELECT
             CAST(DATE_FORMAT(TIMESTAMP '2024-01-02 03:04:05', 'yyyy-MM-01') AS TIMESTAMP),
             CAST(DATE_FORMAT(TIMESTAMP '2024-03-02 03:04:05', 'yyyy-MM-01') AS TIMESTAMP))
     AS DECIMAL(38, 2))                               AS try_cast_timestampdiff_decimal_example,
+    CAST(
+        TIMESTAMPDIFF(
+            MONTH,
+            CAST(DATE_FORMAT(TIMESTAMP '2024-01-02 03:04:05', 'yyyy-MM-01') AS TIMESTAMP),
+            CAST(DATE_FORMAT(TIMESTAMP '2024-03-02 03:04:05', 'yyyy-MM-01') AS TIMESTAMP))
+    AS DECIMAL(38, 2))                               AS cast_timestampdiff_decimal_example,
+    CASE WHEN (
+        CAST(10 AS DECIMAL(38, 5)) / NULLIF(
+            TIMESTAMPDIFF(
+                MONTH,
+                CAST(DATE_FORMAT(TIMESTAMP '2024-01-02 03:04:05', 'yyyy-MM-01') AS TIMESTAMP),
+                CAST(DATE_FORMAT(TIMESTAMP '2024-03-02 03:04:05', 'yyyy-MM-01') AS TIMESTAMP)),
+            0)) IS NOT NULL
+    THEN CAST(10 AS DECIMAL(38, 5)) / NULLIF(
+            TIMESTAMPDIFF(
+                MONTH,
+                CAST(DATE_FORMAT(TIMESTAMP '2024-01-02 03:04:05', 'yyyy-MM-01') AS TIMESTAMP),
+                CAST(DATE_FORMAT(TIMESTAMP '2024-03-02 03:04:05', 'yyyy-MM-01') AS TIMESTAMP)),
+            0)
+    ELSE CAST(0 AS DECIMAL(38, 5)) END               AS case_timestampdiff_nullif_example,
 
     NOW() IS NOT NULL                                AS now_example,
     LOCALTIME IS NOT NULL                            AS local_time_example,
