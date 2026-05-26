@@ -183,13 +183,8 @@ public final class SqlScriptStatementSplitter {
       }
 
       if (!inStringLiteral && startsBlockComment(line, i)) {
-        if (startsDocComment(line, i) || startsHintComment(line, i)) {
-          inPreservedBlockComment = true;
-          parsed.append(line.charAt(i));
-        } else {
-          inBlockComment = true;
-          i++;
-        }
+        inPreservedBlockComment = true;
+        parsed.append(line.charAt(i));
         continue;
       }
 
