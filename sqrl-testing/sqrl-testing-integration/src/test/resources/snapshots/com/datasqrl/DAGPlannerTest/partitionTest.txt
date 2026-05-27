@@ -179,7 +179,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
     {
       "name" : "OrderUpdates_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderUpdates_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\")) PARTITION BY RANGE (\"time\");\n\nCREATE TABLE IF NOT EXISTS \"OrderUpdates_1_all\" PARTITION OF \"OrderUpdates_1\" FOR VALUES FROM (MINVALUE) TO (MAXVALUE)",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderUpdates_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\")) PARTITION BY RANGE (\"time\")",
       "fields" : [
         {
           "name" : "id",
