@@ -34,6 +34,10 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>env-utils</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>stdlib-vector</artifactId>
     </dependency>
     <dependency>
