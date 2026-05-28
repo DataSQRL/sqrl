@@ -693,6 +693,11 @@
 
       <dependency>
         <groupId>com.datasqrl.flinkrunner</groupId>
+        <artifactId>env-utils</artifactId>
+        <version>${flinkrunner.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.datasqrl.flinkrunner</groupId>
         <artifactId>flexible-csv-format</artifactId>
         <version>${flinkrunner.version}</version>
       </dependency>
