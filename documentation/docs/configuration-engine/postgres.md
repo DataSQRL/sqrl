@@ -53,6 +53,23 @@ Available `instance-size` options:
 }
 ```
 
+## Conflict Handling
+
+When a generated PostgreSQL table receives a row that conflicts with an existing row on a primary key or unique constraint,
+DataSQRL chooses one of the following conflict handling strategies:
+
+| Strategy         | PostgreSQL behavior                                                                 | Description                                                                                                                                                                                                                      |
+|------------------|-------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Update           | `ON CONFLICT (...) DO UPDATE SET ...`                                               | The existing row is overwritten with the incoming row.                                                                                                                                                                           |
+| Timestamp update | `ON CONFLICT (...) DO UPDATE SET ... WHERE incoming timestamp > existing timestamp` | The existing row is overwritten only when the incoming row has a newer timestamp than the existing row. Otherwise, the conflicting insert is silently skipped, which prevents out-of-order events from rolling back newer state. |
+| Ignore           | `ON CONFLICT (...) DO NOTHING`                                                      | The existing row is kept, and the conflicting insert is silently skipped.                                                                                                                                                        |
+
+DataSQRL applies these strategies automatically based on the generated [table type](../sqrl-language#type-system):
+
+- `STATE` tables use timestamp update with the appropriate timestamp column.
+- `STREAM` tables use ignore.
+- Other PostgreSQL tables use update.
+
 ## Usage Notes
 
 - Database schema is automatically generated from your SQRL script
