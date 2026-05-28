@@ -177,6 +177,9 @@
             },
             "use-version-guessing": {
               "type": "boolean"
+            },
+            "use-credential-chain": {
+              "type": "boolean"
             }
           },
           "additionalProperties": false,
