@@ -15,6 +15,7 @@
  */
 package com.datasqrl.graphql;
 
+import com.datasqrl.flinkrunner.utils.EnvVarResolver;
 import com.datasqrl.graphql.auth.OAuth2AuthFactory;
 import com.datasqrl.graphql.auth.OAuthDiscoveryHandler;
 import com.datasqrl.graphql.config.CorsHandlerOptions;
@@ -27,7 +28,6 @@ import com.datasqrl.graphql.server.ModelUtils;
 import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.graphql.server.operation.ApiOperation;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.google.common.collect.MoreCollectors;
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
@@ -439,11 +439,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   }
 
   public static ObjectMapper getObjectMapper() {
-    var objectMapper = new ObjectMapper();
-    var module = new SimpleModule();
-    module.addDeserializer(String.class, new JsonEnvVarDeserializer());
-    objectMapper.registerModule(module);
-    return objectMapper;
+    return EnvVarResolver.of(false).initObjectMapper();
   }
 
   /** Build a Vert.x {@link CorsHandler} from our own options DTO. */

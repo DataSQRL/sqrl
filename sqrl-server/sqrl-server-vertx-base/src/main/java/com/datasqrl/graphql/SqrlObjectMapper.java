@@ -15,9 +15,10 @@
  */
 package com.datasqrl.graphql;
 
+import com.datasqrl.env.GlobalEnvironmentStore;
+import com.datasqrl.flinkrunner.utils.EnvVarResolver;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.vertx.core.json.jackson.VertxModule;
 import jakarta.annotation.Nullable;
@@ -35,11 +36,8 @@ public class SqrlObjectMapper {
   }
 
   public static ObjectMapper getMapperWithEnvVarResolver(@Nullable Map<String, String> env) {
-    var mapper = SqrlObjectMapper.MAPPER.copy();
-    var module = new SimpleModule();
-    module.addDeserializer(String.class, new JsonEnvVarDeserializer(env));
-    mapper.registerModule(module);
+    var finalEnv = env != null ? env : GlobalEnvironmentStore.getAll();
 
-    return mapper;
+    return EnvVarResolver.of(finalEnv, false).initObjectMapper(SqrlObjectMapper.MAPPER.copy());
   }
 }
