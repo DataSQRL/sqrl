@@ -239,7 +239,7 @@
     </dependency>
     <dependency>
       <groupId>org.apache.iceberg</groupId>
-      <artifactId>iceberg-flink-runtime-2.0</artifactId>
+      <artifactId>iceberg-flink-runtime-2.1</artifactId>
       <version>${iceberg.version}</version>
     </dependency>
 
