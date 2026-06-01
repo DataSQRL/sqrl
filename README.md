@@ -11,7 +11,7 @@ DataSQRL is an open-source **data engineering harness** that provides guardrails
 
 DataSQRL ensures coding agents meet the non-functional requirements of production data systems for data quality, scalability, governance, and reliability. DataSQRL provides deep-inspection of SQL, relational validators, and deterministic event-replay simulation to ensure agent-generated code meets these requirements through iterative feedback loops.
 
-![DataSQRL Harness Architecture](/documentation/static/img/diagrams/agentic/harness_overview.png)
+![DataSQRL Harness Architecture](/documentation/static/img/diagrams/agentic/harness_overview_margin.png)
 
 ## Key Capabilities
 
