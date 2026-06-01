@@ -22,27 +22,38 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @RequiredArgsConstructor
 @Slf4j
-public final class DuckDbExtensions {
+public final class DuckDbInitializer {
 
   private final StringJoiner joiner = new StringJoiner(";", "", ";");
 
   private final JdbcConfig.DuckDbConfig config;
 
   public Optional<String> buildInitSql() {
-    var extensionDir = System.getenv(DUCKDB_EXTENSIONS_DIR);
-
-    if (config.getMemoryLimit() != null && !config.getMemoryLimit().isBlank()) {
+    if (StringUtils.isNotBlank(config.getMemoryLimit())) {
       joiner.add("SET memory_limit='" + config.getMemoryLimit() + "'");
     }
 
-    if (extensionDir == null || extensionDir.trim().isEmpty()) {
+    initExtensions();
+
+    if (joiner.length() > 1) {
+      return Optional.of(joiner.toString());
+    }
+
+    return Optional.empty();
+  }
+
+  private void initExtensions() {
+    var extensionDir = System.getenv(DUCKDB_EXTENSIONS_DIR);
+
+    if (StringUtils.isBlank(extensionDir)) {
       log.warn(
           "Environment variable {} is not set, extensions will not be loaded.",
           DUCKDB_EXTENSIONS_DIR);
-      return joiner.length() > 1 ? Optional.of(joiner.toString()) : Optional.empty();
+      return;
     }
 
     joiner.add("SET extension_directory='" + extensionDir + "'");
@@ -56,7 +67,5 @@ public final class DuckDbExtensions {
     if (config.isUseVersionGuessing()) {
       joiner.add("SET unsafe_enable_version_guessing = true");
     }
-
-    return Optional.of(joiner.toString());
   }
 }
