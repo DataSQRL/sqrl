@@ -15,24 +15,42 @@ tags: [release]
 DataSQRL is an open-source data engineering harness that provides guardrails and feedback for AI coding agents to develop and operate data pipelines, data products, and data APIs autonomously.
 You can customize DataSQRL as the foundation of your agentic data platform. Our goal is to develop DataSQRL into a comprehensive data engineering harness for data platform automation.
 
-## Why DataSQRL?
+<img src="/img/diagrams/agentic/harness_overview.png" alt="DataSQRL harness architecture showing coding agent with framework, validator, and simulator feedback loops >" width="50%"/>
 
-(write one paragraph justifying why we need a dedicated harness for data engineering focused on data quality and non-functional requirements)
+## Why a Data Engineering Harness?
 
-## Conceptual Framework
+Coding agents are transforming software development. Tools like Cursor, Claude Code, and Copilot can generate application code, write tests, and even refactor entire codebases. But data engineering presents unique challenges that general-purpose coding agents struggle to address.
 
-For the purposes of automating data platforms, a comprehensive conceptual framework captures data schemas, data processing, and data serving to consumers. Specifically, we are building a conceptual framework for *non-transactional* data processing and serving.
+The difference lies in **non-functional requirements**. When you build a data pipeline, functional correctness (does the query return the right results?) is just the starting point. Production data systems must also deliver:
 
-The conceptual framework provides the frame of reference for implementing safe, reliable data processing systems.
+- **Data Quality**: Consistent, accurate data with proper handling of late-arriving events, duplicates, and schema evolution
+- **Scalability**: Performance that holds up as data volumes grow from gigabytes to petabytes
+- **Governance**: Lineage tracking, access controls, and audit trails for regulatory compliance
+- **Reliability**: Exactly-once semantics, failure recovery, and graceful degradation under load
+- **Cost Efficiency**: Optimal resource utilization across compute, storage, and network
+
+A coding agent can generate a SQL query that produces correct results on a test dataset. But will that query perform at scale? Does it handle late data correctly? Will it maintain data quality guarantees when upstream schemas change? These are the questions that justify data engineering as its own discipline and that general-purpose coding agents are not equipped to answer consistently.
+
+A data engineering harness provides the guardrails, feedback loops, and domain-specific constraints that coding agents need to produce production-grade data systems. Without a harness, you get code that works in demos but fails in production. With a harness, you get data pipelines that embody decades of hard-won data engineering knowledge.
+
+DataSQRL is that harness. It encodes the conceptual framework of data systems, validates implementations against data engineering best practices, and provides real-world feedback through simulation and production telemetry. The result: coding agents that can build data systems you'd actually trust to run in production.
+
+## The DataSQRL Harness
+
+<img src="/img/diagrams/agentic/feedback_loops.png" alt="Feedback loops from framework, compiler, testing, validators, and runtime back to the coding agent" width="100%"/>
+
+For the purposes of automating data platforms, a comprehensive harness captures data schemas, data processing, and data serving to consumers. Specifically, we are building a harness for *non-transactional* data processing and serving.
+
+The harness provides the frame of reference for implementing safe, reliable data processing systems.
 It captures the knowledge from [Database Systems: The Complete Book](http://infolab.stanford.edu/~ullman/dscb.html) combined with 25 years of data engineering experience.
 
-DataSQRL breaks the framework into *logical* and *physical* models.
+DataSQRL breaks the harness into *logical* and *physical* layers.
 
-### Logical Model
+### Logical Layer
 
-The logical model expresses what data transformations are needed to produce the desired results.
+The logical layer expresses what data transformations are needed to produce the desired results.
 
-An obvious choice for the logical model is [Codd's relational model](https://en.wikipedia.org/wiki/Relational_model) and its most popular implementation [SQL](https://en.wikipedia.org/wiki/SQL).
+An obvious choice for the logical layer is [Codd's relational model](https://en.wikipedia.org/wiki/Relational_model) and its most popular implementation [SQL](https://en.wikipedia.org/wiki/SQL).
 
 The relational model is widely adopted, proven, and provides a solid mathematical foundation. Most LLMs are trained on lots of SQL code and related documentation. And it is easy for humans to read. Modern versions of SQL (e.g., the SQL:2023 standard) support semi-structured data (JSON), polymorphic table functions, and complex pattern matching to address the messy reality of data platforms.
 
@@ -44,9 +62,9 @@ The relational model uses set semantics. That is inconvenient for representing d
 
 Jennifer Widom's [Continuous Query Language](http://infolab.stanford.edu/~arvind/papers/cql-vldbj.pdf) extends the relational model with data streams and relational operators for moving between streams and sets.
 
-[Flink SQL](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/overview/), based on [Apache Calcite](https://calcite.apache.org/), is the most widely adopted implementation of this extended relational model. That's why we use Flink SQL as the basis of the logical model in DataSQRL.
+[Flink SQL](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/overview/), based on [Apache Calcite](https://calcite.apache.org/), is the most widely adopted implementation of this extended relational model. That's why we use Flink SQL as the basis of the logical layer in DataSQRL.
 
-Using a declarative language for the conceptual framework has a number of advantages from concise representation to deep introspection, but a practical shortcoming is the fact that some data transformations are easier to express imperatively. Flink SQL overcomes this by supporting [user defined functions](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/functions/udfs/) and [custom table operators](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/functions/ptfs/) in programming languages like Java. This gives us a logical model grounded in relational algebra with flexible extensibility to express complex data transformations imperatively.
+Using a declarative language for the harness has a number of advantages from concise representation to deep introspection, but a practical shortcoming is the fact that some data transformations are easier to express imperatively. Flink SQL overcomes this by supporting [user defined functions](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/functions/udfs/) and [custom table operators](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/functions/ptfs/) in programming languages like Java. This gives us a logical layer grounded in relational algebra with flexible extensibility to express complex data transformations imperatively.
 
 DataSQRL builds on Flink SQL and adds 1) concise syntax for common transformations, 2) dbt-style templating, and 3) modular file management and importing. These features help with context management for LLMs by reducing the size of the active context that needs to be maintained during implementation and refinement.
 
@@ -99,7 +117,7 @@ WHERE debit_account_id = :account_id
 ORDER BY tx_time DESC;
 ```
 
-Secondly, DataSQRL allows for explicit relationship definitions between tables which are important for API-based data access where results need to include related entities like *most recent orders* or *recommendations for movie category*. The relational model does not support traversing through an entity-relationship model, which is usually handled by an object-relational mapping layer when exposing an API. To avoid that extra complexity and impedance mismatch in our logical model, DataSQRL provides first-class support for relationships.
+Secondly, DataSQRL allows for explicit relationship definitions between tables which are important for API-based data access where results need to include related entities like *most recent orders* or *recommendations for movie category*. The relational model does not support traversing through an entity-relationship model, which is usually handled by an object-relational mapping layer when exposing an API. To avoid that extra complexity and impedance mismatch in our logical layer, DataSQRL provides first-class support for relationships.
 
 ```sql
 -- Create a relationship between holder and accounts filtered by status
@@ -110,17 +128,19 @@ WHERE a.holder_id = this.holder_id
 ORDER BY a.account_type ASC;
 ```
 
-With the addition of access functions and relationships, the logical model maps directly to the entity-relationship model of GraphQL which DataSQRL uses as the logical model for API-based data retrieval. This gives DataSQRL a highly expressive interface with a simple extension of the logical model which retains conceptual simplicity of the framework.
+With the addition of access functions and relationships, the logical layer maps directly to the entity-relationship model of GraphQL which DataSQRL uses as the logical representation for API-based data retrieval. This gives DataSQRL a highly expressive interface with a simple extension of the logical layer which retains conceptual simplicity of the harness.
 
 The [interface documentation](/docs/interface) provides more details on the serving layer of DataSQRL.
 
-### Physical Model
+### Physical Layer
 
-The physical model represents *how* the data gets processed and served. It's a translation of the logical model into executable code that runs on actual data systems.
+The physical layer represents *how* the data gets processed and served. It's a translation of the logical layer into executable code that runs on actual data systems.
+
+<img src="/img/diagrams/agentic/complete_framework.png" alt="Complete DataSQRL framework showing data flow from sources through processing, storage, and serving layers" width="100%"/>
 
 #### Pipeline Architecture
 
-With [hundreds of database systems](https://db-engines.com/) and many more data infrastructure choices, it is a daunting challenge to construct a simple and coherent physical model that is flexible enough to cover the diverse needs of data platforms.
+With [hundreds of database systems](https://db-engines.com/) and many more data infrastructure choices, it is a daunting challenge to construct a simple and coherent physical layer that is flexible enough to cover the diverse needs of data platforms.
 
 After analyzing a wide range of data platforms, we identified that the vast majority of implementations combine multiple data systems from these categories:
 
@@ -133,13 +153,11 @@ After analyzing a wide range of data platforms, we identified that the vast majo
 
 We call each data system an *engine* and the above categories *engine types*. When looking at data platform implementations at the level of engine types, we see about 15 patterns emerge (the 10 most popular are [documented here](/img/diagrams/architecture_pattern_overview.png)) that arrange those engines in a directed-acyclic graph (DAG) of data processing.
 
-Hence, we use a computational DAG that models the flow of data from source to interface as the basis of our physical model. Each node in the DAG represents a logical computation mapped to be executed by an engine. Thus, the physical model provides an integrated view of the entire data flow.
-
-<img src="/img/diagrams/automation_overview.png" alt="An example physical model DAG" width="100%"/>
+Hence, we use a computational DAG that models the flow of data from source to interface as the basis of our physical layer. Each node in the DAG represents a logical computation mapped to be executed by an engine. Thus, the physical layer provides an integrated view of the entire data flow.
 
 #### Transpiler
 
-While the physical model gives the AI control over what engine executes which computation, the actual mapping of logical to physical plan is done by a deterministic transpiler built in Apache Calcite. This avoids subtle bugs in data mapping and execution. The results of the transpilation are deployment assets which are executed by each engine. For example, the transpiler generates the database schema and queries for Postgres.
+While the physical layer gives the AI control over what engine executes which computation, the actual mapping of logical to physical plan is done by a deterministic transpiler built in Apache Calcite. This avoids subtle bugs in data mapping and execution. The results of the transpilation are deployment assets which are executed by each engine. For example, the transpiler generates the database schema and queries for Postgres.
 
 In the transpiler component, we make the following simplifying assumptions:
 
@@ -152,35 +170,35 @@ This modular architecture allows new engines to be added by conforming to the en
 
 #### Configuration
 
-DataSQRL uses a `package.json` file to configure the engines used to execute a data pipeline. The configuration file defines the overall pipeline topology, the individual engine configurations, and the compiler configuration. One file controls how the physical model is derived and executed, making it simple for the AI to experiment with and fine-tune the physical model.
+DataSQRL uses a `package.json` file to configure the engines used to execute a data pipeline. The configuration file defines the overall pipeline topology, the individual engine configurations, and the compiler configuration. One file controls how the physical layer is derived and executed, making it simple for the AI to experiment with and fine-tune the physical layer.
 
 #### Interface
 
-For the data serving interface, we use GraphQL schema as the physical model which bidirectionally maps to the access functions, table schema, and relationships defined in the logical plan by naming convention. GraphQL fields are mapped to SQL or Kafka queries based on their respective definitions in SQRL. This allows the AI to fine-tune the API within the GraphQL schema.
+For the data serving interface, we use GraphQL schema as the physical representation which bidirectionally maps to the access functions, table schema, and relationships defined in the logical plan by naming convention. GraphQL fields are mapped to SQL or Kafka queries based on their respective definitions in SQRL. This allows the AI to fine-tune the API within the GraphQL schema.
 
 Furthermore, REST and MCP APIs can be explicitly or implicitly defined through GraphQL operations. Implicit definition traverses the GraphQL schema from root query and mutation fields. Explicitly defined operations are provided as separate GraphQL files.
 
-Using GraphQL as the physical model for the API combines simplicity with flexibility while benefiting from the prevalence of GraphQL in LLM training data.
+Using GraphQL as the physical representation for the API combines simplicity with flexibility while benefiting from the prevalence of GraphQL in LLM training data.
 
 ## Validator
 
-The conceptual framework gives AI coding agents a frame of reference to reason about data pipeline and data product implementations. DataSQRL provides validation to support that reasoning and give users tools to ensure the correctness and quality of the generated pipelines and APIs.
+The harness gives AI coding agents a frame of reference to reason about data pipeline and data product implementations. DataSQRL provides validation to support that reasoning and give users tools to ensure the correctness and quality of the generated pipelines and APIs.
 
 ### Verification & Introspection
 
-Verification and introspection complement the conceptual framework by reinforcing the concepts, rules, and dependencies. DataSQRL provides validation at 3 levels: the logical model, physical model, and deployment assets (the code that gets executed by the engines).
+Verification and introspection complement the harness by reinforcing the concepts, rules, and dependencies. DataSQRL provides validation at 3 levels: the logical layer, physical layer, and deployment assets (the code that gets executed by the engines).
 
 #### Logical
 
 At the logical level, the DataSQRL compiler verifies syntax, schemas, and data flow semantics. This ensures that the data pipeline is logically coherent and that data integration points (e.g., between the SQL definitions and GraphQL schema) are consistent.
 
-One of the benefits of using relational algebra as the basis for our framework is the ability to run rules and deep traversals over the operators in the relational algebra tree. The DataSQRL compiler uses Apache Calcite's rule and RelNode traversal framework to validate timestamp propagation, infer primary keys and data types, validate table types, and more. This validation component can be extended with custom rules to validate domain-specific semantics and constraints.
+One of the benefits of using relational algebra as the basis for our harness is the ability to run rules and deep traversals over the operators in the relational algebra tree. The DataSQRL compiler uses Apache Calcite's rule and RelNode traversal framework to validate timestamp propagation, infer primary keys and data types, validate table types, and more. This validation component can be extended with custom rules to validate domain-specific semantics and constraints.
 
 The validation component was designed to provide comprehensive context and suggested fixes for validation errors. In our testing, this produces significantly better results compared to the AI coding agent having to look up and reason about encountered errors.
 
 #### Physical
 
-On compilation, DataSQRL produces the computational data flow DAG that represents the physical model. DataSQRL generates a visual representation as shown above for human validation as well as a concise textual representation that is consumed by coding agents as feedback on their proposed solutions and to reinforce the conceptual data flow of the framework.
+On compilation, DataSQRL produces the computational data flow DAG that represents the physical layer. DataSQRL generates a visual representation as shown above for human validation as well as a concise textual representation that is consumed by coding agents as feedback on their proposed solutions and to reinforce the conceptual data flow of the harness.
 
 ```text
 === CustomerTransaction
@@ -202,13 +220,13 @@ Schema:
  - customerId: BIGINT NOT NULL
 ```
 
-This representation of the physical model combines the inferences from the logical model with the mapping to execution engines to provide a source-to-interface definition of the data flow.
+This representation of the physical layer combines the inferences from the logical layer with the mapping to execution engines to provide a source-to-interface definition of the data flow.
 
 Validation at the physical level ensures that data type mappings are consistent and that the engine assignments are valid, i.e., that an assigned engine has the capabilities to execute a particular operator. DataSQRL uses a capabilities component that extracts all requirements from an operator (e.g., temporal join, or a particular function execution) and validates that the engine supports the corresponding capabilities.
 
 #### Deployment Assets
 
-The executable deployment assets are transpiled from the physical model. Since the transpilation is deterministic, this yields better results than letting the coding agent generate them, and it keeps the conceptual framework concise. However, we generate all deployment assets in a text representation that the coding agent can easily consume as another source of feedback. This is particularly useful during troubleshooting where the deployment assets are the ultimate source of truth of what is being executed and allow the agent to reason "backwards" to the logical model and how to fix it.
+The executable deployment assets are transpiled from the physical layer. Since the transpilation is deterministic, this yields better results than letting the coding agent generate them, and it keeps the harness concise. However, we generate all deployment assets in a text representation that the coding agent can easily consume as another source of feedback. This is particularly useful during troubleshooting where the deployment assets are the ultimate source of truth of what is being executed and allow the agent to reason "backwards" to the logical layer and how to fix it.
 
 Specifically, we generate:
 
@@ -227,8 +245,6 @@ DataSQRL follows the neuro-symbolic approach and provides 3 types of planners fo
 
 Query rewriting and optimization is a well-established technique for producing high-performing physical plans from relational algebra. DataSQRL relies on Apache Calcite's Volcano optimizer and HEP rule engine for this purpose.
 
-<img src="/img/screenshots/banking_dag.png" alt="Architecture view of DataSQRL pipelines" width="100%"/>
-
 #### Physical Planning
 
 The physical plan DAG is subject to a number of constraints forced by the real-world constraints of physical data movement. For example, to serve data on request in the API, the data needs to be available in the database - we cannot serve the data straight from a data processor, for example. These topological constraints combined with the capabilities of individual engines render many AI-proposed solutions invalid.
@@ -243,7 +259,7 @@ Index structure selection is another optimization problem that is better handled
 
 ## Real World Feedback
 
-A conceptual framework with complementary verification and introspection provides the foundation of a world model for data pipelines with feedback on proposed solutions. However, that feedback is limited to the plan and does not account for the complexities of actual execution. Real-world feedback is critical for iterative refinement of production-grade implementations and troubleshooting issues that arise in operation.
+A harness with complementary verification and introspection provides the foundation of a world model for data pipelines with feedback on proposed solutions. However, that feedback is limited to the plan and does not account for the complexities of actual execution. Real-world feedback is critical for iterative refinement of production-grade implementations and troubleshooting issues that arise in operation.
 
 DataSQRL provides two sources of real-world feedback: a simulator that's used at implementation time and telemetry collection from production deployments that captures the operational status of the pipeline.
 
@@ -261,22 +277,34 @@ Read more about invoking the [simulator](/docs/compiler#test-command) and writin
 
 The most important source of real-world feedback is observing the deployed data pipeline in a production environment (or a closely approximated pre-prod environment). Observability is critical for assessing the health of the pipeline and troubleshooting any issues that may occur.
 
-Logs and telemetry collection is a well-established practice for DevOps. What DataSQRL adds is the ability to link observed data back to the physical computation DAG so the agent can accurately reason about cause and effect. For data pipelines that execute across multiple engines, many complex errors arise at the boundary between systems - e.g., an issue in the data processing causes too many writes to the database which degrades performance - and require reasoning across individual systems. To automate such troubleshooting, we need to correlate observations back to the physical data flow and logical model.
+Logs and telemetry collection is a well-established practice for DevOps. What DataSQRL adds is the ability to link observed data back to the physical computation DAG so the agent can accurately reason about cause and effect. For data pipelines that execute across multiple engines, many complex errors arise at the boundary between systems - e.g., an issue in the data processing causes too many writes to the database which degrades performance - and require reasoning across individual systems. To automate such troubleshooting, we need to correlate observations back to the physical data flow and logical layer.
 
 DataSQRL currently assumes production operation in Kubernetes or Docker and provides hooks for extracting logs and telemetry data. That data is correlated back to the SQL code and configuration defining the pipeline via the deployment assets, allowing coding agents to reason about effective solutions for troubleshooting production issues autonomously.
 
 
-# Summary
+## Summary
 
-(write summary)
+Data engineering is entering a new era of automation. Coding agents can now write SQL, configure pipelines, and deploy data systems. But without proper guardrails, they produce solutions that fail under the weight of production requirements.
+
+DataSQRL is the data engineering harness that ensures AI coding agents produce high-quality pipelines. DataSQRl encodes decades of data engineering knowledge into a structured framework that coding agents can leverage to build production-grade data systems.
+
+The harness provides three critical capabilities:
+
+1. **A Conceptual Framework** grounded in relational algebra and stream processing that gives agents a precise vocabulary for reasoning about data transformations, with logical and physical layers that separate *what* from *how*.
+
+2. **Comprehensive Validation** at every level ensures that agent-generated code meets data engineering standards before it reaches production: from syntax and schema validation through physical plan verification to deployment asset generation. 
+
+3. **Real-World Feedback Loops** through simulation and production telemetry that enable agents to iteratively refine implementations based on actual execution behavior, not just static analysis.
+
+For any organization pursuing data platform automation, a data engineering harness is foundational to avoid shipping AI slob data pipelines. Without it, you're asking general-purpose coding agents to navigate the complex constraints of distributed data systems without a map. With DataSQRL, you're equipping them with the domain expertise to succeed.
 
 [DataSQRL is open-source](https://github.com/DataSQRL/sqrl) so you can customize it to build a self-driving data platform tailored to your requirements.
 
-# Getting Started
+## Getting Started
 
 To try out DataSQRL:
 
 1. [Build a project from scratch with DataSQRL](/docs/intro/getting-started) to see how the components of DataSQRL work
 2. [Look at example projects](https://github.com/DataSQRL/datasqrl-examples) and run/modify them locally.
-3. [Read the documentation](docs/intro/index)
+3. [Read the documentation](/docs/intro)
 4. [Check out the open-source project on GitHub](https://github.com/DataSQRL/sqrl)
