@@ -10,28 +10,14 @@ tags: [release]
   <meta name="twitter:image" content="/img/diagrams/agentic/harness_overview.png" />
 </head>
 
-# Data Platform Automation
+# Agentic Data Engineering Harness
 
-DataSQRL is an open-source data automation framework that provides guardrails and feedback for AI coding agents to develop and operate data pipelines, data products, and data APIs autonomously.
-You can customize DataSQRL as the foundation of your self-driving data platform. Our goal is to develop DataSQRL into a comprehensive world model for data platform automation.
+DataSQRL is an open-source data engineering harness that provides guardrails and feedback for AI coding agents to develop and operate data pipelines, data products, and data APIs autonomously.
+You can customize DataSQRL as the foundation of your agentic data platform. Our goal is to develop DataSQRL into a comprehensive data engineering harness for data platform automation.
 
 ## Why DataSQRL?
 
-To understand *why you need DataSQRL*, let's start with the obvious question: **Aren’t LLM-based coding agents good enough?**
-
-LLMs are powerful pattern-matching systems but lack grounded models of how data systems behave. Research such as Apple’s 2024 paper [“The Illusion of Thinking”](https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf) shows that LLMs struggle with causal, temporal, and systems-level reasoning, which are the capabilities required to design reliable, multi-engine data pipelines. As a result, agents often generate brittle transformations, invalid mappings, and incorrect assumptions about how data moves and evolves over time.
-
-That is why DataSQRL exists. Coding agents are impressive solution generators, but they require a **conceptual framework**, **validator**, and **simulator** to ensure correctness, safety, and robustness. In most successful agentic systems deployed in the wild, the neural network–driven reasoning is balanced by a set of components that supply structure, constraints, and feedback loops. Collectively, these components are called **"World Model"**.
-
-<img src="/img/diagrams/world_model_architecture.png" alt="DataSQRL World Model Architecture" width="100%"/>
-
-Consider self-driving cars as an example. Neural networks power environmental perception: recognizing lanes, traffic lights, pedestrians. Autonomous driving becomes possible only when this probabilistic perception is grounded in detailed maps, constraint systems, planning modules, and a conceptual framework based on physics and real‑world dynamics.
-
-The neural network alone cannot infer the rules of the road or the relationships that make a driving environment coherent. It needs a world model for driving.
-
-**DataSQRL plays that grounding role for coding agents in the context of data platforms and data pipelines.**
-
-Let's look at the individual components of DataSQRL to understand how it provides that grounding for AI by building a world model for data processing.
+(write one paragraph justifying why we need a dedicated harness for data engineering focused on data quality and non-functional requirements)
 
 ## Conceptual Framework
 
@@ -277,15 +263,12 @@ The most important source of real-world feedback is observing the deployed data 
 
 Logs and telemetry collection is a well-established practice for DevOps. What DataSQRL adds is the ability to link observed data back to the physical computation DAG so the agent can accurately reason about cause and effect. For data pipelines that execute across multiple engines, many complex errors arise at the boundary between systems - e.g., an issue in the data processing causes too many writes to the database which degrades performance - and require reasoning across individual systems. To automate such troubleshooting, we need to correlate observations back to the physical data flow and logical model.
 
-DataSQRL currently assumes production operation in Kubernetes or Docker and provides hooks for extracting logs and telemetry data.
-Correlating that data back to the physical model is not fully abstracted yet and requires individual setup for each deployment. This is work in progress.
+DataSQRL currently assumes production operation in Kubernetes or Docker and provides hooks for extracting logs and telemetry data. That data is correlated back to the SQL code and configuration defining the pipeline via the deployment assets, allowing coding agents to reason about effective solutions for troubleshooting production issues autonomously.
+
 
 # Summary
 
-DataSQRL is a data automation framework that provides the foundational building blocks for autonomous data platforms. DataSQRL provides a world model consisting of a conceptual framework, validator, and real-world simulator. It uses a neuro-symbolic approach for integrating solvers, planners, and transpilers to handle deterministic optimizations, following the principle of keeping the agentic context and task scope narrow to improve accuracy.
-DataSQRL empowers coding agents with a feedback loop, which enables automation through iterative refinement.
-
-DataSQRL is a flexible framework that can be adapted to multiple data engines and extended for custom verification rules, analyses, and feedback.
+(write summary)
 
 [DataSQRL is open-source](https://github.com/DataSQRL/sqrl) so you can customize it to build a self-driving data platform tailored to your requirements.
 
