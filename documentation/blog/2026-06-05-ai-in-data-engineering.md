@@ -32,7 +32,7 @@ Without systematic guardrails, AI-generated data pipelines work in demos but fai
 
 ## A Data Quality Governance Framework
 
-Successfully integrating AI into data engineering requires a governance framework that addresses three dimensions: **transparency**, **validation**, and **progressive deployment**.
+Successfully integrating AI into data engineering requires a governance framework that addresses three dimensions: **transparency**, **validation**, and **operations**.
 
 ### Transparency: Exposing Data Lineage and Reasoning
 
@@ -109,19 +109,30 @@ Suggestion: Add a timestamp column with WATERMARK definition:
 See: /docs/sqrl-language#temporal-joins
 ```
 
-### Progressive Deployment: Graduated Autonomy => replace with operations
+### Operations: Continuous Monitoring and Autonomous Troubleshooting
 
-Not all data pipelines carry equal risk. A new aggregation for an internal dashboard differs fundamentally from a pipeline feeding real-time fraud detection. We need graduated autonomy levels that match agent independence to pipeline criticality.
+Building pipelines is only half the challenge. When you're managing dozens of AI-generated data pipelines in production, operations becomes the bottleneck. Traditional monitoring approaches—dashboards, manual alerts, runbooks—can't scale when pipeline count grows faster than team headcount.
 
-| Level | Agent Capability | Human Involvement | Use Case |
-|-------|-----------------|-------------------|----------|
-| L0 | None | Full manual implementation | Critical compliance pipelines |
-| L1 | Suggests transformations | Human writes and deploys | Core business logic |
-| L2 | Generates complete pipeline | Human reviews and approves | Standard analytics |
-| L3 | Deploys to staging autonomously | Human approves production promotion | Well-defined patterns |
-| L4 | Full autonomous operation | Human monitors and intervenes on alerts | Routine data products |
+The governance framework needs to support autonomous operations:
 
-Progression through levels requires demonstrated reliability. An agent operating at L2 for a pipeline category needs to show consistent validation pass rates and production stability before advancing to L3. Regression—through failed deployments or data quality incidents—triggers automatic demotion.
+**Continuous Monitoring**
+- Real-time data quality assertions that validate business rules on every record
+- SLA tracking that measures end-to-end latency from source event to API availability
+- Schema drift detection that catches upstream changes before they break downstream consumers
+- Resource utilization monitoring that identifies capacity issues before they cause failures
+
+**Autonomous Troubleshooting**
+- Automatic correlation of symptoms to root causes using lineage information
+- Self-healing for common failure modes (connector reconnection, checkpoint recovery, partition rebalancing)
+- Intelligent alerting that groups related issues and suppresses noise
+- Runbook automation that executes standard remediation steps without human intervention
+
+**Observability Integration**
+- Structured logging that links every record to its source transformation
+- Distributed tracing across the complete pipeline (Kafka → Flink → Postgres → API)
+- Metrics export to existing observability platforms (Prometheus, Datadog, CloudWatch)
+
+The goal? A team of three data engineers should be able to operate thirty pipelines in production. That's only possible when the harness handles routine operations autonomously and escalates only the issues that genuinely require human judgment.
 
 ## Capturing Data Engineering Expertise
 
@@ -313,10 +324,10 @@ Successfully integrating AI into data engineering requires organizational adapta
 As agents handle routine implementation, data engineers shift focus toward:
 
 - **Architecture review**: Evaluating agent-proposed designs against organizational patterns
+- **Pipeline auditing**: Reviewing agent-generated pipelines for correctness, efficiency, and compliance
 - **Domain encoding**: Capturing business knowledge in schemas, contracts, and quality rules
 - **Failure analysis**: Investigating production issues and encoding learnings
-- **Governance evolution**: Refining validation rules and autonomy criteria
-- auditing
+- **Governance evolution**: Refining validation rules and operational criteria
 
 This shift parallels the evolution in other engineering disciplines where automation handles routine tasks while humans focus on judgment-intensive decisions.
 
@@ -344,9 +355,9 @@ This documentation effort has value beyond AI enablement: it improves onboarding
 
 ## The Path Forward
 
-AI-assisted data engineering is not a future possibility—it's a present reality. Organizations that successfully integrate AI into their data platforms will achieve significant productivity gains while maintaining the reliability that production systems demand.
+AI-assisted data engineering is here. Organizations that successfully integrate AI into their data platforms will achieve significant productivity gains while maintaining the reliability that production systems demand.
 
-The key insight? AI integration requires infrastructure, not just tools. Coding agents operating without guardrails produce pipelines that work in demos but fail in production. Agents operating within a purpose-built harness—with comprehensive validation, real-world feedback, and encoded expertise—produce pipelines that meet production requirements.
+AI integration requires infrastructure, not just tools. Coding agents operating without guardrails produce pipelines that work in demos but fail in production. Agents operating within a purpose-built harness with comprehensive validation, real-world feedback, and encoded expertise produce pipelines that meet production requirements.
 
 The **data engineering harness** represents this infrastructure: a system that provides the governance, validation, and feedback loops necessary for AI-assisted data platform automation. By separating concerns—agents handle business logic, the harness handles infrastructure complexity—we achieve both productivity and reliability.
 
