@@ -26,7 +26,7 @@ Organizations are targeting 3-5x productivity improvements through AI-assisted d
 - **Integration testing** becomes a bottleneck when deployment velocity outpaces validation capacity
 - **Operations and troubleshooting** overwhelm teams when they have to manage dozens of pipelines in production
 
-The fundamental problem? Coding agents optimize for functional correctness (e.g.g does the query return the right results?) while production data systems require a much broader set of guarantees.
+The fundamental problem? Coding agents optimize for functional correctness (e.g. does the query return the right results?) while production data systems require a much broader set of guarantees.
 
 Without systematic guardrails, AI-generated data pipelines work in demos but fail in production and overwhelm the data engineering teams that have to fill the gaps.
 
@@ -105,8 +105,6 @@ but lacks a rowtime attribute.
 Suggestion: Add a timestamp column with WATERMARK definition:
   tx_time TIMESTAMP_LTZ(3),
   WATERMARK FOR tx_time AS tx_time - INTERVAL '5' SECOND
-
-See: /docs/sqrl-language#temporal-joins
 ```
 
 ### Operations: Continuous Monitoring and Autonomous Troubleshooting
@@ -279,7 +277,7 @@ The mapping from logical to physical layer happens through deterministic transpi
 - Missing index structures
 - Inconsistent serialization formats
 
-The transpiler generates deployment artifacts—Flink plans, Kafka topics, Postgres schemas, GraphQL models—that are guaranteed consistent with the logical definition. Agents focus on business logic; the harness handles infrastructure integration.
+The transpiler generates deployment artifacts (Flink plans, Kafka topics, Postgres schemas, GraphQL models) that are guaranteed consistent with the logical definition. Agents focus on business logic while the harness handles infrastructure integration.
 
 <img src="/img/diagrams/agentic/complete_framework.png" alt="Complete framework showing transpilation from SQL to multiple engines" width="100%"/>
 

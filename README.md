@@ -19,7 +19,7 @@ DataSQRL provides three capabilities that coding agents need to produce producti
 
 1. **Conceptual Framework**: A SQL-based logical layer grounded in relational algebra and stream processing, with a physical layer that maps to execution engines. Gives agents a precise vocabulary for reasoning about data transformations.
 
-2. **Comprehensive Validation**: Verification at every level: syntax, schema, data flow semantics, physical plan, and deployment assets; with actionable error messages that guide agents toward correct solutions.
+2. **Comprehensive Validation**: Verification at every level across syntax, schema, data flow semantics, physical plans, and deployment assets, with actionable error messages that guide agents toward correct solutions.
 
 3. **Real-World Feedback**: A simulator for local testing with timestamp-accurate replay, plus production telemetry hooks that correlate runtime behavior back to source code for autonomous troubleshooting.
 
@@ -102,11 +102,11 @@ DataSQRL is a harness and framework that deterministically automates data plumbi
 2. **Compile**: DataSQRL builds a computational DAG, validates semantics, and optimizes execution
 3. **Analyze**: The compiler detects data inconsistencies, performance issues, and capability mismatches
 4. **Generate**: Cost-based optimization assigns operators to engines (Flink, Kafka, Postgres, Vert.x) and generates deployment artifacts
-5. **Iterate**: Compilation output feeds back to the agent for refinement; simulation provides real-world feedback
+5. **Iterate**: Compilation output helps the agent refine its solution, while simulation provides real-world feedback
 
 The entire pipeline is defined in SQL: easy to understand, verify, and maintain. DataSQRL handles the complex mapping to physical infrastructure so agents can focus on business logic. DataSQRL is compatible with any code agent.
 
-DataSQRL includes a [function library](https://docs.datasqrl.com/docs/functions) and [connectors](https://docs.datasqrl.com/docs/connectors/) for Kafka, Iceberg, Postgres, and more. The framework is extensible—add custom functions, connectors, or execution engines.
+DataSQRL includes a [function library](https://docs.datasqrl.com/docs/functions) and [connectors](https://docs.datasqrl.com/docs/connectors/) for Kafka, Iceberg, Postgres, and more. The framework is extensible, add custom functions, connectors, or execution engines.
 
 Read the [in-depth explanation](https://docs.datasqrl.com/blog/agentic-data-engineering-harness) or view the [full documentation](https://docs.datasqrl.com/).
 

@@ -117,7 +117,7 @@ WHERE debit_account_id = :account_id
 ORDER BY tx_time DESC;
 ```
 
-Secondly, DataSQRL allows for explicit relationship definitions between tables which are important for API-based data access where results need to include related entities like *most recent orders* or *recommendations for movie category*. The relational model does not support traversing through an entity-relationship model, which is usually handled by an object-relational mapping layer when exposing an API. To avoid that extra complexity and impedance mismatch in our logical layer, DataSQRL provides first-class support for relationships.
+Furthermore, DataSQRL allows for explicit relationship definitions between tables which are important for API-based data access where results need to include related entities like *most recent orders* or *recommendations for movie category*. The relational model does not support traversing through an entity-relationship model, which is usually handled by an object-relational mapping layer when exposing an API. To avoid that extra complexity and impedance mismatch in our logical layer, DataSQRL provides first-class support for relationships.
 
 ```sql
 -- Create a relationship between holder and accounts filtered by status
@@ -247,7 +247,7 @@ Query rewriting and optimization is a well-established technique for producing h
 
 #### Physical Planning
 
-The physical plan DAG is subject to a number of constraints forced by the real-world constraints of physical data movement. For example, to serve data on request in the API, the data needs to be available in the database - we cannot serve the data straight from a data processor, for example. These topological constraints combined with the capabilities of individual engines render many AI-proposed solutions invalid.
+The physical plan DAG is subject to a number of constraints forced by the real-world constraints of physical data movement. For example, when the API needs to serve data on request, that data must first be available in the database. It cannot be served directly from a data processor. These topological constraints combined with the capabilities of individual engines render many AI-proposed solutions invalid.
 
 Hence, we implement a physical planner that uses a cost model with a greedy heuristic to assign logical operators to engines in a way that is consistent. The AI can provide hints to force the assignment of certain operators to specific engines which are added as constraints to the optimizer. This gives the AI control over allocations but shifts the burden of constraint satisfaction to a dedicated solver.
 
@@ -277,7 +277,7 @@ Read more about invoking the [simulator](/docs/compiler#test-command) and writin
 
 The most important source of real-world feedback is observing the deployed data pipeline in a production environment (or a closely approximated pre-prod environment). Observability is critical for assessing the health of the pipeline and troubleshooting any issues that may occur.
 
-Logs and telemetry collection is a well-established practice for DevOps. What DataSQRL adds is the ability to link observed data back to the physical computation DAG so the agent can accurately reason about cause and effect. For data pipelines that execute across multiple engines, many complex errors arise at the boundary between systems - e.g., an issue in the data processing causes too many writes to the database which degrades performance - and require reasoning across individual systems. To automate such troubleshooting, we need to correlate observations back to the physical data flow and logical layer.
+Logs and telemetry collection is a well-established practice for DevOps. What DataSQRL adds is the ability to link observed data back to the physical computation DAG so the agent can accurately reason about cause and effect. For data pipelines that execute across multiple engines, many complex errors arise at system boundaries and require reasoning across multiple systems. For example, an issue in the data processing layer may cause excessive writes to the database, degrading overall performance. To automate such troubleshooting, we need to correlate observations back to the physical data flow and logical layer.
 
 DataSQRL currently assumes production operation in Kubernetes or Docker and provides hooks for extracting logs and telemetry data. That data is correlated back to the SQL code and configuration defining the pipeline via the deployment assets, allowing coding agents to reason about effective solutions for troubleshooting production issues autonomously.
 
