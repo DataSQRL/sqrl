@@ -1,4 +1,4 @@
-# DataSQRL
+# DataSQRL: Agentic Data Engineering Harness
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/DataSQRL/sqrl/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/DataSQRL/sqrl/tree/main)
 [![Docs](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://datasqrl.github.io/sqrl)
@@ -7,45 +7,41 @@
 [![Docker Image Version](https://img.shields.io/docker/v/datasqrl/cmd?sort=semver)](https://hub.docker.com/r/datasqrl/cmd/tags)
 [![Maven Central](https://img.shields.io/maven-central/v/com.datasqrl/sqrl-root)](https://repo1.maven.org/maven2/com/datasqrl/sqrl-root/)
 
-DataSQRL is a data automation framework for building reliable data pipelines, data APIs (REST, MCP, GraphQL), and data products in SQL using open-source technologies.
+DataSQRL is an open-source **data engineering harness** that provides guardrails and feedback for AI coding agents to build reliable data pipelines, data APIs, and data products.
 
-DataSQRL provides three key elements for AI-assisted data platform automation:
-1. **World Model:** DataSQRL builds a source-to-sink computational graph of the data processing including schemas, connectors, and mappings, which provides a comprehensive world model to ground generative AI. 
-2. **Simulation:** DataSQRL includes a runtime and testing framework to ensure data integrity and act as a simulator in iterative refinement loops with real-world feedback. 
-3. **Verification:** Since the entire data pipeline is defined in SQL, it is easy to understand and verify. DataSQRL produces detailed execution plans and lineage graphs to assist automated and manual analysis. 
+DataSQRL ensures coding agents meet the non-functional requirements of production data systems for data quality, scalability, governance, and reliability. DataSQRL provides deep-inspection of SQL, relational validators, and deterministic event-replay simulation to ensure agent-generated code meets these requirements through iterative feedback loops.
 
-DataSQRL generates the deployment artifacts to execute the entire pipeline on open-source technologies like PostgreSQL, Apache Kafka, Apache Flink, and Apache Iceberg on your existing infrastructure with Docker, Kubernetes, or cloud-managed services.
+![DataSQRL Harness Architecture](/documentation/static/img/diagrams/agentic/harness_overview_margin.png)
 
-![DataSQRL Pipeline Architecture](/documentation/static/img/diagrams/automation_overview.png)
+## Key Capabilities
 
-DataSQRL models data pipelines with the following requirements:
+DataSQRL provides three capabilities that coding agents need to produce production-grade data systems:
 
-* 🛡️ **Data Consistency Guarantees:** Exactly-once processing, data consistency across all outputs, schema alignment, and data lineage tracking.
-* 🔒 **Production-grade Reliability:** Robust, highly available, scalable, secure, access-controlled, and observable data pipelines.
-* 🚀 **Developer Workflow Integration:** Local development, quick iteration with feedback, CI/CD support, and comprehensive testing framework.
+1. **Conceptual Framework**: A SQL-based logical layer grounded in relational algebra and stream processing, with a physical layer that maps to execution engines. Gives agents a precise vocabulary for reasoning about data transformations.
 
-To learn more about DataSQRL, check out [the documentation](https://docs.datasqrl.com/).
+2. **Comprehensive Validation**: Verification at every level across syntax, schema, data flow semantics, physical plans, and deployment assets, with actionable error messages that guide agents toward correct solutions.
 
-To see how DataSQRL provides feedback and guides AI coding agents to build data products autonomously, [view this demo video](https://www.youtube.com/watch?v=RfMzdrtrEqQ).
+3. **Real-World Feedback**: A simulator for local testing with timestamp-accurate replay, plus production telemetry hooks that correlate runtime behavior back to source code for autonomous troubleshooting.
+
+DataSQRL compiles SQL scripts into deployment artifacts for PostgreSQL, Apache Kafka, Apache Flink, and Apache Iceberg—running on your existing infrastructure with Docker, Kubernetes, or cloud-managed services.
 
 ## Getting Started
 
-To create a new data project with DataSQRL, use the `init` command in an empty folder.
+Create a new data project with the `init` command:
 
 ```bash
- docker run --rm -v $PWD:/build datasqrl/cmd init api messenger
+docker run --rm -v $PWD:/build datasqrl/cmd init api messenger
 ```
-(Use `${PWD}` in Powershell on Windows).
+(Use `${PWD}` in Powershell on Windows)
 
-This creates a new data API project called `messenger` with some sample data sources and a simple data processing script called `messenger.sqrl`.
+This creates a data API project with sample data sources and a processing script called `messenger.sqrl`.
 
-Run the project with
+Run the project:
 ```bash
 docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/build datasqrl/cmd run messenger-prod-package.json
 ```
 
-This launches the entire data pipeline for ingesting, processing, storing, and serving messages.
-You can access the API in your browser [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/) and add messages with the following mutation:
+Access the API at [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/). Add messages:
 
 ```graphql
 mutation {
@@ -55,7 +51,7 @@ mutation {
 }
 ```
 
-Query messages with:
+Query messages:
 ```graphql
 {
     Messages {
@@ -65,73 +61,61 @@ Query messages with:
 }
 ```
 
-Alternatively, you can query messages through [REST](http://localhost:8888/v1/rest) or [MCP](http://localhost:8888/v1/mcp).
-Once you are done, terminate the pipeline with `CTRL-C`.
+Also available via [REST](http://localhost:8888/v1/rest) or [MCP](http://localhost:8888/v1/mcp). Terminate with `CTRL-C`.
 
-For additional data processing, edit the `messenger.sqrl` script - for example to aggregate messages:
+Edit `messenger.sqrl` to add processing logic:
 ```sql
 TotalMessages := SELECT COUNT(*) as num_messages, MAX(message_time) as latest_timestamp
                  FROM Messages LIMIT 1;
 ```
 
-To run the test case, execute:
+Run tests:
 ```bash
 docker run -it --rm -v $PWD:/build datasqrl/cmd test messenger-test-package.json
 ```
 
-To build the deployment assets for the data pipeline, execute
+Compile deployment artifacts:
 ```bash
 docker run --rm -v $PWD:/build datasqrl/cmd compile messenger-prod-package.json
-``` 
-The `build/deploy` directory contains the Flink compiled plan, Kafka topic definitions, PostgreSQL schema and view definitions, server queries, MCP tool definitions, and GraphQL data model.
-Those assets can be deployed in containerized environments (e.g. via Kubernetes) or cloud-managed services. 
+```
+The `build/deploy` directory contains Flink compiled plans, Kafka topic definitions, PostgreSQL schemas, server queries, MCP tool definitions, and GraphQL models—ready for Kubernetes or cloud deployment.
 
-Read the [full Getting Started tutorial](https://docs.datasqrl.com//docs/getting-started) or check out the [DataSQRL Examples repository](https://github.com/DataSQRL/datasqrl-examples/) for more examples creating MCP servers, data APIs, Iceberg views and more.
+Read the [Getting Started tutorial](https://docs.datasqrl.com/docs/getting-started) or explore the [examples repository](https://github.com/DataSQRL/datasqrl-examples/).
 
-## Why DataSQRL?
+## Why a Data Engineering Harness?
 
-AI-driven data platform automation is within reach. However, trust-worthy automation requires more than generative AI.
-It requires a [world model](https://lingo.csail.mit.edu/blog/world_models/) that understands your data landscape, enforces constraints, and provides the grounding and feedback loops needed for safe, reliable automation.
+Coding agents can generate SQL queries that produce correct results on test data. But will those queries perform at scale? Handle late-arriving events correctly? Maintain data quality when upstream schemas change?
 
-DataSQRL is an open-source world model for data platform automation.
-As a modular framework, it provides the building blocks to build a customized world model for your organization to give AI a set of guardrails that ensure generated solutions are safe, reliable, and perform well in production.
+These non-functional requirements — data quality, scalability, governance, reliability, cost efficiency — are what distinguish data engineering from general software development. General-purpose coding agents aren't equipped to handle them consistently.
 
-## How DataSQRL Works
+DataSQRL provides the guardrails, feedback loops, and domain-specific constraints that coding agents need. Without a harness, you get pipelines that work in demos but fail in production. With a harness, you get pipelines that embody data engineering best practices and domain-specific knowledge.
 
-![Example Data Processing DAG](documentation/static/img/screenshots/dag_example.png)
+To see DataSQRL guiding an AI coding agent, [watch this demo](https://www.youtube.com/watch?v=RfMzdrtrEqQ).
 
-DataSQRL is a modular compiler framework for data pipelines that (deterministically) automates a lot of data plumbing code in data pipelines.
-This significantly reduces the complexity of AI-assisted (i.e. probabilistic) automation and provides feedback through deep introspection of the pipeline code.
+## How It Works
 
-This allows you to generate data processing logic in SQL using any AI coding tools or agents.
-DataSQRL compiles the SQL into a data processing DAG (Directed Acyclic Graph) according to the provided configuration.
-The analyzer traverses the DAG to detect potential data inconsistencies, performance, or scalability issues.
-The cost-based optimizer cuts the DAG into segments executed by different engines (e.g. Flink, Kafka, Postgres, Vert.x), generating the necessary physical plans, schemas, and connectors for a fully integrated, reliable, and consistent data pipeline.
-The compiled artifacts are fed back to the AI for iterative refinement to improve the solution incrementally.
+![DataSQRL Pipeline DAG](documentation/static/img/screenshots/dag_example.png)
 
-In addition, the compiled deployment assets can be executed locally in Docker, Kubernetes, or by a managed cloud service. DataSQRL comes with a testing framework for simulation of the data pipeline.
-This provides real-world feedback on the results and operational characteristics that are included in the iterative refinement feedback loop.
+DataSQRL is a harness and framework that deterministically automates data plumbing, reducing the complexity that coding agents must handle while providing feedback through deep introspection.
 
-DataSQRL gives you full visibility and control over the generated data pipeline. Since the entire pipeline is implemented in SQL it is easy to understand and verify manually.
+1. **Write SQL**: Define data transformations in SQRL (SQL with stream processing extensions)
+2. **Compile**: DataSQRL builds a computational DAG, validates semantics, and optimizes execution
+3. **Analyze**: The compiler detects data inconsistencies, performance issues, and capability mismatches
+4. **Generate**: Cost-based optimization assigns operators to engines (Flink, Kafka, Postgres, Vert.x) and generates deployment artifacts
+5. **Iterate**: Compilation output helps the agent refine its solution, while simulation provides real-world feedback
 
-DataSQRL uses proven open-source technologies to execute the generated deployment assets. You can use your existing infrastructure or cloud services for runtime, DataSQRL is only used at compile time. 
+The entire pipeline is defined in SQL: easy to understand, verify, and maintain. DataSQRL handles the complex mapping to physical infrastructure so agents can focus on business logic. DataSQRL is compatible with any code agent.
 
-DataSQRL has a rich [function library](https://docs.datasqrl.com/docs/functions) and provides [connectors](https://docs.datasqrl.com/docs/connectors/) for many popular data systems (Kafka, Iceberg, Postgres, and many more).
-In addition, DataSQRL is an extensible framework, and you can add custom functions, source/sink connectors, and entire execution engines.
+DataSQRL includes a [function library](https://docs.datasqrl.com/docs/functions) and [connectors](https://docs.datasqrl.com/docs/connectors/) for Kafka, Iceberg, Postgres, and more. The framework is extensible, add custom functions, connectors, or execution engines.
 
-<!--
-[DataSQRL Cloud](https://www.datasqrl.com) is a managed service that runs DataSQRL pipelines with no operational overhead and integrates directly with GitHub for simple deployments.
--->
-
-Read an [in-depth explanation of DataSQRL](https://docs.datasqrl.com/blog/data-platform-automation) or view the [full documentation](https://docs.datasqrl.com/) to learn more.
-
+Read the [in-depth explanation](https://docs.datasqrl.com/blog/agentic-data-engineering-harness) or view the [full documentation](https://docs.datasqrl.com/).
 
 ## Contributing
 
 ![Contribute to DataSQRL](documentation/static/img/undraw/code.svg)
 
-Our goal is to automate data platforms by building a world model that provides the necessary guardrails and feedback. We believe anyone who can read SQL should be empowered to build complex data systems that are robust and reliable.
-Your feedback is invaluable in achieving this goal. Let us know what works and what doesn't by filing GitHub issues or starting discussions.
+Our goal is to build a data engineering harness that enables safe, reliable automation of data platforms. We believe anyone who can read SQL should be empowered to build complex data systems that are robust and production-ready.
 
-We welcome code contributions. For more details, check out [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Your feedback is invaluable. Let us know what works and what doesn't by filing GitHub issues or starting discussions.
 
+We welcome code contributions. See [`CONTRIBUTING.md`](CONTRIBUTING.md) for details.

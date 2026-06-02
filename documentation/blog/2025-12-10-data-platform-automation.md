@@ -3,6 +3,7 @@ slug: data-platform-automation
 title: "World Model for Data Platform Automation"
 authors: [matthias]
 tags: [release]
+unlisted: true
 ---
 
 <head>
