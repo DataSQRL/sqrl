@@ -16,7 +16,7 @@
 package com.datasqrl.graphql.jdbc;
 
 import com.datasqrl.graphql.config.ServerConfig;
-import com.datasqrl.util.DuckDbExtensions;
+import com.datasqrl.util.DuckDbInitializer;
 import com.google.common.collect.ImmutableMap;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -88,8 +88,7 @@ public class JdbcClientsConfig {
 
     // No need for Class.forName() - DuckDB JDBC driver auto-registers via JDBC 4.0+ ServiceLoader
     var url = duckDbConf.getUrl();
-    var extensions = new DuckDbExtensions(duckDbConf);
-    var initSql = extensions.buildInitSql();
+    var initSql = new DuckDbInitializer(duckDbConf).buildInitSql();
 
     var hikariCfg = new HikariConfig();
     hikariCfg.setJdbcUrl(url);
