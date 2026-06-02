@@ -172,6 +172,9 @@
             "url": {
               "type": "string"
             },
+            "memory-limit": {
+              "type": "string"
+            },
             "use-disk-cache": {
               "type": "boolean"
             },
