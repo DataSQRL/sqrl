@@ -96,7 +96,7 @@ To see DataSQRL guiding an AI coding agent, [watch this demo](https://www.youtub
 
 ![DataSQRL Pipeline DAG](documentation/static/img/screenshots/dag_example.png)
 
-DataSQRL is a compiler framework that deterministically automates data plumbing, reducing the complexity that coding agents must handle while providing feedback through deep introspection.
+DataSQRL is a harness and framework that deterministically automates data plumbing, reducing the complexity that coding agents must handle while providing feedback through deep introspection.
 
 1. **Write SQL**: Define data transformations in SQRL (SQL with stream processing extensions)
 2. **Compile**: DataSQRL builds a computational DAG, validates semantics, and optimizes execution
@@ -104,7 +104,7 @@ DataSQRL is a compiler framework that deterministically automates data plumbing,
 4. **Generate**: Cost-based optimization assigns operators to engines (Flink, Kafka, Postgres, Vert.x) and generates deployment artifacts
 5. **Iterate**: Compilation output feeds back to the agent for refinement; simulation provides real-world feedback
 
-The entire pipeline is defined in SQL—easy to understand, verify, and maintain. DataSQRL handles the complex mapping to physical infrastructure so agents can focus on business logic.
+The entire pipeline is defined in SQL: easy to understand, verify, and maintain. DataSQRL handles the complex mapping to physical infrastructure so agents can focus on business logic. DataSQRL is compatible with any code agent.
 
 DataSQRL includes a [function library](https://docs.datasqrl.com/docs/functions) and [connectors](https://docs.datasqrl.com/docs/connectors/) for Kafka, Iceberg, Postgres, and more. The framework is extensible—add custom functions, connectors, or execution engines.
 
