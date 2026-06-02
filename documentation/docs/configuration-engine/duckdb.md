@@ -7,6 +7,7 @@ DuckDB is a vectorized database query engine that excels at analytical queries a
 | Key                    | Type        | Default          | Description                                                                    |
 |------------------------|-------------|------------------|--------------------------------------------------------------------------------|
 | `url`                  | **string**  | `"jdbc:duckdb:"` | Full JDBC URL for the database connection                                      |
+| `memory-limit`         | **string**  | -                | Sets DuckDB's `memory_limit`, for example `"8GB"`                              |
 | `use-disk-cache`       | **boolean** | `false`          | Install and load `cache_httpfs` extension                                      |
 | `use-version-guessing` | **boolean** | `false`          | Sets `unsafe_enable_version_guessing` flag to be able to read uncommitted data |
 
@@ -17,6 +18,7 @@ DuckDB is a vectorized database query engine that excels at analytical queries a
   "engines": {
     "duckdb": {
       "url": "jdbc:duckdb:",
+      "memory-limit": "4GB",
       "use-disk-cache": true,
       "use-version-guessing": true
     }
