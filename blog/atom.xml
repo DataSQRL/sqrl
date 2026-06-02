@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://docs.datasqrl.com/blog</id>
     <title>DataSQRL Blog</title>
-    <updated>2026-06-01T00:00:00.000Z</updated>
+    <updated>2026-04-22T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://docs.datasqrl.com/blog"/>
     <subtitle>DataSQRL Blog</subtitle>
@@ -11,7 +11,7 @@
         <title type="html"><![CDATA[Agentic Data Engineering Harness]]></title>
         <id>https://docs.datasqrl.com/blog/agentic-data-engineering-harness</id>
         <link href="https://docs.datasqrl.com/blog/agentic-data-engineering-harness"/>
-        <updated>2026-06-01T00:00:00.000Z</updated>
+        <updated>2026-04-22T00:00:00.000Z</updated>
         <summary type="html"><![CDATA[DataSQRL is an open-source data engineering harness that provides guardrails and feedback for AI coding agents to develop and operate data pipelines, data products, and data APIs autonomously.]]></summary>
         <content type="html"><![CDATA[
 <p>DataSQRL is an open-source data engineering harness that provides guardrails and feedback for AI coding agents to develop and operate data pipelines, data products, and data APIs autonomously.
