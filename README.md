@@ -25,6 +25,8 @@ DataSQRL provides three capabilities that coding agents need to produce producti
 
 DataSQRL compiles SQL scripts into deployment artifacts for PostgreSQL, Apache Kafka, Apache Flink, and Apache Iceberg—running on your existing infrastructure with Docker, Kubernetes, or cloud-managed services.
 
+![DataSQRL Generated Data Architecture](/documentation/static/img/diagrams/agentic/complete_framework.png)
+
 ## Getting Started
 
 Create a new data project with the `init` command:
@@ -63,28 +65,29 @@ Query messages:
 
 Also available via [REST](http://localhost:8888/v1/rest) or [MCP](http://localhost:8888/v1/mcp). Terminate with `CTRL-C`.
 
-Edit `messenger.sqrl` to add processing logic:
+Instruct your favorite coding agent to update `messenger.sqrl` with test coverage and iterate until tests pass with:
+```bash
+docker run -it --rm -v $PWD:/build datasqrl/cmd test messenger-test-package.json
+```
+
+For example, to expose an endpoint for total messages:
+
 ```sql
 TotalMessages := SELECT COUNT(*) as num_messages, MAX(message_time) as latest_timestamp
                  FROM Messages LIMIT 1;
 ```
 
-Run tests:
-```bash
-docker run -it --rm -v $PWD:/build datasqrl/cmd test messenger-test-package.json
-```
-
-Compile deployment artifacts:
+Finally, compile deployment artifacts to deploy to Kubernetes or cloud services:
 ```bash
 docker run --rm -v $PWD:/build datasqrl/cmd compile messenger-prod-package.json
 ```
 The `build/deploy` directory contains Flink compiled plans, Kafka topic definitions, PostgreSQL schemas, server queries, MCP tool definitions, and GraphQL models—ready for Kubernetes or cloud deployment.
 
-Read the [Getting Started tutorial](https://docs.datasqrl.com/docs/getting-started) or explore the [examples repository](https://github.com/DataSQRL/datasqrl-examples/).
+Read the [Getting Started tutorial](https://docs.datasqrl.com/docs/getting-started) or explore the [AI generated data products](https://github.com/datasqrl-colab/finance-demo) for a fictional bank based on [this catalog definition](https://github.com/datasqrl-colab/finance-data-catalog-demo) for a real-world inspired organizational use case.
 
 ## Why a Data Engineering Harness?
 
-Coding agents can generate SQL queries that produce correct results on test data. But will those queries perform at scale? Handle late-arriving events correctly? Maintain data quality when upstream schemas change?
+Coding agents can generate SQL queries that produce correct results on test data. But will those queries perform at scale? Handle late-arriving events correctly? Maintain data quality when upstream schemas change? Provide data lineage, governance, and meet compliance?
 
 These non-functional requirements — data quality, scalability, governance, reliability, cost efficiency — are what distinguish data engineering from general software development. General-purpose coding agents aren't equipped to handle them consistently.
 
@@ -98,13 +101,13 @@ To see DataSQRL guiding an AI coding agent, [watch this demo](https://www.youtub
 
 DataSQRL is a harness and framework that deterministically automates data plumbing, reducing the complexity that coding agents must handle while providing feedback through deep introspection.
 
-1. **Write SQL**: Define data transformations in SQRL (SQL with stream processing extensions)
+1. **Write SQL**: Define data transformations in SQRL (SQL with stream processing and API extensions)
 2. **Compile**: DataSQRL builds a computational DAG, validates semantics, and optimizes execution
 3. **Analyze**: The compiler detects data inconsistencies, performance issues, and capability mismatches
 4. **Generate**: Cost-based optimization assigns operators to engines (Flink, Kafka, Postgres, Vert.x) and generates deployment artifacts
 5. **Iterate**: Compilation output helps the agent refine its solution, while simulation provides real-world feedback
 
-The entire pipeline is defined in SQL: easy to understand, verify, and maintain. DataSQRL handles the complex mapping to physical infrastructure so agents can focus on business logic. DataSQRL is compatible with any code agent.
+The entire pipeline is defined in SQL: easy to understand, verify, and maintain. DataSQRL handles the complex mapping to physical infrastructure so agents can focus on business logic. DataSQRL is compatible with any code agent and can be extended to incorporate organization knowledge and meet custom compliance requirements.
 
 DataSQRL includes a [function library](https://docs.datasqrl.com/docs/functions) and [connectors](https://docs.datasqrl.com/docs/connectors/) for Kafka, Iceberg, Postgres, and more. The framework is extensible, add custom functions, connectors, or execution engines.
 
