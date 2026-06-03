@@ -173,7 +173,7 @@ You've seen how DataSQRL provides the feedback loop that coding agents need to b
 
 Next:
 - **[Full Documentation](/docs/intro)**: Complete reference and language spec
-- **[Tutorials](tutorials)**: Learn by building more complex pipelines
+- **[Tutorials](examples)**: Learn by building more complex pipelines
 - **[Example Projects](https://github.com/DataSQRL/datasqrl-examples)**: See real-world patterns in action
 
 ## Troubleshooting
