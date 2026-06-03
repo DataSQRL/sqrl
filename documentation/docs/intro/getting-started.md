@@ -1,15 +1,15 @@
 # Getting Started with DataSQRL
 
-The easiest way to understand how DataSQRL guides and provides feedback for agentic development of data pipelines is to build a data pipeline yourself. We are going to build a pipeline for message processing.
 
-<!-- Add video tutorial -->
+The easiest way to understand how DataSQRL provides guardrails and feedback for AI coding agents is to build a data pipeline. We'll create a messenger pipeline, then let a coding agent extend it using DataSQRL's test-driven feedback loop.
+
 ## Prerequisites
 
 You'll need:
 
-- **Docker** installed
+- **Docker** installed and running
 - A terminal (macOS/Linux: Terminal, Windows: PowerShell or WSL)
-- Basic understanding of SQL
+- A coding agent (Claude Code, Codex, Gemini CLI, Copilot, or similar)
 
 ### Install Docker
 
@@ -25,40 +25,31 @@ Verify Docker is working:
 docker --version
 ```
 
-Make sure Docker is running before continuing.
-
 ## Create New Project
 
-To create a new data project with DataSQRL, use the `init` command in an empty folder.
+Create a new data project with the `init` command in an empty folder:
 
 ```bash
- docker run --rm -v $PWD:/build datasqrl/cmd init api messenger
+docker run --rm -v $PWD:/build datasqrl/cmd init api messenger
 ```
-(Use `${PWD}` in Powershell on Windows).
+(Use `${PWD}` in Powershell on Windows)
 
-This creates a new data API project called `messenger` with some sample data sources and a simple data processing script called `messenger.sqrl`.
+This creates a data API project called `messenger` with sample data sources and a processing script called `messenger.sqrl`.
 
-The script defines a simple HelloWorld table that exposes the imported messages. The source of the messages is a managed Kafka topic in production and static Json data for testing.
-
-The engines executing the pipeline are defined in the `package.json` files and create the following architecture:
+The engines executing the pipeline are defined in the `package.json` files:
 ![Initial Pipeline Architecture](/img/diagrams/getting_started_diagram1.png)
 
-## Run SQRL Script
-We can now execute the SQRL project with the compiler:
+## Run the Pipeline
+
+Execute the SQRL project:
 
 ```bash
 docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/build datasqrl/cmd run messenger-prod-package.json
 ```
 
-Note, that we are mapping the local directory so the compiler has access to the script. We are also mapping a number of ports, so we have access to the API and visibility into the pipeline.
+Access the GraphQL API at [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/).
 
-
-
-## Access the API
-
-The pipeline is exposed through a GraphQL API that you can access at  [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/) in your browser.
-
-To add a new message, run this mutation
+Add a message:
 ```graphql
 mutation {
     Messages(event: {message: "Hello World"}) {
@@ -66,9 +57,8 @@ mutation {
     }
 }
 ```
-Copy the query into the left-hand panel and click on the "play" button to see the result.
 
-To query the aggregated statistics, run the following query:
+Query messages:
 ```graphql
 {
     Messages {
@@ -79,34 +69,52 @@ To query the aggregated statistics, run the following query:
 }
 ```
 
-Once you are done, terminate the pipeline with `CTRL-C`.
+Terminate with `CTRL-C`.
 
-## Extend the SQRL Script
+## Let Agents Extend the Pipeline
 
-Let's add more data processing to our script. Copy the following SQL code into `messenger.sqrl`:
+Now instruct your coding agent to extend `messenger.sqrl`. For example:
 
-```sql
-TotalMessages := SELECT COUNT(*) as num_messages, MAX(message_time) as latest_timestamp
-                 FROM Messages LIMIT 1;
+> "Add an endpoint that returns the total message count and the timestamp of the most recent message. Include test coverage."
 
-AlertMessages := SUBSCRIBE SELECT * FROM Messages WHERE LOWER(message) LIKE '%error%';
-```
+The agent should modify `messenger.sqrl` and iterate using the test command:
 
-First, we are aggregating total messages. Next, we are adding a subscription for messages that contain the word `error`. These messages get pushed to consumers immediately. Finally, we are adding a test case for the total messages.
-
-To run the test cases, use this command:
 ```bash
 docker run -it --rm -v $PWD:/build datasqrl/cmd test messenger-test-package.json
 ```
 
-The first time you run a new test case, you will see a failure when the snapshot is created. When you run the test again, it will pass.
+This feedback loop is how DataSQRL guides agents toward correct solutions. The test command:
+- Compiles the SQRL script and validates semantics
+- Runs the pipeline in simulation with timestamp-accurate event replay
+- Compares results against snapshot expectations
 
-The `AlertMessages` get pushed out via the API. Run the production version:
+The first time a new test runs, it creates a snapshot. Subsequent runs validate against that snapshot. When tests fail, the compiler provides actionable error messages that help agents refine their solution.
+
+A correct implementation might look like:
+
+```sql
+TotalMessages := SELECT COUNT(*) as num_messages, MAX(message_time) as latest_timestamp
+                 FROM Messages LIMIT 1;
+```
+
+## Add Real-Time Subscriptions
+
+Ask your agent to add a subscription for error messages:
+
+> "Add a subscription that pushes messages containing the word 'error' to consumers in real-time."
+
+The agent should add something like:
+
+```sql
+AlertMessages := SUBSCRIBE SELECT * FROM Messages WHERE LOWER(message) LIKE '%error%';
+```
+
+Run the production version to test subscriptions:
 ```bash
 docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/build datasqrl/cmd run messenger-prod-package.json
 ```
 
-In the GraphQL IDE, execute the following subscription
+In GraphiQL, start a subscription:
 ```graphql
 subscription {
     AlertMessages {
@@ -116,7 +124,8 @@ subscription {
     }
 }
 ```
-*While* the subscription is running, open a new browser tab for [GraphiQL](http://localhost:8888/v1/graphiql/) and execute this mutation:
+
+In a new browser tab, add an error message:
 ```graphql
 mutation {
     Messages(event: {message: "I found an ERROR! Oh no"}) {
@@ -124,37 +133,51 @@ mutation {
     }
 }
 ```
-If you toggle back to the subscription tab, you should see the message getting pushed through.
 
+The subscription tab should show the message pushed through in real-time.
 
-## Deployment
+## Improving Agent Performance
 
-To build the deployment assets in the for the data pipeline, execute
+Agent performance improves significantly when they understand DataSQRL's capabilities. Point your agent to:
+
+- **[SQRL Language Reference](/docs/sqrl-language)**: Stream processing semantics, temporal joins, windowed aggregations, and SQRL-specific syntax
+- **[Configuration Guide](/docs/configuration)**: Package configuration, engine selection, and deployment options
+
+For more complex projects, consider creating a custom instructions file that includes relevant documentation snippets. Agents that understand SQRL patterns like CDC deduplication, temporal enrichment joins, and subscription syntax produce better results with fewer iterations.
+
+## Compile for Deployment
+
+Build deployment artifacts:
 ```bash
 docker run --rm -v $PWD:/build datasqrl/cmd compile messenger-prod-package.json
-``` 
-The `build/deploy/plan` directory contains the Flink compiled plan, Kafka topic definitions, PostgreSQL schema and view definitions, server queries, and GraphQL data model.
+```
 
-The `build` directory contains additional files that are useful to inspect, verify, and understand the physical model for the data pipeline:
-* `pipeline_visual.html` is a visual representation of the entire data pipeline. Open this file in your browser.
-* `pipeline_explain.txt` contains a textual representation of the pipeline DAG that DataSQRL generates for AI coding agents.
-* `inferred_schema.graphqls` contains the generated GraphQL schema for the API.
+The `build/deploy/plan` directory contains:
+- Flink compiled plans
+- Kafka topic definitions
+- PostgreSQL schemas and views
+- Server queries and GraphQL models
+
+The `build` directory includes files useful for inspection and verification:
+- `pipeline_visual.html`: Visual representation of the pipeline DAG
+- `pipeline_explain.txt`: Textual DAG representation for coding agents
+- `inferred_schema.graphqls`: Generated GraphQL schema
 
 ![DataSQRL Pipeline Visualization](/img/screenshots/dag_messenger.png)
 
-The picture above is the visualization of the pipeline we have build thus far. You can click on the individual nodes in the graph to inspect the schema, logical, and physical plan.
+Click nodes in the visualization to inspect schema, logical plan, and physical plan details. The deployment artifacts support human validation of pipeline correctness and quality. You can use them to build an ensemble of judges to provide automatic validation of compliance, governance, and reliability requirements.
 
 ## Next Steps
 
-Congratulations, you build a production-grade data pipeline and saw how DataSQRL generates the physical pipeline model from the logical definition of the data processing.
-We used the testing framework to simulate real-world execution of the pipeline and used snapshots validating the results.
+You've seen how DataSQRL provides the feedback loop that coding agents need to build production-grade data pipelines. The test command validates agent-generated code, the compiler provides actionable errors, and the simulator ensures real-world correctness.
 
-Together, those three elements - the conceptual framework with the logical (SQL) and physical (dataflow DAG) model, the compiler and validator, and the simulator - comprise the world model of DataSQRL. This world model provides feedback and guardrails to coding agents for autonomous development of data pipelines and data products. Now, you can pair up DataSQRL with your favorite coding agent and let it do the work for you.
+Next:
+- **[Full Documentation](/docs/intro)**: Complete reference and language spec
+- **[Tutorials](tutorials)**: Learn by building more complex pipelines
+- **[Example Projects](https://github.com/DataSQRL/datasqrl-examples)**: See real-world patterns in action
 
-Next, check out:
-* **[Full Documentation](/docs/intro)** for the complete reference, language spec, and more.
-* **[Tutorials](tutorials)** if you prefer learning by doing.
-
-## Troubleshooting Common Issues
+## Troubleshooting
 
 - **Ports already in use**: Check if 8888 or 8081 is being used by another app
+- **Agent not understanding SQRL**: Share the [SQRL Language Reference](/docs/sqrl-language) with your agent
+- **Test failures**: Review the error output—DataSQRL provides specific guidance on what to fix
