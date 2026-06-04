@@ -150,15 +150,15 @@ const sidebars = {
     },
     {
       type: 'doc',
-      id: 'intro/tutorials',
-      label: '🎓 Tutorials',
+      id: 'intro/examples',
+      label: '🎓 Examples',
     },
     {
       type: 'category',
       label: '📘 How To',
       link: {
         type: 'generated-index',
-        description: 'Practical guides for developing data pipelines with DataSQRL',
+        description: 'Practical guides for developing data pipelines with DataSQRL to be used as skills or context for coding agents.',
       },
       items: [
         {
