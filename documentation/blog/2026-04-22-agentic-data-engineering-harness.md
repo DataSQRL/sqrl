@@ -19,21 +19,21 @@ You can customize DataSQRL as the foundation of your agentic data platform. Our 
 
 ## Why a Data Engineering Harness?
 
-Coding agents are transforming software development. Tools like Cursor, Claude Code, and Copilot can generate application code, write tests, and even refactor entire codebases. But data engineering presents unique challenges that general-purpose coding agents struggle to address.
+Coding agents are transforming software development. Tools like Claude Code, Copilot, and Codex can generate application code, write tests, and even refactor entire codebases. But data engineering presents unique challenges that general-purpose coding agents struggle to address.
 
 The difference lies in **non-functional requirements**. When you build a data pipeline, functional correctness (does the query return the right results?) is just the starting point. Production data systems must also deliver:
 
 - **Data Quality**: Consistent, accurate data with proper handling of late-arriving events, duplicates, and schema evolution
-- **Scalability**: Performance that holds up as data volumes grow from gigabytes to petabytes
+- **Scalability**: Performance that holds up as data volumes grow from gigabytes to terabytes
 - **Governance**: Lineage tracking, access controls, and audit trails for regulatory compliance
 - **Reliability**: Exactly-once semantics, failure recovery, and graceful degradation under load
 - **Cost Efficiency**: Optimal resource utilization across compute, storage, and network
 
 A coding agent can generate a SQL query that produces correct results on a test dataset. But will that query perform at scale? Does it handle late data correctly? Will it maintain data quality guarantees when upstream schemas change? These are the questions that justify data engineering as its own discipline and that general-purpose coding agents are not equipped to answer consistently.
 
-A data engineering harness provides the guardrails, feedback loops, and domain-specific constraints that coding agents need to produce production-grade data systems. Without a harness, you get code that works in demos but fails in production. With a harness, you get data pipelines that embody decades of hard-won data engineering knowledge.
+A data engineering harness provides the guardrails, feedback loops, and domain-specific constraints that coding agents need to produce production-grade data systems. Without a harness, you get code that works in demos but fails in production. With a harness, you get data pipelines that embody decades of hard-won data engineering and domain-specific knowledge.
 
-DataSQRL is that harness. It encodes the conceptual framework of data systems, validates implementations against data engineering best practices, and provides real-world feedback through simulation and production telemetry. The result: coding agents that can build data systems you'd actually trust to run in production.
+DataSQRL is that harness. It encodes the conceptual framework of data systems, validates implementations against data engineering best practices, and provides real-world feedback through simulation and production telemetry. The goal is to constrain coding agents into building data systems you'd actually trust to run in production.
 
 ## The DataSQRL Harness
 
@@ -259,7 +259,7 @@ Index structure selection is another optimization problem that is better handled
 
 ## Real World Feedback
 
-A harness with complementary verification and introspection provides the foundation of a world model for data pipelines with feedback on proposed solutions. However, that feedback is limited to the plan and does not account for the complexities of actual execution. Real-world feedback is critical for iterative refinement of production-grade implementations and troubleshooting issues that arise in operation.
+A harness with complementary verification and introspection provides the foundation of a concise model for data pipelines with feedback on proposed solutions. However, that feedback is limited to the plan and does not account for the complexities of actual execution. Real-world feedback is critical for iterative refinement of production-grade implementations and troubleshooting issues that arise in operation.
 
 DataSQRL provides two sources of real-world feedback: a simulator that's used at implementation time and telemetry collection from production deployments that captures the operational status of the pipeline.
 
@@ -296,15 +296,15 @@ The harness provides three critical capabilities:
 
 3. **Real-World Feedback Loops** through simulation and production telemetry that enable agents to iteratively refine implementations based on actual execution behavior, not just static analysis.
 
-For any organization pursuing data platform automation, a data engineering harness is foundational to avoid shipping AI slob data pipelines. Without it, you're asking general-purpose coding agents to navigate the complex constraints of distributed data systems without a map. With DataSQRL, you're equipping them with the domain expertise to succeed.
+For any organization pursuing data platform automation, a data engineering harness is foundational to avoid shipping data pipelines that fail in production. Without it, you're asking general-purpose coding agents to navigate the complex constraints of distributed data systems without a map. With DataSQRL, you're equipping them with the domain expertise and multiple sources of feedback to succeed.
 
-[DataSQRL is open-source](https://github.com/DataSQRL/sqrl) so you can customize it to build a self-driving data platform tailored to your requirements.
+[DataSQRL is open-source](https://github.com/DataSQRL/sqrl) so you can customize it to build a self-driving data platform tailored to your organization.
 
 ## Getting Started
 
 To try out DataSQRL:
 
 1. [Build a project from scratch with DataSQRL](/docs/intro/getting-started) to see how the components of DataSQRL work
-2. [Look at example projects](https://github.com/DataSQRL/datasqrl-examples) and run/modify them locally.
+2. Explore the [AI generated data products](https://github.com/datasqrl-colab/finance-demo) for a fictional bank based on [the bank's catalog definition](https://github.com/datasqrl-colab/finance-data-catalog-demo) as an example.
 3. [Read the documentation](/docs/intro)
 4. [Check out the open-source project on GitHub](https://github.com/DataSQRL/sqrl)

@@ -26,7 +26,7 @@ Organizations are targeting 3-5x productivity improvements through AI-assisted d
 - **Integration testing** becomes a bottleneck when deployment velocity outpaces validation capacity
 - **Operations and troubleshooting** overwhelm teams when they have to manage dozens of pipelines in production
 
-The fundamental problem? Coding agents optimize for functional correctness (e.g. does the query return the right results?) while production data systems require a much broader set of guarantees.
+The fundamental problem is coding agents optimize for functional correctness (e.g. does the query return the right results?) while production data systems require a much broader set of guarantees.
 
 Without systematic guardrails, AI-generated data pipelines work in demos but fail in production and overwhelm the data engineering teams that have to fill the gaps.
 
@@ -109,9 +109,9 @@ Suggestion: Add a timestamp column with WATERMARK definition:
 
 ### Operations: Continuous Monitoring and Autonomous Troubleshooting
 
-Building pipelines is only half the challenge. When you're managing dozens of AI-generated data pipelines in production, operations becomes the bottleneck. Traditional monitoring approaches—dashboards, manual alerts, runbooks—can't scale when pipeline count grows faster than team headcount.
+Building pipelines is only half the challenge. When you're managing dozens of AI-generated data pipelines in production, operations becomes the bottleneck. Traditional monitoring approaches (dashboards, manual alerts, runbooks) can't scale when pipeline count grows faster than team headcount.
 
-The governance framework needs to support autonomous operations:
+The framework needs to support autonomous operations:
 
 **Continuous Monitoring**
 - Real-time data quality assertions that validate business rules on every record
@@ -130,7 +130,7 @@ The governance framework needs to support autonomous operations:
 - Distributed tracing across the complete pipeline (Kafka → Flink → Postgres → API)
 - Metrics export to existing observability platforms (Prometheus, Datadog, CloudWatch)
 
-The goal? A team of three data engineers should be able to operate thirty pipelines in production. That's only possible when the harness handles routine operations autonomously and escalates only the issues that genuinely require human judgment.
+The goal is a team of three data engineers being able to operate dozens pipelines in production. That's only possible when the harness handles routine operations autonomously and escalates only the issues that genuinely require human judgment.
 
 ## Capturing Data Engineering Expertise
 
@@ -159,7 +159,7 @@ SpendingTransactions := SELECT ...
 
 ### Operational Pattern Libraries
 
-Production data pipelines exhibit recurring patterns: CDC deduplication, temporal enrichment joins, windowed aggregations, slowly changing dimensions. Why have agents rediscover these patterns? We encode them as reusable primitives.
+Production data pipelines exhibit recurring patterns: CDC deduplication, temporal enrichment joins, windowed aggregations, slowly changing dimensions. We encode them as reusable patterns to reduce the occurrence of subtle bugs when agents try to recreate them.
 
 ```sql
 -- Pattern: CDC deduplication to current state
@@ -182,7 +182,7 @@ These patterns encode not just the SQL syntax but the semantic intent and operat
 
 ### Failure Mode Documentation
 
-Every production incident represents encoded knowledge about what can go wrong. Systematically capturing failure modes—and their resolutions—creates a corpus that agents can learn from:
+Every production incident represents encoded knowledge about what can go wrong. Systematically capturing failure modes and their resolutions creates a corpus that agents can learn from:
 
 - **Symptoms**: How the failure manifested (data delays, incorrect aggregates, schema mismatches)
 - **Root cause**: The underlying issue (late data handling, join key mismatch, type coercion)
@@ -193,7 +193,7 @@ Over time, this corpus enables agents to anticipate failure modes and proactivel
 
 ## The Data Engineering Harness
 
-Implementing governance, validation, and expertise capture requires purpose-built infrastructure. We call this a **data engineering harness**—a system that provides the guardrails and feedback loops coding agents need to produce production-grade data systems.
+Implementing governance, validation, and expertise capture requires purpose-built infrastructure. We call this a **data engineering harness**: a system that provides the guardrails and feedback loops coding agents need to produce production-grade data systems.
 
 <img src="/img/diagrams/agentic/harness_overview.png" alt="Data engineering harness architecture" width="80%"/>
 
@@ -203,7 +203,7 @@ The harness has three integrated components:
 
 The framework provides a precise vocabulary for reasoning about data transformations:
 
-**Logical Layer**: Expresses *what* transformations are needed using SQL extended with stream processing semantics. The declarative nature enables deep introspection—we can analyze query structure, infer schemas, and validate semantics.
+**Logical Layer**: Expresses *what* transformations are needed using SQL extended with stream processing semantics. The declarative nature enables deep introspection. We can analyze query structure, infer schemas, and validate semantics.
 
 **Physical Layer**: Represents *how* data gets processed through engine assignment and configuration. A cost-based optimizer maps logical operations to physical engines (Flink, Kafka, Postgres, Iceberg) while respecting capability constraints.
 
@@ -219,13 +219,13 @@ Validation operates continuously throughout the development lifecycle:
 - **Deploy-time**: Configuration validity, resource availability, dependency satisfaction
 - **Run-time**: Data quality assertions, SLA monitoring, anomaly detection
 
-Each validation stage produces structured feedback that agents consume for iterative refinement. The harness transforms validation failures into actionable guidance—not opaque errors.
+Each validation stage produces structured feedback that agents consume for iterative refinement. The harness transforms validation failures into actionable guidance.
 
 ### Real-World Feedback
 
 Static validation catches many issues but can't substitute for execution feedback. The harness provides two mechanisms for real-world validation:
 
-**Simulation**: Execute pipelines locally with timestamp-accurate event replay. The simulator runs the complete stack—Flink, Kafka, Postgres—in Docker, enabling agents to test against realistic data volumes and timing scenarios. Crucially, simulation is deterministic: the same inputs always produce the same outputs, enabling reliable regression testing.
+**Simulation**: Execute pipelines locally with timestamp-accurate event replay. The simulator runs the complete stack (Flink, Kafka, Postgres) in Docker, enabling agents to test against realistic data volumes and timing scenarios. Crucially, simulation is deterministic: the same inputs always produce the same outputs, enabling reliable regression testing.
 
 **Production Telemetry**: Monitor deployed pipelines and correlate observations back to source code. When latency increases or data quality degrades, the harness links metrics to specific transformations, enabling autonomous troubleshooting.
 
@@ -237,7 +237,7 @@ DataSQRL implements this harness architecture as an open-source framework. Here'
 
 ### SQL as the Logical Layer
 
-DataSQRL uses SQRL—SQL extended with stream processing semantics from Flink SQL—as the logical representation. Why SQL?
+DataSQRL uses SQRL as the logical representation, which is SQL extended with stream processing from Flink SQL and interface definitions. Why SQL?
 
 - **LLM familiarity**: Most models are extensively trained on SQL
 - **Human readability**: Engineers can verify agent output without learning new syntax
@@ -270,7 +270,7 @@ SpendingByAccount(account_id STRING NOT NULL) :=
 
 ### Deterministic Transpilation
 
-The mapping from logical to physical layer happens through deterministic transpilation—not agent generation. This eliminates an entire class of subtle bugs:
+The mapping from logical to physical layer happens through deterministic transpilation, not agent generation. This eliminates an entire class of subtle bugs:
 
 - Schema mismatches between engines
 - Incorrect data type coercions
@@ -289,7 +289,7 @@ Certain data engineering tasks are better handled by dedicated optimizers than L
 - **Physical Planning**: Cost-based optimizer assigns operations to engines while respecting topological constraints
 - **Index Selection**: Lattice-based optimizer selects index structures that support query access patterns
 
-Agents can provide hints to guide optimization—forcing specific engine assignments or partition keys—but the optimizer ensures constraint satisfaction. This leverages LLM strengths (reasoning under uncertainty, creative problem-solving) while delegating deterministic optimization to purpose-built systems.
+Agents can provide hints to guide optimization (e.g. forcing specific engine assignments or partition keys) but the optimizer ensures constraint satisfaction. This leverages LLM strengths (reasoning under uncertainty, creative problem-solving) while delegating deterministic optimization to purpose-built systems.
 
 ### Continuous Evaluation
 
@@ -311,7 +311,7 @@ Test definitions execute against known inputs with expected outputs captured as 
 - Race conditions in temporal joins
 - Schema evolution compatibility
 
-Nightly evaluation runs validate agent-generated pipelines against regression suites, catching issues before they reach production.
+Tests provide immediate feedback to agents and spot regressions in CI/CD infrastructure.
 
 ## Organizational Implications
 
@@ -357,9 +357,9 @@ AI-assisted data engineering is here. Organizations that successfully integrate 
 
 AI integration requires infrastructure, not just tools. Coding agents operating without guardrails produce pipelines that work in demos but fail in production. Agents operating within a purpose-built harness with comprehensive validation, real-world feedback, and encoded expertise produce pipelines that meet production requirements.
 
-The **data engineering harness** represents this infrastructure: a system that provides the governance, validation, and feedback loops necessary for AI-assisted data platform automation. By separating concerns—agents handle business logic, the harness handles infrastructure complexity—we achieve both productivity and reliability.
+The **data engineering harness** represents this infrastructure: a system that provides the governance, validation, and feedback loops necessary for AI-assisted data platform automation.
 
-[DataSQRL](https://github.com/DataSQRL/sqrl) implements this harness as an open-source framework. You can customize it to encode your domain knowledge, integrate your validation rules, and build a self-driving data platform tailored to your requirements.
+[DataSQRL](https://github.com/DataSQRL/sqrl) implements this harness as an open-source framework. You can customize it to encode your domain knowledge, integrate your validation rules, and build an automated data platform tailored to your requirements.
 
 The question is no longer whether AI will transform data engineering, but how we adapt our practices, tooling, and teams to harness its potential while maintaining the trust that data consumers depend on.
 
@@ -368,6 +368,6 @@ The question is no longer whether AI will transform data engineering, but how we
 To explore AI-assisted data engineering with DataSQRL:
 
 1. [Build a project from scratch](/docs/intro/getting-started) to understand harness components
-2. [Explore example projects](https://github.com/DataSQRL/datasqrl-examples) demonstrating common patterns
+2. [Explore example projects](/docs/intro/examples) demonstrating common patterns
 3. [Read about the harness architecture](/blog/agentic-data-engineering-harness) for detailed technical background
 4. [Contribute to the open-source project](https://github.com/DataSQRL/sqrl) to shape the future of AI-assisted data engineering
