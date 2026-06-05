@@ -24,6 +24,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.parser.SqrlTableFunctionStatement.ParsedArgument;
+import com.datasqrl.planner.util.NonSecretEnvVarResolver;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -122,22 +123,26 @@ public class SqrlStatementParser {
    * @return
    */
   public List<ParsedStatement> parseScript(String script, ErrorCollector scriptErrors) {
-    List<ParsedStatement> sqlStatements = new ArrayList<>();
+    var parsedStatements = new ArrayList<ParsedStatement>();
+
+    var envVarResolver = NonSecretEnvVarResolver.builder().strict(false).build();
     var localErrors = scriptErrors;
+
     try {
       var statements = SqlScriptStatementSplitter.splitStatements(script);
-      for (ParsedObject<String> statement : statements) {
-        localErrors = scriptErrors.atFile(statement.getFileLocation());
-        sqlStatements.add(
-            new ParsedStatement(
-                new ParsedObject<>(
-                    parseStatement(statement.getObject()), statement.getFileLocation()),
-                statement.get()));
+      for (var stmt : statements) {
+        localErrors = scriptErrors.atFile(stmt.getFileLocation());
+
+        var sqlStmt = parseStatement(stmt.getObject(), envVarResolver);
+        var parsedObj = new ParsedObject<>(sqlStmt, stmt.getFileLocation());
+
+        parsedStatements.add(new ParsedStatement(parsedObj, stmt.get()));
       }
     } catch (StatementParserException e) {
       throw localErrors.handle(e);
     }
-    return sqlStatements;
+
+    return parsedStatements;
   }
 
   /**
@@ -146,28 +151,30 @@ public class SqrlStatementParser {
    * @param statement
    * @return
    */
-  public SQLStatement parseStatement(String statement) {
-    var importExportMatcher = IMPORT_EXPORT.matcher(statement);
+  SQLStatement parseStatement(String statement, NonSecretEnvVarResolver envVarResolver) {
+    var resolvedStmt = envVarResolver.resolve(statement);
+    var importExportMatcher = IMPORT_EXPORT.matcher(resolvedStmt);
 
     // #1: Imports and Exports
     if (importExportMatcher.find()) { // it's an import or export statement
       var directive = importExportMatcher.group("fullmatch");
       var commentEnd = importExportMatcher.end() - directive.length();
-      var comment = SqrlComments.parse(parse(statement.substring(0, commentEnd), statement, 0));
-      var body = statement.substring(importExportMatcher.end()).trim();
+      var comment =
+          SqrlComments.parse(parse(resolvedStmt.substring(0, commentEnd), resolvedStmt, 0));
+      var body = resolvedStmt.substring(importExportMatcher.end()).trim();
 
       if (directive.equalsIgnoreCase("import")) {
         var subMatcher = IMPORT_PARSER.matcher(body);
         checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
-        var packageIdentifier = parseNamePath(subMatcher, "package", statement);
-        var alias = parseNamePath(subMatcher, "identifier", statement);
+        var packageIdentifier = parseNamePath(subMatcher, "package", resolvedStmt);
+        var alias = parseNamePath(subMatcher, "identifier", resolvedStmt);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_IMPORT, "Missing package path");
         return new SqrlImportStatement(packageIdentifier, alias, comment);
       } else if (directive.equalsIgnoreCase("export")) {
         var subMatcher = EXPORT_PARSER.matcher(body);
         checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
-        var packageIdentifier = parseNamePath(subMatcher, "package", statement);
-        var tableName = parseNamePath(subMatcher, "identifier", statement);
+        var packageIdentifier = parseNamePath(subMatcher, "package", resolvedStmt);
+        var tableName = parseNamePath(subMatcher, "identifier", resolvedStmt);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing package path");
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing table");
         return new SqrlExportStatement(tableName, packageIdentifier, comment);
@@ -178,11 +185,11 @@ public class SqrlStatementParser {
     }
 
     // #2: SQRL Table Definitions
-    var sqrlDefinition = SQRL_DEFINITION.matcher(statement);
+    var sqrlDefinition = SQRL_DEFINITION.matcher(resolvedStmt);
     if (sqrlDefinition.find()) { // it's a SQRL definition
       var tableName =
           parseNamePath(
-              sqrlDefinition.group("tablename"), statement, sqrlDefinition.start("tablename"));
+              sqrlDefinition.group("tablename"), resolvedStmt, sqrlDefinition.start("tablename"));
       checkFatal(
           tableName.isPresent(),
           tableName.getFileLocation(),
@@ -196,16 +203,17 @@ public class SqrlStatementParser {
           tableName.get());
       var isRelationship = tableName.get().size() > 1;
       var commentEnd = sqrlDefinition.start("fullmatch");
-      var comment = SqrlComments.parse(parse(statement.substring(0, commentEnd), statement, 0));
+      var comment =
+          SqrlComments.parse(parse(resolvedStmt.substring(0, commentEnd), resolvedStmt, 0));
       var definitionBody =
-          parse(statement.substring(sqrlDefinition.end()), statement, sqrlDefinition.end());
+          parse(resolvedStmt.substring(sqrlDefinition.end()), resolvedStmt, sqrlDefinition.end());
 
       var access = AccessModifier.QUERY;
 
       ParsedObject<String> arguments =
-          parse(sqrlDefinition, "arguments", statement).map(str -> str.isBlank() ? null : str);
+          parse(sqrlDefinition, "arguments", resolvedStmt).map(str -> str.isBlank() ? null : str);
       ParsedObject<String> returnType =
-          parse(sqrlDefinition, "returntype", statement).map(str -> str.isBlank() ? null : str);
+          parse(sqrlDefinition, "returntype", resolvedStmt).map(str -> str.isBlank() ? null : str);
       // Identify SQL keyword
       var sqlKeywordPattern = Pattern.compile("^\\s*(\\w+)");
       var keywordMatcher = sqlKeywordPattern.matcher(definitionBody.get());
@@ -229,7 +237,7 @@ public class SqrlStatementParser {
           access = AccessModifier.SUBSCRIPTION;
           var newDefinitionStart = sqrlDefinition.end() + keywordEnd;
           definitionBody =
-              parse(statement.substring(newDefinitionStart), statement, newDefinitionStart);
+              parse(resolvedStmt.substring(newDefinitionStart), resolvedStmt, newDefinitionStart);
         }
         if (arguments.isEmpty() && returnType.isEmpty() && !isRelationship) {
           definition = new SqrlTableDefinition(tableName, definitionBody, access, comment);
@@ -289,26 +297,27 @@ public class SqrlStatementParser {
     }
 
     // #3: Create Table
-    var createTable = CREATE_TABLE.matcher(statement);
+    var createTable = CREATE_TABLE.matcher(resolvedStmt);
     if (createTable.find()) {
       var createTableStmt =
           parse(
-              statement.substring(createTable.start("fullmatch")),
-              statement,
+              resolvedStmt.substring(createTable.start("fullmatch")),
+              resolvedStmt,
               createTable.start("fullmatch"));
       var commentEnd = createTable.start("fullmatch");
-      var comment = SqrlComments.parse(parse(statement.substring(0, commentEnd), statement, 0));
+      var comment =
+          SqrlComments.parse(parse(resolvedStmt.substring(0, commentEnd), resolvedStmt, 0));
       return new SqrlCreateTableStatement(createTableStmt, comment);
     }
 
     // #4: Next Batch
-    var nextBatch = NEXT_BATCH_PARSER.matcher(statement);
+    var nextBatch = NEXT_BATCH_PARSER.matcher(resolvedStmt);
     if (nextBatch.find()) {
-      return new SqrlNextBatch(new ParsedObject<>(statement, FileLocation.START));
+      return new SqrlNextBatch(new ParsedObject<>(resolvedStmt, FileLocation.START));
     }
 
     // #5: If none of the regex match, we assume it's a Flink SQL statement
-    return new FlinkSQLStatement(new ParsedObject<>(statement, FileLocation.START));
+    return new FlinkSQLStatement(new ParsedObject<>(resolvedStmt, FileLocation.START));
   }
 
   /**

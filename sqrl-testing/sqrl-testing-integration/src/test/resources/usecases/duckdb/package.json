@@ -23,7 +23,7 @@
   },
   "connectors": {
     "iceberg": {
-      "warehouse": "/tmp/duckdb"
+      "warehouse": "${TEST_WH}"
     }
   },
   "test-runner": {

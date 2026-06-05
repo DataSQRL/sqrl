@@ -26,6 +26,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ResourceFileUtil;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
+import com.datasqrl.planner.util.NonSecretEnvVarResolver;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -101,7 +102,9 @@ public final class ConfigLoaderUtils {
         Files.isRegularFile(packageJson),
         String.format("Failed to load %s, it is not a regular file", packageJson));
 
-    var objectNode = convertFileToObjectNode(errors, Either.Left(packageJson));
+    // This is called by 'run', 'test', and 'exec', so env var resolution will be done by
+    // DatasqrlRun.
+    var objectNode = convertFileToObjectNode(errors, Either.Left(packageJson), false);
 
     return SqrlConfig.loadResolvedConfig(errors, objectNode, packageSchemaPath);
   }
@@ -294,14 +297,14 @@ public final class ConfigLoaderUtils {
       if (url == null) {
         throw errors.withConfig(defaultPath).exception("Default configuration not found");
       }
-      var defaultJson = convertFileToObjectNode(errors, Either.Right(url));
+      var defaultJson = convertFileToObjectNode(errors, Either.Right(url), false);
       valid &= isValidJson(errors, defaultJson, PACKAGE_SCHEMA_PATH);
       jsons.add(defaultJson);
     }
 
     // Convert, validate, and add files
     for (Path file : files) {
-      var json = convertFileToObjectNode(errors, Either.Left(file));
+      var json = convertFileToObjectNode(errors, Either.Left(file), true);
       valid &= isValidJson(errors, json, PACKAGE_SCHEMA_PATH);
       jsons.add(json);
     }
@@ -326,15 +329,33 @@ public final class ConfigLoaderUtils {
         Files.isDirectory(planDir), "Failed to load Flink config, plan dir does not exist.");
   }
 
-  private static ObjectNode convertFileToObjectNode(ErrorCollector errors, Either<Path, URL> file) {
-    var local = errors.withConfig(file.isLeft() ? file.left().toString() : file.right().toString());
+  private static ObjectNode convertFileToObjectNode(
+      ErrorCollector errors, Either<Path, URL> file, boolean resolveEnvVars) {
+    var filename = file.isLeft() ? file.left().toString() : file.right().toString();
+    var localErr = errors.withConfig(filename);
+
+    ObjectMapper mapper;
+    if (resolveEnvVars) {
+      var resolver = NonSecretEnvVarResolver.builder().strict(false).build();
+      mapper = resolver.initObjectMapper(MAPPER);
+    } else {
+      mapper = MAPPER;
+    }
+
     try {
-      var jsonNode =
-          file.isLeft() ? MAPPER.readTree(file.left().toFile()) : MAPPER.readTree(file.right());
+      JsonNode jsonNode;
+
+      if (file.isLeft()) {
+        jsonNode = mapper.readTree(file.left().toFile());
+
+      } else {
+        jsonNode = mapper.readTree(file.right());
+      }
+
       return (ObjectNode) jsonNode;
 
     } catch (IOException e) {
-      throw local.exception("Could not parse JSON file [%s]: %s", file, e.toString());
+      throw localErr.exception("Could not parse JSON file [%s]: %s", file, e.toString());
     }
   }
 }
