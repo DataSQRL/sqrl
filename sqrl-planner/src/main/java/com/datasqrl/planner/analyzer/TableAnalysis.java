@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
 import lombok.NonNull;
@@ -118,6 +119,9 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
 
   /** The planner hints attached to this table definition */
   @Builder.Default PlannerHints hints = PlannerHints.EMPTY;
+
+  /** A documentation string that describes the table */
+  @Default private Optional<String> documentation = Optional.empty();
 
   /**
    * The statistics for the table, either estimated by planner or provided as hints on the

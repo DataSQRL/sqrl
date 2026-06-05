@@ -189,7 +189,7 @@ public class GraphqlSchemaFactory {
     */
 
     // non-relationship fields
-    // now all relationships are functions that are separate from the rowType. So there can no more
+    // now all relationships are functions that are separate from the rowType. So they cannot
     // have relationship fields inside it
     var rowType = table.getRowType();
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
@@ -206,9 +206,10 @@ public class GraphqlSchemaFactory {
 
     assert !fields.isEmpty() : "Invalid table: " + table;
 
-    var objectType = GraphQLObjectType.newObject().name(typeName).fields(fields).build();
+    var objectType = GraphQLObjectType.newObject().name(typeName).fields(fields);
+    table.getDocumentation().ifPresent(objectType::description);
     definedTypeNames.add(typeName);
-    return Optional.of(objectType);
+    return Optional.of(objectType.build());
   }
 
   public Optional<GraphQLObjectType> createMutationsObjectType(List<MutationTable> mutations) {
@@ -343,10 +344,10 @@ public class GraphqlSchemaFactory {
                 (GraphQLOutputType)
                     wrapMultiplicity(
                         createTypeReference(relationship), relationship.getMultiplicity()))
-            .arguments(createArguments(relationship))
-            .build();
+            .arguments(createArguments(relationship));
+    relationship.getDocumentation().ifPresent(field::description);
 
-    return Optional.of(field);
+    return Optional.of(field.build());
   }
 
   private List<GraphQLArgument> createArguments(SqrlTableFunction tableFunction) {

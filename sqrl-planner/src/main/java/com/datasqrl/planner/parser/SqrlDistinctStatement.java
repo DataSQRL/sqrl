@@ -19,6 +19,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.planner.hint.HintsAndDocs;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.util.CalciteUtil;
 import java.util.List;
@@ -64,7 +65,7 @@ public class SqrlDistinctStatement extends SqrlDefinition {
   public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {
     var sql = super.toSql(sqrlEnv, stack);
     var view = sqrlEnv.parseSQL(sql);
-    var viewAnalysis = sqrlEnv.analyzeView(view, false, PlannerHints.EMPTY, ErrorCollector.root());
+    var viewAnalysis = sqrlEnv.analyzeView(view, false, HintsAndDocs.EMPTY, ErrorCollector.root());
     var relB = viewAnalysis.relBuilder();
 
     // if this is a filtered distinct, we need to add the corresponding processing

@@ -41,6 +41,7 @@ import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable.MutationTableBuilder;
+import com.datasqrl.planner.hint.HintsAndDocs;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.parser.ParsePosUtil;
@@ -63,6 +64,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -305,12 +307,12 @@ public class Sqrl2FlinkSQLTranslator {
    *
    * @param viewDef
    * @param removeTopLevelSort
-   * @param hints
+   * @param hintsDocs
    * @param errors
    * @return
    */
   public ViewAnalysis analyzeView(
-      SqlNode viewDef, boolean removeTopLevelSort, PlannerHints hints, ErrorCollector errors) {
+      SqlNode viewDef, boolean removeTopLevelSort, HintsAndDocs hintsDocs, ErrorCollector errors) {
     var flinkPlanner = this.validatorSupplier.get();
 
     var validated = flinkPlanner.validate(viewDef);
@@ -353,7 +355,7 @@ public class Sqrl2FlinkSQLTranslator {
                 .unwrap(CalciteCatalogReader.class),
             relBuilder,
             errors);
-    var viewAnalysis = analyzer.analyze(hints);
+    var viewAnalysis = analyzer.analyze(hintsDocs);
     viewAnalysis.tableAnalysis().topLevelSort(topLevelSort);
     return viewAnalysis;
   }
@@ -461,11 +463,11 @@ public class Sqrl2FlinkSQLTranslator {
    * Adds a view to Flink and produces the {@link TableAnalysis} for the planner and the DAG.
    *
    * @param originalSql
-   * @param hints
+   * @param hintsDocs
    * @param errors
    * @return
    */
-  public TableAnalysis addView(String originalSql, PlannerHints hints, ErrorCollector errors) {
+  public TableAnalysis addView(String originalSql, HintsAndDocs hintsDocs, ErrorCollector errors) {
     var viewDef = parseSQL(originalSql);
     checkArgument(
         viewDef instanceof SqlCreateView || viewDef instanceof SqlAlterViewAs,
@@ -498,7 +500,7 @@ public class Sqrl2FlinkSQLTranslator {
      NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
     */
     var viewDef2 = parseSQL(originalSql);
-    var viewAnalysis = analyzeView(viewDef2, removedSort, hints, errors);
+    var viewAnalysis = analyzeView(viewDef2, removedSort, hintsDocs, errors);
     var tableAnalysis =
         viewAnalysis.tableAnalysis().objectIdentifier(identifier).originalSql(originalSql).build();
     tableLookup.registerTable(tableAnalysis);
@@ -515,14 +517,14 @@ public class Sqrl2FlinkSQLTranslator {
 
   /**
    * Parses a {@link SqrlTableFunction} definition and analyzes the result. It invokes {@link
-   * #analyzeView(SqlNode, boolean, PlannerHints, ErrorCollector)} and in addition contains the
+   * #analyzeView(SqlNode, boolean, HintsAndDocs, ErrorCollector)} and in addition contains the
    * logic for resolving the function arguments and their types.
    *
    * @param identifier
    * @param originalSql
    * @param arguments
    * @param argumentIndexMap
-   * @param hints
+   * @param hintsDocs
    * @param errors
    * @return
    */
@@ -531,13 +533,13 @@ public class Sqrl2FlinkSQLTranslator {
       String originalSql,
       List<ParsedArgument> arguments,
       Map<Integer, Integer> argumentIndexMap,
-      PlannerHints hints,
+      HintsAndDocs hintsDocs,
       ErrorCollector errors) {
 
     var parameters = getFunctionParameters(arguments);
     // Analyze Query
     var funcDef2 = parseSQL(originalSql);
-    var viewAnalysis = analyzeView(funcDef2, false, hints, errors);
+    var viewAnalysis = analyzeView(funcDef2, false, hintsDocs, errors);
     // Remap parameters in query so the RexDynamicParam point directly at the function parameter by
     // index
     var updateParameters =
@@ -560,7 +562,7 @@ public class Sqrl2FlinkSQLTranslator {
       List<ParsedArgument> arguments,
       ParsedObject<String> returnType,
       List<TableOrFunctionAnalysis> fromTables,
-      PlannerHints hints,
+      HintsAndDocs hintsDocs,
       ErrorCollector errors) {
 
     var parameters = getFunctionParameters(arguments);
@@ -578,7 +580,8 @@ public class Sqrl2FlinkSQLTranslator {
             .originalSql(originalSql)
             .originalRelnode(values)
             .collapsedRelnode(values)
-            .hints(hints)
+            .hints(hintsDocs.hints())
+            .documentation(hintsDocs.documentation())
             .errors(errors)
             .fromTables(fromTables)
             .build();
@@ -632,6 +635,7 @@ public class Sqrl2FlinkSQLTranslator {
             .streamRoot(baseTable.getStreamRoot())
             .fromTables(List.of(baseTable))
             .hints(baseTable.getHints())
+            .documentation(baseTable.getDocumentation())
             .errors(baseTable.getErrors())
             .tableStatistic(baseTable.getTableStatistic())
             .collapsedRelnode(relNode)
@@ -710,9 +714,9 @@ public class Sqrl2FlinkSQLTranslator {
       String tableDefinition,
       SchemaLoader schemaLoader,
       Optional<MutationBuilder> mutationBuilder,
-      PlannerHints hints) {
+      HintsAndDocs hintsDocs) {
     return addSourceTable(
-        addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder), hints);
+        addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder), hintsDocs);
   }
 
   public AddTableResult addExternalExport(
@@ -727,9 +731,9 @@ public class Sqrl2FlinkSQLTranslator {
       String tableDefinition,
       Optional<MutationBuilder> mutationBuilder,
       SchemaLoader schemaLoader,
-      PlannerHints hints) {
+      HintsAndDocs hintsDocs) {
     var result = addTable(Function.identity(), tableDefinition, schemaLoader, mutationBuilder);
-    if (result.isSourceTable()) return Optional.of(addSourceTable(result, hints));
+    if (result.isSourceTable()) return Optional.of(addSourceTable(result, hintsDocs));
     else return Optional.empty();
   }
 
@@ -741,6 +745,12 @@ public class Sqrl2FlinkSQLTranslator {
   private static final String TEMP_VIEW_SUFFIX = "__view";
 
   /**
+   * Keeps track of documentation for CREATE TABLE statements so that we can re-use the doc string
+   * when another table extends it with LIKE clause
+   */
+  private final Map<ObjectIdentifier, Optional<String>> createTableDocumentation = new HashMap<>();
+
+  /**
    * We add a view on top of the created table with the name of the table. The reason we "cover"
    * CREATE TABLE statements with a view is because Flink expands references to physical tables by
    * adding computed columns and watermark, thus making it very difficult to reconcile the DAG
@@ -750,10 +760,21 @@ public class Sqrl2FlinkSQLTranslator {
    * @param addResult
    * @return
    */
-  private TableAnalysis addSourceTable(AddTableResult addResult, PlannerHints hints) {
+  private TableAnalysis addSourceTable(AddTableResult addResult, HintsAndDocs hintsDocs) {
+    createTableDocumentation.put(addResult.baseTableIdentifier, hintsDocs.documentation());
+    // check if we should inherit doc-string from LIKE table
+    if (addResult.createdTable instanceof SqlCreateTableLike createTableLike) {
+      var sourceTable = createTableLike.getTableLike().getSourceTable();
+      ObjectIdentifier oid =
+          null; // convert sourceTable within the context of this catalog and database;
+      if (createTableDocumentation.containsKey(oid)) {
+        hintsDocs = hintsDocs.updateDocsIfAbsent(createTableDocumentation.get(oid));
+      }
+    }
+
     var view =
         createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
-    var viewAnalysis = analyzeView(view, false, hints, ErrorCollector.root());
+    var viewAnalysis = analyzeView(view, false, hintsDocs, ErrorCollector.root());
     TableAnalysis.TableAnalysisBuilder tbBuilder = viewAnalysis.tableAnalysis();
     tbBuilder
         .objectIdentifier(addResult.baseTableIdentifier)

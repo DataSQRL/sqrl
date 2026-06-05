@@ -64,6 +64,7 @@ import com.datasqrl.planner.dag.plan.MutationMetadataExtractor;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.hint.CacheHint;
 import com.datasqrl.planner.hint.EngineHint;
+import com.datasqrl.planner.hint.HintsAndDocs;
 import com.datasqrl.planner.hint.MutationInsertHint;
 import com.datasqrl.planner.hint.NoQueryHint;
 import com.datasqrl.planner.hint.PlannerHints;
@@ -329,7 +330,7 @@ public class SqlScriptPlanner {
               statement.toSql(),
               getMutationBuilder(hintsAndDocs),
               scriptContext.moduleLoader().getSchemaLoader(),
-              hints)
+              hintsAndDocs)
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
@@ -492,7 +493,7 @@ public class SqlScriptPlanner {
                   new ArrayList<>(arguments.values()),
                   passthroughStmt.getReturnType(),
                   fromTables,
-                  hints,
+                  hintsAndDocs,
                   errors);
         } else {
           fnBuilder =
@@ -501,7 +502,7 @@ public class SqlScriptPlanner {
                   originalSql,
                   new ArrayList<>(arguments.values()),
                   argumentIndexMap,
-                  hints,
+                  hintsAndDocs,
                   errors);
         }
         fnBuilder.fullPath(tblFnStmt.getPath());
@@ -526,7 +527,7 @@ public class SqlScriptPlanner {
 
         if (!shouldExcludeTestTable(hints)) {
           addTableToDag(
-              sqrlEnv.addView(originalSql, hints, errors),
+              sqrlEnv.addView(originalSql, hintsAndDocs, errors),
               hintsAndDocs,
               visibility,
               false,
@@ -550,7 +551,7 @@ public class SqlScriptPlanner {
         var visibility =
             new AccessVisibility(adjustAccess(AccessModifier.QUERY), false, true, false);
         addTableToDag(
-            sqrlEnv.addView(flinkStmt.sql().get(), hints, errors),
+            sqrlEnv.addView(flinkStmt.sql().get(), hintsAndDocs, errors),
             hintsAndDocs,
             visibility,
             false,
@@ -561,7 +562,7 @@ public class SqlScriptPlanner {
                 flinkStmt.sql().get(),
                 getMutationBuilder(hintsAndDocs),
                 scriptContext.moduleLoader().getSchemaLoader(),
-                hints)
+                hintsAndDocs)
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
         /*TODO: We are not currently adding these to the DAG (and hence no analysis/visualization based on the DAG)
@@ -911,7 +912,7 @@ public class SqlScriptPlanner {
                 flinkTable.sqlCreateTable,
                 flinkTable.schemaLoader(),
                 getMutationBuilder(hintsAndDocs),
-                hintsAndDocs.hints);
+                hintsAndDocs);
         hintsAndDocs.hints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());
@@ -960,7 +961,7 @@ public class SqlScriptPlanner {
   private Optional<MutationBuilder> getMutationBuilder(HintsAndDocs hintsAndDocs) {
     var mutationStage =
         hintsAndDocs
-            .hints
+            .hints()
             .getHint(EngineHint.class)
             .flatMap(engineHint -> pipeline.getStage(engineHint.getStageNames().get(0)));
 
@@ -1177,19 +1178,6 @@ public class SqlScriptPlanner {
                   sourcePath.getFileName().toString(), ModuleLoaderImpl.TABLE_FILE_SUFFIX)
               + "_export";
       TableWriter.writeToFile(sourcePath.getParent(), exportFilename, table);
-    }
-  }
-
-  record HintsAndDocs(PlannerHints hints, Optional<String> documentation) {
-
-    public static final HintsAndDocs EMPTY = new HintsAndDocs(PlannerHints.EMPTY, Optional.empty());
-
-    public String getDocumentation() {
-      return documentation.orElse("");
-    }
-
-    public HintsAndDocs dropHints() {
-      return new HintsAndDocs(PlannerHints.EMPTY, documentation);
     }
   }
 

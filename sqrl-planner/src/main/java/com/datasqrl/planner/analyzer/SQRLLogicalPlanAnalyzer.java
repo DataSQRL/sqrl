@@ -36,6 +36,7 @@ import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.TableAnalysisLookup;
 import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.analyzer.cost.JoinCostAnalysis;
+import com.datasqrl.planner.hint.HintsAndDocs;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.PrimaryKeyHint;
 import com.datasqrl.planner.hint.RowCountHint;
@@ -160,7 +161,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       TableAnalysis.TableAnalysisBuilder tableAnalysis,
       boolean hasMostRecentDistinct) {}
 
-  public ViewAnalysis analyze(PlannerHints hints) {
+  public ViewAnalysis analyze(HintsAndDocs hintsDocs) {
     originalRelnode.accept(this);
     var analysis = this.intermediateAnalysis;
 
@@ -190,6 +191,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           rowTimeField.get().getName());
     }
 
+    var hints = hintsDocs.hints();
     hints.updateColumnNamesHints(analysis::getField);
     // See if the primary key is being explicitly set:
     Optional<PrimaryKeyHint> pkHint = hints.getHint(PrimaryKeyHint.class);
@@ -243,6 +245,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .primaryKey(analysis.primaryKey)
             .isMostRecentDistinct(isMostRecentDistinct)
             .optionalBaseTable(baseTable)
+            .documentation(hintsDocs.documentation())
             .streamRoot(analysis.streamRoot)
             .fromTables(sourceTables)
             .requiredCapabilities(capabilityAnalysis.getRequiredCapabilities())

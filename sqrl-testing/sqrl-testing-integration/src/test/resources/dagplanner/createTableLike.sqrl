@@ -1,3 +1,4 @@
+/** Represents sensor data */
 CREATE TABLE _SensorReading_schema (
    uuid STRING NOT NULL,
    `sensorid` BIGINT NOT NULL,
@@ -28,3 +29,5 @@ CREATE TABLE SensorReadingMutation (
     recordedTime TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
 
 ) LIKE _SensorReading_schema;
+
+SensorReadingInput := SELECT * FROM SensorReadingMutation WHERE testField > 0;
