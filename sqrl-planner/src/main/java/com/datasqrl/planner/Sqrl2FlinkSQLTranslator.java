@@ -43,7 +43,6 @@ import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable.MutationTableBuilder;
 import com.datasqrl.planner.hint.HintsAndDocs;
-import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsePosUtil.MessageLocation;

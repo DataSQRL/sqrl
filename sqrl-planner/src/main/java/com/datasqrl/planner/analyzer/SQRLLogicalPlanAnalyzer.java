@@ -37,7 +37,6 @@ import com.datasqrl.planner.TableAnalysisLookup;
 import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.analyzer.cost.JoinCostAnalysis;
 import com.datasqrl.planner.hint.HintsAndDocs;
-import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.PrimaryKeyHint;
 import com.datasqrl.planner.hint.RowCountHint;
 import com.datasqrl.planner.tables.SqrlTableFunction;

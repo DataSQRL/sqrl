@@ -20,7 +20,6 @@ import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.hint.HintsAndDocs;
-import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.util.CalciteUtil;
 import java.util.List;
 import org.apache.calcite.rel.logical.LogicalFilter;
