@@ -15,7 +15,7 @@ public record HintsAndDocs(PlannerHints hints, Optional<String> documentation) {
   }
 
   public HintsAndDocs updateDocsIfAbsent(Optional<String> documentation) {
-    if (documentation.isPresent()) return this;
+    if (this.documentation.isPresent()) return this;
     return new HintsAndDocs(hints, documentation);
   }
 }

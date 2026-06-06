@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
@@ -733,8 +734,23 @@ public class Sqrl2FlinkSQLTranslator {
       SchemaLoader schemaLoader,
       HintsAndDocs hintsDocs) {
     var result = addTable(Function.identity(), tableDefinition, schemaLoader, mutationBuilder);
+    hintsDocs = updateDocumentationFromLike(result, hintsDocs);
     if (result.isSourceTable()) return Optional.of(addSourceTable(result, hintsDocs));
     else return Optional.empty();
+  }
+
+  private HintsAndDocs updateDocumentationFromLike(
+      AddTableResult addResult, HintsAndDocs hintsDocs) {
+    createTableDocumentation.put(addResult.baseTableIdentifier, hintsDocs.documentation());
+    // check if we should inherit doc-string from LIKE table
+    if (addResult.createdTable instanceof SqlCreateTableLike createTableLike) {
+      var sourceTable = createTableLike.getTableLike().getSourceTable();
+      ObjectIdentifier oid = qualifyIdentifier(sourceTable);
+      if (createTableDocumentation.containsKey(oid)) {
+        hintsDocs = hintsDocs.updateDocsIfAbsent(createTableDocumentation.get(oid));
+      }
+    }
+    return hintsDocs;
   }
 
   public SqlCreateView createScanView(String viewName, ObjectIdentifier id) {
@@ -743,6 +759,17 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   private static final String TEMP_VIEW_SUFFIX = "__view";
+
+  private ObjectIdentifier qualifyIdentifier(SqlIdentifier identifier) {
+    var names = identifier.names;
+    var size = names.size();
+
+    var databaseName = size > 1 ? names.get(size - 2) : catalogManager.getCurrentDatabase();
+    if (databaseName == null) databaseName = SqrlConstants.FLINK_DEFAULT_DATABASE;
+    var tableName = names.get(size - 1);
+
+    return ObjectIdentifier.of(FLINK_DEFAULT_CATALOG, databaseName, tableName);
+  }
 
   /**
    * Keeps track of documentation for CREATE TABLE statements so that we can re-use the doc string
@@ -761,17 +788,6 @@ public class Sqrl2FlinkSQLTranslator {
    * @return
    */
   private TableAnalysis addSourceTable(AddTableResult addResult, HintsAndDocs hintsDocs) {
-    createTableDocumentation.put(addResult.baseTableIdentifier, hintsDocs.documentation());
-    // check if we should inherit doc-string from LIKE table
-    if (addResult.createdTable instanceof SqlCreateTableLike createTableLike) {
-      var sourceTable = createTableLike.getTableLike().getSourceTable();
-      ObjectIdentifier oid =
-          null; // convert sourceTable within the context of this catalog and database;
-      if (createTableDocumentation.containsKey(oid)) {
-        hintsDocs = hintsDocs.updateDocsIfAbsent(createTableDocumentation.get(oid));
-      }
-    }
-
     var view =
         createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
     var viewAnalysis = analyzeView(view, false, hintsDocs, ErrorCollector.root());

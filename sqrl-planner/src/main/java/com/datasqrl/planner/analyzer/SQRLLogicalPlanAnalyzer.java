@@ -227,15 +227,20 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             && sourceTables.get(0).getType().isStream();
     // The base table is the right-most table in the relational tree that has the same type as the
     // result
-    Optional<TableAnalysis> baseTable = Optional.empty();
+    Optional<TableAnalysis> baseTable;
+    Optional<String> documentation = hintsDocs.documentation();
     if (preservesBaseTable && !sourceTables.isEmpty()) {
       baseTable =
           Optional.ofNullable(Iterables.getLast(sourceTables))
               .filter(AbstractAnalysis::hasRowType)
               .filter(tbl -> tbl.getRowType().equals(originalRelnode.getRowType()))
-              .map(TableOrFunctionAnalysis::getBaseTable)
-              .filter(tbl -> !Name.isHiddenString(tbl.getName()));
-    }
+              .map(TableOrFunctionAnalysis::getBaseTable);
+      // We inherit documentation even if basetable is hidden
+      if (documentation.isEmpty() && baseTable.isPresent()) {
+        documentation = baseTable.get().getDocumentation();
+      }
+      baseTable = baseTable.filter(tbl -> !Name.isHiddenString(tbl.getName()));
+    } else baseTable = Optional.empty();
 
     var tableAnalysis =
         TableAnalysis.builder()
@@ -245,7 +250,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .primaryKey(analysis.primaryKey)
             .isMostRecentDistinct(isMostRecentDistinct)
             .optionalBaseTable(baseTable)
-            .documentation(hintsDocs.documentation())
+            .documentation(documentation)
             .streamRoot(analysis.streamRoot)
             .fromTables(sourceTables)
             .requiredCapabilities(capabilityAnalysis.getRequiredCapabilities())
