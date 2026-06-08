@@ -141,7 +141,7 @@
     <httpcomponents.version>4.5.14</httpcomponents.version>
     <iceberg.version>1.11.0</iceberg.version>
     <jackson.version>2.22.0</jackson.version>
-    <jacoco.version>0.8.14</jacoco.version>
+    <jacoco.version>0.8.15</jacoco.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <jakarta.inject.version>2.0.1</jakarta.inject.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
