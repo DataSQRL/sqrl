@@ -64,6 +64,7 @@ import com.datasqrl.planner.dag.plan.MutationMetadataExtractor;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.hint.CacheHint;
 import com.datasqrl.planner.hint.EngineHint;
+import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.hint.MutationInsertHint;
 import com.datasqrl.planner.hint.NoQueryHint;
 import com.datasqrl.planner.hint.PlannerHints;
@@ -303,7 +304,7 @@ public class SqlScriptPlanner {
       List<StackableStatement> statementStack,
       Sqrl2FlinkSQLTranslator sqrlEnv,
       ErrorCollector errors) {
-    // Process hints & documentation
+    // Process hints & doc
     var hints = PlannerHints.EMPTY;
     Optional<String> documentation = Optional.empty();
     if (stmt instanceof SqrlStatement statement) {
@@ -318,7 +319,7 @@ public class SqlScriptPlanner {
                     .collect(Collectors.joining("\n")));
       }
     }
-    var hintsAndDocs = new HintsAndDocs(hints, documentation);
+    var hintsAndDocs = new HintsAndDoc(hints, documentation);
     if (stmt instanceof SqrlImportStatement statement) {
       addImport(statement, hintsAndDocs, sqrlEnv, errors);
     } else if (stmt instanceof SqrlExportStatement statement) {
@@ -329,7 +330,7 @@ public class SqlScriptPlanner {
               statement.toSql(),
               getMutationBuilder(hintsAndDocs),
               scriptContext.moduleLoader().getSchemaLoader(),
-              hints)
+              hintsAndDocs)
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
@@ -492,7 +493,7 @@ public class SqlScriptPlanner {
                   new ArrayList<>(arguments.values()),
                   passthroughStmt.getReturnType(),
                   fromTables,
-                  hints,
+                  hintsAndDocs,
                   errors);
         } else {
           fnBuilder =
@@ -501,7 +502,7 @@ public class SqlScriptPlanner {
                   originalSql,
                   new ArrayList<>(arguments.values()),
                   argumentIndexMap,
-                  hints,
+                  hintsAndDocs,
                   errors);
         }
         fnBuilder.fullPath(tblFnStmt.getPath());
@@ -526,7 +527,7 @@ public class SqlScriptPlanner {
 
         if (!shouldExcludeTestTable(hints)) {
           addTableToDag(
-              sqrlEnv.addView(originalSql, hints, errors),
+              sqrlEnv.addView(originalSql, hintsAndDocs, errors),
               hintsAndDocs,
               visibility,
               false,
@@ -550,7 +551,7 @@ public class SqlScriptPlanner {
         var visibility =
             new AccessVisibility(adjustAccess(AccessModifier.QUERY), false, true, false);
         addTableToDag(
-            sqrlEnv.addView(flinkStmt.sql().get(), hints, errors),
+            sqrlEnv.addView(flinkStmt.sql().get(), hintsAndDocs, errors),
             hintsAndDocs,
             visibility,
             false,
@@ -561,7 +562,7 @@ public class SqlScriptPlanner {
                 flinkStmt.sql().get(),
                 getMutationBuilder(hintsAndDocs),
                 scriptContext.moduleLoader().getSchemaLoader(),
-                hints)
+                hintsAndDocs)
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
         /*TODO: We are not currently adding these to the DAG (and hence no analysis/visualization based on the DAG)
@@ -721,12 +722,12 @@ public class SqlScriptPlanner {
    * @param sqrlEnv
    */
   private void addSourceToDag(
-      TableAnalysis tableAnalysis, HintsAndDocs hintsAndDocs, Sqrl2FlinkSQLTranslator sqrlEnv) {
+      TableAnalysis tableAnalysis, HintsAndDoc hintsAndDoc, Sqrl2FlinkSQLTranslator sqrlEnv) {
     Preconditions.checkArgument(tableAnalysis.getFromTables().size() == 1);
     var source = (TableAnalysis) tableAnalysis.getFromTables().get(0);
     Preconditions.checkArgument(source.isSourceOrSink());
     var sourceNode =
-        new TableNode(source, getSourceSinkStageAnalysis(), hintsAndDocs.getDocumentation());
+        new TableNode(source, getSourceSinkStageAnalysis(), hintsAndDoc.getDocOrEmpty());
     dagBuilder.add(sourceNode);
     var isHidden = tableAnalysis.getIdentifier().isHidden();
     var visibility =
@@ -735,7 +736,7 @@ public class SqlScriptPlanner {
             false,
             true,
             isHidden);
-    addTableToDag(tableAnalysis, hintsAndDocs, visibility, true, sqrlEnv);
+    addTableToDag(tableAnalysis, hintsAndDoc, visibility, true, sqrlEnv);
   }
 
   /**
@@ -743,30 +744,30 @@ public class SqlScriptPlanner {
    * and provided hints.
    *
    * @param tableAnalysis
-   * @param hintsAndDocs
+   * @param hintsAndDoc
    * @param visibility
    * @param sqrlEnv
    */
   private void addTableToDag(
       TableAnalysis tableAnalysis,
-      HintsAndDocs hintsAndDocs,
+      HintsAndDoc hintsAndDoc,
       AccessVisibility visibility,
       boolean isSource,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
     // Sources must be processed by the stream stage
     var availableStages =
-        isSource ? List.of(streamStage) : determineStages(tableStages, hintsAndDocs.hints());
+        isSource ? List.of(streamStage) : determineStages(tableStages, hintsAndDoc.hints());
     var tableNode =
         new TableNode(
             tableAnalysis,
             isSource
                 ? getSourceSinkStageAnalysis()
                 : getStageAnalysis(tableAnalysis, availableStages),
-            hintsAndDocs.getDocumentation());
+            hintsAndDoc.getDocOrEmpty());
     dagBuilder.add(tableNode);
 
     // Figure out if and what type of access function we should add for this table
-    var queryByHint = hintsAndDocs.hints().getQueryByHint();
+    var queryByHint = hintsAndDoc.hints().getQueryByHint();
     if (visibility.isEndpoint()) { // only add function if this table is an endpoint
       var relBuilder = sqrlEnv.getTableScan(tableAnalysis.getObjectIdentifier());
       List<FunctionParameter> parameters = List.of();
@@ -794,10 +795,10 @@ public class SqlScriptPlanner {
               scriptContext.toIdentifier(fnName), relBuilder.build(), parameters, tableAnalysis);
       fnBuilder.fullPath(NamePath.of(tableName));
       fnBuilder.visibility(visibility);
-      fnBuilder.documentation(hintsAndDocs.documentation());
-      fnBuilder.cacheDuration(getCacheDuration(hintsAndDocs));
+      fnBuilder.documentation(hintsAndDoc.doc());
+      fnBuilder.cacheDuration(getCacheDuration(hintsAndDoc));
       addFunctionToDag(
-          fnBuilder.build(), hintsAndDocs.dropHints()); // hints don't apply to the function access
+          fnBuilder.build(), hintsAndDoc.dropHints()); // hints don't apply to the function access
     } else if (queryByHint.isPresent() && !(queryByHint.get() instanceof NoQueryHint)) {
       throw new StatementParserException(
           ErrorLabel.GENERIC,
@@ -806,19 +807,19 @@ public class SqlScriptPlanner {
     }
   }
 
-  private void addFunctionToDag(SqrlTableFunction function, HintsAndDocs hintsAndDocs) {
+  private void addFunctionToDag(SqrlTableFunction function, HintsAndDoc hintsAndDoc) {
     var availableStages =
         determineStages(
-            determineViableStages(function.getVisibility().access()), hintsAndDocs.hints());
+            determineViableStages(function.getVisibility().access()), hintsAndDoc.hints());
     dagBuilder.add(
         new TableFunctionNode(
             function,
             getStageAnalysis(function.getFunctionAnalysis(), availableStages),
-            hintsAndDocs.getDocumentation()));
+            hintsAndDoc.getDocOrEmpty()));
   }
 
-  private static Duration getCacheDuration(HintsAndDocs hintsAndDocs) {
-    return hintsAndDocs
+  private static Duration getCacheDuration(HintsAndDoc hintsAndDoc) {
+    return hintsAndDoc
         .hints()
         .getHint(CacheHint.class)
         .map(CacheHint::getDuration)
@@ -835,7 +836,7 @@ public class SqlScriptPlanner {
    */
   private void addImport(
       SqrlImportStatement importStmt,
-      HintsAndDocs hintsAndDocs,
+      HintsAndDoc hintsAndDoc,
       Sqrl2FlinkSQLTranslator sqrlEnv,
       ErrorCollector errors) {
     var path = importStmt.getPackageIdentifier().get();
@@ -871,7 +872,7 @@ public class SqlScriptPlanner {
         addImport(
             namespaceObject,
             alias.isPresent() ? (name -> alias.get() + name) : Function.identity(),
-            hintsAndDocs,
+            hintsAndDoc,
             sqrlEnv);
       }
     } else {
@@ -882,7 +883,7 @@ public class SqlScriptPlanner {
       addImport(
           namespaceObject.get(),
           alias.isPresent() ? (name -> alias.get().getDisplay()) : Function.identity(),
-          hintsAndDocs,
+          hintsAndDoc,
           sqrlEnv);
     }
   }
@@ -897,7 +898,7 @@ public class SqlScriptPlanner {
   private void addImport(
       NamespaceObject nsObject,
       Function<String, String> importNameModifier,
-      HintsAndDocs hintsAndDocs,
+      HintsAndDoc hintsAndDoc,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
     if (nsObject instanceof FlinkTableNamespaceObject object) { // import a table
       // TODO: for a create table statement without options (connector), we manage it internally
@@ -910,10 +911,10 @@ public class SqlScriptPlanner {
                 importNameModifier,
                 flinkTable.sqlCreateTable,
                 flinkTable.schemaLoader(),
-                getMutationBuilder(hintsAndDocs),
-                hintsAndDocs.hints);
-        hintsAndDocs.hints().updateColumnNamesHints(tableAnalysis::getField);
-        addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv);
+                getMutationBuilder(hintsAndDoc),
+                hintsAndDoc);
+        hintsAndDoc.hints().updateColumnNamesHints(tableAnalysis::getField);
+        addSourceToDag(tableAnalysis, hintsAndDoc, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
@@ -957,10 +958,10 @@ public class SqlScriptPlanner {
    * For CREATE TABLE statements without connectors which are mutations, we provide this
    * MutationBuilder to fill in the connector settings based on the configured log engine.
    */
-  private Optional<MutationBuilder> getMutationBuilder(HintsAndDocs hintsAndDocs) {
+  private Optional<MutationBuilder> getMutationBuilder(HintsAndDoc hintsAndDoc) {
     var mutationStage =
-        hintsAndDocs
-            .hints
+        hintsAndDoc
+            .hints()
             .getHint(EngineHint.class)
             .flatMap(engineHint -> pipeline.getStage(engineHint.getStageNames().get(0)));
 
@@ -980,7 +981,7 @@ public class SqlScriptPlanner {
           mutationBuilder.generateAccess(scriptContext.isRootContext());
           mutationBuilder.stage(mutationStage.get());
           MutationInsertType insertType =
-              hintsAndDocs
+              hintsAndDoc
                   .hints()
                   .getHint(MutationInsertHint.class)
                   .map(MutationInsertHint::getInsertType)
@@ -992,10 +993,10 @@ public class SqlScriptPlanner {
                   tableBuilder,
                   dataType,
                   insertType,
-                  hintsAndDocs.hints().getHint(TtlHint.class).flatMap(TtlHint::getTtl)));
+                  hintsAndDoc.hints().getHint(TtlHint.class).flatMap(TtlHint::getTtl)));
           mutationBuilder.name(Name.system(origTableName));
           mutationBuilder.insertType(insertType);
-          mutationBuilder.documentation(hintsAndDocs.documentation());
+          mutationBuilder.documentation(hintsAndDoc.doc());
           mutationBuilder.tableBuilder(tableBuilder);
           // UUID and TIMESTAMP are special cases
           tableBuilder
@@ -1177,19 +1178,6 @@ public class SqlScriptPlanner {
                   sourcePath.getFileName().toString(), ModuleLoaderImpl.TABLE_FILE_SUFFIX)
               + "_export";
       TableWriter.writeToFile(sourcePath.getParent(), exportFilename, table);
-    }
-  }
-
-  record HintsAndDocs(PlannerHints hints, Optional<String> documentation) {
-
-    public static final HintsAndDocs EMPTY = new HintsAndDocs(PlannerHints.EMPTY, Optional.empty());
-
-    public String getDocumentation() {
-      return documentation.orElse("");
-    }
-
-    public HintsAndDocs dropHints() {
-      return new HintsAndDocs(PlannerHints.EMPTY, documentation);
     }
   }
 
