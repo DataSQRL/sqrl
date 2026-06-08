@@ -36,7 +36,7 @@ import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.TableAnalysisLookup;
 import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.analyzer.cost.JoinCostAnalysis;
-import com.datasqrl.planner.hint.HintsAndDocs;
+import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.hint.PrimaryKeyHint;
 import com.datasqrl.planner.hint.RowCountHint;
 import com.datasqrl.planner.tables.SqrlTableFunction;
@@ -160,7 +160,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       TableAnalysis.TableAnalysisBuilder tableAnalysis,
       boolean hasMostRecentDistinct) {}
 
-  public ViewAnalysis analyze(HintsAndDocs hintsDocs) {
+  public ViewAnalysis analyze(HintsAndDoc hintsAndDoc) {
     originalRelnode.accept(this);
     var analysis = this.intermediateAnalysis;
 
@@ -190,7 +190,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           rowTimeField.get().getName());
     }
 
-    var hints = hintsDocs.hints();
+    var hints = hintsAndDoc.hints();
     hints.updateColumnNamesHints(analysis::getField);
     // See if the primary key is being explicitly set:
     Optional<PrimaryKeyHint> pkHint = hints.getHint(PrimaryKeyHint.class);
@@ -224,22 +224,25 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             && sourceTables.size() == 1
             && sourceTables.get(0).getRowType().equals(originalRelnode.getRowType())
             && sourceTables.get(0).getType().isStream();
+
     // The base table is the right-most table in the relational tree that has the same type as the
     // result
-    Optional<TableAnalysis> baseTable;
-    Optional<String> documentation = hintsDocs.documentation();
+    Optional<TableAnalysis> baseTable = Optional.empty();
+    Optional<String> documentation = hintsAndDoc.doc();
     if (preservesBaseTable && !sourceTables.isEmpty()) {
       baseTable =
           Optional.ofNullable(Iterables.getLast(sourceTables))
               .filter(AbstractAnalysis::hasRowType)
               .filter(tbl -> tbl.getRowType().equals(originalRelnode.getRowType()))
               .map(TableOrFunctionAnalysis::getBaseTable);
-      // We inherit documentation even if basetable is hidden
+
+      // We inherit doc even if basetable is hidden
       if (documentation.isEmpty() && baseTable.isPresent()) {
         documentation = baseTable.get().getDocumentation();
       }
+
       baseTable = baseTable.filter(tbl -> !Name.isHiddenString(tbl.getName()));
-    } else baseTable = Optional.empty();
+    }
 
     var tableAnalysis =
         TableAnalysis.builder()
@@ -257,6 +260,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .hints(hints)
             .tableStatistic(tableStatistic)
             .errors(errors);
+
     return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis, hasMostRecentDistinct);
   }
 

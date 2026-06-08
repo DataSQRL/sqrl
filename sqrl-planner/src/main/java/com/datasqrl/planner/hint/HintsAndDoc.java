@@ -17,20 +17,19 @@ package com.datasqrl.planner.hint;
 
 import java.util.Optional;
 
-public record HintsAndDocs(PlannerHints hints, Optional<String> documentation) {
+public record HintsAndDoc(PlannerHints hints, Optional<String> doc) {
 
-  public static final HintsAndDocs EMPTY = new HintsAndDocs(PlannerHints.EMPTY, Optional.empty());
+  public static final HintsAndDoc EMPTY = new HintsAndDoc(PlannerHints.EMPTY, Optional.empty());
 
-  public String getDocumentation() {
-    return documentation.orElse("");
+  public String getDocOrEmpty() {
+    return doc.orElse("");
   }
 
-  public HintsAndDocs dropHints() {
-    return new HintsAndDocs(PlannerHints.EMPTY, documentation);
+  public HintsAndDoc dropHints() {
+    return new HintsAndDoc(PlannerHints.EMPTY, doc);
   }
 
-  public HintsAndDocs updateDocsIfAbsent(Optional<String> documentation) {
-    if (this.documentation.isPresent()) return this;
-    return new HintsAndDocs(hints, documentation);
+  public HintsAndDoc updateDocsIfAbsent(Optional<String> documentation) {
+    return this.doc.isPresent() ? this : new HintsAndDoc(hints, documentation);
   }
 }

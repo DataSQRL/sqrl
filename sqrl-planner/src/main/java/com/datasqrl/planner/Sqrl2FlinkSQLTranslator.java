@@ -42,7 +42,7 @@ import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable.MutationTableBuilder;
-import com.datasqrl.planner.hint.HintsAndDocs;
+import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsePosUtil.MessageLocation;
@@ -307,12 +307,12 @@ public class Sqrl2FlinkSQLTranslator {
    *
    * @param viewDef
    * @param removeTopLevelSort
-   * @param hintsDocs
+   * @param hintsAndDoc
    * @param errors
    * @return
    */
   public ViewAnalysis analyzeView(
-      SqlNode viewDef, boolean removeTopLevelSort, HintsAndDocs hintsDocs, ErrorCollector errors) {
+      SqlNode viewDef, boolean removeTopLevelSort, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
     var flinkPlanner = this.validatorSupplier.get();
 
     var validated = flinkPlanner.validate(viewDef);
@@ -355,7 +355,7 @@ public class Sqrl2FlinkSQLTranslator {
                 .unwrap(CalciteCatalogReader.class),
             relBuilder,
             errors);
-    var viewAnalysis = analyzer.analyze(hintsDocs);
+    var viewAnalysis = analyzer.analyze(hintsAndDoc);
     viewAnalysis.tableAnalysis().topLevelSort(topLevelSort);
     return viewAnalysis;
   }
@@ -463,11 +463,11 @@ public class Sqrl2FlinkSQLTranslator {
    * Adds a view to Flink and produces the {@link TableAnalysis} for the planner and the DAG.
    *
    * @param originalSql
-   * @param hintsDocs
+   * @param hintsAndDoc
    * @param errors
    * @return
    */
-  public TableAnalysis addView(String originalSql, HintsAndDocs hintsDocs, ErrorCollector errors) {
+  public TableAnalysis addView(String originalSql, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
     var viewDef = parseSQL(originalSql);
     checkArgument(
         viewDef instanceof SqlCreateView || viewDef instanceof SqlAlterViewAs,
@@ -500,7 +500,7 @@ public class Sqrl2FlinkSQLTranslator {
      NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
     */
     var viewDef2 = parseSQL(originalSql);
-    var viewAnalysis = analyzeView(viewDef2, removedSort, hintsDocs, errors);
+    var viewAnalysis = analyzeView(viewDef2, removedSort, hintsAndDoc, errors);
     var tableAnalysis =
         viewAnalysis.tableAnalysis().objectIdentifier(identifier).originalSql(originalSql).build();
     tableLookup.registerTable(tableAnalysis);
@@ -517,14 +517,14 @@ public class Sqrl2FlinkSQLTranslator {
 
   /**
    * Parses a {@link SqrlTableFunction} definition and analyzes the result. It invokes {@link
-   * #analyzeView(SqlNode, boolean, HintsAndDocs, ErrorCollector)} and in addition contains the
-   * logic for resolving the function arguments and their types.
+   * #analyzeView(SqlNode, boolean, HintsAndDoc, ErrorCollector)} and in addition contains the logic
+   * for resolving the function arguments and their types.
    *
    * @param identifier
    * @param originalSql
    * @param arguments
    * @param argumentIndexMap
-   * @param hintsDocs
+   * @param hintsAndDoc
    * @param errors
    * @return
    */
@@ -533,13 +533,13 @@ public class Sqrl2FlinkSQLTranslator {
       String originalSql,
       List<ParsedArgument> arguments,
       Map<Integer, Integer> argumentIndexMap,
-      HintsAndDocs hintsDocs,
+      HintsAndDoc hintsAndDoc,
       ErrorCollector errors) {
 
     var parameters = getFunctionParameters(arguments);
     // Analyze Query
     var funcDef2 = parseSQL(originalSql);
-    var viewAnalysis = analyzeView(funcDef2, false, hintsDocs, errors);
+    var viewAnalysis = analyzeView(funcDef2, false, hintsAndDoc, errors);
     // Remap parameters in query so the RexDynamicParam point directly at the function parameter by
     // index
     var updateParameters =
@@ -562,7 +562,7 @@ public class Sqrl2FlinkSQLTranslator {
       List<ParsedArgument> arguments,
       ParsedObject<String> returnType,
       List<TableOrFunctionAnalysis> fromTables,
-      HintsAndDocs hintsDocs,
+      HintsAndDoc hintsAndDoc,
       ErrorCollector errors) {
 
     var parameters = getFunctionParameters(arguments);
@@ -580,8 +580,8 @@ public class Sqrl2FlinkSQLTranslator {
             .originalSql(originalSql)
             .originalRelnode(values)
             .collapsedRelnode(values)
-            .hints(hintsDocs.hints())
-            .documentation(hintsDocs.documentation())
+            .hints(hintsAndDoc.hints())
+            .documentation(hintsAndDoc.doc())
             .errors(errors)
             .fromTables(fromTables)
             .build();
@@ -714,9 +714,9 @@ public class Sqrl2FlinkSQLTranslator {
       String tableDefinition,
       SchemaLoader schemaLoader,
       Optional<MutationBuilder> mutationBuilder,
-      HintsAndDocs hintsDocs) {
+      HintsAndDoc hintsAndDoc) {
     return addSourceTable(
-        addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder), hintsDocs);
+        addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder), hintsAndDoc);
   }
 
   public AddTableResult addExternalExport(
@@ -731,25 +731,25 @@ public class Sqrl2FlinkSQLTranslator {
       String tableDefinition,
       Optional<MutationBuilder> mutationBuilder,
       SchemaLoader schemaLoader,
-      HintsAndDocs hintsDocs) {
+      HintsAndDoc hintsAndDoc) {
     var result = addTable(Function.identity(), tableDefinition, schemaLoader, mutationBuilder);
-    hintsDocs = updateDocumentationFromLike(result, hintsDocs);
-    if (result.isSourceTable()) return Optional.of(addSourceTable(result, hintsDocs));
+    hintsAndDoc = updateDocumentationFromLike(result, hintsAndDoc);
+    if (result.isSourceTable()) return Optional.of(addSourceTable(result, hintsAndDoc));
     else return Optional.empty();
   }
 
-  private HintsAndDocs updateDocumentationFromLike(
-      AddTableResult addResult, HintsAndDocs hintsDocs) {
-    createTableDocumentation.put(addResult.baseTableIdentifier, hintsDocs.documentation());
+  private HintsAndDoc updateDocumentationFromLike(
+      AddTableResult addResult, HintsAndDoc hintsAndDoc) {
+    createTableDocumentation.put(addResult.baseTableIdentifier, hintsAndDoc.doc());
     // check if we should inherit doc-string from LIKE table
     if (addResult.createdTable instanceof SqlCreateTableLike createTableLike) {
       var sourceTable = createTableLike.getTableLike().getSourceTable();
       ObjectIdentifier oid = qualifyIdentifier(sourceTable);
       if (createTableDocumentation.containsKey(oid)) {
-        hintsDocs = hintsDocs.updateDocsIfAbsent(createTableDocumentation.get(oid));
+        hintsAndDoc = hintsAndDoc.updateDocsIfAbsent(createTableDocumentation.get(oid));
       }
     }
-    return hintsDocs;
+    return hintsAndDoc;
   }
 
   public SqlCreateView createScanView(String viewName, ObjectIdentifier id) {
@@ -786,10 +786,10 @@ public class Sqrl2FlinkSQLTranslator {
    * @param addResult
    * @return
    */
-  private TableAnalysis addSourceTable(AddTableResult addResult, HintsAndDocs hintsDocs) {
+  private TableAnalysis addSourceTable(AddTableResult addResult, HintsAndDoc hintsAndDoc) {
     var view =
         createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
-    var viewAnalysis = analyzeView(view, false, hintsDocs, ErrorCollector.root());
+    var viewAnalysis = analyzeView(view, false, hintsAndDoc, ErrorCollector.root());
     TableAnalysis.TableAnalysisBuilder tbBuilder = viewAnalysis.tableAnalysis();
     tbBuilder
         .objectIdentifier(addResult.baseTableIdentifier)
