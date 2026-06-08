@@ -119,6 +119,9 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   /** The planner hints attached to this table definition */
   @Builder.Default PlannerHints hints = PlannerHints.EMPTY;
 
+  /** A documentation string that describes the table */
+  @Builder.Default Optional<String> documentation = Optional.empty();
+
   /**
    * The statistics for the table, either estimated by planner or provided as hints on the
    * definition

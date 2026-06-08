@@ -37,6 +37,30 @@ WITH (
   'fields.temperature.kind' = 'random'
 )
 LIKE `_SensorReading_schema`
+=== SensorReadingInput
+ID:          default_catalog.default_database.SensorReadingInput
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   recordedTime
+Row count:   ~5e7
+---
+Schema:
+ - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - sensorid: BIGINT NOT NULL
+ - epoch_timestamp: BIGINT NOT NULL
+ - temperature: DOUBLE NOT NULL
+ - testField: DOUBLE
+ - recordedTime: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.SensorReadingMutation
+Plan:
+LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3], testField=[$4], recordedTime=[$5])
+  LogicalFilter(condition=[>($4, 0)])
+    LogicalTableScan(table=[[default_catalog, default_database, SensorReadingMutation]])
+SQL:
+CREATE VIEW `SensorReadingInput` AS  SELECT * FROM SensorReadingMutation WHERE testField > 0;
+
 === SensorReadingMutation
 ID:          default_catalog.default_database.SensorReadingMutation
 Type:        stream
@@ -111,6 +135,11 @@ WITH (
   'topic' = 'kafka-mutation-SensorReadingMutation'
 )
 LIKE `_SensorReading_schema`;
+CREATE VIEW `SensorReadingInput`
+AS
+SELECT *
+FROM `SensorReadingMutation`
+WHERE `testField` > 0;
 CREATE TABLE `SensorReading_1` (
   `uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `sensorid` BIGINT NOT NULL,
@@ -129,7 +158,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `SensorReadingMutation_2` (
+CREATE TABLE `SensorReadingInput_2` (
   `uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `sensorid` BIGINT NOT NULL,
   `epoch_timestamp` BIGINT NOT NULL,
@@ -144,7 +173,26 @@ WITH (
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
   'sink.on-conflict.action' = 'IGNORE',
-  'table-name' = 'SensorReadingMutation_2',
+  'table-name' = 'SensorReadingInput_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `SensorReadingMutation_3` (
+  `uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sensorid` BIGINT NOT NULL,
+  `epoch_timestamp` BIGINT NOT NULL,
+  `temperature` DOUBLE NOT NULL,
+  `testField` DOUBLE,
+  `recordedTime` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'SensorReadingMutation_3',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
@@ -153,11 +201,15 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReading_1`
 SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`, `hash_columns`(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `timestamp`) AS `__pk_hash`
  FROM `default_catalog`.`default_database`.`SensorReading`
 ;
-INSERT INTO `default_catalog`.`default_database`.`SensorReadingMutation_2`
+INSERT INTO `default_catalog`.`default_database`.`SensorReadingInput_2`
  SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `testField`, `recordedTime`, `hash_columns`(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `testField`, `recordedTime`) AS `__pk_hash`
-  FROM `default_catalog`.`default_database`.`SensorReadingMutation`
+  FROM `default_catalog`.`default_database`.`SensorReadingInput`
  ;
- END
+ INSERT INTO `default_catalog`.`default_database`.`SensorReadingMutation_3`
+  SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `testField`, `recordedTime`, `hash_columns`(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `testField`, `recordedTime`) AS `__pk_hash`
+   FROM `default_catalog`.`default_database`.`SensorReadingMutation`
+  ;
+  END
 >>>kafka.json
 {
   "topics" : [
@@ -223,9 +275,58 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingMutation_2`
       "ttl" : 0.0
     },
     {
-      "name" : "SensorReadingMutation_2",
+      "name" : "SensorReadingInput_2",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"SensorReadingMutation_2\" (\"uuid\" TEXT NOT NULL, \"sensorid\" BIGINT NOT NULL, \"epoch_timestamp\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL, \"testField\" DOUBLE PRECISION, \"recordedTime\" TIMESTAMP WITH TIME ZONE, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SensorReadingInput_2\" (\"uuid\" TEXT NOT NULL, \"sensorid\" BIGINT NOT NULL, \"epoch_timestamp\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL, \"testField\" DOUBLE PRECISION, \"recordedTime\" TIMESTAMP WITH TIME ZONE, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "uuid",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "sensorid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "epoch_timestamp",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "temperature",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : false
+        },
+        {
+          "name" : "testField",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : true
+        },
+        {
+          "name" : "recordedTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "SensorReadingMutation_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SensorReadingMutation_3\" (\"uuid\" TEXT NOT NULL, \"sensorid\" BIGINT NOT NULL, \"epoch_timestamp\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL, \"testField\" DOUBLE PRECISION, \"recordedTime\" TIMESTAMP WITH TIME ZONE, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
       "fields" : [
         {
           "name" : "uuid",
@@ -304,9 +405,46 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingMutation_2`
       ]
     },
     {
+      "name" : "SensorReadingInput",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"SensorReadingInput\"(\"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"testField\", \"recordedTime\") AS SELECT \"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"testField\", \"recordedTime\"\nFROM \"SensorReadingInput_2\"",
+      "fields" : [
+        {
+          "name" : "uuid",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "sensorid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "epoch_timestamp",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "temperature",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : false
+        },
+        {
+          "name" : "testField",
+          "type" : "DOUBLE PRECISION",
+          "nullable" : true
+        },
+        {
+          "name" : "recordedTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    },
+    {
       "name" : "SensorReadingMutation",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"SensorReadingMutation\"(\"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"testField\", \"recordedTime\") AS SELECT \"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"testField\", \"recordedTime\"\nFROM \"SensorReadingMutation_2\"",
+      "sql" : "CREATE OR REPLACE VIEW \"SensorReadingMutation\"(\"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"testField\", \"recordedTime\") AS SELECT \"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"testField\", \"recordedTime\"\nFROM \"SensorReadingMutation_3\"",
       "fields" : [
         {
           "name" : "uuid",
@@ -375,6 +513,31 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingMutation_2`
         {
           "type" : "args",
           "parentType" : "Query",
+          "fieldName" : "SensorReadingInput",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"testField\", \"recordedTime\"\nFROM \"SensorReadingInput_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
           "fieldName" : "SensorReadingMutation",
           "exec" : {
             "arguments" : [
@@ -389,7 +552,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingMutation_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"testField\", \"recordedTime\"\nFROM \"SensorReadingMutation_2\"",
+              "sql" : "SELECT \"uuid\", \"sensorid\", \"epoch_timestamp\", \"temperature\", \"testField\", \"recordedTime\"\nFROM \"SensorReadingMutation_3\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -443,6 +606,32 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingMutation_2`
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/SensorReading{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSensorReadingInput",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query SensorReadingInput($limit: Int = 10, $offset: Int = 0) {\nSensorReadingInput(limit: $limit, offset: $offset) {\nuuid\nsensorid\nepoch_timestamp\ntemperature\ntestField\nrecordedTime\n}\n\n}",
+            "queryName" : "SensorReadingInput",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorReadingInput{?offset,limit}"
         },
         {
           "function" : {
@@ -513,7 +702,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingMutation_2`
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SensorReadingMutation(event: SensorReadingMutationInput!): SensorReadingMutationResultOutput!\n}\n\ntype Query {\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorReadingMutation(limit: Int = 10, offset: Int = 0): [SensorReadingMutation!]\n}\n\ntype SensorReading {\n  uuid: String!\n  sensorid: Long!\n  epoch_timestamp: Long!\n  temperature: Float!\n  timestamp: DateTime!\n}\n\ntype SensorReadingMutation {\n  uuid: String!\n  sensorid: Long!\n  epoch_timestamp: Long!\n  temperature: Float!\n  testField: Float\n  recordedTime: DateTime\n}\n\ninput SensorReadingMutationInput {\n  uuid: String!\n  sensorid: Long!\n  epoch_timestamp: Long!\n  temperature: Float!\n  testField: Float\n}\n\ntype SensorReadingMutationResultOutput {\n  uuid: String!\n  sensorid: Long!\n  epoch_timestamp: Long!\n  temperature: Float!\n  testField: Float\n  recordedTime: DateTime\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SensorReadingMutation(event: SensorReadingMutationInput!): SensorReadingMutationResultOutput!\n}\n\ntype Query {\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorReadingInput(limit: Int = 10, offset: Int = 0): [SensorReadingMutation!]\n  SensorReadingMutation(limit: Int = 10, offset: Int = 0): [SensorReadingMutation!]\n}\n\n\"Represents sensor data\"\ntype SensorReading {\n  uuid: String!\n  sensorid: Long!\n  epoch_timestamp: Long!\n  temperature: Float!\n  timestamp: DateTime!\n}\n\n\"Represents sensor data\"\ntype SensorReadingMutation {\n  uuid: String!\n  sensorid: Long!\n  epoch_timestamp: Long!\n  temperature: Float!\n  testField: Float\n  recordedTime: DateTime\n}\n\ninput SensorReadingMutationInput {\n  uuid: String!\n  sensorid: Long!\n  epoch_timestamp: Long!\n  temperature: Float!\n  testField: Float\n}\n\ntype SensorReadingMutationResultOutput {\n  uuid: String!\n  sensorid: Long!\n  epoch_timestamp: Long!\n  temperature: Float!\n  testField: Float\n  recordedTime: DateTime\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
