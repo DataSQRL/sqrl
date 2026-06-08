@@ -10,10 +10,12 @@ type Employees {
   name: String!
   email: String!
   updatedDate: DateTime!
+  "Returns all employees reporting to the given employee following down the reporting chain"
   allReports(limit: Int = 10, offset: Int = 0): [Employees_allReports!]
   directReports(limit: Int = 10, offset: Int = 0): [Employees!]
 }
 
+"Returns all employees reporting to the given employee following down the reporting chain"
 type Employees_allReports {
   employeeid: Long!
   name: String!
@@ -372,7 +374,7 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Employees {\n  employeeid: Long!\n  name: String!\n  email: String!\n  updatedDate: DateTime!\n  allReports(limit: Int = 10, offset: Int = 0): [Employees_allReports!]\n  directReports(limit: Int = 10, offset: Int = 0): [Employees!]\n}\n\ntype Employees_allReports {\n  employeeid: Long!\n  name: String!\n  level: Int!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Employees(employeeid: Long, name: String, limit: Int = 10, offset: Int = 0): [Employees!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Employees {\n  employeeid: Long!\n  name: String!\n  email: String!\n  updatedDate: DateTime!\n  \"Returns all employees reporting to the given employee following down the reporting chain\"\n  allReports(limit: Int = 10, offset: Int = 0): [Employees_allReports!]\n  directReports(limit: Int = 10, offset: Int = 0): [Employees!]\n}\n\n\"Returns all employees reporting to the given employee following down the reporting chain\"\ntype Employees_allReports {\n  employeeid: Long!\n  name: String!\n  level: Int!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Employees(employeeid: Long, name: String, limit: Int = 10, offset: Int = 0): [Employees!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
