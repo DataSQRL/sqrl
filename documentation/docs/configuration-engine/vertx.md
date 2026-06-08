@@ -257,34 +257,6 @@ The `audience` field is **required** for Auth0 client credentials requests. With
 - **JWKS endpoint** — Auth0 publishes signing keys at `https://<tenant>.auth0.com/.well-known/jwks.json`. The server fetches these automatically from the OIDC discovery document (`/.well-known/openid-configuration`) and rotates them without restart.
 - **Custom domains** — If your Auth0 tenant uses a custom domain (e.g. `https://auth.example.com/`), use that URL as both `site` and `authorizationServerUrl`.
 
-## Deployment Configuration
+## Cloud Deployment
 
-Vert.x supports deployment-specific configuration options for scaling the API server:
-
-| Key              | Type        | Default | Description                                    |
-|------------------|-------------|---------|------------------------------------------------|
-| `instance-size`  | **string**  | -       | Server instance size with storage variants     |
-| `instance-count` | **integer** | -       | Number of server instances to run (minimum: 1) |
-
-### Instance Size Options
-
-Available `instance-size` options with storage variants:
-- `dev` - Development/testing size
-- `small`, `small.disk` - Small instances with optional additional disk
-- `medium`, `medium.disk` - Medium instances with optional additional disk
-- `large`, `large.disk` - Large instances with optional additional disk
-
-### Deployment Example
-
-```json
-{
-  "engines": {
-    "vertx": {
-      "deployment": {
-        "instance-size": "medium.disk",
-        "instance-count": 3
-      }
-    }
-  }
-}
-```
+For cloud deployment configuration (instance sizes, instance counts), see [Cloud Deployment Configuration](cloud-deployment.md#vertx-enginesvertxdeployment).

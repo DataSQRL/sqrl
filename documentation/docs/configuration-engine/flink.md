@@ -34,52 +34,6 @@ Refer to the [Flink Documentation](hhttps://nightlies.apache.org/flink/flink-doc
 }
 ```
 
-## Deployment Configuration
+## Cloud Deployment
 
-Flink supports deployment-specific configuration options for managing cluster resources:
-
-| Key                 | Type        | Default | Description                                                     |
-|---------------------|-------------|---------|-----------------------------------------------------------------|
-| `jobmanager-size`   | **string**  | -       | Job manager instance size: `dev`, `small`, `medium`, `large`    |
-| `taskmanager-size`  | **string**  | -       | Task manager instance size with resource variants               |
-| `taskmanager-count` | **integer** | -       | Number of task manager instances (minimum: 1)                   |
-| `secrets`           | **array**   | `null`  | Array of secret names to inject, or `null` if no secrets needed |
-| `schedule`          | **object**  | -       | Schedule for periodic awakening of the Flink job                |
-
-### Task Manager Size Options
-
-Available `taskmanager-size` options with resource variants:
-- `dev` - Development/testing size
-- `small`, `small.mem`, `small.cpu` - Small instances with memory or CPU optimization
-- `medium`, `medium.mem`, `medium.cpu` - Medium instances with resource variants  
-- `large`, `large.mem`, `large.cpu` - Large instances with resource variants
-
-### Schedule Configuration
-
-The `schedule` object configures periodic awakening of the Flink job. Both `cron` and `timezone` are required when a schedule is configured.
-
-| Key        | Type       | Required | Description                                                        |
-|------------|------------|----------|--------------------------------------------------------------------|
-| `cron`     | **string** | Yes      | Cron expression defining the schedule (e.g. `"0 0 * * *"`)        |
-| `timezone` | **string** | Yes      | IANA timezone for the cron expression (e.g. `"America/New_York"`) |
-
-### Deployment Example
-
-```json
-{
-  "engines": {
-    "flink": {
-      "deployment": {
-        "jobmanager-size": "small",
-        "taskmanager-size": "medium.mem",
-        "taskmanager-count": 2,
-        "secrets": ["flink-secrets", "db-credentials"],
-        "schedule": {
-          "cron": "0 */6 * * *",
-          "timezone": "UTC"
-        }
-      }
-    }
-  }
-}
-```
+For cloud deployment configuration (instance sizes, task manager counts, scheduling), see [Cloud Deployment Configuration](cloud-deployment.md#flink-enginesflinkdeployment).

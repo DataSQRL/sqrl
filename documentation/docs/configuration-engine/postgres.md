@@ -20,38 +20,9 @@ No mandatory configuration keys are required. Physical DDL (tables, indexes, vie
 }
 ```
 
-## Deployment Configuration
+## Cloud Deployment
 
-PostgreSQL supports deployment-specific configuration for database scaling and high availability:
-
-| Key             | Type        | Default | Description                                          |
-|-----------------|-------------|---------|------------------------------------------------------|
-| `instance-size` | **string**  | -       | Database instance size for compute and memory        |
-| `replica-count` | **integer** | -       | Number of read replicas (minimum: 0, maximum varies) |
-
-### Instance Size Options
-
-Available `instance-size` options:
-- `dev` - Development/testing size with minimal resources
-- `small` - Small production workloads
-- `medium` - Medium production workloads  
-- `large` - Large production workloads
-- `xlarge` - Extra large production workloads
-
-### Deployment Example
-
-```json
-{
-  "engines": {
-    "postgres": {
-      "deployment": {
-        "instance-size": "large",
-        "replica-count": 2
-      }
-    }
-  }
-}
-```
+For cloud deployment configuration (instance sizes, replica counts), see [Cloud Deployment Configuration](cloud-deployment.md#postgresql-enginespostgresdeployment).
 
 ## Conflict Handling
 
