@@ -439,7 +439,7 @@ public class HttpServerVerticle extends AbstractVerticle {
   }
 
   public static ObjectMapper getObjectMapper() {
-    return EnvVarResolver.of(false).initObjectMapper();
+    return EnvVarResolver.builder().strict(false).build().initObjectMapper();
   }
 
   /** Build a Vert.x {@link CorsHandler} from our own options DTO. */

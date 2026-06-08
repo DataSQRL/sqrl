@@ -37,7 +37,8 @@ public class SqrlObjectMapper {
 
   public static ObjectMapper getMapperWithEnvVarResolver(@Nullable Map<String, String> env) {
     var finalEnv = env != null ? env : GlobalEnvironmentStore.getAll();
+    var resolver = EnvVarResolver.builder().envVars(finalEnv).strict(false).build();
 
-    return EnvVarResolver.of(finalEnv, false).initObjectMapper(SqrlObjectMapper.MAPPER.copy());
+    return resolver.initObjectMapper(SqrlObjectMapper.MAPPER.copy());
   }
 }

@@ -23,6 +23,7 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.flinkrunner.SqrlRunner;
+import com.datasqrl.flinkrunner.utils.EnvUtils;
 import com.datasqrl.flinkrunner.utils.EnvVarResolver;
 import com.datasqrl.graphql.HttpServerVerticle;
 import com.datasqrl.graphql.SqrlObjectMapper;
@@ -193,7 +194,7 @@ public class DatasqrlRun {
       sqlFile = planDir.resolve("flink-sql.sql").toAbsolutePath().toString();
     }
 
-    var resolver = EnvVarResolver.withDeploymentDefaults(env);
+    var resolver = EnvVarResolver.builder().envVars(EnvUtils.addDeploymentDefaults(env)).build();
     var udfPath = env.get("UDF_PATH");
 
     getLastSavepoint()
