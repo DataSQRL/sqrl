@@ -167,6 +167,7 @@
     <snowflake-jdbc.version>4.2.0</snowflake-jdbc.version>
     <snakeyaml.version>2.6</snakeyaml.version>
     <swagger-core.version>2.2.50</swagger-core.version>
+    <system-stubs.version>2.1.8</system-stubs.version>
     <testcontainers.version>2.0.5</testcontainers.version>
     <vertx.version>5.0.12</vertx.version>
 
@@ -654,6 +655,12 @@
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers</artifactId>
         <version>${testcontainers.version}</version>
+        <scope>test</scope>
+      </dependency>
+      <dependency>
+        <groupId>uk.org.webcompere</groupId>
+        <artifactId>system-stubs-jupiter</artifactId>
+        <version>${system-stubs.version}</version>
         <scope>test</scope>
       </dependency>
 

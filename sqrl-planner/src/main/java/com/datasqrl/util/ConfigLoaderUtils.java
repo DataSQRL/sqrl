@@ -29,6 +29,7 @@ import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.planner.util.NonSecretEnvVarResolver;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.networknt.schema.SchemaRegistry;
@@ -334,28 +335,55 @@ public final class ConfigLoaderUtils {
     var filename = file.isLeft() ? file.left().toString() : file.right().toString();
     var localErr = errors.withConfig(filename);
 
-    ObjectMapper mapper;
-    if (resolveEnvVars) {
-      var resolver = NonSecretEnvVarResolver.builder().strict(false).build();
-      mapper = resolver.initObjectMapper(MAPPER);
-    } else {
-      mapper = MAPPER;
-    }
-
     try {
       JsonNode jsonNode;
-
       if (file.isLeft()) {
-        jsonNode = mapper.readTree(file.left().toFile());
-
+        jsonNode = MAPPER.readTree(file.left().toFile());
       } else {
-        jsonNode = mapper.readTree(file.right());
+        jsonNode = MAPPER.readTree(file.right().openStream());
+      }
+
+      if (resolveEnvVars) {
+        var resolver = NonSecretEnvVarResolver.builder().strict(false).build();
+        resolveConnectorEnvVars(jsonNode.get("connectors"), resolver);
       }
 
       return (ObjectNode) jsonNode;
 
     } catch (IOException e) {
       throw localErr.exception("Could not parse JSON file [%s]: %s", file, e.toString());
+    }
+  }
+
+  private static void resolveConnectorEnvVars(JsonNode node, NonSecretEnvVarResolver resolver) {
+    if (node == null) {
+      return;
+    }
+
+    if (node.isObject()) {
+      var objectNode = (ObjectNode) node;
+      for (var field : objectNode.properties()) {
+        var value = field.getValue();
+
+        if (value.isContainerNode()) {
+          resolveConnectorEnvVars(value, resolver);
+
+        } else if (value.isTextual()) {
+          objectNode.put(field.getKey(), resolver.resolve(value.asText()));
+        }
+      }
+    } else if (node.isArray()) {
+      var arrayNode = (ArrayNode) node;
+      for (var i = 0; i < arrayNode.size(); i++) {
+        var value = arrayNode.get(i);
+
+        if (value.isContainerNode()) {
+          resolveConnectorEnvVars(value, resolver);
+
+        } else if (value.isTextual()) {
+          arrayNode.set(i, MAPPER.getNodeFactory().textNode(resolver.resolve(value.asText())));
+        }
+      }
     }
   }
 }

@@ -23,7 +23,8 @@ CREATE TABLE IF NOT EXISTS `customer_id_count` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 )
 WITH (
-  'connector' = 'blackhole'
+  'connector' = 'print',
+  'print-identifier' = '${SUPER_SECRET}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `customer_id_count`

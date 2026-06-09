@@ -828,7 +828,7 @@ public class Sqrl2FlinkSQLTranslator {
       Optional<MutationBuilder> mutationBuilder) {
     var tableSqlNode = parseSQL(createTableSql);
     checkArgument(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
-    var tableDefinition = (SqlCreateTable) tableSqlNode;
+    var tableDefinition = FlinkSqlNodeFactory.resolveTableProperties((SqlCreateTable) tableSqlNode);
     var fullTable = tableDefinition;
     var origTableName = fullTable.getTableName().getSimple();
     final var finalTableName = tableNameModifier.apply(origTableName);
@@ -837,7 +837,7 @@ public class Sqrl2FlinkSQLTranslator {
       // Check if the LIKE clause is referencing an external schema
       SqlTableLike likeClause = likeTable.getTableLike();
       var likeTableName = likeClause.getSourceTable().toString();
-      var likeTableProps = FlinkSqlNodeFactory.propertiesToMap(likeTable.getPropertyList());
+      var likeTableProps = FlinkSqlNodeFactory.resolvePropertiesToMap(likeTable.getPropertyList());
       Optional<SchemaConversionResult> schema =
           schemaLoader.loadSchema(finalTableName, likeTableName, likeTableProps);
       if (schema.isPresent()) {

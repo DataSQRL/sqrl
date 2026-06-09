@@ -5,7 +5,7 @@ CREATE TABLE Customer (
   lastUpdated AS NOW(),
   WATERMARK FOR `lastUpdated` AS `lastUpdated` - INTERVAL '0.001' SECOND
 ) WITH (
-      'connector' = 'datagen',
+      'connector' = '${DATAGEN_CONNECTOR}',
 
       -- Generate customerid sequentially
       'fields.customerid.kind' = 'sequence',
@@ -23,13 +23,13 @@ CREATE TABLE Customer (
       );
 
 CREATE TABLE IF NOT EXISTS `customer_id_count` (
-   customerid     BIGINT,
-   numEntries BIGINT,
-   PRIMARY KEY (customerid) NOT ENFORCED
-    )
-    WITH (
-        'connector' = 'blackhole'
-        );
+    customerid BIGINT,
+    numEntries BIGINT,
+    PRIMARY KEY (customerid) NOT ENFORCED
+) WITH (
+    'connector' = 'print',
+    'print-identifier' = '${{SUPER_SECRET}}'
+);
 
 INSERT INTO `customer_id_count`
     (SELECT

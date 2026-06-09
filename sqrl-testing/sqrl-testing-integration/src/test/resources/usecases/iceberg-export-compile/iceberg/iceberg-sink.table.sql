@@ -3,7 +3,7 @@ CREATE TABLE Iceberg_sink (
 ) WITH (
       'connector' = 'iceberg',
       'catalog-table' = 'my-table',
-      'warehouse' = '/tmp/duckdb',
+      'warehouse' = '${ICEBERG_TEST_WAREHOUSE}',
       'catalog-type' = 'hadoop',
       'catalog-name' = 'mydatabase'
 ) LIKE `.`;

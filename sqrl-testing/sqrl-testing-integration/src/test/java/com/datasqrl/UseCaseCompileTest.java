@@ -21,9 +21,13 @@ import com.datasqrl.util.ArgumentsProviders;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
+import uk.org.webcompere.systemstubs.jupiter.SystemStub;
+import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
 
 /**
  * Parametrized Test for parsing and planning of SQRL scripts in resources/usecases. Add entire SQRL
@@ -34,9 +38,16 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
  * `-warn` are expected to produce warnings which are snapshotted. SQRL scripts ending in -disabled`
  * are ignored.
  */
+@ExtendWith(SystemStubsExtension.class)
 public class UseCaseCompileTest {
 
   private static final Path USECASE_DIR = getResourcesDirectory("usecases");
+
+  @SuppressWarnings("unused")
+  @SystemStub
+  private final EnvironmentVariables environmentVariables =
+      new EnvironmentVariables(
+          "DATAGEN_CONNECTOR", "datagen", "ICEBERG_TEST_WAREHOUSE", "/tmp/test_iceberg_wh");
 
   @RegisterExtension
   final CliCompileTestExtension snapshotExtension = new CliCompileTestExtension();
@@ -55,7 +66,7 @@ public class UseCaseCompileTest {
   @Test
   @Disabled("Intended for manual usage")
   void runTestCaseByName() {
-    var pkg = USECASE_DIR.resolve("function-translation/duckdb").resolve("package.json");
+    var pkg = USECASE_DIR.resolve("flink-only-compile").resolve("package.json");
     UseCaseTestHelper.testUseCase(
         snapshotExtension,
         getClass(),
