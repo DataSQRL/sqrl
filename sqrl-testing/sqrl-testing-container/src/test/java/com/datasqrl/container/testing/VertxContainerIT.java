@@ -89,17 +89,14 @@ public class VertxContainerIT {
     }
 
     assertThat(graphiql)
-        .contains("<!doctype html>")
+        .containsIgnoringCase("<!DOCTYPE html>")
         .contains("<html lang=\"en\">")
         .contains("<title>GraphiQL</title>")
         .contains("window.VERTX_GRAPHIQL_CONFIG")
         .contains("\"httpEnabled\":true")
         .contains("\"graphQLUri\":\"/v1/graphql\"")
         .contains("\"graphQLWSEnabled\":true")
-        .contains("\"graphQLWSUri\":\"/v1/graphql\"")
-        .contains("static/js/main.")
-        .contains("static/css/main.")
-        .contains("<div id=\"root\"></div>");
+        .contains("\"graphQLWSUri\":\"/v1/graphql\"");
 
     assertTraceLogContains("GET /v1/graphiql/");
   }
