@@ -140,7 +140,7 @@ CREATE TABLE `Iceberg_sink_ex1` (
 WITH (
   'connector' = 'iceberg',
   'catalog-table' = 'my-table',
-  'warehouse' = '/tmp/duckdb',
+  'warehouse' = '/tmp/test_iceberg_wh',
   'catalog-type' = 'hadoop',
   'catalog-name' = 'mydatabase'
 )
