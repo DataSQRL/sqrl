@@ -16,10 +16,11 @@
 package com.datasqrl.engine.stream.flink.plan;
 
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
+import com.datasqrl.planner.util.NonSecretEnvVarResolver;
 import com.datasqrl.sql.SqlCallRewriter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,6 +43,7 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
 import org.apache.flink.sql.parser.ddl.SqlCreateTable;
+import org.apache.flink.sql.parser.ddl.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlDistribution;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
@@ -152,6 +154,40 @@ public class FlinkSqlNodeFactory {
         SqlParserPos.ZERO);
   }
 
+  public static SqlCreateTable resolveTableProperties(SqlCreateTable createTable) {
+    var resolvedPropMap = resolvePropertiesToMap(createTable.getPropertyList());
+    var resolvedPropList = createProperties(resolvedPropMap);
+
+    if (createTable instanceof SqlCreateTableLike likeTable) {
+      return new SqlCreateTableLike(
+          likeTable.getParserPosition(),
+          likeTable.getTableName(),
+          likeTable.getColumnList(),
+          likeTable.getTableConstraints(),
+          resolvedPropList,
+          likeTable.getDistribution(),
+          likeTable.getPartitionKeyList(),
+          likeTable.getWatermark().orElse(null),
+          likeTable.getComment().orElse(null),
+          likeTable.getTableLike(),
+          likeTable.isTemporary(),
+          likeTable.ifNotExists);
+    }
+
+    return new SqlCreateTable(
+        createTable.getParserPosition(),
+        createTable.getTableName(),
+        createTable.getColumnList(),
+        createTable.getTableConstraints(),
+        resolvedPropList,
+        createTable.getDistribution(),
+        createTable.getPartitionKeyList(),
+        createTable.getWatermark().orElse(null),
+        createTable.getComment().orElse(null),
+        createTable.isTemporary(),
+        createTable.ifNotExists);
+  }
+
   public static SqlNodeList createProperties(Map<String, String> options) {
     List<SqlNode> props =
         options.entrySet().stream()
@@ -167,15 +203,20 @@ public class FlinkSqlNodeFactory {
     return new SqlNodeList(props, SqlParserPos.ZERO);
   }
 
-  public static Map<String, String> propertiesToMap(SqlNodeList nodeList) {
-    Map<String, String> result = new HashMap<>();
-    for (SqlNode node : nodeList) {
+  public static Map<String, String> resolvePropertiesToMap(SqlNodeList nodeList) {
+    var res = new LinkedHashMap<String, String>();
+    var resolver = NonSecretEnvVarResolver.builder().strict(false).build();
+
+    for (var node : nodeList) {
       var option = (SqlTableOption) node;
       var keyLiteral = (SqlLiteral) option.getKey();
       var valueLiteral = (SqlLiteral) option.getValue();
-      result.put(keyLiteral.toValue(), valueLiteral.toValue());
+      var resolvedVal = resolver.resolve(valueLiteral.toValue());
+
+      res.put(keyLiteral.toValue(), resolvedVal);
     }
-    return result;
+
+    return res;
   }
 
   public static SqlNodeList createPartitionKeys(List<String> partitionKeys) {
