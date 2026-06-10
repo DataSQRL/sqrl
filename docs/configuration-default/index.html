@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.11c193f7.css">
-<script src="/assets/js/runtime~main.07ac7984.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.8da19b98.js" defer="defer"></script>
 <script src="/assets/js/main.f69976dd.js" defer="defer"></script>
 </head>
 <body>
@@ -23,9 +23,7 @@
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="connector-template-variables">Connector Template Variables<a href="#connector-template-variables" class="hash-link" aria-label="Direct link to Connector Template Variables" title="Direct link to Connector Template Variables" translate="no">​</a></h2>
 <p>The connector templates configured under <code>connectors</code> can use environment variables and SQRL-specific variables for dynamic configuration.</p>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="environment-variables">Environment Variables<a href="#environment-variables" class="hash-link" aria-label="Direct link to Environment Variables" title="Direct link to Environment Variables" translate="no">​</a></h3>
-<p>You can reference environment variables using the <code>${VAR_NAME}</code> placeholder syntax, for example <code>${POSTGRES_PASSWORD}</code>.
-At runtime, these placeholders are automatically resolved using the environment variables defined in the system or deployment environment.</p>
-<p>This can help decouple security credentials or add flexibility across different deployment environments.</p>
+<p>See <a class="" href="/docs/configuration#environment-variables-var">Environment Variables</a> for supported placeholder syntax and resolution behavior.</p>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="sqrl-variables">SQRL Variables<a href="#sqrl-variables" class="hash-link" aria-label="Direct link to SQRL Variables" title="Direct link to SQRL Variables" translate="no">​</a></h3>
 <p>SQRL-specific variables start with a <code>sqrl:</code> prefix and are used for templating inside connector configuration options.
 The proper syntax look like <code>${sqrl:&lt;identifier&gt;}</code>.</p>
