@@ -1,26 +1,26 @@
 CREATE TABLE Customer (
-  customerid BIGINT NOT NULL,
-  email STRING NOT NULL,
-  name STRING NOT NULL,
-  lastUpdated AS NOW(),
-  WATERMARK FOR `lastUpdated` AS `lastUpdated` - INTERVAL '0.001' SECOND
+    customerid BIGINT NOT NULL,
+    email STRING NOT NULL,
+    name STRING NOT NULL,
+    lastUpdated AS NOW(),
+    WATERMARK FOR `lastUpdated` AS `lastUpdated` - INTERVAL '0.001' SECOND
 ) WITH (
-      'connector' = '${DATAGEN_CONNECTOR}',
+    'connector' = '${DATAGEN_CONNECTOR}',
 
-      -- Generate customerid sequentially
-      'fields.customerid.kind' = 'sequence',
-      'fields.customerid.start' = '1',
-      'fields.customerid.end' = '10',
+    -- Generate customerid sequentially
+    'fields.customerid.kind' = 'sequence',
+    'fields.customerid.start' = '1',
+    'fields.customerid.end' = '10',
 
-      -- Generate random email addresses
-      'fields.email.length' = '15',
+    -- Generate random email addresses
+    'fields.email.length' = '15',
 
-      -- Generate random names
-      'fields.name.length' = '10',
+    -- Generate random names
+    'fields.name.length' = '10',
 
-      -- Control the rate of generation
-      'rows-per-second' = '5'
-      );
+    -- Control the rate of generation
+    'rows-per-second' = '5'
+);
 
 CREATE TABLE IF NOT EXISTS `customer_id_count` (
     customerid BIGINT,
@@ -31,9 +31,12 @@ CREATE TABLE IF NOT EXISTS `customer_id_count` (
     'print-identifier' = '${{SUPER_SECRET}}'
 );
 
-INSERT INTO `customer_id_count`
-    (SELECT
-         customerid,
-         COUNT(*) AS numEntries
-     FROM Customer GROUP BY customerid
-    );
+CREATE TEMPORARY TABLE IF NOT EXISTS `unused_print_sink` (
+    num INT,
+    text STRING
+) WITH (
+    'connector' = 'print',
+    'print-identifier' = '${NON_EXISTING_ENV_VAR}'
+);
+
+INSERT INTO `customer_id_count` SELECT customerid, COUNT(*) AS numEntries FROM Customer GROUP BY customerid;
