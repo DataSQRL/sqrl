@@ -19,8 +19,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.graphql.config.ServerConfigUtil;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.cfg.JsonNodeFeature;
 import java.io.File;
 import java.util.Comparator;
 import java.util.Map;
@@ -61,7 +62,8 @@ class ServerConfigTemplateTest {
 
     if (!Objects.equals(original, mapper.convertValue(afterParsing, Map.class))) {
       mapper
-          .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+          .configure(JsonNodeFeature.WRITE_PROPERTIES_SORTED, true)
+          .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
           .writerWithDefaultPrettyPrinter()
           .writeValue(TEMPLATE, afterParsing);
     }
