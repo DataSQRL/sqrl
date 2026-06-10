@@ -26,8 +26,10 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ResourceFileUtil;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
+import com.datasqrl.planner.util.NonSecretEnvVarResolver;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.networknt.schema.SchemaRegistry;
@@ -101,7 +103,9 @@ public final class ConfigLoaderUtils {
         Files.isRegularFile(packageJson),
         String.format("Failed to load %s, it is not a regular file", packageJson));
 
-    var objectNode = convertFileToObjectNode(errors, Either.Left(packageJson));
+    // This is called by 'run', 'test', and 'exec', so env var resolution will be done by
+    // DatasqrlRun.
+    var objectNode = convertFileToObjectNode(errors, Either.Left(packageJson), false);
 
     return SqrlConfig.loadResolvedConfig(errors, objectNode, packageSchemaPath);
   }
@@ -294,14 +298,14 @@ public final class ConfigLoaderUtils {
       if (url == null) {
         throw errors.withConfig(defaultPath).exception("Default configuration not found");
       }
-      var defaultJson = convertFileToObjectNode(errors, Either.Right(url));
+      var defaultJson = convertFileToObjectNode(errors, Either.Right(url), false);
       valid &= isValidJson(errors, defaultJson, PACKAGE_SCHEMA_PATH);
       jsons.add(defaultJson);
     }
 
     // Convert, validate, and add files
     for (Path file : files) {
-      var json = convertFileToObjectNode(errors, Either.Left(file));
+      var json = convertFileToObjectNode(errors, Either.Left(file), true);
       valid &= isValidJson(errors, json, PACKAGE_SCHEMA_PATH);
       jsons.add(json);
     }
@@ -326,15 +330,60 @@ public final class ConfigLoaderUtils {
         Files.isDirectory(planDir), "Failed to load Flink config, plan dir does not exist.");
   }
 
-  private static ObjectNode convertFileToObjectNode(ErrorCollector errors, Either<Path, URL> file) {
-    var local = errors.withConfig(file.isLeft() ? file.left().toString() : file.right().toString());
+  private static ObjectNode convertFileToObjectNode(
+      ErrorCollector errors, Either<Path, URL> file, boolean resolveEnvVars) {
+    var filename = file.isLeft() ? file.left().toString() : file.right().toString();
+    var localErr = errors.withConfig(filename);
+
     try {
-      var jsonNode =
-          file.isLeft() ? MAPPER.readTree(file.left().toFile()) : MAPPER.readTree(file.right());
+      JsonNode jsonNode;
+      if (file.isLeft()) {
+        jsonNode = MAPPER.readTree(file.left().toFile());
+      } else {
+        jsonNode = MAPPER.readTree(file.right().openStream());
+      }
+
+      if (resolveEnvVars) {
+        var resolver = NonSecretEnvVarResolver.builder().strict(false).build();
+        resolveConnectorEnvVars(jsonNode.get("connectors"), resolver);
+      }
+
       return (ObjectNode) jsonNode;
 
     } catch (IOException e) {
-      throw local.exception("Could not parse JSON file [%s]: %s", file, e.toString());
+      throw localErr.exception("Could not parse JSON file [%s]: %s", file, e.toString());
+    }
+  }
+
+  private static void resolveConnectorEnvVars(JsonNode node, NonSecretEnvVarResolver resolver) {
+    if (node == null) {
+      return;
+    }
+
+    if (node.isObject()) {
+      var objectNode = (ObjectNode) node;
+      for (var field : objectNode.properties()) {
+        var value = field.getValue();
+
+        if (value.isContainerNode()) {
+          resolveConnectorEnvVars(value, resolver);
+
+        } else if (value.isTextual()) {
+          objectNode.put(field.getKey(), resolver.resolve(value.asText()));
+        }
+      }
+    } else if (node.isArray()) {
+      var arrayNode = (ArrayNode) node;
+      for (var i = 0; i < arrayNode.size(); i++) {
+        var value = arrayNode.get(i);
+
+        if (value.isContainerNode()) {
+          resolveConnectorEnvVars(value, resolver);
+
+        } else if (value.isTextual()) {
+          arrayNode.set(i, MAPPER.getNodeFactory().textNode(resolver.resolve(value.asText())));
+        }
+      }
     }
   }
 }

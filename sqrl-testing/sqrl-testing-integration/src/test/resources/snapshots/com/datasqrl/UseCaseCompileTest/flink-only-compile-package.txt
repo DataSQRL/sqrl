@@ -23,7 +23,16 @@ CREATE TABLE IF NOT EXISTS `customer_id_count` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 )
 WITH (
-  'connector' = 'blackhole'
+  'connector' = 'print',
+  'print-identifier' = '${SUPER_SECRET}'
+);
+CREATE TEMPORARY TABLE IF NOT EXISTS `unused_print_sink` (
+  `num` INTEGER,
+  `text` STRING
+)
+WITH (
+  'connector' = 'print',
+  'print-identifier' = '${NON_EXISTING_ENV_VAR}'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `customer_id_count`

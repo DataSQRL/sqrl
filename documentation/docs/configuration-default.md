@@ -108,10 +108,7 @@ The connector templates configured under `connectors` can use environment variab
 
 ### Environment Variables
 
-You can reference environment variables using the `${VAR_NAME}` placeholder syntax, for example `${POSTGRES_PASSWORD}`.
-At runtime, these placeholders are automatically resolved using the environment variables defined in the system or deployment environment.
-
-This can help decouple security credentials or add flexibility across different deployment environments.
+See [Environment Variables](configuration#environment-variables-var) for supported placeholder syntax and resolution behavior.
 
 ### SQRL Variables
 
