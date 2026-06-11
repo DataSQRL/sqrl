@@ -21,7 +21,11 @@ import com.datasqrl.graphql.SqrlObjectMapper;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
@@ -29,6 +33,7 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
+import java.io.IOException;
 import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -48,7 +53,10 @@ public class ServerConfig {
   private ServletConfig servletConfig = new ServletConfig();
   private GraphQLHandlerOptions graphQLHandlerOptions = new GraphQLHandlerOptions();
   private GraphiQLHandlerOptions graphiQLHandlerOptions;
+
+  @JsonSerialize(using = HttpServerOptionsSerializer.class)
   private HttpServerOptions httpServerOptions = new HttpServerOptions();
+
   private PgConnectOptions pgConnectOptions = new PgConnectOptions();
   private PoolOptions poolOptions = new PoolOptions();
   private CorsHandlerOptions corsHandlerOptions = new CorsHandlerOptions();
@@ -168,5 +176,15 @@ public class ServerConfig {
 
   private JsonObject getJsonObjectOrEmpty(Map<String, Object> options) {
     return options == null ? new JsonObject() : new JsonObject(options);
+  }
+
+  private static class HttpServerOptionsSerializer extends JsonSerializer<HttpServerOptions> {
+
+    @Override
+    public void serialize(
+        HttpServerOptions value, JsonGenerator gen, SerializerProvider serializers)
+        throws IOException {
+      gen.writeObject(value.toJson().getMap());
+    }
   }
 }
