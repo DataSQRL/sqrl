@@ -28,10 +28,12 @@ import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.DriverManager;
@@ -45,6 +47,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.GZIPInputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobStatus;
@@ -355,10 +358,29 @@ public class DatasqrlTest {
             .POST(HttpRequest.BodyPublishers.ofString(query.getQuery()));
 
     query.getHeaders().forEach(requestBuilder::header);
+    // Make sure we use 'gzip' compression for tests
+    requestBuilder.header("Accept-Encoding", "gzip");
 
-    var response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+    var response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofByteArray());
 
-    return response.body();
+    return decodeResponseBody(response);
+  }
+
+  @SneakyThrows
+  private String decodeResponseBody(HttpResponse<byte[]> response) {
+    var body = response.body();
+    var encoding = response.headers().firstValue("Content-Encoding").orElse(null);
+
+    if (!"gzip".equalsIgnoreCase(encoding)) {
+      throw new IllegalStateException(
+          "Test query responses are expected to be 'gzip' compressed. Received Content-Encoding: "
+              + encoding);
+    }
+
+    try (var in = new GZIPInputStream(new ByteArrayInputStream(body))) {
+      var bytes = in.readAllBytes();
+      return new String(bytes, StandardCharsets.UTF_8);
+    }
   }
 
   @SneakyThrows
