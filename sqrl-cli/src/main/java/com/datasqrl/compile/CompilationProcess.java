@@ -90,6 +90,12 @@ public class CompilationProcess {
 
       loadResult.inferredSchema().ifPresent(writeDeploymentArtifactsHook::writeInferredSchema);
 
+      // Data model (GraphQL schema) Voyager page; first API version when multi-version.
+      if (!apiVersions.isEmpty()) {
+        writeDeploymentArtifactsHook.writeDataModelVisual(
+            apiVersions.get(0).schema().getDefinition());
+      }
+
       apiVersions.forEach(
           api -> {
             var model = generateServerModel.generateGraphQLModel(api, serverPlan);
