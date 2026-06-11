@@ -508,17 +508,14 @@ CREATE TABLE `ApplicationAlert_2` (
   `loan_type_id` BIGINT NOT NULL,
   `max_amount` DOUBLE NOT NULL,
   `min_amount` DOUBLE NOT NULL,
-  `amount` DOUBLE NOT NULL,
-  PRIMARY KEY (`_uuid`) NOT ENFORCED
+  `amount` DOUBLE NOT NULL
 )
 WITH (
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'password' = '${POSTGRES_PASSWORD}',
-  'sink.on-conflict.action' = 'IGNORE',
-  'table-name' = 'ApplicationAlert',
-  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
-  'username' = '${POSTGRES_USERNAME}'
+  'connector' = 'kafka',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'ApplicationAlert'
 );
 CREATE TABLE `ApplicationStatus_3` (
   `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -751,6 +748,17 @@ INSERT INTO `default_catalog`.`default_database`.`ApplicationAlert_2`
 {
   "topics" : [
     {
+      "topicName" : "ApplicationAlert",
+      "tableName" : "ApplicationAlert_2",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
       "topicName" : "AddChatMessage",
       "tableName" : "AddChatMessage",
       "format" : "flexible-json",
@@ -777,7 +785,6 @@ INSERT INTO `default_catalog`.`default_database`.`ApplicationAlert_2`
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "AddChatMessage" ("_uuid" TEXT NOT NULL, "role" TEXT NOT NULL, "content" TEXT NOT NULL, "name" TEXT, "context" JSONB, "event_time" TIMESTAMP WITH TIME ZONE, PRIMARY KEY ("_uuid"));
-CREATE TABLE IF NOT EXISTS "ApplicationAlert" ("_uuid" TEXT NOT NULL, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "amount" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("_uuid"));
 CREATE TABLE IF NOT EXISTS "ApplicationStatus" ("_uuid" TEXT NOT NULL, "status" TEXT NOT NULL, "message" TEXT, "event_time" TIMESTAMP WITH TIME ZONE, "id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("_uuid"));
 CREATE TABLE IF NOT EXISTS "ApplicationUpdates" ("_uuid" TEXT NOT NULL, "loan_application_id" BIGINT NOT NULL, "status" TEXT NOT NULL, "message" TEXT, "event_time" TIMESTAMP WITH TIME ZONE, PRIMARY KEY ("_uuid"));
 CREATE TABLE IF NOT EXISTS "Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
@@ -815,31 +822,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "query" : {
               "type" : "SqlQuery",
               "sql" : "SELECT *\nFROM \"AddChatMessage\"",
-              "parameters" : [ ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Query",
-          "fieldName" : "ApplicationAlert",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"ApplicationAlert\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -1267,7 +1249,15 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
           "sinkConfig" : { }
         }
       ],
-      "subscriptions" : [ ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "ApplicationAlert",
+          "topic" : "ApplicationAlert",
+          "sinkConfig" : { },
+          "equalityConditions" : { }
+        }
+      ],
       "operations" : [
         {
           "function" : {

@@ -12,7 +12,6 @@
     }
   },
   "test-runner": {
-    "snapshot-folder": "snapshots-banking-batch",
     "delay-sec": -1
   }
 }
