@@ -36,6 +36,7 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.micrometer.MicrometerMetricsFactory;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,8 +61,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.CheckpointingOptions;
@@ -155,16 +156,45 @@ public class DatasqrlRun {
         });
   }
 
-  public void cancel() {
+  public void drainAndCancel() {
     log.debug("Flink cancel initiated...");
-    closeCommon(() -> tableResult.getJobClient().get().cancel());
+    closeCommon(this::drainAndCancelFlinkJob);
+  }
+
+  private void drainAndCancelFlinkJob() {
+    var jobClient = tableResult.getJobClient().get();
+    Path tmpSavepointDir = null;
+    try {
+      // Flink exposes drain semantics only through stop-with-savepoint, so keeping it temporary
+      tmpSavepointDir = Files.createTempDirectory("sqrl-test-drain-savepoint-");
+      jobClient
+          .stopWithSavepoint(
+              true, tmpSavepointDir.toAbsolutePath().toString(), SavepointFormatType.NATIVE)
+          .get();
+      log.debug("Flink job drained before cancellation");
+    } catch (Exception e) {
+      log.warn("Failed to drain Flink job before cancellation. Falling back to cancel.", e);
+      try {
+        jobClient.cancel().get();
+      } catch (Exception cancelException) {
+        log.debug("Flink job cancellation failed.", cancelException);
+      }
+    } finally {
+      if (tmpSavepointDir != null) {
+        try {
+          FileUtils.deleteDirectory(tmpSavepointDir.toFile());
+        } catch (IOException e) {
+          log.warn("Failed to delete temporary Flink drain savepoint: {}", tmpSavepointDir, e);
+        }
+      }
+    }
   }
 
   private void closeCommon(Runnable closeFlinkJob) {
     if (tableResult != null) {
       try {
         var status = tableResult.getJobClient().get().getJobStatus().get();
-        if (status != JobStatus.FINISHED) {
+        if (!status.isGloballyTerminalState()) {
           closeFlinkJob.run();
         }
       } catch (Exception e) {

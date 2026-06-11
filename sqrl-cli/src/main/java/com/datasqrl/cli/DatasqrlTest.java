@@ -53,6 +53,10 @@ import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.JobClient;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configurator;
 
 /**
  * The test runner executes the test against the running DataSQRL pipeline and snapshots the
@@ -70,6 +74,8 @@ public class DatasqrlTest {
 
   private static final String GRAPHQL_ENDPOINT = "http://localhost:8888/%s/graphql";
   private static final String SNAPSHOT_EXT = ".snapshot";
+  private static final String CHECKPOINT_FAILURE_MANAGER_LOGGER =
+      "org.apache.flink.runtime.checkpoint.CheckpointFailureManager";
 
   private final Path rootDir;
   private final Path planDir;
@@ -256,14 +262,33 @@ public class DatasqrlTest {
       // printed and the exit code is non-zero, instead of being swallowed during cleanup.
       testResults.add(TestResult.Failure.pipeline(e));
     } finally {
-      run.cancel();
-      Thread.sleep(1000); // wait for log lines to clear out
+      drainAndCancelJob(run);
       outputManager.restoreStd();
     }
 
     // 6. Print the test results on the command line
     printTestResults(testResults, snapshotDir, testDir);
     return testResults.stream().mapToInt(TestResult::exitCode).sum();
+  }
+
+  private void drainAndCancelJob(DatasqrlRun run) throws InterruptedException {
+    var loggerContext = (LoggerContext) LogManager.getContext(false);
+    var configuration = loggerContext.getConfiguration();
+    var previousLoggerConfig = configuration.getLoggers().get(CHECKPOINT_FAILURE_MANAGER_LOGGER);
+    var previousLevel = previousLoggerConfig == null ? null : previousLoggerConfig.getLevel();
+
+    Configurator.setLevel(CHECKPOINT_FAILURE_MANAGER_LOGGER, Level.ERROR);
+    try {
+      run.drainAndCancel();
+      Thread.sleep(1000); // keep suppression active for async shutdown logs
+    } finally {
+      if (previousLoggerConfig == null) {
+        configuration.removeLogger(CHECKPOINT_FAILURE_MANAGER_LOGGER);
+      } else {
+        previousLoggerConfig.setLevel(previousLevel);
+      }
+      loggerContext.updateLoggers();
+    }
   }
 
   private void printTestResults(
