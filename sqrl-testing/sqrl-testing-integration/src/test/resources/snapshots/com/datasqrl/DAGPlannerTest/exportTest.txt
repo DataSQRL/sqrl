@@ -302,6 +302,7 @@ WITH (
   'connector' = 'upsert-kafka',
   'key.format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-DistinctStream',
   'value.fields-include' = 'ALL',
@@ -333,6 +334,7 @@ WITH (
   'connector' = 'kafka',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-JoinStream'
 );
