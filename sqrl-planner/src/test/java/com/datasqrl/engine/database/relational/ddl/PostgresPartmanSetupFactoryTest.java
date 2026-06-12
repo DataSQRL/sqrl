@@ -38,7 +38,8 @@ class PostgresPartmanSetupFactoryTest {
             table("plain", PartitionType.NONE, List.of(), Duration.ofDays(30)),
             table("hashed", PartitionType.HASH, List.of("id"), Duration.ofDays(30)),
             table("noTtl", PartitionType.RANGE, List.of("time"), Duration.ZERO),
-            table("nullTtl", PartitionType.RANGE, List.of("time"), null));
+            table("nullTtl", PartitionType.RANGE, List.of("time"), null),
+            table("noPartitionKey", PartitionType.RANGE, List.of(), Duration.ofDays(30)));
     assertThat(PostgresPartmanSetupFactory.createSetupSql(tables)).isEmpty();
   }
 
