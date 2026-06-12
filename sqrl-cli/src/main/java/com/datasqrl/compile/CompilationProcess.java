@@ -34,6 +34,7 @@ import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -92,6 +93,7 @@ public class CompilationProcess {
 
       // Data model (GraphQL schema) Voyager page; latest API version when multi-version.
       if (!apiVersions.isEmpty()) {
+        Collections.sort(apiVersions);
         writeDeploymentArtifactsHook.writeDataModelVisual(
             apiVersions.get(apiVersions.size() - 1).schema().getDefinition());
       }
