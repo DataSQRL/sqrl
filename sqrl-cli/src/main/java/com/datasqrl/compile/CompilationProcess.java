@@ -98,7 +98,7 @@ public class CompilationProcess {
 
       // create test artifact
       if (executionGoal == ExecutionGoal.TEST) {
-        var gqlGenerator = new GqlGenerator(serverPlanOpt.get().getFunctions());
+        var gqlGenerator = new GqlGenerator(serverPlan.getFunctions());
         var jdbcViews =
             physicalPlan
                 .getPlans(JdbcPhysicalPlan.class)

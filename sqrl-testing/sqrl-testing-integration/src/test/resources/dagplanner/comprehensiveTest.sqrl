@@ -67,6 +67,9 @@ CustomerTimeWindow := SELECT
 /*+ test */
 CustomerTimeWindowTest := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
 
+/*+ test(no_rows) */
+CustomerTimeWindowNoRowsTest := SELECT * FROM CustomerTimeWindow WHERE FALSE;
+
 /*+ workload */
 CustomerTimeWindowWorkload := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
 

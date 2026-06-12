@@ -23,6 +23,7 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.compile.TestPlan;
+import com.datasqrl.compile.TestPlan.GraphqlQuery.TestType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.graphql.SqrlObjectMapper;
@@ -53,6 +54,7 @@ import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.JobClient;
+import org.apache.flink.types.Either;
 
 /**
  * The test runner executes the test against the running DataSQRL pipeline and snapshots the
@@ -228,7 +230,7 @@ public class DatasqrlTest {
                   .sorted()
                   .collect(Collectors.joining(",", "[", "]"));
 
-          snapshot(snapshotDir, client.getName(), data, testResults);
+          snapshot(Either.Right(client.getName()), snapshotDir, data, testResults);
         }
 
         var expectedSnapshots =
@@ -332,7 +334,7 @@ public class DatasqrlTest {
       var data = executeQuery(query);
 
       // Snapshot result
-      snapshot(snapshotDir, query.getName(), data, testResults);
+      snapshot(Either.Left(query), snapshotDir, data, testResults);
 
       // Wait before next mutation
       if (mutationWait > 0) {
@@ -385,10 +387,23 @@ public class DatasqrlTest {
 
   @SneakyThrows
   private void snapshot(
-      Path snapshotDir, String name, String rawJson, List<TestResult> testResults) {
+      Either<TestPlan.GraphqlQuery, String> test,
+      Path snapshotDir,
+      String rawJson,
+      List<TestResult> testResults) {
+
+    var name = test.isLeft() ? test.left().getName() : test.right();
+    var testType = test.isLeft() ? test.left().getTestType() : null;
 
     var snapshotPath = snapshotDir.resolve(name + SNAPSHOT_EXT);
     var content = format(rawJson);
+
+    if (testType == TestType.NO_ROWS) {
+      var res = getNoRowsResult(content, name);
+      testResults.add(res);
+
+      return;
+    }
 
     // Existing snapshot logic
     if (Files.exists(snapshotPath)) {
@@ -407,7 +422,19 @@ public class DatasqrlTest {
     }
   }
 
-  @SneakyThrows
+  private TestResult getNoRowsResult(String rawData, String name) {
+    try {
+      var root = SqrlObjectMapper.MAPPER.readTree(rawData);
+      var data = root.get("data");
+      if (data.hasNonNull(name) && data.get(name).isEmpty()) {
+        return new TestResult.SnapshotOk(name);
+      }
+    } catch (JsonProcessingException ignored) {
+    }
+
+    return new TestResult.NoSnapshotExpected(name, rawData);
+  }
+
   private String format(String rawData) {
     try {
       var data = SqrlObjectMapper.MAPPER.readValue(rawData, Object.class);

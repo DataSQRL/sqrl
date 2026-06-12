@@ -145,6 +145,31 @@ public abstract class TestResult {
     }
   }
 
+  public static class NoSnapshotExpected extends NamedResult {
+
+    private final String failureContent;
+
+    public NoSnapshotExpected(String testName, String failureContent) {
+      super(testName);
+      this.failureContent = failureContent;
+    }
+
+    @Override
+    public boolean isSuccess() {
+      return false;
+    }
+
+    @Override
+    public int exitCode() {
+      return 1;
+    }
+
+    @Override
+    public void printDetails(OutputFormatter formatter, Optional<Path> testDir) {
+      formatter.failureDetails(getTestName(), failureContent);
+    }
+  }
+
   public static class Failure extends TestResult {
 
     private final String msg;
