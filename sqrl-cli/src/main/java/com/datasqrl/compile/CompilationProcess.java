@@ -34,6 +34,8 @@ import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -86,12 +88,13 @@ public class CompilationProcess {
           serverPlan.getMutations().size());
 
       var loadResult = graphqlSourceLoader.load(serverPlan);
-      var apiVersions = loadResult.apiVersions();
+      var apiVersions = new ArrayList<>(loadResult.apiVersions());
 
       loadResult.inferredSchema().ifPresent(writeDeploymentArtifactsHook::writeInferredSchema);
 
       // Data model (GraphQL schema) Voyager page; latest API version when multi-version.
       if (!apiVersions.isEmpty()) {
+        Collections.sort(apiVersions);
         writeDeploymentArtifactsHook.writeDataModelVisual(
             apiVersions.get(apiVersions.size() - 1).schema().getDefinition());
       }
