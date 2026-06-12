@@ -18,7 +18,6 @@ package com.datasqrl.compile;
 import static com.datasqrl.planner.util.SqrTableFunctionUtil.getTableFunctionFromPath;
 
 import com.datasqrl.compile.TestPlan.GraphqlQuery;
-import com.datasqrl.compile.TestPlan.GraphqlQuery.TestType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.graphql.ApiSources;
@@ -101,7 +100,7 @@ public class TestPlanner {
                 api.version(),
                 definition.getName(),
                 AstPrinter.printAst(definition),
-                extractTestType(definition.getName()),
+                shouldSnapshot(definition.getName()),
                 baseHeaders));
       }
     }
@@ -113,11 +112,11 @@ public class TestPlanner {
         List.copyOf(subscriptions));
   }
 
-  private TestType extractTestType(String name) {
+  private boolean shouldSnapshot(String name) {
     return getTableFunctionFromPath(gqlGenerator.getTableFunctions(), name)
         .map(tableFn1 -> tableFn1.getFunctionAnalysis().getHints())
-        .map(hints -> hints.isNoRowsTest() ? TestType.NO_ROWS : TestType.REGULAR)
-        .orElse(null);
+        .map(hints -> !hints.isNoRowsTest())
+        .orElse(true);
   }
 
   @SneakyThrows
@@ -172,7 +171,7 @@ public class TestPlanner {
                 version,
                 prefix,
                 AstPrinter.printAst(operationDefinition),
-                extractTestType(prefix),
+                shouldSnapshot(prefix),
                 headers);
         switch (operationDefinition.getOperation()) {
           case QUERY:

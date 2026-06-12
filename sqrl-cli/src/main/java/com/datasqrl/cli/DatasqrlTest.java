@@ -23,7 +23,6 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.compile.TestPlan;
-import com.datasqrl.compile.TestPlan.GraphqlQuery.TestType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.graphql.SqrlObjectMapper;
@@ -393,12 +392,12 @@ public class DatasqrlTest {
       List<TestResult> testResults) {
 
     var name = test.isLeft() ? test.left().getName() : test.right();
-    var testType = test.isLeft() ? test.left().getTestType() : null;
+    var snapshot = !test.isLeft() || test.left().isSnapshot();
 
     var snapshotPath = snapshotDir.resolve(name + SNAPSHOT_EXT);
     var content = format(rawJson);
 
-    if (testType == TestType.NO_ROWS) {
+    if (!snapshot) {
       var res = getNoRowsResult(content, name);
       testResults.add(res);
 
