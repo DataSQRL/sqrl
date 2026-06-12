@@ -173,13 +173,27 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
   "topics" : [ ],
   "testRunnerTopics" : [ ]
 }
+>>>postgres-partman.sql
+CREATE SCHEMA IF NOT EXISTS partman;
+CREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;
+
+SELECT partman.create_parent(
+    p_parent_table => 'public."OrderUpdates_1"',
+    p_control      => 'time',
+    p_interval     => '1 week',
+    p_premake      => 4
+);
+UPDATE partman.part_config
+   SET retention            = '30 days',
+       retention_keep_table = false
+ WHERE parent_table = 'public."OrderUpdates_1"';
 >>>postgres.json
 {
   "statements" : [
     {
       "name" : "OrderUpdates_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderUpdates_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\")) PARTITION BY RANGE (\"time\");\n\nCREATE TABLE IF NOT EXISTS \"OrderUpdates_1_all\" PARTITION OF \"OrderUpdates_1\" FOR VALUES FROM (MINVALUE) TO (MAXVALUE)",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderUpdates_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\")) PARTITION BY RANGE (\"time\")",
       "fields" : [
         {
           "name" : "id",

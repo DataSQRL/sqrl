@@ -48,6 +48,13 @@ public class PostgresCreateTableDdlFactory extends GenericCreateTableDdlFactory 
       return partitionDdl;
     }
 
+    // pg_partman owns lifecycle for RANGE+TTL tables — no default partition needed
+    if (stmt.getPartitionType() == PartitionType.RANGE
+        && stmt.getTtl() != null
+        && !stmt.getTtl().isZero()) {
+      return partitionDdl;
+    }
+
     var allPartitionTableName = quoteIdentifier(stmt.getName() + PARTITION_SUFFIX);
     var tableName = quoteIdentifier(stmt.getName());
     var partitionDefinition =
