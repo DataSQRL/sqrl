@@ -41,13 +41,14 @@ public record JdbcPhysicalPlan(
     @JsonIgnore ExecutionStage stage,
     @Singular List<JdbcStatement> statements,
     @JsonIgnore @Singular List<RelNode> queries,
-    @JsonIgnore Map<String, CreateTableJdbcStatement> tableIdMap)
+    @JsonIgnore Map<String, CreateTableJdbcStatement> tableIdMap,
+    @JsonIgnore @Singular List<DeploymentArtifact> extraArtifacts)
     implements DatabasePhysicalPlan {
 
   @SuppressWarnings("unused")
   @JsonCreator
   public JdbcPhysicalPlan(@JsonProperty("statements") List<JdbcStatement> statements) {
-    this(null, new ArrayList<>(statements), List.of(), Map.of());
+    this(null, new ArrayList<>(statements), List.of(), Map.of(), List.of());
   }
 
   public List<JdbcStatement> getStatementsForType(Type type) {
@@ -61,14 +62,17 @@ public record JdbcPhysicalPlan(
   @JsonIgnore
   @Override
   public List<DeploymentArtifact> getDeploymentArtifacts() {
-    return List.of(
-        new DeploymentArtifact(
-            "-schema.sql",
-            Stream.of(Type.EXTENSION, Type.TABLE, Type.INDEX)
-                .map(this::getStatementsForType)
-                .filter(Predicate.not(List::isEmpty))
-                .map(JdbcPhysicalPlan::toSql)
-                .collect(Collectors.joining(";\n\n"))),
-        new DeploymentArtifact("-views.sql", toSql(getStatementsForType(Type.VIEW))));
+    return Stream.concat(
+            Stream.of(
+                new DeploymentArtifact(
+                    "-schema.sql",
+                    Stream.of(Type.EXTENSION, Type.TABLE, Type.INDEX)
+                        .map(this::getStatementsForType)
+                        .filter(Predicate.not(List::isEmpty))
+                        .map(JdbcPhysicalPlan::toSql)
+                        .collect(Collectors.joining(";\n\n"))),
+                new DeploymentArtifact("-views.sql", toSql(getStatementsForType(Type.VIEW)))),
+            extraArtifacts.stream())
+        .toList();
   }
 }
