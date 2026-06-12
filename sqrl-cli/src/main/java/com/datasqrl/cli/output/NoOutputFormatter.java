@@ -62,6 +62,9 @@ public class NoOutputFormatter implements OutputFormatter {
   public void testSummary(int totalTests, int failures) {}
 
   @Override
+  public void failureDetails(String testName, String failureContent) {}
+
+  @Override
   public void failureDetails(
       String testName, String testFile, String expectedFile, String actualFile) {}
 }

@@ -18,6 +18,7 @@ package com.datasqrl.compile;
 import com.datasqrl.engine.database.relational.JdbcStatement;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,9 +37,16 @@ public class TestPlan {
   @NoArgsConstructor
   @Getter
   public static class GraphqlQuery {
+
+    public enum TestType {
+      REGULAR,
+      NO_ROWS
+    }
+
     String version;
     String name;
     String query;
+    @Nullable TestType testType;
     Map<String, String> headers;
   }
 }

@@ -48,6 +48,8 @@ public interface OutputFormatter {
 
   void testSummary(int totalTests, int failures);
 
+  void failureDetails(String testName, String failureContent);
+
   void failureDetails(String testName, String testFile, String expectedFile, String actualFile);
 
   default Path relativizeFromCliRoot(Path path) {
