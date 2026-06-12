@@ -140,6 +140,15 @@ public class DefaultOutputFormatter implements OutputFormatter {
   }
 
   @Override
+  public void failureDetails(String testName, String failureContent) {
+    out.println("  " + colors.bold() + testName + colors.reset());
+    out.println("  " + "-".repeat(testName.length()));
+    newline();
+    out.println(failureContent);
+    newline();
+  }
+
+  @Override
   public void failureDetails(
       String testName, String testFile, String expectedFile, String actualFile) {
     out.println("  " + colors.bold() + testName + colors.reset());
