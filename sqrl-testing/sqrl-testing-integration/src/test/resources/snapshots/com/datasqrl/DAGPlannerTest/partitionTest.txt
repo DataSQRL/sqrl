@@ -173,6 +173,20 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
   "topics" : [ ],
   "testRunnerTopics" : [ ]
 }
+>>>postgres-partman.sql
+CREATE SCHEMA IF NOT EXISTS partman;
+CREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;
+
+SELECT partman.create_parent(
+    p_parent_table => 'public."OrderUpdates_1"',
+    p_control      => 'time',
+    p_interval     => '1 week',
+    p_premake      => 4
+);
+UPDATE partman.part_config
+   SET retention            = '30 days',
+       retention_keep_table = false
+ WHERE parent_table = 'public."OrderUpdates_1"';
 >>>postgres.json
 {
   "statements" : [
