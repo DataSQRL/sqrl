@@ -46,8 +46,10 @@ public class DagWriter {
   public static final String DATABASE_FILENAME = "pipeline_mutation_database.json";
   public static final String INFERRED_SCHEMA_FILENAME = "inferred_schema.graphqls";
   public static final String VISUAL_HTML_FILENAME = "visualize_dag.html";
+  public static final String DATA_MODEL_VISUAL_FILENAME = "data_model_visual.html";
 
   static final String DAG_PLACEHOLDER = "${DAG}";
+  static final String SCHEMA_PLACEHOLDER = "${SCHEMA}";
 
   private final BuildPath buildDir;
   private final CompilerConfig compilerConfig;
@@ -63,6 +65,17 @@ public class DagWriter {
 
   void writeInferredSchema(String inferredSchema) {
     writeFile(buildDir.buildDir().resolve(INFERRED_SCHEMA_FILENAME), inferredSchema);
+  }
+
+  // Inline the API schema into the Voyager page, like writeExplain's ${DAG}.
+  @SneakyThrows
+  void writeDataModelVisual(String schema) {
+    String htmlFile =
+        Resources.toString(
+            Resources.getResource(DATA_MODEL_VISUAL_FILENAME), StandardCharsets.UTF_8);
+    htmlFile =
+        htmlFile.replace("\"" + SCHEMA_PLACEHOLDER + "\"", Deserializer.INSTANCE.toJson(schema));
+    writeFile(buildDir.buildDir().resolve(DATA_MODEL_VISUAL_FILENAME), htmlFile);
   }
 
   private void writeExplain(PipelineDAG dag) throws IOException {
