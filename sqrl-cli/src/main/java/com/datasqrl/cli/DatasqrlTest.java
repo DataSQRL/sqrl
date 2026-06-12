@@ -23,7 +23,6 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.compile.TestPlan;
-import com.datasqrl.compile.TestPlan.GraphqlQuery.TestType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.graphql.SqrlObjectMapper;
@@ -54,11 +53,11 @@ import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.JobClient;
+import org.apache.flink.types.Either;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.flink.types.Either;
 
 /**
  * The test runner executes the test against the running DataSQRL pipeline and snapshots the
@@ -439,12 +438,12 @@ public class DatasqrlTest {
       List<TestResult> testResults) {
 
     var name = test.isLeft() ? test.left().getName() : test.right();
-    var testType = test.isLeft() ? test.left().getTestType() : null;
+    var snapshot = !test.isLeft() || test.left().isSnapshot();
 
     var snapshotPath = snapshotDir.resolve(name + SNAPSHOT_EXT);
     var content = format(rawJson);
 
-    if (testType == TestType.NO_ROWS) {
+    if (!snapshot) {
       var res = getNoRowsResult(content, name);
       testResults.add(res);
 
