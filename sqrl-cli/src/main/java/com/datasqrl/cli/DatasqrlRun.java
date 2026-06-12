@@ -140,67 +140,61 @@ public class DatasqrlRun {
 
   public void stop() {
     log.debug("Flink stop initiated");
-    closeCommon(
-        () -> {
-          var sp =
-              tableResult
-                  .getJobClient()
-                  .get()
-                  .stopWithSavepoint(false, null, SavepointFormatType.NATIVE);
-          try {
-            var spPath = sp.get();
-            log.info("Savepoint created at {}", spPath);
-          } catch (Exception e) {
-            log.error("Savepoint creation failed.", e);
-          }
-        });
+    try {
+      closeFlinkJobIfNeeded(
+          () -> {
+            var sp =
+                tableResult
+                    .getJobClient()
+                    .get()
+                    .stopWithSavepoint(false, null, SavepointFormatType.NATIVE);
+            try {
+              var spPath = sp.get();
+              log.info("Savepoint created at {}", spPath);
+            } catch (Exception e) {
+              log.error("Savepoint creation failed.", e);
+            }
+          });
+    } finally {
+      closeVertxAndShutdown();
+    }
   }
 
   public void drainAndCancel() {
     log.debug("Flink cancel initiated...");
-    closeCommon(this::drainAndCancelFlinkJob);
+    closeFlinkJobIfNeeded(
+        () -> {
+          var jobClient = tableResult.getJobClient().get();
+          Path tmpSavepointDir = null;
+          try {
+            // Flink exposes drain semantics only through stop-with-savepoint, so keeping it
+            // temporary
+            tmpSavepointDir = Files.createTempDirectory("sqrl-test-drain-savepoint-");
+            jobClient
+                .stopWithSavepoint(
+                    true, tmpSavepointDir.toAbsolutePath().toString(), SavepointFormatType.NATIVE)
+                .get();
+          } catch (Exception e) {
+            log.warn("Failed to drain Flink job before cancellation. Falling back to cancel.", e);
+            try {
+              jobClient.cancel().get();
+            } catch (Exception cancelException) {
+              log.debug("Flink job cancellation failed.", cancelException);
+            }
+          } finally {
+            if (tmpSavepointDir != null) {
+              try {
+                FileUtils.deleteDirectory(tmpSavepointDir.toFile());
+              } catch (IOException e) {
+                log.warn(
+                    "Failed to delete temporary Flink drain savepoint: {}", tmpSavepointDir, e);
+              }
+            }
+          }
+        });
   }
 
-  private void drainAndCancelFlinkJob() {
-    var jobClient = tableResult.getJobClient().get();
-    Path tmpSavepointDir = null;
-    try {
-      // Flink exposes drain semantics only through stop-with-savepoint, so keeping it temporary
-      tmpSavepointDir = Files.createTempDirectory("sqrl-test-drain-savepoint-");
-      jobClient
-          .stopWithSavepoint(
-              true, tmpSavepointDir.toAbsolutePath().toString(), SavepointFormatType.NATIVE)
-          .get();
-      log.debug("Flink job drained before cancellation");
-    } catch (Exception e) {
-      log.warn("Failed to drain Flink job before cancellation. Falling back to cancel.", e);
-      try {
-        jobClient.cancel().get();
-      } catch (Exception cancelException) {
-        log.debug("Flink job cancellation failed.", cancelException);
-      }
-    } finally {
-      if (tmpSavepointDir != null) {
-        try {
-          FileUtils.deleteDirectory(tmpSavepointDir.toFile());
-        } catch (IOException e) {
-          log.warn("Failed to delete temporary Flink drain savepoint: {}", tmpSavepointDir, e);
-        }
-      }
-    }
-  }
-
-  private void closeCommon(Runnable closeFlinkJob) {
-    if (tableResult != null) {
-      try {
-        var status = tableResult.getJobClient().get().getJobStatus().get();
-        if (!status.isGloballyTerminalState()) {
-          closeFlinkJob.run();
-        }
-      } catch (Exception e) {
-        // allow failure if job already ended
-      }
-    }
+  public void closeVertxAndShutdown() {
     if (vertx != null) {
       vertx.close();
     }
@@ -208,6 +202,21 @@ public class DatasqrlRun {
     // Signal shutdown to release the hold
     if (shutdownLatch != null) {
       shutdownLatch.countDown();
+    }
+  }
+
+  private void closeFlinkJobIfNeeded(Runnable closeFlinkJob) {
+    if (tableResult == null) {
+      return;
+    }
+
+    try {
+      var status = tableResult.getJobClient().get().getJobStatus().get();
+      if (!status.isGloballyTerminalState()) {
+        closeFlinkJob.run();
+      }
+    } catch (Exception e) {
+      // allow failure if job already ended
     }
   }
 
