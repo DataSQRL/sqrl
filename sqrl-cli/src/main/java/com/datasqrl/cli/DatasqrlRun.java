@@ -36,6 +36,7 @@ import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.micrometer.MicrometerMetricsFactory;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,8 +61,8 @@ import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.CheckpointingOptions;
@@ -139,38 +140,61 @@ public class DatasqrlRun {
 
   public void stop() {
     log.debug("Flink stop initiated");
-    closeCommon(
+    try {
+      closeFlinkJobIfNeeded(
+          () -> {
+            var sp =
+                tableResult
+                    .getJobClient()
+                    .get()
+                    .stopWithSavepoint(false, null, SavepointFormatType.NATIVE);
+            try {
+              var spPath = sp.get();
+              log.info("Savepoint created at {}", spPath);
+            } catch (Exception e) {
+              log.error("Savepoint creation failed.", e);
+            }
+          });
+    } finally {
+      closeVertxAndShutdown();
+    }
+  }
+
+  public void drainAndCancel() {
+    log.debug("Flink cancel initiated...");
+    closeFlinkJobIfNeeded(
         () -> {
-          var sp =
-              tableResult
-                  .getJobClient()
-                  .get()
-                  .stopWithSavepoint(false, null, SavepointFormatType.NATIVE);
+          var jobClient = tableResult.getJobClient().get();
+          Path tmpSavepointDir = null;
           try {
-            var spPath = sp.get();
-            log.info("Savepoint created at {}", spPath);
+            // Flink exposes drain semantics only through stop-with-savepoint, so keeping it
+            // temporary
+            tmpSavepointDir = Files.createTempDirectory("sqrl-test-drain-savepoint-");
+            jobClient
+                .stopWithSavepoint(
+                    true, tmpSavepointDir.toAbsolutePath().toString(), SavepointFormatType.NATIVE)
+                .get();
           } catch (Exception e) {
-            log.error("Savepoint creation failed.", e);
+            log.warn("Failed to drain Flink job before cancellation. Falling back to cancel.", e);
+            try {
+              jobClient.cancel().get();
+            } catch (Exception cancelException) {
+              log.debug("Flink job cancellation failed.", cancelException);
+            }
+          } finally {
+            if (tmpSavepointDir != null) {
+              try {
+                FileUtils.deleteDirectory(tmpSavepointDir.toFile());
+              } catch (IOException e) {
+                log.warn(
+                    "Failed to delete temporary Flink drain savepoint: {}", tmpSavepointDir, e);
+              }
+            }
           }
         });
   }
 
-  public void cancel() {
-    log.debug("Flink cancel initiated...");
-    closeCommon(() -> tableResult.getJobClient().get().cancel());
-  }
-
-  private void closeCommon(Runnable closeFlinkJob) {
-    if (tableResult != null) {
-      try {
-        var status = tableResult.getJobClient().get().getJobStatus().get();
-        if (status != JobStatus.FINISHED) {
-          closeFlinkJob.run();
-        }
-      } catch (Exception e) {
-        // allow failure if job already ended
-      }
-    }
+  public void closeVertxAndShutdown() {
     if (vertx != null) {
       vertx.close();
     }
@@ -178,6 +202,21 @@ public class DatasqrlRun {
     // Signal shutdown to release the hold
     if (shutdownLatch != null) {
       shutdownLatch.countDown();
+    }
+  }
+
+  private void closeFlinkJobIfNeeded(Runnable closeFlinkJob) {
+    if (tableResult == null) {
+      return;
+    }
+
+    try {
+      var status = tableResult.getJobClient().get().getJobStatus().get();
+      if (!status.isGloballyTerminalState()) {
+        closeFlinkJob.run();
+      }
+    } catch (Exception e) {
+      // allow failure if job already ended
     }
   }
 
