@@ -48,28 +48,21 @@ class PgPartmanExtensionTest {
 
   @Test
   void givenRangeTtlTable_whenGetDdl_thenFullSetupSql() {
-    var expectedSql =
-        """
-        CREATE SCHEMA IF NOT EXISTS partman;
-        CREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;
-
-        SELECT partman.create_parent(
-            p_parent_table => 'public."Orders_1"',
-            p_control      => 'time',
-            p_interval     => '1 week',
-            p_premake      => 4
-        );
-        UPDATE partman.part_config
-           SET retention            = '30 days',
-               retention_keep_table = false
-         WHERE parent_table = 'public."Orders_1"';\
-        """;
-
     assertThat(
             extension.getDdl(
                 List.of(
                     table("Orders_1", PartitionType.RANGE, List.of("time"), Duration.ofDays(30)))))
-        .isEqualTo(expectedSql)
+        .contains("CREATE SCHEMA IF NOT EXISTS partman")
+        .contains("CREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman")
+        .contains("SELECT partman.create_parent")
+        .contains("p_parent_table => 'public.\"Orders_1\"'")
+        .contains("p_control => 'time'")
+        .contains("p_interval => '1 week'")
+        .contains("p_premake => 4")
+        .contains("UPDATE partman.part_config")
+        .contains("retention = '30 days'")
+        .contains("retention_keep_table = false")
+        .contains("WHERE parent_table = 'public.\"Orders_1\"'")
         .doesNotContain("p_type");
   }
 

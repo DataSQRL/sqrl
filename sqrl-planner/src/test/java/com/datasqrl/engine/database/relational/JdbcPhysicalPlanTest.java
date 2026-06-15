@@ -59,7 +59,7 @@ class JdbcPhysicalPlanTest {
             .statement(stmt("t1", Type.TABLE, "CREATE TABLE t1"))
             .tableIdMap(Map.of())
             .standaloneExtensionStatement(
-                stmt("-partman.sql", Type.EXTENSION, "SELECT partman.create_parent"))
+                stmt("partman", Type.EXTENSION, "SELECT partman.create_parent"))
             .build();
 
     var artifacts = plan.getDeploymentArtifacts();
