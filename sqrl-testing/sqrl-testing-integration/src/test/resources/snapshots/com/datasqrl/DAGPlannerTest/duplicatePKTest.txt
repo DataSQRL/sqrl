@@ -336,7 +336,8 @@ INSERT INTO `default_catalog`.`default_database`.`_Input_2`
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"_Input_2_hash_c1\" ON \"_Input_2\" USING hash (\"userid\")"
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

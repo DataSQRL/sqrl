@@ -480,7 +480,8 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingInput_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

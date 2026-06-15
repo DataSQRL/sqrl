@@ -19,7 +19,9 @@ import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFacto
 
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
+import java.time.Duration;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 
@@ -45,6 +47,12 @@ public class PostgresCreateTableDdlFactory extends GenericCreateTableDdlFactory 
             .formatted(ddl, stmt.getPartitionType(), listToSql(stmt.getPartitionKey()));
 
     if (!addDefaultPartition) {
+      return partitionDdl;
+    }
+
+    // pg_partman owns lifecycle for RANGE + TTL tables, so no default partition needed
+    var ttl = Optional.ofNullable(stmt.getTtl()).orElse(Duration.ZERO);
+    if (stmt.getPartitionType() == PartitionType.RANGE && !ttl.isZero()) {
       return partitionDdl;
     }
 

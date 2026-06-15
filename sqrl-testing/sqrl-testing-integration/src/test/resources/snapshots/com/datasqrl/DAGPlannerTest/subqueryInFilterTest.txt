@@ -799,7 +799,8 @@ INSERT INTO `default_catalog`.`default_database`.`ExcludedOrders_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

@@ -1128,7 +1128,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

@@ -632,7 +632,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

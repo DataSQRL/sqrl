@@ -317,7 +317,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"Orders_2_hash_c1\" ON \"Orders_2\" USING hash (\"customerid\")"
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {
