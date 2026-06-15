@@ -297,7 +297,8 @@ INSERT INTO `default_catalog`.`default_database`.`SpecialOrderSummary_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

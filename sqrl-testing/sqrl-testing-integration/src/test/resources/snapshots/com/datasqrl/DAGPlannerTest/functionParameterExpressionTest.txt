@@ -314,7 +314,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerVectorEmbed_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx-exec-functions.json
 {

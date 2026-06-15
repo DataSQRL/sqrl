@@ -609,7 +609,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithOrders_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

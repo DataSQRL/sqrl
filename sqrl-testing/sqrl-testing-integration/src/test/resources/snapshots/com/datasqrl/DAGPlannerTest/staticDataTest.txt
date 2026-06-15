@@ -1572,7 +1572,8 @@ INSERT INTO `default_catalog`.`default_database`.`Numbers2_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

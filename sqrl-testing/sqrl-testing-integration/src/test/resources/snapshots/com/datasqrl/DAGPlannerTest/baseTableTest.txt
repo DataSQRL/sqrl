@@ -668,7 +668,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerWithEmail_2`
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"Product_4_hash_c3\" ON \"Product_4\" USING hash (\"category\")"
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {
