@@ -1,0 +1,87 @@
+>>>pipeline_explain.txt
+=== Events
+ID:          default_catalog.default_database.Events
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+---
+Schema:
+ - event_id: BIGINT NOT NULL
+ - user_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - amount: BIGINT NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Events__base
+
+=== WindowedEventsByUser
+ID:          default_catalog.default_database.WindowedEventsByUser
+Type:        stream
+Stage:       flink
+Primary key: window_start, window_end, user_id
+Timestamp:   -
+Row count:   ~5e7
+---
+Schema:
+ - window_start: TIMESTAMP(3) NOT NULL
+ - window_end: TIMESTAMP(3) NOT NULL
+ - user_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_count: BIGINT NOT NULL
+ - total_amount: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Events
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+ - sort: [0 ASC-nulls-first, 2 ASC-nulls-first]
+
+=== by_user
+ID:          print.by_user
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.WindowedEventsByUser
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Events__schema` (
+  `event_id` BIGINT NOT NULL,
+  `user_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `amount` BIGINT NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/events.jsonl'
+);
+CREATE TABLE `Events` (
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'source.monitor-interval' = '1m'
+)
+LIKE `Events__schema`;
+CREATE VIEW `WindowedEventsByUser`
+AS
+SELECT `window_start`, `window_end`, `user_id`, COUNT(*) AS `event_count`, SUM(`amount`) AS `total_amount`
+FROM TABLE(TUMBLE(TABLE `Events`, DESCRIPTOR(`event_time`), INTERVAL '5' SECOND))
+GROUP BY `window_start`, `window_end`, `user_id`;
+CREATE TABLE `by_user_1` (
+  `window_start` TIMESTAMP(3) NOT NULL,
+  `window_end` TIMESTAMP(3) NOT NULL,
+  `user_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_count` BIGINT NOT NULL,
+  `total_amount` BIGINT NOT NULL,
+  PRIMARY KEY (`window_start`, `window_end`, `user_id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'print',
+  'print-identifier' = 'by_user'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`by_user_1`
+SELECT *
+ FROM `default_catalog`.`default_database`.`WindowedEventsByUser`
+;
+END
