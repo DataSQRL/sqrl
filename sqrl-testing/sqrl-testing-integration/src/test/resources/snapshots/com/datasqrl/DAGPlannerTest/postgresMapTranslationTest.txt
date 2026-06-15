@@ -125,7 +125,8 @@ END
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

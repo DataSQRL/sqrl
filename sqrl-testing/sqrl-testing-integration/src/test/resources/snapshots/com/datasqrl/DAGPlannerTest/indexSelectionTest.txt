@@ -538,7 +538,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"Product_3_btree_c4c1\" ON \"Product_3\" USING btree (\"_ingest_time\",\"name\")"
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

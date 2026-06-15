@@ -398,7 +398,8 @@ INSERT INTO `default_catalog`.`default_database`.`MachineTempByHour_2`
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"MachineTempByHour_2_hash_c0\" ON \"MachineTempByHour_2\" USING hash (\"machineid\")"
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

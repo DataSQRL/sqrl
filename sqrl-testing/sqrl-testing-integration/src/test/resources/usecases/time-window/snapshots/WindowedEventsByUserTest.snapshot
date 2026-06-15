@@ -1,0 +1,35 @@
+{
+  "data" : {
+    "WindowedEventsByUserTest" : [ {
+      "window_start" : "2026-01-01T04:00:00.000Z",
+      "window_end" : "2026-01-01T04:00:05.000Z",
+      "user_id" : "alice",
+      "event_count" : 2,
+      "total_amount" : 30
+    }, {
+      "window_start" : "2026-01-01T04:00:00.000Z",
+      "window_end" : "2026-01-01T04:00:05.000Z",
+      "user_id" : "bob",
+      "event_count" : 1,
+      "total_amount" : 30
+    }, {
+      "window_start" : "2026-01-01T04:00:05.000Z",
+      "window_end" : "2026-01-01T04:00:10.000Z",
+      "user_id" : "alice",
+      "event_count" : 1,
+      "total_amount" : 40
+    }, {
+      "window_start" : "2026-01-01T04:00:05.000Z",
+      "window_end" : "2026-01-01T04:00:10.000Z",
+      "user_id" : "bob",
+      "event_count" : 1,
+      "total_amount" : 50
+    }, {
+      "window_start" : "2026-01-01T04:00:10.000Z",
+      "window_end" : "2026-01-01T04:00:15.000Z",
+      "user_id" : "alice",
+      "event_count" : 1,
+      "total_amount" : 60
+    } ]
+  }
+}

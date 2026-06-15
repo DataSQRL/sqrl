@@ -53,6 +53,11 @@ import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobStatus;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.core.execution.JobClient;
+import org.apache.flink.types.Either;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configurator;
 
 /**
  * The test runner executes the test against the running DataSQRL pipeline and snapshots the
@@ -70,6 +75,8 @@ public class DatasqrlTest {
 
   private static final String GRAPHQL_ENDPOINT = "http://localhost:8888/%s/graphql";
   private static final String SNAPSHOT_EXT = ".snapshot";
+  private static final String CHECKPOINT_FAILURE_MANAGER_LOGGER =
+      "org.apache.flink.runtime.checkpoint.CheckpointFailureManager";
 
   private final Path rootDir;
   private final Path planDir;
@@ -94,6 +101,7 @@ public class DatasqrlTest {
     }
     // Collects all exceptions during the testing
     var testResults = new ArrayList<TestResult>();
+    boolean testFailed = false;
     // Retrieve test plan
     TestPlan testPlan = null;
     // Read configuration
@@ -110,6 +118,7 @@ public class DatasqrlTest {
     }
 
     // 2. Run the DataSQRL pipeline
+    var subscriptionClients = new ArrayList<SubscriptionClient>();
     try {
       formatter.sectionHeader("Starting stream processor");
       var result = run.run();
@@ -117,7 +126,6 @@ public class DatasqrlTest {
 
       formatter.sectionHeader("Running Tests");
       outputManager.redirectStd();
-      var subscriptionClients = new ArrayList<SubscriptionClient>();
       // 3. Execute subscription & mutation operations against the API and snapshot results
       if (testPlan != null) {
         // 1. add the graphql subscriptions to the test plan
@@ -197,73 +205,112 @@ public class DatasqrlTest {
         // The job reached a terminal failure state; surface its real root cause.
         var cause = e.getCause() != null ? e.getCause() : e;
         testResults.add(TestResult.Failure.flink(cause));
+        testFailed = true;
       } catch (Exception ignored) {
         // Timed out or interrupted while the job is still running; nothing conclusive to report.
-      }
-
-      // 5. Validate JDBC views, run the API queries, finish subscriptions and snapshot the API
-      // results
-      if (testPlan != null) {
-        var jdbcResList = validateJdbcViews(testPlan.getJdbcViews());
-        testResults.addAll(jdbcResList);
-
-        var gqlResList = executeAndSnapshotGraphqlQueries(testPlan.getQueries(), snapshotDir, 0);
-        testResults.addAll(gqlResList);
-
-        // Stop subscriptions
-        for (var client : subscriptionClients) {
-          client.close();
-        }
-
-        // Collect messages and write to snapshots
-        for (var client : subscriptionClients) {
-          var messages = client.getMessages();
-
-          assert messages.size() < 1000 : "Too many messages: %d > 1000".formatted(messages.size());
-
-          var data =
-              messages.stream()
-                  // to guarantee that snapshots are stable, must sort the responses by json
-                  // contents
-                  .sorted()
-                  .collect(Collectors.joining(",", "[", "]"));
-
-          snapshot(snapshotDir, client.getName(), data, testResults);
-        }
-
-        var expectedSnapshots =
-            Stream.of(
-                    collectGraphqlQueryNames(testPlan.getQueries()).stream(),
-                    collectGraphqlQueryNames(testPlan.getMutations()).stream(),
-                    collectGraphqlQueryNames(testPlan.getSubscriptions()).stream())
-                .flatMap(stream -> stream)
-                .collect(Collectors.toSet());
-
-        // Check all snapshots in the directory
-        try (var directoryStream = Files.newDirectoryStream(snapshotDir, "*" + SNAPSHOT_EXT)) {
-          for (var path : directoryStream) {
-            var snapshotFileName = path.getFileName().toString();
-            if (!expectedSnapshots.contains(snapshotFileName)) {
-              // Snapshot exists on filesystem but missing in the test results
-              testResults.add(new TestResult.SnapshotMissing(snapshotFileName));
-            }
-          }
-        }
       }
     } catch (Exception e) {
       // The pipeline failed to start or run (e.g. a missing environment variable referenced by the
       // compiled Flink plan). Record it as a real failure with its root cause so the message is
       // printed and the exit code is non-zero, instead of being swallowed during cleanup.
       testResults.add(TestResult.Failure.pipeline(e));
+      testFailed = true;
     } finally {
-      run.cancel();
-      Thread.sleep(1000); // wait for log lines to clear out
+      drainAndCancelJob(run);
+    }
+
+    // 5. Validate JDBC views, run the API queries, finish subscriptions and snapshot the API
+    // results
+    try {
+      if (!testFailed) {
+        validateTestJobRun(testPlan, snapshotDir, subscriptionClients, testResults);
+      }
+    } finally {
+      run.closeVertxAndShutdown();
       outputManager.restoreStd();
     }
 
     // 6. Print the test results on the command line
     printTestResults(testResults, snapshotDir, testDir);
     return testResults.stream().mapToInt(TestResult::exitCode).sum();
+  }
+
+  @SneakyThrows
+  private void validateTestJobRun(
+      TestPlan testPlan,
+      Path snapshotDir,
+      ArrayList<SubscriptionClient> subscriptionClients,
+      List<TestResult> testResults) {
+
+    if (testPlan == null) {
+      return;
+    }
+
+    var jdbcResList = validateJdbcViews(testPlan.getJdbcViews());
+    testResults.addAll(jdbcResList);
+
+    var gqlResList = executeAndSnapshotGraphqlQueries(testPlan.getQueries(), snapshotDir, 0);
+    testResults.addAll(gqlResList);
+
+    // Stop subscriptions
+    for (var client : subscriptionClients) {
+      client.close();
+    }
+
+    // Collect messages and write to snapshots
+    for (var client : subscriptionClients) {
+      var messages = client.getMessages();
+
+      assert messages.size() < 1000 : "Too many messages: %d > 1000".formatted(messages.size());
+
+      var data =
+          messages.stream()
+              // to guarantee that snapshots are stable, must sort the responses by json
+              // contents
+              .sorted()
+              .collect(Collectors.joining(",", "[", "]"));
+
+      snapshot(Either.Right(client.getName()), snapshotDir, data, testResults);
+    }
+
+    var expectedSnapshots =
+        Stream.of(
+                collectGraphqlQueryNames(testPlan.getQueries()).stream(),
+                collectGraphqlQueryNames(testPlan.getMutations()).stream(),
+                collectGraphqlQueryNames(testPlan.getSubscriptions()).stream())
+            .flatMap(stream -> stream)
+            .collect(Collectors.toSet());
+
+    // Check all snapshots in the directory
+    try (var directoryStream = Files.newDirectoryStream(snapshotDir, "*" + SNAPSHOT_EXT)) {
+      for (var path : directoryStream) {
+        var snapshotFileName = path.getFileName().toString();
+        if (!expectedSnapshots.contains(snapshotFileName)) {
+          // Snapshot exists on filesystem but missing in the test results
+          testResults.add(new TestResult.SnapshotMissing(snapshotFileName));
+        }
+      }
+    }
+  }
+
+  private void drainAndCancelJob(DatasqrlRun run) throws InterruptedException {
+    var loggerContext = (LoggerContext) LogManager.getContext(false);
+    var configuration = loggerContext.getConfiguration();
+    var previousLoggerConfig = configuration.getLoggers().get(CHECKPOINT_FAILURE_MANAGER_LOGGER);
+    var previousLevel = previousLoggerConfig == null ? null : previousLoggerConfig.getLevel();
+
+    Configurator.setLevel(CHECKPOINT_FAILURE_MANAGER_LOGGER, Level.ERROR);
+    try {
+      run.drainAndCancel();
+      Thread.sleep(1000); // keep suppression active for async shutdown logs
+    } finally {
+      if (previousLoggerConfig == null) {
+        configuration.removeLogger(CHECKPOINT_FAILURE_MANAGER_LOGGER);
+      } else {
+        previousLoggerConfig.setLevel(previousLevel);
+      }
+      loggerContext.updateLoggers();
+    }
   }
 
   private void printTestResults(
@@ -332,7 +379,7 @@ public class DatasqrlTest {
       var data = executeQuery(query);
 
       // Snapshot result
-      snapshot(snapshotDir, query.getName(), data, testResults);
+      snapshot(Either.Left(query), snapshotDir, data, testResults);
 
       // Wait before next mutation
       if (mutationWait > 0) {
@@ -385,10 +432,23 @@ public class DatasqrlTest {
 
   @SneakyThrows
   private void snapshot(
-      Path snapshotDir, String name, String rawJson, List<TestResult> testResults) {
+      Either<TestPlan.GraphqlQuery, String> test,
+      Path snapshotDir,
+      String rawJson,
+      List<TestResult> testResults) {
+
+    var name = test.isLeft() ? test.left().getName() : test.right();
+    var snapshot = !test.isLeft() || test.left().isSnapshot();
 
     var snapshotPath = snapshotDir.resolve(name + SNAPSHOT_EXT);
     var content = format(rawJson);
+
+    if (!snapshot) {
+      var res = getNoRowsResult(content, name);
+      testResults.add(res);
+
+      return;
+    }
 
     // Existing snapshot logic
     if (Files.exists(snapshotPath)) {
@@ -407,7 +467,19 @@ public class DatasqrlTest {
     }
   }
 
-  @SneakyThrows
+  private TestResult getNoRowsResult(String rawData, String name) {
+    try {
+      var root = SqrlObjectMapper.MAPPER.readTree(rawData);
+      var data = root.get("data");
+      if (data.hasNonNull(name) && data.get(name).isEmpty()) {
+        return new TestResult.SnapshotOk(name);
+      }
+    } catch (JsonProcessingException ignored) {
+    }
+
+    return new TestResult.NoSnapshotExpected(name, rawData);
+  }
+
   private String format(String rawData) {
     try {
       var data = SqrlObjectMapper.MAPPER.readValue(rawData, Object.class);

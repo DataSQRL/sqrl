@@ -15,9 +15,12 @@
  */
 package com.datasqrl.planner.hint;
 
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
+import com.datasqrl.planner.parser.StatementParserException;
 import com.google.auto.service.AutoService;
+import lombok.Getter;
 
 /**
  * Defines a table to be a test case which means it will only be planned when the user runs test
@@ -27,8 +30,11 @@ public class TestHint extends PlannerHint {
 
   public static final String HINT_NAME = "test";
 
-  protected TestHint(ParsedObject<SqrlHint> source) {
+  @Getter private final boolean noRows;
+
+  protected TestHint(ParsedObject<SqrlHint> source, boolean noRows) {
     super(source, Type.DAG);
+    this.noRows = noRows;
   }
 
   @AutoService(Factory.class)
@@ -36,12 +42,29 @@ public class TestHint extends PlannerHint {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      return new TestHint(source);
+      return new TestHint(source, parseNoRows(source));
     }
 
     @Override
     public String getName() {
       return HINT_NAME;
+    }
+
+    private static boolean parseNoRows(ParsedObject<SqrlHint> source) {
+      var arguments = source.get().getOptions();
+      if (arguments == null || arguments.isEmpty()) {
+        return false;
+      }
+
+      if (arguments.size() != 1 || !"no_rows".equalsIgnoreCase(arguments.get(0))) {
+        throw new StatementParserException(
+            ErrorLabel.GENERIC,
+            source.getFileLocation(),
+            "%s hint only supports 'no_rows' as argument",
+            source.get().getName());
+      }
+
+      return true;
     }
   }
 }

@@ -57,7 +57,7 @@
 {"id":25,"customer_id":10,"loan_type_id":10,"amount":20613.3,"duration":15,"application_date":"2023-06-04T23:27:55.927Z","updated_at":"2023-06-04T23:27:55.927Z"}
 {"id":13,"customer_id":6,"loan_type_id":8,"amount":68752.31,"duration":27,"application_date":"2023-06-05T00:05:08.313Z","updated_at":"2023-06-05T00:05:08.313Z"}
 {"id":82,"customer_id":5,"loan_type_id":2,"amount":918717.32,"duration":67,"application_date":"2023-05-19T18:18:50.673Z","updated_at":"2023-06-05T03:18:39.239Z"}
-{"id":42,"customer_id":3,"loan_type_id":8,"amount":99298.17,"duration":37,"application_date":"2023-06-05T07:41:17.770Z","updated_at":"2023-06-05T07:41:17.770Z"}
+{"id":42,"customer_id":3,"loan_type_id":8,"amount":101298.17,"duration":37,"application_date":"2023-06-05T07:41:17.770Z","updated_at":"2023-06-05T07:41:17.770Z"}
 {"id":24,"customer_id":5,"loan_type_id":6,"amount":5638.16,"duration":29,"application_date":"2023-06-05T09:53:18.397Z","updated_at":"2023-06-05T09:53:18.397Z"}
 {"id":58,"customer_id":7,"loan_type_id":8,"amount":42413.17,"duration":14,"application_date":"2023-06-05T11:49:29.163Z","updated_at":"2023-06-05T11:49:29.163Z"}
 {"id":80,"customer_id":1,"loan_type_id":2,"amount":243720.97,"duration":151,"application_date":"2023-05-31T06:13:22.491Z","updated_at":"2023-06-05T19:56:45.744Z"}
@@ -127,4 +127,3 @@
 {"id":14,"customer_id":8,"loan_type_id":3,"amount":14541.9,"duration":44,"application_date":"2023-06-13T14:40:10.368Z","updated_at":"2023-06-16T00:24:39.619Z"}
 {"id":85,"customer_id":7,"loan_type_id":10,"amount":7420.29,"duration":16,"application_date":"2023-06-15T12:56:36.814Z","updated_at":"2023-06-16T00:24:59.373Z"}
 {"id":29,"customer_id":4,"loan_type_id":9,"amount":465251.2,"duration":18,"application_date":"2023-06-10T04:52:49.807Z","updated_at":"2023-06-16T00:25:18.889Z"}
-{"id":101,"customer_id":4,"loan_type_id":9,"amount":1,"duration":18,"application_date":"2023-06-16T00:56:29.447Z","updated_at":"2023-06-16T00:56:29.447Z"}

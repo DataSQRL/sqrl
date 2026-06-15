@@ -8,4 +8,4 @@ DataSQRL builds on top of Flink and the Flink connector ecosystem.
 | 0.7.x    | 1.19.x    | 1.19+ <br /> 1.19.2+3 tested | 15+ <br /> 17 tested | 0.8.0    | 1.9+ <br /> 1.9.0 tested   | 3+ <br /> 3.4.0 tested |
 | 0.8.x    | 1.19.x    | 1.19+ <br /> 1.19.3 tested   | 15+ <br /> 17 tested | 0.8.0    | 1.9+ <br /> 1.9.2 tested   | 3+ <br /> 3.4.0 tested |
 | 0.9.x    | 2.2.x     | 2.2+ <br /> 2.2.0 tested     | 17+ <br /> 17 tested | 0.8.0    | 1.10+ <br /> 1.10.0 tested | 3+ <br /> 3.9.1 tested |
-| 0.10.x   | 2.2.x     | 2.2+ <br /> 2.2.1 tested     | 17+ <br /> 17 tested | 0.8.0    | 1.10+ <br /> 1.10.1 tested | 3+ <br /> 3.9.1 tested |
+| 0.10.x   | 2.2.x     | 2.2+ <br /> 2.2.1 tested     | 17+ <br /> 18 tested | 0.8.0    | 1.10+ <br /> 1.11.0 tested | 3+ <br /> 4.2.0 tested |

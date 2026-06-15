@@ -45,8 +45,7 @@ ApplicationStatus := SELECT u._uuid, u.status, u.message, u.event_time, a.id, a.
 
 --EXPORT ApplicationStatus TO print.status;
 
--- TODO make it a subscription
-ApplicationAlert := SELECT _uuid, id, customer_id, loan_type_id, max_amount, min_amount, amount
+ApplicationAlert := SUBSCRIBE SELECT _uuid, id, customer_id, loan_type_id, max_amount, min_amount, amount
                     FROM ApplicationStatus a
                     WHERE status = 'underwriting' AND (amount > max_amount OR amount < min_amount);
 
@@ -61,3 +60,6 @@ LoanTypesTest := SELECT COUNT(*) as num_loan_types FROM LoanTypes;
 CustomerApplicationTest := SELECT c.id, c.email, COUNT(*) as num_applications, SUM(a.amount) as total
                            FROM Customers c JOIN Applications a ON c.id = a.customer_id
                            GROUP BY c.id, c.email ORDER BY c.email;
+
+/*+ test */
+ApplicationAlertTest := SELECT * FROM ApplicationAlert ORDER BY id;

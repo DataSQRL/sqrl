@@ -119,13 +119,13 @@
     <avro.version>1.12.1</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
     <aws-msk-iam-auth.version>2.3.7</aws-msk-iam-auth.version>
-    <aws-sdk-bom.version>2.46.5</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.46.10</aws-sdk-bom.version>
     <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-csv.version>1.14.1</commons-csv.version>
     <commons-exec.version>1.6.0</commons-exec.version>
     <commons-io.version>2.22.0</commons-io.version>
     <duckdb.version>1.5.3.0</duckdb.version>
-    <feign.version>13.12</feign.version>
+    <feign.version>13.13</feign.version>
     <freemarker.version>2.3.34</freemarker.version>
     <glassfish.version>3.0.0</glassfish.version>
     <graphql-java-extended-scalars.version>24.0</graphql-java-extended-scalars.version>
@@ -133,8 +133,8 @@
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
     <guava.version>33.6.0-jre</guava.version>
     <h2.version>2.4.240</h2.version>
-    <spring-framework.version>7.0.7</spring-framework.version>
-    <hikari.version>7.0.2</hikari.version>
+    <spring-framework.version>7.0.8</spring-framework.version>
+    <hikari.version>7.1.0</hikari.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
     <hadoop.version>3.3.4</hadoop.version>
@@ -159,17 +159,17 @@
     <opencsv.version>5.12.0</opencsv.version>
     <picocli.version>4.7.7</picocli.version>
     <postgres.version>42.7.11</postgres.version>
-    <projectreactor.version>3.8.5</projectreactor.version>
-    <protobuf.version>4.35.0</protobuf.version>
+    <projectreactor.version>3.8.6</projectreactor.version>
+    <protobuf.version>4.35.1</protobuf.version>
     <scala.version>2.12</scala.version>
     <scram.version>2.1</scram.version>
     <slf4j.version>1.7.36</slf4j.version>
-    <snowflake-jdbc.version>4.2.0</snowflake-jdbc.version>
+    <snowflake-jdbc.version>4.3.0</snowflake-jdbc.version>
     <snakeyaml.version>2.6</snakeyaml.version>
-    <swagger-core.version>2.2.50</swagger-core.version>
+    <swagger-core.version>2.2.51</swagger-core.version>
     <system-stubs.version>2.1.8</system-stubs.version>
     <testcontainers.version>2.0.5</testcontainers.version>
-    <vertx.version>5.1.1</vertx.version>
+    <vertx.version>5.1.2</vertx.version>
 
     <!-- Plugin versions -->
     <docker-maven-plugin.version>0.48.1</docker-maven-plugin.version>
@@ -824,7 +824,7 @@
         <plugin>
           <groupId>io.reactiverse</groupId>
           <artifactId>vertx-maven-plugin</artifactId>
-          <version>2.0.2</version>
+          <version>2.1.0</version>
         </plugin>
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

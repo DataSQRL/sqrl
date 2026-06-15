@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.function.translation.postgres.vector;
+package com.datasqrl.function.translation.postgres.extensions;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType;
 import com.datasqrl.flinkrunner.stdlib.vector.VectorFunctions;
-import com.datasqrl.sql.DatabaseExtension;
+import com.datasqrl.sql.DatabaseTypeExtension;
 import com.datasqrl.util.FunctionUtil;
 import com.google.auto.service.AutoService;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@AutoService(DatabaseExtension.class)
-public class VectorPgExtension implements DatabaseExtension {
-  public static final String ddlStatement = "CREATE EXTENSION IF NOT EXISTS vector";
+@AutoService(DatabaseTypeExtension.class)
+public class VectorPgExtension implements DatabaseTypeExtension {
+
+  private static final String ddlStatement = "CREATE EXTENSION IF NOT EXISTS vector";
 
   @Override
   public Class typeClass() {
@@ -41,7 +42,7 @@ public class VectorPgExtension implements DatabaseExtension {
   }
 
   @Override
-  public String getExtensionDdl() {
+  public String getDdl() {
     return ddlStatement;
   }
 }

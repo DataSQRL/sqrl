@@ -233,7 +233,8 @@ END
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"_OrderEntries_1_hash_c1\" ON \"_OrderEntries_1\" USING hash (\"customerid\")"
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

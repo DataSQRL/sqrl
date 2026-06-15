@@ -291,7 +291,8 @@ INSERT INTO `default_catalog`.`default_database`.`source_a_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

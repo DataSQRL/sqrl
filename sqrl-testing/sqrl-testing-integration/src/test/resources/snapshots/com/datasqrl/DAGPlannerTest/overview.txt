@@ -993,7 +993,8 @@ INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"SimpleOrders_6_btree_c2c3\" ON \"SimpleOrders_6\" USING btree (\"customerid\",\"amount\")"
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

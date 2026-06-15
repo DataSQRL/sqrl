@@ -19,16 +19,25 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class SqrTableFunctionUtil {
+
+  public static Optional<SqrlTableFunction> getTableFunctionFromPath(
+      List<SqrlTableFunction> tableFunctions, String name) {
+
+    return getTableFunctionFromPath(tableFunctions, NamePath.of(name));
+  }
+
   public static Optional<SqrlTableFunction> getTableFunctionFromPath(
       List<SqrlTableFunction> tableFunctions, NamePath path) {
-    final List<SqrlTableFunction> tableFunctionsAtPath =
+
+    var tableFunctionsAtPath =
         tableFunctions.stream()
             .filter(tableFunction -> tableFunction.getFullPath().equals(path))
-            .collect(Collectors.toList());
-    assert (tableFunctionsAtPath.size() <= 1); // no overloading
+            .toList();
+
+    assert tableFunctionsAtPath.size() <= 1; // no overloading
+
     return tableFunctionsAtPath.isEmpty()
         ? Optional.empty()
         : Optional.of(tableFunctionsAtPath.get(0));

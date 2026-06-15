@@ -25,7 +25,6 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.jdbc.FlinkSqrlPostgresDataTypeMapper;
 import com.datasqrl.engine.EnginePhysicalPlan;
-import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.database.relational.ddl.PostgresPartmanSetupFactory;
 import com.datasqrl.flinkrunner.connector.postgresql.jdbc.SqrlPostgresOptions.OnConflictAction;
 import com.datasqrl.graphql.jdbc.DatabaseType;
@@ -73,7 +72,10 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
     return PostgresPartmanSetupFactory.createSetupSql(plan.tableIdMap().values())
         .map(
             sql ->
-                plan.toBuilder().extraArtifact(new DeploymentArtifact("-partman.sql", sql)).build())
+                plan.toBuilder()
+                    .standaloneExtensionStatement(
+                        new GenericJdbcStatement("partman", JdbcStatement.Type.EXTENSION, sql))
+                    .build())
         .orElse(plan);
   }
 

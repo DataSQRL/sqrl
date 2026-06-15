@@ -408,7 +408,8 @@ INSERT INTO `default_catalog`.`default_database`.`SelectOrders1_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

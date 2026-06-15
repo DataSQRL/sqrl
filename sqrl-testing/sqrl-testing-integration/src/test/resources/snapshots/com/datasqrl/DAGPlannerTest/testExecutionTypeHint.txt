@@ -376,7 +376,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerAgg3_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

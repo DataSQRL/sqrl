@@ -1,5 +1,5 @@
 mutation {
-  ApplicationUpdates(event: [{loan_application_id: 101,
+  ApplicationUpdates(event: [{loan_application_id: 42,
      status: "underwriting", message: "The road goes ever on and on"}]) {
     loan_application_id
     message

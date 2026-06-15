@@ -16,3 +16,6 @@ EXPORT FlinkFunctions TO print.functions;
 
 /*+test */
 FlinkFunctionsTest := SELECT name_upper, name_md5, formatted_name FROM FlinkFunctions ORDER BY name_upper ASC;
+
+/*+ test(no_rows) */
+NoRowsTest := SELECT * FROM FlinkFunctions WHERE FALSE;

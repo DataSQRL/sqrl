@@ -796,7 +796,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerCumulate_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

@@ -24,10 +24,11 @@ import java.util.Set;
  *
  * <p>Service loader interface
  */
-public interface DatabaseExtension {
+public interface DatabaseTypeExtension {
+
   Class typeClass();
 
   Set<Name> operators();
 
-  String getExtensionDdl();
+  String getDdl();
 }

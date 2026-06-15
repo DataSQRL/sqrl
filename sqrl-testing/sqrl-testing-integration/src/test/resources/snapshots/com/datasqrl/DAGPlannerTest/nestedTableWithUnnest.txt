@@ -234,7 +234,8 @@ INSERT INTO `default_catalog`.`default_database`.`_OrdersTotals_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

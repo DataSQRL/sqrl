@@ -317,6 +317,13 @@ UPDATE partman.part_config
         }
       ]
     }
+  ],
+  "standaloneExtensionStatements" : [
+    {
+      "name" : "partman",
+      "type" : "EXTENSION",
+      "sql" : "CREATE SCHEMA IF NOT EXISTS partman;\nCREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;\n\nSELECT partman.create_parent(\n    p_parent_table => 'public.\"OrderUpdates_1\"',\n    p_control => 'time',\n    p_interval => '1 week',\n    p_premake => 4\n);\n\nUPDATE partman.part_config\n   SET retention = '30 days',\n       retention_keep_table = false\n WHERE parent_table = 'public.\"OrderUpdates_1\"';"
+    }
   ]
 }
 >>>vertx.json

@@ -17,7 +17,6 @@ package com.datasqrl.compile;
 
 import static com.datasqrl.planner.util.SqrTableFunctionUtil.getTableFunctionFromPath;
 
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import graphql.language.Argument;
@@ -42,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -50,7 +50,7 @@ import org.apache.calcite.sql.type.SqlTypeName;
 @RequiredArgsConstructor
 class GqlGenerator extends GraphqlSchemaVisitor {
 
-  private final List<SqrlTableFunction> tableFunctions;
+  @Getter private final List<SqrlTableFunction> tableFunctions;
 
   @Override
   public List<Node> visitDocument(Document node, Object context) {
@@ -62,7 +62,7 @@ class GqlGenerator extends GraphqlSchemaVisitor {
         .map(definition -> (ObjectTypeDefinition) definition)
         .filter(definition -> definition.getName().equals("Query"))
         .flatMap(q -> processQueryDefinition(q, node).stream())
-        .collect(Collectors.toList());
+        .toList();
   }
 
   @Override
@@ -72,16 +72,16 @@ class GqlGenerator extends GraphqlSchemaVisitor {
 
   private List<Node> processQueryDefinition(ObjectTypeDefinition definition, Document document) {
     List<Node> queries = new ArrayList<>();
-    for (FieldDefinition def : definition.getFieldDefinitions()) {
-      final var tableFunction =
-          getTableFunctionFromPath(tableFunctions, NamePath.of(def.getName())).get();
-      if (tableFunction.getVisibility().isTest()) {
+    var defs = definition.getFieldDefinitions();
+    for (FieldDefinition def : defs) {
+      final var tableFn = getTableFunctionFromPath(tableFunctions, def.getName()).get();
+      if (tableFn.getVisibility().isTest()) {
         var operation =
             processOperation(
                 def.getName(),
                 (ObjectTypeDefinition) unbox(def.getType(), document).get(),
                 def.getInputValueDefinitions(),
-                tableFunction.getRowType(),
+                tableFn.getRowType(),
                 document);
         queries.add(operation);
       }

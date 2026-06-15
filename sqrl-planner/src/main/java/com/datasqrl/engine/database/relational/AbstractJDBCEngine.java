@@ -120,8 +120,10 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     var stmtFactory = getStatementFactory();
     var planBuilder = JdbcPhysicalPlan.builder();
     planBuilder.stage(stagePlan.getStage());
-    // Create extensions
-    planBuilder.statements(stmtFactory.extractExtensions(stagePlan.getQueries()));
+
+    // Create type extensions
+    planBuilder.statements(stmtFactory.extractTypeExtensions(stagePlan.getQueries()));
+
     // Create tables
     var tableNames = new HashSet<String>();
     var duplicateTableNames = new ArrayList<String>();
@@ -156,6 +158,11 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     }
 
     planBuilder.tableIdMap(tableIdMap);
+
+    // Create table extensions
+    planBuilder.standaloneExtensionStatements(
+        stmtFactory.applyTableExtensions(tableIdMap.values()));
+
     // Create executable queries & views
     if (stmtFactory.supportsQueries()) {
       stagePlan

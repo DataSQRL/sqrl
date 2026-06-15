@@ -1,0 +1,17 @@
+IMPORT testdata.sources.*;
+
+WindowedEventsByUser :=
+SELECT
+    window_start,
+    window_end,
+    user_id,
+    COUNT(*) AS event_count,
+    SUM(amount) AS total_amount
+FROM TABLE(TUMBLE(TABLE Events, DESCRIPTOR(event_time) ,INTERVAL '5' SECOND))
+GROUP BY window_start, window_end, user_id
+ORDER BY window_start, user_id;
+
+EXPORT WindowedEventsByUser TO print.by_user;
+
+/*+ test */
+WindowedEventsByUserTest := SELECT * FROM WindowedEventsByUser ORDER BY window_start, user_id;

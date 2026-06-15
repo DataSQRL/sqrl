@@ -18,6 +18,7 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +28,11 @@ public interface JdbcStatementFactory {
 
   JdbcStatement createTable(JdbcEngineCreateTable createTable);
 
-  default List<JdbcStatement> extractExtensions(List<Query> queries) {
+  default List<JdbcStatement> applyTableExtensions(Collection<CreateTableJdbcStatement> tables) {
+    return List.of();
+  }
+
+  default List<JdbcStatement> extractTypeExtensions(List<Query> queries) {
     return List.of();
   }
 
