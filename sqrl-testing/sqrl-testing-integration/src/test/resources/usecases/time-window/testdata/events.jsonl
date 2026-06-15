@@ -1,0 +1,6 @@
+{"event_id":1,"user_id":"alice","amount":10,"event_time":"2026-01-01T12:00:01.000Z"}
+{"event_id":2,"user_id":"alice","amount":20,"event_time":"2026-01-01T12:00:03.000Z"}
+{"event_id":3,"user_id":"bob","amount":30,"event_time":"2026-01-01T12:00:04.999Z"}
+{"event_id":4,"user_id":"alice","amount":40,"event_time":"2026-01-01T12:00:05.000Z"}
+{"event_id":5,"user_id":"bob","amount":50,"event_time":"2026-01-01T12:00:08.000Z"}
+{"event_id":6,"user_id":"alice","amount":60,"event_time":"2026-01-01T12:00:10.000Z"}

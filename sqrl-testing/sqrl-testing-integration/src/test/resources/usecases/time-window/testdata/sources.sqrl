@@ -1,0 +1,5 @@
+CREATE TABLE Events (
+    WATERMARK FOR event_time AS event_time - INTERVAL '0.001' SECOND
+) WITH (
+    'source.monitor-interval' = '1m'
+) LIKE `events.jsonl`;

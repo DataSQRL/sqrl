@@ -1,0 +1,12 @@
+{
+  "data" : {
+    "ApplicationAlertTest" : [ {
+      "id" : 42,
+      "customer_id" : 3,
+      "loan_type_id" : 8,
+      "max_amount" : 100000,
+      "min_amount" : 5000,
+      "amount" : 101298.17
+    } ]
+  }
+}

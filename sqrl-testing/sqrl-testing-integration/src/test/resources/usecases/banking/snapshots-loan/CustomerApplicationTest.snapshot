@@ -18,8 +18,8 @@
     }, {
       "id" : 4,
       "email" : "emilydavis@email.com",
-      "num_applications" : 16,
-      "total" : 3175592.43
+      "num_applications" : 15,
+      "total" : 3175591.43
     }, {
       "id" : 7,
       "email" : "jamesjones@email.com",
@@ -44,7 +44,7 @@
       "id" : 3,
       "email" : "michaelbrown@email.com",
       "num_applications" : 5,
-      "total" : 568584.4
+      "total" : 570584.4
     }, {
       "id" : 6,
       "email" : "sarahwilliams@email.com",

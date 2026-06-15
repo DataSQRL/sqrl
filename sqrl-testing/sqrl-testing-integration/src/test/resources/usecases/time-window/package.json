@@ -1,0 +1,20 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink"],
+  "script": {
+    "main": "time-window.sqrl"
+  },
+  "compiler": {
+    "logger": "none"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "1s"
+      }
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}
