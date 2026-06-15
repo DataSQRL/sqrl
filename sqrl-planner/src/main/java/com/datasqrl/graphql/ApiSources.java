@@ -17,11 +17,17 @@ package com.datasqrl.graphql;
 
 import java.util.List;
 
-public record ApiSources(String version, ApiSource schema, List<ApiSource> operations) {
+public record ApiSources(String version, ApiSource schema, List<ApiSource> operations)
+    implements Comparable<ApiSources> {
 
   public static final String DEFAULT_API_VERSION = "v1";
 
   public ApiSources(String inferredSchema, List<ApiSource> operations) {
     this(DEFAULT_API_VERSION, new ApiSource(inferredSchema), operations);
+  }
+
+  @Override
+  public int compareTo(ApiSources other) {
+    return version.compareTo(other.version);
   }
 }
