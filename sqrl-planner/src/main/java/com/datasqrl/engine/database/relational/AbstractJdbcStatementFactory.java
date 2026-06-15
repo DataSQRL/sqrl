@@ -34,7 +34,7 @@ import com.datasqrl.planner.hint.PartitionKeyHint;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.TtlHint;
 import com.datasqrl.planner.parser.SqrlStatementParser;
-import com.datasqrl.sql.DatabaseExtension;
+import com.datasqrl.sql.DatabaseTypeExtension;
 import com.datasqrl.util.CalciteUtil;
 import java.time.Duration;
 import java.util.Collection;
@@ -230,20 +230,20 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         .collect(Collectors.toList());
   }
 
-  protected Set<DatabaseExtension> extractTypeExtensions(
-      Stream<RelNode> relNodes, List<DatabaseExtension> extensions) {
+  protected Set<DatabaseTypeExtension> extractTypeExtensions(
+      Stream<RelNode> relNodes, List<DatabaseTypeExtension> extensions) {
     return relNodes
         .map(relNode -> extractTypeExtensions(relNode, extensions))
         .flatMap(Collection::stream)
         .collect(Collectors.toSet());
   }
 
-  protected Set<DatabaseExtension> extractTypeExtensions(
-      RelNode relNode, List<DatabaseExtension> extensions) {
-    Set<DatabaseExtension> matchedExtensions = new HashSet<>();
+  protected Set<DatabaseTypeExtension> extractTypeExtensions(
+      RelNode relNode, List<DatabaseTypeExtension> extensions) {
+    Set<DatabaseTypeExtension> matchedExtensions = new HashSet<>();
     for (RelDataTypeField field : relNode.getRowType().getFieldList()) {
       // See if we use a type from an extension by matching on class
-      for (DatabaseExtension extension : extensions) {
+      for (DatabaseTypeExtension extension : extensions) {
         if (field.getType() instanceof RawRelDataType
             && ((RawRelDataType) field.getType())
                 .getRawType()
@@ -260,7 +260,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         new RexShuttle() {
           @Override
           public RexNode visitCall(RexCall call) {
-            for (DatabaseExtension extension : extensions) {
+            for (DatabaseTypeExtension extension : extensions) {
               for (Name functionName : extension.operators()) {
                 if (functionName.equals(Name.system(call.getOperator().getName()))) {
                   matchedExtensions.add(extension);

@@ -16,6 +16,7 @@
 package com.datasqrl.engine.database.relational;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -23,8 +24,10 @@ import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
+import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.database.relational.ddl.PostgresCreateTableDdlFactory;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.function.translation.postgres.extensions.PgPartmanExtension;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import java.time.Duration;
@@ -66,7 +69,7 @@ class PostgresJdbcEngineTest {
   }
 
   @Test
-  void givenRangeTtlTable_whenPlan_thenPartmanArtifactAdded() {
+  void givenRangeTtlTable_whenPlan_thenPartmanExtensionAddedToSchema() {
     var flinkTable = mock(FlinkTableBuilder.class);
     when(flinkTable.getTableName()).thenReturn("orders_1");
     var engineTable = new JdbcEngineCreateTable("orders_1", flinkTable, null, null);
@@ -86,6 +89,13 @@ class PostgresJdbcEngineTest {
 
     var stmtFactory = mock(JdbcStatementFactory.class);
     when(stmtFactory.createTable(engineTable)).thenReturn(createStmt);
+    when(stmtFactory.applyTableExtensions(any()))
+        .thenReturn(
+            List.of(
+                new GenericJdbcStatement(
+                    "PgPartmanExtension",
+                    Type.EXTENSION,
+                    new PgPartmanExtension().getDdl(List.of(createStmt)))));
     when(stmtFactory.supportsQueries()).thenReturn(false);
 
     var engine =
@@ -102,8 +112,8 @@ class PostgresJdbcEngineTest {
     var artifacts = plan.getDeploymentArtifacts();
     assertThat(artifacts)
         .extracting(DeploymentArtifact::fileSuffix)
-        .containsExactly("-schema.sql", "-views.sql", "-partman.sql");
-    assertThat((String) artifacts.get(2).content())
+        .containsExactly("-schema.sql", "-views.sql");
+    assertThat((String) artifacts.get(0).content())
         .contains("partman.create_parent")
         .contains("retention            = '30 days'");
   }

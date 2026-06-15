@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class JdbcPhysicalPlanTest {
@@ -37,7 +38,7 @@ class JdbcPhysicalPlanTest {
             .statement(stmt("t2", Type.TABLE, "CREATE TABLE t2"))
             .statement(stmt("i1", Type.INDEX, "CREATE INDEX i1"))
             .statement(stmt("v1", Type.VIEW, "CREATE VIEW v1"))
-            .tableIdMap(java.util.Map.of())
+            .tableIdMap(Map.of())
             .build();
 
     var artifacts = plan.getDeploymentArtifacts();
@@ -52,12 +53,13 @@ class JdbcPhysicalPlanTest {
   }
 
   @Test
-  void givenExtraArtifacts_whenGetDeploymentArtifacts_thenAppendedAfterDefaults() {
+  void givenStandaloneExtensionStatements_whenGetDeploymentArtifacts_thenAppendedAfterDefaults() {
     var plan =
         JdbcPhysicalPlan.builder()
             .statement(stmt("t1", Type.TABLE, "CREATE TABLE t1"))
-            .tableIdMap(java.util.Map.of())
-            .extraArtifact(new DeploymentArtifact("-partman.sql", "SELECT partman.create_parent"))
+            .tableIdMap(Map.of())
+            .standaloneExtensionStatement(
+                stmt("-partman.sql", Type.EXTENSION, "SELECT partman.create_parent"))
             .build();
 
     var artifacts = plan.getDeploymentArtifacts();

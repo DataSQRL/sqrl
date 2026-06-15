@@ -29,13 +29,16 @@ import com.datasqrl.engine.database.relational.ddl.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.InsertStatement;
 import com.datasqrl.engine.database.relational.ddl.PostgresCreateTableDdlFactory;
 import com.datasqrl.engine.database.relational.ddl.notify.CreateNotifyTriggerDDL;
-import com.datasqrl.function.translation.postgres.vector.VectorPgExtension;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
 import com.datasqrl.planner.hint.VectorDimensionHint;
-import com.datasqrl.sql.DatabaseExtension;
+import com.datasqrl.sql.DatabaseTableExtension;
+import com.datasqrl.sql.DatabaseTypeExtension;
 import com.datasqrl.util.CalciteUtil;
+import com.datasqrl.util.ServiceLoaderDiscovery;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -46,8 +49,6 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class PostgresStatementFactory extends AbstractJdbcStatementFactory
     implements JdbcStatementFactory {
-
-  public static final List<DatabaseExtension> EXTENSIONS = List.of(new VectorPgExtension());
 
   public PostgresStatementFactory() {
     super(
@@ -100,12 +101,30 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory
   }
 
   @Override
-  public List<JdbcStatement> extractExtensions(List<Query> queries) {
-    return extractTypeExtensions(queries.stream().map(Query::relNode), EXTENSIONS).stream()
+  public List<JdbcStatement> applyTableExtensions(Collection<CreateTableJdbcStatement> tables) {
+    var res = new ArrayList<JdbcStatement>();
+
+    var tableExtensions = ServiceLoaderDiscovery.getAll(DatabaseTableExtension.class);
+    for (var ext : tableExtensions) {
+      var ddl = ext.getDdl(tables);
+
+      if (ddl != null && !ddl.isBlank()) {
+        res.add(new GenericJdbcStatement(ext.getName(), Type.EXTENSION, ddl));
+      }
+    }
+
+    return List.copyOf(res);
+  }
+
+  @Override
+  public List<JdbcStatement> extractTypeExtensions(List<Query> queries) {
+    var typeExtensions = ServiceLoaderDiscovery.getAll(DatabaseTypeExtension.class);
+
+    return extractTypeExtensions(queries.stream().map(Query::relNode), typeExtensions).stream()
         .map(
             ext ->
                 new GenericJdbcStatement(
-                    ext.getClass().getSimpleName(), Type.EXTENSION, ext.getExtensionDdl()))
+                    ext.getClass().getSimpleName(), Type.EXTENSION, ext.getDdl()))
         .collect(Collectors.toList());
   }
 
