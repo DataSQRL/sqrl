@@ -15,6 +15,8 @@
  */
 package com.datasqrl.compile;
 
+import static com.datasqrl.planner.util.SqrTableFunctionUtil.getTableFunctionFromPath;
+
 import com.datasqrl.compile.TestPlan.GraphqlQuery;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
@@ -23,7 +25,6 @@ import com.datasqrl.util.FileUtil;
 import graphql.language.AstPrinter;
 import graphql.language.Definition;
 import graphql.language.Document;
-import graphql.language.Node;
 import graphql.language.OperationDefinition;
 import graphql.parser.Parser;
 import java.io.IOException;
@@ -92,13 +93,14 @@ public class TestPlanner {
 
       var document = parser.parseDocument(api.schema().getDefinition());
       var queryNodes = gqlGenerator.visitDocument(document, null);
-      for (Node<?> definition : queryNodes) {
-        var definition1 = (OperationDefinition) definition;
+      for (var node : queryNodes) {
+        var definition = (OperationDefinition) node;
         queries.add(
             new GraphqlQuery(
                 api.version(),
-                definition1.getName(),
-                AstPrinter.printAst(definition1),
+                definition.getName(),
+                AstPrinter.printAst(definition),
+                shouldSnapshot(definition.getName()),
                 baseHeaders));
       }
     }
@@ -108,6 +110,13 @@ public class TestPlanner {
         List.copyOf(queries),
         List.copyOf(mutations),
         List.copyOf(subscriptions));
+  }
+
+  private boolean shouldSnapshot(String name) {
+    return getTableFunctionFromPath(gqlGenerator.getTableFunctions(), name)
+        .map(tableFn1 -> tableFn1.getFunctionAnalysis().getHints())
+        .map(hints -> !hints.isNoRowsTest())
+        .orElse(true);
   }
 
   @SneakyThrows
@@ -158,7 +167,12 @@ public class TestPlanner {
     for (Definition<?> definition : document.getDefinitions()) {
       if (definition instanceof OperationDefinition operationDefinition) {
         var query =
-            new GraphqlQuery(version, prefix, AstPrinter.printAst(operationDefinition), headers);
+            new GraphqlQuery(
+                version,
+                prefix,
+                AstPrinter.printAst(operationDefinition),
+                shouldSnapshot(prefix),
+                headers);
         switch (operationDefinition.getOperation()) {
           case QUERY:
             queries.add(query);
