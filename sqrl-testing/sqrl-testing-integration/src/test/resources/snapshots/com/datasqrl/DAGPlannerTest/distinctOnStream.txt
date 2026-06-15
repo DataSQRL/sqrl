@@ -388,7 +388,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerUpdates_2`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

@@ -40,6 +40,7 @@ import org.apache.calcite.rel.RelNode;
 public record JdbcPhysicalPlan(
     @JsonIgnore ExecutionStage stage,
     @Singular List<JdbcStatement> statements,
+    @Singular List<JdbcStatement> standaloneExtensionStatements,
     @JsonIgnore @Singular List<RelNode> queries,
     @JsonIgnore Map<String, CreateTableJdbcStatement> tableIdMap)
     implements DatabasePhysicalPlan {
@@ -47,28 +48,40 @@ public record JdbcPhysicalPlan(
   @SuppressWarnings("unused")
   @JsonCreator
   public JdbcPhysicalPlan(@JsonProperty("statements") List<JdbcStatement> statements) {
-    this(null, new ArrayList<>(statements), List.of(), Map.of());
+    this(null, new ArrayList<>(statements), List.of(), List.of(), Map.of());
   }
 
   public List<JdbcStatement> getStatementsForType(Type type) {
     return statements.stream().filter(s -> s.getType() == type).collect(Collectors.toList());
   }
 
+  @JsonIgnore
+  @Override
+  public List<DeploymentArtifact> getDeploymentArtifacts() {
+    var artifacts = new ArrayList<DeploymentArtifact>();
+    artifacts.add(new DeploymentArtifact("-schema.sql", buildSchemaContent()));
+    artifacts.add(new DeploymentArtifact("-views.sql", toSql(getStatementsForType(Type.VIEW))));
+
+    standaloneExtensionStatements.stream()
+        .map(stmt -> new DeploymentArtifact(formatSuffix(stmt.getName()), stmt.getSql()))
+        .forEach(artifacts::add);
+
+    return List.copyOf(artifacts);
+  }
+
+  private String buildSchemaContent() {
+    return Stream.of(Type.EXTENSION, Type.TABLE, Type.INDEX)
+        .map(this::getStatementsForType)
+        .filter(Predicate.not(List::isEmpty))
+        .map(JdbcPhysicalPlan::toSql)
+        .collect(Collectors.joining(";\n\n"));
+  }
+
   private static String toSql(List<JdbcStatement> statements) {
     return DeploymentArtifact.toSqlString(statements.stream().map(JdbcStatement::getSql));
   }
 
-  @JsonIgnore
-  @Override
-  public List<DeploymentArtifact> getDeploymentArtifacts() {
-    return List.of(
-        new DeploymentArtifact(
-            "-schema.sql",
-            Stream.of(Type.EXTENSION, Type.TABLE, Type.INDEX)
-                .map(this::getStatementsForType)
-                .filter(Predicate.not(List::isEmpty))
-                .map(JdbcPhysicalPlan::toSql)
-                .collect(Collectors.joining(";\n\n"))),
-        new DeploymentArtifact("-views.sql", toSql(getStatementsForType(Type.VIEW))));
+  private static String formatSuffix(String name) {
+    return "-" + name + ".sql";
   }
 }

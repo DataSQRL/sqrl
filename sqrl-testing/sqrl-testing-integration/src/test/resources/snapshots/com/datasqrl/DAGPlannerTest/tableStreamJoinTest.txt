@@ -879,7 +879,8 @@ INSERT INTO `default_catalog`.`default_database`.`OrderCustomerLeftExcludedTimeB
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"Customer_1_btree_c0c2\" ON \"Customer_1\" USING btree (\"customerid\",\"name\")"
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

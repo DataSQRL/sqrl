@@ -332,7 +332,8 @@ INSERT INTO `default_catalog`.`default_database`.`Orders1_2`
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"Orders1_2_btree_c2c1\" ON \"Orders1_2\" USING btree (\"time\",\"customerid\")"
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

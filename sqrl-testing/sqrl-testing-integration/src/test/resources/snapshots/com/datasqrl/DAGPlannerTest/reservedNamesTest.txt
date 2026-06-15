@@ -289,7 +289,8 @@ INSERT INTO `default_catalog`.`default_database`.`Where_2`
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"Order_1_hash_c1\" ON \"Order_1\" USING hash (\"customerid\")"
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {

@@ -754,7 +754,8 @@ INSERT INTO `default_catalog`.`default_database`.`CustomerExport`
         }
       ]
     }
-  ]
+  ],
+  "standaloneExtensionStatements" : [ ]
 }
 >>>vertx.json
 {
