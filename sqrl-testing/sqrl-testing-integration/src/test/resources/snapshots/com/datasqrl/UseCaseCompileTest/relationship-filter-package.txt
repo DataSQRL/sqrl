@@ -1,0 +1,624 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+type Detail {
+  id: String!
+  info: String!
+}
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  Detail(limit: Int = 10, offset: Int = 0): [Detail!]
+  Thing(limit: Int = 10, offset: Int = 0): [Thing!]
+  Tombstone(limit: Int = 10, offset: Int = 0): [Tombstone!]
+  cleanQuery(limit: Int = 10, offset: Int = 0): [Thing!]
+  joinQuery(limit: Int = 10, offset: Int = 0): [Thing!]
+  subqueryQuery(limit: Int = 10, offset: Int = 0): [Thing!]
+}
+
+type Thing {
+  id: String!
+  label: String!
+  detail: Detail
+}
+
+type Tombstone {
+  id: String!
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Detail
+ID:          default_catalog.default_database.Detail
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+Row count:   ~3
+---
+Schema:
+ - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+ - info: CHAR(8) CHARACTER SET "UTF-16LE" NOT NULL
+
+=== Thing
+ID:          default_catalog.default_database.Thing
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+Row count:   ~3
+---
+Schema:
+ - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+ - label: CHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
+
+=== Tombstone
+ID:          default_catalog.default_database.Tombstone
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+Row count:   ~1
+---
+Schema:
+ - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+
+=== cleanQuery
+ID:          default_catalog.default_database.cleanQuery
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+ - label: CHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Thing
+
+=== joinQuery
+ID:          default_catalog.default_database.joinQuery
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+Row count:   ~3e7
+---
+Schema:
+ - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+ - label: CHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Thing
+ - default_catalog.default_database.Tombstone
+
+=== subqueryQuery
+ID:          default_catalog.default_database.subqueryQuery
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   -
+Row count:   ~3e7
+---
+Schema:
+ - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+ - label: CHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Thing
+ - default_catalog.default_database.Tombstone
+
+>>>flink-sql-no-functions.sql
+CREATE VIEW `Thing`
+AS
+SELECT *
+FROM (VALUES ROW('a', 'label-a'),
+   ROW('b', 'label-b'),
+   ROW('c', 'label-c')) AS `t` (`id`, `label`);
+CREATE VIEW `Detail`
+AS
+SELECT *
+FROM (VALUES ROW('a', 'detail-a'),
+   ROW('b', 'detail-b'),
+   ROW('c', 'detail-c')) AS `t` (`id`, `info`);
+CREATE VIEW `Tombstone`
+AS
+SELECT *
+FROM (VALUES ROW('c')) AS `t` (`id`);
+CREATE VIEW `cleanQuery`
+AS
+SELECT *
+FROM `Thing`
+WHERE `label` IS NOT NULL;
+CREATE VIEW `subqueryQuery`
+AS
+SELECT *
+FROM `Thing`
+WHERE `id` NOT IN (SELECT `id`
+   FROM `Tombstone`);
+CREATE VIEW `joinQuery`
+AS
+SELECT `th`.*
+FROM `Thing` AS `th`
+ LEFT JOIN `Tombstone` AS `tomb` ON `th`.`id` = `tomb`.`id`
+WHERE `tomb`.`id` IS NULL;
+CREATE TABLE `Detail_1` (
+  `id` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  `info` CHAR(8) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Detail',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Thing_2` (
+  `id` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  `label` CHAR(7) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Thing',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Tombstone_3` (
+  `id` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Tombstone',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `cleanQuery_4` (
+  `id` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  `label` CHAR(7) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'cleanQuery',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `joinQuery_5` (
+  `id` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  `label` CHAR(7) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'joinQuery',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `subqueryQuery_6` (
+  `id` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
+  `label` CHAR(7) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'subqueryQuery',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Detail_1`
+SELECT *
+ FROM `default_catalog`.`default_database`.`Detail`
+;
+INSERT INTO `default_catalog`.`default_database`.`Thing_2`
+ SELECT *
+  FROM `default_catalog`.`default_database`.`Thing`
+ ;
+ INSERT INTO `default_catalog`.`default_database`.`Tombstone_3`
+  SELECT *
+   FROM `default_catalog`.`default_database`.`Tombstone`
+  ;
+  INSERT INTO `default_catalog`.`default_database`.`cleanQuery_4`
+   SELECT *
+    FROM `default_catalog`.`default_database`.`cleanQuery`
+   ;
+   INSERT INTO `default_catalog`.`default_database`.`joinQuery_5`
+    SELECT *
+     FROM `default_catalog`.`default_database`.`joinQuery`
+    ;
+    INSERT INTO `default_catalog`.`default_database`.`subqueryQuery_6`
+     SELECT *
+      FROM `default_catalog`.`default_database`.`subqueryQuery`
+     ;
+     END
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Detail" ("id" TEXT NOT NULL, "info" TEXT NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "Thing" ("id" TEXT NOT NULL, "label" TEXT NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "Tombstone" ("id" TEXT NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "cleanQuery" ("id" TEXT NOT NULL, "label" TEXT NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "joinQuery" ("id" TEXT NOT NULL, "label" TEXT NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT NULL, PRIMARY KEY ("id"))
+>>>postgres-views.sql
+
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Detail",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Detail\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Thing",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Thing\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Thing",
+          "fieldName" : "detail",
+          "exec" : {
+            "arguments" : [ ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Detail\"\nWHERE $1 = \"id\"\nFETCH NEXT 1 ROWS ONLY",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "id"
+                }
+              ],
+              "pagination" : "NONE",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Tombstone",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Tombstone\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "cleanQuery",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"cleanQuery\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "joinQuery",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"joinQuery\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "subqueryQuery",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"subqueryQuery\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetDetail",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Detail($limit: Int = 10, $offset: Int = 0) {\nDetail(limit: $limit, offset: $offset) {\nid\ninfo\n}\n\n}",
+            "queryName" : "Detail",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Detail{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetThing",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Thing($limit: Int = 10, $offset: Int = 0) {\nThing(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
+            "queryName" : "Thing",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Thing{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetTombstone",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Tombstone($limit: Int = 10, $offset: Int = 0) {\nTombstone(limit: $limit, offset: $offset) {\nid\n}\n\n}",
+            "queryName" : "Tombstone",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Tombstone{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetcleanQuery",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query cleanQuery($limit: Int = 10, $offset: Int = 0) {\ncleanQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
+            "queryName" : "cleanQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/cleanQuery{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetjoinQuery",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query joinQuery($limit: Int = 10, $offset: Int = 0) {\njoinQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
+            "queryName" : "joinQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/joinQuery{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetsubqueryQuery",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query subqueryQuery($limit: Int = 10, $offset: Int = 0) {\nsubqueryQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
+            "queryName" : "subqueryQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/subqueryQuery{?offset,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Detail {\n  id: String!\n  info: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Detail(limit: Int = 10, offset: Int = 0): [Detail!]\n  Thing(limit: Int = 10, offset: Int = 0): [Thing!]\n  Tombstone(limit: Int = 10, offset: Int = 0): [Tombstone!]\n  cleanQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  joinQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  subqueryQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n}\n\ntype Thing {\n  id: String!\n  label: String!\n  detail: Detail\n}\n\ntype Tombstone {\n  id: String!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

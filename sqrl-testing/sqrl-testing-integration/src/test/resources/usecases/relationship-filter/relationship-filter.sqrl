@@ -1,0 +1,25 @@
+/*+primary_key(id) */
+Thing := SELECT * FROM (VALUES
+    ('a', 'label-a'), ('b', 'label-b'), ('c', 'label-c')) AS t (id, label);
+
+/*+primary_key(id) */
+Detail := SELECT * FROM (VALUES
+    ('a', 'detail-a'), ('b', 'detail-b'), ('c', 'detail-c')) AS t (id, info);
+
+/*+primary_key(id) */
+Tombstone := SELECT * FROM (VALUES ('c')) AS t (id);
+
+-- Nested relationship field on Thing
+Thing.detail := SELECT * FROM Detail d WHERE this.id = d.id LIMIT 1;
+
+-- A) clean passthrough -> result keeps `detail`
+cleanQuery := SELECT * FROM Thing WHERE label IS NOT NULL;
+
+-- B) subquery filter -> result must also keep `detail`
+subqueryQuery := SELECT * FROM Thing
+WHERE id NOT IN (SELECT id FROM Tombstone);
+
+-- C) anti-join filter -> result must also keep `detail`
+joinQuery := SELECT th.* FROM Thing th
+LEFT JOIN Tombstone tomb ON th.id = tomb.id
+WHERE tomb.id IS NULL;
