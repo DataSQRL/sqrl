@@ -244,8 +244,7 @@ class McpValidationIT {
       log.info("Testing tool call for: {}", firstTool.name());
 
       var callRequest =
-          McpSchema.CallToolRequest.builder()
-              .name(firstTool.name())
+          McpSchema.CallToolRequest.builder(firstTool.name())
               .arguments(Map.of("limit", 3))
               .build();
 
@@ -314,7 +313,7 @@ class McpValidationIT {
             foundValidToolsResponse = true;
             assertThat(jsonResponse.get("tools").isArray()).as("Tools should be an array").isTrue();
 
-            if (jsonResponse.get("tools").size() > 0) {
+            if (!jsonResponse.get("tools").isEmpty()) {
               var firstTool = jsonResponse.get("tools").get(0);
               assertThat(firstTool.has("name")).as("Tool should have name").isTrue();
               assertThat(firstTool.has("description")).as("Tool should have description").isTrue();
