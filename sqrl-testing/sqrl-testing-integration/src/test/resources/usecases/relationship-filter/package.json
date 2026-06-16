@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "postgres", "vertx"],
+  "script": {
+    "main": "relationship-filter.sqrl"
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

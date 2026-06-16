@@ -42,8 +42,8 @@ import com.datasqrl.planner.hint.RowCountHint;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.LinkedHashMultimap;
+import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -231,9 +231,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     Optional<String> documentation = hintsAndDoc.doc();
     if (preservesBaseTable && !sourceTables.isEmpty()) {
       baseTable =
-          Optional.ofNullable(Iterables.getLast(sourceTables))
+          Lists.reverse(sourceTables).stream()
               .filter(AbstractAnalysis::hasRowType)
               .filter(tbl -> tbl.getRowType().equals(originalRelnode.getRowType()))
+              .findFirst()
               .map(TableOrFunctionAnalysis::getBaseTable);
 
       // We inherit doc even if basetable is hidden
