@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import com.datasqrl.server.MetadataReader;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.ext.web.RoutingContext;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -47,12 +48,13 @@ public class AuthMetadataReader implements MetadataReader {
               "WWW-Authenticate",
               "Bearer error=\"insufficient_scope\", error_description=\"Required claim missing\"");
 
+      var locations =
+          env.getField().getSourceLocation() == null
+              ? null
+              : List.of(env.getField().getSourceLocation());
+
       throw new MissingRequiredClaimException(
-          name,
-          env.getField().getSourceLocation() != null
-              ? java.util.List.of(env.getField().getSourceLocation())
-              : null,
-          env.getExecutionStepInfo().getPath());
+          name, locations, env.getExecutionStepInfo().getPath());
     }
 
     var value = principal.get(name);
