@@ -30,7 +30,7 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Checkout datasqrl-examples
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: DataSQRL/datasqrl-examples
           token: ${{ secrets.EXAMPLES_BOT_PAT }}
