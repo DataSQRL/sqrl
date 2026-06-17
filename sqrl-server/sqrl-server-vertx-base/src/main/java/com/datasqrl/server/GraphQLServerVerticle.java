@@ -24,6 +24,7 @@ import com.datasqrl.server.exec.FlinkExecFunctionPlan;
 import com.datasqrl.server.exec.FlinkFunctionExecutor;
 import com.datasqrl.server.graphql.CustomScalars;
 import com.datasqrl.server.graphql.GraphQLEngineBuilder;
+import com.datasqrl.server.graphql.GraphQLQueryMetricsInstrumentation;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.jdbc.DatabaseType;
 import com.datasqrl.server.jdbc.JdbcClientsConfig;
@@ -32,6 +33,7 @@ import com.datasqrl.server.jdbc.VertxParamArgumentTypeMapper;
 import com.google.common.collect.ImmutableMap;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
+import graphql.execution.instrumentation.ChainedInstrumentation;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
@@ -48,6 +50,8 @@ import io.vertx.sqlclient.SqlClient;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javax.annotation.Nullable;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -66,7 +70,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   private final List<AuthenticationProvider> authProviders;
   private final Optional<FlinkExecFunctionPlan> execFunctionPlan;
 
-  private GraphQL graphQLEngine;
+  @Getter @Nullable private GraphQL graphQLEngine;
 
   @Override
   public void start(Promise<Void> startPromise) {
@@ -169,15 +173,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
     }
   }
 
-  /**
-   * Returns the GraphQL engine instance for internal use by other verticles.
-   *
-   * @return the GraphQL engine, or null if not yet initialized
-   */
-  public GraphQL getGraphQLEngine() {
-    return this.graphQLEngine;
-  }
-
   public GraphQL createGraphQL(
       Map<DatabaseType, SqlClient> clients,
       SubscriptionConfigurationImpl subscriptionConfig,
@@ -185,6 +180,13 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       FunctionExecutor functionExecutor) {
     try {
       var vertxJdbcClient = new VertxJdbcClient(clients);
+      var vertxServerCtx =
+          new VertxServerContext(
+              vertxJdbcClient,
+              metadataReaders,
+              functionExecutor,
+              new VertxParamArgumentTypeMapper());
+
       var graphQL =
           model.accept(
               new GraphQLEngineBuilder.Builder()
@@ -192,15 +194,17 @@ public class GraphQLServerVerticle extends AbstractVerticle {
                   .withSubscriptionConfiguration(subscriptionConfig)
                   .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
                   .build(),
-              new VertxServerContext(
-                  vertxJdbcClient,
-                  metadataReaders,
-                  functionExecutor,
-                  new VertxParamArgumentTypeMapper()));
+              vertxServerCtx);
+
       var meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
-        graphQL.instrumentation(new MicrometerInstrumentation(meterRegistry));
+        graphQL.instrumentation(
+            new ChainedInstrumentation(
+                List.of(
+                    new MicrometerInstrumentation(meterRegistry),
+                    new GraphQLQueryMetricsInstrumentation(meterRegistry, modelVersion, model))));
       }
+
       return graphQL.build();
     } catch (Exception e) {
       log.error("Unable to create GraphQL", e);
