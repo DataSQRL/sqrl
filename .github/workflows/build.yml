@@ -14,7 +14,7 @@ jobs:
       has-code: ${{ steps.filter.outputs.has-code }}
       has-docs: ${{ steps.filter.outputs.has-docs }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Detect change scopes
@@ -38,7 +38,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           submodules: false
 
@@ -52,10 +52,10 @@ jobs:
           git pull --ff-only origin main
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
-          cache: npm
+          cache: 'npm'
           cache-dependency-path: documentation/package-lock.json
 
       - name: Install dependencies
