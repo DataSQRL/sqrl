@@ -207,7 +207,8 @@ public class HttpServerVerticle extends AbstractVerticle {
                 try {
                   var config =
                       new JsonObject(
-                          JsonUtils.MAPPER.readValue(result.result().toString(), Map.class));
+                          JsonUtils.getMapperWithEnvVarResolver()
+                              .readValue(result.result().toString(), Map.class));
                   promise.complete(config);
                 } catch (Exception e) {
                   e.printStackTrace();
@@ -222,8 +223,8 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   @SneakyThrows
   public static Map<String, RootGraphQLModel> loadModel() {
-    return JsonUtils.MAPPER.readValue(
-            new File("vertx.json").getAbsoluteFile(), ModelContainer.class)
+    return JsonUtils.getMapperWithEnvVarResolver()
+        .readValue(new File("vertx.json").getAbsoluteFile(), ModelContainer.class)
         .models;
   }
 }

@@ -37,6 +37,10 @@ public class JsonUtils {
     MAPPER.registerModule(new VertxModule());
   }
 
+  public static ObjectMapper getMapperWithEnvVarResolver() {
+    return getMapperWithEnvVarResolver(System.getenv());
+  }
+
   public static ObjectMapper getMapperWithEnvVarResolver(@Nullable Map<String, String> env) {
     var finalEnv = env != null ? env : GlobalEnvironmentStore.getAll();
     var resolver = EnvVarResolver.builder().envVars(finalEnv).strict(false).build();

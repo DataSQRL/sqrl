@@ -40,7 +40,7 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
 
   @Override
   public CompletionStage<Void> configure(VertxServerModuleContext ctx) {
-    var deploymentFutures = new ArrayList<Future<String>>();
+    var deploymentFutures = new ArrayList<Future<Void>>();
     for (var modelEntry : ctx.models().entrySet()) {
       var deploymentFuture = deployVersionedModel(ctx, modelEntry.getKey(), modelEntry.getValue());
       deploymentFutures.add(deploymentFuture);
@@ -53,7 +53,7 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
     return toCompletionStage(Future.all(deploymentFutures).mapEmpty());
   }
 
-  private Future<String> deployVersionedModel(
+  private Future<Void> deployVersionedModel(
       VertxServerModuleContext context, String modelVersion, RootGraphQLModel model) {
     var childOpts = new DeploymentOptions().setInstances(1);
     var hasMcp = model.getOperations().stream().anyMatch(ApiOperation::isMcpEndpoint);
@@ -79,53 +79,77 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
               return context
                   .vertx()
                   .deployVerticle(graphQLVerticle, childOpts)
-                  .onSuccess(
+                  .compose(
                       graphQLDeploymentId -> {
                         log.info("GraphQL verticle deployed successfully: {}", graphQLDeploymentId);
-                        if (hasMcp) {
-                          var mcpBridgeVerticle =
-                              new McpBridgeVerticle(
-                                  context.router(),
-                                  context.config(),
-                                  modelVersion,
-                                  model,
-                                  authProviders,
-                                  graphQLVerticle);
-                          context
-                              .vertx()
-                              .deployVerticle(mcpBridgeVerticle, childOpts)
-                              .onSuccess(
-                                  id ->
-                                      log.info("MCP bridge verticle deployed successfully: {}", id))
-                              .onFailure(
-                                  err -> log.error("Failed to deploy MCP bridge verticle", err));
-                        }
-                        if (hasRest) {
-                          var restBridgeVerticle =
-                              new RestBridgeVerticle(
-                                  context.router(),
-                                  context.config(),
-                                  modelVersion,
-                                  model,
-                                  authProviders,
-                                  graphQLVerticle);
-                          context
-                              .vertx()
-                              .deployVerticle(restBridgeVerticle, childOpts)
-                              .onSuccess(
-                                  id ->
-                                      log.info(
-                                          "REST bridge verticle deployed successfully: {}", id))
-                              .onFailure(
-                                  err -> log.error("Failed to deploy REST bridge verticle", err));
-                        }
+                        return deployBridgeVerticles(
+                            context,
+                            childOpts,
+                            modelVersion,
+                            model,
+                            authProviders,
+                            graphQLVerticle,
+                            hasMcp,
+                            hasRest);
                       })
                   .onFailure(
                       err ->
                           log.error(
-                              "Failed to deploy GraphQL verticle, will trigger orderly shutdown",
+                              "Failed to deploy API verticles, will trigger orderly shutdown",
                               err));
             });
+  }
+
+  private Future<Void> deployBridgeVerticles(
+      VertxServerModuleContext context,
+      DeploymentOptions childOpts,
+      String modelVersion,
+      RootGraphQLModel model,
+      List<AuthenticationProvider> authProviders,
+      GraphQLServerVerticle graphQLVerticle,
+      boolean hasMcp,
+      boolean hasRest) {
+    var bridgeDeploymentFutures = new ArrayList<Future<String>>();
+
+    if (hasMcp) {
+      var mcpBridgeVerticle =
+          new McpBridgeVerticle(
+              context.router(),
+              context.config(),
+              modelVersion,
+              model,
+              authProviders,
+              graphQLVerticle);
+      bridgeDeploymentFutures.add(
+          context
+              .vertx()
+              .deployVerticle(mcpBridgeVerticle, childOpts)
+              .onSuccess(id -> log.info("MCP bridge verticle deployed successfully: {}", id))
+              .onFailure(err -> log.error("Failed to deploy MCP bridge verticle", err)));
+    }
+
+    if (hasRest) {
+      var restBridgeVerticle =
+          new RestBridgeVerticle(
+              context.router(),
+              context.config(),
+              modelVersion,
+              model,
+              authProviders,
+              graphQLVerticle);
+      bridgeDeploymentFutures.add(
+          context
+              .vertx()
+              .deployVerticle(restBridgeVerticle, childOpts)
+              .onSuccess(id -> log.info("REST bridge verticle deployed successfully: {}", id))
+              .onFailure(err -> log.error("Failed to deploy REST bridge verticle", err)));
+    }
+
+    if (bridgeDeploymentFutures.isEmpty()) {
+      return Future.succeededFuture();
+    }
+
+    return Future.all(bridgeDeploymentFutures).mapEmpty();
   }
 
   private Future<List<AuthenticationProvider>> createAuthProviders(
