@@ -15,48 +15,31 @@
  */
 package com.datasqrl.server;
 
-import com.datasqrl.server.auth.OAuth2AuthFactory;
-import com.datasqrl.server.auth.OAuthDiscoveryHandler;
-import com.datasqrl.server.config.CorsHandlerOptions;
 import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.config.ServerConfigUtil;
-import com.datasqrl.server.exec.FlinkExecFunctionPlan;
 import com.datasqrl.server.graphql.ModelContainer;
-import com.datasqrl.server.graphql.ModelUtils;
 import com.datasqrl.server.graphql.RootGraphQLModel;
-import com.datasqrl.server.kafka.KafkaHealthTracker;
-import com.datasqrl.server.operation.ApiOperation;
+import com.datasqrl.server.modules.ApiDeploymentModule;
+import com.datasqrl.server.modules.GlobalHandlersModule;
+import com.datasqrl.server.modules.HealthChecksModule;
+import com.datasqrl.server.modules.MetricsModule;
+import com.datasqrl.server.modules.OAuthDiscoveryModule;
+import com.datasqrl.server.modules.ServerModule;
+import com.datasqrl.server.modules.VertxServerModuleContext;
 import com.datasqrl.util.JsonUtils;
-import com.google.common.collect.MoreCollectors;
-import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
-import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
-import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
-import io.micrometer.core.instrument.binder.system.UptimeMetrics;
-import io.micrometer.core.instrument.composite.CompositeMeterRegistry;
-import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
-import io.vertx.core.http.HttpMethod;
+import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.auth.authentication.AuthenticationProvider;
-import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.healthchecks.Status;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.CorsHandler;
-import io.vertx.ext.web.handler.LoggerHandler;
-import io.vertx.ext.web.healthchecks.HealthCheckHandler;
-import io.vertx.micrometer.backends.BackendRegistries;
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
@@ -148,99 +131,11 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   private void bootstrap(Promise<Void> startPromise) {
     var router = Router.router(vertx);
+    var moduleContext =
+        new VertxServerModuleContext(vertx, router, config, models, planDir, closeables);
 
-    // ── Metrics ───────────────────────────────────────────────────────────────
-    var meterRegistry = findMeterRegistry();
-    meterRegistry.ifPresent(
-        registry -> {
-          registerJvmMetrics(registry);
-
-          router
-              .route("/metrics")
-              .handler(
-                  ctx ->
-                      ctx.response()
-                          .putHeader("content-type", "text/plain")
-                          .end(registry.scrape()));
-        });
-
-    // ── Global handlers (CORS, body, etc.) ────────────────────────────────────
-    router.route().handler(toCorsHandler(config.getCorsHandlerOptions()));
-    router.route().handler(BodyHandler.create());
-
-    // Use detailed tracing if enabled, otherwise use standard logging (must be after BodyHandler)
-    if (System.getenv("SQRL_DEBUG") != null) {
-      router.route().handler(new DetailedRequestTracer());
-    } else {
-      router.route().handler(LoggerHandler.create());
-    }
-
-    // ── Health checks ────────────────────────────────────────────────────────
-    var healthCheckHandler = HealthCheckHandler.create(vertx);
-
-    var kafkaHealthTrackerCtx = Optional.<KafkaHealthTracker.Context>empty();
-    for (var model : models.values()) {
-      var topic = ModelUtils.findFirstKafkaMutationTopic(model);
-      if (topic.isPresent()) {
-        kafkaHealthTrackerCtx =
-            Optional.of(
-                new KafkaHealthTracker.Context(
-                    topic.get(), config.getKafkaMutationConfig().asMap(false)));
-        break;
-      }
-
-      topic = ModelUtils.findFirstKafkaSubscriptionTopic(model);
-      if (topic.isPresent()) {
-        kafkaHealthTrackerCtx =
-            Optional.of(
-                new KafkaHealthTracker.Context(
-                    topic.get(), config.getKafkaSubscriptionConfig().asMap()));
-      }
-    }
-
-    if (kafkaHealthTrackerCtx.isPresent()) {
-      var kafkaHealthTracker = new KafkaHealthTracker(vertx, kafkaHealthTrackerCtx.get());
-      closeables.add(kafkaHealthTracker);
-
-      healthCheckHandler.register(
-          "kafka",
-          promise -> {
-            if (kafkaHealthTracker.isHealthy()) {
-              promise.complete(Status.OK());
-            } else {
-              promise.complete(
-                  Status.KO(
-                      new JsonObject()
-                          .put("reason", "Kafka broker probe failed")
-                          .put("error", kafkaHealthTracker.lastError())));
-            }
-          });
-    }
-
-    router.get("/health*").handler(healthCheckHandler);
-
-    // ── OAuth Discovery Endpoints (RFC 9728) ─────────────────────────────────
-    var oauthDiscovery = new OAuthDiscoveryHandler(config);
-    oauthDiscovery.registerRoutes(router);
-
-    // Deploy GraphQL verticles and collect futures
-    var deploymentFutures = new ArrayList<Future<String>>();
-    for (var modelEntry : models.entrySet()) {
-      var deploymentFuture =
-          deployVersionedModel(router, modelEntry.getKey(), modelEntry.getValue());
-      deploymentFutures.add(deploymentFuture);
-    }
-
-    // Wait for all GraphQL verticles to deploy, then start HTTP server
-    Future.all(deploymentFutures)
-        .compose(
-            compositeFuture -> {
-              // ── Start the HTTP server ────────────────────────────────────────────────
-              return vertx
-                  .createHttpServer(config.getHttpServerOptions())
-                  .requestHandler(router)
-                  .listen(config.getHttpServerOptions().getPort());
-            })
+    configureModules(moduleContext)
+        .compose(ignored -> startHttpServer(router))
         .onSuccess(
             server -> {
               log.info("HTTP server listening on port {}", server.actualPort());
@@ -253,132 +148,47 @@ public class HttpServerVerticle extends AbstractVerticle {
             });
   }
 
-  private Optional<PrometheusMeterRegistry> findMeterRegistry() {
-    var registry = BackendRegistries.getDefaultNow();
-    if (registry == null) {
-      return Optional.empty();
-    }
-
-    log.info("Found registry: {}", registry.getClass().getSimpleName());
-
-    if (registry instanceof PrometheusMeterRegistry meterRegistry) {
-      return Optional.of(meterRegistry);
-    }
-
-    if (registry instanceof CompositeMeterRegistry compositeRegistry) {
-      return compositeRegistry.getRegistries().stream()
-          .filter(PrometheusMeterRegistry.class::isInstance)
-          .map(PrometheusMeterRegistry.class::cast)
-          .collect(MoreCollectors.toOptional());
-    }
-
-    throw new IllegalStateException(
-        "Unable to register metrics to: " + registry.getClass().getSimpleName());
+  private Future<Void> configureModules(VertxServerModuleContext ctx) {
+    return configureInfrastructure(ctx)
+        .compose(ignored -> configureGlobalHandlers(ctx))
+        .compose(ignored -> configureEndpoints(ctx))
+        .compose(ignored -> deployApiVerticles(ctx));
   }
 
-  private Future<String> deployVersionedModel(
-      Router router, String modelVersion, RootGraphQLModel model) {
-    var childOpts = new DeploymentOptions().setInstances(1);
-    var hasMcp = model.getOperations().stream().anyMatch(ApiOperation::isMcpEndpoint);
-    var hasRest = model.getOperations().stream().anyMatch(ApiOperation::isRestEndpoint);
-
-    return createAuthProviders()
-        .compose(
-            authProviders -> {
-              var execFunctionPlan = loadExecFunctionPlan();
-              if (execFunctionPlan.isPresent()) {
-                log.info("Exec function plan loaded");
-              }
-
-              var graphQLVerticle =
-                  new GraphQLServerVerticle(
-                      router, config, modelVersion, model, authProviders, execFunctionPlan);
-
-              return vertx
-                  .deployVerticle(graphQLVerticle, childOpts)
-                  .onSuccess(
-                      graphQLDeploymentId -> {
-                        log.info("GraphQL verticle deployed successfully: {}", graphQLDeploymentId);
-                        if (hasMcp) {
-                          var mcpBridgeVerticle =
-                              new McpBridgeVerticle(
-                                  router,
-                                  config,
-                                  modelVersion,
-                                  model,
-                                  authProviders,
-                                  graphQLVerticle);
-                          vertx
-                              .deployVerticle(mcpBridgeVerticle, childOpts)
-                              .onSuccess(
-                                  id ->
-                                      log.info("MCP bridge verticle deployed successfully: {}", id))
-                              .onFailure(
-                                  err -> log.error("Failed to deploy MCP bridge verticle", err));
-                        }
-                        if (hasRest) {
-                          var restBridgeVerticle =
-                              new RestBridgeVerticle(
-                                  router,
-                                  config,
-                                  modelVersion,
-                                  model,
-                                  authProviders,
-                                  graphQLVerticle);
-                          vertx
-                              .deployVerticle(restBridgeVerticle, childOpts)
-                              .onSuccess(
-                                  id ->
-                                      log.info(
-                                          "REST bridge verticle deployed successfully: {}", id))
-                              .onFailure(
-                                  err -> log.error("Failed to deploy REST bridge verticle", err));
-                        }
-                      })
-                  .onFailure(
-                      err ->
-                          log.error(
-                              "Failed to deploy GraphQL verticle, will trigger orderly shutdown",
-                              err));
-            });
+  private Future<Void> configureInfrastructure(VertxServerModuleContext ctx) {
+    return configurePhase(ctx, new MetricsModule());
   }
 
-  /**
-   * Creates authentication providers for all configured auth methods. Supports both OAuth and JWT
-   * simultaneously when both are configured.
-   */
-  private Future<List<AuthenticationProvider>> createAuthProviders() {
-    List<Future<AuthenticationProvider>> providerFutures = new ArrayList<>();
+  private Future<Void> configureGlobalHandlers(VertxServerModuleContext ctx) {
+    return configurePhase(ctx, new GlobalHandlersModule());
+  }
 
-    if (config.getOauthConfig() != null && config.getOauthConfig().getSite() != null) {
-      log.info("Configuring OAuth authentication with JWKS");
-      providerFutures.add(
-          OAuth2AuthFactory.createAuthProvider(vertx, config.getOauthConfig())
-              .map(provider -> (AuthenticationProvider) provider));
+  private Future<Void> configureEndpoints(VertxServerModuleContext ctx) {
+    return configurePhase(ctx, new HealthChecksModule(), new OAuthDiscoveryModule());
+  }
+
+  private Future<Void> deployApiVerticles(VertxServerModuleContext ctx) {
+    return configurePhase(ctx, new ApiDeploymentModule());
+  }
+
+  @SafeVarargs
+  private Future<Void> configurePhase(
+      VertxServerModuleContext ctx, ServerModule<VertxServerModuleContext>... modules) {
+
+    CompletionStage<Void> chain = CompletableFuture.completedStage(null);
+
+    for (var module : modules) {
+      chain = chain.thenCompose(ignored -> module.configure(ctx));
     }
 
-    if (config.getJwtAuth() != null) {
-      log.info("Configuring JWT authentication");
-      providerFutures.add(
-          Future.succeededFuture(
-              (AuthenticationProvider) JWTAuth.create(vertx, config.getJwtAuthOptions())));
-    }
+    return Future.fromCompletionStage(chain);
+  }
 
-    if (providerFutures.isEmpty()) {
-      log.info("No authentication configured");
-      return Future.succeededFuture(List.of());
-    }
-
-    return Future.all(providerFutures)
-        .map(
-            composite -> {
-              List<AuthenticationProvider> providers = new ArrayList<>();
-              for (int i = 0; i < composite.size(); i++) {
-                providers.add(composite.resultAt(i));
-              }
-              log.info("Configured {} authentication provider(s)", providers.size());
-              return providers;
-            });
+  private Future<HttpServer> startHttpServer(Router router) {
+    return vertx
+        .createHttpServer(config.getHttpServerOptions())
+        .requestHandler(router)
+        .listen(config.getHttpServerOptions().getPort());
   }
 
   // ---------------------------------------------------------------------------
@@ -410,50 +220,10 @@ public class HttpServerVerticle extends AbstractVerticle {
     return promise.future();
   }
 
-  private Optional<FlinkExecFunctionPlan> loadExecFunctionPlan() {
-    var planFile = planDir.resolve("vertx-exec-functions.ser");
-
-    if (!Files.exists(planFile)) {
-      return Optional.empty();
-    }
-
-    return Optional.of(FlinkExecFunctionPlan.deserialize(planFile));
-  }
-
-  private void registerJvmMetrics(PrometheusMeterRegistry registry) {
-    new UptimeMetrics().bindTo(registry);
-    new JvmMemoryMetrics().bindTo(registry);
-    new JvmThreadMetrics().bindTo(registry);
-
-    var jvmGcMetrics = new JvmGcMetrics();
-    jvmGcMetrics.bindTo(registry);
-    closeables.add(jvmGcMetrics);
-  }
-
   @SneakyThrows
   public static Map<String, RootGraphQLModel> loadModel() {
     return JsonUtils.MAPPER.readValue(
             new File("vertx.json").getAbsoluteFile(), ModelContainer.class)
         .models;
-  }
-
-  /** Build a Vert.x {@link CorsHandler} from our own options DTO. */
-  private CorsHandler toCorsHandler(CorsHandlerOptions opts) {
-    var ch =
-        opts.getAllowedOrigin() != null
-            ? CorsHandler.create().addOrigin(opts.getAllowedOrigin())
-            : CorsHandler.create();
-
-    if (opts.getAllowedOrigins() != null) {
-      ch.addOrigins(opts.getAllowedOrigins());
-    }
-
-    return ch.allowedMethods(
-            opts.getAllowedMethods().stream().map(HttpMethod::valueOf).collect(Collectors.toSet()))
-        .allowedHeaders(opts.getAllowedHeaders())
-        .exposedHeaders(opts.getExposedHeaders())
-        .allowCredentials(opts.isAllowCredentials())
-        .maxAgeSeconds(opts.getMaxAgeSeconds())
-        .allowPrivateNetwork(opts.isAllowPrivateNetwork());
   }
 }
