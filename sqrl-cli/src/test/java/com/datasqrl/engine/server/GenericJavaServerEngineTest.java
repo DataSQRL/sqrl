@@ -15,12 +15,12 @@
  */
 package com.datasqrl.engine.server;
 
-import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.QueryEngineConfigConverter;
-import com.datasqrl.graphql.config.ServerConfigUtil;
+import com.datasqrl.server.config.ServerConfigUtil;
+import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.List;
@@ -61,8 +61,8 @@ class GenericJavaServerEngineTest {
     var mergedConfig = ServerConfigUtil.mergeConfigs(defaultConfig, config);
 
     // Serialize the merged configuration to JSON string and parse back
-    var serializedJson = MAPPER.writeValueAsString(mergedConfig);
-    JsonNode configNode = MAPPER.readTree(serializedJson);
+    var serializedJson = JsonUtils.MAPPER.writeValueAsString(mergedConfig);
+    JsonNode configNode = JsonUtils.MAPPER.readTree(serializedJson);
     JsonNode pubSecKeysNode = configNode.path("jwtAuth").path("pubSecKeys");
 
     assertThat(pubSecKeysNode.isArray()).isTrue();

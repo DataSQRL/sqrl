@@ -15,7 +15,7 @@
  */
 package com.datasqrl.planner.tables;
 
-import com.datasqrl.graphql.server.ResolvedMetadata;
+import com.datasqrl.server.ResolvedMetadata;
 
 public interface MetadataExtractor {
 

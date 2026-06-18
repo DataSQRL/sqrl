@@ -15,7 +15,7 @@
  */
 package com.datasqrl.converter;
 
-import static com.datasqrl.graphql.converter.GraphQLSchemaConverterConfig.ignorePrefix;
+import static com.datasqrl.server.converter.GraphQLSchemaConverterConfig.ignorePrefix;
 import static graphql.Scalars.GraphQLBoolean;
 import static graphql.Scalars.GraphQLFloat;
 import static graphql.Scalars.GraphQLID;
@@ -24,10 +24,10 @@ import static graphql.Scalars.GraphQLString;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-import com.datasqrl.graphql.converter.GraphQLSchemaConverter;
-import com.datasqrl.graphql.converter.GraphQLSchemaConverterConfig;
-import com.datasqrl.graphql.server.CustomScalars;
-import com.datasqrl.graphql.server.operation.ApiOperation;
+import com.datasqrl.server.converter.GraphQLSchemaConverter;
+import com.datasqrl.server.converter.GraphQLSchemaConverterConfig;
+import com.datasqrl.server.graphql.CustomScalars;
+import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.fasterxml.jackson.annotation.JsonInclude;

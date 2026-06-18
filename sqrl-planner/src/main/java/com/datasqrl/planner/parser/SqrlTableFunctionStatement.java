@@ -16,9 +16,9 @@
 package com.datasqrl.planner.parser;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.graphql.exec.FlinkExecFunction;
-import com.datasqrl.graphql.server.MetadataType;
-import com.datasqrl.graphql.server.ResolvedMetadata;
+import com.datasqrl.server.MetadataType;
+import com.datasqrl.server.ResolvedMetadata;
+import com.datasqrl.server.exec.FlinkExecFunction;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.Optional;

@@ -16,9 +16,9 @@
 package com.datasqrl.engine.server;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
-import com.datasqrl.graphql.server.RootGraphqlModel;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,5 +43,5 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
    * The generated API for the server. This gets generated after the planning and is added to the
    * plan later.
    */
-  final Map<String, RootGraphqlModel> models = new LinkedHashMap<>();
+  final Map<String, RootGraphQLModel> models = new LinkedHashMap<>();
 }

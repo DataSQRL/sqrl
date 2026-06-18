@@ -320,7 +320,7 @@ public final class ConfigLoaderUtils {
 
     // Merge all collected JSON into one object
     var merged = MAPPER.createObjectNode();
-    jsons.forEach(node -> JsonMergeUtils.merge(merged, node));
+    jsons.forEach(node -> JsonUtils.merge(merged, node));
 
     return SqrlConfig.loadResolvedConfig(errors, merged);
   }

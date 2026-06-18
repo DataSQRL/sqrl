@@ -15,15 +15,15 @@
  */
 package com.datasqrl.config;
 
-import static com.datasqrl.graphql.ApiSources.DEFAULT_API_VERSION;
+import static com.datasqrl.server.ApiSources.DEFAULT_API_VERSION;
 
 import com.datasqrl.engine.server.ServerPhysicalPlan;
-import com.datasqrl.graphql.ApiSource;
-import com.datasqrl.graphql.ApiSources;
-import com.datasqrl.graphql.GraphqlSchemaHandler;
-import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.plan.validate.ExecutionGoal;
+import com.datasqrl.server.ApiSource;
+import com.datasqrl.server.ApiSources;
+import com.datasqrl.server.GraphqlSchemaHandler;
+import com.datasqrl.server.ScriptFiles;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;

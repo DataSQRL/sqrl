@@ -16,10 +16,10 @@
 package com.datasqrl.planner.hint;
 
 import com.datasqrl.error.ErrorLabel;
-import com.datasqrl.graphql.server.MutationInsertType;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
 import com.datasqrl.planner.parser.StatementParserException;
+import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.util.EnumUtil;
 import com.google.auto.service.AutoService;
 import java.util.Arrays;

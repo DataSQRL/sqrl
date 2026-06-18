@@ -20,7 +20,7 @@ import static com.datasqrl.planner.util.SqrTableFunctionUtil.getTableFunctionFro
 import com.datasqrl.compile.TestPlan.GraphqlQuery;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
-import com.datasqrl.graphql.ApiSources;
+import com.datasqrl.server.ApiSources;
 import com.datasqrl.util.FileUtil;
 import graphql.language.AstPrinter;
 import graphql.language.Definition;

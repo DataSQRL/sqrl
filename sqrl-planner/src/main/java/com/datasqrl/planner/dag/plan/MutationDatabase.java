@@ -17,9 +17,9 @@ package com.datasqrl.planner.dag.plan;
 
 import com.datasqrl.calcite.type.TypeCompatibility;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.exec.FlinkExecFunction;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.ParsedRelDataTypeResult;
+import com.datasqrl.server.exec.FlinkExecFunction;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Collection;
 import java.util.List;
