@@ -27,4 +27,4 @@ fi
 cd /opt/sqrl/config
 
 # Run the application jar from the app directory using SqrlLauncher to enable metrics
-exec java $SQRL_JVM_ARGS -cp /opt/sqrl/app/vertx-server.jar com.datasqrl.graphql.SqrlLauncher
+exec java $SQRL_JVM_ARGS -cp /opt/sqrl/app/vertx-server.jar com.datasqrl.server.SqrlLauncher
