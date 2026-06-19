@@ -67,7 +67,7 @@ public class KafkaStartupFailureContainerIT {
     // Verify the expected error messages are present
     assertThat(logs).contains("Invalid url in bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS}");
     assertThat(logs).contains("Unable to create GraphQL");
-    assertThat(logs).contains("Failed to deploy GraphQL verticle");
+    assertThat(logs).contains("Failed to deploy API verticles, will trigger orderly shutdown");
   }
 
   @Test
@@ -101,6 +101,6 @@ public class KafkaStartupFailureContainerIT {
 
     // Verify error messages
     assertThat(logs).contains("Invalid url in bootstrap.servers");
-    assertThat(logs).contains("Failed to deploy GraphQL verticle, will trigger orderly shutdown");
+    assertThat(logs).contains("Failed to deploy API verticles, will trigger orderly shutdown");
   }
 }

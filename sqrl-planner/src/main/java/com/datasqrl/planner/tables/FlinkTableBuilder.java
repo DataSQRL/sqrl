@@ -17,7 +17,7 @@ package com.datasqrl.planner.tables;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
-import com.datasqrl.graphql.server.ResolvedMetadata;
+import com.datasqrl.server.ResolvedMetadata;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;

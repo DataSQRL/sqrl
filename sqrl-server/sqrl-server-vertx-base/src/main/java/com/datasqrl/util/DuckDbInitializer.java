@@ -17,7 +17,7 @@ package com.datasqrl.util;
 
 import static com.datasqrl.env.EnvVariableNames.DUCKDB_EXTENSIONS_DIR;
 
-import com.datasqrl.graphql.config.JdbcConfig;
+import com.datasqrl.server.config.JdbcConfig;
 import java.util.Optional;
 import java.util.StringJoiner;
 import lombok.RequiredArgsConstructor;

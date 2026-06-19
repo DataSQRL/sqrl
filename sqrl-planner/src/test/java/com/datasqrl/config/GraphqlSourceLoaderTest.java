@@ -24,11 +24,11 @@ import static org.mockito.Mockito.when;
 
 import com.datasqrl.config.PackageJson.ScriptApiConfig;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
-import com.datasqrl.graphql.ApiSource;
-import com.datasqrl.graphql.GraphqlSchemaHandler;
-import com.datasqrl.graphql.ScriptFiles;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.plan.validate.ExecutionGoal;
+import com.datasqrl.server.ApiSource;
+import com.datasqrl.server.GraphqlSchemaHandler;
+import com.datasqrl.server.ScriptFiles;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;

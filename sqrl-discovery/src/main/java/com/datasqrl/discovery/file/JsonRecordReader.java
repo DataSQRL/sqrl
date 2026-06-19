@@ -15,8 +15,7 @@
  */
 package com.datasqrl.discovery.file;
 
-import com.datasqrl.graphql.SqrlObjectMapper;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.datasqrl.util.JsonUtils;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Strings;
 import java.io.BufferedReader;
@@ -32,8 +31,6 @@ import lombok.extern.slf4j.Slf4j;
 @AutoService(RecordReader.class)
 @Slf4j
 public class JsonRecordReader implements RecordReader {
-
-  private final ObjectMapper mapper = SqrlObjectMapper.MAPPER;
 
   @Override
   public String getFormat() {
@@ -51,7 +48,8 @@ public class JsonRecordReader implements RecordReader {
                 return Stream.of();
               }
               try {
-                return Stream.of((Map<String, Object>) mapper.readValue(line, LinkedHashMap.class));
+                return Stream.of(
+                    (Map<String, Object>) JsonUtils.MAPPER.readValue(line, LinkedHashMap.class));
               } catch (IOException e) {
                 log.warn("Could not read json record: {}", line);
                 return Stream.of();

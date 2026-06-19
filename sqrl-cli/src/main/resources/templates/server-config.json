@@ -175,15 +175,15 @@
   "kafkaMutationConfig" : {
     "bootstrap.servers" : "${KAFKA_BOOTSTRAP_SERVERS}",
     "compression.type" : "zstd",
-    "key.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer",
-    "value.serializer" : "com.datasqrl.graphql.kafka.JsonSerializer"
+    "key.serializer" : "com.datasqrl.server.kafka.JsonSerializer",
+    "value.serializer" : "com.datasqrl.server.kafka.JsonSerializer"
   },
   "kafkaSubscriptionConfig" : {
     "auto.offset.reset" : "latest",
     "bootstrap.servers" : "${KAFKA_BOOTSTRAP_SERVERS}",
     "compression.type" : "zstd",
-    "key.deserializer" : "com.datasqrl.graphql.kafka.JsonDeserializer",
-    "value.deserializer" : "com.datasqrl.graphql.kafka.JsonDeserializer"
+    "key.deserializer" : "com.datasqrl.server.kafka.JsonDeserializer",
+    "value.deserializer" : "com.datasqrl.server.kafka.JsonDeserializer"
   },
   "duckDbConfig" : null,
   "snowflakeConfig" : null

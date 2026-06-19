@@ -289,8 +289,8 @@ If tests fail due to Flink memory issues, uncomment the configuration line in `E
 - **GraphQL API**: Auto-generated from SQRL scripts, served at `http://localhost:8888/graphiql/`
 
 ### Server Entry Points
-- **Server Main**: `com.datasqrl.graphql.SqrlLauncher` - Main class for standalone deployment
-- **Main Verticle**: `com.datasqrl.graphql.GraphQLServerVerticle` - Main Verticle that configures the GraphQL server
+- **Server Main**: `com.datasqrl.server.SqrlLauncher` - Main class for standalone deployment
+- **Main Verticle**: `com.datasqrl.server.GraphQLServerVerticle` - Main Verticle that configures the GraphQL server
 
 ### Core Server Classes
 - **RootGraphqlModel**: Central model class encapsulating GraphQL schema and execution coordinates

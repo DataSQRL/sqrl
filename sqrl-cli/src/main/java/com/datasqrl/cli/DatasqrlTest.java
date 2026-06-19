@@ -25,8 +25,8 @@ import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
-import com.datasqrl.graphql.SqrlObjectMapper;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
+import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import java.io.ByteArrayInputStream;
 import java.net.URI;
@@ -114,7 +114,7 @@ public class DatasqrlTest {
     // framework
     var testJson = planDir.resolve("test.json").toFile();
     if (testJson.exists()) {
-      testPlan = SqrlObjectMapper.MAPPER.readValue(testJson, TestPlan.class);
+      testPlan = JsonUtils.MAPPER.readValue(testJson, TestPlan.class);
     }
 
     // 2. Run the DataSQRL pipeline
@@ -469,7 +469,7 @@ public class DatasqrlTest {
 
   private TestResult getNoRowsResult(String rawData, String name) {
     try {
-      var root = SqrlObjectMapper.MAPPER.readTree(rawData);
+      var root = JsonUtils.MAPPER.readTree(rawData);
       var data = root.get("data");
       if (data.hasNonNull(name) && data.get(name).isEmpty()) {
         return new TestResult.SnapshotOk(name);
@@ -482,8 +482,8 @@ public class DatasqrlTest {
 
   private String format(String rawData) {
     try {
-      var data = SqrlObjectMapper.MAPPER.readValue(rawData, Object.class);
-      return SqrlObjectMapper.MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(data);
+      var data = JsonUtils.MAPPER.readValue(rawData, Object.class);
+      return JsonUtils.MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(data);
     } catch (JsonProcessingException e) {
       return rawData;
     }

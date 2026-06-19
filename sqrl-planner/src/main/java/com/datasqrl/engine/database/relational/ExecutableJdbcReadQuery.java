@@ -17,7 +17,7 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.server.jdbc.DatabaseType;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;

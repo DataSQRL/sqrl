@@ -16,7 +16,7 @@
 package com.datasqrl.config;
 
 import com.datasqrl.config.PackageJson.CompilerApiConfig;
-import com.datasqrl.graphql.server.operation.ApiProtocol;
+import com.datasqrl.server.operation.ApiProtocol;
 import java.util.EnumSet;
 import lombok.AllArgsConstructor;
 
