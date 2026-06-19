@@ -28,7 +28,7 @@
   <name>SQRL :: Server :: Vert.x</name>
 
   <properties>
-    <vertx.verticle>com.datasqrl.graphql.HttpServerVerticle</vertx.verticle>
+    <vertx.verticle>com.datasqrl.server.HttpServerVerticle</vertx.verticle>
     <skipVertexFatJar>false</skipVertexFatJar>
     <docker.image.name>datasqrl/sqrl-server</docker.image.name>
   </properties>
@@ -55,7 +55,7 @@
         <configuration>
           <redeploy>true</redeploy>
           <attach>true</attach>
-          <launcher>com.datasqrl.graphql.SqrlLauncher</launcher>
+          <launcher>com.datasqrl.server.SqrlLauncher</launcher>
           <skip>${skipVertexFatJar}</skip>
         </configuration>
         <executions>

@@ -25,11 +25,11 @@ import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.flinkrunner.SqrlRunner;
 import com.datasqrl.flinkrunner.utils.EnvUtils;
 import com.datasqrl.flinkrunner.utils.EnvVarResolver;
-import com.datasqrl.graphql.HttpServerVerticle;
-import com.datasqrl.graphql.SqrlObjectMapper;
-import com.datasqrl.graphql.config.ServerConfigUtil;
-import com.datasqrl.graphql.server.ModelContainer;
+import com.datasqrl.server.HttpServerVerticle;
+import com.datasqrl.server.config.ServerConfigUtil;
+import com.datasqrl.server.graphql.ModelContainer;
 import com.datasqrl.util.ConfigLoaderUtils;
+import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
 import io.micrometer.prometheusmetrics.PrometheusMeterRegistry;
@@ -101,7 +101,7 @@ public class DatasqrlRun {
     this.sqrlConfig = sqrlConfig;
     this.flinkConfig = flinkConfig;
     this.env = env;
-    mapper = SqrlObjectMapper.getMapperWithEnvVarResolver(env);
+    mapper = JsonUtils.getMapperWithEnvVarResolver(env);
     shutdownLatch = blocking ? new CountDownLatch(1) : null;
   }
 
@@ -341,7 +341,7 @@ public class DatasqrlRun {
     var baseServerConfig = ServerConfigUtil.fromConfigMap(json);
 
     var serverConfig = ServerConfigUtil.mergeConfigs(baseServerConfig, vertxConfig());
-    var serverVerticle = new HttpServerVerticle(serverConfig, rootGraphqlModel, planDir);
+    var serverVerticle = new HttpServerVerticle(planDir, serverConfig, rootGraphqlModel);
     var prometheusMeterRegistry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
     var metricsOptions =
         new MicrometerMetricsFactory(prometheusMeterRegistry).newOptions().setEnabled(true);

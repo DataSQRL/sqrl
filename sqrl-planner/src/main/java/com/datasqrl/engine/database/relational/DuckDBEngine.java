@@ -18,7 +18,7 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.graphql.jdbc.DatabaseType;
+import com.datasqrl.server.jdbc.DatabaseType;
 import jakarta.inject.Inject;
 import lombok.NonNull;
 

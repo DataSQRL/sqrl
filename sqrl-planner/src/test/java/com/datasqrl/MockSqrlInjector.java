@@ -30,7 +30,7 @@ import org.springframework.context.annotation.Configuration;
     basePackages = {
       "com.datasqrl.calcite.type",
       "com.datasqrl.config",
-      "com.datasqrl.graphql",
+      "com.datasqrl.server",
       "com.datasqrl.loaders",
       "com.datasqrl.planner"
     })

@@ -15,9 +15,8 @@
  */
 package com.datasqrl.config;
 
-import static com.datasqrl.graphql.SqrlObjectMapper.MAPPER;
-
 import com.datasqrl.engine.database.QueryEngine;
+import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,8 +41,8 @@ public class QueryEngineConfigConverterImpl implements QueryEngineConfigConverte
       if (engineConf instanceof EngineConfigImpl impl) {
         var engineConfigMap = impl.sqrlConfig.toMap();
 
-        var rootNode = MAPPER.createObjectNode();
-        var configNode = MAPPER.valueToTree(engineConfigMap);
+        var rootNode = JsonUtils.MAPPER.createObjectNode();
+        var configNode = JsonUtils.MAPPER.valueToTree(engineConfigMap);
         rootNode.set(queryEngine.serverConfigName(), configNode);
 
         convertedConfigs.add(rootNode);

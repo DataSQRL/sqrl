@@ -1,0 +1,222 @@
+/*
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.datasqrl.server;
+
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import com.datasqrl.server.config.ServerConfig;
+import com.datasqrl.server.graphql.RootGraphQLModel;
+import com.datasqrl.server.graphql.RootGraphQLModel.MutationCoordsVisitor;
+import com.datasqrl.server.io.SinkProducer;
+import com.datasqrl.server.kafka.KafkaSinkProducer;
+import graphql.schema.DataFetcher;
+import graphql.schema.DataFetchingEnvironment;
+import io.vertx.core.CompositeFuture;
+import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.kafka.client.producer.KafkaProducer;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Purpose: Configures data fetchers for GraphQL mutations and executes the mutations (kafka
+ * messages sending and SQL inserting) Collaboration: Uses {@link RootGraphQLModel} to get mutation
+ * coordinates and creates data fetchers for Kafka and PostgreSQL.
+ */
+@Slf4j
+@AllArgsConstructor
+public class MutationConfigurationImpl implements MutationConfiguration<DataFetcher<?>> {
+
+  private Vertx vertx;
+  private ServerConfig config;
+
+  @Override
+  public MutationCoordsVisitor<DataFetcher<?>, ServerContext> createSinkFetcherVisitor() {
+    return (coords, context) -> {
+      KafkaProducer<String, String> producer =
+          KafkaProducer.create(
+              vertx, config.getKafkaMutationConfig().asMap(coords.isTransactional()));
+
+      var emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
+      var keyColumns = coords.getKeyColumns();
+      final var computedInputColumns = new HashMap<String, ComputeInputColumns>();
+
+      coords
+          .getComputedColumns()
+          .forEach(
+              (colName, metadata) -> {
+                ComputeInputColumns fct =
+                    switch (metadata.metadataType()) {
+                      case UUID -> (env -> UUID.randomUUID());
+                      case AUTH -> {
+                        MetadataReader metadataReader =
+                            context.getMetadataReader(metadata.metadataType());
+                        yield (env ->
+                            metadataReader.read(env, metadata.name(), metadata.required()));
+                      }
+                      default -> null;
+                    };
+                if (fct != null) computedInputColumns.put(colName, fct);
+              });
+
+      final List<String> timestampColumns =
+          coords.getComputedColumns().entrySet().stream()
+              .filter(e -> e.getValue().metadataType() == MetadataType.TIMESTAMP)
+              .map(Entry::getKey)
+              .collect(Collectors.toList());
+
+      checkNotNull(emitter, "Could not find sink for field: %s", coords.getFieldName());
+
+      return env -> {
+        var records = getRecords(env, keyColumns, computedInputColumns);
+        var cf = new CompletableFuture<>();
+
+        Future<List<Object>> sendFuture =
+            coords.isTransactional()
+                ? sendMessagesTransactionally(producer, emitter, records, timestampColumns)
+                : sendMessagesNonTransactionally(
+                    createSendFutures(emitter, records, timestampColumns));
+
+        sendFuture
+            .onSuccess(results -> completeWithResults(cf, results, coords.isReturnList()))
+            .onFailure(cf::completeExceptionally);
+
+        return cf;
+      };
+    };
+  }
+
+  @FunctionalInterface
+  interface ComputeInputColumns {
+
+    Object compute(DataFetchingEnvironment env);
+  }
+
+  private List<SinkProducer.Record> getRecords(
+      DataFetchingEnvironment env,
+      List<String> keyColumns,
+      Map<String, ComputeInputColumns> computedColumns) {
+    // Rules:
+    // - Only one argument is allowed, it doesn't matter the name
+    // - input argument cannot be null.
+    var args = env.getArguments();
+
+    var argument = args.entrySet().stream().findFirst().map(Entry::getValue).get();
+
+    List<Map> entries;
+    if (argument instanceof List) {
+      entries = (List<Map>) argument;
+    } else {
+      entries = List.of((Map) argument);
+    }
+
+    // Construct keys if necessary (null if no key cols)
+    var keys = new Map[entries.size()];
+    if (!keyColumns.isEmpty()) {
+      for (int i = 0; i < entries.size(); i++) {
+        var filtered = new LinkedHashMap();
+        for (var key : keyColumns) {
+          if (entries.get(i).containsKey(key)) {
+            filtered.put(key, entries.get(i).get(key));
+          }
+        }
+        keys[i] = filtered;
+      }
+    }
+
+    if (!computedColumns.isEmpty()) {
+      // Add UUID for event for the computed uuid columns
+      entries.forEach(
+          entry -> {
+            computedColumns.forEach(
+                (colName, fct) -> {
+                  var value = fct.compute(env);
+                  entry.put(colName, value);
+                });
+          });
+    }
+
+    var records = new ArrayList<SinkProducer.Record>();
+    for (int i = 0; i < entries.size(); i++) {
+      records.add(new SinkProducer.Record(keys[i], entries.get(i)));
+    }
+
+    return records;
+  }
+
+  private void completeWithResults(
+      CompletableFuture<Object> cf, List<Object> results, boolean returnList) {
+    if (returnList) {
+      cf.complete(results);
+    } else {
+      cf.complete(results.get(0));
+    }
+  }
+
+  private Future<List<Object>> sendMessagesTransactionally(
+      KafkaProducer<String, String> producer,
+      SinkProducer emitter,
+      List<SinkProducer.Record> records,
+      List<String> timestampColumns) {
+
+    return producer
+        .initTransactions()
+        .compose(v -> producer.beginTransaction())
+        .compose(
+            v -> {
+              // Create send futures only after transaction is initialized and begun
+              var futures = createSendFutures(emitter, records, timestampColumns);
+              return Future.join(futures);
+            })
+        .compose(compositeFuture -> producer.commitTransaction().map(v -> compositeFuture.list()))
+        .recover(
+            throwable -> producer.abortTransaction().compose(v -> Future.failedFuture(throwable)));
+  }
+
+  private Future<List<Object>> sendMessagesNonTransactionally(List<Future<Map>> futures) {
+    return Future.join(futures).map(CompositeFuture::list);
+  }
+
+  private List<Future<Map>> createSendFutures(
+      SinkProducer emitter, List<SinkProducer.Record> records, List<String> timestampColumns) {
+    return records.stream()
+        .map(
+            rec ->
+                emitter
+                    .send(rec)
+                    .map(
+                        sinkResult -> {
+                          // Add timestamp from sink to result
+                          var dateTime =
+                              ZonedDateTime.ofInstant(sinkResult.sourceTime(), ZoneOffset.UTC);
+                          timestampColumns.forEach(
+                              colName -> rec.value().put(colName, dateTime.toOffsetDateTime()));
+                          return rec.value();
+                        }))
+        .collect(Collectors.toList());
+  }
+}

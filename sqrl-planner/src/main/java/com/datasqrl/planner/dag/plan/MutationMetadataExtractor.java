@@ -15,10 +15,10 @@
  */
 package com.datasqrl.planner.dag.plan;
 
-import com.datasqrl.graphql.server.MetadataType;
-import com.datasqrl.graphql.server.ResolvedMetadata;
 import com.datasqrl.planner.parser.SqrlTableFunctionStatement;
 import com.datasqrl.planner.tables.MetadataExtractor;
+import com.datasqrl.server.MetadataType;
+import com.datasqrl.server.ResolvedMetadata;
 
 public final class MutationMetadataExtractor implements MetadataExtractor {
 

@@ -15,8 +15,8 @@
  */
 package com.datasqrl.planner.tables;
 
-import com.datasqrl.graphql.exec.FlinkExecFunction;
-import com.datasqrl.graphql.server.ResolvedMetadata;
+import com.datasqrl.server.ResolvedMetadata;
+import com.datasqrl.server.exec.FlinkExecFunction;
 import java.util.Optional;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;

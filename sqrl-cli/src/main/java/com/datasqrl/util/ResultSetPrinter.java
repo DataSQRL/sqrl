@@ -15,7 +15,7 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.graphql.server.CustomScalars;
+import com.datasqrl.server.graphql.CustomScalars;
 import com.google.common.base.Predicates;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;

@@ -17,8 +17,8 @@ package com.datasqrl.packager.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.graphql.SqrlObjectMapper;
-import com.datasqrl.graphql.config.ServerConfigUtil;
+import com.datasqrl.server.config.ServerConfigUtil;
+import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.cfg.JsonNodeFeature;
@@ -32,7 +32,7 @@ import org.junit.jupiter.api.Test;
 class ServerConfigTemplateTest {
   private static final File TEMPLATE = new File("src/main/resources/templates/server-config.json");
 
-  private static ObjectMapper mapper = SqrlObjectMapper.MAPPER;
+  private static final ObjectMapper mapper = JsonUtils.MAPPER.copy();
 
   @SuppressWarnings("unchecked")
   @Test

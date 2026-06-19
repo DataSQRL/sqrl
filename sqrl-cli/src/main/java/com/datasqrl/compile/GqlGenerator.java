@@ -17,8 +17,8 @@ package com.datasqrl.compile;
 
 import static com.datasqrl.planner.util.SqrTableFunctionUtil.getTableFunctionFromPath;
 
-import com.datasqrl.graphql.visitor.GraphqlSchemaVisitor;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.server.visitor.GraphqlSchemaVisitor;
 import graphql.language.Argument;
 import graphql.language.Definition;
 import graphql.language.Document;

@@ -16,9 +16,9 @@
 package com.datasqrl.config;
 
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.graphql.server.operation.ApiProtocol;
 import com.datasqrl.planner.PredicatePushdownRules;
 import com.datasqrl.planner.analyzer.cost.CostModel;
+import com.datasqrl.server.operation.ApiProtocol;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;

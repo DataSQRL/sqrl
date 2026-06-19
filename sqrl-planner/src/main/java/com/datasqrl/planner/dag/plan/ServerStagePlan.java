@@ -16,8 +16,8 @@
 package com.datasqrl.planner.dag.plan;
 
 import com.datasqrl.engine.ExecutionEngine;
-import com.datasqrl.graphql.exec.FlinkExecFunctionFactory;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.server.exec.FlinkExecFunctionFactory;
 import java.util.List;
 import lombok.Builder;
 import lombok.Singular;
