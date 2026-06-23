@@ -57,7 +57,7 @@ class ExecCmdTest {
     execCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
 
     Path buildDir = execCmd.getBuildDir();
-    Path planDir = execCmd.getTargetFolder().resolve(SqrlConstants.PLAN_DIR);
+    Path planDir = execCmd.getTargetDir().resolve(SqrlConstants.PLAN_DIR);
 
     var mockSqrlConfig = mock(PackageJson.class);
     var mockEnv = Map.of("key", "value");

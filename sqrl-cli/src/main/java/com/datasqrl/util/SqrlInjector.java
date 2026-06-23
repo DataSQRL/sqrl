@@ -16,16 +16,15 @@
 package com.datasqrl.util;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.RootPath;
-import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.config.TargetPath;
+import com.datasqrl.config.WorkspacePaths;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -37,15 +36,13 @@ import org.springframework.context.annotation.Configuration;
 public class SqrlInjector {
 
   @Bean
-  @Qualifier("buildDir")
-  public Path buildDir(@Qualifier("rootDir") Path rootDir) {
-    return rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
-  }
+  public WorkspacePaths workspacePaths(
+      @Qualifier("workspaceDir") Path workspaceDir,
+      @Qualifier("buildDir") Path buildDir,
+      @Qualifier("targetDir") Path targetDir,
+      @Qualifier("projectRoot") Optional<Path> projectRoot) {
 
-  @Bean
-  public BuildPath buildPath(
-      @Qualifier("buildDir") Path buildDir, @Qualifier("targetDir") Path targetDir) {
-    return new BuildPath(buildDir, targetDir);
+    return new WorkspacePaths(workspaceDir, buildDir, targetDir, projectRoot);
   }
 
   @Bean
@@ -65,21 +62,12 @@ public class SqrlInjector {
 
   @Bean
   public ExecutionEnginesHolder executionEnginesHolder(
-      com.datasqrl.error.ErrorCollector errors,
+      ErrorCollector errors,
       ApplicationContext applicationContext,
       PackageJson sqrlConfig,
       ExecutionGoal goal) {
+
     return new ExecutionEnginesHolder(
         errors, applicationContext, sqrlConfig, goal == ExecutionGoal.TEST);
-  }
-
-  @Bean
-  public RootPath rootPath(@Qualifier("rootDir") Path rootDir) {
-    return new RootPath(rootDir);
-  }
-
-  @Bean
-  public TargetPath targetPath(@Qualifier("targetDir") Path targetDir) {
-    return new TargetPath(targetDir);
   }
 }

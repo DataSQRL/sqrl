@@ -15,6 +15,11 @@
   },
   "script": {
     "main": "loan.sqrl",
+    "shared": {
+      "banking-catalog": {
+        "path": "../banking-shared"
+      }
+    },
     "api": {
       "v1": {
         "schema": "loan.graphqls",

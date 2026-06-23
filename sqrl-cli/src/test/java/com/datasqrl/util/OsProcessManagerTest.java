@@ -195,8 +195,8 @@ class OsProcessManagerTest {
     when(mockBuildDir.toString()).thenReturn("/build/dir");
     when(mockBuildDir.getParent()).thenReturn(mockBuildDir);
 
-    env.put("BUILD_UID", "1000");
-    env.put("BUILD_GID", "1000");
+    env.put("WORKSPACE_UID", "1000");
+    env.put("WORKSPACE_GID", "1000");
     serviceManager = new OsProcessManager(env);
 
     try (MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
@@ -239,8 +239,8 @@ class OsProcessManagerTest {
     when(mockDir.toAbsolutePath()).thenReturn(mockDir);
     when(mockDir.toString()).thenReturn("/test/dir");
 
-    env.put("BUILD_UID", "1000");
-    env.put("BUILD_GID", "1000");
+    env.put("WORKSPACE_UID", "1000");
+    env.put("WORKSPACE_GID", "1000");
     serviceManager = new OsProcessManager(env);
 
     when(mockProcess.waitFor()).thenReturn(0);
@@ -264,8 +264,8 @@ class OsProcessManagerTest {
   void givenBlankOwnership_whenSetOwnerForDir_thenSkipsChownCommand() throws Exception {
     // Given
     Path mockDir = mock(Path.class);
-    env.put("BUILD_UID", "");
-    env.put("BUILD_GID", "");
+    env.put("WORKSPACE_UID", "");
+    env.put("WORKSPACE_GID", "");
     serviceManager = new OsProcessManager(env);
 
     try (MockedConstruction<ProcessBuilder> pbMocked = mockConstruction(ProcessBuilder.class)) {
@@ -285,8 +285,8 @@ class OsProcessManagerTest {
     when(mockDir.toAbsolutePath()).thenReturn(mockDir);
     when(mockDir.toString()).thenReturn("/test/dir");
 
-    env.put("BUILD_UID", "1000");
-    env.put("BUILD_GID", "1000");
+    env.put("WORKSPACE_UID", "1000");
+    env.put("WORKSPACE_GID", "1000");
     serviceManager = new OsProcessManager(env);
 
     when(mockProcess.waitFor()).thenReturn(1); // Failure

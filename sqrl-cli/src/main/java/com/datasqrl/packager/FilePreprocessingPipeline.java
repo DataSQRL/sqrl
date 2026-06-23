@@ -18,8 +18,8 @@ package com.datasqrl.packager;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.TableSchemaFactory;
 import com.datasqrl.packager.preprocess.Preprocessor;
@@ -51,7 +51,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class FilePreprocessingPipeline {
 
-  private final BuildPath buildPath;
+  private final WorkspacePaths workspacePaths;
   private final Set<Preprocessor> preprocessors;
 
   public void run(Path sourceDir, ErrorCollector errors) throws IOException {
@@ -59,7 +59,7 @@ public class FilePreprocessingPipeline {
   }
 
   public void run(Path sourceDir, NamePath namePath, ErrorCollector errors) throws IOException {
-    Path buildDir = NameUtil.namepath2Path(buildPath.buildDir(), namePath);
+    Path buildDir = NameUtil.namepath2Path(workspacePaths.buildDir(), namePath);
 
     Files.walkFileTree(
         sourceDir,
@@ -71,7 +71,6 @@ public class FilePreprocessingPipeline {
 
   private static Set<String> getCopyExtensions() {
     Set<String> copyExtensions = new HashSet<>(TableSchemaFactory.factoriesByExtension().keySet());
-    copyExtensions.add(SqrlConstants.SQRL_EXTENSION);
     copyExtensions.add(SqrlConstants.SQL_EXTENSION);
     copyExtensions.add(SqrlConstants.GRAPHQL_EXTENSION);
     copyExtensions.add(SqrlConstants.CONFIG_EXTENSION);
@@ -101,7 +100,11 @@ public class FilePreprocessingPipeline {
       if (currentCtx == null) {
         currentCtx =
             new Context(
-                sourceDir, buildDir, buildPath.getUdfPath(), buildPath.getDataPath(), errors);
+                sourceDir,
+                buildDir,
+                workspacePaths.getUdfPath(),
+                workspacePaths.getDataPath(),
+                errors);
       }
 
       ctxDeque.push(currentCtx.getSubContext(dir));
@@ -147,8 +150,14 @@ public class FilePreprocessingPipeline {
     }
 
     @SneakyThrows
-    public Path createNewBuildFile(Path relativeFilePath) {
-      Path result = buildDir.resolve(relativeFilePath);
+    public Path createNewBuildFile(Path file) {
+      Path result;
+      if (file.getNameCount() > 1) {
+        result = getRelativeBuildPath(file.getParent()).resolve(file.getFileName());
+      } else {
+        result = buildDir.resolve(file);
+      }
+
       ensureDirectoryExists(result.getParent());
       return result;
     }
@@ -158,9 +167,9 @@ public class FilePreprocessingPipeline {
           newSourceDir, getRelativeBuildPath(newSourceDir), libDir, dataDir, errorCollector);
     }
 
-    public void copyToBuild(Path file) {
+    public Path copyToBuild(Path file) {
       var destination = getRelativeBuildPath(file.getParent());
-      copy(file, destination);
+      return copy(file, destination);
     }
 
     public Path createNewDataFile(Path file) {
@@ -178,10 +187,11 @@ public class FilePreprocessingPipeline {
     }
 
     @SneakyThrows
-    private void copy(Path file, Path targetDir) {
+    private Path copy(Path file, Path targetDir) {
       var copyPath = targetDir.resolve(file.getFileName());
       ensureDirectoryExists(targetDir);
-      Files.copy(file, copyPath, StandardCopyOption.REPLACE_EXISTING);
+
+      return Files.copy(file, copyPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
     @SneakyThrows

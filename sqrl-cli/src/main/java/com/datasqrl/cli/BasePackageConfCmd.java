@@ -41,6 +41,6 @@ public abstract class BasePackageConfCmd extends BaseOsProcessManagerCmd {
   protected OutputFormatter getOutputFormatter() {
     return cli.internalTestExec
         ? new NoOutputFormatter()
-        : new DefaultOutputFormatter(cli.rootDir, batchMode);
+        : new DefaultOutputFormatter(cli.workspaceDir, batchMode);
   }
 }

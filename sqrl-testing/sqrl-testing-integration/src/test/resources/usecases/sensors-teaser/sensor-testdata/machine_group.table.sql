@@ -1,9 +1,0 @@
-CREATE TABLE MachineGroup (
-     PRIMARY KEY (groupId, `created`) NOT ENFORCED,
-     WATERMARK FOR `created` AS `created` - INTERVAL '0.001' SECOND
-) WITH (
-      'format' = 'flexible-json',
-      'path' = '${DATA_PATH}/machine_group.jsonl',
-      'connector' = 'filesystem'
-      )
-LIKE `machine_group.schema.yml`;

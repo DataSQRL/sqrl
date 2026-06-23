@@ -28,7 +28,7 @@ public class TestOutputManager implements AutoCloseable {
 
   private static final String TEST_LOG_FILE = "test-execution.log";
 
-  private final Path rootDir;
+  private final Path workspaceDir;
 
   private PrintStream originalOut;
   private PrintStream originalErr;
@@ -68,7 +68,7 @@ public class TestOutputManager implements AutoCloseable {
       return;
     }
 
-    var logsDir = rootDir.resolve("build/logs");
+    var logsDir = workspaceDir.resolve("build/logs");
     Files.createDirectories(logsDir);
 
     var logFile = logsDir.resolve(TEST_LOG_FILE).toFile();

@@ -19,7 +19,6 @@ import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
 import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.compile.CompilationProcess;
-import com.datasqrl.compile.DirectoryManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
@@ -30,6 +29,7 @@ import com.datasqrl.error.ErrorPrefix;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
+import com.datasqrl.util.DirectoryUtils;
 import com.datasqrl.util.FlinkCompileException;
 import com.datasqrl.util.SqrlInjector;
 import java.nio.file.Files;
@@ -44,7 +44,38 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
 
   public abstract ExecutionGoal getGoal();
 
+  @Override
+  protected void runInternal(ErrorCollector errors) throws Exception {
+    compile(errors);
+
+    if (!errors.hasErrors()) {
+      execute(errors);
+    }
+  }
+
+  @Override
+  protected Path getBuildDir() {
+    if (projectRoot.isPresent() || packageFiles.isEmpty()) {
+      return super.getBuildDir();
+    }
+
+    var deepestCommonSubDir = DirectoryUtils.deepestCommonSubDir(packageFiles);
+    var projectRootPath = cli.workspaceDir.resolve(deepestCommonSubDir);
+
+    if (!Files.isDirectory(projectRootPath)) {
+      throw new IllegalArgumentException(
+          "Project root does not exist or not a directory: " + projectRootPath);
+    }
+
+    return projectRootPath.resolve(SqrlConstants.BUILD_DIR_NAME);
+  }
+
   protected void compile(ErrorCollector errors) {
+    errors.checkFatal(
+        Files.isDirectory(cli.workspaceDir),
+        "Not a valid workspace directory: %s",
+        cli.workspaceDir);
+
     var formatter = getOutputFormatter();
 
     if (getGoal() == ExecutionGoal.COMPILE) {
@@ -54,16 +85,16 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     if (getGoal() == ExecutionGoal.COMPILE) {
       formatter.phaseStart("Initializing build environment");
     }
-    var sqrlConfig = initPackageJson(errors, cli.rootDir, packageFiles);
 
-    DirectoryManager.prepareTargetDirectory(getTargetFolder());
-    errors.checkFatal(
-        Files.isDirectory(cli.rootDir), "Not a valid root directory: %s", cli.rootDir);
+    var sqrlConfig = initPackageJson(errors, packageFiles, cli.workspaceDir);
+    DirectoryUtils.prepareTargetDirectory(getTargetDir());
 
     try (var springCtx = new AnnotationConfigApplicationContext()) {
       springCtx.registerBean(ErrorCollector.class, () -> errors);
-      springCtx.registerBean("rootDir", Path.class, () -> cli.rootDir);
-      springCtx.registerBean("targetDir", Path.class, this::getTargetFolder);
+      projectRoot.ifPresent(p -> springCtx.registerBean("projectRoot", Path.class, () -> p));
+      springCtx.registerBean("workspaceDir", Path.class, () -> cli.workspaceDir);
+      springCtx.registerBean("buildDir", Path.class, this::getBuildDir);
+      springCtx.registerBean("targetDir", Path.class, this::getTargetDir);
       springCtx.registerBean(PackageJson.class, () -> sqrlConfig);
       springCtx.registerBean(ExecutionGoal.class, this::getGoal);
       springCtx.registerBean("internalTestExec", Boolean.class, () -> cli.internalTestExec);
@@ -88,7 +119,7 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
       }
 
       var compilationProcess = springCtx.getBean(CompilationProcess.class);
-      var testDir = sqrlConfig.getTestConfig().getTestDir(cli.rootDir);
+      var testDir = sqrlConfig.getTestConfig().getTestDir(cli.workspaceDir);
       testDir.ifPresent(this::validateTestPath);
 
       Pair<PhysicalPlan, ? extends TestPlan> plan;
@@ -108,7 +139,7 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
         formatter.phaseStart("Generating deployment artifacts");
       }
 
-      packager.postprocess(getTargetFolder(), plan.getLeft(), plan.getRight());
+      packager.postprocess(getTargetDir(), plan.getLeft(), plan.getRight());
 
       if (getGoal() == ExecutionGoal.COMPILE) {
         printCompilationResults(formatter);
@@ -120,38 +151,29 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     // Do nothing by default
   }
 
-  @Override
-  protected void runInternal(ErrorCollector errors) throws Exception {
-    compile(errors);
-
-    if (!errors.hasErrors()) {
-      execute(errors);
-    }
-  }
-
   /**
    * Initializes the {@link PackageJson} configuration by merging all provided package configuration
    * files. If no files are provided, attempts to load the default package configuration file.
    *
    * @param errors error collector
-   * @param rootDir the root project directory
    * @param packageFiles the list of given package configuration file paths
+   * @param workspaceDir the workspace root directory
    * @return the merged {@link PackageJson} configuration
    */
   private PackageJson initPackageJson(
-      ErrorCollector errors, Path rootDir, List<Path> packageFiles) {
+      ErrorCollector errors, List<Path> packageFiles, Path workspaceDir) {
     var locErrors = errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
 
     var finalPackageFiles = new ArrayList<Path>();
     if (packageFiles.isEmpty()) {
       // Try to find default package
-      var defaultPkg = rootDir.resolve(SqrlConstants.DEFAULT_PACKAGE);
+      var defaultPkg = workspaceDir.resolve(SqrlConstants.DEFAULT_PACKAGE);
       if (Files.isRegularFile(defaultPkg)) {
         finalPackageFiles.add(defaultPkg);
       }
 
     } else {
-      packageFiles.stream().map(rootDir::resolve).forEach(finalPackageFiles::add);
+      packageFiles.stream().map(workspaceDir::resolve).forEach(finalPackageFiles::add);
     }
 
     if (finalPackageFiles.isEmpty()) {
@@ -173,7 +195,7 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     var relBuildDir = formatter.relativizeFromCliRoot(getBuildDir());
 
     formatter.sectionHeader("Compilation Results");
-    formatter.info("Deployment artifacts: " + formatter.relativizeFromCliRoot(getTargetFolder()));
+    formatter.info("Deployment artifacts: " + formatter.relativizeFromCliRoot(getTargetDir()));
     formatter.info("Pipeline DAG:         " + relBuildDir.resolve("pipeline_explain.txt"));
     formatter.info("Visual DAG:           " + relBuildDir.resolve("pipeline_visual.html"));
     formatter.newline();

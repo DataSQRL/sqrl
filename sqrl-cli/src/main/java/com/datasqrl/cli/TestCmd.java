@@ -42,11 +42,11 @@ public class TestCmd extends AbstractCompileCmd {
       return;
     }
 
-    try (var outputMgr = new TestOutputManager(cli.rootDir)) {
+    try (var outputMgr = new TestOutputManager(cli.workspaceDir)) {
       var formatter = getOutputFormatter();
       formatter.header("DataSQRL Test Execution");
 
-      var targetDir = getTargetFolder();
+      var targetDir = getTargetDir();
       var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
 
       // Start services before testing
@@ -61,7 +61,7 @@ public class TestCmd extends AbstractCompileCmd {
 
       var sqrlTest =
           new DatasqrlTest(
-              cli.rootDir, planDir, sqrlConfig, flinkConfig, env, outputMgr, formatter);
+              cli.workspaceDir, planDir, sqrlConfig, flinkConfig, env, outputMgr, formatter);
       var testExitCode = sqrlTest.run();
       exitCode.set(testExitCode);
 

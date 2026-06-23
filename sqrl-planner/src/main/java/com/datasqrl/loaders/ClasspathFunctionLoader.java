@@ -15,8 +15,8 @@
  */
 package com.datasqrl.loaders;
 
-import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.util.NamespaceObjectUtil;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.List;

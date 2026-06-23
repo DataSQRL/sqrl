@@ -17,6 +17,7 @@ package com.datasqrl.config;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import lombok.Getter;
 
 public class PackageJsonImpl implements PackageJson {
@@ -24,6 +25,7 @@ public class PackageJsonImpl implements PackageJson {
   public static final String ENGINES_PROPERTY = "engines";
   public static final String ENABLED_ENGINES_KEY = "enabled-engines";
   public static final String DISCOVERY_KEY = "discovery";
+  public static final String PROJECT_ROOT_KEY = "project-root";
   public static final String SCRIPT_KEY = "script";
   public static final String COMPILER_KEY = "compiler";
   public static final String CONNECTORS_KEY = "connectors";
@@ -86,9 +88,8 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   @Override
-  public boolean hasScriptKey() {
-    // ScriptConfiguration.SCRIPT_KEY
-    return false;
+  public Optional<String> getProjectRoot() {
+    return sqrlConfig.asString(PROJECT_ROOT_KEY).getOptional();
   }
 
   @Override

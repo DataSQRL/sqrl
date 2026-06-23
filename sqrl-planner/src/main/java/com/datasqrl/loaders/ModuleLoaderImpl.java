@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
-import com.datasqrl.config.BuildPath;
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
@@ -56,24 +56,23 @@ public class ModuleLoaderImpl implements ModuleLoader {
   static final Deserializer SERIALIZER = Deserializer.INSTANCE;
 
   private final ClasspathFunctionLoader classpathFunctionLoader;
-  private final BuildPath buildPath;
+  private final WorkspacePaths workspacePaths;
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
   private final Cache<NamePath, SqrlModule> cache =
       CacheBuilder.newBuilder().maximumSize(1000).build();
-  ;
 
   @Inject
   public ModuleLoaderImpl(
-      ResourceResolver resourceResolver, BuildPath buildPath, ErrorCollector errors) {
+      ResourceResolver resourceResolver, WorkspacePaths workspacePaths, ErrorCollector errors) {
     this.classpathFunctionLoader = new ClasspathFunctionLoader();
-    this.buildPath = buildPath;
+    this.workspacePaths = workspacePaths;
     this.resourceResolver = resourceResolver;
     this.errors = errors;
   }
 
   private ModuleLoaderImpl withResourceResolver(ResourceResolver resourceResolver) {
-    return new ModuleLoaderImpl(classpathFunctionLoader, buildPath, resourceResolver, errors);
+    return new ModuleLoaderImpl(classpathFunctionLoader, workspacePaths, resourceResolver, errors);
   }
 
   @Override
@@ -147,7 +146,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
     }
 
     if (filename.endsWith(FUNCTION_JSON_EXTENSION)) {
-      return loadFunction(path, directory);
+      return loadFunction(path);
     }
 
     return List.of();
@@ -183,11 +182,11 @@ public class ModuleLoaderImpl implements ModuleLoader {
   public static final Class<?> UDF_FUNCTION_CLASS = UserDefinedFunction.class;
 
   @SneakyThrows
-  private List<NamespaceObject> loadFunction(Path path, NamePath namePath) {
+  private List<NamespaceObject> loadFunction(Path path) {
     var json = SERIALIZER.mapJsonFile(path, ObjectNode.class);
     var jarPath = json.get("jarPath").asText();
     var functionClassName = json.get("functionClass").asText();
-    var resolvedJarPath = buildPath.getUdfPath().resolve(jarPath);
+    var resolvedJarPath = workspacePaths.getUdfPath().resolve(jarPath);
     var jarUrl = resolvedJarPath.toUri().toURL();
     var functionClass = loadClass(jarUrl, functionClassName);
     checkArgument(

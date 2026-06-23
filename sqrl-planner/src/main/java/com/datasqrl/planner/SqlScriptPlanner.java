@@ -24,6 +24,7 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJson.SharedScriptConfig;
 import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.MutationEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -109,6 +110,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -148,6 +150,8 @@ public class SqlScriptPlanner {
   public static final String EXPORT_SUFFIX = "_ex";
   public static final String ACCESS_FUNCTION_SUFFIX = "__access";
 
+  private final AtomicInteger exportTableCounter = new AtomicInteger(0);
+
   private final ErrorCollector errorCollector;
 
   /** Used to assemble the full script with imports as a string */
@@ -157,14 +161,13 @@ public class SqlScriptPlanner {
   private final PackageJson packageJson;
   private final ExecutionPipeline pipeline;
   private final ExecutionGoal executionGoal;
-
   private final CostModel costModel;
   @Getter private final DAGBuilder dagBuilder;
   @Getter private final ExecutionStage streamStage;
   private final List<ExecutionStage> tableStages;
   private final List<ExecutionStage> queryStages;
   private final List<ExecutionStage> subscriptionStages;
-  private final AtomicInteger exportTableCounter = new AtomicInteger(0);
+  private final Set<String> sharedScripts;
 
   /** Manages the context of the script that is processed, adjusted for imports */
   private ScriptContext scriptContext;
@@ -208,6 +211,10 @@ public class SqlScriptPlanner {
         pipeline.stages().stream()
             .filter(stage -> stage.getType() == EngineType.LOG)
             .collect(Collectors.toList());
+    this.sharedScripts =
+        packageJson.getScriptConfig().getSharedScriptConfigs().stream()
+            .map(SharedScriptConfig::getName)
+            .collect(Collectors.toSet());
   }
 
   /**
@@ -846,7 +853,6 @@ public class SqlScriptPlanner {
     NamePath aliasPath = null;
     if (importStmt.getAlias().isPresent()) {
       aliasPath = importStmt.getAlias().get();
-      ;
       checkFatal(
           aliasPath.size() == 1,
           ErrorCode.INVALID_IMPORT,

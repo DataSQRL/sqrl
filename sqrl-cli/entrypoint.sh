@@ -22,14 +22,14 @@ if [[ -n "${SQRL_DEBUG+x}" && -n "$SQRL_DEBUG" ]]; then
   set -x
 fi
 
-cd /build
+cd /workspace
 
 # Todo: there is a target flag we need to parse and set
-export DATA_PATH=/build/build/deploy/flink/data
-export UDF_PATH=/build/build/deploy/flink/lib
+export DATA_PATH=/workspace/build/deploy/flink/data
+export UDF_PATH=/workspace/build/deploy/flink/lib
 
-# Get the UID/GID of the /build directory to ensure files are created with correct ownership
-export BUILD_UID=$(stat -c '%u' /build)
-export BUILD_GID=$(stat -c '%g' /build)
+# Get the UID/GID of the /workspace directory to ensure files are created with correct ownership
+export WORKSPACE_UID=$(stat -c '%u' /workspace)
+export WORKSPACE_GID=$(stat -c '%g' /workspace)
 
 exec java $SQRL_JVM_TOOL_OPTS $SQRL_JVM_ARGS -jar /opt/sqrl/sqrl-cli.jar "${@}"

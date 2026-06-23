@@ -63,7 +63,7 @@ public class SqrlContainerExtension
 
   public static final String SQRL_CMD_IMAGE = "datasqrl/cmd";
   public static final String SQRL_SERVER_IMAGE = "datasqrl/sqrl-server";
-  public static final String BUILD_DIR = "/build";
+  public static final String WORKSPACE_DIR = "/workspace";
   public static final int HTTP_SERVER_PORT = 8888;
   public static final String REDPANDA_NETWORK_ALIAS = "redpanda";
   public static final int REDPANDA_INTERNAL_PORT = 29092;
@@ -140,8 +140,8 @@ public class SqrlContainerExtension
 
     var cmd =
         new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
-            .withWorkingDirectory(BUILD_DIR)
-            .withFileSystemBind(testDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
+            .withWorkingDirectory(WORKSPACE_DIR)
+            .withFileSystemBind(testDir.toString(), WORKSPACE_DIR, BindMode.READ_WRITE)
             .withEnv("TZ", "America/Los_Angeles");
     if (debug) {
       cmd = cmd.withEnv("SQRL_DEBUG", "1");

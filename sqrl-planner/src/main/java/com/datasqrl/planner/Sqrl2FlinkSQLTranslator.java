@@ -19,9 +19,9 @@ import static com.datasqrl.config.SqrlConstants.FLINK_DEFAULT_CATALOG;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.calcite.SqrlRexUtil;
-import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
@@ -185,11 +185,11 @@ public class Sqrl2FlinkSQLTranslator {
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
 
   public Sqrl2FlinkSQLTranslator(
-      BuildPath buildPath, FlinkStreamEngine flink, CompilerConfig compilerConfig) {
+      WorkspacePaths workspacePaths, FlinkStreamEngine flink, CompilerConfig compilerConfig) {
     this.executionMode = flink.getExecutionMode();
     this.compileFlinkPlan = compilerConfig.compileFlinkPlan();
     // Set up a StreamExecution Environment in Flink with configuration and access to jars
-    var jarUrls = getUdfUrls(buildPath);
+    var jarUrls = getUdfUrls(workspacePaths);
     // Create a UDF class loader and configure
     ClassLoader udfClassLoader =
         new URLClassLoader(jarUrls.toArray(new URL[0]), getClass().getClassLoader());
@@ -1159,9 +1159,9 @@ public class Sqrl2FlinkSQLTranslator {
         .orElseThrow(() -> new TableException("Unsupported query: " + sqlNode));
   }
 
-  private static List<URL> getUdfUrls(BuildPath buildPath) {
+  private static List<URL> getUdfUrls(WorkspacePaths workspacePaths) {
     List<URL> urls = new ArrayList<>();
-    try (var stream = Files.newDirectoryStream(buildPath.getUdfPath(), "*.jar")) {
+    try (var stream = Files.newDirectoryStream(workspacePaths.getUdfPath(), "*.jar")) {
       stream.forEach(
           p -> {
             try {

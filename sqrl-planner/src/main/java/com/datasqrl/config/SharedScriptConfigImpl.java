@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.compile;
+package com.datasqrl.config;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
+import com.datasqrl.config.PackageJson.SharedScriptConfig;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
-@Slf4j
-public class DirectoryManager {
+@RequiredArgsConstructor
+public class SharedScriptConfigImpl implements SharedScriptConfig {
 
-  @SneakyThrows
-  public static void prepareTargetDirectory(Path targetDir) {
-    if (Files.isDirectory(targetDir)) {
-      FileUtils.cleanDirectory(targetDir.toFile());
-    } else {
-      Files.createDirectories(targetDir);
-    }
+  private final SqrlConfig sqrlConfig;
+
+  @Override
+  public String getName() {
+    return sqrlConfig.getSelfKey();
   }
 
-  @SneakyThrows
-  public static void createDirectoriesIfNotExists(Path dir) {
-    if (!Files.isDirectory(dir)) {
-      Files.createDirectories(dir);
-    }
+  @Override
+  public String getPath() {
+    return sqrlConfig.asString("path").get();
+  }
+
+  @Override
+  public Map<String, Object> getConfig() {
+    return Map.of();
   }
 }

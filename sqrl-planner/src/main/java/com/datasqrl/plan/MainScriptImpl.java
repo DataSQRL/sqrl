@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl;
+package com.datasqrl.plan;
 
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.resolver.ResourceResolver;
-import com.datasqrl.plan.MainScript;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FileUtil;
@@ -32,32 +32,30 @@ import org.springframework.stereotype.Component;
 public class MainScriptImpl implements MainScript {
 
   private final PackageJson config;
+  private final WorkspacePaths workspacePaths;
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
 
   @Override
   public String getContent() {
     var mainScript =
-        config
-            .getScriptConfig()
-            .getMainScript()
-            .map(Path::of)
-            .flatMap(resourceResolver::resolveFile)
+        getPath()
             .orElseThrow(
                 () ->
                     errors.exception(
-                        "Could not find main sqrl script file: %s",
+                        "Could not find main SQRL script file: %s",
                         config.getScriptConfig().getMainScript()));
+
     return FileUtil.readFile(mainScript);
   }
 
   @Override
   public Optional<Path> getPath() {
-    return config
-        .getScriptConfig()
-        .getMainScript()
-        .map(Path::of)
-        .flatMap(resourceResolver::resolveFile);
+    var mainScript = config.getScriptConfig().getMainScript();
+    var mainScriptPath =
+        workspacePaths.projectRoot().map(p -> p.resolve(mainScript)).orElse(Path.of(mainScript));
+
+    return resourceResolver.resolveFile(mainScriptPath);
   }
 
   @Override

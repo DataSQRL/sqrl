@@ -67,8 +67,8 @@ public class OsProcessManager {
 
   public OsProcessManager(Map<String, String> env) {
     this.env = new HashMap<>(env);
-    ownerUser = env.getOrDefault("BUILD_UID", "root");
-    ownerGroup = env.getOrDefault("BUILD_GID", "root");
+    ownerUser = env.getOrDefault("WORKSPACE_UID", "root");
+    ownerGroup = env.getOrDefault("WORKSPACE_GID", "root");
   }
 
   /**
@@ -121,11 +121,11 @@ public class OsProcessManager {
 
   /**
    * Sets the ownership of a directory and all its contents recursively using the configured
-   * BUILD_UID and BUILD_GID environment variables.
+   * WORKSPACE_UID and WORKSPACE_GID environment variables.
    *
-   * <p>If the BUILD_UID or BUILD_GID environment variables are not set or are blank, this method
-   * performs no operation. If the {@code chown} command fails, a warning is logged but no exception
-   * is thrown.
+   * <p>If the WORKSPACE_UID or WORKSPACE_GID environment variables are not set or are blank, this
+   * method performs no operation. If the {@code chown} command fails, a warning is logged but no
+   * exception is thrown.
    *
    * @param dir the directory whose ownership should be set recursively
    * @throws IOException if there's an error starting the {@code chown} process
