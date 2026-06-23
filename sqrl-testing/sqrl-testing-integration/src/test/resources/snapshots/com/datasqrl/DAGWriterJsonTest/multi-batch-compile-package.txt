@@ -12,7 +12,8 @@
   "timestamp" : "-",
   "schema" : [ {
     "name" : "val",
-    "type" : "INTEGER NOT NULL"
+    "type" : "INTEGER NOT NULL",
+    "documentation" : ""
   } ],
   "row_count" : "~1e8"
 }, {

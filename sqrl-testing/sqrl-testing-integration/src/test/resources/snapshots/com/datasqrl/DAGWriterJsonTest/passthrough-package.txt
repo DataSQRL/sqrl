@@ -63,16 +63,20 @@
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "name",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "email",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "updatedDate",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
+    "documentation" : ""
   } ],
   "primary_key" : [ "employeeid" ],
   "row_count" : "~2e7"
@@ -92,13 +96,16 @@
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "managerid",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "updatedDate",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
+    "documentation" : ""
   } ],
   "primary_key" : [ "employeeid", "managerid" ],
   "row_count" : "~2e7"
@@ -115,16 +122,20 @@
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "name",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "email",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "updatedDate",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
+    "documentation" : ""
   } ],
   "row_count" : "~1e8"
 }, {
@@ -152,13 +163,16 @@
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "managerid",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "updatedDate",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
+    "documentation" : ""
   } ],
   "row_count" : "~1e8"
 }, {

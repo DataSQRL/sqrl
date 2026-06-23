@@ -436,7 +436,7 @@ public class PipelineDAGExporter {
     items.forEach(i -> s.append(" - ").append(i.toString()).append(LINEBREAK));
   }
 
-  private record SchemaColumn(String name, String type, String description) {
+  private record SchemaColumn(String name, String type, String documentation) {
 
     @Override
     public String toString() {

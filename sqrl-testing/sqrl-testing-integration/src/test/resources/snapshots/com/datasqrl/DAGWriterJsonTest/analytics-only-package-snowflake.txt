@@ -38,31 +38,40 @@
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "customer_id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "loan_type_id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "amount",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "duration",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "application_date",
-    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL"
+    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "updated_at",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "id1",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "id2",
-    "type" : "BIGINT"
+    "type" : "BIGINT",
+    "documentation" : ""
   } ],
   "primary_key" : [ "id", "loan_type_id" ],
   "row_count" : "~1e8"
@@ -79,34 +88,44 @@
   "timestamp" : "event_time",
   "schema" : [ {
     "name" : "status",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "message",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "event_time",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "customer_id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "loan_type_id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "amount",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "duration",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "max_amount",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "min_amount",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   } ],
   "primary_key" : [ "customer_id" ],
   "row_count" : "~8e7"
@@ -129,25 +148,32 @@
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "customer_id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "loan_type_id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "amount",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "duration",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "application_date",
-    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL"
+    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "updated_at",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
+    "documentation" : ""
   } ],
   "primary_key" : [ "id", "loan_type_id" ],
   "row_count" : "~2e7"
@@ -170,31 +196,40 @@
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "name",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "description",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "interest_rate",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "max_amount",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "min_amount",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "max_duration",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "min_duration",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "updated_at",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
+    "documentation" : ""
   } ],
   "primary_key" : [ "id" ],
   "row_count" : "~2e7"
@@ -211,16 +246,20 @@
   "timestamp" : "event_time",
   "schema" : [ {
     "name" : "loan_application_id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "status",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "message",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "event_time",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
+    "documentation" : ""
   } ],
   "row_count" : "~1e8"
 }, {
@@ -250,25 +289,32 @@
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "customer_id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "loan_type_id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "amount",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "duration",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "application_date",
-    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL"
+    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "updated_at",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
+    "documentation" : ""
   } ],
   "primary_key" : [ "id", "updated_at" ],
   "row_count" : "~1e8"
@@ -300,31 +346,40 @@
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "name",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "description",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "interest_rate",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "max_amount",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "min_amount",
-    "type" : "DOUBLE NOT NULL"
+    "type" : "DOUBLE NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "max_duration",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "min_duration",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "documentation" : ""
   }, {
     "name" : "updated_at",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
+    "documentation" : ""
   } ],
   "primary_key" : [ "id", "updated_at" ],
   "row_count" : "~1e8"
