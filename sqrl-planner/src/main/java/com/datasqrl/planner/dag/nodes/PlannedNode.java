@@ -19,10 +19,8 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis.UniqueIdentifier;
-import com.datasqrl.planner.util.Documented;
 import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.Map;
-import lombok.Getter;
 import lombok.NonNull;
 
 public abstract class PlannedNode extends PipelineNode {

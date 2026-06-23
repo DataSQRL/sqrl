@@ -18,7 +18,6 @@ package com.datasqrl.planner.util;
 import com.datasqrl.canonicalizer.Name;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 public interface Documented {
 

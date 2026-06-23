@@ -17,7 +17,6 @@ package com.datasqrl.planner.hint;
 
 import com.datasqrl.planner.util.Documented;
 import com.datasqrl.planner.util.Documented.Documentation;
-import java.util.Map;
 import java.util.Optional;
 
 public record HintsAndDoc(PlannerHints hints, Optional<String> doc) {
@@ -36,11 +35,11 @@ public record HintsAndDoc(PlannerHints hints, Optional<String> doc) {
    * Extracts Column and Argument documentation from markdown-style syntax. Any remaining content is
    * considered the table or function docString.
    *
-   * @return
+   * @return Documentation with parsed column/argument docs and remaining description
    */
-  public Documented.Documentation getDocumentation() {
+  public Documentation getDocumentation() {
     if (doc.isPresent()) {
-      return new Documentation(doc.get(), Map.of(), Map.of());
+      return DocStringParser.parse(doc.get());
     }
     return Documented.EMPTY;
   }

@@ -24,7 +24,6 @@ import com.datasqrl.planner.util.Documented;
 import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.server.ResolvedMetadata;
 import java.util.Map;
-import java.util.Optional;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Singular;
