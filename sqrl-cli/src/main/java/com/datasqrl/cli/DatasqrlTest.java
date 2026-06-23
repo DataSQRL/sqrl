@@ -78,7 +78,7 @@ public class DatasqrlTest {
   private static final String CHECKPOINT_FAILURE_MANAGER_LOGGER =
       "org.apache.flink.runtime.checkpoint.CheckpointFailureManager";
 
-  private final Path rootDir;
+  private final Path workspaceDir;
   private final Path planDir;
   private final PackageJson sqrlConfig;
   private final Configuration flinkConfig;
@@ -93,8 +93,8 @@ public class DatasqrlTest {
 
     var testConfig = sqrlConfig.getTestConfig();
     // Initialize snapshot directory
-    var snapshotDir = testConfig.getSnapshotDir(rootDir);
-    var testDir = testConfig.getTestDir(rootDir);
+    var snapshotDir = testConfig.getSnapshotDir(workspaceDir);
+    var testDir = testConfig.getTestDir(workspaceDir);
     // Check if the directory exists, create it if it doesn’t
     if (!Files.exists(snapshotDir)) {
       Files.createDirectories(snapshotDir);

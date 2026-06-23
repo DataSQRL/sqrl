@@ -15,9 +15,9 @@
  */
 package com.datasqrl.compile;
 
-import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.GraphqlSourceLoader;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcStatement;
@@ -50,7 +50,7 @@ public class CompilationProcess {
 
   private final SqlScriptPlanner planner;
   private final DAGPlanner dagPlanner;
-  private final BuildPath buildPath;
+  private final WorkspacePaths workspacePaths;
   private final MainScript mainScript;
   private final PackageJson config;
   private final GenerateServerModel generateServerModel;
@@ -63,7 +63,7 @@ public class CompilationProcess {
 
     var environment =
         new Sqrl2FlinkSQLTranslator(
-            buildPath,
+            workspacePaths,
             (FlinkStreamEngine) planner.getStreamStage().engine(),
             config.getCompilerConfig());
     planner.planMain(mainScript, Optional.empty(), environment);

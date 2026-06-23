@@ -15,7 +15,6 @@
  */
 package com.datasqrl;
 
-import static com.datasqrl.config.SqrlConstants.BUILD_DIR_NAME;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datasqrl.cli.AssertStatusHook;
@@ -75,7 +74,7 @@ public final class FullUseCaseRunner {
       throw e;
     }
 
-    var rootDir = param.packageJsonPath().getParent();
+    var workspaceDir = param.packageJsonPath().getParent();
 
     log.info(
         """
@@ -85,36 +84,37 @@ public final class FullUseCaseRunner {
         Test package file: {}
         """,
         param.getUseCaseName(),
-        rootDir,
+        workspaceDir,
         param.getPackageJsonName());
 
     // Execute the test phase manually via DatasqrlTest
     var packageJson =
         ConfigLoaderUtils.loadResolvedConfig(
-            ErrorCollector.root(), rootDir.resolve(BUILD_DIR_NAME));
+            ErrorCollector.root(), workspaceDir.resolve(SqrlConstants.BUILD_DIR_NAME));
 
     var env = new HashMap<>(containerHook.getEnv());
     env.putAll(System.getenv());
     env.putAll(GlobalEnvironmentStore.getAll());
-    env.put("DATA_PATH", rootDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
-    env.put("UDF_PATH", rootDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
+    env.put(
+        "DATA_PATH", workspaceDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
+    env.put("UDF_PATH", workspaceDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
 
     var planDir =
-        rootDir
+        workspaceDir
             .resolve(SqrlConstants.BUILD_DIR_NAME)
             .resolve(SqrlConstants.DEPLOY_DIR_NAME)
             .resolve(SqrlConstants.PLAN_DIR);
     var flinkConfig = loadInternalTestFlinkConfig(planDir, env);
-    var outputMgr = new TestOutputManager(rootDir);
+    var outputMgr = new TestOutputManager(workspaceDir);
     var test =
         new DatasqrlTest(
-            rootDir,
+            workspaceDir,
             planDir,
             packageJson,
             flinkConfig,
             env,
             outputMgr,
-            new DefaultOutputFormatter(rootDir, false));
+            new DefaultOutputFormatter(workspaceDir, false));
     try {
       var run = test.run();
       if (run != 0) {

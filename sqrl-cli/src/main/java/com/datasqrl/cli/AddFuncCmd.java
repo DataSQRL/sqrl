@@ -53,7 +53,7 @@ public class AddFuncCmd extends BaseCmd {
   @Override
   protected void runInternal(ErrorCollector errors) {
     try {
-      addUdf(() -> cli.rootDir);
+      addUdf(() -> cli.workspaceDir);
     } catch (Exception e) {
       throw errors.exception("Failed to add function '%s': %s", fnName, e);
     }

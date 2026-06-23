@@ -15,11 +15,11 @@
  */
 package com.datasqrl.packager;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.TestPlan;
-import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.RootPath;
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.PhysicalPlan;
@@ -32,20 +32,14 @@ import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -59,22 +53,29 @@ import org.springframework.stereotype.Component;
 @AllArgsConstructor
 public class Packager {
 
-  private final RootPath rootDir;
+  private final WorkspacePaths workspacePaths;
   private final PackageJson config;
-  private final BuildPath buildDir;
-  private final FilePreprocessingPipeline preprocPipeline;
+  private final FilePreprocessingPipeline preprocessingPipeline;
   private final MainScript mainScript;
 
   public void preprocess(ErrorCollector errors) {
-    errors.checkFatal(
-        config.getScriptConfig().getMainScript().map(StringUtils::isNotBlank).orElse(Boolean.FALSE),
-        "No config or main script specified");
+    // Validate main script
+    config.getScriptConfig().getMainScript();
     try {
-      cleanDir(buildDir.buildDir());
-      cleanDir(rootDir.rootDir().resolve(SqrlConstants.DEFAULT_ICEBERG_WAREHOUSE_DIR));
-      createBuildDir(buildDir.buildDir());
-      preprocPipeline.run(rootDir.rootDir(), errors);
-      configureScripts(buildDir.buildDir());
+      cleanDir(workspacePaths.buildDir());
+      cleanDir(workspacePaths.workspaceDir().resolve(SqrlConstants.DEFAULT_ICEBERG_WAREHOUSE_DIR));
+      createBuildDir(workspacePaths.buildDir());
+
+      var basePath = workspacePaths.projectRoot().orElse(workspacePaths.buildDir().getParent());
+      // Preprocess shared scripts first if there are any
+      var sharedScripts = config.getScriptConfig().getSharedScriptConfigs();
+      for (var sharedScript : sharedScripts) {
+        var sourcePath = basePath.resolve(sharedScript.getPath());
+        preprocessingPipeline.run(sourcePath, NamePath.of(sharedScript.getName()), errors);
+      }
+
+      preprocessingPipeline.run(basePath, errors);
+
       writePackageConfig();
     } catch (IOException e) {
       throw errors.handle(e);
@@ -101,51 +102,18 @@ public class Packager {
 
   public void postprocessFlinkCompileError(FlinkCompileException err) {
     if (StringUtils.isNotBlank(err.getDag())) {
-      var dagPath = buildDir.buildDir().resolve("compile_error_dag.log");
+      var dagPath = workspacePaths.buildDir().resolve("compile_error_dag.log");
       writeTextToFile(dagPath, err.getDag());
     }
 
     if (CollectionUtils.isNotEmpty(err.getFlinkSql())) {
-      var sqlPath = buildDir.buildDir().resolve("compile_error_sql.log");
+      var sqlPath = workspacePaths.buildDir().resolve("compile_error_sql.log");
       writeTextToFile(sqlPath, String.join("\n", err.getFlinkSql()));
     }
   }
 
-  /**
-   * Runs templating engine with configuration values on all SQRL files
-   *
-   * @param buildDir the build directory to process
-   * @throws IOException if file operations fail
-   */
-  private void configureScripts(Path buildDir) throws IOException {
-    Map<String, Object> templateValues = config.getScriptConfig().getConfig();
-    if (!templateValues.isEmpty()) {
-      MustacheFactory mustacheFactory = new DefaultMustacheFactory();
-      try (var pathStream = Files.walk(buildDir)) {
-        pathStream
-            .filter(Files::isRegularFile)
-            .filter(path -> path.toString().endsWith(".sqrl"))
-            .forEach(
-                sqrlFile -> {
-                  try {
-                    String content = Files.readString(sqrlFile);
-                    Mustache mustache =
-                        mustacheFactory.compile(
-                            new StringReader(content), sqrlFile.getFileName().toString());
-                    StringWriter writer = new StringWriter();
-                    mustache.execute(writer, templateValues);
-                    Files.writeString(
-                        sqrlFile, writer.toString(), StandardOpenOption.TRUNCATE_EXISTING);
-                  } catch (Exception e) {
-                    throw new RuntimeException("Failed to template SQRL file: " + sqrlFile, e);
-                  }
-                });
-      }
-    }
-  }
-
   private void writePackageConfig() throws IOException {
-    config.toFile(buildDir.buildDir().resolve(SqrlConstants.PACKAGE_JSON), true);
+    config.toFile(workspacePaths.buildDir().resolve(SqrlConstants.PACKAGE_JSON), true);
   }
 
   @SneakyThrows

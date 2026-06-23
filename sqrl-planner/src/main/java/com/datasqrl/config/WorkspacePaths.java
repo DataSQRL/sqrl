@@ -15,14 +15,17 @@
  */
 package com.datasqrl.config;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import java.nio.file.Path;
+import java.util.Optional;
 
-public record RootPath(Path rootDir) {
+public record WorkspacePaths(
+    Path workspaceDir, Path buildDir, Path targetDir, Optional<Path> projectRoot) {
 
-  @Inject
-  public RootPath(@Named("rootDir") Path rootDir) {
-    this.rootDir = rootDir;
+  public Path getUdfPath() {
+    return targetDir.resolve(SqrlConstants.FLINK_ASSETS_DIR).resolve(SqrlConstants.LIB_DIR);
+  }
+
+  public Path getDataPath() {
+    return targetDir.resolve(SqrlConstants.FLINK_ASSETS_DIR).resolve(SqrlConstants.DATA_DIR);
   }
 }

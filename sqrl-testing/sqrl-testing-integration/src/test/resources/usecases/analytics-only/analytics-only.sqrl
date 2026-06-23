@@ -1,4 +1,4 @@
-IMPORT loan-local.sources;
+IMPORT banking-catalog.sources;
 /*+primary_key(id, loan_type_id) */
 /*+partition_key(loan_type_id) */
 _Applications := DISTINCT sources.ApplicationsStream ON id ORDER BY updated_at DESC;

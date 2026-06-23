@@ -1,0 +1,27 @@
+CREATE TABLE CustomersStream (
+PRIMARY KEY (id, `updated_at`) NOT ENFORCED,
+WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
+) WITH (
+'source.monitor-interval' = '10 sec'
+)
+LIKE `customers.jsonl`;
+
+CREATE TABLE ApplicationUpdates (
+    WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
+) LIKE `application_updates.jsonl`;
+
+CREATE TABLE ApplicationsStream (
+PRIMARY KEY (id, `updated_at`) NOT ENFORCED,
+WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECONDS
+) WITH (
+'source.monitor-interval' = '10 sec'
+)
+LIKE `applications.jsonl`;
+
+CREATE TABLE LoanTypesStream (
+PRIMARY KEY (id, `updated_at`) NOT ENFORCED,
+WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
+) WITH (
+'source.monitor-interval' = '10 sec'
+)
+LIKE `loan_types.jsonl`;

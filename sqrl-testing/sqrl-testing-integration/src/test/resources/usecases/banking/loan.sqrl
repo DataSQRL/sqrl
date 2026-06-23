@@ -1,4 +1,4 @@
-IMPORT loan-local.sources;
+IMPORT banking-catalog.sources;
 
 /*+engine(kafka), insert(transaction) */
 CREATE TABLE ApplicationUpdates (

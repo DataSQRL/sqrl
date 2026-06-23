@@ -199,12 +199,12 @@ public class ExternalRedpandaContainerIT {
       container =
           container.withFileSystemBind(
               bankingDir.toString(),
-              SqrlContainerExtension.BUILD_DIR + "/../banking",
+              SqrlContainerExtension.WORKSPACE_DIR + "/../banking",
               BindMode.READ_ONLY);
       log.info(
           "Mounted banking directory: {} -> {}",
           bankingDir,
-          SqrlContainerExtension.BUILD_DIR + "/../banking");
+          SqrlContainerExtension.WORKSPACE_DIR + "/../banking");
     }
 
     return container;

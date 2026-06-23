@@ -146,6 +146,28 @@
           "type": "object",
           "minProperties": 1,
           "additionalProperties": true
+        },
+        "shared": {
+          "type": "object",
+          "minProperties": 1,
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+$": {
+              "type": "object",
+              "minProperties": 1,
+              "properties": {
+                "path": {
+                  "type": "string"
+                },
+                "config": {
+                  "type": "object",
+                  "minProperties": 1,
+                  "additionalProperties": true
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": false,

@@ -47,7 +47,7 @@ public interface PackageJson {
 
   int getVersion();
 
-  boolean hasScriptKey();
+  Optional<String> getProjectRoot();
 
   TestRunnerConfiguration getTestConfig();
 
@@ -96,7 +96,9 @@ public interface PackageJson {
 
   interface ScriptConfig {
 
-    Optional<String> getMainScript();
+    String getMainScript();
+
+    List<SharedScriptConfig> getSharedScriptConfigs();
 
     List<ScriptApiConfig> getScriptApiConfigs();
 
@@ -111,6 +113,15 @@ public interface PackageJson {
     void setMainScript(String script);
 
     void setGraphql(String graphql);
+  }
+
+  interface SharedScriptConfig {
+
+    String getName();
+
+    String getPath();
+
+    Map<String, Object> getConfig();
   }
 
   interface ScriptApiConfig {

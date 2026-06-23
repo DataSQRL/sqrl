@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl;
+package com.datasqrl.util;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;

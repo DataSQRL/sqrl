@@ -2,7 +2,12 @@
   "version": "1",
   "enabled-engines": ["flink", "iceberg"],
   "script": {
-    "main": "iceberg-export.sqrl"
+    "main": "iceberg-export.sqrl",
+    "shared": {
+      "banking-catalog": {
+        "path": "../banking-shared"
+      }
+    }
   },
   "engines": {
     "flink": {

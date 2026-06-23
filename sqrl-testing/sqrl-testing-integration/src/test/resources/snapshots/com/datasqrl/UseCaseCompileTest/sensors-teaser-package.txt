@@ -14,7 +14,19 @@ scalar LocalTime
 "A 64-bit signed integer"
 scalar Long
 
+type MachineGroup {
+  groupId: Long!
+  groupName: String!
+  created: DateTime!
+  machines: [MachineGroup_machinesOutput]!
+}
+
+type MachineGroup_machinesOutput {
+  machineId: Long!
+}
+
 type Query {
+  MachineGroup(limit: Int = 10, offset: Int = 0): [MachineGroup!]
   """
   Returns the sensor temperature for a sensor by id from most recent.
       Sensor temperature readings are averaged per second.
@@ -23,6 +35,7 @@ type Query {
   "Returns the maximum temperature recorded for a given sensor"
   SensorMaxTemp(sensorid: Long, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]
   SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]
+  Sensors(limit: Int = 10, offset: Int = 0): [Sensors!]
 }
 
 """
@@ -52,6 +65,13 @@ type SensorReading {
   timestamp: DateTime!
 }
 
+type Sensors {
+  id: Long!
+  machineId: Long!
+  placed: Long!
+  timestamp: DateTime!
+}
+
 enum _McpMethodType {
   NONE
   TOOL
@@ -67,6 +87,25 @@ enum _RestMethodType {
 directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
+=== MachineGroup
+ID:          default_catalog.default_database.MachineGroup
+Type:        stream
+Stage:       flink
+Primary key: groupId, created
+Timestamp:   created
+Row count:   ~1e8
+---
+Schema:
+ - groupId: BIGINT NOT NULL
+ - groupName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - created: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - machines: RecordType:peek_no_expand(BIGINT NOT NULL machineId) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.MachineGroup__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: MachineGroup
+
 === SecReading
 ID:          default_catalog.default_database.SecReading
 Type:        state
@@ -122,6 +161,24 @@ Inputs:
 Annotations:
  - stream-root: SensorReading
 
+=== Sensors
+ID:          default_catalog.default_database.Sensors
+Type:        stream
+Stage:       flink
+Primary key: id, placed
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - machineId: BIGINT NOT NULL
+ - placed: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Sensors__base
+Annotations:
+ - stream-root: Sensors
+
 === _SensorMaxTempWindow
 ID:          default_catalog.default_database._SensorMaxTempWindow
 Type:        state
@@ -140,6 +197,48 @@ Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
 
 >>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `MachineGroup__schema` (
+  `groupId` BIGINT NOT NULL,
+  `groupName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `machines` ROW(`machineId` BIGINT NOT NULL) NOT NULL ARRAY NOT NULL
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/machine_group.jsonl'
+);
+CREATE TABLE `MachineGroup` (
+  PRIMARY KEY (`groupId`, `created`) NOT ENFORCED,
+  WATERMARK FOR `created` AS `created` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/machine_group.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `MachineGroup__schema`;
+CREATE TEMPORARY TABLE `Sensors__schema` (
+  `id` BIGINT NOT NULL,
+  `machineId` BIGINT NOT NULL,
+  `placed` BIGINT NOT NULL
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/sensors.jsonl'
+);
+CREATE TABLE `Sensors` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`placed`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`id`, `placed`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/sensors.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `Sensors__schema`;
 CREATE TEMPORARY TABLE `SensorReading__schema` (
   `sensorid` BIGINT NOT NULL,
   `time` BIGINT NOT NULL,
@@ -156,7 +255,7 @@ CREATE TABLE `SensorReading` (
 )
 WITH (
   'format' = 'flexible-csv',
-  'path' = '${DATA_PATH}/sensorreading.csv.gz',
+  'path' = '${DATA_PATH}/sensor_reading.csv.gz',
   'connector' = 'filesystem',
   'flexible-csv.skip-header' = 'true'
 )
@@ -177,7 +276,23 @@ SELECT `sensorid`, `window_time`, `maxTemp`
 FROM (SELECT `sensorid`, `window_time`, `maxTemp`, ROW_NUMBER() OVER (PARTITION BY `sensorid` ORDER BY `window_time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`_SensorMaxTempWindow`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1;
-CREATE TABLE `SecReading_1` (
+CREATE TABLE `MachineGroup_1` (
+  `groupId` BIGINT NOT NULL,
+  `groupName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `machines` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  PRIMARY KEY (`groupId`, `created`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'MachineGroup',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `SecReading_2` (
   `sensorid` BIGINT NOT NULL,
   `timeSec` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `timeStart` TIMESTAMP(3) NOT NULL,
@@ -195,7 +310,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `SensorMaxTemp_2` (
+CREATE TABLE `SensorMaxTemp_3` (
   `sensorid` BIGINT NOT NULL,
   `window_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `maxTemp` DOUBLE NOT NULL,
@@ -211,7 +326,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `SensorReading_3` (
+CREATE TABLE `SensorReading_4` (
   `sensorid` BIGINT NOT NULL,
   `time` BIGINT NOT NULL,
   `temperature` DOUBLE NOT NULL,
@@ -228,29 +343,55 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
+CREATE TABLE `Sensors_5` (
+  `id` BIGINT NOT NULL,
+  `machineId` BIGINT NOT NULL,
+  `placed` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `placed`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Sensors',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `default_catalog`.`default_database`.`SecReading_1`
-SELECT *
- FROM `default_catalog`.`default_database`.`SecReading`
+INSERT INTO `default_catalog`.`default_database`.`MachineGroup_1`
+SELECT `groupId`, `groupName`, `created`, `to_jsonb`(`machines`) AS `machines`
+ FROM `default_catalog`.`default_database`.`MachineGroup`
 ;
-INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
+INSERT INTO `default_catalog`.`default_database`.`SecReading_2`
  SELECT *
-  FROM `default_catalog`.`default_database`.`SensorMaxTemp`
+  FROM `default_catalog`.`default_database`.`SecReading`
  ;
- INSERT INTO `default_catalog`.`default_database`.`SensorReading_3`
+ INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_3`
   SELECT *
-   FROM `default_catalog`.`default_database`.`SensorReading`
+   FROM `default_catalog`.`default_database`.`SensorMaxTemp`
   ;
-  END
+  INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
+   SELECT *
+    FROM `default_catalog`.`default_database`.`SensorReading`
+   ;
+   INSERT INTO `default_catalog`.`default_database`.`Sensors_5`
+    SELECT *
+     FROM `default_catalog`.`default_database`.`Sensors`
+    ;
+    END
 >>>kafka.json
 {
   "topics" : [ ],
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "MachineGroup" ("groupId" BIGINT NOT NULL, "groupName" TEXT NOT NULL, "created" TIMESTAMP WITH TIME ZONE NOT NULL, "machines" JSONB, PRIMARY KEY ("groupId","created"));
 CREATE TABLE IF NOT EXISTS "SecReading" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "timeStart" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "timeEnd" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("sensorid","timeStart","timeEnd","timeSec"));
 CREATE TABLE IF NOT EXISTS "SensorMaxTemp" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid","time"))
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid","time"));
+CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","placed"))
 >>>postgres-views.sql
 
 >>>vertx.json
@@ -258,6 +399,31 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
   "models" : {
     "v1" : {
       "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "MachineGroup",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"MachineGroup\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
         {
           "type" : "args",
           "parentType" : "Query",
@@ -352,11 +518,62 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
               "database" : "POSTGRES"
             }
           }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Sensors",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Sensors\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
         }
       ],
       "mutations" : [ ],
       "subscriptions" : [ ],
       "operations" : [
+        {
+          "function" : {
+            "name" : "GetMachineGroup",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query MachineGroup($limit: Int = 10, $offset: Int = 0) {\nMachineGroup(limit: $limit, offset: $offset) {\ngroupId\ngroupName\ncreated\nmachines {\nmachineId\n}\n}\n\n}",
+            "queryName" : "MachineGroup",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MachineGroup{?offset,limit}"
+        },
         {
           "function" : {
             "name" : "GetSecReading",
@@ -444,11 +661,37 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" B
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/SensorReading{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetSensors",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Sensors($limit: Int = 10, $offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\n}\n\n}",
+            "queryName" : "Sensors",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Sensors{?offset,limit}"
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  \"\"\"\n  Returns the sensor temperature for a sensor by id from most recent.\n      Sensor temperature readings are averaged per second.\n  \"\"\"\n  SecReading(sensorid: Long!, limit: Int = 10, offset: Int = 0): [SecReading!]\n  \"Returns the maximum temperature recorded for a given sensor\"\n  SensorMaxTemp(sensorid: Long, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n}\n\n\"\"\"\nReturns the sensor temperature for a sensor by id from most recent.\n    Sensor temperature readings are averaged per second.\n\"\"\"\ntype SecReading {\n  sensorid: Long!\n  timeSec: DateTime!\n  timeStart: DateTime!\n  timeEnd: DateTime!\n  temp: Float!\n}\n\n\"Returns the maximum temperature recorded for a given sensor\"\ntype SensorMaxTemp {\n  sensorid: Long!\n  window_time: DateTime!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Long!\n  time: Long!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MachineGroup {\n  groupId: Long!\n  groupName: String!\n  created: DateTime!\n  machines: [MachineGroup_machinesOutput]!\n}\n\ntype MachineGroup_machinesOutput {\n  machineId: Long!\n}\n\ntype Query {\n  MachineGroup(limit: Int = 10, offset: Int = 0): [MachineGroup!]\n  \"\"\"\n  Returns the sensor temperature for a sensor by id from most recent.\n      Sensor temperature readings are averaged per second.\n  \"\"\"\n  SecReading(sensorid: Long!, limit: Int = 10, offset: Int = 0): [SecReading!]\n  \"Returns the maximum temperature recorded for a given sensor\"\n  SensorMaxTemp(sensorid: Long, limit: Int = 10, offset: Int = 0): [SensorMaxTemp!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  Sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\n\"\"\"\nReturns the sensor temperature for a sensor by id from most recent.\n    Sensor temperature readings are averaged per second.\n\"\"\"\ntype SecReading {\n  sensorid: Long!\n  timeSec: DateTime!\n  timeStart: DateTime!\n  timeEnd: DateTime!\n  temp: Float!\n}\n\n\"Returns the maximum temperature recorded for a given sensor\"\ntype SensorMaxTemp {\n  sensorid: Long!\n  window_time: DateTime!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Long!\n  time: Long!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\ntype Sensors {\n  id: Long!\n  machineId: Long!\n  placed: Long!\n  timestamp: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

@@ -18,20 +18,60 @@ package com.datasqrl.cli;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.OsProcessManager;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.flink.configuration.Configuration;
 import picocli.CommandLine.Option;
 
 public abstract class BaseOsProcessManagerCmd extends BaseCmd {
 
-  protected static final Path DEFAULT_TARGET =
-      Path.of(SqrlConstants.BUILD_DIR_NAME, SqrlConstants.DEPLOY_DIR_NAME);
+  @Option(
+      names = {"-p", "--project-base"},
+      description = "Base folder of the project. Must be a relative path. Default: \"./\".")
+  protected Optional<Path> projectRoot = Optional.empty();
 
   @Option(
       names = {"-t", "--target"},
-      description = "Target folder for deployment artifacts and plans. Default: \"build/deploy\".")
-  protected Path targetFolder = DEFAULT_TARGET;
+      description =
+          "Target folder for deployment artifacts and plans. Must be a relative path. Default: \"./build/deploy\".")
+  protected Optional<Path> targetDir = Optional.empty();
+
+  protected Path getProjectRoot() {
+    if (projectRoot.isEmpty()) {
+      return cli.workspaceDir;
+    }
+
+    var projRoot = projectRoot.get();
+    if (projRoot.isAbsolute()) {
+      throw new IllegalArgumentException("Project root must be a relative path");
+    }
+
+    projRoot = cli.workspaceDir.resolve(projRoot);
+    if (!Files.isDirectory(projRoot)) {
+      throw new IllegalArgumentException(
+          "Project root does not exist or not a directory: " + projRoot);
+    }
+
+    return projRoot;
+  }
+
+  protected Path getBuildDir() {
+    return getProjectRoot().resolve(SqrlConstants.BUILD_DIR_NAME);
+  }
+
+  protected Path getTargetDir() {
+    if (targetDir.isPresent()) {
+      var target = targetDir.get();
+      if (!cli.internalTestExec && target.isAbsolute()) {
+        throw new IllegalArgumentException("Target directory must be a relative path");
+      }
+      return cli.workspaceDir.resolve(target);
+    }
+
+    return getBuildDir().resolve(SqrlConstants.DEPLOY_DIR_NAME);
+  }
 
   @Override
   protected void teardown() {
@@ -42,14 +82,6 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
 
   protected OsProcessManager getOsProcessManager() {
     return new OsProcessManager(System.getenv());
-  }
-
-  protected Path getTargetFolder() {
-    if (targetFolder.isAbsolute()) {
-      return targetFolder;
-    }
-
-    return cli.rootDir.resolve(targetFolder);
   }
 
   /**

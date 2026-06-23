@@ -13,16 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.config;
+package com.datasqrl.loaders.resolver;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import java.nio.file.Path;
-
-public record TargetPath(Path targetDir) {
-
-  @Inject
-  public TargetPath(@Named("targetDir") Path targetDir) {
-    this.targetDir = targetDir;
-  }
-}
+public class ResourceResolvers {}
