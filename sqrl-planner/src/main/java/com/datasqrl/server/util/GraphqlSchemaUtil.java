@@ -21,6 +21,8 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.plan.table.Multiplicity;
+import com.datasqrl.planner.util.Documented;
+import com.datasqrl.planner.util.Documented.Lookup;
 import com.datasqrl.server.graphql.CustomScalars;
 import graphql.Scalars;
 import graphql.language.FieldDefinition;
@@ -93,21 +95,25 @@ public class GraphqlSchemaUtil {
   }
 
   public static Optional<GraphQLInputType> getGraphQLInputType(
-      RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
-    return getGraphQLType(GraphQLMetaType.INPUT, type, namePath, extendedScalarTypes)
+      RelDataType type, NamePath namePath, boolean extendedScalarTypes, Lookup fieldDocs) {
+    return getGraphQLType(GraphQLMetaType.INPUT, type, namePath, extendedScalarTypes, fieldDocs)
         .map(inputType -> wrapNullable(inputType, type))
         .map(GraphqlSchemaUtil::asInputType);
   }
 
   public static Optional<GraphQLOutputType> getGraphQLOutputType(
-      RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
-    return getGraphQLType(GraphQLMetaType.OUTPUT, type, namePath, extendedScalarTypes)
+      RelDataType type, NamePath namePath, boolean extendedScalarTypes, Lookup fieldDocs) {
+    return getGraphQLType(GraphQLMetaType.OUTPUT, type, namePath, extendedScalarTypes, fieldDocs)
         .map(t -> wrapNullable(t, type))
         .map(GraphqlSchemaUtil::asOutputType);
   }
 
   public static Optional<GraphQLType> getGraphQLType(
-      GraphQLMetaType metaType, RelDataType type, NamePath namePath, boolean extendedScalarTypes) {
+      GraphQLMetaType metaType,
+      RelDataType type,
+      NamePath namePath,
+      boolean extendedScalarTypes,
+      Lookup fieldDocs) {
     if (type.getSqlTypeName() == null) {
       return Optional.empty();
     }
@@ -164,12 +170,14 @@ public class GraphqlSchemaUtil {
       // arity many, create a GraphQLList of the component type
       case ARRAY:
       case MULTISET:
-        return getGraphQLType(metaType, type.getComponentType(), namePath, extendedScalarTypes)
+        return getGraphQLType(
+                metaType, type.getComponentType(), namePath, extendedScalarTypes, fieldDocs)
             .map(GraphQLList::list);
       // nested type, arity 1
       case STRUCTURED:
       case ROW:
-        return createGraphQLStructuredType(metaType, type, namePath, extendedScalarTypes);
+        return createGraphQLStructuredType(
+            metaType, type, namePath, extendedScalarTypes, fieldDocs);
       case MAP:
         return Optional.of(CustomScalars.JSON);
       case BINARY:
@@ -192,7 +200,8 @@ public class GraphqlSchemaUtil {
       GraphQLMetaType metaType,
       RelDataType rowType,
       NamePath namePath,
-      boolean extendedScalarTypes) {
+      boolean extendedScalarTypes,
+      Lookup fieldDocs) {
     var typeName = uniquifyNameForPath(namePath, metaType.suffix);
     final BiConsumer<String, GraphQLType> fieldConsumer;
     final Supplier<GraphQLType> buildResult;
@@ -200,23 +209,27 @@ public class GraphqlSchemaUtil {
       final var builder = GraphQLObjectType.newObject();
       builder.name(typeName);
       fieldConsumer =
-          (fieldName, fieldType) ->
-              builder.field(
-                  GraphQLFieldDefinition.newFieldDefinition()
-                      .name(fieldName)
-                      .type((GraphQLOutputType) fieldType)
-                      .build());
+          (fieldName, fieldType) -> {
+            var fieldBuild =
+                GraphQLFieldDefinition.newFieldDefinition()
+                    .name(fieldName)
+                    .type((GraphQLOutputType) fieldType);
+            fieldDocs.getDocsFor(fieldName).ifPresent(fieldBuild::description);
+            builder.field(fieldBuild.build());
+          };
       buildResult = builder::build;
     } else {
       final var builder = GraphQLInputObjectType.newInputObject();
       builder.name(typeName);
       fieldConsumer =
-          (fieldName, fieldType) ->
-              builder.field(
-                  GraphQLInputObjectField.newInputObjectField()
-                      .name(fieldName)
-                      .type((GraphQLInputType) fieldType)
-                      .build());
+          (fieldName, fieldType) -> {
+            var fieldBuild =
+                GraphQLInputObjectField.newInputObjectField()
+                    .name(fieldName)
+                    .type((GraphQLInputType) fieldType);
+            fieldDocs.getDocsFor(fieldName).ifPresent(fieldBuild::description);
+            builder.field(fieldBuild.build());
+          };
       buildResult = builder::build;
     }
     for (RelDataTypeField field : rowType.getFieldList()) {
@@ -225,7 +238,7 @@ public class GraphqlSchemaUtil {
         continue;
       }
       var columnType = field.getType();
-      getGraphQLType(metaType, columnType, fieldPath, extendedScalarTypes)
+      getGraphQLType(metaType, columnType, fieldPath, extendedScalarTypes, Documented.NO_LOOKUP)
           .map(fieldType -> wrapNullable(fieldType, columnType)) // recursively traverse
           .ifPresent(fieldType -> fieldConsumer.accept(field.getName(), fieldType));
     }

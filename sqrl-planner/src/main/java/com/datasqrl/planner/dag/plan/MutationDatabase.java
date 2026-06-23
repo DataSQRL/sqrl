@@ -19,12 +19,14 @@ import com.datasqrl.calcite.type.TypeCompatibility;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.ParsedRelDataTypeResult;
+import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.server.exec.FlinkExecFunction;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
@@ -46,9 +48,10 @@ public record MutationDatabase(List<Table> tables) {
                                   var name = column.getName().toString();
                                   var entireColumn = column.toString();
                                   var spec = entireColumn.substring(entireColumn.indexOf(' ') + 1);
-                                  return new ColumnDefinition(name, spec);
+                                  var docs = mutTbl.getDocumentation().getColumn(name, "");
+                                  return new ColumnDefinition(name, spec, docs);
                                 }
-                                return new ColumnDefinition("", node.toString());
+                                return new ColumnDefinition("", node.toString(), "");
                               })
                           .toList();
                   var definition =
@@ -62,7 +65,7 @@ public record MutationDatabase(List<Table> tables) {
                       tblBuilder.buildSql(false).toString(),
                       definition,
                       mutTbl.getCreateTable().getConfig(),
-                      mutTbl.getDocumentation().orElse(""));
+                      mutTbl.getDocumentation().getDocString(""));
                 })
             .toList();
     return new MutationDatabase(tables);
@@ -171,5 +174,5 @@ public record MutationDatabase(List<Table> tables) {
   public record TableDefinition(
       List<ColumnDefinition> columns, List<String> primaryKey, List<String> partitionKey) {}
 
-  public record ColumnDefinition(String name, String spec) {}
+  public record ColumnDefinition(String name, String spec, String documentation) {}
 }

@@ -510,7 +510,7 @@ public class SqlScriptPlanner {
             new AccessVisibility(
                 access, hints.isTest(), tblFnStmt.isRelationship() || passthroughFn, isHidden);
         fnBuilder.visibility(visibility);
-        fnBuilder.documentation(documentation);
+        fnBuilder.documentation(hintsAndDocs.getDocumentation());
         fnBuilder.cacheDuration(getCacheDuration(hintsAndDocs));
         var fn = fnBuilder.build();
         errors.checkFatal(
@@ -726,8 +726,7 @@ public class SqlScriptPlanner {
     Preconditions.checkArgument(tableAnalysis.getFromTables().size() == 1);
     var source = (TableAnalysis) tableAnalysis.getFromTables().get(0);
     Preconditions.checkArgument(source.isSourceOrSink());
-    var sourceNode =
-        new TableNode(source, getSourceSinkStageAnalysis(), hintsAndDoc.getDocOrEmpty());
+    var sourceNode = new TableNode(source, getSourceSinkStageAnalysis());
     dagBuilder.add(sourceNode);
     var isHidden = tableAnalysis.getIdentifier().isHidden();
     var visibility =
@@ -762,8 +761,7 @@ public class SqlScriptPlanner {
             tableAnalysis,
             isSource
                 ? getSourceSinkStageAnalysis()
-                : getStageAnalysis(tableAnalysis, availableStages),
-            hintsAndDoc.getDocOrEmpty());
+                : getStageAnalysis(tableAnalysis, availableStages));
     dagBuilder.add(tableNode);
 
     // Figure out if and what type of access function we should add for this table
@@ -795,7 +793,7 @@ public class SqlScriptPlanner {
               scriptContext.toIdentifier(fnName), relBuilder.build(), parameters, tableAnalysis);
       fnBuilder.fullPath(NamePath.of(tableName));
       fnBuilder.visibility(visibility);
-      fnBuilder.documentation(hintsAndDoc.doc());
+      fnBuilder.documentation(hintsAndDoc.getDocumentation());
       fnBuilder.cacheDuration(getCacheDuration(hintsAndDoc));
       addFunctionToDag(
           fnBuilder.build(), hintsAndDoc.dropHints()); // hints don't apply to the function access
@@ -813,9 +811,7 @@ public class SqlScriptPlanner {
             determineViableStages(function.getVisibility().access()), hintsAndDoc.hints());
     dagBuilder.add(
         new TableFunctionNode(
-            function,
-            getStageAnalysis(function.getFunctionAnalysis(), availableStages),
-            hintsAndDoc.getDocOrEmpty()));
+            function, getStageAnalysis(function.getFunctionAnalysis(), availableStages)));
   }
 
   private static Duration getCacheDuration(HintsAndDoc hintsAndDoc) {
@@ -996,7 +992,7 @@ public class SqlScriptPlanner {
                   hintsAndDoc.hints().getHint(TtlHint.class).flatMap(TtlHint::getTtl)));
           mutationBuilder.name(Name.system(origTableName));
           mutationBuilder.insertType(insertType);
-          mutationBuilder.documentation(hintsAndDoc.doc());
+          mutationBuilder.documentation(hintsAndDoc.getDocumentation());
           mutationBuilder.tableBuilder(tableBuilder);
           // UUID and TIMESTAMP are special cases
           tableBuilder

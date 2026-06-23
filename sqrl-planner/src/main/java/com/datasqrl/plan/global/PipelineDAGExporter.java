@@ -123,7 +123,9 @@ public class PipelineDAGExporter {
                           .map(
                               field ->
                                   new SchemaColumn(
-                                      field.getName(), field.getType().getFullTypeString()))
+                                      field.getName(),
+                                      field.getType().getFullTypeString(),
+                                      table.getDocumentation().getColumn(field.getName(), "")))
                           .toList())
                   .annotations(getAnnotations(table))
                   .build());
@@ -164,7 +166,7 @@ public class PipelineDAGExporter {
 
   private String getDocumentation(PlannedNode node) {
     if (includeDocumentation) {
-      return node.getDocumentation();
+      return node.getDocumentation().getDocString("");
     } else {
       return null;
     }
@@ -434,7 +436,7 @@ public class PipelineDAGExporter {
     items.forEach(i -> s.append(" - ").append(i.toString()).append(LINEBREAK));
   }
 
-  private record SchemaColumn(String name, String type) {
+  private record SchemaColumn(String name, String type, String description) {
 
     @Override
     public String toString() {

@@ -33,6 +33,7 @@ import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.Documented;
 import com.datasqrl.server.graphql.CustomScalars;
 import com.datasqrl.server.util.GraphqlSchemaUtil;
 import graphql.Scalars;
@@ -195,7 +196,9 @@ public class GraphqlSchemaFactory {
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     for (RelDataTypeField field : rowType.getFieldList()) {
       final var fieldPath = typePath.concat(NamePath.of(field.getName()));
-      createRelDataTypeField(field, fieldPath).map(fields::add);
+      createRelDataTypeField(
+              field, fieldPath, table.getDocumentation().getColumnOpt(field.getName()))
+          .map(fields::add);
     }
 
     // relationship fields if any (reference to types defined when processing the relationship) need
@@ -207,7 +210,7 @@ public class GraphqlSchemaFactory {
     assert !fields.isEmpty() : "Invalid table: " + table;
 
     var objectType = GraphQLObjectType.newObject().name(typeName).fields(fields);
-    table.getDocumentation().ifPresent(objectType::description);
+    table.getDocumentation().getDocStringOpt().ifPresent(objectType::description);
     definedTypeNames.add(typeName);
     return Optional.of(objectType.build());
   }
@@ -222,7 +225,10 @@ public class GraphqlSchemaFactory {
       var name = mutation.getName().getDisplay();
       var inputType =
           GraphqlSchemaUtil.getGraphQLInputType(
-                  mutation.getInputDataType(), NamePath.of(name), extendedScalarTypes)
+                  mutation.getInputDataType(),
+                  NamePath.of(name),
+                  extendedScalarTypes,
+                  mutation.getDocumentation().getColumnLookup())
               .map(
                   type ->
                       isMultiple
@@ -242,7 +248,8 @@ public class GraphqlSchemaFactory {
                   GraphqlSchemaUtil.getGraphQLOutputType(
                           mutation.getOutputDataType(),
                           NamePath.of(name.concat("Result")),
-                          extendedScalarTypes)
+                          extendedScalarTypes,
+                          mutation.getDocumentation().getColumnLookup())
                       .map(
                           type ->
                               isMultiple
@@ -253,7 +260,7 @@ public class GraphqlSchemaFactory {
                               new IllegalArgumentException(
                                   "Could not create output type for mutation: "
                                       + mutation.getName())));
-      mutation.getDocumentation().ifPresent(mutationFieldBuilder::description);
+      mutation.getDocumentation().getDocStringOpt().ifPresent(mutationFieldBuilder::description);
       builder.field(mutationFieldBuilder.build());
     }
     return Optional.of(builder.build());
@@ -288,7 +295,7 @@ public class GraphqlSchemaFactory {
               .name(tableFunctionName)
               .type(type)
               .arguments(createArguments(tableFunction));
-      tableFunction.getDocumentation().ifPresent(fieldBuilder::description);
+      tableFunction.getDocumentation().getDocStringOpt().ifPresent(fieldBuilder::description);
       fields.add(fieldBuilder.build());
     }
     if (fields.isEmpty()) {
@@ -310,16 +317,18 @@ public class GraphqlSchemaFactory {
    * (which is no more planed as a table function) and which we recursively process
    */
   private Optional<GraphQLFieldDefinition> createRelDataTypeField(
-      RelDataTypeField field, NamePath fieldPath) {
-    return getGraphQLOutputType(field.getType(), fieldPath, extendedScalarTypes)
+      RelDataTypeField field, NamePath fieldPath, Optional<String> docs) {
+    return getGraphQLOutputType(
+            field.getType(), fieldPath, extendedScalarTypes, Documented.NO_LOOKUP)
         .filter(type -> isValidGraphQLName(field.getName()))
         .filter(type -> isVisible(field))
         .map(
-            type ->
-                GraphQLFieldDefinition.newFieldDefinition()
-                    .name(field.getName())
-                    .type(type)
-                    .build());
+            type -> {
+              var builder =
+                  GraphQLFieldDefinition.newFieldDefinition().name(field.getName()).type(type);
+              docs.ifPresent(builder::description);
+              return builder.build();
+            });
   }
 
   /**
@@ -345,7 +354,7 @@ public class GraphqlSchemaFactory {
                     wrapMultiplicity(
                         createTypeReference(relationship), relationship.getMultiplicity()))
             .arguments(createArguments(relationship));
-    relationship.getDocumentation().ifPresent(field::description);
+    relationship.getDocumentation().getDocStringOpt().ifPresent(field::description);
 
     return Optional.of(field.build());
   }
@@ -361,19 +370,29 @@ public class GraphqlSchemaFactory {
             .filter(
                 p ->
                     GraphqlSchemaUtil.getGraphQLInputType(
-                            p.getType(null), NamePath.of(p.getName()), extendedScalarTypes)
+                            p.getType(null),
+                            NamePath.of(p.getName()),
+                            extendedScalarTypes,
+                            Documented.NO_LOOKUP)
                         .isPresent())
             .map(
-                parameter ->
-                    GraphQLArgument.newArgument()
-                        .name(parameter.getName())
-                        .type(
-                            GraphqlSchemaUtil.getGraphQLInputType(
-                                    parameter.getType(null),
-                                    NamePath.of(parameter.getName()),
-                                    extendedScalarTypes)
-                                .get())
-                        .build())
+                parameter -> {
+                  var builder =
+                      GraphQLArgument.newArgument()
+                          .name(parameter.getName())
+                          .type(
+                              GraphqlSchemaUtil.getGraphQLInputType(
+                                      parameter.getType(null),
+                                      NamePath.of(parameter.getName()),
+                                      extendedScalarTypes,
+                                      Documented.NO_LOOKUP)
+                                  .get());
+                  tableFunction
+                      .getDocumentation()
+                      .getArgumentOpt(parameter.getName())
+                      .ifPresent(builder::description);
+                  return builder.build();
+                })
             .collect(Collectors.toList());
     List<GraphQLArgument> limitAndOffsetArguments = List.of();
     if (tableFunction.getVisibility().access() != AccessModifier.SUBSCRIPTION

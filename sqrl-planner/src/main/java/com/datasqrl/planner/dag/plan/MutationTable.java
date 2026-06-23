@@ -61,7 +61,7 @@ public class MutationTable implements ExecutableQuery, Documented {
   @Singular Map<String, ResolvedMetadata> computedColumns;
 
   /** A documentation string that describes the mutation */
-  @Default Optional<String> documentation = Optional.empty();
+  @Default Documentation documentation = Documented.EMPTY;
 
   /** How records are inserted into the topic for this mutation */
   @Default MutationInsertType insertType = MutationInsertType.SINGLE;

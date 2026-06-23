@@ -32,7 +32,7 @@ class PostgresCreateTableDdlFactoryTest {
     return new CreateTableJdbcStatement(
         "orders",
         null,
-        List.of(new Field("id", "BIGINT", false)),
+        List.of(new Field("id", "BIGINT", false, null)),
         List.of("id"),
         partitionKey,
         partitionType,

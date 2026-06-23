@@ -66,6 +66,4 @@ public interface TableOrFunctionAnalysis extends AbstractAnalysis {
    * returns the same type as the base table.
    */
   TableAnalysis getBaseTable();
-
-  Optional<String> getDocumentation();
 }
