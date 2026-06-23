@@ -176,12 +176,12 @@ class DocStringParserTest {
         """
         This table stores customer orders.
 
-        # Columns:
+        ## Columns:
         - orderId: The unique order identifier
         - customerId: Reference to the customer
         - total: Order total amount
 
-        # Arguments
+        ### Arguments
         - status: Filter by order status
         - limit: Maximum results to return""";
 

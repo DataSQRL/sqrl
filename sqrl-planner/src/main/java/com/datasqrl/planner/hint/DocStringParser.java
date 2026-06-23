@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
 public final class DocStringParser {
 
   private static final Pattern SECTION_HEADER_PATTERN =
-      Pattern.compile("^\\s*#?\\s*(columns?|arguments?)\\s*[:\\-]?\\s*$", Pattern.CASE_INSENSITIVE);
+      Pattern.compile("^\\s*#*\\s*(columns?|arguments?)\\s*[:\\-]?\\s*$", Pattern.CASE_INSENSITIVE);
 
   private static final Pattern LIST_ITEM_PATTERN =
       Pattern.compile("^\\s*[-*]\\s*([\\w]+)\\s*:\\s*(.+)$");
