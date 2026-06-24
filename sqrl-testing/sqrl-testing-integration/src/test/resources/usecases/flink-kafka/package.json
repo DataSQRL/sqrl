@@ -5,7 +5,10 @@
     "main": "flink-kafka.sqrl",
     "shared": {
       "banking-catalog": {
-        "path": "../banking-shared"
+        "path": "../banking-shared",
+        "config": {
+          "monitorInterval": "5s"
+        }
       }
     }
   },

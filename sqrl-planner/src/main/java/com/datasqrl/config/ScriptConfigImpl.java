@@ -15,6 +15,8 @@
  */
 package com.datasqrl.config;
 
+import static com.datasqrl.config.PackageJsonImpl.CONFIG_KEY;
+
 import com.datasqrl.config.PackageJson.ScriptApiConfig;
 import com.datasqrl.config.PackageJson.SharedScriptConfig;
 import java.util.ArrayList;
@@ -33,7 +35,6 @@ public class ScriptConfigImpl implements PackageJson.ScriptConfig {
   public static final String API_KEY = "api";
   public static final String GRAPHQL_KEY = "graphql";
   public static final String OPERATIONS_KEY = "operations";
-  public static final String CONFIG_KEY = "config";
   public static final String DATABASE_KEY = "database";
 
   @Override

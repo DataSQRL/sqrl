@@ -174,7 +174,7 @@ CREATE TABLE `CustomersStream` (
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 )
 WITH (
-  'source.monitor-interval' = '10 sec'
+  'source.monitor-interval' = '10s'
 )
 LIKE `CustomersStream__schema`;
 CREATE TEMPORARY TABLE `ApplicationUpdates__schema` (
@@ -211,7 +211,7 @@ CREATE TABLE `ApplicationsStream` (
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 )
 WITH (
-  'source.monitor-interval' = '10 sec'
+  'source.monitor-interval' = '10s'
 )
 LIKE `ApplicationsStream__schema`;
 CREATE TEMPORARY TABLE `LoanTypesStream__schema` (
@@ -235,7 +235,7 @@ CREATE TABLE `LoanTypesStream` (
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 )
 WITH (
-  'source.monitor-interval' = '10 sec'
+  'source.monitor-interval' = '10s'
 )
 LIKE `LoanTypesStream__schema`;
 USE CATALOG `default_catalog`;
