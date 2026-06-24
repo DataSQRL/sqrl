@@ -159,10 +159,14 @@ public class SqrlContainerExtension
     return createServerContainer(true);
   }
 
-  @SuppressWarnings("resource")
   public GenericContainer<?> createServerContainer(boolean withRedpanda) {
-    var deployPlanPath = testDir.resolve("build/deploy/plan");
-    assertThat(deployPlanPath).exists().isDirectory();
+    return createServerContainer(testDir, withRedpanda);
+  }
+
+  @SuppressWarnings("resource")
+  public GenericContainer<?> createServerContainer(Path projectRoot, boolean withRedpanda) {
+    var planDir = projectRoot.resolve("build/deploy/plan");
+    assertThat(planDir).exists().isDirectory();
 
     if (withRedpanda) {
       assertThat(redpandaContainer).as("redpandaContainer is already set.").isNull();
@@ -175,7 +179,7 @@ public class SqrlContainerExtension
         new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + getImageTag()))
             .withNetwork(network)
             .withExposedPorts(HTTP_SERVER_PORT)
-            .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
+            .withFileSystemBind(planDir.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
             .withEnv("SQRL_DEBUG", "1")
             .waitingFor(
                 Wait.forLogMessage(".*HTTP server listening on port 8888.*", 1)
@@ -259,12 +263,12 @@ public class SqrlContainerExtension
   }
 
   public void startGraphQLServer(Consumer<GenericContainer<?>> containerCustomizer) {
-    startGraphQLServer(containerCustomizer, true);
+    startGraphQLServer(containerCustomizer, testDir, true);
   }
 
   public void startGraphQLServer(
-      Consumer<GenericContainer<?>> containerCustomizer, boolean withRedpanda) {
-    serverContainer = createServerContainer(withRedpanda);
+      Consumer<GenericContainer<?>> containerCustomizer, Path projectRoot, boolean withRedpanda) {
+    serverContainer = createServerContainer(projectRoot, withRedpanda);
 
     containerCustomizer.accept(serverContainer);
 
@@ -501,7 +505,13 @@ public class SqrlContainerExtension
   }
 
   public void assertLogFiles(String logs) {
-    var logsDir = testDir.resolve("build/logs");
+    assertLogFiles(logs, null);
+  }
+
+  public void assertLogFiles(String logs, @Nullable String testCase) {
+    var testCaseDir = testCase == null ? testDir : testDir.resolve(testCase);
+
+    var logsDir = testCaseDir.resolve("build/logs");
     assertThat(logsDir).as("Logs directory should exist\n%s", logs).exists().isDirectory();
 
     var cliLogFile = logsDir.resolve("datasqrl-cli.log");
