@@ -18,7 +18,7 @@ docker pull datasqrl/cmd:latest
 The DataSQRL CLI provides the following commands:
 
 ```bash
-docker run --rm -v $PWD:/build datasqrl/cmd -h
+docker run --rm -v $PWD:/workspace datasqrl/cmd -h
 ```
 
 ```
@@ -38,7 +38,7 @@ Commands:
 ```
 
 :::warning
-You need to mount the current directory (`$PWD` or `${PWD}` on Windows with Powershell) to the `/build`
+You need to mount the current directory (`$PWD` or `${PWD}` on Windows with Powershell) to the `/workspace`
 directory for file access in Docker.
 :::
 
@@ -52,7 +52,7 @@ See the [configuration documentation](configuration.md) for more details.
 The `init` command creates a new SQRL project with the necessary files and directory structure.
 
 ```bash
-docker run --rm -v $PWD/<project-folder>:/build datasqrl/cmd init -h
+docker run --rm -v $PWD/<project-folder>:/workspace datasqrl/cmd init -h
 ```
 
 ```
@@ -71,7 +71,7 @@ Initializes an empty SQRL project.
 ```bash
 mkdir my-project
 
-docker run --rm -v $PWD/my-project:/build datasqrl/cmd init stream my-project
+docker run --rm -v $PWD/my-project:/workspace datasqrl/cmd init stream my-project
 ```
 
 This creates a new streaming project named `my-project` with the default configuration and directory structure.
@@ -81,7 +81,7 @@ This creates a new streaming project named `my-project` with the default configu
 The `add-func` command adds a new user-defined function (UDF) to an existing SQRL project.
 
 ```bash
-docker run --rm -v $PWD/<project-folder>:/build datasqrl/cmd add-func -h
+docker run --rm -v $PWD/<project-folder>:/workspace datasqrl/cmd add-func -h
 ```
 
 ```
@@ -100,7 +100,7 @@ project.
 ```bash
 mkdir my-project
 
-docker run --rm -v $PWD/my-project:/build datasqrl/cmd add-func MyAwesomeFunction
+docker run --rm -v $PWD/my-project:/workspace datasqrl/cmd add-func MyAwesomeFunction
 ```
 
 This creates a new scalar function template in the `functions/` directory.
@@ -113,19 +113,25 @@ It stages all files needed by the compiler in the `build` directory and outputs 
 artifacts for all engines in the target folder (defaults to `build/deploy`).
 
 ```bash
-docker run --rm -v $PWD:/build datasqrl/cmd compile -h
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile -h
 ```
 
 ```
-Usage: sqrl compile [-BhV] [-t=<targetFolder>] [<packageFiles>...]
+Usage: sqrl compile [-BhV] [-r=<projectRoot>] [-t=<targetFolder>]
+                    [<packageFiles>...]
 Compiles an SQRL project and produces all build artifacts.
       [<packageFiles>...]   Package configuration file(s) of the project.
                               Default: "package.json".
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
+  -r, --project-root=<projectRoot>
+                            Project root folder. Must be a relative path. If
+                              omitted, it is inferred from the package path(s),
+                              falling back to "/workspace".
   -t, --target=<targetFolder>
                             Target folder for deployment artifacts and plans.
-                              Default: "build/deploy".
+                              Must be a relative path.
+                            Default: "<project-root>/build/deploy".
   -V, --version             Print version information and exit.
 ```
 
@@ -135,7 +141,7 @@ Compiles an SQRL project and produces all build artifacts.
 cd my-project
 
 # Defaults to package.json
-docker run --rm -v $PWD:/build datasqrl/cmd compile
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile
 ```
 
 Or with a specific package configuration file:
@@ -143,7 +149,7 @@ Or with a specific package configuration file:
 ```bash
 cd my-project
 
-docker run --rm -v $PWD:/build datasqrl/cmd compile package-prod.json
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile package-prod.json
 ```
 
 ### Output
@@ -158,19 +164,25 @@ Upon successful compilation, the compiler writes:
 The `run` command compiles and runs the generated data pipeline in Docker.
 
 ```bash
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/build datasqrl/cmd run -h
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd run -h
 ```
 
 ```
-Usage: sqrl run [-BhV] [-t=<targetFolder>] [<packageFiles>...]
+Usage: sqrl run [-BhV] [-r=<projectRoot>] [-t=<targetFolder>]
+                [<packageFiles>...]
 Compiles, then runs a SQRL project in a lightweight, standalone environment.
       [<packageFiles>...]   Package configuration file(s) of the project.
                               Default: "package.json".
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
+  -r, --project-root=<projectRoot>
+                            Project root folder. Must be a relative path. If
+                              omitted, it is inferred from the package path(s),
+                              falling back to "/workspace".
   -t, --target=<targetFolder>
                             Target folder for deployment artifacts and plans.
-                              Default: "build/deploy".
+                              Must be a relative path.
+                            Default: "<project-root>/build/deploy".
   -V, --version             Print version information and exit.
 ```
 
@@ -186,7 +198,7 @@ These `run`-specific configuration options will be replaced if they are defined 
 ```bash
 cd my-project
 
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v $PWD:/build datasqrl/cmd run
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v $PWD:/workspace datasqrl/cmd run
 ```
 
 This compiles, then runs the SQRL project in the `my-project` folder,
@@ -218,7 +230,7 @@ This allows DataSQRL to map connectors correctly and also applies to [testing](#
 To preserve inserted data between runs, mount a directory for Redpanda to persist the data to:
 
 ```bash
-docker run -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v /mydata/project:/data/redpanda -v $PWD:/build datasqrl/cmd run my-package.json
+docker run -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v /mydata/project:/data/redpanda -v $PWD:/workspace datasqrl/cmd run my-package.json
 ```
 
 The volume mount contains the data written to the log engine and persists it to the local `/mydata/project` directory
@@ -246,26 +258,32 @@ All subsequent runs of the test command compare the results to the previously sn
 if the results are identical, else fail.
 
 ```bash
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/build datasqrl/cmd test -h
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd test -h
 ```
 
 ```
-Usage: sqrl test [-BhV] [-t=<targetFolder>] [<packageFiles>...]
+Usage: sqrl test [-BhV] [-r=<projectRoot>] [-t=<targetFolder>]
+                 [<packageFiles>...]
 Compiles, then tests a SQRL project.
       [<packageFiles>...]   Package configuration file(s) of the project.
                               Default: "package.json".
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
+  -r, --project-root=<projectRoot>
+                            Project root folder. Must be a relative path. If
+                              omitted, it is inferred from the package path(s),
+                              falling back to "/workspace".
   -t, --target=<targetFolder>
                             Target folder for deployment artifacts and plans.
-                              Default: "build/deploy".
+                              Must be a relative path.
+                            Default: "<project-root>/build/deploy".
   -V, --version             Print version information and exit.
 ```
 
 ### Example
 
 ```bash
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/build datasqrl/cmd test
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd test
 ```
 
 The Test Command related configuration can be adjusted via the [`test-runner`](configuration.md#test-runner-test-runner) configuration.
@@ -291,21 +309,26 @@ The `exec` command executes an already compiled SQRL project using its existing 
 This is useful when you want to run a previously compiled pipeline.
 
 ```bash
-run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/build datasqrl/cmd exec -h
+run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd exec -h
 ```
 
 :::warning
 Be aware that `exec` does not apply all run-specific Flink configuration that we previously described at [run command](#run-command).
-It only sets `execution.target` to `local` if it is missing to be able to deploy, but other than that takes the configuration from the `build/deploy` folder as is.
+It only sets `execution.target` to `local` if it is missing to be able to deploy, but other than that takes the configuration from the given `targetFolder` as is.
 :::
 
 ```
-Usage: sqrl exec [-hV] [-t=<targetFolder>]
+Usage: sqrl exec [-hV] [-r=<projectRoot>] [-t=<targetFolder>]
 Executes an already compiled SQRL script using its existing build artifacts.
   -h, --help      Show this help message and exit.
+  -r, --project-root=<projectRoot>
+                  Project root folder. Must be a relative path. If omitted, it
+                    is inferred from the package path(s), falling back to
+                    "/workspace".
   -t, --target=<targetFolder>
-                  Target folder for deployment artifacts and plans. Default:
-                    "build/deploy".
+                  Target folder for deployment artifacts and plans. Must be a
+                    relative path.
+                  Default: "<project-root>/build/deploy".
   -V, --version   Print version information and exit.
 ```
 
@@ -314,5 +337,5 @@ Executes an already compiled SQRL script using its existing build artifacts.
 ```bash
 cd my-project
 
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/build datasqrl/cmd exec
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd exec
 ```

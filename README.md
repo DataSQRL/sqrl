@@ -32,7 +32,7 @@ DataSQRL compiles SQL scripts into deployment artifacts for PostgreSQL, Apache K
 Create a new data project with the `init` command:
 
 ```bash
-docker run --rm -v $PWD:/build datasqrl/cmd init api messenger
+docker run --rm -v $PWD:/workspace datasqrl/cmd init api messenger
 ```
 (Use `${PWD}` in Powershell on Windows)
 
@@ -40,7 +40,7 @@ This creates a data API project with sample data sources and a processing script
 
 Run the project:
 ```bash
-docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/build datasqrl/cmd run messenger-prod-package.json
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd run messenger-prod-package.json
 ```
 
 Access the API at [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/). Add messages:
@@ -67,7 +67,7 @@ Also available via [REST](http://localhost:8888/v1/rest) or [MCP](http://localho
 
 Instruct your favorite coding agent to update `messenger.sqrl` with test coverage and iterate until tests pass with:
 ```bash
-docker run -it --rm -v $PWD:/build datasqrl/cmd test messenger-test-package.json
+docker run -it --rm -v $PWD:/workspace datasqrl/cmd test messenger-test-package.json
 ```
 
 For example, to expose an endpoint for total messages:

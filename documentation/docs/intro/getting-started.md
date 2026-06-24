@@ -30,7 +30,7 @@ docker --version
 Create a new data project with the `init` command in an empty folder:
 
 ```bash
-docker run --rm -v $PWD:/build datasqrl/cmd init api messenger
+docker run --rm -v $PWD:/workspace datasqrl/cmd init api messenger
 ```
 (Use `${PWD}` in Powershell on Windows)
 
@@ -44,7 +44,7 @@ The engines executing the pipeline are defined in the `package.json` files:
 Execute the SQRL project:
 
 ```bash
-docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/build datasqrl/cmd run messenger-prod-package.json
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd run messenger-prod-package.json
 ```
 
 Access the GraphQL API at [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/).
@@ -80,7 +80,7 @@ Now instruct your coding agent to extend `messenger.sqrl`. For example:
 The agent should modify `messenger.sqrl` and iterate using the test command:
 
 ```bash
-docker run -it --rm -v $PWD:/build datasqrl/cmd test messenger-test-package.json
+docker run -it --rm -v $PWD:/workspace datasqrl/cmd test messenger-test-package.json
 ```
 
 This feedback loop is how DataSQRL guides agents toward correct solutions. The test command:
@@ -111,7 +111,7 @@ AlertMessages := SUBSCRIBE SELECT * FROM Messages WHERE LOWER(message) LIKE '%er
 
 Run the production version to test subscriptions:
 ```bash
-docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/build datasqrl/cmd run messenger-prod-package.json
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd run messenger-prod-package.json
 ```
 
 In GraphiQL, start a subscription:
@@ -149,7 +149,7 @@ For more complex projects, consider creating a custom instructions file that inc
 
 Build deployment artifacts:
 ```bash
-docker run --rm -v $PWD:/build datasqrl/cmd compile messenger-prod-package.json
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile messenger-prod-package.json
 ```
 
 The `build/deploy/plan` directory contains:
@@ -158,7 +158,7 @@ The `build/deploy/plan` directory contains:
 - PostgreSQL schemas and views
 - Server queries and GraphQL models
 
-The `build` directory includes files useful for inspection and verification:
+The `build` directory also includes files useful for inspection and verification:
 - `pipeline_visual.html`: Visual representation of the pipeline DAG
 - `pipeline_explain.txt`: Textual DAG representation for coding agents
 - `inferred_schema.graphqls`: Generated GraphQL schema

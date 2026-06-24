@@ -52,6 +52,7 @@ The following is the [default configuration file](https://raw.githubusercontent.
       "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
       "properties.group.id": "${KAFKA_GROUP_ID}",
       "properties.auto.offset.reset": "earliest",
+      "properties.compression.type": "zstd",
       "topic": "${sqrl:table-name}"
     },
     "kafka": {
@@ -59,6 +60,7 @@ The following is the [default configuration file](https://raw.githubusercontent.
       "format": "flexible-json",
       "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
       "properties.group.id": "${KAFKA_GROUP_ID}",
+      "properties.compression.type": "zstd",
       "topic": "${sqrl:table-name}"
     },
     "iceberg": {
