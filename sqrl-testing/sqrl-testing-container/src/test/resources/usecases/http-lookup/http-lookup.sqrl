@@ -21,7 +21,7 @@ CREATE TABLE _Customers (
   msg STRING,
   uuid STRING
 ) WITH (
-  'connector' = 'rest-lookup',
+  'connector' = 'http',
   'format' = 'json',
   'url' = 'http://http-lookup-mock:18080/client',
   'asyncPolling' = 'true'

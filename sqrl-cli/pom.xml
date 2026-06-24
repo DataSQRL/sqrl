@@ -380,12 +380,6 @@
                     <exclude>com/google/**</exclude>
                   </excludes>
                 </filter>
-                <filter>
-                  <artifact>com.getindata:flink-http-connector</artifact>
-                  <excludes>
-                    <exclude>com/fasterxml/jackson/**</exclude>
-                  </excludes>
-                </filter>
               </filters>
               <relocations>
                 <relocation>
