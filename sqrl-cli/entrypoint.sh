@@ -22,10 +22,20 @@ if [[ -n "${SQRL_DEBUG+x}" && -n "$SQRL_DEBUG" ]]; then
   set -x
 fi
 
-cd /workspace
+if [[ -d /build ]]; then
+  WORKSPACE=/build
+  printf 'Warning: The "/build" mounting point is deprecated and will be removed, please use "/workspace" instead\n' >&2
+elif [[ ! -d /workspace ]]; then
+  printf 'Error: The "/workspace" mount does not exist, try adding "-v $PWD:/workspace" to the docker command' >&2
+  exit 1
+else
+  WORKSPACE=/workspace
+fi
+
+cd $WORKSPACE
 
 # Get the UID/GID of the /workspace directory to ensure files are created with correct ownership
-export WORKSPACE_UID=$(stat -c '%u' /workspace)
-export WORKSPACE_GID=$(stat -c '%g' /workspace)
+export WORKSPACE_UID=$(stat -c '%u' $WORKSPACE)
+export WORKSPACE_GID=$(stat -c '%g' $WORKSPACE)
 
 exec java $SQRL_JVM_TOOL_OPTS $SQRL_JVM_ARGS -jar /opt/sqrl/sqrl-cli.jar "${@}"
