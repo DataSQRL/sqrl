@@ -30,14 +30,15 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
 
   @Option(
       names = {"-r", "--project-root"},
-      description = "Root folder of the project. Must be a relative path. Default: \"./\".")
+      description =
+          "Project root folder. Must be a relative path. If omitted, it is inferred from the package path(s), falling back to \"/workspace\".")
   protected Optional<Path> projectRoot = Optional.empty();
 
   @Option(
       names = {"-t", "--target"},
       description =
-          "Target folder for deployment artifacts and plans. Must be a relative path. Default: \"./build/deploy\".")
-  protected Optional<Path> targetDir = Optional.empty();
+          "Target folder for deployment artifacts and plans. Must be a relative path.%nDefault: \"<project-root>/build/deploy\".")
+  protected Optional<Path> targetFolder = Optional.empty();
 
   @Override
   protected void setupEnvVars() {
@@ -69,10 +70,10 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
   }
 
   protected Path getTargetDir() {
-    if (targetDir.isPresent()) {
-      var target = targetDir.get();
+    if (targetFolder.isPresent()) {
+      var target = targetFolder.get();
       if (!cli.internalTestExec && target.isAbsolute()) {
-        throw new IllegalArgumentException("Target directory must be a relative path");
+        throw new IllegalArgumentException("Target folder must be a relative path");
       }
       return cli.workspaceDir.resolve(target);
     }
