@@ -4,7 +4,6 @@
   "name" : "ApplicationInfo",
   "type" : "query",
   "stage" : "iceberg",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.ApplicationInfo" ],
   "annotations" : [ {
     "name" : "base-table",
@@ -30,7 +29,6 @@
   "name" : "ApplicationInfo",
   "type" : "state",
   "stage" : "iceberg",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database._Applications", "default_catalog.default_database._LoanTypes" ],
   "annotations" : [ ],
   "plan" : "LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], id1=[$7], id2=[$16])\n  LogicalJoin(condition=[=($16, $1)], joinType=[left])\n    LogicalJoin(condition=[=($7, $2)], joinType=[inner])\n      LogicalTableScan(table=[[default_catalog, default_database, _Applications]])\n      LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])\n    LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])\n",
@@ -38,40 +36,31 @@
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "customer_id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "loan_type_id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "amount",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   }, {
     "name" : "duration",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "application_date",
-    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL"
   }, {
     "name" : "updated_at",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   }, {
     "name" : "id1",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "id2",
-    "type" : "BIGINT",
-    "documentation" : ""
+    "type" : "BIGINT"
   } ],
   "primary_key" : [ "id", "loan_type_id" ],
   "row_count" : "~1e8"
@@ -88,44 +77,34 @@
   "timestamp" : "event_time",
   "schema" : [ {
     "name" : "status",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "message",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "event_time",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   }, {
     "name" : "id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "customer_id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "loan_type_id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "amount",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   }, {
     "name" : "duration",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "max_amount",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   }, {
     "name" : "min_amount",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   } ],
   "primary_key" : [ "customer_id" ],
   "row_count" : "~8e7"
@@ -134,7 +113,6 @@
   "name" : "_Applications",
   "type" : "state",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.sources.ApplicationsStream" ],
   "annotations" : [ {
     "name" : "mostRecentDistinct",
@@ -148,32 +126,25 @@
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "customer_id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "loan_type_id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "amount",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   }, {
     "name" : "duration",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "application_date",
-    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL"
   }, {
     "name" : "updated_at",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
   "primary_key" : [ "id", "loan_type_id" ],
   "row_count" : "~2e7"
@@ -182,7 +153,6 @@
   "name" : "_LoanTypes",
   "type" : "state",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.sources.LoanTypesStream" ],
   "annotations" : [ {
     "name" : "mostRecentDistinct",
@@ -196,40 +166,31 @@
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "name",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "description",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "interest_rate",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   }, {
     "name" : "max_amount",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   }, {
     "name" : "min_amount",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   }, {
     "name" : "max_duration",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "min_duration",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "updated_at",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
   "primary_key" : [ "id" ],
   "row_count" : "~2e7"
@@ -238,7 +199,6 @@
   "name" : "ApplicationUpdates",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.sources.ApplicationUpdates__base" ],
   "annotations" : [ ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 1:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, sources, ApplicationUpdates]])\n",
@@ -246,20 +206,16 @@
   "timestamp" : "event_time",
   "schema" : [ {
     "name" : "loan_application_id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "status",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "message",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "event_time",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
   "row_count" : "~1e8"
 }, {
@@ -267,7 +223,6 @@
   "name" : "ApplicationUpdates",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/application_updates.jsonl",
@@ -278,7 +233,6 @@
   "name" : "ApplicationsStream",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.sources.ApplicationsStream__base" ],
   "annotations" : [ {
     "name" : "stream-root",
@@ -289,32 +243,25 @@
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "customer_id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "loan_type_id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "amount",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   }, {
     "name" : "duration",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "application_date",
-    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL"
   }, {
     "name" : "updated_at",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
   "primary_key" : [ "id", "updated_at" ],
   "row_count" : "~1e8"
@@ -323,7 +270,6 @@
   "name" : "ApplicationsStream",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/applications.jsonl",
@@ -335,7 +281,6 @@
   "name" : "LoanTypesStream",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.sources.LoanTypesStream__base" ],
   "annotations" : [ {
     "name" : "stream-root",
@@ -346,40 +291,31 @@
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "name",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "description",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "interest_rate",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   }, {
     "name" : "max_amount",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   }, {
     "name" : "min_amount",
-    "type" : "DOUBLE NOT NULL",
-    "documentation" : ""
+    "type" : "DOUBLE NOT NULL"
   }, {
     "name" : "max_duration",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "min_duration",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "updated_at",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
   "primary_key" : [ "id", "updated_at" ],
   "row_count" : "~1e8"
@@ -388,7 +324,6 @@
   "name" : "LoanTypesStream",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/loan_types.jsonl",

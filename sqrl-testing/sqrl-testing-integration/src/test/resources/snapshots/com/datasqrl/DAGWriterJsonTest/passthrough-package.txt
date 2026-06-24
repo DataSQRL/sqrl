@@ -4,7 +4,6 @@
   "name" : "Employees",
   "type" : "query",
   "stage" : "postgres",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Employees" ],
   "annotations" : [ {
     "name" : "parameters",
@@ -36,7 +35,6 @@
   "name" : "Employees.directReports",
   "type" : "query",
   "stage" : "postgres",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Employees", "default_catalog.default_database.Reporting" ],
   "annotations" : [ {
     "name" : "parameters",
@@ -52,7 +50,6 @@
   "name" : "Employees",
   "type" : "state",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.hr.Employees" ],
   "annotations" : [ {
     "name" : "mostRecentDistinct",
@@ -63,20 +60,16 @@
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "name",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "email",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "updatedDate",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
   "primary_key" : [ "employeeid" ],
   "row_count" : "~2e7"
@@ -85,7 +78,6 @@
   "name" : "Reporting",
   "type" : "state",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.hr.Reporting" ],
   "annotations" : [ {
     "name" : "mostRecentDistinct",
@@ -96,16 +88,13 @@
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "managerid",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "updatedDate",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
   "primary_key" : [ "employeeid", "managerid" ],
   "row_count" : "~2e7"
@@ -114,7 +103,6 @@
   "name" : "Employees",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.hr.Employees__base" ],
   "annotations" : [ ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[updatedDate], watermark=[-($3, 1:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, hr, Employees]])\n",
@@ -122,20 +110,16 @@
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "name",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "email",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "updatedDate",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
   "row_count" : "~1e8"
 }, {
@@ -143,7 +127,6 @@
   "name" : "Employees",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/employees.jsonl",
@@ -155,7 +138,6 @@
   "name" : "Reporting",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.hr.Reporting__base" ],
   "annotations" : [ ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[updatedDate], watermark=[-($2, 1:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, hr, Reporting]])\n",
@@ -163,16 +145,13 @@
   "timestamp" : "updatedDate",
   "schema" : [ {
     "name" : "employeeid",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "managerid",
-    "type" : "BIGINT NOT NULL",
-    "documentation" : ""
+    "type" : "BIGINT NOT NULL"
   }, {
     "name" : "updatedDate",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
   "row_count" : "~1e8"
 }, {
@@ -180,7 +159,6 @@
   "name" : "Reporting",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/reporting.jsonl",

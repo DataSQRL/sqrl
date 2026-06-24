@@ -125,7 +125,7 @@ public class PipelineDAGExporter {
                                   new SchemaColumn(
                                       field.getName(),
                                       field.getType().getFullTypeString(),
-                                      table.getDocumentation().getColumn(field.getName(), "")))
+                                      table.getDocumentation().getColumn(field.getName(), null)))
                           .toList())
                   .annotations(getAnnotations(table))
                   .build());
@@ -166,17 +166,18 @@ public class PipelineDAGExporter {
 
   private String getDocumentation(PlannedNode node) {
     if (includeDocumentation) {
-      return node.getDocumentation().getDocString("");
-    } else {
-      return null;
+      return node.getDocumentation().getDocString(null);
     }
+
+    return null;
   }
 
   private String getSql(TableAnalysis tableAnalysis) {
-    if (!includeSQL) {
-      return null;
+    if (includeSQL) {
+      return tableAnalysis.getOriginalSql();
     }
-    return tableAnalysis.getOriginalSql();
+
+    return null;
   }
 
   private Optional<String> getRowCount(TableAnalysis tableAnalysis) {
@@ -325,9 +326,11 @@ public class PipelineDAGExporter {
               + "Stage:       "
               + stage
               + LINEBREAK;
+
       if (StringUtils.isNotBlank(documentation)) {
         header += "Docs:       " + documentation + LINEBREAK;
       }
+
       return header;
     }
 
@@ -436,7 +439,7 @@ public class PipelineDAGExporter {
     items.forEach(i -> s.append(" - ").append(i.toString()).append(LINEBREAK));
   }
 
-  private record SchemaColumn(String name, String type, String documentation) {
+  private record SchemaColumn(String name, String type, String description) {
 
     @Override
     public String toString() {

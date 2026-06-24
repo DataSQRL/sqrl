@@ -21,7 +21,7 @@ import java.util.Optional;
 
 public interface Documented {
 
-  public static final Documentation EMPTY = new Documentation(null, Map.of(), Map.of());
+  Documentation EMPTY = new Documentation(null, Map.of(), Map.of());
 
   Lookup NO_LOOKUP = name -> Optional.empty();
 

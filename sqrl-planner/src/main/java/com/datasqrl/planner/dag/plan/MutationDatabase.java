@@ -46,10 +46,10 @@ public record MutationDatabase(List<Table> tables) {
                                   var name = column.getName().toString();
                                   var entireColumn = column.toString();
                                   var spec = entireColumn.substring(entireColumn.indexOf(' ') + 1);
-                                  var docs = mutTbl.getDocumentation().getColumn(name, "");
+                                  var docs = mutTbl.getDocumentation().getColumn(name, null);
                                   return new ColumnDefinition(name, spec, docs);
                                 }
-                                return new ColumnDefinition("", node.toString(), "");
+                                return new ColumnDefinition("", node.toString(), null);
                               })
                           .toList();
                   var definition =
@@ -63,7 +63,7 @@ public record MutationDatabase(List<Table> tables) {
                       tblBuilder.buildSql(false).toString(),
                       definition,
                       mutTbl.getCreateTable().getConfig(),
-                      mutTbl.getDocumentation().getDocString(""));
+                      mutTbl.getDocumentation().getDocString(null));
                 })
             .toList();
     return new MutationDatabase(tables);

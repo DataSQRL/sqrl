@@ -45,7 +45,7 @@ public class Deserializer {
             .registerModule(new JavaTimeModule())
             .registerModule(new VertxModule())
             .registerModule(module)
-            .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+            .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL)
             .addMixIn(LogicalType.class, AlphabeticMixin.class)
             .addMixIn(RowType.RowField.class, AlphabeticMixin.class)
             .addMixIn(TypeSerializer.class, AlphabeticMixin.class);
@@ -55,7 +55,7 @@ public class Deserializer {
         .registerModule(new Jdk8Module())
         .registerModule(new JavaTimeModule())
         .registerModule(module)
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        .setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
   }
 
   public <T> T mapJsonFile(Path path, Class<T> clazz) {

@@ -35,12 +35,9 @@ public record HintsAndDoc(PlannerHints hints, Optional<String> doc) {
    * Extracts Column and Argument documentation from markdown-style syntax. Any remaining content is
    * considered the table or function docString.
    *
-   * @return Documentation with parsed column/argument docs and remaining description
+   * @return documentation with parsed column/argument docs and the remaining description
    */
   public Documentation getDocumentation() {
-    if (doc.isPresent()) {
-      return DocStringParser.parse(doc.get());
-    }
-    return Documented.EMPTY;
+    return doc.map(DocStringParser::parse).orElse(Documented.EMPTY);
   }
 }

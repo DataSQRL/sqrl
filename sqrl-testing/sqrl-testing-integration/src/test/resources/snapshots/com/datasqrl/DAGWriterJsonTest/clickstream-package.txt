@@ -4,7 +4,6 @@
   "name" : "Click",
   "type" : "query",
   "stage" : "postgres",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Click" ],
   "annotations" : [ {
     "name" : "stream-root",
@@ -49,7 +48,6 @@
   "name" : "VisitAfter",
   "type" : "query",
   "stage" : "postgres",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.VisitAfter" ],
   "annotations" : [ {
     "name" : "base-table",
@@ -62,7 +60,6 @@
   "name" : "Click",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Click__base" ],
   "annotations" : [ {
     "name" : "stream-root",
@@ -73,16 +70,13 @@
   "timestamp" : "timestamp",
   "schema" : [ {
     "name" : "url",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "timestamp",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   }, {
     "name" : "userid",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   } ],
   "primary_key" : [ "url", "userid", "timestamp" ],
   "row_count" : "~1e8"
@@ -91,7 +85,6 @@
   "name" : "Click",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/click.jsonl",
@@ -114,16 +107,15 @@
   "timestamp" : "-",
   "schema" : [ {
     "name" : "url",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "rec",
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : "the recommended page URL"
+    "description" : "the recommended page URL"
   }, {
     "name" : "frequency",
     "type" : "BIGINT NOT NULL",
-    "documentation" : "the number of visitors that co-visited that page"
+    "description" : "the number of visitors that co-visited that page"
   } ],
   "primary_key" : [ "url", "rec" ],
   "row_count" : "~2e7"
@@ -144,11 +136,11 @@
   "schema" : [ {
     "name" : "url",
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : "URL of the top visited page"
+    "description" : "URL of the top visited page"
   }, {
     "name" : "total",
     "type" : "BIGINT NOT NULL",
-    "documentation" : "Total number of visitors"
+    "description" : "Total number of visitors"
   } ],
   "primary_key" : [ "url" ],
   "row_count" : "~1e7"
@@ -157,7 +149,6 @@
   "name" : "VisitAfter",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Click" ],
   "annotations" : [ ],
   "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4])\n  LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
@@ -165,16 +156,13 @@
   "timestamp" : "timestamp",
   "schema" : [ {
     "name" : "beforeURL",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "afterURL",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
-    "documentation" : ""
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "timestamp",
-    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL",
-    "documentation" : ""
+    "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   } ],
   "row_count" : "~3e7"
 } ]

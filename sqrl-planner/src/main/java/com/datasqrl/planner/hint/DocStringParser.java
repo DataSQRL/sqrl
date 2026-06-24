@@ -19,8 +19,9 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * Parses Rust-style documentation strings to extract column and argument definitions.
@@ -42,6 +43,7 @@ import java.util.regex.Pattern;
  * - limit: Maximum number of results
  * }</pre>
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class DocStringParser {
 
   private static final Pattern SECTION_HEADER_PATTERN =
@@ -50,7 +52,11 @@ public final class DocStringParser {
   private static final Pattern LIST_ITEM_PATTERN =
       Pattern.compile("^\\s*[-*]\\s*([\\w]+)\\s*:\\s*(.+)$");
 
-  private DocStringParser() {}
+  private enum SectionType {
+    NONE,
+    COLUMN,
+    ARGUMENT
+  }
 
   /**
    * Parses a docstring to extract column and argument documentation.
@@ -64,17 +70,16 @@ public final class DocStringParser {
       return new Documentation(null, Map.of(), Map.of());
     }
 
-    Map<Name, String> columnDocs = new LinkedHashMap<>();
-    Map<Name, String> argumentDocs = new LinkedHashMap<>();
-    StringBuilder remainingDoc = new StringBuilder();
+    var columnDocs = new LinkedHashMap<Name, String>();
+    var argumentDocs = new LinkedHashMap<Name, String>();
+    var remainingDoc = new StringBuilder();
 
-    String[] lines = docString.split("\\r?\\n");
-    SectionType currentSection = SectionType.NONE;
+    var lines = docString.split("\\r?\\n");
+    var currentSection = SectionType.NONE;
     boolean inDefinitionBlock = false;
 
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
-      SectionType detectedSection = detectSectionHeader(line);
+    for (var line : lines) {
+      var detectedSection = detectSectionHeader(line);
 
       if (detectedSection != SectionType.NONE) {
         currentSection = detectedSection;
@@ -87,8 +92,10 @@ public final class DocStringParser {
         if (itemMatch.matches()) {
           var name = Name.system(itemMatch.group(1).trim());
           var description = itemMatch.group(2).trim();
+
           if (currentSection == SectionType.COLUMN) {
             columnDocs.put(name, description);
+
           } else if (currentSection == SectionType.ARGUMENT) {
             argumentDocs.put(name, description);
           }
@@ -112,33 +119,33 @@ public final class DocStringParser {
     }
 
     var finalDocString = remainingDoc.toString().trim();
+
     return new Documentation(
         finalDocString.isEmpty() ? null : finalDocString, columnDocs, argumentDocs);
   }
 
   private static SectionType detectSectionHeader(String line) {
-    Matcher matcher = SECTION_HEADER_PATTERN.matcher(line);
+    var matcher = SECTION_HEADER_PATTERN.matcher(line);
+
     if (matcher.matches()) {
-      String headerType = matcher.group(1).toLowerCase();
+      var headerType = matcher.group(1).toLowerCase();
+
       if (headerType.startsWith("column")) {
         return SectionType.COLUMN;
-      } else if (headerType.startsWith("argument")) {
+      }
+
+      if (headerType.startsWith("argument")) {
         return SectionType.ARGUMENT;
       }
     }
+
     return SectionType.NONE;
   }
 
   private static void appendToRemainingDoc(StringBuilder sb, String line) {
-    if (sb.length() > 0) {
+    if (!sb.isEmpty()) {
       sb.append("\n");
     }
     sb.append(line);
-  }
-
-  private enum SectionType {
-    NONE,
-    COLUMN,
-    ARGUMENT
   }
 }
