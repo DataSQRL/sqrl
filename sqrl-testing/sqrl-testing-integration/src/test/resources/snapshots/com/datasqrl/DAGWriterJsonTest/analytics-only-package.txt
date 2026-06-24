@@ -239,7 +239,7 @@
     "description" : "ApplicationsStream"
   } ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($6, 1:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, sources, ApplicationsStream]])\n",
-  "sql" : "CREATE TEMPORARY TABLE `ApplicationsStream__schema` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n)\nWITH (\n  'connector' = 'datagen'\n);\nCREATE TABLE `ApplicationsStream` (\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n)\nWITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/applications.jsonl',\n  'source.monitor-interval' = '10 sec',\n  'connector' = 'filesystem'\n)\nLIKE `ApplicationsStream__schema`",
+  "sql" : "CREATE TEMPORARY TABLE `ApplicationsStream__schema` (\n  `id` BIGINT NOT NULL,\n  `customer_id` BIGINT NOT NULL,\n  `loan_type_id` BIGINT NOT NULL,\n  `amount` DOUBLE NOT NULL,\n  `duration` BIGINT NOT NULL,\n  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n)\nWITH (\n  'connector' = 'filesystem',\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/applications.jsonl'\n);\nCREATE TABLE `ApplicationsStream` (\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n)\nWITH (\n  'source.monitor-interval' = '10 sec'\n)\nLIKE `ApplicationsStream__schema`",
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
@@ -287,7 +287,7 @@
     "description" : "LoanTypesStream"
   } ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[updated_at], watermark=[-($8, 1:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, sources, LoanTypesStream]])\n",
-  "sql" : "CREATE TEMPORARY TABLE `LoanTypesStream__schema` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `interest_rate` DOUBLE NOT NULL,\n  `max_amount` DOUBLE NOT NULL,\n  `min_amount` DOUBLE NOT NULL,\n  `max_duration` BIGINT NOT NULL,\n  `min_duration` BIGINT NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n)\nWITH (\n  'connector' = 'datagen'\n);\nCREATE TABLE `LoanTypesStream` (\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n)\nWITH (\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/loan_types.jsonl',\n  'source.monitor-interval' = '10 sec',\n  'connector' = 'filesystem'\n)\nLIKE `LoanTypesStream__schema`",
+  "sql" : "CREATE TEMPORARY TABLE `LoanTypesStream__schema` (\n  `id` BIGINT NOT NULL,\n  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `interest_rate` DOUBLE NOT NULL,\n  `max_amount` DOUBLE NOT NULL,\n  `min_amount` DOUBLE NOT NULL,\n  `max_duration` BIGINT NOT NULL,\n  `min_duration` BIGINT NOT NULL,\n  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL\n)\nWITH (\n  'connector' = 'filesystem',\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/loan_types.jsonl'\n);\nCREATE TABLE `LoanTypesStream` (\n  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,\n  WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND\n)\nWITH (\n  'source.monitor-interval' = '10 sec'\n)\nLIKE `LoanTypesStream__schema`",
   "timestamp" : "updated_at",
   "schema" : [ {
     "name" : "id",
@@ -338,12 +338,9 @@ CREATE TABLE CustomersStream (
 PRIMARY KEY (id, `updated_at`) NOT ENFORCED,
 WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 ) WITH (
-'format' = 'flexible-json',
-'path' = '${DATA_PATH}/customers.jsonl',
-'source.monitor-interval' = '10 sec',
-'connector' = 'filesystem'
+'source.monitor-interval' = '10 sec'
 )
-LIKE `customers.schema.yml`;
+LIKE `customers.jsonl`;
 CREATE TABLE ApplicationUpdates (
     WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
 ) LIKE `application_updates.jsonl`;
@@ -351,22 +348,16 @@ CREATE TABLE ApplicationsStream (
 PRIMARY KEY (id, `updated_at`) NOT ENFORCED,
 WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECONDS
 ) WITH (
-'format' = 'flexible-json',
-'path' = '${DATA_PATH}/applications.jsonl',
-'source.monitor-interval' = '10 sec',
-'connector' = 'filesystem'
+'source.monitor-interval' = '10 sec'
 )
-LIKE `applications.schema.yml`;
+LIKE `applications.jsonl`;
 CREATE TABLE LoanTypesStream (
 PRIMARY KEY (id, `updated_at`) NOT ENFORCED,
 WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 ) WITH (
-'format' = 'flexible-json',
-'path' = '${DATA_PATH}/loan_types.jsonl',
-'source.monitor-interval' = '10 sec',
-'connector' = 'filesystem'
+'source.monitor-interval' = '10 sec'
 )
-LIKE `loan_types.schema.yml`;
+LIKE `loan_types.jsonl`;
 USE CATALOG `default_catalog`;
 CREATE DATABASE IF NOT EXISTS `default_database`;
 USE `default_database`;

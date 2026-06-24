@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +34,7 @@ import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -83,6 +83,10 @@ public class SqrlContainerExtension
   private List<GenericContainer<?>> commandContainers = new ArrayList<>();
   private long testStartTime;
   private String currentTestName;
+
+  public SqrlContainerExtension() {
+    this(null);
+  }
 
   public SqrlContainerExtension(String testCaseName) {
     this.testCaseName = testCaseName;
@@ -420,18 +424,23 @@ public class SqrlContainerExtension
 
   @SneakyThrows
   public static Path itPath(String relativePath) {
-    var directLocalPath = Paths.get("src/test/resources", relativePath).toAbsolutePath();
+
+    if (StringUtils.isBlank(relativePath)) {
+      return Path.of("../sqrl-testing-integration/src/test/resources/usecases").toRealPath();
+    }
+
+    var directLocalPath = Path.of("src/test/resources", relativePath).toAbsolutePath();
     if (Files.exists(directLocalPath) && Files.isDirectory(directLocalPath)) {
       return directLocalPath.toRealPath();
     }
 
-    var localPath = Paths.get("src/test/resources/usecases", relativePath).toAbsolutePath();
+    var localPath = Path.of("src/test/resources/usecases", relativePath).toAbsolutePath();
     if (Files.exists(localPath) && Files.isDirectory(localPath)) {
       return localPath.toRealPath();
     }
 
     var integrationPath =
-        Paths.get("../sqrl-testing-integration/src/test/resources/usecases", relativePath)
+        Path.of("../sqrl-testing-integration/src/test/resources/usecases", relativePath)
             .toAbsolutePath();
     assertThat(integrationPath).exists().isDirectory();
     return integrationPath.toRealPath();

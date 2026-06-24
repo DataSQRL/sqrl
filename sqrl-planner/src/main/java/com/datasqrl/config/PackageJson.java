@@ -47,8 +47,6 @@ public interface PackageJson {
 
   int getVersion();
 
-  Optional<String> getProjectRoot();
-
   TestRunnerConfiguration getTestConfig();
 
   interface CompilerConfig {

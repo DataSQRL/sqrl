@@ -19,7 +19,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.file.Files;
 import java.time.Duration;
+import java.util.Optional;
+
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.util.EntityUtils;
@@ -35,10 +38,10 @@ import org.testcontainers.utility.DockerImageName;
 @Slf4j
 public class ExternalRedpandaContainerIT {
 
-  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("flink-kafka");
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension();
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-  private static final String REDPANDA_IMAGE = "redpandadata/redpanda:latest";
+  private static final String REDPANDA_IMAGE = "redpandadata/redpanda:v23.1.2";
   private static final String REDPANDA_CONTAINER_NAME = "redpanda";
   private static final int REDPANDA_PORT = 9093;
 
@@ -67,7 +70,7 @@ public class ExternalRedpandaContainerIT {
 
     // When - Compile SQRL script with external Kafka configuration
     var cmd = createCmdContainerWithExternalKafka();
-    cmd.withCommand("test", "package.json");
+    cmd.withCommand("test", "flink-kafka/package.json");
 
     log.info("Starting compilation with external Redpanda container");
     log.info(sqrl.getDockerRunCommand(cmd));
@@ -191,20 +194,19 @@ public class ExternalRedpandaContainerIT {
             .withNetwork(sqrl.getNetwork())
             .withEnv("KAFKA_BOOTSTRAP_SERVERS", REDPANDA_CONTAINER_NAME + ":" + REDPANDA_PORT);
 
-    // Add additional mount to resolve the symlink
-    // flink-kafka/loan-local -> ../banking/loan-local
-    var bankingDir = sqrl.getTestDir().getParent().resolve("banking");
+    // Add additional mount for "banking-shared"
+    var bankingDir = sqrl.getTestDir().resolve("banking-shared");
 
-    if (bankingDir.toFile().exists()) {
+    if (Files.exists(bankingDir)) {
       container =
           container.withFileSystemBind(
               bankingDir.toString(),
-              SqrlContainerExtension.WORKSPACE_DIR + "/../banking",
+              SqrlContainerExtension.WORKSPACE_DIR + "/banking-shared",
               BindMode.READ_ONLY);
       log.info(
-          "Mounted banking directory: {} -> {}",
+          "Mounted banking-shared directory: {} -> {}",
           bankingDir,
-          SqrlContainerExtension.WORKSPACE_DIR + "/../banking");
+          SqrlContainerExtension.WORKSPACE_DIR + "/banking-shared");
     }
 
     return container;

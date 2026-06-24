@@ -28,8 +28,8 @@ import picocli.CommandLine.Option;
 public abstract class BaseOsProcessManagerCmd extends BaseCmd {
 
   @Option(
-      names = {"-p", "--project-base"},
-      description = "Base folder of the project. Must be a relative path. Default: \"./\".")
+      names = {"-p", "--project-root"},
+      description = "Root folder of the project. Must be a relative path. Default: \"./\".")
   protected Optional<Path> projectRoot = Optional.empty();
 
   @Option(
@@ -43,18 +43,7 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
       return cli.workspaceDir;
     }
 
-    var projRoot = projectRoot.get();
-    if (projRoot.isAbsolute()) {
-      throw new IllegalArgumentException("Project root must be a relative path");
-    }
-
-    projRoot = cli.workspaceDir.resolve(projRoot);
-    if (!Files.isDirectory(projRoot)) {
-      throw new IllegalArgumentException(
-          "Project root does not exist or not a directory: " + projRoot);
-    }
-
-    return projRoot;
+    return getFullProjectRoot(projectRoot.get());
   }
 
   protected Path getBuildDir() {
@@ -93,5 +82,27 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
   @SneakyThrows
   protected Configuration getFlinkConfig(Path planDir) {
     return ConfigLoaderUtils.loadFlinkConfig(planDir);
+  }
+
+  /**
+   * Resolves the project root against the CLI workspace directory.
+   *
+   * @param projectRoot relative project root path
+   * @return project root resolved from the workspace directory
+   * @throws IllegalArgumentException if the path is absolute or does not resolve to an existing
+   *     directory
+   */
+  protected Path getFullProjectRoot(Path projectRoot) {
+    if (projectRoot.isAbsolute()) {
+      throw new IllegalArgumentException("Project root must be a relative path");
+    }
+
+    var fullProjectRoot = cli.workspaceDir.resolve(projectRoot);
+    if (!Files.isDirectory(fullProjectRoot)) {
+      throw new IllegalArgumentException(
+          "Project root does not exist or not a directory: " + fullProjectRoot);
+    }
+
+    return fullProjectRoot;
   }
 }
