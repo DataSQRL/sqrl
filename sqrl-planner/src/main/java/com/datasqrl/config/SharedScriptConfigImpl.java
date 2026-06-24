@@ -15,6 +15,8 @@
  */
 package com.datasqrl.config;
 
+import static com.datasqrl.config.PackageJsonImpl.CONFIG_KEY;
+
 import com.datasqrl.config.PackageJson.SharedScriptConfig;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,6 @@ public class SharedScriptConfigImpl implements SharedScriptConfig {
 
   @Override
   public Map<String, Object> getConfig() {
-    return Map.of();
+    return sqrlConfig.getSubConfig(CONFIG_KEY).toMap();
   }
 }

@@ -2,5 +2,10 @@
   "version": "1",
   "information": {
     "description": "Common table definitions for banking test use cases"
+  },
+  "script": {
+    "config": {
+      "monitorInterval": "10s"
+    }
   }
 }
