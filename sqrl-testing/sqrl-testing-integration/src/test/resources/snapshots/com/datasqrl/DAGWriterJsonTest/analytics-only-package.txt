@@ -4,7 +4,6 @@
   "name" : "ApplicationInfo",
   "type" : "query",
   "stage" : "iceberg",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.ApplicationInfo" ],
   "annotations" : [ {
     "name" : "base-table",
@@ -30,7 +29,6 @@
   "name" : "ApplicationInfo",
   "type" : "state",
   "stage" : "iceberg",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database._Applications", "default_catalog.default_database._LoanTypes" ],
   "annotations" : [ ],
   "plan" : "LogicalProject(id=[$0], customer_id=[$1], loan_type_id=[$2], amount=[$3], duration=[$4], application_date=[$5], updated_at=[$6], id1=[$7], id2=[$16])\n  LogicalJoin(condition=[=($16, $1)], joinType=[left])\n    LogicalJoin(condition=[=($7, $2)], joinType=[inner])\n      LogicalTableScan(table=[[default_catalog, default_database, _Applications]])\n      LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])\n    LogicalTableScan(table=[[default_catalog, default_database, _LoanTypes]])\n",
@@ -115,7 +113,6 @@
   "name" : "_Applications",
   "type" : "state",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.sources.ApplicationsStream" ],
   "annotations" : [ {
     "name" : "mostRecentDistinct",
@@ -156,7 +153,6 @@
   "name" : "_LoanTypes",
   "type" : "state",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.sources.LoanTypesStream" ],
   "annotations" : [ {
     "name" : "mostRecentDistinct",
@@ -203,7 +199,6 @@
   "name" : "ApplicationUpdates",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.sources.ApplicationUpdates__base" ],
   "annotations" : [ ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[event_time], watermark=[-($3, 1:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, sources, ApplicationUpdates]])\n",
@@ -228,7 +223,6 @@
   "name" : "ApplicationUpdates",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/application_updates.jsonl",
@@ -239,7 +233,6 @@
   "name" : "ApplicationsStream",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.sources.ApplicationsStream__base" ],
   "annotations" : [ {
     "name" : "stream-root",
@@ -277,7 +270,6 @@
   "name" : "ApplicationsStream",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/applications.jsonl",
@@ -289,7 +281,6 @@
   "name" : "LoanTypesStream",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.sources.LoanTypesStream__base" ],
   "annotations" : [ {
     "name" : "stream-root",
@@ -333,7 +324,6 @@
   "name" : "LoanTypesStream",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/loan_types.jsonl",

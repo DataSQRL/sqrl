@@ -39,5 +39,5 @@ public interface JdbcStatement {
     EXTENSION
   }
 
-  record Field(String name, String type, boolean nullable) {}
+  record Field(String name, String type, boolean nullable, String description) {}
 }

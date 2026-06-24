@@ -19,6 +19,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable;
+import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
@@ -29,11 +30,8 @@ public class TableNode extends PlannedNode {
 
   final TableAnalysis tableAnalysis;
 
-  public TableNode(
-      TableAnalysis tableAnalysis,
-      Map<ExecutionStage, StageAnalysis> stageAnalysis,
-      String documentation) {
-    super(tableAnalysis.isSourceOrSink() ? "source" : "table", stageAnalysis, documentation);
+  public TableNode(TableAnalysis tableAnalysis, Map<ExecutionStage, StageAnalysis> stageAnalysis) {
+    super(tableAnalysis.isSourceOrSink() ? "source" : "table", stageAnalysis);
     this.tableAnalysis = tableAnalysis;
   }
 
@@ -56,6 +54,11 @@ public class TableNode extends PlannedNode {
     }
     MutationTable mutation = tableAnalysis.getSourceSinkTable().get().mutationDefinition();
     return Optional.ofNullable(mutation);
+  }
+
+  @Override
+  public Documentation getDocumentation() {
+    return tableAnalysis.getDocumentation();
   }
 
   @Override

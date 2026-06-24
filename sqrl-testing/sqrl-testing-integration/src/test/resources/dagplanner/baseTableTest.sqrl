@@ -2,7 +2,13 @@ IMPORT ecommerceTs.customer;
 IMPORT ecommerceTs.product AS _Product;
 
 CustomerWithEmail := SELECT * FROM Customer WHERE email IS NOT NULL;
-/** A distinctly customer */
+/** A distinctly customer
+
+  ## Columns:
+  * customerid: The unique id of a customer
+  * timestamp : When the customer was last updated
+
+  */
 DistinctCustomer := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;
 CustomerById(id BIGINT NOT NULL) := SELECT * FROM CustomerWithEmail WHERE customerid = :id;
 DistinctCustomerById(id BIGINT NOT NULL) := SELECT * FROM DistinctCustomer WHERE customerid = :id;

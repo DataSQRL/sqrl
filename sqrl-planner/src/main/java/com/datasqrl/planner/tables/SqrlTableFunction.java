@@ -83,7 +83,7 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   @Nullable @Default @Setter private ExecutableQuery executableQuery = null;
 
   /** A documentation string that describes the function */
-  @Default private Optional<String> documentation = Optional.empty();
+  @Default private Documentation documentation = Documented.EMPTY;
 
   @Default private Duration cacheDuration = Duration.ZERO;
 

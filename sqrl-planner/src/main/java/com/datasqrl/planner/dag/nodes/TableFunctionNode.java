@@ -19,6 +19,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.Map;
 import lombok.Getter;
 
@@ -29,10 +30,8 @@ public class TableFunctionNode extends PlannedNode {
   private final SqrlTableFunction function;
 
   public TableFunctionNode(
-      SqrlTableFunction function,
-      Map<ExecutionStage, StageAnalysis> stageAnalysis,
-      String documentation) {
-    super("function", stageAnalysis, documentation);
+      SqrlTableFunction function, Map<ExecutionStage, StageAnalysis> stageAnalysis) {
+    super("function", stageAnalysis);
     this.function = function;
   }
 
@@ -52,6 +51,11 @@ public class TableFunctionNode extends PlannedNode {
   @Override
   public boolean isSink() {
     return function.getVisibility().isEndpoint();
+  }
+
+  @Override
+  public Documentation getDocumentation() {
+    return function.getDocumentation();
   }
 
   @Override
