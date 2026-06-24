@@ -581,7 +581,7 @@ public class Sqrl2FlinkSQLTranslator {
             .originalRelnode(values)
             .collapsedRelnode(values)
             .hints(hintsAndDoc.hints())
-            .documentation(hintsAndDoc.doc())
+            .documentation(hintsAndDoc.getDocumentation())
             .errors(errors)
             .fromTables(fromTables)
             .build();

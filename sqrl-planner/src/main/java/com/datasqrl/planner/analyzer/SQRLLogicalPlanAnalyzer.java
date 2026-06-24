@@ -40,6 +40,7 @@ import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.hint.PrimaryKeyHint;
 import com.datasqrl.planner.hint.RowCountHint;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.LinkedHashMultimap;
@@ -228,7 +229,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     // The base table is the right-most table in the relational tree that has the same type as the
     // result
     Optional<TableAnalysis> baseTable = Optional.empty();
-    Optional<String> documentation = hintsAndDoc.doc();
+    Documentation documentation = hintsAndDoc.getDocumentation();
     if (preservesBaseTable && !sourceTables.isEmpty()) {
       baseTable =
           Lists.reverse(sourceTables).stream()

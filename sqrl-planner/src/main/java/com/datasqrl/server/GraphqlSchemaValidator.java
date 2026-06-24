@@ -27,6 +27,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.Documented;
 import com.datasqrl.server.util.GraphqlErrorUtil;
 import com.datasqrl.server.util.GraphqlSchemaUtil;
 import graphql.ParseAndValidate;
@@ -411,7 +412,8 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
                   GraphqlSchemaUtil.getGraphQLInputType(
                       foundParameter.get().getType(null),
                       NamePath.of(foundParameter.get().getName()),
-                      true);
+                      true,
+                      Documented.NO_LOOKUP);
               checkState(
                   inferedParameterType.isPresent(),
                   atField.getSourceLocation(),

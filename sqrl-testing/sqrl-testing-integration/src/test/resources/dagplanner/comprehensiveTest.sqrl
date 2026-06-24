@@ -23,6 +23,12 @@ TemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_
 
 Customer.related := SELECT * FROM Customer other WHERE this.customerid = other.customerid ORDER BY other.`timestamp`;
 
+/**
+  Customers that are related and have an email of at least given length
+
+  ## Argument:
+  - length: minimum email length of returned customers
+ */
 Customer.relatedByLength(length INT NOT NULL) := SELECT * FROM Customer other WHERE this.customerid = other.customerid
                                                                        AND CHAR_LENGTH(other.email) >= :length ORDER BY other.`timestamp`;
 
@@ -47,6 +53,10 @@ UnnestOrders.newId := id + productid;
 
 /**
     Newly placed orders
+
+   ## Columns
+   * orderid: The id of the order
+   * amount: The amount ordered
  */
 /*+engine(kafka), ttl(36 hours) */
 CREATE TABLE Orders (
@@ -55,6 +65,13 @@ CREATE TABLE Orders (
                         PRIMARY KEY (orderid) NOT ENFORCED
 );
 
+/**
+  Counts unique emails per minute
+
+  Columns:
+  - window_start: Start of the aggregation window
+  - unique_email_count: Number of unique emails for all customers per minute
+ */
 CustomerTimeWindow := SELECT
                           window_start, window_end,
                           COUNT(DISTINCT email) AS unique_email_count
@@ -76,6 +93,12 @@ CustomerTimeWindowWorkload := SELECT * FROM CustomerTimeWindow ORDER BY window_e
 /*+ test, workload */
 CustomerTimeWindowTestWorkload := SELECT * FROM CustomerTimeWindow ORDER BY window_end DESC;
 
+/**
+  Returns the customer with given id
+
+  ## Arguments:
+  * id: Id of the customer to search for
+ */
 /*+ cache(5 min) */
 CustomerQuery(id BIGINT NOT NULL) := SELECT * FROM AnotherCustomer WHERE customerid = :id;
 

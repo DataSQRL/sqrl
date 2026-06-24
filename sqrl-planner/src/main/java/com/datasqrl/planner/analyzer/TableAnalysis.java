@@ -23,6 +23,7 @@ import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
+import com.datasqrl.planner.util.Documented;
 import com.datasqrl.util.CalciteUtil;
 import java.util.List;
 import java.util.Optional;
@@ -46,7 +47,7 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 @Value
 @AllArgsConstructor
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class TableAnalysis implements TableOrFunctionAnalysis {
+public class TableAnalysis implements TableOrFunctionAnalysis, Documented {
 
   /** The unique identifier of this table within Flink's catalog. */
   @NonNull @Include ObjectIdentifier objectIdentifier;
@@ -120,7 +121,7 @@ public class TableAnalysis implements TableOrFunctionAnalysis {
   @Builder.Default PlannerHints hints = PlannerHints.EMPTY;
 
   /** A documentation string that describes the table */
-  @Builder.Default Optional<String> documentation = Optional.empty();
+  @Builder.Default Documentation documentation = Documented.EMPTY;
 
   /**
    * The statistics for the table, either estimated by planner or provided as hints on the

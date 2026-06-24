@@ -22,19 +22,32 @@ scalar Long
 
 type Query {
   Click(limit: Int = 10, offset: Int = 0): [Click!]
-  Recommendation(url: String!, limit: Int = 10, offset: Int = 0): [Recommendation!]
+  "Recommend pages that are visited shortly after"
+  Recommendation(
+    "the URL to get recommendations for"
+    url: String!,
+    limit: Int = 10,
+    offset: Int = 0
+  ): [Recommendation!]
+  "Most visited pages"
   Trending(limit: Int = 10, offset: Int = 0): [Trending!]
   VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]
 }
 
+"Recommend pages that are visited shortly after"
 type Recommendation {
   url: String!
+  "the recommended page URL"
   rec: String!
+  "the number of visitors that co-visited that page"
   frequency: Long!
 }
 
+"Most visited pages"
 type Trending {
+  "URL of the top visited page"
   url: String!
+  "Total number of visitors"
   total: Long!
 }
 
@@ -390,6 +403,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
         {
           "function" : {
             "name" : "GetRecommendation",
+            "description" : "Recommend pages that are visited shortly after",
             "parameters" : {
               "type" : "object",
               "properties" : {
@@ -400,7 +414,8 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
                   "type" : "integer"
                 },
                 "url" : {
-                  "type" : "string"
+                  "type" : "string",
+                  "description" : "the URL to get recommendations for"
                 }
               },
               "required" : [
@@ -421,6 +436,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
         {
           "function" : {
             "name" : "GetTrending",
+            "description" : "Most visited pages",
             "parameters" : {
               "type" : "object",
               "properties" : {
@@ -473,7 +489,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Click {\n  url: String!\n  timestamp: DateTime!\n  userid: String!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): [Click!]\n  Recommendation(url: String!, limit: Int = 10, offset: Int = 0): [Recommendation!]\n  Trending(limit: Int = 10, offset: Int = 0): [Trending!]\n  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]\n}\n\ntype Recommendation {\n  url: String!\n  rec: String!\n  frequency: Long!\n}\n\ntype Trending {\n  url: String!\n  total: Long!\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Click {\n  url: String!\n  timestamp: DateTime!\n  userid: String!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): [Click!]\n  \"Recommend pages that are visited shortly after\"\n  Recommendation(\n    \"the URL to get recommendations for\"\n    url: String!,\n    limit: Int = 10,\n    offset: Int = 0\n  ): [Recommendation!]\n  \"Most visited pages\"\n  Trending(limit: Int = 10, offset: Int = 0): [Trending!]\n  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]\n}\n\n\"Recommend pages that are visited shortly after\"\ntype Recommendation {\n  url: String!\n  \"the recommended page URL\"\n  rec: String!\n  \"the number of visitors that co-visited that page\"\n  frequency: Long!\n}\n\n\"Most visited pages\"\ntype Trending {\n  \"URL of the top visited page\"\n  url: String!\n  \"Total number of visitors\"\n  total: Long!\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

@@ -34,6 +34,8 @@ import com.datasqrl.planner.hint.PartitionKeyHint;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.TtlHint;
 import com.datasqrl.planner.parser.SqrlStatementParser;
+import com.datasqrl.planner.util.Documented;
+import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.sql.DatabaseTypeExtension;
 import com.datasqrl.util.CalciteUtil;
 import java.time.Duration;
@@ -94,7 +96,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   @Override
   public QueryResult createPassthroughQuery(Query query, boolean withView) {
     var passthroughSql = query.function().getFunctionAnalysis().getOriginalSql();
-    var description = query.function().getDocumentation().orElse(null);
+    var description = query.function().getDocumentation().getDocString(null);
 
     // Replace all argument references
     var formattedSql =
@@ -119,7 +121,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
             viewSql,
             description,
             rowType,
-            getColumns(rowType.getFieldList(), PlannerHints.EMPTY));
+            getColumns(
+                rowType.getFieldList(), PlannerHints.EMPTY, query.function().getDocumentation()));
 
     return new QueryResult(qBuilder, view);
   }
@@ -129,7 +132,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       RelNode relNode,
       boolean withView,
       Map<String, String> tableNameMapping,
-      Optional<String> documentation) {
+      Documented.Documentation documentation) {
     var rewrittenRelNode = dialectCallConverter.convert(relNode);
     var sqlNodes = relToSqlConverter.convert(rewrittenRelNode, tableNameMapping);
     var sql = sqlNodeToString.convert(sqlNodes).getSql();
@@ -168,7 +171,10 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     return new CreateTableJdbcStatement(
         tableName,
         null,
-        getColumns(createTable.datatype().getFieldList(), createTable.tableAnalysis().getHints()),
+        getColumns(
+            createTable.datatype().getFieldList(),
+            createTable.tableAnalysis().getHints(),
+            createTable.tableAnalysis().getDocumentation()),
         primaryKeys,
         partitionKeys,
         partitionType,
@@ -183,11 +189,15 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     return partitionKey.isEmpty() ? PartitionType.NONE : PartitionType.LIST;
   }
 
-  protected List<Field> getColumns(List<RelDataTypeField> fields, PlannerHints hints) {
-    return fields.stream().map(field -> toField(field, hints)).collect(Collectors.toList());
+  protected List<Field> getColumns(
+      List<RelDataTypeField> fields, PlannerHints hints, Documentation documentation) {
+    return fields.stream()
+        .map(field -> toField(field, hints, documentation))
+        .collect(Collectors.toList());
   }
 
-  protected JdbcStatement.Field toField(RelDataTypeField field, PlannerHints hints) {
+  protected JdbcStatement.Field toField(
+      RelDataTypeField field, PlannerHints hints, Documentation documentation) {
     var castSpec =
         getSqlType(
             field.getType(),
@@ -201,7 +211,11 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
     var datatype = field.getType();
 
-    return new Field(field.getName(), typeName, datatype.isNullable());
+    return new Field(
+        field.getName(),
+        typeName,
+        datatype.isNullable(),
+        documentation.getColumn(field.getName(), null));
   }
 
   protected abstract SqlDataTypeSpec getSqlType(RelDataType type, Optional<DataTypeHint> hint);
@@ -283,7 +297,10 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   }
 
   private JdbcStatement getViewStatement(
-      String viewName, RelDataType rowType, SqlNodes sqlNodes, Optional<String> documentation) {
+      String viewName,
+      RelDataType rowType,
+      SqlNodes sqlNodes,
+      Documented.Documentation documentation) {
     var viewNameIdentifier = new SqlIdentifier(viewName, SqlParserPos.ZERO);
     var columnList =
         new SqlNodeList(
@@ -297,8 +314,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         viewName,
         Type.VIEW,
         viewSql,
-        documentation.orElse(null),
+        documentation.getDocString(null),
         rowType,
-        getColumns(rowType.getFieldList(), PlannerHints.EMPTY));
+        getColumns(rowType.getFieldList(), PlannerHints.EMPTY, documentation));
   }
 }

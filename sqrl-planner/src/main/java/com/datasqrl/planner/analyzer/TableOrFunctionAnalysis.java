@@ -17,7 +17,6 @@ package com.datasqrl.planner.analyzer;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.tables.TableType;
-import java.util.Optional;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
 public interface TableOrFunctionAnalysis extends AbstractAnalysis {
@@ -66,6 +65,4 @@ public interface TableOrFunctionAnalysis extends AbstractAnalysis {
    * returns the same type as the base table.
    */
   TableAnalysis getBaseTable();
-
-  Optional<String> getDocumentation();
 }

@@ -1,5 +1,10 @@
 IMPORT clickstream-local.click;  -- Import data
-/* Most visited pages */
+/** Most visited pages
+
+    Columns:
+       - url: URL of the top visited page
+       - total: Total number of visitors
+*/
 Trending := SELECT url, count(1) AS total
     FROM Click
     GROUP BY url ORDER BY total DESC, url ASC;
@@ -9,7 +14,16 @@ VisitAfter := SELECT b.url AS beforeURL, a.url AS afterURL,
     FROM Click b JOIN Click a ON b.userid=a.userid AND
         b.`timestamp` < a.`timestamp` AND
         b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;
-/* Recommend pages that are visited shortly after */
+/** Recommend pages that are visited shortly after
+
+  Argument:
+  * url: the URL to get recommendations for
+
+  Columns:
+  * rec: the recommended page URL
+  * frequency: the number of visitors that co-visited that page
+
+*/
 /*+query_by_all(url) */
 Recommendation := SELECT beforeURL AS url, afterURL AS rec,
     count(1) AS frequency FROM VisitAfter

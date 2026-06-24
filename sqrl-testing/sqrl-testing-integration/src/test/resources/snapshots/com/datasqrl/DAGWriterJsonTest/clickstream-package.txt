@@ -4,7 +4,6 @@
   "name" : "Click",
   "type" : "query",
   "stage" : "postgres",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Click" ],
   "annotations" : [ {
     "name" : "stream-root",
@@ -20,7 +19,7 @@
   "name" : "Recommendation",
   "type" : "query",
   "stage" : "postgres",
-  "documentation" : "",
+  "documentation" : "Recommend pages that are visited shortly after",
   "inputs" : [ "default_catalog.default_database.Recommendation" ],
   "annotations" : [ {
     "name" : "parameters",
@@ -36,7 +35,7 @@
   "name" : "Trending",
   "type" : "query",
   "stage" : "postgres",
-  "documentation" : "",
+  "documentation" : "Most visited pages",
   "inputs" : [ "default_catalog.default_database.Trending" ],
   "annotations" : [ {
     "name" : "base-table",
@@ -49,7 +48,6 @@
   "name" : "VisitAfter",
   "type" : "query",
   "stage" : "postgres",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.VisitAfter" ],
   "annotations" : [ {
     "name" : "base-table",
@@ -62,7 +60,6 @@
   "name" : "Click",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Click__base" ],
   "annotations" : [ {
     "name" : "stream-root",
@@ -88,7 +85,6 @@
   "name" : "Click",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/click.jsonl",
@@ -100,7 +96,7 @@
   "name" : "Recommendation",
   "type" : "state",
   "stage" : "flink",
-  "documentation" : "",
+  "documentation" : "Recommend pages that are visited shortly after",
   "inputs" : [ "default_catalog.default_database.VisitAfter" ],
   "annotations" : [ {
     "name" : "sort",
@@ -114,10 +110,12 @@
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   }, {
     "name" : "rec",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "description" : "the recommended page URL"
   }, {
     "name" : "frequency",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "description" : "the number of visitors that co-visited that page"
   } ],
   "primary_key" : [ "url", "rec" ],
   "row_count" : "~2e7"
@@ -126,7 +124,7 @@
   "name" : "Trending",
   "type" : "state",
   "stage" : "flink",
-  "documentation" : "",
+  "documentation" : "Most visited pages",
   "inputs" : [ "default_catalog.default_database.Click" ],
   "annotations" : [ {
     "name" : "sort",
@@ -137,10 +135,12 @@
   "timestamp" : "-",
   "schema" : [ {
     "name" : "url",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL",
+    "description" : "URL of the top visited page"
   }, {
     "name" : "total",
-    "type" : "BIGINT NOT NULL"
+    "type" : "BIGINT NOT NULL",
+    "description" : "Total number of visitors"
   } ],
   "primary_key" : [ "url" ],
   "row_count" : "~1e7"
@@ -149,7 +149,6 @@
   "name" : "VisitAfter",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Click" ],
   "annotations" : [ ],
   "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4])\n  LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
@@ -187,6 +186,11 @@ WITH (
   'connector' = 'filesystem'
 )
 LIKE `Click__schema`;
+/** Most visited pages
+    Columns:
+       - url: URL of the top visited page
+       - total: Total number of visitors
+*/
 Trending := SELECT url, count(1) AS total
     FROM Click
     GROUP BY url ORDER BY total DESC, url ASC;
@@ -195,6 +199,13 @@ VisitAfter := SELECT b.url AS beforeURL, a.url AS afterURL,
     FROM Click b JOIN Click a ON b.userid=a.userid AND
         b.`timestamp` < a.`timestamp` AND
         b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;
+/** Recommend pages that are visited shortly after
+  Argument:
+  * url: the URL to get recommendations for
+  Columns:
+  * rec: the recommended page URL
+  * frequency: the number of visitors that co-visited that page
+*/
 /*+query_by_all(url) */
 Recommendation := SELECT beforeURL AS url, afterURL AS rec,
     count(1) AS frequency FROM VisitAfter

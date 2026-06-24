@@ -4,7 +4,6 @@
   "name" : "Employees",
   "type" : "query",
   "stage" : "postgres",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Employees" ],
   "annotations" : [ {
     "name" : "parameters",
@@ -36,7 +35,6 @@
   "name" : "Employees.directReports",
   "type" : "query",
   "stage" : "postgres",
-  "documentation" : "",
   "inputs" : [ "default_catalog.default_database.Employees", "default_catalog.default_database.Reporting" ],
   "annotations" : [ {
     "name" : "parameters",
@@ -52,7 +50,6 @@
   "name" : "Employees",
   "type" : "state",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.hr.Employees" ],
   "annotations" : [ {
     "name" : "mostRecentDistinct",
@@ -81,7 +78,6 @@
   "name" : "Reporting",
   "type" : "state",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.hr.Reporting" ],
   "annotations" : [ {
     "name" : "mostRecentDistinct",
@@ -107,7 +103,6 @@
   "name" : "Employees",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.hr.Employees__base" ],
   "annotations" : [ ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[updatedDate], watermark=[-($3, 1:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, hr, Employees]])\n",
@@ -132,7 +127,6 @@
   "name" : "Employees",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/employees.jsonl",
@@ -144,7 +138,6 @@
   "name" : "Reporting",
   "type" : "stream",
   "stage" : "flink",
-  "documentation" : "",
   "inputs" : [ "default_catalog.hr.Reporting__base" ],
   "annotations" : [ ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[updatedDate], watermark=[-($2, 1:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, hr, Reporting]])\n",
@@ -166,7 +159,6 @@
   "name" : "Reporting",
   "type" : "import",
   "stage" : "flink",
-  "documentation" : "",
   "connector" : {
     "format" : "flexible-json",
     "path" : "${DATA_PATH}/reporting.jsonl",
