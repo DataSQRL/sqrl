@@ -16,6 +16,7 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.config.SqrlConstants;
+import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.OsProcessManager;
 import java.nio.file.Files;
@@ -28,7 +29,7 @@ import picocli.CommandLine.Option;
 public abstract class BaseOsProcessManagerCmd extends BaseCmd {
 
   @Option(
-      names = {"-p", "--project-root"},
+      names = {"-r", "--project-root"},
       description = "Root folder of the project. Must be a relative path. Default: \"./\".")
   protected Optional<Path> projectRoot = Optional.empty();
 
@@ -37,6 +38,23 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
       description =
           "Target folder for deployment artifacts and plans. Must be a relative path. Default: \"./build/deploy\".")
   protected Optional<Path> targetDir = Optional.empty();
+
+  @Override
+  protected void setupEnvVars() {
+    var basePath = getTargetDir();
+    var dataPath = basePath.resolve("flink/data").toAbsolutePath().toString();
+    var libPath = basePath.resolve("flink/lib").toAbsolutePath().toString();
+
+    GlobalEnvironmentStore.put("DATA_PATH", dataPath);
+    GlobalEnvironmentStore.put("UDF_PATH", libPath);
+  }
+
+  @Override
+  protected void teardown() {
+    if (!cli.internalTestExec) {
+      getOsProcessManager().teardown(getBuildDir());
+    }
+  }
 
   protected Path getProjectRoot() {
     if (projectRoot.isEmpty()) {
@@ -60,13 +78,6 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
     }
 
     return getBuildDir().resolve(SqrlConstants.DEPLOY_DIR_NAME);
-  }
-
-  @Override
-  protected void teardown() {
-    if (!cli.internalTestExec) {
-      getOsProcessManager().teardown(getBuildDir());
-    }
   }
 
   protected OsProcessManager getOsProcessManager() {

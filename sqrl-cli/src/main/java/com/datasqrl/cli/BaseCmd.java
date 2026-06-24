@@ -39,6 +39,7 @@ public abstract class BaseCmd implements Runnable, IExitCodeGenerator {
     var collector = ErrorCollector.root();
 
     try {
+      setupEnvVars();
       runInternal(collector);
       cli.statusHook.onSuccess(collector);
 
@@ -66,6 +67,10 @@ public abstract class BaseCmd implements Runnable, IExitCodeGenerator {
   }
 
   protected abstract void runInternal(ErrorCollector errors) throws Exception;
+
+  protected void setupEnvVars() {
+    // By default, do nothing
+  }
 
   protected void teardown() {
     // By default, do nothing

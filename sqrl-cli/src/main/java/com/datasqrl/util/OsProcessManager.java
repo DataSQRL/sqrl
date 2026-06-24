@@ -31,7 +31,6 @@ import com.datasqrl.env.GlobalEnvironmentStore;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -109,7 +108,7 @@ public class OsProcessManager {
    */
   @SneakyThrows
   public void teardown(Path buildDir) {
-    Path source = Paths.get(LOGS_PATH);
+    Path source = Path.of(LOGS_PATH);
     Path target = buildDir.resolve("logs");
 
     if (Files.exists(source)) {
@@ -147,10 +146,10 @@ public class OsProcessManager {
   private void createDirectories() throws IOException, InterruptedException {
     log.debug("Creating necessary directories ...");
 
-    createDirectoryWithPermission(Paths.get(LOGS_PATH));
+    createDirectoryWithPermission(Path.of(LOGS_PATH));
 
-    Files.createDirectories(Paths.get(FLINK_CP_DATA_PATH));
-    Files.createDirectories(Paths.get(FLINK_SP_DATA_PATH));
+    Files.createDirectories(Path.of(FLINK_CP_DATA_PATH));
+    Files.createDirectories(Path.of(FLINK_SP_DATA_PATH));
   }
 
   private void createDirectoryWithPermission(Path dir) throws IOException, InterruptedException {
@@ -176,7 +175,7 @@ public class OsProcessManager {
     } else {
       log.info("Starting Redpanda ...");
 
-      var redpandaDataPath = Paths.get(REDPANDA_DATA_PATH);
+      var redpandaDataPath = Path.of(REDPANDA_DATA_PATH);
       Files.createDirectories(redpandaDataPath);
 
       // Start Redpanda process
@@ -200,7 +199,7 @@ public class OsProcessManager {
               "0",
               "--check=false");
 
-      pb.redirectOutput(Paths.get(LOGS_PATH, "redpanda.log").toFile());
+      pb.redirectOutput(Path.of(LOGS_PATH, "redpanda.log").toFile());
       pb.redirectErrorStream(true);
 
       var redpandaProcess = pb.start();
@@ -236,7 +235,7 @@ public class OsProcessManager {
       return;
     }
 
-    var postgresDataPath = Paths.get(POSTGRES_DATA_PATH);
+    var postgresDataPath = Path.of(POSTGRES_DATA_PATH);
     var started = false;
 
     // Create Postgres dir if necessary
@@ -320,7 +319,7 @@ public class OsProcessManager {
   private void executePostgresCommand(String... command) throws IOException, InterruptedException {
     var pb = new ProcessBuilder(command);
     pb.redirectOutput(
-        ProcessBuilder.Redirect.appendTo(Paths.get(LOGS_PATH, "postgres.log").toFile()));
+        ProcessBuilder.Redirect.appendTo(Path.of(LOGS_PATH, "postgres.log").toFile()));
     pb.redirectErrorStream(true);
 
     var process = pb.start();
@@ -382,7 +381,7 @@ public class OsProcessManager {
 
   String readServiceLogFile(String serviceName) {
     String logFileName = serviceName.toLowerCase() + ".log";
-    Path logFile = Paths.get(LOGS_PATH, logFileName);
+    Path logFile = Path.of(LOGS_PATH, logFileName);
     try {
       if (Files.exists(logFile)) {
         // Read the last 50 lines of the log file for error details

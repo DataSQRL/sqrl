@@ -36,7 +36,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -79,12 +78,15 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
       formatter.phaseStart("Initializing build environment");
     }
 
-    var sqrlConfig = initPackageJson(errors, packageFiles, cli.workspaceDir);
+    var sqrlConfig = initPackageJson(errors);
     DirectoryUtils.prepareTargetDirectory(getTargetDir());
 
     try (var springCtx = new AnnotationConfigApplicationContext()) {
       springCtx.registerBean(ErrorCollector.class, () -> errors);
-      projectRoot.ifPresent(p -> springCtx.registerBean("projectRoot", Path.class, () -> p));
+      if (projectRoot.isPresent()) {
+        // We only set this if project root is explicitly given
+        springCtx.registerBean("projectRoot", Path.class, this::getProjectRoot);
+      }
       springCtx.registerBean("workspaceDir", Path.class, () -> cli.workspaceDir);
       springCtx.registerBean("buildDir", Path.class, this::getBuildDir);
       springCtx.registerBean("targetDir", Path.class, this::getTargetDir);
@@ -149,24 +151,22 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
    * files. If no files are provided, attempts to load the default package configuration file.
    *
    * @param errors error collector
-   * @param packageFiles the list of given package configuration file paths
-   * @param workspaceDir the workspace root directory
    * @return the merged {@link PackageJson} configuration
    */
-  private PackageJson initPackageJson(
-      ErrorCollector errors, List<Path> packageFiles, Path workspaceDir) {
+  private PackageJson initPackageJson(ErrorCollector errors) {
     var locErrors = errors.withLocation(ErrorPrefix.CONFIG).resolve("package");
+    var basePath = getProjectRoot();
 
     var finalPackageFiles = new ArrayList<Path>();
     if (packageFiles.isEmpty()) {
       // Try to find default package
-      var defaultPkg = workspaceDir.resolve(SqrlConstants.DEFAULT_PACKAGE);
+      var defaultPkg = basePath.resolve(SqrlConstants.DEFAULT_PACKAGE);
       if (Files.isRegularFile(defaultPkg)) {
         finalPackageFiles.add(defaultPkg);
       }
 
     } else {
-      packageFiles.stream().map(workspaceDir::resolve).forEach(finalPackageFiles::add);
+      packageFiles.stream().map(basePath::resolve).forEach(finalPackageFiles::add);
     }
 
     if (finalPackageFiles.isEmpty()) {

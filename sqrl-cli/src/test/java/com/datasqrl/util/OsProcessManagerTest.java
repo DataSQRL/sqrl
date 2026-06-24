@@ -17,7 +17,6 @@ package com.datasqrl.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
@@ -33,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,11 +72,9 @@ class OsProcessManagerTest {
     // Given
     String serviceName = "TestService";
 
-    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
+    try (MockedStatic<Files> filesMocked = mockStatic(Files.class)) {
 
-      Path mockLogFile = mock(Path.class);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockLogFile);
+      Path mockLogFile = Path.of("/tmp/logs", "testservice.log");
       filesMocked.when(() -> Files.exists(mockLogFile)).thenReturn(true);
       filesMocked
           .when(() -> Files.readAllLines(mockLogFile))
@@ -98,13 +94,10 @@ class OsProcessManagerTest {
     // Given
     String serviceName = "TestService";
 
-    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
+    try (MockedStatic<Files> filesMocked = mockStatic(Files.class)) {
 
-      Path mockLogFile = mock(Path.class);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockLogFile);
+      Path mockLogFile = Path.of("/tmp/logs", "testservice.log");
       filesMocked.when(() -> Files.exists(mockLogFile)).thenReturn(false);
-      when(mockLogFile.toString()).thenReturn("/tmp/logs/testservice.log");
 
       // When
       String result = serviceManager.readServiceLogFile(serviceName);
@@ -120,11 +113,9 @@ class OsProcessManagerTest {
     // Given
     String serviceName = "TestService";
 
-    try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class)) {
+    try (MockedStatic<Files> filesMocked = mockStatic(Files.class)) {
 
-      Path mockLogFile = mock(Path.class);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockLogFile);
+      Path mockLogFile = Path.of("/tmp/logs", "testservice.log");
       filesMocked.when(() -> Files.exists(mockLogFile)).thenReturn(true);
       filesMocked
           .when(() -> Files.readAllLines(mockLogFile))
@@ -148,14 +139,9 @@ class OsProcessManagerTest {
     Path mockPlanDir = mock(Path.class);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
         MockedStatic<ConfigLoaderUtils> configMocked = mockStatic(ConfigLoaderUtils.class)) {
 
-      Path mockPath = mock(Path.class);
-      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
-      when(mockPath.toString()).thenReturn("/mock/path");
-      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
+      Path mockPath = Path.of("/mock/path");
       filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
 
       // Mock that no services are needed
@@ -199,15 +185,12 @@ class OsProcessManagerTest {
     env.put("WORKSPACE_GID", "1000");
     serviceManager = new OsProcessManager(env);
 
-    try (MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
-        MockedStatic<java.nio.file.Files> filesMocked = mockStatic(java.nio.file.Files.class);
+    try (MockedStatic<java.nio.file.Files> filesMocked = mockStatic(java.nio.file.Files.class);
         MockedStatic<org.apache.commons.io.FileUtils> fileUtilsMocked =
             mockStatic(org.apache.commons.io.FileUtils.class)) {
 
-      Path mockLogPath = mock(Path.class);
-      pathsMocked.when(() -> Paths.get("/tmp/logs")).thenReturn(mockLogPath);
+      Path mockLogPath = Path.of("/tmp/logs");
       filesMocked.when(() -> java.nio.file.Files.exists(mockLogPath)).thenReturn(true);
-      when(mockLogPath.toFile()).thenReturn(mock(java.io.File.class));
       when(mockTargetDir.toFile()).thenReturn(mock(java.io.File.class));
 
       when(mockProcess.waitFor()).thenReturn(0);
@@ -314,14 +297,9 @@ class OsProcessManagerTest {
     Path mockPlanDir = mock(Path.class);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
         MockedStatic<ConfigLoaderUtils> configMocked = mockStatic(ConfigLoaderUtils.class)) {
 
-      Path mockPath = mock(Path.class);
-      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
-      when(mockPath.toString()).thenReturn("/mock/path");
-      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
+      Path mockPath = Path.of("/mock/path");
       filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
 
       // Mock that no Kafka topics or Postgres statements are found
@@ -358,17 +336,10 @@ class OsProcessManagerTest {
     Path mockPlanDir = mock(Path.class);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
         MockedStatic<ConfigLoaderUtils> configMocked = mockStatic(ConfigLoaderUtils.class)) {
 
-      Path mockPath = mock(Path.class);
-      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
-      when(mockPath.toString()).thenReturn("/mock/path");
-      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
+      Path mockPath = Path.of("/mock/path");
       filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
-      filesMocked.when(() -> Files.exists(mockPath)).thenReturn(true);
-      filesMocked.when(() -> Files.list(mockPath)).thenReturn(Stream.of(mockPath));
 
       // Mock that Kafka topics are found but no Postgres statements
       var mockTopic = mock(NewTopic.class);
@@ -413,16 +384,9 @@ class OsProcessManagerTest {
     Path mockPlanDir = mock(Path.class);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
         MockedStatic<ConfigLoaderUtils> configMocked = mockStatic(ConfigLoaderUtils.class)) {
 
-      Path mockPath = mock(Path.class);
-      java.io.File mockFile = mock(java.io.File.class);
-      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
-      when(mockPath.toString()).thenReturn("/mock/path");
-      when(mockPath.toFile()).thenReturn(mockFile);
-      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
+      Path mockPath = Path.of("/mock/path");
       filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
       filesMocked.when(() -> Files.exists(any(Path.class))).thenReturn(true);
       filesMocked.when(() -> Files.list(any(Path.class))).thenReturn(Stream.of(mockPath));
@@ -470,16 +434,9 @@ class OsProcessManagerTest {
     Path mockPlanDir = mock(Path.class);
 
     try (MockedStatic<Files> filesMocked = mockStatic(Files.class);
-        MockedStatic<Paths> pathsMocked = mockStatic(Paths.class);
         MockedStatic<ConfigLoaderUtils> configMocked = mockStatic(ConfigLoaderUtils.class)) {
 
-      Path mockPath = mock(Path.class);
-      java.io.File mockFile = mock(java.io.File.class);
-      when(mockPath.toAbsolutePath()).thenReturn(mockPath);
-      when(mockPath.toString()).thenReturn("/mock/path");
-      when(mockPath.toFile()).thenReturn(mockFile);
-      pathsMocked.when(() -> Paths.get(anyString())).thenReturn(mockPath);
-      pathsMocked.when(() -> Paths.get(anyString(), anyString())).thenReturn(mockPath);
+      Path mockPath = Path.of("/mock/path");
       filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
       filesMocked.when(() -> Files.exists(any(Path.class))).thenReturn(true);
       filesMocked.when(() -> Files.list(any(Path.class))).thenReturn(Stream.of(mockPath));

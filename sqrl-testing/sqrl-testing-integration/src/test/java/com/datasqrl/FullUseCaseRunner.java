@@ -74,7 +74,7 @@ public final class FullUseCaseRunner {
       throw e;
     }
 
-    var workspaceDir = param.packageJsonPath().getParent();
+    var preojectRoot = param.packageJsonPath().getParent();
 
     log.info(
         """
@@ -84,37 +84,37 @@ public final class FullUseCaseRunner {
         Test package file: {}
         """,
         param.getUseCaseName(),
-        workspaceDir,
+        preojectRoot,
         param.getPackageJsonName());
 
     // Execute the test phase manually via DatasqrlTest
     var packageJson =
         ConfigLoaderUtils.loadResolvedConfig(
-            ErrorCollector.root(), workspaceDir.resolve(SqrlConstants.BUILD_DIR_NAME));
+            ErrorCollector.root(), preojectRoot.resolve(SqrlConstants.BUILD_DIR_NAME));
 
     var env = new HashMap<>(containerHook.getEnv());
     env.putAll(System.getenv());
     env.putAll(GlobalEnvironmentStore.getAll());
     env.put(
-        "DATA_PATH", workspaceDir.resolve("build/deploy/flink/data").toAbsolutePath().toString());
-    env.put("UDF_PATH", workspaceDir.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
+        "DATA_PATH", preojectRoot.resolve("build/deploy/flink/data").toAbsolutePath().toString());
+    env.put("UDF_PATH", preojectRoot.resolve("build/deploy/flink/lib").toAbsolutePath().toString());
 
     var planDir =
-        workspaceDir
+        preojectRoot
             .resolve(SqrlConstants.BUILD_DIR_NAME)
             .resolve(SqrlConstants.DEPLOY_DIR_NAME)
             .resolve(SqrlConstants.PLAN_DIR);
     var flinkConfig = loadInternalTestFlinkConfig(planDir, env);
-    var outputMgr = new TestOutputManager(workspaceDir);
+    var outputMgr = new TestOutputManager(preojectRoot);
     var test =
         new DatasqrlTest(
-            workspaceDir,
+            preojectRoot,
             planDir,
             packageJson,
             flinkConfig,
             env,
             outputMgr,
-            new DefaultOutputFormatter(workspaceDir, false));
+            new DefaultOutputFormatter(preojectRoot, false));
     try {
       var run = test.run();
       if (run != 0) {

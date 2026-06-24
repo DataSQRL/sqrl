@@ -42,7 +42,8 @@ public class TestCmd extends AbstractCompileCmd {
       return;
     }
 
-    try (var outputMgr = new TestOutputManager(cli.workspaceDir)) {
+    var projectRoot = getProjectRoot();
+    try (var outputMgr = new TestOutputManager(projectRoot)) {
       var formatter = getOutputFormatter();
       formatter.header("DataSQRL Test Execution");
 
@@ -61,7 +62,7 @@ public class TestCmd extends AbstractCompileCmd {
 
       var sqrlTest =
           new DatasqrlTest(
-              cli.workspaceDir, planDir, sqrlConfig, flinkConfig, env, outputMgr, formatter);
+              projectRoot, planDir, sqrlConfig, flinkConfig, env, outputMgr, formatter);
       var testExitCode = sqrlTest.run();
       exitCode.set(testExitCode);
 
