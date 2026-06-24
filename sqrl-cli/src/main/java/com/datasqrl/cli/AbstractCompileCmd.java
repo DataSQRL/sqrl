@@ -54,20 +54,13 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
   }
 
   @Override
-  protected Path getBuildDir() {
+  protected Path getProjectRoot() {
     if (projectRoot.isPresent() || packageFiles.isEmpty()) {
-      return super.getBuildDir();
+      return super.getProjectRoot();
     }
 
     var deepestCommonSubDir = DirectoryUtils.deepestCommonSubDir(packageFiles);
-    var projectRootPath = cli.workspaceDir.resolve(deepestCommonSubDir);
-
-    if (!Files.isDirectory(projectRootPath)) {
-      throw new IllegalArgumentException(
-          "Project root does not exist or not a directory: " + projectRootPath);
-    }
-
-    return projectRootPath.resolve(SqrlConstants.BUILD_DIR_NAME);
+    return getFullProjectRoot(deepestCommonSubDir);
   }
 
   protected void compile(ErrorCollector errors) {
