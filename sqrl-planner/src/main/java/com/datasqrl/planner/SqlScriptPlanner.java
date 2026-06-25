@@ -177,7 +177,7 @@ public class SqlScriptPlanner {
   public SqlScriptPlanner(
       ErrorCollector errorCollector,
       @Qualifier("moduleLoader") ModuleLoader moduleLoader,
-      @Qualifier("rootModuleLoader") Optional<ModuleLoader> rootModuleLoader,
+      @Qualifier("rootModuleLoader") ModuleLoader rootModuleLoader,
       SqrlStatementParser sqrlParser,
       PackageJson packageJson,
       ExecutionPipeline pipeline,
@@ -865,31 +865,25 @@ public class SqlScriptPlanner {
 
     var alias = Optional.ofNullable(aliasPath).map(NamePath::getFirst);
 
-    ModuleLoader loader = scriptContext.moduleLoader();
-    NamePath finalPath = path;
+    var loader = scriptContext.moduleLoader();
+    var finalPath = path;
+    boolean rootImport = false;
     if (isRootImport(path)) {
+      loader = scriptContext.rootModuleLoader();
       finalPath = path.popFirst(); // remove the artificial 'root' prefix element
-      var importHead = finalPath.getFirst().getDisplay();
-
-      checkFatal(
-          scriptContext.rootModuleLoader().isPresent() && sharedScriptNames.contains(importHead),
-          ErrorCode.INVALID_IMPORT,
-          "Invalid %s import [%s], make sure to add '%s' as a shared script in the package configuration",
-          ROOT_IMPORT,
-          path,
-          importHead);
-
-      loader = scriptContext.rootModuleLoader().get();
-
-    } else {
-      var importHead = finalPath.getFirst().getDisplay();
-      checkFatal(
-          !sharedScriptNames.contains(importHead),
-          ErrorCode.INVALID_IMPORT,
-          "Invalid import, make sure to use the '%s' prefix to import shared script content");
+      rootImport = true;
     }
 
     var module = loader.getModule(finalPath.popLast()).orElse(null);
+    var importPathHead = finalPath.getFirst().getDisplay();
+
+    checkFatal(
+        module != null || rootImport || !sharedScriptNames.contains(importPathHead),
+        importStmt.getPackageIdentifier().getFileLocation(),
+        ErrorCode.INVALID_IMPORT,
+        "Invalid import, to access a shared script in a submodule make sure to use the '%s' prefix",
+        ROOT_IMPORT);
+
     checkFatal(
         module != null,
         importStmt.getPackageIdentifier().getFileLocation(),
@@ -1233,7 +1227,7 @@ public class SqlScriptPlanner {
    */
   private record ScriptContext(
       ModuleLoader moduleLoader,
-      Optional<ModuleLoader> rootModuleLoader,
+      ModuleLoader rootModuleLoader,
       String databaseName,
       boolean isRootContext) {
 

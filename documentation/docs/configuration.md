@@ -90,7 +90,7 @@ The `config` JSON object is passed to the Mustache templating engine to substitu
 
 The example `script.config` above could be used to instantiate the following table definition in SQRL:
 ```sql
-IMPORT root.`data-catalog`.sources;
+IMPORT data-catalog.sources;
 
 MyTable := SELECT
              o.*
@@ -103,7 +103,12 @@ MyTable := SELECT
 ```
 
 :::warning
-Be aware that any shared import must start with the `root` prefix!
+When a project has SQRL scripts in subfolders, e.g. `./my-module/module-script.sqrl`, it can access shared imports with applying the `root` prefix.
+With the example above that would mean:
+```sql
+IMPORT root.data-catalog.sources;
+```
+
 :::
 
 ## Test-Runner (`test-runner`)

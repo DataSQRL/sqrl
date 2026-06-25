@@ -80,15 +80,9 @@ public class SqrlInjector {
 
   @Bean
   public ModuleLoader rootModuleLoader(
-      PackageJson packageJson,
       WorkspacePaths workspacePaths,
       ClasspathFunctionLoader classpathFunctionLoader,
       ErrorCollector errors) {
-
-    var sharedConfigs = packageJson.getScriptConfig().getSharedScriptConfigs();
-    if (sharedConfigs.isEmpty()) {
-      return null;
-    }
 
     return new ModuleLoaderImpl(
         new FileResourceResolver(workspacePaths.buildDir()),
