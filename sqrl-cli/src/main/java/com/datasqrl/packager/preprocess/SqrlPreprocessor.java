@@ -40,10 +40,10 @@ public class SqrlPreprocessor implements Preprocessor {
       FilenameAnalyzer.of(SqrlConstants.SQRL_EXTENSION);
   private static final MustacheFactory MUSTACHE_FACTORY = new DefaultMustacheFactory();
 
+  private final Map<String, PackageJson> sharedConfigs = new HashMap<>();
+
   private final PackageJson config;
   private final ErrorCollector errors;
-
-  private final Map<String, PackageJson> sharedConfigs = new HashMap<>();
 
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {

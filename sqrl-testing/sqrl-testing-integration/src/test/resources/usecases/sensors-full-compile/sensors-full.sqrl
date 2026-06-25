@@ -1,4 +1,4 @@
-IMPORT sensors-shared.sources; -- Import sensor data
+IMPORT root.sensors-shared.sources; -- Import sensor data
 
 /* Aggregate sensor readings to second */
 /*+primary_key(sensorid, timeSec) */

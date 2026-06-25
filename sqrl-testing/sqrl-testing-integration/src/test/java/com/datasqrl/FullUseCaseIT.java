@@ -65,7 +65,7 @@ public class FullUseCaseIT {
 
   /** Ad-hoc debugging entry point. Change the path below to run a single use case manually. */
   static Stream<UseCaseParam> specificUseCaseProvider() {
-    return Stream.of(new UseCaseParam(USE_CASES.resolve("avro-schema").resolve("package.json")));
+    return Stream.of(new UseCaseParam(USE_CASES.resolve("flink-kafka").resolve("package.json")));
   }
 
   @ParameterizedTest
