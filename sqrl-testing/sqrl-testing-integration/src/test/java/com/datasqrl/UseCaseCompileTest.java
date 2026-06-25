@@ -66,7 +66,7 @@ public class UseCaseCompileTest {
   @Test
   @Disabled("Intended for manual usage")
   void runTestCaseByName() {
-    var pkg = USECASE_DIR.resolve("time-window").resolve("package.json");
+    var pkg = USECASE_DIR.resolve("avro-schema-legacy-ts").resolve("package.json");
     UseCaseTestHelper.testUseCase(
         snapshotExtension,
         getClass(),

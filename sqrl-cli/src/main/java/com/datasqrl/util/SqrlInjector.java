@@ -20,6 +20,9 @@ import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.loaders.ClasspathFunctionLoader;
+import com.datasqrl.loaders.ModuleLoader;
+import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.plan.validate.ExecutionGoal;
@@ -46,8 +49,13 @@ public class SqrlInjector {
   }
 
   @Bean
-  public ResourceResolver resourceResolver(@Qualifier("buildDir") Path buildDir) {
-    return new FileResourceResolver(buildDir);
+  public ResourceResolver resourceResolver(WorkspacePaths workspacePaths) {
+    return new FileResourceResolver(workspacePaths.buildDir());
+  }
+
+  @Bean
+  public ClasspathFunctionLoader classpathFunctionLoader() {
+    return new ClasspathFunctionLoader();
   }
 
   @Bean
@@ -58,6 +66,35 @@ public class SqrlInjector {
   @Bean
   public JBangRunner jBangRunner(@Qualifier("internalTestExec") Boolean internalTestExec) {
     return internalTestExec ? JBangRunner.disabled() : JBangRunner.create();
+  }
+
+  @Bean
+  public ModuleLoader moduleLoader(
+      ResourceResolver resourceResolver,
+      WorkspacePaths workspacePaths,
+      ClasspathFunctionLoader classpathFunctionLoader,
+      ErrorCollector errors) {
+
+    return new ModuleLoaderImpl(resourceResolver, workspacePaths, classpathFunctionLoader, errors);
+  }
+
+  @Bean
+  public ModuleLoader rootModuleLoader(
+      PackageJson packageJson,
+      WorkspacePaths workspacePaths,
+      ClasspathFunctionLoader classpathFunctionLoader,
+      ErrorCollector errors) {
+
+    var sharedConfigs = packageJson.getScriptConfig().getSharedScriptConfigs();
+    if (sharedConfigs.isEmpty()) {
+      return null;
+    }
+
+    return new ModuleLoaderImpl(
+        new FileResourceResolver(workspacePaths.buildDir()),
+        workspacePaths,
+        classpathFunctionLoader,
+        errors);
   }
 
   @Bean

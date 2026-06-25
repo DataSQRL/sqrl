@@ -32,7 +32,6 @@ import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import jakarta.inject.Inject;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
@@ -40,39 +39,31 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.springframework.stereotype.Component;
 
 @Component
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@RequiredArgsConstructor
 public class ModuleLoaderImpl implements ModuleLoader {
 
   public static final String TABLE_FILE_SUFFIX = ".table.sql";
   public static final String FUNCTION_JSON_EXTENSION = ".function.json";
   public static final String SQRL_FILE_EXTENSION = ".sqrl";
-  static final Deserializer SERIALIZER = Deserializer.INSTANCE;
 
-  private final ClasspathFunctionLoader classpathFunctionLoader;
-  private final WorkspacePaths workspacePaths;
-  private final ResourceResolver resourceResolver;
-  private final ErrorCollector errors;
+  private static final Deserializer SERIALIZER = Deserializer.INSTANCE;
+
   private final Cache<NamePath, SqrlModule> cache =
       CacheBuilder.newBuilder().maximumSize(1000).build();
 
-  @Inject
-  public ModuleLoaderImpl(
-      ResourceResolver resourceResolver, WorkspacePaths workspacePaths, ErrorCollector errors) {
-    this.classpathFunctionLoader = new ClasspathFunctionLoader();
-    this.workspacePaths = workspacePaths;
-    this.resourceResolver = resourceResolver;
-    this.errors = errors;
-  }
+  private final ResourceResolver resourceResolver;
+  private final WorkspacePaths workspacePaths;
+  private final ClasspathFunctionLoader classpathFunctionLoader;
+  private final ErrorCollector errors;
 
   private ModuleLoaderImpl withResourceResolver(ResourceResolver resourceResolver) {
-    return new ModuleLoaderImpl(classpathFunctionLoader, workspacePaths, resourceResolver, errors);
+    return new ModuleLoaderImpl(resourceResolver, workspacePaths, classpathFunctionLoader, errors);
   }
 
   @Override

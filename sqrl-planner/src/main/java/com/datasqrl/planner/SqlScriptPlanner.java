@@ -132,6 +132,7 @@ import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
@@ -147,8 +148,9 @@ import org.springframework.stereotype.Component;
 @Lazy
 public class SqlScriptPlanner {
 
-  public static final String EXPORT_SUFFIX = "_ex";
-  public static final String ACCESS_FUNCTION_SUFFIX = "__access";
+  private static final String EXPORT_SUFFIX = "_ex";
+  private static final String ACCESS_FUNCTION_SUFFIX = "__access";
+  private static final String ROOT_IMPORT = "root";
 
   private final AtomicInteger exportTableCounter = new AtomicInteger(0);
 
@@ -167,21 +169,23 @@ public class SqlScriptPlanner {
   private final List<ExecutionStage> tableStages;
   private final List<ExecutionStage> queryStages;
   private final List<ExecutionStage> subscriptionStages;
-  private final Set<String> sharedScripts;
+  private final Set<String> sharedScriptNames;
 
   /** Manages the context of the script that is processed, adjusted for imports */
   private ScriptContext scriptContext;
 
   public SqlScriptPlanner(
       ErrorCollector errorCollector,
-      ModuleLoader moduleLoader,
+      @Qualifier("moduleLoader") ModuleLoader moduleLoader,
+      @Qualifier("rootModuleLoader") Optional<ModuleLoader> rootModuleLoader,
       SqrlStatementParser sqrlParser,
       PackageJson packageJson,
       ExecutionPipeline pipeline,
       ExecutionGoal executionGoal) {
     this.errorCollector = errorCollector;
     this.completeScript = new SqlScriptWriter();
-    this.scriptContext = new ScriptContext(moduleLoader, FLINK_DEFAULT_DATABASE, true);
+    this.scriptContext =
+        new ScriptContext(moduleLoader, rootModuleLoader, FLINK_DEFAULT_DATABASE, true);
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -211,7 +215,7 @@ public class SqlScriptPlanner {
         pipeline.stages().stream()
             .filter(stage -> stage.getType() == EngineType.LOG)
             .collect(Collectors.toList());
-    this.sharedScripts =
+    this.sharedScriptNames =
         packageJson.getScriptConfig().getSharedScriptConfigs().stream()
             .map(SharedScriptConfig::getName)
             .collect(Collectors.toSet());
@@ -861,16 +865,41 @@ public class SqlScriptPlanner {
           ErrorCode.INVALID_IMPORT,
           "Invalid table name - paths not supported");
     }
-    Optional<Name> alias = Optional.ofNullable(aliasPath).map(NamePath::getFirst);
 
-    var module = scriptContext.moduleLoader.getModule(path.popLast()).orElse(null);
+    var alias = Optional.ofNullable(aliasPath).map(NamePath::getFirst);
+
+    ModuleLoader loader = scriptContext.moduleLoader();
+    NamePath finalPath = path;
+    if (isRootImport(path)) {
+      finalPath = path.popFirst(); // remove the artificial 'root' prefix element
+      var importHead = finalPath.getFirst().getDisplay();
+
+      checkFatal(
+          scriptContext.rootModuleLoader().isPresent() && sharedScriptNames.contains(importHead),
+          ErrorCode.INVALID_IMPORT,
+          "Invalid %s import [%s], make sure to add '%s' as a shared script in the package configuration",
+          ROOT_IMPORT,
+          path,
+          importHead);
+
+      loader = scriptContext.rootModuleLoader().get();
+
+    } else {
+      var importHead = finalPath.getFirst().getDisplay();
+      checkFatal(
+          !sharedScriptNames.contains(importHead),
+          ErrorCode.INVALID_IMPORT,
+          "Invalid import, make sure to use the '%s' prefix to import shared script content");
+    }
+
+    var module = loader.getModule(finalPath.popLast()).orElse(null);
     checkFatal(
         module != null,
         importStmt.getPackageIdentifier().getFileLocation(),
         ErrorLabel.GENERIC,
         "Could not find module [%s] at path: [%s]",
         path,
-        String.join("/", path.toStringList()));
+        String.join("/", finalPath.toStringList()));
 
     if (isStar) {
       if (module.getNamespaceObjects().isEmpty()) {
@@ -885,9 +914,12 @@ public class SqlScriptPlanner {
             sqrlEnv);
       }
     } else {
-      var namespaceObject = module.getNamespaceObject(path.getLast());
+      var namespaceObject = module.getNamespaceObject(finalPath.getLast());
       errors.checkFatal(
-          namespaceObject.isPresent(), "Object [%s] not found in module: %s", path.getLast(), path);
+          namespaceObject.isPresent(),
+          "Object [%s] not found in module: %s",
+          finalPath.getLast(),
+          finalPath);
 
       addImport(
           namespaceObject.get(),
@@ -895,6 +927,10 @@ public class SqlScriptPlanner {
           hintsAndDoc,
           sqrlEnv);
     }
+  }
+
+  private boolean isRootImport(NamePath path) {
+    return !path.isEmpty() && ROOT_IMPORT.equals(path.getFirst().getDisplay());
   }
 
   /**
@@ -1096,7 +1132,7 @@ public class SqlScriptPlanner {
               Optional.of(sinkTableId),
               existingTable.getSourceSinkTable());
     } else { // the export is to a user-defined sink: load it
-      var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
+      var module = scriptContext.moduleLoader().getModule(sinkPath.popLast()).orElse(null);
       checkFatal(
           module != null,
           exportStmt.getPackageIdentifier().getFileLocation(),
@@ -1203,12 +1239,15 @@ public class SqlScriptPlanner {
    *     {@code false} for regular imports
    */
   private record ScriptContext(
-      ModuleLoader moduleLoader, String databaseName, boolean isRootContext) {
+      ModuleLoader moduleLoader,
+      Optional<ModuleLoader> rootModuleLoader,
+      String databaseName,
+      boolean isRootContext) {
 
     ScriptContext fromImport(ModuleLoader moduleLoader, boolean isInline, String databaseName) {
       return isInline
-          ? new ScriptContext(moduleLoader, this.databaseName, isRootContext)
-          : new ScriptContext(moduleLoader, databaseName, false);
+          ? new ScriptContext(moduleLoader, this.rootModuleLoader, this.databaseName, isRootContext)
+          : new ScriptContext(moduleLoader, this.rootModuleLoader, databaseName, false);
     }
 
     boolean hasDifferentDatabase(ScriptContext other) {

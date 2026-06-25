@@ -23,20 +23,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 
+@RequiredArgsConstructor
 public class FileResourceResolver implements ResourceResolver {
 
-  Path baseDir;
-
-  public FileResourceResolver(Path baseDir) {
-    this.baseDir = baseDir;
-  }
-
-  @Override
-  public String toString() {
-    return "FileResourceResolver[" + baseDir + ']';
-  }
+  private final Path baseDir;
 
   @SneakyThrows
   @Override
@@ -73,5 +66,10 @@ public class FileResourceResolver implements ResourceResolver {
     Preconditions.checkArgument(
         subPath.startsWith(baseDir), "Not a sub-path: %s of %s", subPath, baseDir);
     return new FileResourceResolver(subPath);
+  }
+
+  @Override
+  public String toString() {
+    return "FileResourceResolver{" + baseDir + '}';
   }
 }
