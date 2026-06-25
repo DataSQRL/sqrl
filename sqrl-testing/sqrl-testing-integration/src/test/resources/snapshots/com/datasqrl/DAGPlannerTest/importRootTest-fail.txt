@@ -1,24 +1,5 @@
-[FATAL] Invalid root import [root.nonexistent.*], make sure to add 'nonexistent' as a shared script in the package configuration
+[FATAL] Could not find module [root.nonexistent.*] at path: [nonexistent/*]
 in script:importRootTest-fail.sqrl [1:1]:
 IMPORT root.nonexistent.*;
 ^
-Invalid IMPORT statement.
-
-To import all tables from another script inline and reference it directly, use:
-```
-IMPORT ecommerce-data.*;
-```
-To import all tables from another script in their own namespace, use:
-```
-IMPORT ecommerce-data;
-```
-To import all tables from another script with a custom namespace, use:
-```
-IMPORT ecommerce-data AS catalog;
-```
-
-To import from a shared script, use the defined name and the `root` prefix:
-```
-IMPORT root.shared-catalog;
-```
 

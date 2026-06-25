@@ -13,7 +13,11 @@ To import all tables from another script with a custom namespace, use:
 IMPORT ecommerce-data AS catalog;
 ```
 
-To import from a shared script, use the defined name and the `root` prefix:
+To import from a shared script into your main script, simply use its defined name:
+```
+IMPORT shared-catalog;
+```
+To import from a shared script into a submodule script, use the `root` prefix:
 ```
 IMPORT root.shared-catalog;
 ```
