@@ -127,11 +127,11 @@
     "sslMode" : "DISABLE",
     "sslNegotiation" : "POSTGRES",
     "useLayer7Proxy" : false,
+    "usingDomainSocket" : false,
     "socketAddress" : {
       "inetSocket" : true,
       "domainSocket" : false
-    },
-    "usingDomainSocket" : false
+    }
   },
   "poolOptions" : {
     "maxSize" : 4,
@@ -186,5 +186,13 @@
     "value.deserializer" : "com.datasqrl.server.kafka.JsonDeserializer"
   },
   "duckDbConfig" : null,
-  "snowflakeConfig" : null
+  "snowflakeConfig" : null,
+  "graphQLTailSampleTracingConfig" : {
+    "enabled" : false,
+    "defaultThresholdMs" : 60000,
+    "alwaysLogErrors" : true,
+    "maxLoggedTracesPerMinute" : 60,
+    "maxFieldTraces" : 50,
+    "thresholds" : { }
+  }
 }

@@ -38,6 +38,8 @@ class ServerConfigTest {
     assertThat(serverConfig.getCorsHandlerOptions()).isNotNull();
     assertThat(serverConfig.getJwtAuth()).isNull();
     assertThat(serverConfig.getSwaggerConfig()).isNotNull();
+    assertThat(serverConfig.getGraphQLTailSampleTracingConfig()).isNotNull();
+    assertThat(serverConfig.getGraphQLTailSampleTracingConfig().isEnabled()).isFalse();
     assertThat(serverConfig.getKafkaMutationConfig()).isNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNull();
   }
@@ -56,6 +58,14 @@ class ServerConfigTest {
     json.set("corsHandlerOptions", MAPPER.createObjectNode().put("allowCredentials", true));
     json.set("jwtAuth", MAPPER.createObjectNode().put("algorithm", "HS256"));
     json.set("swaggerConfig", MAPPER.createObjectNode().put("enabled", true));
+    json.set(
+        "graphQLTailSampleTracingConfig",
+        MAPPER
+            .createObjectNode()
+            .put("enabled", true)
+            .put("defaultThresholdMs", 750)
+            .put("maxLoggedTracesPerMinute", 10)
+            .set("thresholds", MAPPER.createObjectNode().put("Query.HighTempAlert", 250)));
 
     var kafkaMutationConfig = MAPPER.createObjectNode();
     kafkaMutationConfig.put("bootstrap.servers", "localhost:9092");
@@ -78,6 +88,13 @@ class ServerConfigTest {
     assertThat(serverConfig.getCorsHandlerOptions()).isNotNull();
     assertThat(serverConfig.getJwtAuth()).isNotNull();
     assertThat(serverConfig.getSwaggerConfig()).isNotNull();
+    assertThat(serverConfig.getGraphQLTailSampleTracingConfig().isEnabled()).isTrue();
+    assertThat(serverConfig.getGraphQLTailSampleTracingConfig().getDefaultThresholdMs())
+        .isEqualTo(750);
+    assertThat(serverConfig.getGraphQLTailSampleTracingConfig().getMaxLoggedTracesPerMinute())
+        .isEqualTo(10);
+    assertThat(serverConfig.getGraphQLTailSampleTracingConfig().getThresholds())
+        .containsEntry("Query.HighTempAlert", 250L);
     assertThat(serverConfig.getKafkaMutationConfig()).isNotNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNotNull();
   }
@@ -93,6 +110,7 @@ class ServerConfigTest {
     json.putNull("corsHandlerOptions");
     json.putNull("jwtAuth");
     json.putNull("swaggerConfig");
+    json.putNull("graphQLTailSampleTracingConfig");
     json.putNull("kafkaMutationConfig");
     json.putNull("kafkaSubscriptionConfig");
 
@@ -105,6 +123,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getPoolOptions()).isNotNull();
     assertThat(serverConfig.getCorsHandlerOptions()).isNotNull();
     assertThat(serverConfig.getSwaggerConfig()).isNotNull();
+    assertThat(serverConfig.getGraphQLTailSampleTracingConfig()).isNotNull();
 
     // PgConnectOptions uses empty default when null
     assertThat(serverConfig.getPgConnectOptions()).isNotNull();
