@@ -199,6 +199,35 @@ The cluster side is an infrastructure concern: a node group named `N` must label
 
 Multiple names are combined with AND — the pod requires a node carrying all of them.
 
+### Creating the node group (cluster side)
+
+A node group is provisioned by the cluster operator, not by the pipeline. The contract is simple: nodes in group `N` must carry the **label** `N=true` and the **taint** `N=true:NoSchedule`. The label provides the pin (pods requesting `N` land here); the taint provides the isolation (everything that does not request `N` is kept off).
+
+On a [Karpenter](https://karpenter.sh/)-managed cluster (e.g. Amazon EKS), create a `NodePool`. For a group named `nvme` backed by local-NVMe instances:
+
+```yaml
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: nvme
+spec:
+  template:
+    metadata:
+      labels:
+        nvme: "true"            # selected by pods requesting node group "nvme"
+    spec:
+      taints:
+        - key: nvme             # repels everything that does not tolerate "nvme"
+          value: "true"
+          effect: NoSchedule
+      requirements:
+        - { key: node.kubernetes.io/instance-type, operator: In, values: [ i7i.2xlarge ] }
+        - { key: karpenter.sh/capacity-type, operator: In, values: [ on-demand ] }
+      # nodeClassRef, arch/os, disruption budgets and limits as appropriate for your cluster
+```
+
+The label name and taint key must both equal the node-group name. Nodes in the group must also carry any standard scheduling labels your platform applies to workload nodes, so the deployment's base node selection still resolves.
+
 ---
 
 ## Do Not Disrupt (`do-not-disrupt`)
