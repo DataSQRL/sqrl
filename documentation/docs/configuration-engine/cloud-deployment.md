@@ -163,3 +163,62 @@ Vert.x API server deployments consist of a configurable number of identically si
 | large | 4 | 16 | 220GB | 1 | 15 |
 
 The `dev` size is intended for development and testing with small amounts of data. The `.disk` qualifier enables NVMe storage for instances that require local disk access.
+
+---
+
+## Node Groups (`*-node-groups`)
+
+Pins a component's pods onto dedicated nodes. Each engine's `deployment` accepts a list of node-group names. Each name is a **hard requirement**: if no matching node is available, the pod stays `Pending` — it never falls back to a shared node.
+
+| Engine | Field(s) |
+| :--- | :--- |
+| Flink | `taskmanager-node-groups`, `jobmanager-node-groups` |
+| PostgreSQL | `node-groups` |
+| Vert.x | `node-groups` |
+
+```json5
+{
+  "engines": {
+    "flink": {
+      "deployment": {
+        "taskmanager-size": "medium.mem",
+        "taskmanager-count": 6,
+        "taskmanager-node-groups": [ "nvme" ]   // TaskManagers MUST run on the "nvme" node group
+      }
+    }
+  }
+}
+```
+
+For each name `N` in the list, the pod is given:
+
+* a **node selector** requiring the node label `N=true` (the pin), and
+* a **toleration** for taint key `N` (so it is allowed onto the dedicated, tainted nodes).
+
+The cluster side is an infrastructure concern: a node group named `N` must label its nodes `N=true` **and** taint them `N=<value>:NoSchedule`. The taint keeps everything that does not request `N` off those nodes; the matching label + toleration place the requesting pods on them. This gives both *pinning* (the workload runs there) and *isolation* (nothing else does).
+
+Multiple names are combined with AND — the pod requires a node carrying all of them.
+
+---
+
+## Do Not Disrupt (`do-not-disrupt`)
+
+Protects a component's pods from **voluntary** autoscaler disruption (node consolidation / scale-down). When `true`, the pods are annotated so the cluster autoscaler will not evict or consolidate them. Use it for long-running, stateful, or hard-to-reschedule workloads — for example a Flink catch-up that reprocesses the whole backlog, or the PostgreSQL primary during bootstrap.
+
+| Engine | Field | Default |
+| :--- | :--- | :--- |
+| Flink | `do-not-disrupt` | `false` |
+| PostgreSQL | `do-not-disrupt` | `true` |
+| Vert.x | `do-not-disrupt` | `false` |
+
+```json5
+{
+  "engines": {
+    "flink": {
+      "deployment": {
+        "do-not-disrupt": true   // keep TaskManagers/JobManager from being consolidated mid-run
+      }
+    }
+  }
+}
+```
