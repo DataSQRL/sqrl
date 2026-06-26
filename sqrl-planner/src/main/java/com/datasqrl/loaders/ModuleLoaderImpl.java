@@ -42,9 +42,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.flink.table.functions.UserDefinedFunction;
-import org.springframework.stereotype.Component;
 
-@Component
 @RequiredArgsConstructor
 public class ModuleLoaderImpl implements ModuleLoader {
 
@@ -67,19 +65,19 @@ public class ModuleLoaderImpl implements ModuleLoader {
   }
 
   @Override
-  public Optional<SqrlModule> getModule(NamePath namePath) {
+  public Optional<SqrlModule> loadModule(NamePath namePath) {
     var cached = cache.getIfPresent(namePath);
     if (cached != null) {
       return Optional.of(cached);
     }
 
-    var module = getModuleOpt(namePath);
+    var module = loadModuleOpt(namePath);
     module.ifPresent(sqrlModule -> cache.put(namePath, sqrlModule));
 
     return module;
   }
 
-  private Optional<SqrlModule> getModuleOpt(NamePath namePath) {
+  private Optional<SqrlModule> loadModuleOpt(NamePath namePath) {
     // Load modules from file system first
     var module = loadFromFileSystem(namePath);
     if (module.isEmpty()) { // if it's not local, try to load it from classpath

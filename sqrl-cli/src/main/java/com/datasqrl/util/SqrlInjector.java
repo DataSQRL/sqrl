@@ -16,20 +16,12 @@
 package com.datasqrl.util;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.config.ExecutionEnginesHolder;
-import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.WorkspacePaths;
-import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.loaders.ClasspathFunctionLoader;
-import com.datasqrl.loaders.ModuleLoader;
-import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
-import com.datasqrl.plan.validate.ExecutionGoal;
 import java.nio.file.Path;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -54,11 +46,6 @@ public class SqrlInjector {
   }
 
   @Bean
-  public ClasspathFunctionLoader classpathFunctionLoader() {
-    return new ClasspathFunctionLoader();
-  }
-
-  @Bean
   public NameCanonicalizer nameCanonicalizer() {
     return NameCanonicalizer.SYSTEM;
   }
@@ -66,39 +53,5 @@ public class SqrlInjector {
   @Bean
   public JBangRunner jBangRunner(@Qualifier("internalTestExec") Boolean internalTestExec) {
     return internalTestExec ? JBangRunner.disabled() : JBangRunner.create();
-  }
-
-  @Bean
-  public ModuleLoader moduleLoader(
-      ResourceResolver resourceResolver,
-      WorkspacePaths workspacePaths,
-      ClasspathFunctionLoader classpathFunctionLoader,
-      ErrorCollector errors) {
-
-    return new ModuleLoaderImpl(resourceResolver, workspacePaths, classpathFunctionLoader, errors);
-  }
-
-  @Bean
-  public ModuleLoader rootModuleLoader(
-      WorkspacePaths workspacePaths,
-      ClasspathFunctionLoader classpathFunctionLoader,
-      ErrorCollector errors) {
-
-    return new ModuleLoaderImpl(
-        new FileResourceResolver(workspacePaths.buildDir()),
-        workspacePaths,
-        classpathFunctionLoader,
-        errors);
-  }
-
-  @Bean
-  public ExecutionEnginesHolder executionEnginesHolder(
-      ErrorCollector errors,
-      ApplicationContext applicationContext,
-      PackageJson sqrlConfig,
-      ExecutionGoal goal) {
-
-    return new ExecutionEnginesHolder(
-        errors, applicationContext, sqrlConfig, goal == ExecutionGoal.TEST);
   }
 }

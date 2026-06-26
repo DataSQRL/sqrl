@@ -26,6 +26,7 @@ import com.datasqrl.engine.export.PrintEngineFactory;
 import com.datasqrl.engine.log.kafka.KafkaLogEngine;
 import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import com.datasqrl.util.StreamUtil;
 import jakarta.annotation.Nullable;
@@ -37,8 +38,10 @@ import java.util.Set;
 import java.util.TreeMap;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
 
 /** Configuration for the engines */
+@Component
 @RequiredArgsConstructor
 public class ExecutionEnginesHolder {
 
@@ -52,14 +55,14 @@ public class ExecutionEnginesHolder {
   private final ErrorCollector errors;
   private final ApplicationContext applicationContext;
   private final PackageJson packageJson;
-  private final boolean testExecution;
+  private final ExecutionGoal execGoal;
 
   private volatile Map<String, ExecutionEngine> engines = null;
 
   public void initEnabledEngines() {
     getEngines();
 
-    if (testExecution) {
+    if (isTestExec()) {
       packageJson.setEnabledEngines(List.copyOf(engines.keySet()));
     }
   }
@@ -94,7 +97,7 @@ public class ExecutionEnginesHolder {
                           .filter(databaseEngine::supportsQueryEngine)
                           .forEach(databaseEngine::addQueryEngine));
 
-          if (testExecution) {
+          if (isTestExec()) {
             enginesTmp = adaptToTest(enginesTmp);
           }
 
@@ -151,5 +154,9 @@ public class ExecutionEnginesHolder {
     }
 
     return engines;
+  }
+
+  private boolean isTestExec() {
+    return execGoal == ExecutionGoal.TEST;
   }
 }
