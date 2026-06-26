@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.file.Files;
 import java.time.Duration;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +36,12 @@ import org.testcontainers.utility.DockerImageName;
 @Slf4j
 public class ExternalRedpandaContainerIT {
 
-  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension("flink-kafka");
+  @RegisterExtension static SqrlContainerExtension sqrl = new SqrlContainerExtension();
+
+  private static final String PROJECT_ROOT = "flink-kafka";
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-  private static final String REDPANDA_IMAGE = "redpandadata/redpanda:latest";
+  private static final String REDPANDA_IMAGE = "redpandadata/redpanda:v23.1.2";
   private static final String REDPANDA_CONTAINER_NAME = "redpanda";
   private static final int REDPANDA_PORT = 9093;
 
@@ -67,7 +70,7 @@ public class ExternalRedpandaContainerIT {
 
     // When - Compile SQRL script with external Kafka configuration
     var cmd = createCmdContainerWithExternalKafka();
-    cmd.withCommand("test", "package.json");
+    cmd.withCommand("test", "-r", PROJECT_ROOT);
 
     log.info("Starting compilation with external Redpanda container");
     log.info(sqrl.getDockerRunCommand(cmd));
@@ -93,7 +96,8 @@ public class ExternalRedpandaContainerIT {
     assertThat(logs).contains("ApplicationStatusTest", "BUILD SUCCESS");
 
     // Verify that no internal Kafka processes were started
-    var cliLogs = sqrl.getTestDir().resolve("build").resolve("logs").resolve("datasqrl-cli.log");
+    var testDir = sqrl.getTestDir().resolve(PROJECT_ROOT);
+    var cliLogs = testDir.resolve("build/logs/datasqrl-cli.log");
     assertThat(cliLogs).isRegularFile();
     assertThat(cliLogs)
         .as("Should not start internal Kafka when external Kafka is configured")
@@ -102,8 +106,8 @@ public class ExternalRedpandaContainerIT {
             "Skip starting Redpanda, because KAFKA_BOOTSTRAP_SERVERS=redpanda:9093 is provided");
 
     // Verify log files and build ownership
-    sqrl.assertLogFiles(logs);
-    SqrlContainerExtension.assertBuildNotOwnedByRoot(sqrl.getTestDir(), logs);
+    sqrl.assertLogFiles(logs, PROJECT_ROOT);
+    SqrlContainerExtension.assertBuildNotOwnedByRoot(testDir, logs);
 
     // Start GraphQL server with external Kafka configuration and test connectivity
     var bootstrapServers = REDPANDA_CONTAINER_NAME + ":" + REDPANDA_PORT;
@@ -114,6 +118,7 @@ public class ExternalRedpandaContainerIT {
             container
                 .withEnv("KAFKA_BOOTSTRAP_SERVERS", bootstrapServers)
                 .withNetwork(sqrl.getNetwork()),
+        testDir,
         false);
 
     // Verify server is running and can execute GraphQL queries
@@ -191,20 +196,19 @@ public class ExternalRedpandaContainerIT {
             .withNetwork(sqrl.getNetwork())
             .withEnv("KAFKA_BOOTSTRAP_SERVERS", REDPANDA_CONTAINER_NAME + ":" + REDPANDA_PORT);
 
-    // Add additional mount to resolve the symlink
-    // flink-kafka/loan-local -> ../banking/loan-local
-    var bankingDir = sqrl.getTestDir().getParent().resolve("banking");
+    // Add additional mount for "banking-shared"
+    var bankingDir = sqrl.getTestDir().resolve("banking-shared");
 
-    if (bankingDir.toFile().exists()) {
+    if (Files.exists(bankingDir)) {
       container =
           container.withFileSystemBind(
               bankingDir.toString(),
-              SqrlContainerExtension.BUILD_DIR + "/../banking",
+              SqrlContainerExtension.WORKSPACE_DIR + "/banking-shared",
               BindMode.READ_ONLY);
       log.info(
-          "Mounted banking directory: {} -> {}",
+          "Mounted banking-shared directory: {} -> {}",
           bankingDir,
-          SqrlContainerExtension.BUILD_DIR + "/../banking");
+          SqrlContainerExtension.WORKSPACE_DIR + "/banking-shared");
     }
 
     return container;

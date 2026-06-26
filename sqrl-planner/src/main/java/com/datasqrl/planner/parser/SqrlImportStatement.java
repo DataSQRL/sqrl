@@ -19,7 +19,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorLocation;
 import lombok.Value;
 
-/** Represents an EXPORT statement */
+/** Represents an IMPORT statement */
 @Value
 public class SqrlImportStatement implements SqrlDdlStatement {
 

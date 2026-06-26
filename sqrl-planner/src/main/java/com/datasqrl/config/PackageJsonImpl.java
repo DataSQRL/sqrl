@@ -86,12 +86,6 @@ public class PackageJsonImpl implements PackageJson {
   }
 
   @Override
-  public boolean hasScriptKey() {
-    // ScriptConfiguration.SCRIPT_KEY
-    return false;
-  }
-
-  @Override
   public TestRunnerConfiguration getTestConfig() {
     return new TestRunnerConfigImpl(sqrlConfig.getSubConfig(TEST_RUNNER_KEY));
   }

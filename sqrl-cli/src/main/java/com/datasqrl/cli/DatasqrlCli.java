@@ -41,19 +41,19 @@ public class DatasqrlCli implements Runnable {
     CommandLine.usage(this, System.out);
   }
 
-  final Path rootDir;
+  final Path workspaceDir;
   final StatusHook statusHook;
   final boolean internalTestExec;
 
   public DatasqrlCli(
-      @NonNull Path rootDir, @NonNull StatusHook statusHook, boolean internalTestExec) {
-    this.rootDir = rootDir;
+      @NonNull Path workspaceDir, @NonNull StatusHook statusHook, boolean internalTestExec) {
+    this.workspaceDir = workspaceDir;
     this.statusHook = statusHook;
     this.internalTestExec = internalTestExec;
   }
 
-  public DatasqrlCli(@NonNull Path rootDir) {
-    this(rootDir, StatusHook.NONE, false);
+  public DatasqrlCli(@NonNull Path workspaceDir) {
+    this(workspaceDir, StatusHook.NONE, false);
   }
 
   public DatasqrlCli() {

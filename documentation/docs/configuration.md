@@ -42,7 +42,7 @@ The individual engines are configured under the **`engines`** field. The followi
   "engines": {
     "flink": {
       "config": {
-        "table.exec.source.idle-timeout": "10 sec"
+        "table.exec.source.idle-timeout": "10s"
       }
     }
   }
@@ -54,6 +54,10 @@ Refer to the engine configuration documentation for more information on how to c
 ## Source Files (`script`)
 
 Configures the main SQRL script to compile, the (optional) GraphQL schema for the exposed API, and (optional) list of operations defined as GraphQL queries.
+
+Shared SQRL scripts can be configured under `shared` to define reusable packages, such as common data catalogs, that are imported by multiple SQRL projects.
+Each shared script package is structured like a regular SQRL project, but its root directory must contain a `package.json` configuration file, which may be minimal and can provide metadata or default `script.config` values for template variables used by the shared SQRL files.
+Each `shared` entry uses its key as the import namespace, points `path` to the shared package root, and can define per-project `config` overrides for the shared package defaults.
 
 Optionally it can also take a mutation database JSON that is generated during every compilation, and if it's kept and included in the config,
 SQRL will check backward compatibility during compile making sure that mutation schemas will not get overwritten by mistake.
@@ -68,11 +72,17 @@ The `config` JSON object is passed to the Mustache templating engine to substitu
     "operations": ["api/operations-v1/myop1.graphql"], // List of GraphQL queries that define operations which are exposed as API endpoints
     "database": "my-mutation-database.json",           // Check backward compatibility for mutation schema during compilation
     "config": {                                        // Arbitrary JSON object used by the mustache templating engine to instantiate SQRL files
-      "table": "orders",
+      "excludedTenant": 123,
       "filters": [
         { "field": "total_amount", "isNull": false },
         { "field": "coupon_code", "isNull": true }
       ]
+    },
+    "shared": {                                        // Shared SQRL script(s) that can be imported in the main SQRL script
+      "data-catalog": {
+        "path": "../shared-project",                   // Relative path to the shared project root
+        "config": { ... }                              // Optional mustache template overrides
+      }
     }
   }
 }
@@ -80,15 +90,26 @@ The `config` JSON object is passed to the Mustache templating engine to substitu
 
 The example `script.config` above could be used to instantiate the following table definition in SQRL:
 ```sql
+IMPORT data-catalog.sources;
+
 MyTable := SELECT
              o.*
-           FROM {{table}} AS o
-           WHERE o.tenant_id > 0
+           FROM sources.Orders AS o
+           WHERE o.tenant_id <> {{excludedTenant}}
             {{#filters}}
              AND o.{{field}} IS {{^quoted}}NOT{{/quoted}} NULL
             {{/filters}}
             ORDER BY o.tenant_id DESC;
 ```
+
+:::warning
+When a project has SQRL scripts in subfolders, e.g. `./my-module/module-script.sqrl`, it can access shared imports with applying the `root` prefix.
+With the example above that would mean:
+```sql
+IMPORT root.data-catalog.sources;
+```
+
+:::
 
 ## Test-Runner (`test-runner`)
 

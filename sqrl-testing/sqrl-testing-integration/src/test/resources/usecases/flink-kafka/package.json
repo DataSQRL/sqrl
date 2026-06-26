@@ -2,7 +2,15 @@
   "version": "1",
   "enabled-engines": ["flink", "kafka"],
   "script": {
-    "main": "flink-kafka.sqrl"
+    "main": "flink-kafka.sqrl",
+    "shared": {
+      "banking-catalog": {
+        "path": "../banking-shared",
+        "config": {
+          "monitorInterval": "5s"
+        }
+      }
+    }
   },
   "test-runner": {
     "delay-sec": -1,

@@ -52,13 +52,14 @@ public final class ArgumentsProviders {
       return PACKAGE_JSON_REGEX;
     }
 
-    protected Function<Path, Boolean> testModifierFilter() {
-      return path -> TestNameModifier.of(path.getParent()) != TestNameModifier.disabled;
+    protected boolean testModifierFilter(Path packagePath) {
+      var mod = TestNameModifier.of(packagePath.getParent());
+      return mod != TestNameModifier.disabled && mod != TestNameModifier.shared;
     }
 
     protected Stream<Path> collectPackageJsonFiles() {
       return directories.stream()
-          .flatMap(p -> collectPackageFiles(p, packageJsonRegex(), testModifierFilter()))
+          .flatMap(p -> collectPackageFiles(p, packageJsonRegex(), this::testModifierFilter))
           .sorted();
     }
 

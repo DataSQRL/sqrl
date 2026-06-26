@@ -16,10 +16,12 @@
 package com.datasqrl;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.config.BuildPath;
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import java.nio.file.Path;
+import java.util.Objects;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -42,29 +44,20 @@ public class MockSqrlInjector {
   }
 
   @Bean
-  @Qualifier("buildDir")
-  public Path buildDir(@Qualifier("rootDir") Path rootDir) {
-    return rootDir.resolve("build");
+  public WorkspacePaths workspacePaths(@Qualifier("workspaceDir") Path workspaceDir) {
+    return new WorkspacePaths(
+        workspaceDir,
+        workspaceDir.resolve("build"),
+        workspaceDir.resolve("build").resolve("deploy"),
+        Optional.of(workspaceDir));
   }
 
   @Bean
-  @Qualifier("targetDir")
-  public Path targetDir(@Qualifier("rootDir") Path rootDir) {
-    return rootDir.resolve("build").resolve("deploy");
-  }
-
-  @Bean
-  public BuildPath buildPath(
-      @Qualifier("buildDir") Path buildDir, @Qualifier("targetDir") Path targetDir) {
-    return new BuildPath(buildDir, targetDir);
-  }
-
-  @Bean
-  public ResourceResolver resourceResolver(@Qualifier("rootDir") Path rootDir) {
-    if (rootDir == null) {
-      return new FileResourceResolver(
-          Path.of("../sqrl-testing/sqrl-testing-integration/src/test/resources/dagplanner"));
-    }
-    return new FileResourceResolver(rootDir);
+  public ResourceResolver resourceResolver(@Qualifier("workspaceDir") Path workspaceDir) {
+    return new FileResourceResolver(
+        Objects.requireNonNullElseGet(
+            workspaceDir,
+            () ->
+                Path.of("../sqrl-testing/sqrl-testing-integration/src/test/resources/dagplanner")));
   }
 }

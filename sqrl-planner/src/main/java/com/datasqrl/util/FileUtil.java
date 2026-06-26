@@ -39,8 +39,8 @@ public class FileUtil {
     return p.getFileName().toString().endsWith(extension);
   }
 
-  public static Path combineWithRootIfRelative(Path rootDir, Path dir) {
-    return dir.isAbsolute() ? dir : rootDir.resolve(dir);
+  public static Path combineWithBaseIfRelative(Path baseDir, Path dir) {
+    return dir.isAbsolute() ? dir : baseDir.resolve(dir);
   }
 
   /**

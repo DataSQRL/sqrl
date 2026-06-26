@@ -2,7 +2,12 @@
   "version": "1",
   "enabled-engines": ["flink", "iceberg", "duckdb"],
   "script": {
-    "main": "analytics-only.sqrl"
+    "main": "analytics-only.sqrl",
+    "shared": {
+      "banking-catalog": {
+        "path": "../banking-shared"
+      }
+    }
   },
   "engines": {
     "flink": {

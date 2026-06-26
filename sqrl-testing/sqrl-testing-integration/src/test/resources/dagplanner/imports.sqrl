@@ -1,4 +1,4 @@
 IMPORT ecommerceTs.customer;
 /*+query_by_all(productid) */
 IMPORT ecommerceTs.product;
-
+IMPORT root.ecommerceSql.category;
