@@ -217,7 +217,9 @@ public class JwtContainerIT {
     // Create MCP client with JWT authentication
     var transport =
         HttpClientStreamableHttpTransport.builder(mcpUrl)
-            .customizeRequest(r -> r.header("Authorization", "Bearer " + jwtToken))
+            .httpRequestCustomizer(
+                (requestBuilder, method, uri, body, context) ->
+                    requestBuilder.header("Authorization", "Bearer " + jwtToken))
             .endpoint("/v1/mcp")
             .build();
 
@@ -241,8 +243,7 @@ public class JwtContainerIT {
       log.info("Testing tool call: {}", myTableTool.name());
 
       var callRequest =
-          McpSchema.CallToolRequest.builder()
-              .name(myTableTool.name())
+          McpSchema.CallToolRequest.builder(myTableTool.name())
               .arguments(Map.of("limit", 5))
               .build();
 
@@ -272,7 +273,9 @@ public class JwtContainerIT {
     // Create MCP client with JWT authentication but missing required claims
     var transport =
         HttpClientStreamableHttpTransport.builder(mcpUrl)
-            .customizeRequest(r -> r.header("Authorization", "Bearer " + jwtToken))
+            .httpRequestCustomizer(
+                (requestBuilder, method, uri, body, context) ->
+                    requestBuilder.header("Authorization", "Bearer " + jwtToken))
             .endpoint("/v1/mcp")
             .build();
 
@@ -296,8 +299,7 @@ public class JwtContainerIT {
       log.info("Testing tool call: {}", myTableTool.name());
 
       var callRequest =
-          McpSchema.CallToolRequest.builder()
-              .name(myTableTool.name())
+          McpSchema.CallToolRequest.builder(myTableTool.name())
               .arguments(Map.of("limit", 5))
               .build();
 
