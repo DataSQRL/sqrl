@@ -16,7 +16,6 @@
 package com.datasqrl.plan;
 
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
@@ -32,7 +31,6 @@ import org.springframework.stereotype.Component;
 public class MainScriptImpl implements MainScript {
 
   private final PackageJson config;
-  private final WorkspacePaths workspacePaths;
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
 
@@ -51,9 +49,7 @@ public class MainScriptImpl implements MainScript {
 
   @Override
   public Optional<Path> getPath() {
-    var mainScript = config.getScriptConfig().getMainScript();
-    var mainScriptPath =
-        workspacePaths.projectRoot().map(p -> p.resolve(mainScript)).orElse(Path.of(mainScript));
+    var mainScriptPath = Path.of(config.getScriptConfig().getMainScript());
 
     return resourceResolver.resolveFile(mainScriptPath);
   }
