@@ -41,40 +41,44 @@ class ModuleLoadersTest {
   @Mock private SqrlModule module;
 
   @Test
-  void givenRegularImport_whenLoadModule_thenUsesMainLoaderAndPreservesPath() {
+  void givenRegularImport_whenLoadImportModule_thenUsesMainLoaderAndPreservesPath() {
     var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
     when(mainLoader.loadModule(NamePath.of("submodule"))).thenReturn(Optional.of(module));
 
     var loadedModule =
-        moduleLoaders.loadModule(NamePath.of("submodule", "Table"), FileLocation.START);
+        moduleLoaders.loadImportModule(NamePath.of("submodule", "Table"), FileLocation.START);
 
     assertThat(loadedModule.module()).isSameAs(module);
     assertThat(loadedModule.finalPath()).isEqualTo(NamePath.of("submodule", "Table"));
+    assertThat(loadedModule.rootImport()).isFalse();
     verify(mainLoader).loadModule(NamePath.of("submodule"));
     verifyNoInteractions(rootLoader);
   }
 
   @Test
-  void givenRootImport_whenLoadModule_thenUsesRootLoaderAndRemovesRootPrefix() {
+  void givenRootImport_whenLoadImportModule_thenUsesRootLoaderAndRemovesRootPrefix() {
     var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
     when(rootLoader.loadModule(NamePath.of("shared"))).thenReturn(Optional.of(module));
 
     var loadedModule =
-        moduleLoaders.loadModule(NamePath.of("root", "shared", "Table"), FileLocation.START);
+        moduleLoaders.loadImportModule(NamePath.of("root", "shared", "Table"), FileLocation.START);
 
     assertThat(loadedModule.module()).isSameAs(module);
     assertThat(loadedModule.finalPath()).isEqualTo(NamePath.of("shared", "Table"));
+    assertThat(loadedModule.rootImport()).isTrue();
     verify(rootLoader).loadModule(NamePath.of("shared"));
     verifyNoInteractions(mainLoader);
   }
 
   @Test
-  void givenMissingSharedScriptImportWithoutRoot_whenLoadModule_thenReportsRootPrefixRequirement() {
+  void
+      givenMissingSharedScriptImportWithoutRoot_whenLoadImportModule_thenReportsRootPrefixRequirement() {
     var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
     when(mainLoader.loadModule(NamePath.of("shared"))).thenReturn(Optional.empty());
 
     assertThatThrownBy(
-            () -> moduleLoaders.loadModule(NamePath.of("shared", "Table"), FileLocation.START))
+            () ->
+                moduleLoaders.loadImportModule(NamePath.of("shared", "Table"), FileLocation.START))
         .isInstanceOf(StatementParserException.class)
         .hasMessage(
             "Invalid import, to access a shared script in a submodule make sure to use the 'root' prefix");
@@ -83,12 +87,29 @@ class ModuleLoadersTest {
   }
 
   @Test
-  void givenMissingRegularImport_whenLoadModule_thenReportsMissingModule() {
+  void
+      givenMissingSharedScriptExportWithoutRoot_whenLoadExportModule_thenReportsRootPrefixRequirement() {
+    var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
+    when(mainLoader.loadModule(NamePath.of("shared"))).thenReturn(Optional.empty());
+
+    assertThatThrownBy(
+            () ->
+                moduleLoaders.loadExportModule(NamePath.of("shared", "Table"), FileLocation.START))
+        .isInstanceOf(StatementParserException.class)
+        .hasMessage(
+            "Invalid export, to access a shared script in a submodule make sure to use the 'root' prefix");
+    verify(mainLoader).loadModule(NamePath.of("shared"));
+    verifyNoInteractions(rootLoader);
+  }
+
+  @Test
+  void givenMissingRegularImport_whenLoadImportModule_thenReportsMissingModule() {
     var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
     when(mainLoader.loadModule(NamePath.of("missing"))).thenReturn(Optional.empty());
 
     assertThatThrownBy(
-            () -> moduleLoaders.loadModule(NamePath.of("missing", "Table"), FileLocation.START))
+            () ->
+                moduleLoaders.loadImportModule(NamePath.of("missing", "Table"), FileLocation.START))
         .isInstanceOf(StatementParserException.class)
         .hasMessage("Could not find module [missing.Table] at path: [missing/Table]");
     verify(mainLoader).loadModule(NamePath.of("missing"));
@@ -96,7 +117,7 @@ class ModuleLoadersTest {
   }
 
   @Test
-  void givenMainLoaderReplacement_whenLoadModule_thenUsesReplacementAndKeepsRootLoader() {
+  void givenMainLoaderReplacement_whenLoadImportModule_thenUsesReplacementAndKeepsRootLoader() {
     var replacementLoader = mock(ModuleLoader.class);
     var moduleLoaders =
         new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"))
@@ -104,11 +125,14 @@ class ModuleLoadersTest {
     when(replacementLoader.loadModule(NamePath.of("local"))).thenReturn(Optional.of(module));
     when(rootLoader.loadModule(NamePath.of("shared"))).thenReturn(Optional.of(module));
 
-    assertThat(moduleLoaders.loadModule(NamePath.of("local", "Table"), FileLocation.START).module())
+    assertThat(
+            moduleLoaders
+                .loadImportModule(NamePath.of("local", "Table"), FileLocation.START)
+                .module())
         .isSameAs(module);
     assertThat(
             moduleLoaders
-                .loadModule(NamePath.of("root", "shared", "Table"), FileLocation.START)
+                .loadImportModule(NamePath.of("root", "shared", "Table"), FileLocation.START)
                 .module())
         .isSameAs(module);
 

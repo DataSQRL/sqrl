@@ -861,7 +861,7 @@ public class SqlScriptPlanner {
     var loadedModule =
         scriptContext
             .moduleLoaders()
-            .loadModule(path, importStmt.getPackageIdentifier().getFileLocation());
+            .loadImportModule(path, importStmt.getPackageIdentifier().getFileLocation());
     var module = loadedModule.module();
     var finalPath = loadedModule.finalPath();
 
@@ -1093,16 +1093,11 @@ public class SqlScriptPlanner {
               Optional.of(sinkTableId),
               existingTable.getSourceSinkTable());
     } else { // the export is to a user-defined sink: load it
-      // TODO ferenc: Allow shared exports
-      var module = scriptContext.mainModuleLoader().loadModule(sinkPath.popLast()).orElse(null);
-      checkFatal(
-          module != null,
-          exportStmt.getPackageIdentifier().getFileLocation(),
-          ErrorLabel.GENERIC,
-          "Could not find module [%s] at path: [%s]",
-          sinkPath,
-          String.join("/", sinkPath.toStringList()));
-
+      var moduleCtx =
+          scriptContext
+              .moduleLoaders()
+              .loadExportModule(sinkPath, exportStmt.getPackageIdentifier().getFileLocation());
+      var module = moduleCtx.module();
       var sinkObj = module.getNamespaceObject(sinkName);
       checkFatal(
           sinkObj.isPresent(),
