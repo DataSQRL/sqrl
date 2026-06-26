@@ -164,7 +164,8 @@
                   "additionalProperties": true
                 }
               },
-              "additionalProperties": false
+              "additionalProperties": false,
+              "required": ["path"]
             }
           },
           "additionalProperties": false

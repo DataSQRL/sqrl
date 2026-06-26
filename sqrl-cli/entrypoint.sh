@@ -26,7 +26,7 @@ if [[ -d /build ]]; then
   WORKSPACE=/build
   printf 'Warning: The "/build" mounting point is deprecated and will be removed, please use "/workspace" instead\n' >&2
 elif [[ ! -d /workspace ]]; then
-  printf 'Error: The "/workspace" mount does not exist, try adding "-v $PWD:/workspace" to the docker command' >&2
+  printf 'Error: The "/workspace" mount does not exist, try adding "-v $PWD:/workspace" to the docker command\n' >&2
   exit 1
 else
   WORKSPACE=/workspace

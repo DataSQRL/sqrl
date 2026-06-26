@@ -105,12 +105,7 @@ class SqrlPreprocessorTest {
   @Test
   void givenSqrlFileInSharedScriptDirectory_whenProcess_thenRendersSharedPackageValues()
       throws IOException {
-    var sharedScript = mock(SharedScriptConfig.class);
-    when(sharedScript.getName()).thenReturn("shared-catalog");
-    when(sharedScript.getPath()).thenReturn("shared");
-    when(sharedScript.getConfig()).thenReturn(Map.of("tableName", "OverrideOrders"));
-    when(packageJson.getScriptConfig()).thenReturn(scriptConfig);
-    when(scriptConfig.getSharedScriptConfigs()).thenReturn(List.of(sharedScript));
+    givenSharedConfig("shared-catalog", "shared", Map.of("tableName", "OverrideOrders"));
 
     var sharedDir = sourceDir.resolve("shared");
     Files.createDirectories(sharedDir);
@@ -136,9 +131,47 @@ class SqrlPreprocessorTest {
         .isEqualTo("IMPORT OverrideOrders; LIMIT 25;");
   }
 
+  @Test
+  void givenSqrlFileBelowSharedScriptPath_whenProcess_thenRendersSharedPackageValues()
+      throws IOException {
+    givenSharedConfig("shared-catalog", "shared", Map.of("limit", 50));
+
+    var nestedSharedDir = sourceDir.resolve("shared/nested");
+    Files.createDirectories(nestedSharedDir);
+    Files.writeString(
+        nestedSharedDir.resolve("package.json"),
+        """
+        {
+          "version": "1",
+          "script": {
+            "config": {
+              "tableName": "NestedOrders",
+              "limit": 25
+            }
+          }
+        }
+        """);
+    var sqrlFile = nestedSharedDir.resolve("catalog.sqrl");
+    Files.writeString(sqrlFile, "IMPORT {{tableName}}; LIMIT {{limit}};");
+
+    underTest.process(sqrlFile, context);
+
+    assertThat(Files.readString(buildDir.resolve("shared/nested/catalog.sqrl")))
+        .isEqualTo("IMPORT NestedOrders; LIMIT 50;");
+  }
+
   private void givenProjectConfig(Map<String, Object> templateValues) {
     when(packageJson.getScriptConfig()).thenReturn(scriptConfig);
     when(scriptConfig.getSharedScriptConfigs()).thenReturn(List.of());
     when(scriptConfig.getConfig()).thenReturn(templateValues);
+  }
+
+  private void givenSharedConfig(String name, String path, Map<String, Object> templateOverrides) {
+    var sharedScript = mock(SharedScriptConfig.class);
+    when(sharedScript.getName()).thenReturn(name);
+    when(sharedScript.getPath()).thenReturn(path);
+    when(sharedScript.getConfig()).thenReturn(templateOverrides);
+    when(packageJson.getScriptConfig()).thenReturn(scriptConfig);
+    when(scriptConfig.getSharedScriptConfigs()).thenReturn(List.of(sharedScript));
   }
 }

@@ -79,7 +79,7 @@ public class SqrlPreprocessor implements Preprocessor {
     var sharedScripts = config.getScriptConfig().getSharedScriptConfigs();
 
     for (var sharedScript : sharedScripts) {
-      if (scriptDir.endsWith(sharedScript.getPath())) {
+      if (containsSubpath(scriptDir, sharedScript.getPath())) {
         var sharedPackageConfig =
             sharedConfigs.computeIfAbsent(
                 sharedScript.getName(), k -> loadSharedPackage(scriptDir, k));
@@ -104,5 +104,18 @@ public class SqrlPreprocessor implements Preprocessor {
     }
 
     return ConfigLoaderUtils.loadResolvedConfig(localErrors, sharedDir);
+  }
+
+  private static boolean containsSubpath(Path path, String subpathStr) {
+    var subpath = Path.of(subpathStr);
+    int subpathLen = subpath.getNameCount();
+
+    for (int i = 0; i <= path.getNameCount() - subpathLen; i++) {
+      if (path.subpath(i, i + subpathLen).equals(subpath)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }
