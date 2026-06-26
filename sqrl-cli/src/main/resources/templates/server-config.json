@@ -27,7 +27,7 @@
     "activityLogDataFormat" : "HEX_DUMP",
     "alpnVersions" : [ "HTTP_2", "HTTP_1_1" ],
     "clientAuth" : "NONE",
-    "compressionContentSizeThreshold" : 0,
+    "compressionContentSizeThreshold" : 26214400,
     "compressionLevel" : 6,
     "compressionSupported" : true,
     "crlPaths" : [ ],
