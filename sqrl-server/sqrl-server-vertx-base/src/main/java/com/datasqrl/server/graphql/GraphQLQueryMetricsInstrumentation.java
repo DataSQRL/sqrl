@@ -15,8 +15,6 @@
  */
 package com.datasqrl.server.graphql;
 
-import static java.util.Objects.requireNonNull;
-
 import com.datasqrl.server.graphql.RootGraphQLModel.ArgumentLookupQueryCoords;
 import graphql.execution.instrumentation.InstrumentationState;
 import graphql.execution.instrumentation.SimplePerformantInstrumentation;
@@ -98,13 +96,5 @@ public class GraphQLQueryMetricsInstrumentation extends SimplePerformantInstrume
 
   private static void record(Timer timer, long startNanos) {
     timer.record(System.nanoTime() - startNanos, TimeUnit.NANOSECONDS);
-  }
-
-  private record QueryKey(String parentType, String fieldName) {
-
-    private QueryKey {
-      requireNonNull(parentType, "parentType must not be null");
-      requireNonNull(fieldName, "fieldName must not be null");
-    }
   }
 }
