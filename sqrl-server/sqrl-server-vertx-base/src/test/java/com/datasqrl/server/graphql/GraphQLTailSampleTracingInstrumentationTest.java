@@ -49,16 +49,15 @@ import org.junit.jupiter.api.Test;
 class GraphQLTailSampleTracingInstrumentationTest {
 
   @Test
-  void givenSlowQuery_whenExecutionCompletes_thenLogsTraceWarning() throws Exception {
+  void givenSlowNamedQueryWithoutOperationParameter_whenExecutionCompletes_thenLogsTraceWarning()
+      throws Exception {
     var appender = attachAppender();
     try {
       var instrumentation = newInstrumentation(config(1, Map.of("Query.HighTempAlert", 1L)));
       var state = instrumentation.createState(mock(InstrumentationCreateStateParameters.class));
       var executionContext =
           instrumentation.beginExecution(
-              executionParameters(
-                  "query HighTempAlertQuery { HighTempAlert }", "HighTempAlertQuery"),
-              state);
+              executionParameters("query HighTempAlertQuery { HighTempAlert }", null), state);
       var environment = environment("Query", "HighTempAlert", "/HighTempAlert");
       DataFetcher<?> fetcher = env -> "result";
 

@@ -28,6 +28,8 @@ import graphql.execution.instrumentation.SimplePerformantInstrumentation;
 import graphql.execution.instrumentation.parameters.InstrumentationCreateStateParameters;
 import graphql.execution.instrumentation.parameters.InstrumentationExecutionParameters;
 import graphql.execution.instrumentation.parameters.InstrumentationFieldFetchParameters;
+import graphql.language.OperationDefinition;
+import graphql.parser.Parser;
 import graphql.schema.DataFetcher;
 import graphql.schema.GraphQLNamedSchemaElement;
 import java.nio.charset.StandardCharsets;
@@ -104,7 +106,7 @@ public class GraphQLTailSampleTracingInstrumentation extends SimplePerformantIns
       InstrumentationExecutionParameters parameters, InstrumentationState state) {
 
     if (state instanceof TraceState traceState) {
-      traceState.operationName = parameters.getOperation();
+      traceState.operationName = operationName(parameters);
       traceState.startNanos = System.nanoTime();
 
       return SimpleInstrumentationContext.whenCompleted(
@@ -289,6 +291,35 @@ public class GraphQLTailSampleTracingInstrumentation extends SimplePerformantIns
       return HexFormat.of().formatHex(hash, 0, 8);
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException("SHA-256 digest is unavailable", e);
+    }
+  }
+
+  /**
+   * Returns the client-provided operation name, or derives the declared name for single-operation
+   * documents where the HTTP request omitted the optional operationName field.
+   */
+  private static String operationName(InstrumentationExecutionParameters parameters) {
+    var operationName = parameters.getOperation();
+    if (operationName != null && !operationName.isBlank()) {
+      return operationName;
+    }
+
+    var query = parameters.getQuery();
+    if (query.isBlank()) {
+      return null;
+    }
+
+    try {
+      var operations = Parser.parse(query).getDefinitionsOfType(OperationDefinition.class);
+      if (operations.size() != 1) {
+        return null;
+      }
+
+      var parsedName = operations.get(0).getName();
+      return parsedName == null || parsedName.isBlank() ? null : parsedName;
+    } catch (RuntimeException e) {
+      log.debug("Failed to parse GraphQL query param for tail sample tracing", e);
+      return null;
     }
   }
 
