@@ -115,7 +115,8 @@ PostgreSQL deployments consist of one primary instance and a configurable number
         "instance-size": "medium",      // Instance size (see table below)
         "replica-count": 1,             // Number of read replicas (0 or larger)
         "disk-size-gb": 256,            // Disk size in GB (1 or larger)
-        "auto-expand-percentage": 0.2   // Auto-expand threshold (0 to disable, must be < 1)
+        "auto-expand-percentage": 0.2,  // Auto-expand threshold (0 to disable, must be < 1)
+        "create-indexes": true          // Whether to create table indexes (see "Create Indexes" below)
       }
     }
   }
@@ -246,6 +247,30 @@ Protects a component's pods from **voluntary** autoscaler disruption (node conso
     "flink": {
       "deployment": {
         "do-not-disrupt": true   // keep TaskManagers/JobManager from being consolidated mid-run
+      }
+    }
+  }
+}
+```
+
+---
+
+## Create Indexes (`create-indexes`)
+
+Controls whether the PostgreSQL table indexes are created for the deployment. Defaults to `true`. PostgreSQL only.
+
+| Engine | Field | Default |
+| :--- | :--- | :--- |
+| PostgreSQL | `create-indexes` | `true` |
+
+Set it to `false` to bootstrap the database **tables-only**, skipping all index creation. This is intended for a catch-up profile that reprocesses a large backlog: writing to un-indexed tables drains the backlog faster. The indexes are then built when the deployment is upgraded back to a steady-state profile (where `create-indexes` returns to its `true` default), so a catch-up deployment must be followed by such an upgrade before it serves production query traffic.
+
+```json5
+{
+  "engines": {
+    "postgres": {
+      "deployment": {
+        "create-indexes": false   // tables-only bootstrap for fast backlog draining; build indexes on the steady-state upgrade
       }
     }
   }
