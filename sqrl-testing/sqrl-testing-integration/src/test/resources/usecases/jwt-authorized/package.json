@@ -7,6 +7,9 @@
     "vertx" : {
       "authKind": ["JWT"],
       "config": {
+        "httpServerOptions": {
+          "compressionContentSizeThreshold": 0
+        },
         "jwtAuth": {
           "pubSecKeys": [
             {

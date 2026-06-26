@@ -3,6 +3,15 @@
   "script": {
     "main": "sensors-mutation.sqrl"
   },
+  "engines": {
+    "vertx": {
+      "config": {
+        "httpServerOptions": {
+          "compressionContentSizeThreshold": 0
+        }
+      }
+    }
+  },
   "test-runner": {
     "delay-sec": -1
   }
