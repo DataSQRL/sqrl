@@ -40,7 +40,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 public final class ModuleLoaders {
 
-  private static final String ROOT_IMPORT = "root";
+  private static final String ROOT_PREFIX = "root";
 
   private final ModuleLoader mainLoader;
   private final ModuleLoader rootLoader;
@@ -72,7 +72,21 @@ public final class ModuleLoaders {
     return new ModuleLoaders(mainLoader, rootLoader, sharedScriptNames);
   }
 
-  public LoadedModule loadModule(NamePath namePath, FileLocation fileLocation) {
+  public ModuleContext loadImportModule(NamePath namePath, FileLocation fileLocation) {
+    var ctx = doLoad(namePath);
+    validate(ctx, namePath, fileLocation, false);
+
+    return ctx;
+  }
+
+  public ModuleContext loadExportModule(NamePath namePath, FileLocation fileLocation) {
+    var ctx = doLoad(namePath);
+    validate(ctx, namePath, fileLocation, true);
+
+    return ctx;
+  }
+
+  ModuleContext doLoad(NamePath namePath) {
     var loader = mainLoader;
     var finalPath = namePath;
     boolean rootImport = false;
@@ -84,29 +98,33 @@ public final class ModuleLoaders {
     }
 
     var module = loader.loadModule(finalPath.popLast()).orElse(null);
-    var importPathHead = finalPath.getFirst().getDisplay();
+
+    return new ModuleContext(module, finalPath, rootImport);
+  }
+
+  void validate(ModuleContext ctx, NamePath origPath, FileLocation fileLocation, boolean export) {
+    var pathHead = ctx.finalPath.getFirst().getDisplay();
 
     checkFatal(
-        module != null || rootImport || !sharedScriptNames.contains(importPathHead),
+        ctx.module != null || ctx.rootImport || !sharedScriptNames.contains(pathHead),
         fileLocation,
-        ErrorCode.INVALID_IMPORT,
-        "Invalid import, to access a shared script in a submodule make sure to use the '%s' prefix",
-        ROOT_IMPORT);
+        export ? ErrorCode.INVALID_EXPORT : ErrorCode.INVALID_IMPORT,
+        "Invalid %s, to access a shared script in a submodule make sure to use the '%s' prefix",
+        export ? "export" : "import",
+        ROOT_PREFIX);
 
     checkFatal(
-        module != null,
+        ctx.module != null,
         fileLocation,
         ErrorLabel.GENERIC,
         "Could not find module [%s] at path: [%s]",
-        namePath,
-        String.join("/", finalPath.toStringList()));
-
-    return new LoadedModule(module, finalPath);
+        origPath,
+        String.join("/", ctx.finalPath.toStringList()));
   }
 
   boolean isRootImport(NamePath path) {
-    return !path.isEmpty() && ROOT_IMPORT.equals(path.getFirst().getDisplay());
+    return !path.isEmpty() && ROOT_PREFIX.equals(path.getFirst().getDisplay());
   }
 
-  public record LoadedModule(SqrlModule module, NamePath finalPath) {}
+  public record ModuleContext(SqrlModule module, NamePath finalPath, boolean rootImport) {}
 }
