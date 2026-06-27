@@ -116,7 +116,8 @@ PostgreSQL deployments consist of one primary instance and a configurable number
         "replica-count": 1,             // Number of read replicas (0 or larger)
         "disk-size-gb": 256,            // Disk size in GB (1 or larger)
         "auto-expand-percentage": 0.2,  // Auto-expand threshold (0 to disable, must be < 1)
-        "create-indexes": true          // Whether to create table indexes (see "Create Indexes" below)
+        "create-indexes": true,         // Whether to create table indexes (see "Create Indexes" below)
+        "parameters": {}                // Extra postgresql.parameters (see "Parameters" below)
       }
     }
   }
@@ -276,3 +277,30 @@ Set it to `false` to bootstrap the database **tables-only**, skipping all index 
   }
 }
 ```
+
+## Parameters (`parameters`)
+
+Extra PostgreSQL server parameters, merged into the database's `postgresql.parameters`. Any key here overrides the built-in default for that parameter. PostgreSQL only; empty by default.
+
+| Engine | Field | Default |
+| :--- | :--- | :--- |
+| PostgreSQL | `parameters` | `{}` |
+
+Typically used in a catch-up profile that trades durability for ingest throughput while reprocessing a large backlog — for example a larger `shared_buffers`/`max_wal_size` together with `synchronous_commit: off`. Set these only in the catch-up profile: on the steady-state upgrade any parameter not listed here reverts to its default.
+
+```json5
+{
+  "engines": {
+    "postgres": {
+      "deployment": {
+        "parameters": {
+          "shared_buffers": "8GB",        // override the default (256MB)
+          "max_wal_size": "32GB",
+          "synchronous_commit": "off"     // faster backfill, durability trade-off
+        }
+      }
+    }
+  }
+}
+```
+
