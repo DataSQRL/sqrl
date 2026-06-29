@@ -98,6 +98,54 @@ public class GraphQLTailSampleTracingContainerIT {
             });
   }
 
+  @Test
+  @SneakyThrows
+  void givenDefaultThresholdAndLowQueryThreshold_whenGraphQLQueryRuns_thenWarnTraceIsLogged() {
+    postgres.startPostgreSQLContainer();
+    sqrl.compileSqrlProject();
+    applyQuerySpecificTailSampleTracingConfig();
+
+    sqrl.startGraphQLServer(
+        container ->
+            container
+                .withEnv(EnvVariableNames.POSTGRES_HOST, "postgresql")
+                .withEnv(EnvVariableNames.POSTGRES_USERNAME, postgres.getPostgresql().getUsername())
+                .withEnv(EnvVariableNames.POSTGRES_PASSWORD, postgres.getPostgresql().getPassword())
+                .withEnv(
+                    EnvVariableNames.POSTGRES_DATABASE, postgres.getPostgresql().getDatabaseName())
+                .withEnv(EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS, "localhost:9092"));
+
+    try (var response =
+        sqrl.executeGraphQLQuery(
+            "{\"query\":\"query QuerySpecificTailTrace { CustomersByName(inputName: \\\"Bobblabla\\\") { customerid name } CustomersById(a: 15, b: 10) { customerid name } }\"}")) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+      var responseJson = MAPPER.readTree(EntityUtils.toString(response.getEntity()));
+      assertThat(responseJson.has("errors")).isFalse();
+      assertThat(responseJson.at("/data/CustomersByName/0/name").asText()).isEqualTo("Bob Jones");
+      assertThat(responseJson.at("/data/CustomersById/0/name").asText()).isEqualTo("Bob Jones");
+    }
+
+    await()
+        .atMost(Duration.ofSeconds(10))
+        .pollInterval(Duration.ofMillis(500))
+        .untilAsserted(
+            () -> {
+              var event = getTailTraceLogEvent();
+              assertThat(event.get("operationName").asText()).isEqualTo("QuerySpecificTailTrace");
+              assertThat(event.get("sampleReason").asText()).isEqualTo("slow");
+              assertThat(event.get("thresholdMs").asLong()).isEqualTo(1);
+              assertThat(event.get("fields")).hasSizeGreaterThanOrEqualTo(2);
+              assertThat(event.get("fields").findValuesAsText("path"))
+                  .contains("/CustomersByName", "/CustomersById");
+              assertThat(event.get("fields"))
+                  .anySatisfy(
+                      field -> {
+                        assertThat(field.get("path").asText()).isEqualTo("/CustomersByName");
+                        assertThat(field.get("thresholdMs").asLong()).isEqualTo(1);
+                      });
+            });
+  }
+
   @SneakyThrows
   private void applyTestTailSampleTracingConfig() {
     var configPath = sqrl.getTestDir().resolve("build/deploy/plan/vertx-config.json");
@@ -107,6 +155,22 @@ public class GraphQLTailSampleTracingContainerIT {
     tracingConfig.put("defaultThresholdMs", 1);
     tracingConfig.put("maxLoggedTracesPerMinute", 0);
     tracingConfig.put("maxFieldTraces", 10);
+    config.set("graphQLTailSampleTracingConfig", tracingConfig);
+    MAPPER.writerWithDefaultPrettyPrinter().writeValue(configPath.toFile(), config);
+  }
+
+  @SneakyThrows
+  private void applyQuerySpecificTailSampleTracingConfig() {
+    var configPath = sqrl.getTestDir().resolve("build/deploy/plan/vertx-config.json");
+    var config = (ObjectNode) MAPPER.readTree(configPath.toFile());
+    var tracingConfig = MAPPER.createObjectNode();
+    var thresholds = MAPPER.createObjectNode();
+
+    thresholds.put("Query.CustomersByName", 1);
+    tracingConfig.put("enabled", true);
+    tracingConfig.put("maxLoggedTracesPerMinute", 0);
+    tracingConfig.put("maxFieldTraces", 10);
+    tracingConfig.set("thresholds", thresholds);
     config.set("graphQLTailSampleTracingConfig", tracingConfig);
     MAPPER.writerWithDefaultPrettyPrinter().writeValue(configPath.toFile(), config);
   }
