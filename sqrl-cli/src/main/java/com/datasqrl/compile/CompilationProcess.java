@@ -66,7 +66,7 @@ public class CompilationProcess {
             buildPath,
             (FlinkStreamEngine) planner.getStreamStage().engine(),
             config.getCompilerConfig());
-    planner.planMain(mainScript, environment);
+    planner.planMain(mainScript, Optional.empty(), environment);
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);

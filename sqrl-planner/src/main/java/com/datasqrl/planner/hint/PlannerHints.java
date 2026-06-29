@@ -19,6 +19,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.planner.parser.SqrlComments;
 import com.datasqrl.planner.parser.StatementParserException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -34,12 +35,15 @@ public class PlannerHints {
 
   private final List<PlannerHint> hints;
 
-  public static PlannerHints from(SqrlComments comments, ErrorCollector errors) {
-    var hints =
-        comments.hints().stream()
-            .map(c -> PlannerHint.from(c, errors))
-            .flatMap(Optional::stream)
-            .toList();
+  public static PlannerHints from(
+      SqrlComments comments, Optional<PlannerHints> inheritedHints, ErrorCollector errors) {
+    var hints = new ArrayList<PlannerHint>();
+    inheritedHints.ifPresent(inherited -> hints.addAll(inherited.hints));
+
+    comments.hints().stream()
+        .map(c -> PlannerHint.from(c, errors))
+        .flatMap(Optional::stream)
+        .forEach(hints::add);
 
     return new PlannerHints(hints);
   }
@@ -54,6 +58,10 @@ public class PlannerHints {
     }
 
     return queryBy.stream().map(ColumnNamesHint.class::cast).findFirst();
+  }
+
+  public boolean isEmpty() {
+    return hints.isEmpty();
   }
 
   public boolean isTest() {

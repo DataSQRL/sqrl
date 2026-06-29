@@ -211,14 +211,19 @@ public class SqlScriptPlanner {
   }
 
   /**
-   * Main entry method for parsing a SQRL script. The bulk of this method ensure that exceptions and
-   * errors are correctly mapped to the source so that users can easily understand what the issue is
-   * and what's causing it.
+   * Main entry method for parsing a SQRL script. The bulk of this method ensures that exceptions
+   * and errors are correctly mapped to the source so that users can easily understand what the
+   * issue is and what's causing it.
    *
-   * @param mainScript
-   * @param sqrlEnv
+   * @param mainScript SQRL script to plan
+   * @param inheritedHints inherited hints if the planned script is coming from an IMPORT
+   * @param sqrlEnv the SQRL compilation environment
    */
-  public void planMain(MainScript mainScript, Sqrl2FlinkSQLTranslator sqrlEnv) {
+  public void planMain(
+      MainScript mainScript,
+      Optional<PlannerHints> inheritedHints,
+      Sqrl2FlinkSQLTranslator sqrlEnv) {
+
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
     var statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
     var statementStack = new ArrayList<StackableStatement>();
@@ -229,7 +234,7 @@ public class SqlScriptPlanner {
       var sqlStatement = statement.get();
 
       try {
-        planStatement(sqlStatement, statementStack, sqrlEnv, lineErrors);
+        planStatement(sqlStatement, statementStack, inheritedHints, sqrlEnv, lineErrors);
 
       } catch (CollectedException e) {
         throw e;
@@ -302,6 +307,7 @@ public class SqlScriptPlanner {
   private void planStatement(
       SQLStatement stmt,
       List<StackableStatement> statementStack,
+      Optional<PlannerHints> inheritedHints,
       Sqrl2FlinkSQLTranslator sqrlEnv,
       ErrorCollector errors) {
     // Process hints & doc
@@ -309,7 +315,7 @@ public class SqlScriptPlanner {
     Optional<String> documentation = Optional.empty();
     if (stmt instanceof SqrlStatement statement) {
       var comments = statement.getComments();
-      hints = PlannerHints.from(comments, errors);
+      hints = PlannerHints.from(comments, inheritedHints, errors);
       if (!comments.documentation().isEmpty()) {
         documentation =
             Optional.of(
@@ -842,7 +848,7 @@ public class SqlScriptPlanner {
     NamePath aliasPath = null;
     if (importStmt.getAlias().isPresent()) {
       aliasPath = importStmt.getAlias().get();
-      ;
+
       checkFatal(
           aliasPath.size() == 1,
           ErrorCode.INVALID_IMPORT,
@@ -937,7 +943,11 @@ public class SqlScriptPlanner {
         completeScript.append(stmts);
       }
 
-      planMain(scriptObject.getScript(), sqrlEnv);
+      var hints =
+          hintsAndDoc.hints().isEmpty()
+              ? Optional.<PlannerHints>empty()
+              : Optional.of(hintsAndDoc.hints());
+      planMain(scriptObject.getScript(), hints, sqrlEnv);
 
       if (priorContext.hasDifferentDatabase(scriptContext)) {
         // Switch it back
