@@ -61,6 +61,8 @@ public class ServerConfig {
   private PoolOptions poolOptions = new PoolOptions();
   private CorsHandlerOptions corsHandlerOptions = new CorsHandlerOptions();
   private SwaggerConfig swaggerConfig = new SwaggerConfig();
+  private GraphQLTailSampleTracingConfig graphQLTailSampleTracingConfig =
+      new GraphQLTailSampleTracingConfig();
   private Map<String, Object> jwtAuth;
   private OAuthConfig oauthConfig;
 
@@ -172,6 +174,14 @@ public class ServerConfig {
   public void setSwaggerConfigFromJson(Map<String, Object> options) {
     this.swaggerConfig =
         options == null ? new SwaggerConfig() : MAPPER.convertValue(options, SwaggerConfig.class);
+  }
+
+  @JsonSetter("graphQLTailSampleTracingConfig")
+  public void setGraphQLTailSampleTracingConfigFromJson(Map<String, Object> options) {
+    this.graphQLTailSampleTracingConfig =
+        options == null
+            ? new GraphQLTailSampleTracingConfig()
+            : MAPPER.convertValue(options, GraphQLTailSampleTracingConfig.class);
   }
 
   private JsonObject getJsonObjectOrEmpty(Map<String, Object> options) {
