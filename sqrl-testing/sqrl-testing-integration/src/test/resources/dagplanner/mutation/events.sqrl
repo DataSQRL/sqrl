@@ -1,0 +1,7 @@
+/*+ no_query, engine(kafka) */
+CREATE TABLE MyEvents (
+    `id` STRING NOT NULL METADATA FROM 'uuid',
+    `payload` STRING,
+    `timestamp` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+    WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+);

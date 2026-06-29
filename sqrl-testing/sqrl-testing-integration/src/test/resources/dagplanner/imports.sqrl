@@ -1,4 +1,10 @@
 IMPORT ecommerceTs.customer;
-/*+query_by_all(productid) */
+
+/*+ query_by_all(productid) */
 IMPORT ecommerceTs.product;
 
+/*+ ttl(14 days) */
+IMPORT mutation.events.*;
+
+-- Export mutation table explicitly for test snapshot
+EXPORT MyEvents TO logger.myevents;
