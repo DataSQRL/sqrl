@@ -29,6 +29,7 @@ import feign.jackson.JacksonEncoder;
 import io.jsonwebtoken.Jwts;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.client.transport.McpHttpClientTransportAuthorizationException;
 import io.modelcontextprotocol.spec.McpSchema;
 import java.security.KeyPairGenerator;
 import java.sql.SQLException;
@@ -190,14 +191,9 @@ public class JwtContainerIT {
     var transport = HttpClientStreamableHttpTransport.builder(mcpUrl).endpoint("/v1/mcp").build();
     var client = McpClient.sync(transport).requestTimeout(Duration.ofSeconds(10)).build();
 
-    // Should fail when trying to initialize due to lack of authentication
-    // MCP uses OAuthFailureHandler which returns "authentication_required" error
-    assertThatThrownBy(client::initialize)
-        .satisfies(
-            ex -> {
-              var fullMessage = getFullExceptionMessage(ex);
-              assertThat(fullMessage).containsIgnoringCase("authentication_required");
-            });
+    // Should fail when trying to initialize due to lack of authentication.
+    // The MCP SDK maps 401/403 responses to transport authorization exceptions.
+    assertThatThrownBy(client::initialize).satisfies(ex -> assertMcpAuthorizationStatus(ex, 401));
 
     client.close();
   }
@@ -217,7 +213,9 @@ public class JwtContainerIT {
     // Create MCP client with JWT authentication
     var transport =
         HttpClientStreamableHttpTransport.builder(mcpUrl)
-            .customizeRequest(r -> r.header("Authorization", "Bearer " + jwtToken))
+            .httpRequestCustomizer(
+                (requestBuilder, method, uri, body, context) ->
+                    requestBuilder.header("Authorization", "Bearer " + jwtToken))
             .endpoint("/v1/mcp")
             .build();
 
@@ -241,8 +239,7 @@ public class JwtContainerIT {
       log.info("Testing tool call: {}", myTableTool.name());
 
       var callRequest =
-          McpSchema.CallToolRequest.builder()
-              .name(myTableTool.name())
+          McpSchema.CallToolRequest.builder(myTableTool.name())
               .arguments(Map.of("limit", 5))
               .build();
 
@@ -272,7 +269,9 @@ public class JwtContainerIT {
     // Create MCP client with JWT authentication but missing required claims
     var transport =
         HttpClientStreamableHttpTransport.builder(mcpUrl)
-            .customizeRequest(r -> r.header("Authorization", "Bearer " + jwtToken))
+            .httpRequestCustomizer(
+                (requestBuilder, method, uri, body, context) ->
+                    requestBuilder.header("Authorization", "Bearer " + jwtToken))
             .endpoint("/v1/mcp")
             .build();
 
@@ -296,15 +295,13 @@ public class JwtContainerIT {
       log.info("Testing tool call: {}", myTableTool.name());
 
       var callRequest =
-          McpSchema.CallToolRequest.builder()
-              .name(myTableTool.name())
+          McpSchema.CallToolRequest.builder(myTableTool.name())
               .arguments(Map.of("limit", 5))
               .build();
 
-      // Should throw exception when calling tool with missing required claims
+      // Should throw exception when calling tool with missing required claims.
       assertThatThrownBy(() -> client.callTool(callRequest))
-          .isInstanceOf(RuntimeException.class)
-          .hasMessageContaining("Forbidden");
+          .satisfies(ex -> assertMcpAuthorizationStatus(ex, 403));
     }
   }
 
@@ -437,18 +434,20 @@ public class JwtContainerIT {
     }
   }
 
-  private String getFullExceptionMessage(Throwable throwable) {
-    var messages = new StringBuilder();
-    var current = throwable;
+  private void assertMcpAuthorizationStatus(Throwable ex, int statusCode) {
+    var authException = findMcpAuthorizationException(ex);
+    assertThat(authException).isNotNull();
+    assertThat(authException.getResponseInfo().statusCode()).isEqualTo(statusCode);
+  }
+
+  private McpHttpClientTransportAuthorizationException findMcpAuthorizationException(Throwable ex) {
+    var current = ex;
     while (current != null) {
-      if (current.getMessage() != null) {
-        if (!messages.isEmpty()) {
-          messages.append(" -> ");
-        }
-        messages.append(current.getMessage());
+      if (current instanceof McpHttpClientTransportAuthorizationException authException) {
+        return authException;
       }
       current = current.getCause();
     }
-    return messages.toString();
+    return null;
   }
 }
