@@ -211,17 +211,19 @@ public class SqlScriptPlanner {
   }
 
   /**
-   * Main entry method for parsing a SQRL script. The bulk of this method ensure that exceptions and
-   * errors are correctly mapped to the source so that users can easily understand what the issue is
-   * and what's causing it.
+   * Main entry method for parsing a SQRL script. The bulk of this method ensures that exceptions
+   * and errors are correctly mapped to the source so that users can easily understand what the
+   * issue is and what's causing it.
    *
-   * @param mainScript
-   * @param sqrlEnv
+   * @param mainScript SQRL script to plan
+   * @param inheritedHints inherited hints if the planned script is coming from an IMPORT
+   * @param sqrlEnv the SQRL compilation environment
    */
   public void planMain(
       MainScript mainScript,
       Optional<PlannerHints> inheritedHints,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
+
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
     var statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
     var statementStack = new ArrayList<StackableStatement>();
