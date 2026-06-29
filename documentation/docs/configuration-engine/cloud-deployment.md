@@ -168,15 +168,15 @@ The `dev` size is intended for development and testing with small amounts of dat
 
 ---
 
-## Node Groups (`*-node-groups`)
+## Dedicated Nodes (`*-dedicated-nodes`)
 
-Pins a component's pods onto dedicated nodes. Each engine's `deployment` accepts a list of node-group names. Each name is a **hard requirement**: if no matching node is available, the pod stays `Pending` — it never falls back to a shared node.
+Pins a component's pods onto dedicated nodes. Each engine's `deployment` accepts a list of dedicated-node names. Each name is a **hard requirement**: if no matching node is available, the pod stays `Pending` — it never falls back to a shared node.
 
 | Engine | Field(s) |
 | :--- | :--- |
-| Flink | `taskmanager-node-groups`, `jobmanager-node-groups` |
-| PostgreSQL | `node-groups` |
-| Vert.x | `node-groups` |
+| Flink | `taskmanager-dedicated-nodes`, `jobmanager-dedicated-nodes` |
+| PostgreSQL | `dedicated-nodes` |
+| Vert.x | `dedicated-nodes` |
 
 ```json5
 {
@@ -185,7 +185,7 @@ Pins a component's pods onto dedicated nodes. Each engine's `deployment` accepts
       "deployment": {
         "taskmanager-size": "medium.mem",
         "taskmanager-count": 6,
-        "taskmanager-node-groups": [ "nvme" ]   // TaskManagers MUST run on the "nvme" node group
+        "taskmanager-dedicated-nodes": [ "nvme" ]   // TaskManagers MUST run on the "nvme" dedicated nodes
       }
     }
   }
@@ -197,13 +197,13 @@ For each name `N` in the list, the pod is given:
 * a **node selector** requiring the node label `N=true` (the pin), and
 * a **toleration** for taint key `N` (so it is allowed onto the dedicated, tainted nodes).
 
-The cluster side is an infrastructure concern: a node group named `N` must label its nodes `N=true` **and** taint them `N=<value>:NoSchedule`. The taint keeps everything that does not request `N` off those nodes; the matching label + toleration place the requesting pods on them. This gives both *pinning* (the workload runs there) and *isolation* (nothing else does).
+The cluster side is an infrastructure concern: the dedicated nodes for `N` must be labeled `N=true` **and** tainted `N=<value>:NoSchedule`. The taint keeps everything that does not request `N` off those nodes; the matching label + toleration place the requesting pods on them. This gives both *pinning* (the workload runs there) and *isolation* (nothing else does).
 
 Multiple names are combined with AND — the pod requires a node carrying all of them.
 
-### Creating the node group (cluster side)
+### Provisioning the dedicated nodes (cluster side)
 
-A node group is provisioned by the cluster operator, not by the pipeline. The contract is simple: nodes in group `N` must carry the **label** `N=true` and the **taint** `N=true:NoSchedule`. The label provides the pin (pods requesting `N` land here); the taint provides the isolation (everything that does not request `N` is kept off).
+Dedicated nodes are provisioned by the cluster operator, not by the pipeline. The contract is simple: the nodes for `N` must carry the **label** `N=true` and the **taint** `N=true:NoSchedule`. The label provides the pin (pods requesting `N` land here); the taint provides the isolation (everything that does not request `N` is kept off).
 
 On a [Karpenter](https://karpenter.sh/)-managed cluster (e.g. Amazon EKS), create a `NodePool`. For a group named `nvme` backed by local-NVMe instances:
 
@@ -216,7 +216,7 @@ spec:
   template:
     metadata:
       labels:
-        nvme: "true"            # selected by pods requesting node group "nvme"
+        nvme: "true"            # selected by pods requesting dedicated nodes "nvme"
     spec:
       taints:
         - key: nvme             # repels everything that does not tolerate "nvme"
@@ -228,7 +228,7 @@ spec:
       # nodeClassRef, arch/os, disruption budgets and limits as appropriate for your cluster
 ```
 
-The label name and taint key must both equal the node-group name. Nodes in the group must also carry any standard scheduling labels your platform applies to workload nodes, so the deployment's base node selection still resolves.
+The label name and taint key must both equal the dedicated-nodes name. These nodes must also carry any standard scheduling labels your platform applies to workload nodes, so the deployment's base node selection still resolves.
 
 ---
 
