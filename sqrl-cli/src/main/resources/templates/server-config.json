@@ -96,6 +96,7 @@
     "trafficClass" : -1,
     "useAlpn" : false,
     "useProxyProtocol" : false,
+    "useSemicolonAsQueryParamDelimiter" : true,
     "webSocketAllowServerNoContext" : false,
     "webSocketClosingTimeout" : 10,
     "webSocketCompressionLevel" : 6,
@@ -170,6 +171,14 @@
     "license" : "Apache License 2.0",
     "licenseUrl" : "https://www.apache.org/licenses/LICENSE-2.0"
   },
+  "graphQLTailSampleTracingConfig" : {
+    "enabled" : false,
+    "defaultThresholdMs" : 60000,
+    "alwaysLogErrors" : true,
+    "maxLoggedTracesPerMinute" : 60,
+    "maxFieldTraces" : 50,
+    "thresholds" : { }
+  },
   "jwtAuth" : null,
   "oauthConfig" : null,
   "kafkaMutationConfig" : {
@@ -186,13 +195,5 @@
     "value.deserializer" : "com.datasqrl.server.kafka.JsonDeserializer"
   },
   "duckDbConfig" : null,
-  "snowflakeConfig" : null,
-  "graphQLTailSampleTracingConfig" : {
-    "enabled" : false,
-    "defaultThresholdMs" : 60000,
-    "alwaysLogErrors" : true,
-    "maxLoggedTracesPerMinute" : 60,
-    "maxFieldTraces" : 50,
-    "thresholds" : { }
-  }
+  "snowflakeConfig" : null
 }
