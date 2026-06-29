@@ -25,6 +25,7 @@ import com.datasqrl.server.exec.FlinkFunctionExecutor;
 import com.datasqrl.server.graphql.CustomScalars;
 import com.datasqrl.server.graphql.GraphQLEngineBuilder;
 import com.datasqrl.server.graphql.GraphQLQueryMetricsInstrumentation;
+import com.datasqrl.server.graphql.GraphQLTailSampleTracingInstrumentation;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.jdbc.DatabaseType;
 import com.datasqrl.server.jdbc.JdbcClientsConfig;
@@ -34,6 +35,7 @@ import com.google.common.collect.ImmutableMap;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
 import graphql.execution.instrumentation.ChainedInstrumentation;
+import graphql.execution.instrumentation.Instrumentation;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Promise;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
@@ -47,6 +49,7 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.micrometer.backends.BackendRegistries;
 import io.vertx.sqlclient.SqlClient;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -196,13 +199,20 @@ public class GraphQLServerVerticle extends AbstractVerticle {
                   .build(),
               vertxServerCtx);
 
+      var instrumentations = new ArrayList<Instrumentation>();
       var meterRegistry = BackendRegistries.getDefaultNow();
       if (meterRegistry != null) {
-        graphQL.instrumentation(
-            new ChainedInstrumentation(
-                List.of(
-                    new MicrometerInstrumentation(meterRegistry),
-                    new GraphQLQueryMetricsInstrumentation(meterRegistry, modelVersion, model))));
+        instrumentations.add(new MicrometerInstrumentation(meterRegistry));
+        instrumentations.add(
+            new GraphQLQueryMetricsInstrumentation(meterRegistry, modelVersion, model));
+      }
+      if (config.getGraphQLTailSampleTracingConfig().isEnabled()) {
+        instrumentations.add(
+            new GraphQLTailSampleTracingInstrumentation(
+                modelVersion, model, config.getGraphQLTailSampleTracingConfig()));
+      }
+      if (!instrumentations.isEmpty()) {
+        graphQL.instrumentation(new ChainedInstrumentation(instrumentations));
       }
 
       return graphQL.build();
