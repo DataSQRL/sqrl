@@ -94,6 +94,7 @@ import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
@@ -667,6 +668,13 @@ public class Sqrl2FlinkSQLTranslator {
             } else {
               return dynamicParam;
             }
+          }
+
+          @Override
+          public RexNode visitSubQuery(RexSubQuery subQuery) {
+            var rewritten = subQuery.rel.accept(DynamicParameterReplacer.this);
+            var rewrittenSubQuery = subQuery.clone(rewritten);
+            return super.visitSubQuery(rewrittenSubQuery);
           }
         };
 
