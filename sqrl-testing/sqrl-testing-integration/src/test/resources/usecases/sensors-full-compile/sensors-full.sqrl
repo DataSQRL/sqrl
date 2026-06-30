@@ -1,18 +1,17 @@
-IMPORT sensor-{{variant}}.sensor_reading; -- Import sensor data
-IMPORT sensor-{{variant}}.sensors AS SensorUpdates;
+IMPORT sensors-shared.sources; -- Import sensor data
 
 /* Aggregate sensor readings to second */
 /*+primary_key(sensorid, timeSec) */
 SecReading := SELECT sensorid, window_time as timeSec,
                      avg(temperature) as temp
-              FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
+              FROM TABLE(TUMBLE(TABLE sources.SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '1' SECONDS))
               GROUP BY sensorid, window_start, window_end, window_time
               ORDER BY timeSec DESC;
 
 SecReadingByTemp(temp Int NOT NULL) := SELECT * FROM SecReading WHERE temp > :temp ORDER BY timeSec ASC LIMIT 10;
 
 /* Create table of sensors and relate to readings */
-Sensors := DISTINCT SensorUpdates ON id ORDER BY `timestamp` DESC;
+Sensors := DISTINCT sources.Sensors ON id ORDER BY `timestamp` DESC;
 Sensors.readings := SELECT * FROM SecReading r WHERE r.sensorid = this.id;
 
 /* Get max temperature in last hour */

@@ -1,7 +1,4 @@
-IMPORT loan-local.sources;
-
-_Applications := DISTINCT sources.ApplicationsStream ON id ORDER BY updated_at DESC;
-_LoanTypes := DISTINCT sources.LoanTypesStream ON id ORDER BY updated_at DESC;
+IMPORT root.module.tables.*;
 
 ApplicationStatus := SUBSCRIBE SELECT u.status, u.message, u.event_time, a.id, a.customer_id, a.loan_type_id,
                             a.amount, a.duration, t.max_amount, t.min_amount

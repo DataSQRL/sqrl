@@ -26,11 +26,11 @@ public record SqrlScriptExecutor(Path packageJsonPath, String goal) {
 
   public void execute(AssertStatusHook hook) {
     assertThat(packageJsonPath).as("Package JSON must be provided").exists();
-    var rootDir = packageJsonPath.getParent();
+    var workspaceDir = packageJsonPath.getParent();
     var fileName = packageJsonPath.getFileName().toString();
 
     // Execute the command
-    var cli = new DatasqrlCli(rootDir, hook, true);
+    var cli = new DatasqrlCli(workspaceDir, hook, true);
     var exitCode = cli.getCmd().execute(goal, fileName);
     exitCode += hook.isSuccess() ? 0 : 1;
 

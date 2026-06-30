@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.compile;
+package com.datasqrl.util;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
 @Slf4j
-public class DirectoryManager {
+public class DirectoryUtils {
+
+  public static final Path EMPTY_PATH = Path.of("");
 
   @SneakyThrows
   public static void prepareTargetDirectory(Path targetDir) {
@@ -34,9 +37,24 @@ public class DirectoryManager {
   }
 
   @SneakyThrows
-  public static void createDirectoriesIfNotExists(Path dir) {
-    if (!Files.isDirectory(dir)) {
-      Files.createDirectories(dir);
+  public static Path deepestCommonSubDir(List<Path> paths) {
+    if (paths == null || paths.isEmpty()) {
+      throw new IllegalArgumentException("The provided path list must not be null or empty");
     }
+
+    return paths.stream()
+        .map(Path::getParent)
+        .map(path -> path == null ? EMPTY_PATH : path.normalize())
+        .reduce(
+            (left, right) -> {
+              while (!right.startsWith(left)) {
+                left = left.getParent();
+                if (left == null) {
+                  return EMPTY_PATH;
+                }
+              }
+              return left;
+            })
+        .orElse(EMPTY_PATH);
   }
 }

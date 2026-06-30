@@ -33,8 +33,6 @@ type Query {
   Machine(limit: Int = 10, offset: Int = 0): [Machine!]
   SecReading(limit: Int = 10, offset: Int = 0): [SecReading!]
   SensorLastHour(limit: Int = 10, offset: Int = 0): [SensorLastHour!]
-  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]
-  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]
   Sensors(limit: Int = 10, offset: Int = 0): [Sensors!]
   SecReadingByTemp(temp: Int!, limit: Int = 10, offset: Int = 0): [SecReading!]
 }
@@ -50,21 +48,6 @@ type SensorLastHour {
   window_time: DateTime!
   avgTemp: Float!
   maxTemp: Float!
-}
-
-type SensorReading {
-  sensorid: Long!
-  time: Long!
-  temperature: Float!
-  humidity: Float!
-  timestamp: DateTime!
-}
-
-type SensorUpdates {
-  id: Long!
-  machineId: Long!
-  placed: Long!
-  timestamp: DateTime!
 }
 
 type Sensors {
@@ -139,7 +122,7 @@ Schema:
  - timeSec: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - temp: DOUBLE NOT NULL
 Inputs:
- - default_catalog.default_database.SensorReading
+ - default_catalog.sources.SensorReading
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
  - stream-root: SensorReading
@@ -176,43 +159,6 @@ Annotations:
  - mostRecentDistinct: true
  - stream-root: SensorReading
 
-=== SensorReading
-ID:          default_catalog.default_database.SensorReading
-Type:        stream
-Stage:       flink
-Primary key: sensorid, time
-Timestamp:   timestamp
-Row count:   ~1e8
----
-Schema:
- - sensorid: BIGINT NOT NULL
- - time: BIGINT NOT NULL
- - temperature: DOUBLE NOT NULL
- - humidity: DOUBLE NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Inputs:
- - default_catalog.default_database.SensorReading__base
-Annotations:
- - stream-root: SensorReading
-
-=== SensorUpdates
-ID:          default_catalog.default_database.SensorUpdates
-Type:        stream
-Stage:       flink
-Primary key: id, placed
-Timestamp:   timestamp
-Row count:   ~1e8
----
-Schema:
- - id: BIGINT NOT NULL
- - machineId: BIGINT NOT NULL
- - placed: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Inputs:
- - default_catalog.default_database.SensorUpdates__base
-Annotations:
- - stream-root: SensorUpdates
-
 === Sensors
 ID:          default_catalog.default_database.Sensors
 Type:        state
@@ -227,10 +173,10 @@ Schema:
  - placed: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
- - default_catalog.default_database.SensorUpdates
+ - default_catalog.sources.Sensors
 Annotations:
  - mostRecentDistinct: true
- - stream-root: SensorUpdates
+ - stream-root: Sensors
 
 === _SensorMaxTempWindow
 ID:          default_catalog.default_database._SensorMaxTempWindow
@@ -251,7 +197,88 @@ Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
  - stream-root: SensorReading
 
+=== SensorReading
+ID:          default_catalog.sources.SensorReading
+Type:        stream
+Stage:       flink
+Primary key: sensorid, time
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - sensorid: BIGINT NOT NULL
+ - time: BIGINT NOT NULL
+ - temperature: DOUBLE NOT NULL
+ - humidity: DOUBLE NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.sources.SensorReading__base
+Annotations:
+ - stream-root: SensorReading
+
+=== Sensors
+ID:          default_catalog.sources.Sensors
+Type:        stream
+Stage:       flink
+Primary key: id, placed
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - machineId: BIGINT NOT NULL
+ - placed: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.sources.Sensors__base
+Annotations:
+ - stream-root: Sensors
+
 >>>flink-sql-no-functions.sql
+CREATE DATABASE IF NOT EXISTS `sources`;
+USE `sources`;
+CREATE TEMPORARY TABLE `MachineGroup__schema` (
+  `groupId` BIGINT NOT NULL,
+  `groupName` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `created` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `machines` ROW(`machineId` BIGINT NOT NULL) NOT NULL ARRAY NOT NULL
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/machine_group.jsonl'
+);
+CREATE TABLE `MachineGroup` (
+  PRIMARY KEY (`groupId`, `created`) NOT ENFORCED,
+  WATERMARK FOR `created` AS `created` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/machine_group.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `MachineGroup__schema`;
+CREATE TEMPORARY TABLE `Sensors__schema` (
+  `id` BIGINT NOT NULL,
+  `machineId` BIGINT NOT NULL,
+  `placed` BIGINT NOT NULL
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/sensors.jsonl'
+);
+CREATE TABLE `Sensors` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`placed`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`id`, `placed`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/sensors.jsonl',
+  'connector' = 'filesystem'
+)
+LIKE `Sensors__schema`;
 CREATE TEMPORARY TABLE `SensorReading__schema` (
   `sensorid` BIGINT NOT NULL,
   `time` BIGINT NOT NULL,
@@ -268,40 +295,24 @@ CREATE TABLE `SensorReading` (
 )
 WITH (
   'format' = 'flexible-csv',
-  'path' = '${DATA_PATH}/sensorreading.csv.gz',
+  'path' = '${DATA_PATH}/sensor_reading.csv.gz',
   'connector' = 'filesystem',
   'flexible-csv.skip-header' = 'true'
 )
 LIKE `SensorReading__schema`;
-CREATE TEMPORARY TABLE `SensorUpdates__schema` (
-  `id` BIGINT NOT NULL,
-  `machineId` BIGINT NOT NULL,
-  `placed` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `SensorUpdates` (
-  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`placed`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
-  PRIMARY KEY (`id`, `placed`) NOT ENFORCED,
-  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
-)
-WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/sensors.jsonl',
-  'connector' = 'filesystem'
-)
-LIKE `SensorUpdates__schema`;
+USE CATALOG `default_catalog`;
+CREATE DATABASE IF NOT EXISTS `default_database`;
+USE `default_database`;
 CREATE VIEW `SecReading`
 AS
 SELECT `sensorid`, `window_time` AS `timeSec`, AVG(`temperature`) AS `temp`
-FROM TABLE(TUMBLE(TABLE `SensorReading`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND))
+FROM TABLE(TUMBLE(TABLE `sources`.`SensorReading`, DESCRIPTOR(`timestamp`), INTERVAL '1' SECOND))
 GROUP BY `sensorid`, `window_start`, `window_end`, `window_time`;
 CREATE VIEW `Sensors`
 AS
 SELECT `id`, `machineId`, `placed`, `timestamp`
 FROM (SELECT `id`, `machineId`, `placed`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`SensorUpdates`) AS `t`
+  FROM `default_catalog`.`sources`.`Sensors`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `_SensorMaxTempWindow`
 AS
@@ -388,40 +399,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `SensorReading_5` (
-  `sensorid` BIGINT NOT NULL,
-  `time` BIGINT NOT NULL,
-  `temperature` DOUBLE NOT NULL,
-  `humidity` DOUBLE NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED
-)
-WITH (
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'password' = '${POSTGRES_PASSWORD}',
-  'sink.on-conflict.action' = 'IGNORE',
-  'table-name' = 'SensorReading',
-  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
-  'username' = '${POSTGRES_USERNAME}'
-);
-CREATE TABLE `SensorUpdates_6` (
-  `id` BIGINT NOT NULL,
-  `machineId` BIGINT NOT NULL,
-  `placed` BIGINT NOT NULL,
-  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`, `placed`) NOT ENFORCED
-)
-WITH (
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'password' = '${POSTGRES_PASSWORD}',
-  'sink.on-conflict.action' = 'IGNORE',
-  'table-name' = 'SensorUpdates',
-  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
-  'username' = '${POSTGRES_USERNAME}'
-);
-CREATE TABLE `Sensors_7` (
+CREATE TABLE `Sensors_5` (
   `id` BIGINT NOT NULL,
   `machineId` BIGINT NOT NULL,
   `placed` BIGINT NOT NULL,
@@ -455,19 +433,11 @@ INSERT INTO `default_catalog`.`default_database`.`Machine_2`
    SELECT *
     FROM `default_catalog`.`default_database`.`_SensorMaxTempWindow`
    ;
-   INSERT INTO `default_catalog`.`default_database`.`SensorReading_5`
+   INSERT INTO `default_catalog`.`default_database`.`Sensors_5`
     SELECT *
-     FROM `default_catalog`.`default_database`.`SensorReading`
+     FROM `default_catalog`.`sources`.`Sensors`
     ;
-    INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_6`
-     SELECT *
-      FROM `default_catalog`.`default_database`.`SensorUpdates`
-     ;
-     INSERT INTO `default_catalog`.`default_database`.`Sensors_7`
-      SELECT *
-       FROM `default_catalog`.`default_database`.`SensorUpdates`
-      ;
-      END
+    END
 >>>kafka.json
 {
   "topics" : [ ],
@@ -478,8 +448,6 @@ CREATE TABLE IF NOT EXISTS "HighTemp" ("machineId" BIGINT NOT NULL, "sensorid" B
 CREATE TABLE IF NOT EXISTS "Machine" ("machineId" BIGINT NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("machineId"));
 CREATE TABLE IF NOT EXISTS "SecReading" ("sensorid" BIGINT NOT NULL, "timeSec" TIMESTAMP WITH TIME ZONE NOT NULL, "temp" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("sensorid","timeSec"));
 CREATE TABLE IF NOT EXISTS "SensorLastHour" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid","time"));
-CREATE TABLE IF NOT EXISTS "SensorUpdates" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","placed"));
 CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
 
 CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId")
@@ -683,56 +651,6 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
         {
           "type" : "args",
           "parentType" : "Query",
-          "fieldName" : "SensorReading",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"SensorReading\"",
-              "parameters" : [ ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Query",
-          "fieldName" : "SensorUpdates",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"SensorUpdates\"",
-              "parameters" : [ ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Query",
           "fieldName" : "Sensors",
           "exec" : {
             "arguments" : [
@@ -918,58 +836,6 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
         },
         {
           "function" : {
-            "name" : "GetSensorReading",
-            "parameters" : {
-              "type" : "object",
-              "properties" : {
-                "offset" : {
-                  "type" : "integer"
-                },
-                "limit" : {
-                  "type" : "integer"
-                }
-              },
-              "required" : [ ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntime\ntemperature\nhumidity\ntimestamp\n}\n\n}",
-            "queryName" : "SensorReading",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorReading{?offset,limit}"
-        },
-        {
-          "function" : {
-            "name" : "GetSensorUpdates",
-            "parameters" : {
-              "type" : "object",
-              "properties" : {
-                "offset" : {
-                  "type" : "integer"
-                },
-                "limit" : {
-                  "type" : "integer"
-                }
-              },
-              "required" : [ ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query SensorUpdates($limit: Int = 10, $offset: Int = 0) {\nSensorUpdates(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\n}\n\n}",
-            "queryName" : "SensorUpdates",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorUpdates{?offset,limit}"
-        },
-        {
-          "function" : {
             "name" : "GetSensors",
             "parameters" : {
               "type" : "object",
@@ -1040,7 +906,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype HighTemp {\n  machineId: Long!\n  sensorid: Long!\n  temp: Float!\n  timeSec: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Machine {\n  machineId: Long!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(limit: Int = 10, offset: Int = 0): [SecReading!]\n  SensorLastHour(limit: Int = 10, offset: Int = 0): [SensorLastHour!]\n  SensorReading(limit: Int = 10, offset: Int = 0): [SensorReading!]\n  SensorUpdates(limit: Int = 10, offset: Int = 0): [SensorUpdates!]\n  Sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n  SecReadingByTemp(temp: Int!, limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype SecReading {\n  sensorid: Long!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorLastHour {\n  sensorid: Long!\n  window_time: DateTime!\n  avgTemp: Float!\n  maxTemp: Float!\n}\n\ntype SensorReading {\n  sensorid: Long!\n  time: Long!\n  temperature: Float!\n  humidity: Float!\n  timestamp: DateTime!\n}\n\ntype SensorUpdates {\n  id: Long!\n  machineId: Long!\n  placed: Long!\n  timestamp: DateTime!\n}\n\ntype Sensors {\n  id: Long!\n  machineId: Long!\n  placed: Long!\n  timestamp: DateTime!\n  lastHour(limit: Int = 10, offset: Int = 0): [SensorLastHour!]\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype HighTemp {\n  machineId: Long!\n  sensorid: Long!\n  temp: Float!\n  timeSec: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Machine {\n  machineId: Long!\n  maxTemp: Float!\n  avgTemp: Float!\n  sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n}\n\ntype Query {\n  HighTemp(limit: Int = 10, offset: Int = 0): [HighTemp!]\n  Machine(limit: Int = 10, offset: Int = 0): [Machine!]\n  SecReading(limit: Int = 10, offset: Int = 0): [SecReading!]\n  SensorLastHour(limit: Int = 10, offset: Int = 0): [SensorLastHour!]\n  Sensors(limit: Int = 10, offset: Int = 0): [Sensors!]\n  SecReadingByTemp(temp: Int!, limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\ntype SecReading {\n  sensorid: Long!\n  timeSec: DateTime!\n  temp: Float!\n}\n\ntype SensorLastHour {\n  sensorid: Long!\n  window_time: DateTime!\n  avgTemp: Float!\n  maxTemp: Float!\n}\n\ntype Sensors {\n  id: Long!\n  machineId: Long!\n  placed: Long!\n  timestamp: DateTime!\n  lastHour(limit: Int = 10, offset: Int = 0): [SensorLastHour!]\n  readings(limit: Int = 10, offset: Int = 0): [SecReading!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

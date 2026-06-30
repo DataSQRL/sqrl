@@ -24,7 +24,6 @@ import com.datasqrl.tests.SnowflakeTestExtension;
 import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.TestShardingExtension;
 import java.nio.file.Path;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +65,7 @@ public class FullUseCaseIT {
 
   /** Ad-hoc debugging entry point. Change the path below to run a single use case manually. */
   static Stream<UseCaseParam> specificUseCaseProvider() {
-    return Stream.of(new UseCaseParam(USE_CASES.resolve("banking").resolve("package.json")));
+    return Stream.of(new UseCaseParam(USE_CASES.resolve("flink-kafka").resolve("package.json")));
   }
 
   @ParameterizedTest
@@ -86,11 +85,9 @@ public class FullUseCaseIT {
     }
 
     @Override
-    protected Function<Path, Boolean> testModifierFilter() {
-      return path -> {
-        var mod = TestNameModifier.of(path.getParent());
-        return mod != TestNameModifier.compile && mod != TestNameModifier.disabled;
-      };
+    protected boolean testModifierFilter(Path packagePath) {
+      return super.testModifierFilter(packagePath)
+          && TestNameModifier.of(packagePath.getParent()) != TestNameModifier.compile;
     }
 
     @Override

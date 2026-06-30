@@ -15,23 +15,29 @@
  */
 package com.datasqrl.config;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
-import java.nio.file.Path;
+import static com.datasqrl.config.PackageJsonImpl.CONFIG_KEY;
 
-public record BuildPath(Path buildDir, Path targetDir) {
+import com.datasqrl.config.PackageJson.SharedScriptConfig;
+import java.util.Map;
+import lombok.RequiredArgsConstructor;
 
-  @Inject
-  public BuildPath(@Named("buildDir") Path buildDir, @Named("targetDir") Path targetDir) {
-    this.buildDir = buildDir;
-    this.targetDir = targetDir;
+@RequiredArgsConstructor
+public class SharedScriptConfigImpl implements SharedScriptConfig {
+
+  private final SqrlConfig sqrlConfig;
+
+  @Override
+  public String getName() {
+    return sqrlConfig.getSelfKey();
   }
 
-  public Path getUdfPath() {
-    return targetDir.resolve(SqrlConstants.FLINK_ASSETS_DIR).resolve(SqrlConstants.LIB_DIR);
+  @Override
+  public String getPath() {
+    return sqrlConfig.asString("path").get();
   }
 
-  public Path getDataPath() {
-    return targetDir.resolve(SqrlConstants.FLINK_ASSETS_DIR).resolve(SqrlConstants.DATA_DIR);
+  @Override
+  public Map<String, Object> getConfig() {
+    return sqrlConfig.getSubConfig(CONFIG_KEY).toMap();
   }
 }

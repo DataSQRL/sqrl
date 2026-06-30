@@ -58,7 +58,7 @@ class TestCmdTest {
     testCmd.execute(errors);
 
     verify(testCmd).execute(errors);
-    verify(testCmd, never()).getTargetFolder();
+    verify(testCmd, never()).getTargetDir();
   }
 
   @Test
@@ -66,7 +66,7 @@ class TestCmdTest {
     testCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
 
     Path buildDir = testCmd.getBuildDir();
-    Path planDir = testCmd.getTargetFolder().resolve(SqrlConstants.PLAN_DIR);
+    Path planDir = testCmd.getTargetDir().resolve(SqrlConstants.PLAN_DIR);
 
     // Mock static methods and verify arguments
     try (MockedStatic<ConfigLoaderUtils> mocked = mockStatic(ConfigLoaderUtils.class)) {

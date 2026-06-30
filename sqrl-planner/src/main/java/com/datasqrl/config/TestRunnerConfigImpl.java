@@ -30,16 +30,16 @@ public class TestRunnerConfigImpl implements TestRunnerConfiguration {
   SqrlConfig sqrlConfig;
 
   @Override
-  public Path getSnapshotDir(Path rootDir) {
+  public Path getSnapshotDir(Path projectRoot) {
     var snapshotDir = Paths.get(sqrlConfig.asString("snapshot-folder").get());
 
-    return FileUtil.combineWithRootIfRelative(rootDir, snapshotDir);
+    return FileUtil.combineWithBaseIfRelative(projectRoot, snapshotDir);
   }
 
   @Override
-  public Optional<Path> getTestDir(Path rootDir) {
+  public Optional<Path> getTestDir(Path projectRoot) {
     var testDir = Paths.get(sqrlConfig.asString("test-folder").get());
-    testDir = FileUtil.combineWithRootIfRelative(rootDir, testDir);
+    testDir = FileUtil.combineWithBaseIfRelative(projectRoot, testDir);
 
     return Files.isDirectory(testDir) ? Optional.of(testDir) : Optional.empty();
   }

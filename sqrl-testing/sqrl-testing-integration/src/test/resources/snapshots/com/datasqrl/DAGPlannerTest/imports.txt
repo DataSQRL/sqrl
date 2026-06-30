@@ -1,4 +1,37 @@
 >>>pipeline_explain.txt
+=== Category
+ID:          default_catalog.default_database.Category
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   updateTime
+Row count:   ~1e8
+---
+Schema:
+ - categoryid: INTEGER NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - description: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - updateTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Category__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[updateTime], watermark=[-($3, 1:INTERVAL SECOND)])
+  LogicalProject(categoryid=[$0], name=[$1], description=[$2], updateTime=[NOW()])
+    LogicalTableScan(table=[[default_catalog, default_database, Category]])
+SQL:
+CREATE TABLE `Category` (
+  `categoryid` INTEGER NOT NULL,
+  `name` STRING NOT NULL,
+  `description` STRING,
+  `updateTime` AS NOW(),
+  WATERMARK FOR `updateTime` AS `updateTime` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+)
 === Customer
 ID:          default_catalog.default_database.Customer
 Type:        stream
@@ -173,6 +206,19 @@ WITH (
   'connector' = 'filesystem'
 )
 LIKE `Product__schema`;
+CREATE TABLE `Category` (
+  `categoryid` INTEGER NOT NULL,
+  `name` STRING NOT NULL,
+  `description` STRING,
+  `updateTime` AS `NOW`(),
+  WATERMARK FOR `updateTime` AS `updateTime` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec',
+  'connector' = 'filesystem'
+);
 CREATE TABLE `MyEvents` (
   `id` STRING NOT NULL,
   `payload` STRING,
@@ -188,7 +234,24 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-MyEvents'
 );
-CREATE TABLE `Customer_1` (
+CREATE TABLE `Category_1` (
+  `categoryid` INTEGER NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `updateTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Category_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Customer_2` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -201,11 +264,11 @@ WITH (
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
   'sink.on-conflict.action' = 'IGNORE',
-  'table-name' = 'Customer_1',
+  'table-name' = 'Customer_2',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `myevents_2` (
+CREATE TABLE `myevents_3` (
   `id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `payload` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -215,7 +278,7 @@ WITH (
   'connector' = 'print',
   'print-identifier' = 'myevents'
 );
-CREATE TABLE `Product_3` (
+CREATE TABLE `Product_4` (
   `productid` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -228,24 +291,28 @@ WITH (
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
   'sink.on-conflict.action' = 'IGNORE',
-  'table-name' = 'Product_3',
+  'table-name' = 'Product_4',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `default_catalog`.`default_database`.`Customer_1`
-SELECT *
- FROM `default_catalog`.`default_database`.`Customer`
+INSERT INTO `default_catalog`.`default_database`.`Category_1`
+SELECT `categoryid`, `name`, `description`, `updateTime`, `hash_columns`(`categoryid`, `name`, `description`, `updateTime`) AS `__pk_hash`
+ FROM `default_catalog`.`default_database`.`Category`
 ;
-INSERT INTO `default_catalog`.`default_database`.`myevents_2`
+INSERT INTO `default_catalog`.`default_database`.`Customer_2`
  SELECT *
-  FROM `default_catalog`.`default_database`.`MyEvents`
+  FROM `default_catalog`.`default_database`.`Customer`
  ;
- INSERT INTO `default_catalog`.`default_database`.`Product_3`
+ INSERT INTO `default_catalog`.`default_database`.`myevents_3`
   SELECT *
-   FROM `default_catalog`.`default_database`.`Product`
+   FROM `default_catalog`.`default_database`.`MyEvents`
   ;
-  END
+  INSERT INTO `default_catalog`.`default_database`.`Product_4`
+   SELECT *
+    FROM `default_catalog`.`default_database`.`Product`
+   ;
+   END
 >>>kafka.json
 {
   "topics" : [
@@ -269,9 +336,48 @@ INSERT INTO `default_catalog`.`default_database`.`myevents_2`
 {
   "statements" : [
     {
-      "name" : "Customer_1",
+      "name" : "Category_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Category_1\" (\"categoryid\" INTEGER NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT, \"updateTime\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "categoryid",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : true
+        },
+        {
+          "name" : "updateTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "Customer_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_2\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
       "fields" : [
         {
           "name" : "customerid",
@@ -309,9 +415,9 @@ INSERT INTO `default_catalog`.`default_database`.`myevents_2`
       "ttl" : 0.0
     },
     {
-      "name" : "Product_3",
+      "name" : "Product_4",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Product_3\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Product_4\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
       "fields" : [
         {
           "name" : "productid",
@@ -351,9 +457,36 @@ INSERT INTO `default_catalog`.`default_database`.`myevents_2`
       "ttl" : 0.0
     },
     {
+      "name" : "Category",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Category\"(\"categoryid\", \"name\", \"description\", \"updateTime\") AS SELECT \"categoryid\", \"name\", \"description\", \"updateTime\"\nFROM \"Category_1\"",
+      "fields" : [
+        {
+          "name" : "categoryid",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "description",
+          "type" : "TEXT",
+          "nullable" : true
+        },
+        {
+          "name" : "updateTime",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
       "name" : "Customer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_2\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -393,6 +526,31 @@ INSERT INTO `default_catalog`.`default_database`.`myevents_2`
         {
           "type" : "args",
           "parentType" : "Query",
+          "fieldName" : "Category",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"categoryid\", \"name\", \"description\", \"updateTime\"\nFROM \"Category_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
           "fieldName" : "Customer",
           "exec" : {
             "arguments" : [
@@ -407,7 +565,7 @@ INSERT INTO `default_catalog`.`default_database`.`myevents_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "sql" : "SELECT *\nFROM \"Customer_2\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -436,7 +594,7 @@ INSERT INTO `default_catalog`.`default_database`.`myevents_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Product_3\"\nWHERE \"productid\" = $1",
+              "sql" : "SELECT *\nFROM \"Product_4\"\nWHERE \"productid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -476,6 +634,32 @@ INSERT INTO `default_catalog`.`default_database`.`myevents_2`
       ],
       "subscriptions" : [ ],
       "operations" : [
+        {
+          "function" : {
+            "name" : "GetCategory",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Category($limit: Int = 10, $offset: Int = 0) {\nCategory(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
+            "queryName" : "Category",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Category{?offset,limit}"
+        },
         {
           "function" : {
             "name" : "GetCustomer",
@@ -559,7 +743,7 @@ INSERT INTO `default_catalog`.`default_database`.`myevents_2`
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  MyEvents(event: MyEventsInput!): MyEventsResultOutput!\n}\n\ninput MyEventsInput {\n  payload: String\n}\n\ntype MyEventsResultOutput {\n  id: String!\n  payload: String\n  timestamp: DateTime!\n}\n\ntype Product {\n  productid: Long!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Product(productid: Long!, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Category {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  MyEvents(event: MyEventsInput!): MyEventsResultOutput!\n}\n\ninput MyEventsInput {\n  payload: String\n}\n\ntype MyEventsResultOutput {\n  id: String!\n  payload: String\n  timestamp: DateTime!\n}\n\ntype Product {\n  productid: Long!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Category(limit: Int = 10, offset: Int = 0): [Category!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Product(productid: Long!, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

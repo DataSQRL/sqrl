@@ -21,7 +21,7 @@ import java.util.Optional;
 
 public interface ModuleLoader {
 
-  Optional<SqrlModule> getModule(NamePath namePath);
+  Optional<SqrlModule> loadModule(NamePath namePath);
 
   SchemaLoader getSchemaLoader();
 }

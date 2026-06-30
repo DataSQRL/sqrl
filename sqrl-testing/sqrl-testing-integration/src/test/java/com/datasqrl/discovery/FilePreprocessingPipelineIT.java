@@ -19,11 +19,13 @@ import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.CliCompileTestExtension;
-import com.datasqrl.config.BuildPath;
+import com.datasqrl.config.PackageJsonImpl;
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.FilePreprocessingPipeline;
 import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
+import com.datasqrl.packager.preprocess.SqrlPreprocessor;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Sets;
@@ -32,6 +34,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
@@ -48,14 +51,14 @@ class FilePreprocessingPipelineIT {
   final CliCompileTestExtension snapshotExtension = new CliCompileTestExtension(Path.of("build"));
 
   private ErrorCollector errorCollector;
-  private BuildPath buildPath;
+  private WorkspacePaths workspacePaths;
   private Path outputDir;
 
   @BeforeEach
   void setup() {
     outputDir = snapshotExtension.getOutputDir();
     errorCollector = ErrorCollector.root();
-    buildPath = new BuildPath(outputDir, outputDir);
+    workspacePaths = new WorkspacePaths(outputDir, outputDir, outputDir, Optional.of(outputDir));
   }
 
   @Test
@@ -63,13 +66,13 @@ class FilePreprocessingPipelineIT {
       throws Exception {
     // Arrange
     var preprocessingPipeline =
-        new FilePreprocessingPipeline(buildPath, Set.of(new CopyStaticDataPreprocessor()));
+        new FilePreprocessingPipeline(workspacePaths, Set.of(new CopyStaticDataPreprocessor()));
 
     // Act
     preprocessingPipeline.run(FILES_DIR, errorCollector);
 
     // Assert
-    Path dataDir = buildPath.getDataPath();
+    Path dataDir = workspacePaths.getDataPath();
 
     // Verify JSONL file is copied to data directory unchanged
     Path jsonlFile = dataDir.resolve("sample_data.jsonl");
@@ -99,13 +102,13 @@ class FilePreprocessingPipelineIT {
   void given_jarFile_when_jarPreprocessorRuns_then_processesJarCorrectly() throws Exception {
     // Arrange
     var preprocessingPipeline =
-        new FilePreprocessingPipeline(buildPath, Set.of(new JarPreprocessor()));
+        new FilePreprocessingPipeline(workspacePaths, Set.of(new JarPreprocessor()));
 
     // Act
     preprocessingPipeline.run(FILES_DIR, errorCollector);
 
     // Assert
-    Path libDir = buildPath.getUdfPath();
+    Path libDir = workspacePaths.getUdfPath();
 
     // Verify JAR file is copied to lib directory
     Path jarFile = libDir.resolve("myjavafunction-0.1.0-SNAPSHOT.jar");
@@ -126,14 +129,18 @@ class FilePreprocessingPipelineIT {
       throws Exception {
     // Arrange
     var preprocessors =
-        Sets.newLinkedHashSet(List.of(new CopyStaticDataPreprocessor(), new JarPreprocessor()));
-    var preprocessingPipeline = new FilePreprocessingPipeline(buildPath, preprocessors);
+        Sets.newLinkedHashSet(
+            List.of(
+                new CopyStaticDataPreprocessor(),
+                new JarPreprocessor(),
+                new SqrlPreprocessor(new PackageJsonImpl(), ErrorCollector.root())));
+    var preprocessingPipeline = new FilePreprocessingPipeline(workspacePaths, preprocessors);
 
     // Act
     preprocessingPipeline.run(FILES_DIR, errorCollector);
 
     // Assert data files are processed correctly
-    Path dataDir = buildPath.getDataPath();
+    Path dataDir = workspacePaths.getDataPath();
     assertThat(dataDir.resolve("sample_data.jsonl")).exists();
     assertThat(dataDir.resolve("sample_data.csv.gz")).exists();
     assertThat(countFiles(dataDir, false)).isEqualTo(2); // jsonl + csv.gz
@@ -143,7 +150,7 @@ class FilePreprocessingPipelineIT {
     assertThat(csvContent).doesNotContain("header1,header2,header3");
 
     // Assert JAR files are processed correctly
-    Path libDir = buildPath.getUdfPath();
+    Path libDir = workspacePaths.getUdfPath();
     assertThat(libDir.resolve("myjavafunction-0.1.0-SNAPSHOT.jar")).exists();
     assertThat(countFiles(libDir, false)).isEqualTo(1); // test-udf.jar
 

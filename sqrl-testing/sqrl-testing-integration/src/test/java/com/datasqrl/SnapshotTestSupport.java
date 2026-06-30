@@ -117,6 +117,7 @@ public final class SnapshotTestSupport {
    */
   public enum TestNameModifier {
     none, // Normal test that we expect to succeed
+    shared, // Shared package file that should not be executed
     compile, // Test that expected to get compiled, but not executed
     disabled, // Disabled test that is not executed
     warn, // This test should succeed but issue warnings that we are testing

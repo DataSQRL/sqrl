@@ -90,16 +90,16 @@ public class CliCompileTestExtension implements BeforeEachCallback, AfterEachCal
     clearDir(tempRoot);
   }
 
-  public AssertStatusHook execute(Path rootDir, String... args) {
-    return execute(rootDir, List.of(args));
+  public AssertStatusHook execute(Path workspaceDir, String... args) {
+    return execute(workspaceDir, List.of(args));
   }
 
   /**
    * Executes the compiler command specified by the provided argument list. Sets {@link #buildDir}
    * and {@link #planDir} based on the root directory.
    */
-  public AssertStatusHook execute(Path rootDir, List<String> argsList) {
-    this.buildDir = rootDir.resolve(SqrlConstants.BUILD_DIR_NAME).toAbsolutePath();
+  public AssertStatusHook execute(Path workspaceDir, List<String> argsList) {
+    this.buildDir = workspaceDir.resolve(SqrlConstants.BUILD_DIR_NAME).toAbsolutePath();
     this.planDir =
         buildDir
             .resolve(SqrlConstants.DEPLOY_DIR_NAME)
@@ -107,7 +107,7 @@ public class CliCompileTestExtension implements BeforeEachCallback, AfterEachCal
             .toAbsolutePath();
     var statusHook = new AssertStatusHook();
     var code =
-        new DatasqrlCli(rootDir, statusHook, true)
+        new DatasqrlCli(workspaceDir, statusHook, true)
             .getCmd()
             .execute(argsList.toArray(String[]::new));
     if (statusHook.isSuccess() && code != 0) {

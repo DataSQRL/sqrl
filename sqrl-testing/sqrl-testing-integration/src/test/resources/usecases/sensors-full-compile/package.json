@@ -2,8 +2,10 @@
   "version": "1",
   "script": {
     "main": "sensors-full.sqrl",
-    "config": {
-      "variant": "testdata"
+    "shared": {
+      "sensors-shared": {
+        "path": "../sensors-shared"
+      }
     }
   },
   "test-runner": {

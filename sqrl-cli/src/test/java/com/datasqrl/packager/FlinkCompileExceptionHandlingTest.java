@@ -19,9 +19,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.RootPath;
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.util.FlinkCompileException;
 import java.nio.file.Files;
@@ -41,18 +40,16 @@ class FlinkCompileExceptionHandlingTest {
 
   @TempDir private Path tempBuildDir;
 
-  @Mock private RootPath rootPath;
   @Mock private PackageJson packageJson;
   @Mock private FilePreprocessingPipeline preprocPipeline;
   @Mock private MainScript mainScript;
 
-  private BuildPath buildPath;
   private Packager packager;
 
   @BeforeEach
   void setUp() {
-    buildPath = new BuildPath(tempBuildDir, null);
-    packager = new Packager(rootPath, packageJson, buildPath, preprocPipeline, mainScript);
+    var workspacePaths = new WorkspacePaths(null, tempBuildDir, tempBuildDir, null);
+    packager = new Packager(workspacePaths, packageJson, preprocPipeline, mainScript);
   }
 
   @Test
@@ -197,8 +194,9 @@ class FlinkCompileExceptionHandlingTest {
     var sqlContent = Files.readString(sqlFile);
     assertThat(sqlContent)
         .isEqualTo(
-            "CREATE TABLE t1 (id INT)\n"
-                + "CREATE TABLE t2 (id INT)\n"
-                + "INSERT INTO t2 SELECT * FROM t1");
+            """
+                CREATE TABLE t1 (id INT)
+                CREATE TABLE t2 (id INT)
+                INSERT INTO t2 SELECT * FROM t1""");
   }
 }

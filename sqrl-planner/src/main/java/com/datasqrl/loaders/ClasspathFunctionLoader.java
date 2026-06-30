@@ -15,8 +15,8 @@
  */
 package com.datasqrl.loaders;
 
-import com.datasqrl.NamespaceObjectUtil;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.util.NamespaceObjectUtil;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import java.util.List;
@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import lombok.AllArgsConstructor;
 import org.apache.flink.table.functions.AggregateFunction;
 import org.apache.flink.table.functions.AsyncScalarFunction;
 import org.apache.flink.table.functions.FunctionDefinition;
@@ -34,13 +33,14 @@ import org.apache.flink.table.functions.ScalarFunction;
 import org.apache.flink.table.functions.TableAggregateFunction;
 import org.apache.flink.table.functions.TableFunction;
 import org.apache.flink.table.functions.UserDefinedFunction;
+import org.springframework.stereotype.Component;
 
 /**
  * Loads functions from the classpath which applies to standard library functions that are part of
  * the DataSQRL distribution (in contrast to UDFs that the user provides via JARs - those are loaded
  * from a directory)
  */
-@AllArgsConstructor
+@Component
 public class ClasspathFunctionLoader {
 
   public static final Set<Class<? extends FunctionDefinition>> FLINK_UDF_CLASSES =

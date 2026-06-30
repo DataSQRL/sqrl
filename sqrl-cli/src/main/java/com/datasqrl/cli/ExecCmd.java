@@ -32,8 +32,8 @@ import picocli.CommandLine.Command;
 public class ExecCmd extends BaseOsProcessManagerCmd {
 
   @Override
-  protected void runInternal(ErrorCollector errors) throws Exception {
-    var targetDir = getTargetFolder();
+  protected void runInternal(ErrorCollector errors) {
+    var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
 
     // Start services before executing
