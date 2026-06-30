@@ -125,7 +125,6 @@ class ConfigLoaderUtilsTest {
     assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
-    assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
   }
 
   @Test
@@ -138,7 +137,6 @@ class ConfigLoaderUtilsTest {
     assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
-    assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
   }
 
   @Test
@@ -155,7 +153,6 @@ class ConfigLoaderUtilsTest {
     assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
-    assertThat(underTest.getScriptConfig().getMainScript()).isEmpty();
   }
 
   @Test

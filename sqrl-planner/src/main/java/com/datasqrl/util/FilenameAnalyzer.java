@@ -45,6 +45,10 @@ public record FilenameAnalyzer(Pattern filePattern) {
     return Optional.empty();
   }
 
+  public static FilenameAnalyzer of(String... fileExtensions) {
+    return of(Set.of(fileExtensions));
+  }
+
   public static FilenameAnalyzer of(Set<String> fileExtensions) {
     List<String> escapedExtensions =
         fileExtensions.stream().map(String::toLowerCase).map(Pattern::quote).toList();

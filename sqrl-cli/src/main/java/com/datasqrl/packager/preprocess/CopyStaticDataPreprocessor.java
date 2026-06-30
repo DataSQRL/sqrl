@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.Set;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -42,8 +41,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class CopyStaticDataPreprocessor implements Preprocessor {
 
-  private static final FilenameAnalyzer DATA_PATTERN =
-      FilenameAnalyzer.of(Set.of("jsonl", "csv", "avro"));
+  private static final FilenameAnalyzer DATA_PATTERN = FilenameAnalyzer.of("jsonl", "csv", "avro");
 
   @SneakyThrows
   @Override

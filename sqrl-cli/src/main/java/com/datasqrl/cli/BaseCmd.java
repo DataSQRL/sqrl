@@ -15,11 +15,9 @@
  */
 package com.datasqrl.cli;
 
-import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.BeanCreationException;
@@ -41,6 +39,7 @@ public abstract class BaseCmd implements Runnable, IExitCodeGenerator {
     var collector = ErrorCollector.root();
 
     try {
+      setupEnvVars();
       runInternal(collector);
       cli.statusHook.onSuccess(collector);
 
@@ -69,16 +68,16 @@ public abstract class BaseCmd implements Runnable, IExitCodeGenerator {
 
   protected abstract void runInternal(ErrorCollector errors) throws Exception;
 
+  protected void setupEnvVars() {
+    // By default, do nothing
+  }
+
   protected void teardown() {
     // By default, do nothing
   }
 
   protected long getElapsedTime() {
     return System.currentTimeMillis() - startTime;
-  }
-
-  protected Path getBuildDir() {
-    return cli.rootDir.resolve(SqrlConstants.BUILD_DIR_NAME);
   }
 
   @Override

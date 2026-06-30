@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl;
+package com.datasqrl.plan;
 
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.resolver.ResourceResolver;
-import com.datasqrl.plan.MainScript;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FileUtil;
@@ -38,26 +37,21 @@ public class MainScriptImpl implements MainScript {
   @Override
   public String getContent() {
     var mainScript =
-        config
-            .getScriptConfig()
-            .getMainScript()
-            .map(Path::of)
-            .flatMap(resourceResolver::resolveFile)
+        getPath()
             .orElseThrow(
                 () ->
                     errors.exception(
-                        "Could not find main sqrl script file: %s",
+                        "Could not find main SQRL script file: %s",
                         config.getScriptConfig().getMainScript()));
+
     return FileUtil.readFile(mainScript);
   }
 
   @Override
   public Optional<Path> getPath() {
-    return config
-        .getScriptConfig()
-        .getMainScript()
-        .map(Path::of)
-        .flatMap(resourceResolver::resolveFile);
+    var mainScriptPath = Path.of(config.getScriptConfig().getMainScript());
+
+    return resourceResolver.resolveFile(mainScriptPath);
   }
 
   @Override

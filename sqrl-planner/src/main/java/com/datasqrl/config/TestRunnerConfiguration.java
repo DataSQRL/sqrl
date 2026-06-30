@@ -22,9 +22,9 @@ import java.util.Optional;
 
 public interface TestRunnerConfiguration {
 
-  Path getSnapshotDir(Path rootDir);
+  Path getSnapshotDir(Path projectRoot);
 
-  Optional<Path> getTestDir(Path rootDir);
+  Optional<Path> getTestDir(Path projectRoot);
 
   boolean useInferredSchema();
 

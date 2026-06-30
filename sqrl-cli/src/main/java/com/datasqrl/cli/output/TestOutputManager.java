@@ -15,6 +15,7 @@
  */
 package com.datasqrl.cli.output;
 
+import com.datasqrl.config.SqrlConstants;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -28,7 +29,7 @@ public class TestOutputManager implements AutoCloseable {
 
   private static final String TEST_LOG_FILE = "test-execution.log";
 
-  private final Path rootDir;
+  private final Path projectRoot;
 
   private PrintStream originalOut;
   private PrintStream originalErr;
@@ -68,7 +69,7 @@ public class TestOutputManager implements AutoCloseable {
       return;
     }
 
-    var logsDir = rootDir.resolve("build/logs");
+    var logsDir = projectRoot.resolve(SqrlConstants.BUILD_DIR_NAME).resolve("logs");
     Files.createDirectories(logsDir);
 
     var logFile = logsDir.resolve(TEST_LOG_FILE).toFile();

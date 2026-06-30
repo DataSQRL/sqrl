@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,6 +34,7 @@ import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -63,7 +63,7 @@ public class SqrlContainerExtension
 
   public static final String SQRL_CMD_IMAGE = "datasqrl/cmd";
   public static final String SQRL_SERVER_IMAGE = "datasqrl/sqrl-server";
-  public static final String BUILD_DIR = "/build";
+  public static final String WORKSPACE_DIR = "/workspace";
   public static final int HTTP_SERVER_PORT = 8888;
   public static final String REDPANDA_NETWORK_ALIAS = "redpanda";
   public static final int REDPANDA_INTERNAL_PORT = 29092;
@@ -83,6 +83,10 @@ public class SqrlContainerExtension
   private List<GenericContainer<?>> commandContainers = new ArrayList<>();
   private long testStartTime;
   private String currentTestName;
+
+  public SqrlContainerExtension() {
+    this(null);
+  }
 
   public SqrlContainerExtension(String testCaseName) {
     this.testCaseName = testCaseName;
@@ -140,8 +144,8 @@ public class SqrlContainerExtension
 
     var cmd =
         new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
-            .withWorkingDirectory(BUILD_DIR)
-            .withFileSystemBind(testDir.toString(), BUILD_DIR, BindMode.READ_WRITE)
+            .withWorkingDirectory(WORKSPACE_DIR)
+            .withFileSystemBind(testDir.toString(), WORKSPACE_DIR, BindMode.READ_WRITE)
             .withEnv("TZ", "America/Los_Angeles");
     if (debug) {
       cmd = cmd.withEnv("SQRL_DEBUG", "1");
@@ -155,10 +159,14 @@ public class SqrlContainerExtension
     return createServerContainer(true);
   }
 
-  @SuppressWarnings("resource")
   public GenericContainer<?> createServerContainer(boolean withRedpanda) {
-    var deployPlanPath = testDir.resolve("build/deploy/plan");
-    assertThat(deployPlanPath).exists().isDirectory();
+    return createServerContainer(testDir, withRedpanda);
+  }
+
+  @SuppressWarnings("resource")
+  public GenericContainer<?> createServerContainer(Path projectRoot, boolean withRedpanda) {
+    var planDir = projectRoot.resolve("build/deploy/plan");
+    assertThat(planDir).exists().isDirectory();
 
     if (withRedpanda) {
       assertThat(redpandaContainer).as("redpandaContainer is already set.").isNull();
@@ -171,7 +179,7 @@ public class SqrlContainerExtension
         new GenericContainer<>(DockerImageName.parse(SQRL_SERVER_IMAGE + ":" + getImageTag()))
             .withNetwork(network)
             .withExposedPorts(HTTP_SERVER_PORT)
-            .withFileSystemBind(deployPlanPath.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
+            .withFileSystemBind(planDir.toString(), "/opt/sqrl/config", BindMode.READ_ONLY)
             .withEnv("SQRL_DEBUG", "1")
             .waitingFor(
                 Wait.forLogMessage(".*HTTP server listening on port 8888.*", 1)
@@ -255,12 +263,12 @@ public class SqrlContainerExtension
   }
 
   public void startGraphQLServer(Consumer<GenericContainer<?>> containerCustomizer) {
-    startGraphQLServer(containerCustomizer, true);
+    startGraphQLServer(containerCustomizer, testDir, true);
   }
 
   public void startGraphQLServer(
-      Consumer<GenericContainer<?>> containerCustomizer, boolean withRedpanda) {
-    serverContainer = createServerContainer(withRedpanda);
+      Consumer<GenericContainer<?>> containerCustomizer, Path projectRoot, boolean withRedpanda) {
+    serverContainer = createServerContainer(projectRoot, withRedpanda);
 
     containerCustomizer.accept(serverContainer);
 
@@ -420,18 +428,23 @@ public class SqrlContainerExtension
 
   @SneakyThrows
   public static Path itPath(String relativePath) {
-    var directLocalPath = Paths.get("src/test/resources", relativePath).toAbsolutePath();
+
+    if (StringUtils.isBlank(relativePath)) {
+      return Path.of("../sqrl-testing-integration/src/test/resources/usecases").toRealPath();
+    }
+
+    var directLocalPath = Path.of("src/test/resources", relativePath).toAbsolutePath();
     if (Files.exists(directLocalPath) && Files.isDirectory(directLocalPath)) {
       return directLocalPath.toRealPath();
     }
 
-    var localPath = Paths.get("src/test/resources/usecases", relativePath).toAbsolutePath();
+    var localPath = Path.of("src/test/resources/usecases", relativePath).toAbsolutePath();
     if (Files.exists(localPath) && Files.isDirectory(localPath)) {
       return localPath.toRealPath();
     }
 
     var integrationPath =
-        Paths.get("../sqrl-testing-integration/src/test/resources/usecases", relativePath)
+        Path.of("../sqrl-testing-integration/src/test/resources/usecases", relativePath)
             .toAbsolutePath();
     assertThat(integrationPath).exists().isDirectory();
     return integrationPath.toRealPath();
@@ -492,7 +505,13 @@ public class SqrlContainerExtension
   }
 
   public void assertLogFiles(String logs) {
-    var logsDir = testDir.resolve("build/logs");
+    assertLogFiles(logs, null);
+  }
+
+  public void assertLogFiles(String logs, @Nullable String testCase) {
+    var testCaseDir = testCase == null ? testDir : testDir.resolve(testCase);
+
+    var logsDir = testCaseDir.resolve("build/logs");
     assertThat(logsDir).as("Logs directory should exist\n%s", logs).exists().isDirectory();
 
     var cliLogFile = logsDir.resolve("datasqrl-cli.log");

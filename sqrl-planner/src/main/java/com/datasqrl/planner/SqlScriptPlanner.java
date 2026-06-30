@@ -39,6 +39,7 @@ import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderImpl;
+import com.datasqrl.loaders.ModuleLoaders;
 import com.datasqrl.loaders.NamespaceObject;
 import com.datasqrl.loaders.ScriptSqrlModule.ScriptNamespaceObject;
 import com.datasqrl.loaders.TableWriter;
@@ -145,8 +146,10 @@ import org.springframework.stereotype.Component;
 @Lazy
 public class SqlScriptPlanner {
 
-  public static final String EXPORT_SUFFIX = "_ex";
-  public static final String ACCESS_FUNCTION_SUFFIX = "__access";
+  private static final String EXPORT_SUFFIX = "_ex";
+  private static final String ACCESS_FUNCTION_SUFFIX = "__access";
+
+  private final AtomicInteger exportTableCounter = new AtomicInteger(0);
 
   private final ErrorCollector errorCollector;
 
@@ -157,28 +160,26 @@ public class SqlScriptPlanner {
   private final PackageJson packageJson;
   private final ExecutionPipeline pipeline;
   private final ExecutionGoal executionGoal;
-
   private final CostModel costModel;
   @Getter private final DAGBuilder dagBuilder;
   @Getter private final ExecutionStage streamStage;
   private final List<ExecutionStage> tableStages;
   private final List<ExecutionStage> queryStages;
   private final List<ExecutionStage> subscriptionStages;
-  private final AtomicInteger exportTableCounter = new AtomicInteger(0);
 
   /** Manages the context of the script that is processed, adjusted for imports */
   private ScriptContext scriptContext;
 
   public SqlScriptPlanner(
       ErrorCollector errorCollector,
-      ModuleLoader moduleLoader,
+      ModuleLoaders moduleLoaders,
       SqrlStatementParser sqrlParser,
       PackageJson packageJson,
       ExecutionPipeline pipeline,
       ExecutionGoal executionGoal) {
     this.errorCollector = errorCollector;
     this.completeScript = new SqlScriptWriter();
-    this.scriptContext = new ScriptContext(moduleLoader, FLINK_DEFAULT_DATABASE, true);
+    this.scriptContext = new ScriptContext(moduleLoaders, FLINK_DEFAULT_DATABASE, true);
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -335,7 +336,7 @@ public class SqlScriptPlanner {
           .createTable(
               statement.toSql(),
               getMutationBuilder(hintsAndDocs),
-              scriptContext.moduleLoader().getSchemaLoader(),
+              scriptContext.mainModuleLoader().getSchemaLoader(),
               hintsAndDocs)
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
@@ -567,7 +568,7 @@ public class SqlScriptPlanner {
             .createTable(
                 flinkStmt.sql().get(),
                 getMutationBuilder(hintsAndDocs),
-                scriptContext.moduleLoader().getSchemaLoader(),
+                scriptContext.mainModuleLoader().getSchemaLoader(),
                 hintsAndDocs)
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
@@ -854,22 +855,22 @@ public class SqlScriptPlanner {
           ErrorCode.INVALID_IMPORT,
           "Invalid table name - paths not supported");
     }
-    Optional<Name> alias = Optional.ofNullable(aliasPath).map(NamePath::getFirst);
 
-    var module = scriptContext.moduleLoader.getModule(path.popLast()).orElse(null);
-    checkFatal(
-        module != null,
-        importStmt.getPackageIdentifier().getFileLocation(),
-        ErrorLabel.GENERIC,
-        "Could not find module [%s] at path: [%s]",
-        path,
-        String.join("/", path.toStringList()));
+    var alias = Optional.ofNullable(aliasPath).map(NamePath::getFirst);
+
+    var loadedModule =
+        scriptContext
+            .moduleLoaders()
+            .loadImportModule(path, importStmt.getPackageIdentifier().getFileLocation());
+    var module = loadedModule.module();
+    var finalPath = loadedModule.finalPath();
 
     if (isStar) {
       if (module.getNamespaceObjects().isEmpty()) {
         errors.warn("Module is empty: %s", path);
       }
-      for (NamespaceObject namespaceObject : module.getNamespaceObjects()) {
+
+      for (var namespaceObject : module.getNamespaceObjects()) {
         // For multiple imports, the alias serves as a prefix.
         addImport(
             namespaceObject,
@@ -878,9 +879,12 @@ public class SqlScriptPlanner {
             sqrlEnv);
       }
     } else {
-      var namespaceObject = module.getNamespaceObject(path.getLast());
+      var namespaceObject = module.getNamespaceObject(finalPath.getLast());
       errors.checkFatal(
-          namespaceObject.isPresent(), "Object [%s] not found in module: %s", path.getLast(), path);
+          namespaceObject.isPresent(),
+          "Object [%s] not found in module: %s",
+          finalPath.getLast(),
+          finalPath);
 
       addImport(
           namespaceObject.get(),
@@ -1089,15 +1093,11 @@ public class SqlScriptPlanner {
               Optional.of(sinkTableId),
               existingTable.getSourceSinkTable());
     } else { // the export is to a user-defined sink: load it
-      var module = scriptContext.moduleLoader.getModule(sinkPath.popLast()).orElse(null);
-      checkFatal(
-          module != null,
-          exportStmt.getPackageIdentifier().getFileLocation(),
-          ErrorLabel.GENERIC,
-          "Could not find module [%s] at path: [%s]",
-          sinkPath,
-          String.join("/", sinkPath.toStringList()));
-
+      var moduleCtx =
+          scriptContext
+              .moduleLoaders()
+              .loadExportModule(sinkPath, exportStmt.getPackageIdentifier().getFileLocation());
+      var module = moduleCtx.module();
       var sinkObj = module.getNamespaceObject(sinkName);
       checkFatal(
           sinkObj.isPresent(),
@@ -1190,29 +1190,34 @@ public class SqlScriptPlanner {
   /**
    * Internal object that keeps the necessary context for the current script during planning.
    *
-   * @param moduleLoader loads modules related to the script
+   * @param moduleLoaders loads modules related to the script
    * @param databaseName corresponding database name for the script context
    * @param isRootContext {@code true} if the context refers to the main script or an inline import,
    *     {@code false} for regular imports
    */
   private record ScriptContext(
-      ModuleLoader moduleLoader, String databaseName, boolean isRootContext) {
+      ModuleLoaders moduleLoaders, String databaseName, boolean isRootContext) {
 
-    ScriptContext fromImport(ModuleLoader moduleLoader, boolean isInline, String databaseName) {
-      return isInline
-          ? new ScriptContext(moduleLoader, this.databaseName, isRootContext)
-          : new ScriptContext(moduleLoader, databaseName, false);
+    ScriptContext fromImport(ModuleLoader moduleLoader, boolean inline, String databaseName) {
+      return inline
+          ? new ScriptContext(
+              moduleLoaders.withMainLoader(moduleLoader), this.databaseName, isRootContext)
+          : new ScriptContext(moduleLoaders.withMainLoader(moduleLoader), databaseName, false);
+    }
+
+    ModuleLoader mainModuleLoader() {
+      return moduleLoaders.getMainLoader();
     }
 
     boolean hasDifferentDatabase(ScriptContext other) {
       return !databaseName.equals(other.databaseName);
     }
 
-    public ObjectIdentifier toIdentifier(String name) {
+    ObjectIdentifier toIdentifier(String name) {
       return ObjectIdentifier.of(FLINK_DEFAULT_CATALOG, this.databaseName, name);
     }
 
-    public ObjectIdentifier toIdentifier(NamePath namePath) {
+    ObjectIdentifier toIdentifier(NamePath namePath) {
       var size = namePath.size();
       if (size == 0 || size > 3) {
         return null;
@@ -1225,7 +1230,7 @@ public class SqlScriptPlanner {
       return ObjectIdentifier.of(catalogName, databaseName, tableName);
     }
 
-    public ObjectIdentifier toIdentifier(Name name) {
+    ObjectIdentifier toIdentifier(Name name) {
       return toIdentifier(name.getDisplay());
     }
   }

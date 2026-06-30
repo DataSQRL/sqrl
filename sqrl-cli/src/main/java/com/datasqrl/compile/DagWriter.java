@@ -15,9 +15,9 @@
  */
 package com.datasqrl.compile;
 
-import com.datasqrl.config.BuildPath;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.PackageJson.ExplainConfig;
+import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.plan.global.PipelineDAGExporter;
 import com.datasqrl.planner.dag.PipelineDAG;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
@@ -51,20 +51,20 @@ public class DagWriter {
   static final String DAG_PLACEHOLDER = "${DAG}";
   static final String SCHEMA_PLACEHOLDER = "${SCHEMA}";
 
-  private final BuildPath buildDir;
+  private final WorkspacePaths workspacePaths;
   private final CompilerConfig compilerConfig;
 
   @SneakyThrows
   void run(PipelineDAG dag, String source, MutationDatabase mutationDatabase) {
     writeExplain(dag);
-    writeFile(buildDir.buildDir().resolve(FULL_SOURCE_FILENAME), source);
+    writeFile(workspacePaths.buildDir().resolve(FULL_SOURCE_FILENAME), source);
     writeFile(
-        buildDir.buildDir().resolve(DATABASE_FILENAME),
+        workspacePaths.buildDir().resolve(DATABASE_FILENAME),
         Deserializer.INSTANCE.toJson(mutationDatabase));
   }
 
   void writeInferredSchema(String inferredSchema) {
-    writeFile(buildDir.buildDir().resolve(INFERRED_SCHEMA_FILENAME), inferredSchema);
+    writeFile(workspacePaths.buildDir().resolve(INFERRED_SCHEMA_FILENAME), inferredSchema);
   }
 
   // Inline the API schema into the Voyager page, like writeExplain's ${DAG}.
@@ -75,7 +75,7 @@ public class DagWriter {
             Resources.getResource(DATA_MODEL_VISUAL_FILENAME), StandardCharsets.UTF_8);
     htmlFile =
         htmlFile.replace("\"" + SCHEMA_PLACEHOLDER + "\"", Deserializer.INSTANCE.toJson(schema));
-    writeFile(buildDir.buildDir().resolve(DATA_MODEL_VISUAL_FILENAME), htmlFile);
+    writeFile(workspacePaths.buildDir().resolve(DATA_MODEL_VISUAL_FILENAME), htmlFile);
   }
 
   private void writeExplain(PipelineDAG dag) throws IOException {
@@ -93,7 +93,7 @@ public class DagWriter {
     List<PipelineDAGExporter.Node> nodes = exporter.export(dag);
     if (explainConfig.isSorted()) Collections.sort(nodes); // make order deterministic
     writeFile(
-        buildDir.buildDir().resolve(EXPLAIN_TEXT_FILENAME),
+        workspacePaths.buildDir().resolve(EXPLAIN_TEXT_FILENAME),
         nodes.stream().map(PipelineDAGExporter.Node::toString).collect(Collectors.joining("\n")));
 
     // Write pipeline plan as visual representation
@@ -113,8 +113,8 @@ public class DagWriter {
     String htmlFile =
         Resources.toString(Resources.getResource(VISUAL_HTML_FILENAME), StandardCharsets.UTF_8);
     htmlFile = htmlFile.replace(DAG_PLACEHOLDER, jsonContent);
-    writeFile(buildDir.buildDir().resolve(EXPLAIN_VISUAL_FILENAME), htmlFile);
-    writeFile(buildDir.buildDir().resolve(EXPLAIN_JSON_FILENAME), jsonContent);
+    writeFile(workspacePaths.buildDir().resolve(EXPLAIN_VISUAL_FILENAME), htmlFile);
+    writeFile(workspacePaths.buildDir().resolve(EXPLAIN_JSON_FILENAME), jsonContent);
   }
 
   @SneakyThrows

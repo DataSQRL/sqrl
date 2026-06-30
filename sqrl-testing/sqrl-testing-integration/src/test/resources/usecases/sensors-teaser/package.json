@@ -1,7 +1,12 @@
 {
   "version": "1",
   "script": {
-    "main": "sensors-teaser.sqrl"
+    "main": "sensors-teaser.sqrl",
+    "shared": {
+      "sensors-shared": {
+        "path": "../sensors-shared"
+      }
+    }
   },
   "test-runner": {
     "delay-sec": -1

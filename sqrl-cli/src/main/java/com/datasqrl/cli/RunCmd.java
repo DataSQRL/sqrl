@@ -36,7 +36,7 @@ public class RunCmd extends AbstractCompileCmd {
       return;
     }
 
-    var targetDir = getTargetFolder();
+    var targetDir = getTargetDir();
     var planDir = targetDir.resolve(SqrlConstants.PLAN_DIR);
 
     // Start services before running

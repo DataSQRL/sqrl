@@ -43,17 +43,16 @@ CREATE TEMPORARY TABLE `CustomersStream__schema` (
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
-  'connector' = 'datagen'
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/customers.jsonl'
 );
 CREATE TABLE `CustomersStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 )
 WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/customers.jsonl',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10s'
 )
 LIKE `CustomersStream__schema`;
 CREATE TEMPORARY TABLE `ApplicationUpdates__schema` (
@@ -81,17 +80,16 @@ CREATE TEMPORARY TABLE `ApplicationsStream__schema` (
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
-  'connector' = 'datagen'
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/applications.jsonl'
 );
 CREATE TABLE `ApplicationsStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 )
 WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/applications.jsonl',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10s'
 )
 LIKE `ApplicationsStream__schema`;
 CREATE TEMPORARY TABLE `LoanTypesStream__schema` (
@@ -106,17 +104,16 @@ CREATE TEMPORARY TABLE `LoanTypesStream__schema` (
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
-  'connector' = 'datagen'
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/loan_types.jsonl'
 );
 CREATE TABLE `LoanTypesStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED,
   WATERMARK FOR `updated_at` AS `updated_at` - INTERVAL '0.001' SECOND
 )
 WITH (
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/loan_types.jsonl',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10s'
 )
 LIKE `LoanTypesStream__schema`;
 USE CATALOG `default_catalog`;

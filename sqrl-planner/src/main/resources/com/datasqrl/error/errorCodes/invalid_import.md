@@ -1,14 +1,23 @@
 Invalid IMPORT statement.
 
-To import a single table use:
-```
-IMPORT ecommerce-data.Orders;
-```
-To import all tables in a package use:
+To import all tables from another script inline and reference it directly, use:
 ```
 IMPORT ecommerce-data.*;
 ```
-To import a single table under a different name:
+To import all tables from another script in their own namespace, use:
 ```
-IMPORT ecommerce-data.Orders AS OrdersTable;
+IMPORT ecommerce-data;
+```
+To import all tables from another script with a custom namespace, use:
+```
+IMPORT ecommerce-data AS catalog;
+```
+
+To import from a shared script into your main script, simply use its defined name:
+```
+IMPORT shared-catalog;
+```
+To import from a shared script into a submodule script, use the `root` prefix:
+```
+IMPORT root.shared-catalog;
 ```

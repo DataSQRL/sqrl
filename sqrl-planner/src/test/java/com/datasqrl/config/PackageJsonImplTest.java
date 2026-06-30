@@ -62,23 +62,6 @@ class PackageJsonImplTest {
   }
 
   @Test
-  void givenConfigWithoutScript_whenHasScriptKey_thenReturnsFalse() {
-    var packageJson = new PackageJsonImpl(config);
-
-    assertThat(packageJson.hasScriptKey()).isFalse();
-  }
-
-  @Test
-  void givenConfigWithScript_whenHasScriptKey_thenReturnsFalse() {
-    config.getSubConfig("script").setProperty("main", "example.sqrl");
-
-    var packageJson = new PackageJsonImpl(config);
-
-    // Current implementation always returns false - this appears to be unimplemented
-    assertThat(packageJson.hasScriptKey()).isFalse();
-  }
-
-  @Test
   void givenPackageJson_whenGetTestConfig_thenReturnsTestConfiguration() {
     config.getSubConfig("test-runner").setProperty("snapshot-folder", "/dummy");
 
@@ -109,9 +92,10 @@ class PackageJsonImplTest {
   void givenEmptyConfig_whenCreateScriptConfig_thenReturnsEmptyValues() {
     var scriptConfig = new ScriptConfigImpl(config);
 
-    assertThat(scriptConfig.getMainScript()).isEmpty();
     assertThat(scriptConfig.getGraphql()).isEmpty();
     assertThat(scriptConfig.getScriptApiConfigs()).isEmpty();
+    assertThat(scriptConfig.getDatabase()).isEmpty();
+    assertThat(scriptConfig.getOperations()).isEmpty();
   }
 
   @Test
