@@ -16,7 +16,6 @@
 package com.datasqrl.planner.tables;
 
 import com.datasqrl.io.tables.TableType;
-import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -38,18 +37,20 @@ public record FlinkConnectorConfigWrapper(Map<String, String> options, Optional<
   public static final String KEY_FORMAT_KEY = "key.format";
 
   public static Map<String, TableType> CONNECTOR_TYPE_MAP =
-      ImmutableMap.of(
+      Map.of(
           "kafka", TableType.STREAM,
+          "kafka-safe", TableType.STREAM,
           "file", TableType.STREAM,
           "iceberg", TableType.STREAM,
           "filesystem", TableType.STREAM,
           "upsert-kafka", TableType.VERSIONED_STATE,
+          "upsert-kafka-safe", TableType.VERSIONED_STATE,
           "jdbc", TableType.LOOKUP,
           "jdbc-sqrl", TableType.LOOKUP,
           "postgres-cdc", TableType.VERSIONED_STATE);
 
   public static Map<String, String> CATALOG_CONNECTOR_MAP =
-      ImmutableMap.of("org.apache.iceberg.flink.FlinkCatalog", "iceberg");
+      Map.of("org.apache.iceberg.flink.FlinkCatalog", "iceberg");
 
   public static final Set<String> SINK_ONLY_CONNECTORS =
       Set.of(
