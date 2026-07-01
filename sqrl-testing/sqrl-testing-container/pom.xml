@@ -155,6 +155,13 @@
         </exclusion>
       </exclusions>
     </dependency>
+    <dependency>
+      <groupId>org.jacoco</groupId>
+      <artifactId>org.jacoco.agent</artifactId>
+      <version>${jacoco.version}</version>
+      <classifier>runtime</classifier>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
@@ -198,6 +205,65 @@
         <skipTests>false</skipTests>
         <skipITs>false</skipITs>
       </properties>
+    </profile>
+    <profile>
+      <id>jacoco-aggregate</id>
+      <activation>
+        <property>
+          <name>jacoco.aggregate</name>
+        </property>
+      </activation>
+      <dependencies>
+        <!-- JaCoCo aggregates coverage against direct application dependencies. -->
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-server-vertx</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-deployment-model</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-server-core</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-server-vertx-base</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-planner</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-discovery</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-cli</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-reload4j</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+      </dependencies>
     </profile>
   </profiles>
 </project>

@@ -71,6 +71,10 @@ public class SqrlContainerExtension
       REDPANDA_NETWORK_ALIAS + ":" + REDPANDA_INTERNAL_PORT;
   private static final String REDPANDA_IMAGE = "redpandadata/redpanda:v23.1.2";
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final String JACOCO_AGENT_PATH_PROPERTY = "jacoco.agent.path";
+  private static final String JACOCO_AGENT_CONTAINER_PATH = "/opt/sqrl/jacocoagent.jar";
+  private static final String JACOCO_OUTPUT_CONTAINER_DIR = "/jacoco";
+  private static final Path JACOCO_OUTPUT_HOST_DIR = Path.of("target");
 
   private final String testCaseName;
 
@@ -150,6 +154,7 @@ public class SqrlContainerExtension
     if (debug) {
       cmd = cmd.withEnv("SQRL_DEBUG", "1");
     }
+    cmd = configureJacoco(cmd, "sqrl-cli.exec");
 
     commandContainers.add(cmd);
     return cmd;
@@ -189,8 +194,39 @@ public class SqrlContainerExtension
       serverContainer =
           serverContainer.withEnv(KAFKA_BOOTSTRAP_SERVERS, REDPANDA_INTERNAL_BOOTSTRAP);
     }
+    serverContainer = configureJacoco(serverContainer, "sqrl-server.exec");
 
     return serverContainer;
+  }
+
+  @SneakyThrows
+  private GenericContainer<?> configureJacoco(GenericContainer<?> container, String destFileName) {
+    var agentPathProperty = System.getProperty(JACOCO_AGENT_PATH_PROPERTY);
+    if (StringUtils.isBlank(agentPathProperty)) {
+      return container;
+    }
+
+    var agentPath = Path.of(agentPathProperty);
+    if (!Files.isRegularFile(agentPath)) {
+      log.warn("JaCoCo agent not found at {}, Docker coverage disabled", agentPath);
+      return container;
+    }
+
+    var outputDir = JACOCO_OUTPUT_HOST_DIR.toAbsolutePath();
+    Files.createDirectories(outputDir);
+
+    var jacocoArg =
+        String.format(
+            "-javaagent:%s=destfile=%s/%s,append=true,includes=com.datasqrl.*",
+            JACOCO_AGENT_CONTAINER_PATH, JACOCO_OUTPUT_CONTAINER_DIR, destFileName);
+    var existingJvmArgs = container.getEnvMap().get("SQRL_JVM_ARGS");
+    var jvmArgs =
+        StringUtils.isBlank(existingJvmArgs) ? jacocoArg : existingJvmArgs + " " + jacocoArg;
+
+    return container
+        .withFileSystemBind(agentPath.toString(), JACOCO_AGENT_CONTAINER_PATH, BindMode.READ_ONLY)
+        .withFileSystemBind(outputDir.toString(), JACOCO_OUTPUT_CONTAINER_DIR, BindMode.READ_WRITE)
+        .withEnv("SQRL_JVM_ARGS", jvmArgs);
   }
 
   public void compileSqrlProject() {

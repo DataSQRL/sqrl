@@ -179,7 +179,10 @@ commands:
           name: Save package results
           command: |
             mkdir -p ~/test-results/junit/
-            find . -type f -regex ".*/target/surefire-reports/.*xml" \
+            find . -type f \( \
+                -regex ".*/target/surefire-reports/.*xml" \
+                -o -regex ".*/target/failsafe-reports/.*xml" \
+              \) \
               -exec cp {} ~/test-results/junit/ \;
           when: always
       - store_test_results:
@@ -204,11 +207,42 @@ commands:
 
             ./codecov --version
 
-            # Upload the coverage report.
-            ./codecov upload-coverage $COMMON_ARGS
+            INTEGRATION_COVERAGE=sqrl-testing/sqrl-testing-integration/target/site/jacoco-aggregate/jacoco.xml
+            if [ -f "$INTEGRATION_COVERAGE" ]; then
+              ./codecov upload-coverage \
+                --file "$INTEGRATION_COVERAGE" \
+                --flag integration \
+                --name "integration-${TEST_SHARDING_INDEX:-0}" \
+                $COMMON_ARGS
+            else
+              # Unit-test jobs have per-module JaCoCo reports instead of an aggregate report.
+              ./codecov upload-coverage $COMMON_ARGS
+            fi
 
             # Upload the test reports.
             ./codecov do-upload --report-type test_results $COMMON_ARGS
+
+  upload-container-coverage:
+    description: "Upload container E2E JaCoCo coverage to Codecov"
+    steps:
+      - run:
+          name: Codecov container coverage
+          command: |
+            curl -Os https://cli.codecov.io/latest/linux/codecov
+            chmod +x codecov
+
+            EXTRA=""
+            if [ -n "$CIRCLE_PR_NUMBER" ]; then
+              EXTRA="--pull-request-number $CIRCLE_PR_NUMBER"
+            fi
+
+            COMMON_ARGS="--token $CODECOV_TOKEN --branch $CIRCLE_BRANCH --commit-sha $CIRCLE_SHA1 $EXTRA --recurse-submodules --git-service github"
+            ./codecov upload-coverage \
+              --file sqrl-testing/sqrl-testing-container/target/site/jacoco-aggregate/jacoco.xml \
+              --flag container-e2e \
+              --name "container-e2e-${CIRCLE_NODE_INDEX}" \
+              $COMMON_ARGS
+          when: always
 
   compute-sha1-tags:
     description: "Compute deterministic tags from Dockerfiles"
@@ -348,7 +382,9 @@ jobs:
       - install-jdk
       - run:
           name: Run Integration Tests
-          command: mvn -U -T2 -B install -DonlyITs
+          command: |
+            mvn -U -T2 -B install -DonlyITs
+            mvn -B -DonlyITs -Djacoco.aggregate jacoco:report-aggregate
       - save-test-results
 
   container-e2e-test:
@@ -389,6 +425,7 @@ jobs:
               -Dit.test="$SHARD_TESTS" \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
+            mvn -B -DonlyContainerE2E -Djacoco.aggregate jacoco:report-aggregate
       - run:
           name: Collect test results
           command: |
@@ -399,6 +436,7 @@ jobs:
       - store_test_results:
           path: ~/test-results
           when: always
+      - upload-container-coverage
 
   deploy:
     docker:
@@ -418,7 +456,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease} -Deasyjacoco.skip=true
+          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease}
 
   build-images:
     # use a full VM so we can run Docker / Buildx
