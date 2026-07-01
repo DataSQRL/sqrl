@@ -33,7 +33,6 @@ mvn -P dev initialize
 # Server-specific builds
 mvn clean package                    # Build fat JAR (vertx-server.jar)
 mvn clean package -Pskip-shade-plugin  # Build without fat JAR
-mvn clean package -Pinstrument     # Build with JaCoCo instrumentation
 ```
 
 ### Testing Commands
@@ -47,11 +46,11 @@ mvn verify
 # Coverage report
 mvn jacoco:report
 
-# Test specific module (ALWAYS include -Deasyjacoco.skip when using -pl)
-mvn test -pl sqrl-planner -Deasyjacoco.skip
+# Test specific module
+mvn test -pl sqrl-planner
 
 # Test specific test method in module
-mvn test -pl sqrl-tools/sqrl-config -Dtest=TestClassName#testMethodName -Deasyjacoco.skip
+mvn test -pl sqrl-tools/sqrl-config -Dtest=TestClassName#testMethodName
 
 # Container tests (requires Docker images to be built)
 mvn -B install -DonlyContainerE2E -pl :sqrl-testing-container -Dit.test=TestClassName

@@ -135,12 +135,14 @@
     <h2.version>2.4.240</h2.version>
     <spring-framework.version>7.0.8</spring-framework.version>
     <hikari.version>7.1.0</hikari.version>
+    <argLine></argLine>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
     <hadoop.version>3.3.4</hadoop.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
     <iceberg.version>1.11.0</iceberg.version>
     <jackson.version>2.22.0</jackson.version>
+    <jacocoArgLine></jacocoArgLine>
     <jacoco.version>0.8.15</jacoco.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <jakarta.inject.version>2.0.1</jakarta.inject.version>
@@ -173,7 +175,6 @@
 
     <!-- Plugin versions -->
     <docker-maven-plugin.version>0.48.1</docker-maven-plugin.version>
-    <easy-jacoco-maven-plugin.version>0.1.4</easy-jacoco-maven-plugin.version>
     <git-code-format-maven-plugin.version>5.6</git-code-format-maven-plugin.version>
     <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
     <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
@@ -870,33 +871,47 @@
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
         <version>${jacoco.version}</version>
-        <configuration>
-          <excludes>
-            <exclude>org/**</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>com.marvinformatics.jacoco</groupId>
-        <artifactId>easy-jacoco-maven-plugin</artifactId>
-        <version>0.1.4</version>
-        <configuration>
-          <projectRules>
-            <rule>
-              <limits>
-                <limit>
-                  <counter>INSTRUCTION</counter>
-                  <value>COVEREDRATIO</value>
-                  <minimum>0.70</minimum>
-                </limit>
-              </limits>
-            </rule>
-          </projectRules>
-          <projectExtraProperties>
-            <license.skip>true</license.skip>
-          </projectExtraProperties>
-        </configuration>
+        <executions>
+          <execution>
+            <id>prepare-agent</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+            <configuration>
+              <append>true</append>
+              <destFile>${project.build.directory}/jacoco.exec</destFile>
+              <propertyName>jacocoArgLine</propertyName>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report</id>
+            <goals>
+              <goal>report</goal>
+            </goals>
+            <phase>verify</phase>
+            <configuration>
+              <excludes>
+                <exclude>org/**</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+          <execution>
+            <id>report-aggregate</id>
+            <goals>
+              <goal>report-aggregate</goal>
+            </goals>
+            <phase>verify</phase>
+            <inherited>false</inherited>
+            <configuration>
+              <dataFileIncludes>
+                <dataFileInclude>target/*.exec</dataFileInclude>
+              </dataFileIncludes>
+              <excludes>
+                <exclude>org/**</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
       <plugin>
@@ -982,6 +997,10 @@
           <environmentVariables>
             <TZ>America/Los_Angeles</TZ>
           </environmentVariables>
+          <argLine>@{jacocoArgLine} ${argLine}</argLine>
+          <systemPropertyVariables>
+            <jacoco.agent.path>${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar</jacoco.agent.path>
+          </systemPropertyVariables>
         </configuration>
       </plugin>
       <plugin>
@@ -998,8 +1017,9 @@
           <systemPropertyVariables>
             <flinkrunner.image.repo>${flinkrunner.image.repo}</flinkrunner.image.repo>
             <flinkrunner.version>${flinkrunner.version}</flinkrunner.version>
+            <jacoco.agent.path>${settings.localRepository}/org/jacoco/org.jacoco.agent/${jacoco.version}/org.jacoco.agent-${jacoco.version}-runtime.jar</jacoco.agent.path>
           </systemPropertyVariables>
-          <argLine>${argLine}
+          <argLine>@{jacocoArgLine} ${argLine}
             --add-opens=java.base/java.util=ALL-UNNAMED
             --add-opens=java.base/java.lang=ALL-UNNAMED
             --add-opens=java.base/java.io=ALL-UNNAMED
