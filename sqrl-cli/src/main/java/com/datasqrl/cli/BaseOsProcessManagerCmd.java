@@ -108,7 +108,8 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
    */
   protected Path getFullProjectRoot(Path projectRoot) {
     if (projectRoot.isAbsolute()) {
-      throw new IllegalArgumentException("Project root must be a relative path");
+      throw new IllegalArgumentException(
+          "Project root must be a relative path, got: " + projectRoot);
     }
 
     var fullProjectRoot = cli.workspaceDir.resolve(projectRoot);
