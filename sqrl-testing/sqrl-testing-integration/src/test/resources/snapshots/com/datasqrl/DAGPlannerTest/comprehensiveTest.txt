@@ -1183,6 +1183,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
       ],
       "messageSchema" : "",
       "config" : {
+        "cleanup.policy" : "compact",
         "retention.ms" : "129600000"
       }
     }

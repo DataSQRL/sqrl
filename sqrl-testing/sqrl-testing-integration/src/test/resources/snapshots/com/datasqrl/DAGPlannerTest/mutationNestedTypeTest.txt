@@ -226,7 +226,9 @@ INSERT INTO `default_catalog`.`default_database`.`NestedCustomers_2`
         "customerid"
       ],
       "messageSchema" : "",
-      "config" : { }
+      "config" : {
+        "cleanup.policy" : "compact"
+      }
     }
   ],
   "testRunnerTopics" : [ ]
