@@ -36,10 +36,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+@Slf4j
 public abstract class AbstractCompileCmd extends BasePackageConfCmd {
+
+  private Optional<Path> inferredProjectRoot = Optional.empty();
 
   public abstract ExecutionGoal getGoal();
 
@@ -59,6 +65,8 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     }
 
     var deepestCommonSubDir = DirectoryUtils.deepestCommonSubDir(packageFiles);
+    inferredProjectRoot = Optional.of(deepestCommonSubDir);
+
     return getFullProjectRoot(deepestCommonSubDir);
   }
 
@@ -164,18 +172,28 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
       if (Files.isRegularFile(defaultPkg)) {
         finalPackageFiles.add(defaultPkg);
       }
-
     } else {
-      packageFiles.stream().map(basePath::resolve).forEach(finalPackageFiles::add);
+      finalPackageFiles.addAll(formatGivenPackageFiles());
     }
 
     if (finalPackageFiles.isEmpty()) {
-      locErrors.fatal("No package file were given, and default %s not found", packageFiles);
+      locErrors.fatal("No package file were given, and default %s not found", PACKAGE_JSON);
     }
 
     return loadRunDefaults()
         ? ConfigLoaderUtils.loadUnresolvedRunConfig(locErrors, finalPackageFiles)
         : ConfigLoaderUtils.loadUnresolvedConfig(locErrors, finalPackageFiles);
+  }
+
+  List<Path> formatGivenPackageFiles() {
+    var basePath = getProjectRoot();
+    inferredProjectRoot.ifPresent(
+        p -> log.info("Inferred project root folder from given package file(s): {}", p));
+
+    return packageFiles.stream()
+        .map(pkg -> inferredProjectRoot.map(root -> root.relativize(pkg.normalize())).orElse(pkg))
+        .map(basePath::resolve)
+        .toList();
   }
 
   private void validateTestPath(Path path) {

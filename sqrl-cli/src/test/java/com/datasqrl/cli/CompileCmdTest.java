@@ -15,6 +15,7 @@
  */
 package com.datasqrl.cli;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockConstruction;
@@ -32,6 +33,7 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.Packager;
 import com.datasqrl.util.ConfigLoaderUtils;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -97,5 +99,35 @@ class CompileCmdTest {
       verify(testConfig, never()).getTestDir(tempDir);
       verify(compilationProcess).executeCompilation(Optional.of(testDir));
     }
+  }
+
+  @Test
+  void givenInferredProjectRoot_whenFormattingPackageFiles_thenRemovesInferredRoot()
+      throws IOException {
+    var projectDir = tempDir.resolve(Path.of("apps", "orders"));
+    Files.createDirectories(projectDir);
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+    compileCmd.packageFiles = List.of(Path.of("apps", "orders", "package.json"));
+
+    assertThat(compileCmd.formatGivenPackageFiles())
+        .containsExactly(projectDir.resolve("package.json"));
+  }
+
+  @Test
+  void givenExplicitProjectRoot_whenFormattingPackageFiles_thenResolvesFromExplicitRoot()
+      throws IOException {
+    var projRoot = Path.of("apps", "orders");
+    var projectDir = tempDir.resolve(projRoot);
+    Files.createDirectories(projectDir);
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+    compileCmd.projectRoot = Optional.of(projRoot);
+    compileCmd.packageFiles = List.of(Path.of("package.json"));
+
+    assertThat(compileCmd.formatGivenPackageFiles())
+        .containsExactly(projectDir.resolve("package.json"));
   }
 }
