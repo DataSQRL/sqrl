@@ -170,7 +170,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
     return new CreateTableJdbcStatement(
         tableName,
-        null,
+        createTable.tableAnalysis().getDocumentation().docString(),
         getColumns(
             createTable.datatype().getFieldList(),
             createTable.tableAnalysis().getHints(),
