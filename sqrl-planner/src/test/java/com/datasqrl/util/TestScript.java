@@ -35,6 +35,7 @@ import lombok.NonNull;
 import lombok.Singular;
 import lombok.SneakyThrows;
 import lombok.Value;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
@@ -92,8 +93,8 @@ public interface TestScript {
 
   static TestScript.Impl.ImplBuilder of(Path rootPackage, Path script, String... resultTables) {
     var name = script.getFileName().toString();
-    if (name.endsWith(".sqrl")) {
-      name = StringUtil.removeFromEnd(name, ".sqrl");
+    if (name.toLowerCase().endsWith(".sqrl")) {
+      name = FilenameUtils.removeExtension(name);
     }
     return Impl.builder()
         .name(name)

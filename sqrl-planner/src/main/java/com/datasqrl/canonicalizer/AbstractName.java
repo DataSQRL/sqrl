@@ -17,10 +17,6 @@ package com.datasqrl.canonicalizer;
 
 public abstract class AbstractName implements Name {
 
-  public static String validateName(String name) {
-    return name;
-  }
-
   @Override
   public String toString() {
     return getDisplay();

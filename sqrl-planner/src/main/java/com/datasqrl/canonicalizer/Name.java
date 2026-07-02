@@ -15,6 +15,7 @@
  */
 package com.datasqrl.canonicalizer;
 
+import com.datasqrl.planner.util.SqlTableNameExtractor;
 import java.io.Serializable;
 
 /** Represents the name of a field in the ingested data */
@@ -71,20 +72,10 @@ public interface Name extends Serializable, Comparable<Name> {
         this.getCanonical() + name.getCanonical(), this.getDisplay() + name.getCanonical());
   }
 
-  static boolean validName(String name) {
-    return !(name == null
-        || name.trim().isEmpty()); // && name.indexOf('.') < 0 && name.indexOf('/') < 0;
-  }
-
-  static boolean isValidNameStrict(String name) {
-    return !(name == null || name.trim().isEmpty())
-        && name.indexOf('.') < 0
-        && name.indexOf('/') < 0;
-  }
-
   static Name of(String name, NameCanonicalizer canonicalizer) {
-    name = name.trim();
-    return new StandardName(canonicalizer.getCanonical(name), name);
+    var formattedName = formatName(name);
+
+    return new StandardName(canonicalizer.getCanonical(formattedName), formattedName);
   }
 
   static Name changeDisplayName(Name name, String displayName) {
@@ -105,5 +96,9 @@ public interface Name extends Serializable, Comparable<Name> {
 
   static boolean isSystemHidden(String name) {
     return name.startsWith(SYSTEM_HIDDEN_PREFIX);
+  }
+
+  private static String formatName(String name) {
+    return SqlTableNameExtractor.stripQuotes(name.trim());
   }
 }
