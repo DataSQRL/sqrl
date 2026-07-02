@@ -114,7 +114,7 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
       }
 
       var compilationProcess = springCtx.getBean(CompilationProcess.class);
-      var testDir = sqrlConfig.getTestConfig().getTestDir(cli.workspaceDir);
+      var testDir = sqrlConfig.getTestConfig().getTestDir(getProjectRoot());
       testDir.ifPresent(this::validateTestPath);
 
       Pair<PhysicalPlan, ? extends TestPlan> plan;
