@@ -20,6 +20,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.Value;
+import org.apache.commons.lang3.Strings;
 
 public interface TestGraphQLSchema {
 
@@ -81,15 +83,14 @@ public interface TestGraphQLSchema {
       try (Stream<Path> files =
           Files.list(schemaDir)
               .filter(Files::isRegularFile)
-              .sorted(
-                  (f1, f2) -> f1.getFileName().toString().compareTo(f2.getFileName().toString()))) {
+              .sorted(Comparator.comparing(f -> f.getFileName().toString()))) {
         files.forEach(
             f -> {
               String filename = f.getFileName().toString();
               if (filename.endsWith(QUERY_FILE_SUFFIX)) {
                 try {
                   result.put(
-                      StringUtil.removeFromEnd(filename, QUERY_FILE_SUFFIX), Files.readString(f));
+                      Strings.CS.removeEnd(filename, QUERY_FILE_SUFFIX), Files.readString(f));
                 } catch (IOException e) {
                   throw new RuntimeException(e);
                 }

@@ -130,6 +130,14 @@ public final class SqlTableNameExtractor {
 
   /* --------------------- utility helpers ----------------------------- */
 
+  public static String stripQuotes(String s) {
+    // Caller guarantees no mixed quoting, so trim leading/trailing quote char.
+    if (s.length() > 1 && ("`\"[".indexOf(s.charAt(0)) >= 0)) {
+      return s.substring(1, s.length() - 1);
+    }
+    return s;
+  }
+
   private static void addFirstNonNullGroup(Set<String> out, Matcher m, int maxGroup) {
     for (int g = 1; g <= maxGroup; g++) {
       String id = m.group(g);
@@ -138,14 +146,6 @@ public final class SqlTableNameExtractor {
         break;
       }
     }
-  }
-
-  private static String stripQuotes(String s) {
-    // Caller guarantees no mixed quoting, so trim leading/trailing quote char.
-    if (s.length() > 1 && ("`\"[".indexOf(s.charAt(0)) >= 0)) {
-      return s.substring(1, s.length() - 1);
-    }
-    return s;
   }
 
   private static String stripLiteralsAndComments(String s) {

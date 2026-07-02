@@ -15,19 +15,16 @@
  */
 package com.datasqrl.canonicalizer;
 
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
+@NoArgsConstructor // For Kryo
+@AllArgsConstructor
 public class StandardName extends AbstractName {
 
-  private String canonicalName;
-  private String displayName;
-
-  public StandardName() {} // For Kryo
-
-  StandardName(@NonNull String canonicalName, @NonNull String displayName) {
-    this.canonicalName = validateName(canonicalName);
-    this.displayName = validateName(displayName);
-  }
+  @NonNull private String canonicalName;
+  @NonNull private String displayName;
 
   @Override
   public String getCanonical() {

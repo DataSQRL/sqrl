@@ -15,12 +15,11 @@
  */
 package com.datasqrl.util;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.Assert.assertEquals;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,6 +30,8 @@ import lombok.SneakyThrows;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.junit.jupiter.api.TestInfo;
 
 @Slf4j
@@ -41,11 +42,6 @@ public class SnapshotTest {
   public static final String SNAPSHOT_EXTENSION = ".txt";
 
   public static final String JUNIT_SNAPSHOTS = System.getenv("SQRL_JUNIT_SNAPSHOTS");
-
-  public static void createOrValidateSnapshot(
-      @NonNull String className, @NonNull String fileName, @NonNull String content) {
-    new Snapshot(className, fileName, new StringBuilder(content)).createOrValidate();
-  }
 
   private static Path getPath(String[] components) {
     return Paths.get(components[0], Arrays.copyOfRange(components, 1, components.length));
@@ -66,23 +62,27 @@ public class SnapshotTest {
     StringBuilder content;
 
     public static Snapshot of(@NonNull String name, @NonNull TestInfo testInfo, String content) {
-      var fileName = testInfo.getDisplayName();
-      var matcher = PARAMETRIZED_TEST.matcher(fileName);
+      var testName = testInfo.getDisplayName();
+      var matcher = PARAMETRIZED_TEST.matcher(testName);
+
       if (matcher.find()) {
-        fileName = matcher.group(1);
+        testName = matcher.group(1);
       }
-      if (fileName.endsWith("()")) {
-        fileName = StringUtil.removeFromEnd(fileName, "()");
+
+      if (testName.endsWith("()")) {
+        testName = Strings.CS.removeEnd(testName, "()");
       }
+
       var c = new StringBuilder();
-      if (!Strings.isNullOrEmpty(content)) {
+      if (StringUtils.isNotBlank(content)) {
         c.append(content);
       }
-      return new Snapshot(name, fileName, c);
+
+      return new Snapshot(name, testName, c);
     }
 
     public static Snapshot of(@NonNull Class testClass, @NonNull String... testParameters) {
-      Preconditions.checkArgument(testParameters.length > 0);
+      checkArgument(testParameters.length > 0);
       var fileName = String.join(FILE_DELIMITER, testParameters);
       return new Snapshot(testClass.getName(), fileName, new StringBuilder());
     }
@@ -100,7 +100,7 @@ public class SnapshotTest {
     }
 
     public boolean hasContent() {
-      return content.length() > 0;
+      return !content.isEmpty();
     }
 
     public Snapshot addContent(@NonNull String addedContent, String... caseNames) {
@@ -124,10 +124,9 @@ public class SnapshotTest {
     @SneakyThrows
     public void createOrValidate() {
       String content = getContent();
-      Preconditions.checkArgument(
-          fileName.matches("^[a-zA-Z0-9_-]+$"), "Invalid display name: %s", fileName);
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(className), "No snapshot class name");
-      Preconditions.checkArgument(!Strings.isNullOrEmpty(content), "No snapshot content");
+      checkArgument(fileName.matches("^[a-zA-Z0-9_-]+$"), "Invalid display name: %s", fileName);
+      checkArgument(StringUtils.isNotBlank(className), "No snapshot class name");
+      checkArgument(StringUtils.isNotBlank(content), "No snapshot content");
 
       String[] snapLocation = ArrayUtils.addAll(BASE_SNAPSHOT_DIR, className.split("\\."));
       snapLocation = ArrayUtils.addAll(snapLocation, fileName + SNAPSHOT_EXTENSION);

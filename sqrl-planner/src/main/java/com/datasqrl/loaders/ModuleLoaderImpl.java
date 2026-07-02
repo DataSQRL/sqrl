@@ -28,7 +28,6 @@ import com.datasqrl.loaders.schema.SchemaLoader;
 import com.datasqrl.loaders.schema.SchemaLoaderImpl;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FunctionUtil;
-import com.datasqrl.util.StringUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -41,6 +40,8 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.Strings;
 import org.apache.flink.table.functions.UserDefinedFunction;
 
 @RequiredArgsConstructor
@@ -129,8 +130,9 @@ public class ModuleLoaderImpl implements ModuleLoader {
     }
 
     if (filename.endsWith(SQRL_FILE_EXTENSION)) {
-      var script =
-          directory.concat(Name.system(StringUtil.removeFromEnd(filename, SQRL_FILE_EXTENSION)));
+      var scriptName = FilenameUtils.removeExtension(filename);
+      var script = directory.concat(Name.system(scriptName));
+
       return List.of(loadScript(script, path).asNamespaceObject());
     }
 
@@ -152,8 +154,12 @@ public class ModuleLoaderImpl implements ModuleLoader {
 
   @SneakyThrows
   private List<FlinkTableNamespaceObject> loadTable(Path path) {
-    var tableName = StringUtil.removeFromEnd(path.getFileName().toString(), TABLE_FILE_SUFFIX);
-    errors.checkFatal(Name.validName(tableName), "Not a valid table name: %s", tableName);
+    var filename = path.getFileName().toString();
+    var tableName = Strings.CS.removeEnd(filename, TABLE_FILE_SUFFIX);
+    errors.checkFatal(
+        tableName != null && !tableName.isBlank(),
+        "Table name cannot be extracted from file name: %s",
+        filename);
 
     var tableSql = Files.readString(path);
 
