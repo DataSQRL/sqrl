@@ -165,7 +165,10 @@ commands:
           name: Save package results
           command: |
             mkdir -p ~/test-results/junit/
-            find . -type f -regex ".*/target/surefire-reports/.*xml" \
+            find . -type f \( \
+                -regex ".*/target/surefire-reports/.*xml" \
+                -o -regex ".*/target/failsafe-reports/.*xml" \
+              \) \
               -exec cp {} ~/test-results/junit/ \;
           when: always
       - store_test_results:
@@ -311,7 +314,7 @@ jobs:
             export MAVEN_OPTS="-Xmx3g -XX:MaxMetaspaceSize=768m -Djava.awt.headless=true"
             mvn -U -T1 -B install \
             -DonlyUTs \
-            -DargLine="@{argLine} -Xmx2g -XX:MaxMetaspaceSize=512m"
+            -DargLine="-Xmx2g -XX:MaxMetaspaceSize=512m"
       - save-test-results
 
   integration-tests:
@@ -367,6 +370,8 @@ jobs:
               -pl :sqrl-testing-container \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
+            mvn -B -DonlyContainerE2E jacoco:report-aggregate
+      - save-test-results
 
   deploy:
     docker:
@@ -386,7 +391,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease} -Deasyjacoco.skip=true
+          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease}
 
   build-images:
     # use a full VM so we can run Docker / Buildx
