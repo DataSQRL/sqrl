@@ -217,6 +217,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       connectorConfig.put(
           FlinkConnectorConfigWrapper.CONNECTOR_KEY,
           UPSERT_FORMAT.formatted(connectorConfig.get(FlinkConnectorConfigWrapper.CONNECTOR_KEY)));
+      topicConfig.put("cleanup.policy", "compact");
     }
 
     if (!messageKey.isEmpty()) {

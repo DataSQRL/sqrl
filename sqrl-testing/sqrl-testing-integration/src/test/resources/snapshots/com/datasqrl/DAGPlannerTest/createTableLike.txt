@@ -236,6 +236,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingInput_2`
       "name" : "SensorReading_1",
       "type" : "TABLE",
       "sql" : "CREATE TABLE IF NOT EXISTS \"SensorReading_1\" (\"uuid\" TEXT NOT NULL, \"sensorid\" BIGINT NOT NULL, \"epoch_timestamp\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "description" : "Represents sensor data",
       "fields" : [
         {
           "name" : "uuid",
@@ -280,6 +281,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingInput_2`
       "name" : "SensorReadingInput_2",
       "type" : "TABLE",
       "sql" : "CREATE TABLE IF NOT EXISTS \"SensorReadingInput_2\" (\"uuid\" TEXT NOT NULL, \"sensorid\" BIGINT NOT NULL, \"epoch_timestamp\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL, \"testField\" DOUBLE PRECISION, \"recordedTime\" TIMESTAMP WITH TIME ZONE, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "description" : "Represents sensor data",
       "fields" : [
         {
           "name" : "uuid",
@@ -329,6 +331,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingInput_2`
       "name" : "SensorReadingMutation_3",
       "type" : "TABLE",
       "sql" : "CREATE TABLE IF NOT EXISTS \"SensorReadingMutation_3\" (\"uuid\" TEXT NOT NULL, \"sensorid\" BIGINT NOT NULL, \"epoch_timestamp\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL, \"testField\" DOUBLE PRECISION, \"recordedTime\" TIMESTAMP WITH TIME ZONE, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "description" : "Represents sensor data",
       "fields" : [
         {
           "name" : "uuid",
