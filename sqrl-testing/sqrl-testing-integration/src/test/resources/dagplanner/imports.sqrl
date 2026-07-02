@@ -1,11 +1,11 @@
-IMPORT ecommerceTs.customer;
+IMPORT `ecommerceTs`.`customer`;
 
 /*+ query_by_all(productid) */
 IMPORT ecommerceTs.product;
-IMPORT root.ecommerceSql.category;
+IMPORT `root`.`ecommerceSql`.`category`;
 
 /*+ ttl(14 days) */
-IMPORT mutation.events.*;
+IMPORT `mutation`.`events`.*;
 
 -- Export mutation table explicitly for test snapshot
-EXPORT MyEvents TO logger.myevents;
+EXPORT MyEvents TO `logger`.`myevents`;

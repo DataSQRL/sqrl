@@ -100,7 +100,6 @@ import com.datasqrl.planner.util.SqlScriptWriter;
 import com.datasqrl.planner.util.SqlTableNameExtractor;
 import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.util.FunctionUtil;
-import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -119,6 +118,7 @@ import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.commons.lang3.Strings;
 import org.apache.flink.sql.parser.ddl.SqlAlterTable;
 import org.apache.flink.sql.parser.ddl.SqlAlterView;
 import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
@@ -1180,7 +1180,7 @@ public class SqlScriptPlanner {
 
     public void writeExportWithSchema(FlinkTableBuilder table) {
       String exportFilename =
-          StringUtil.removeFromEnd(
+          Strings.CS.removeEnd(
                   sourcePath.getFileName().toString(), ModuleLoaderImpl.TABLE_FILE_SUFFIX)
               + "_export";
       TableWriter.writeToFile(sourcePath.getParent(), exportFilename, table);

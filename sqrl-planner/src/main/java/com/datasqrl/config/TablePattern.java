@@ -15,7 +15,6 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.util.StringUtil;
 import com.google.common.base.Preconditions;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -35,19 +34,6 @@ public class TablePattern {
       updatedPattern = addRegexBoundary(pattern);
     }
     return Pattern.compile(updatedPattern);
-  }
-
-  public String substitute(String name, Optional<String> prefix, Optional<String> suffix) {
-    var nameOffsets = getNameMatchOffsets(pattern);
-    var updatedPattern =
-        StringUtil.replaceSubstring(pattern, nameOffsets[0], nameOffsets[1], Pattern.quote(name));
-    if (prefix.isPresent()) {
-      updatedPattern = Pattern.quote(prefix.get()) + updatedPattern;
-    }
-    if (suffix.isPresent()) {
-      updatedPattern = updatedPattern + Pattern.quote(suffix.get());
-    }
-    return updatedPattern;
   }
 
   public static TablePattern of(Optional<String> pattern, String defaultPattern) {
