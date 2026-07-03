@@ -187,8 +187,10 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
 
   List<Path> formatGivenPackageFiles() {
     var basePath = getProjectRoot();
-    inferredProjectRoot.ifPresent(
-        p -> log.info("Inferred project root folder from given package file(s): {}", p));
+
+    inferredProjectRoot
+        .filter(path -> !path.normalize().equals(DirectoryUtils.EMPTY_PATH))
+        .ifPresent(p -> log.info("Inferred project root folder from given package file(s): {}", p));
 
     return packageFiles.stream()
         .map(pkg -> inferredProjectRoot.map(root -> root.relativize(pkg.normalize())).orElse(pkg))
