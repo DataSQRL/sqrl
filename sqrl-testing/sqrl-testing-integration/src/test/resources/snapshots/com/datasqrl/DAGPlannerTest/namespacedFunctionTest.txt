@@ -43,48 +43,24 @@ WITH (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`
-=== Orders
-ID:          default_catalog.default_database.Orders
-Type:        stream
-Stage:       flink
-Primary key: id, time
-Timestamp:   time
-Row count:   ~1e8
+=== CustomerById
+ID:          default_catalog.default_database.CustomerById
+Type:        query
+Stage:       postgres
 ---
-Schema:
- - id: BIGINT NOT NULL
- - customerid: BIGINT NOT NULL
- - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
- - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
 Inputs:
- - default_catalog.default_database.Orders__base
+ - default_catalog.default_database.Customer
 Annotations:
- - features: DENORMALIZE (feature)
- - stream-root: Orders
+ - stream-root: Customer
+ - parameters: customerid
+ - base-table: Customer
 Plan:
-LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
-  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[$4])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
-CREATE TEMPORARY TABLE `Orders__schema` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Orders` (
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
-  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-)
-WITH (
-  'format' = 'flexible-json',
-  'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
-)
-LIKE `Orders__schema`
+CREATE VIEW `CustomerById` AS  SELECT * FROM Customer WHERE customerid = ?          ;
+
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Customer__schema` (
   `customerid` BIGINT NOT NULL,
@@ -107,26 +83,6 @@ WITH (
   'connector' = 'filesystem'
 )
 LIKE `Customer__schema`;
-CREATE TEMPORARY TABLE `Orders__schema` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Orders` (
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
-  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
-)
-WITH (
-  'format' = 'flexible-json',
-  'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
-)
-LIKE `Orders__schema`;
 CREATE TABLE `Customer_1` (
   `customerid` BIGINT NOT NULL,
   `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -144,32 +100,12 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `Orders_2` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED
-)
-WITH (
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'password' = '${POSTGRES_PASSWORD}',
-  'sink.on-conflict.action' = 'IGNORE',
-  'table-name' = 'Orders_2',
-  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
-  'username' = '${POSTGRES_USERNAME}'
-);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
  FROM `default_catalog`.`default_database`.`Customer`
 ;
-INSERT INTO `default_catalog`.`default_database`.`Orders_2`
- SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-  FROM `default_catalog`.`default_database`.`Orders`
- ;
- END
+END
 >>>kafka.json
 {
   "topics" : [ ],
@@ -219,41 +155,6 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
       "ttl" : 0.0
     },
     {
-      "name" : "Orders_2",
-      "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
-      "fields" : [
-        {
-          "name" : "id",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "time",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "entries",
-          "type" : "JSONB",
-          "nullable" : true
-        }
-      ],
-      "primaryKey" : [
-        "id",
-        "time"
-      ],
-      "partitionKey" : [ ],
-      "partitionType" : "NONE",
-      "numPartitions" : 0,
-      "ttl" : 0.0
-    },
-    {
       "name" : "Customer",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
@@ -284,38 +185,6 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           "nullable" : false
         }
       ]
-    },
-    {
-      "name" : "Orders",
-      "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_2\"",
-      "fields" : [
-        {
-          "name" : "id",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "customerid",
-          "type" : "BIGINT",
-          "nullable" : false
-        },
-        {
-          "name" : "time",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : false
-        },
-        {
-          "name" : "entries",
-          "type" : "JSONB",
-          "nullable" : true
-        }
-      ]
-    },
-    {
-      "name" : "Orders_2_hash_c1",
-      "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders_2_hash_c1\" ON \"Orders_2\" USING hash (\"customerid\")"
     }
   ],
   "standaloneExtensionStatements" : [ ]
@@ -353,7 +222,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
         {
           "type" : "args",
           "parentType" : "Customer",
-          "fieldName" : "orders",
+          "fieldName" : "self",
           "exec" : {
             "arguments" : [
               {
@@ -367,37 +236,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Orders_2\"\nWHERE $1 = \"customerid\"",
-              "parameters" : [
-                {
-                  "type" : "source",
-                  "key" : "customerid"
-                }
-              ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Customer",
-          "fieldName" : "orders2",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT \"id\"\nFROM \"Orders_2\"\nWHERE $1 = \"customerid\"",
+              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE $1 = \"customerid\"",
               "parameters" : [
                 {
                   "type" : "source",
@@ -413,7 +252,47 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
         {
           "type" : "args",
           "parentType" : "Query",
-          "fieldName" : "Orders",
+          "fieldName" : "CustomerById",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "customerid",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "static",
+          "parentType" : "Query",
+          "fieldName" : "admin"
+        },
+        {
+          "type" : "args",
+          "parentType" : "AdminQueries",
+          "fieldName" : "customersByTenant",
           "exec" : {
             "arguments" : [
               {
@@ -427,8 +306,103 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Orders_2\"",
-              "parameters" : [ ],
+              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE CAST($1 AS TEXT) IS NOT NULL AND CAST($2 AS TEXT) IS NOT NULL",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "asTenantId"
+                },
+                {
+                  "type" : "metadata",
+                  "metadata" : {
+                    "metadataType" : "AUTH",
+                    "name" : "datasqrl_admin",
+                    "required" : true
+                  }
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "static",
+          "parentType" : "Query",
+          "fieldName" : "backend"
+        },
+        {
+          "type" : "args",
+          "parentType" : "BackendQueries",
+          "fieldName" : "customerLookup",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "customerid"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1 AND CAST($2 AS TEXT) IS NOT NULL",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "customerid",
+                  "sqlType" : "BIGINT"
+                },
+                {
+                  "type" : "metadata",
+                  "metadata" : {
+                    "metadataType" : "AUTH",
+                    "name" : "https://datasqrl.com/tenant_id",
+                    "required" : true
+                  }
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "BackendQueries",
+          "fieldName" : "tenantCustomers",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"\nWHERE CAST($1 AS TEXT) IS NOT NULL",
+              "parameters" : [
+                {
+                  "type" : "metadata",
+                  "metadata" : {
+                    "metadataType" : "AUTH",
+                    "name" : "https://datasqrl.com/installation_id",
+                    "required" : true
+                  }
+                }
+              ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
               "database" : "POSTGRES"
@@ -445,22 +419,10 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
             "parameters" : {
               "type" : "object",
               "properties" : {
-                "orders_limit" : {
-                  "type" : "integer"
-                },
-                "orders2_offset" : {
-                  "type" : "integer"
-                },
                 "offset" : {
                   "type" : "integer"
                 },
                 "limit" : {
-                  "type" : "integer"
-                },
-                "orders2_limit" : {
-                  "type" : "integer"
-                },
-                "orders_offset" : {
                   "type" : "integer"
                 }
               },
@@ -469,44 +431,117 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query Customer($limit: Int = 10, $offset: Int = 0, $orders_limit: Int = 10, $orders_offset: Int = 0, $orders2_limit: Int = 10, $orders2_offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\norders(limit: $orders_limit, offset: $orders_offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\norders2(limit: $orders2_limit, offset: $orders2_offset) {\nid\n}\n}\n\n}",
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
             "queryName" : "Customer",
             "operationType" : "QUERY"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Customer{?orders_limit,orders2_offset,offset,limit,orders2_limit,orders_offset}"
+          "uriTemplate" : "queries/Customer{?offset,limit}"
         },
         {
           "function" : {
-            "name" : "GetOrders",
+            "name" : "GetCustomerById",
             "parameters" : {
               "type" : "object",
               "properties" : {
                 "offset" : {
                   "type" : "integer"
                 },
+                "customerid" : {
+                  "type" : "integer"
+                },
                 "limit" : {
                   "type" : "integer"
                 }
               },
-              "required" : [ ]
+              "required" : [
+                "customerid"
+              ]
             }
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-            "queryName" : "Orders",
+            "query" : "query CustomerById($customerid: Long!, $limit: Int = 10, $offset: Int = 0) {\nCustomerById(customerid: $customerid, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerById",
             "operationType" : "QUERY"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Orders{?offset,limit}"
+          "uriTemplate" : "queries/CustomerById{?offset,customerid,limit}"
+        },
+        {
+          "function" : {
+            "name" : "Getadmin",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "customersByTenant_limit" : {
+                  "type" : "integer"
+                },
+                "asTenantId" : {
+                  "type" : "string"
+                },
+                "customersByTenant_offset" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "asTenantId"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query admin($asTenantId: String!, $customersByTenant_limit: Int = 10, $customersByTenant_offset: Int = 0) {\nadmin(asTenantId: $asTenantId) {\ncustomersByTenant(limit: $customersByTenant_limit, offset: $customersByTenant_offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n}\n\n}",
+            "queryName" : "admin",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/admin{?customersByTenant_limit,asTenantId,customersByTenant_offset}"
+        },
+        {
+          "function" : {
+            "name" : "Getbackend",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "customerLookup_limit" : {
+                  "type" : "integer"
+                },
+                "tenantCustomers_limit" : {
+                  "type" : "integer"
+                },
+                "tenantCustomers_offset" : {
+                  "type" : "integer"
+                },
+                "customerLookup_offset" : {
+                  "type" : "integer"
+                },
+                "customerLookup_customerid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "customerLookup_customerid"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query backend($customerLookup_customerid: Long!, $customerLookup_limit: Int = 10, $customerLookup_offset: Int = 0, $tenantCustomers_limit: Int = 10, $tenantCustomers_offset: Int = 0) {\nbackend {\ncustomerLookup(customerid: $customerLookup_customerid, limit: $customerLookup_limit, offset: $customerLookup_offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\ntenantCustomers(limit: $tenantCustomers_limit, offset: $tenantCustomers_offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n}\n\n}",
+            "queryName" : "backend",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/backend{?customerLookup_limit,tenantCustomers_limit,tenantCustomers_offset,customerLookup_offset,customerLookup_customerid}"
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n  \"These are the orders for a customer\"\n  orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  orders2(limit: Int = 10, offset: Int = 0): [Customer_orders2!]\n}\n\ntype Customer_orders2 {\n  id: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type AdminQueries {\n  customersByTenant(limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype BackendQueries {\n  customerLookup(customerid: Long!, limit: Int = 10, offset: Int = 0): [Customer!]\n  tenantCustomers(limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n  self(limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerById(customerid: Long!, limit: Int = 10, offset: Int = 0): [Customer!]\n  admin(asTenantId: String!): AdminQueries\n  backend: BackendQueries\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

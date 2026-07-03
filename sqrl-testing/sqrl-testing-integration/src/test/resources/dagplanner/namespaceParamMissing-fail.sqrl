@@ -1,0 +1,8 @@
+IMPORT ecommerceTs.customer;
+
+CREATE NAMESPACE admin (
+    asTenantId STRING NOT NULL
+);
+
+-- References a parameter that the namespace does not declare.
+admin.customers() := SELECT * FROM Customer WHERE CAST(:admin.nonexistent AS STRING) IS NOT NULL;

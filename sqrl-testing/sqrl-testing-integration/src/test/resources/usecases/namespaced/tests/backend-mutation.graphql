@@ -1,0 +1,13 @@
+mutation {
+    backend {
+        T1: UserTokens(event: {userid: 1, tokens: 500}) {
+            userid
+        }
+        T2: UserTokens(event: {userid: 2, tokens: 200}) {
+            userid
+        }
+        T3: UserTokens(event: {userid: 1, tokens: 300}) {
+            userid
+        }
+    }
+}

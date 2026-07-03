@@ -1,0 +1,4 @@
+IMPORT ecommerceTs.customer;
+
+-- A namespaced function has no parent table, so it cannot reference `this`.
+backend.bad := SELECT * FROM Customer c WHERE this.customerid = c.customerid;

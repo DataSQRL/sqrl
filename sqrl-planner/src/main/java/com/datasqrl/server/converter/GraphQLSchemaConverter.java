@@ -405,6 +405,18 @@ public class GraphQLSchemaConverter {
     };
   }
 
+  /**
+   * Appends a {@code ", "} variable separator to the operation header unless this is the first
+   * variable (i.e. the header still ends with the opening {@code (}). The header is shared across
+   * the recursive traversal, so sibling nested fields (e.g. under a namespace) need this shared
+   * check rather than a per-field counter.
+   */
+  private static void appendHeaderSeparator(StringBuilder queryHeader) {
+    if (queryHeader.length() > 0 && queryHeader.charAt(queryHeader.length() - 1) != '(') {
+      queryHeader.append(", ");
+    }
+  }
+
   public boolean visit(
       GraphQLFieldDefinition fieldDef,
       StringBuilder queryBody,
@@ -455,7 +467,7 @@ public class GraphQLSchemaConverter {
                     nestedField.getName(),
                     nestedField.getDescription());
             String typeString = printFieldType(nestedField);
-            if (numArgs > 0) queryHeader.append(", ");
+            appendHeaderSeparator(queryHeader);
             queryHeader.append(argName).append(": ").append(typeString);
             numArgs++;
             if (nestedFields.hasNext()) {
@@ -476,7 +488,7 @@ public class GraphQLSchemaConverter {
                   arg.getName(),
                   arg.getDescription());
           String typeString = printArgumentType(arg);
-          if (numArgs > 0) queryHeader.append(", ");
+          appendHeaderSeparator(queryHeader);
           queryHeader.append(argName).append(": ").append(typeString);
           numArgs++;
         }

@@ -809,7 +809,7 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query Events($id: Long!, $limit: Int = 10, $offset: Int = 0$likeCount_limit: Int = 10, $likeCount_offset: Int = 0) {\nEvents(id: $id, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nlikeCount(limit: $likeCount_limit, offset: $likeCount_offset) {\neventid\nnum\ntest\n}\n}\n\n}",
+            "query" : "query Events($id: Long!, $limit: Int = 10, $offset: Int = 0, $likeCount_limit: Int = 10, $likeCount_offset: Int = 0) {\nEvents(id: $id, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nlikeCount(limit: $likeCount_limit, offset: $likeCount_offset) {\neventid\nnum\ntest\n}\n}\n\n}",
             "queryName" : "Events",
             "operationType" : "QUERY"
           },
@@ -846,7 +846,7 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query EventsLiked($userid: String!, $limit: Int = 10, $offset: Int = 0$likeCount_limit: Int = 10, $likeCount_offset: Int = 0) {\nEventsLiked(userid: $userid, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nlikeCount(limit: $likeCount_limit, offset: $likeCount_offset) {\neventid\nnum\ntest\n}\n}\n\n}",
+            "query" : "query EventsLiked($userid: String!, $limit: Int = 10, $offset: Int = 0, $likeCount_limit: Int = 10, $likeCount_offset: Int = 0) {\nEventsLiked(userid: $userid, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nlikeCount(limit: $likeCount_limit, offset: $likeCount_offset) {\neventid\nnum\ntest\n}\n}\n\n}",
             "queryName" : "EventsLiked",
             "operationType" : "QUERY"
           },

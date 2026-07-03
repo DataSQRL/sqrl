@@ -93,6 +93,22 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
    */
   @Default private boolean passthrough = false;
 
+  /**
+   * Whether this is a namespaced root function. A namespaced function has a path of size 2 (e.g.
+   * {@code backend.dormantDeployments}) where the head is a namespace (not a table), so it is
+   * exposed as a field on a namespace object type under the root Query rather than as a
+   * relationship.
+   */
+  @Default private boolean namespaced = false;
+
+  /**
+   * External arguments exposed on the enclosing namespace field itself (e.g. {@code asTenantId} in
+   * {@code admin(asTenantId: String!)}). Shared by all functions in the namespace and propagated to
+   * each as parent-field parameters. Empty for non-namespaced functions or namespaces with no
+   * external parameters.
+   */
+  @Default private final List<FunctionParameter> namespaceArguments = List.of();
+
   @Override
   public RelDataType getRowType(
       RelDataTypeFactory relDataTypeFactory, List<? extends Object> list) {
@@ -123,7 +139,7 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   }
 
   public boolean isRelationship() {
-    return fullPath.size() > 1;
+    return fullPath.size() > 1 && !namespaced;
   }
 
   @Override

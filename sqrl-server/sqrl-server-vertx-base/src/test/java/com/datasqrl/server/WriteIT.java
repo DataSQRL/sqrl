@@ -176,7 +176,7 @@ class WriteIT {
                 .build())
         .mutation(
             new KafkaMutationCoords(
-                "addCustomer", false, topicName, List.of(), Map.of(), false, Map.of()))
+                "addCustomer", false, topicName, List.of(), Map.of(), false, Map.of(), null))
         .build();
   }
 
