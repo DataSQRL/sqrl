@@ -20,6 +20,7 @@ import com.datasqrl.server.ResolvedMetadata;
 import com.datasqrl.server.jdbc.DatabaseType;
 import com.datasqrl.server.operation.ApiOperation;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -298,13 +299,20 @@ public class RootGraphQLModel {
     /** The database the query is executed against */
     DatabaseType database;
 
+    /**
+     * Companion COUNT(*) query producing pagination metadata. When non-null, the query returns a
+     * page wrapper ({@code {results, pagination}}) rather than a bare list.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    String countSql;
+
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
       return visitor.visitSqlQuery(this, context);
     }
 
     public SqlQuery updateSql(String newSql) {
-      return new SqlQuery(newSql, parameters, pagination, cacheDurationMs, database);
+      return new SqlQuery(newSql, parameters, pagination, cacheDurationMs, database, countSql);
     }
   }
 
@@ -486,6 +494,13 @@ public class RootGraphQLModel {
 
     SqlQuery query;
     PreparedSqrlQuery preparedQueryContainer;
+
+    /** Prepared companion count query; null for non-paged queries or non-binding databases. */
+    PreparedSqrlQuery preparedCountQueryContainer;
+
+    public ResolvedSqlQuery(SqlQuery query, PreparedSqrlQuery preparedQueryContainer) {
+      this(query, preparedQueryContainer, null);
+    }
 
     @Override
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {

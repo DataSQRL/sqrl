@@ -24,6 +24,7 @@ import com.datasqrl.server.ApiSource;
 import com.datasqrl.server.ApiSources;
 import com.datasqrl.server.GraphqlSchemaHandler;
 import com.datasqrl.server.ScriptFiles;
+import com.datasqrl.server.SqrlPaginationUtil;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -75,9 +76,17 @@ public class GraphqlSourceLoader {
     }
 
     if (!shouldUseInferredSchema(apiVersions)) {
-      apiVersions.forEach(
-          apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));
-      return new LoadResult(apiVersions, Optional.empty());
+      var injected =
+          apiVersions.stream()
+              .map(
+                  apiVersion ->
+                      new ApiSources(
+                          apiVersion.version(),
+                          SqrlPaginationUtil.injectPaginationType(apiVersion.schema()),
+                          apiVersion.operations()))
+              .toList();
+      injected.forEach(apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));
+      return new LoadResult(injected, Optional.empty());
     }
 
     List<ApiSource> operations;

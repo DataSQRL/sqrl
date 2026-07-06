@@ -171,7 +171,8 @@ class WriteIT {
                                 List.of(),
                                 PaginationType.NONE,
                                 0,
-                                DatabaseType.POSTGRES))
+                                DatabaseType.POSTGRES,
+                                null))
                         .build())
                 .build())
         .mutation(

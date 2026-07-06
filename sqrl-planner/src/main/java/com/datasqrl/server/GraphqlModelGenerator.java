@@ -148,7 +148,8 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
       ObjectTypeDefinition parentType,
       FieldDefinition atField,
       SqrlTableFunction tableFunction,
-      TypeDefinitionRegistry registry) {
+      TypeDefinitionRegistry registry,
+      boolean paged) {
     // As we no more merge user provided graphQL schema with the inferred schema, we no more need to
     // generate as many queries as the permutations of its arguments.
     // We now have a single executable query linked to the table function and already fully defined
@@ -168,13 +169,15 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
             .map(InputValueDefinition::getName)
             .anyMatch(
                 name -> name.equals(SchemaConstants.LIMIT) || name.equals(SchemaConstants.OFFSET));
+    var countSql = paged ? buildCountSql(tableFunction, executableJdbcReadQuery.getSql()) : null;
     queryBase =
         new SqlQuery(
             executableJdbcReadQuery.getSql(),
             parameters,
             hasLimitOrOffset ? PaginationType.LIMIT_AND_OFFSET : PaginationType.NONE,
             executableJdbcReadQuery.getCacheDuration().toMillis(),
-            executableJdbcReadQuery.getDatabase());
+            executableJdbcReadQuery.getDatabase(),
+            countSql);
     var coordsBuilder =
         ArgumentLookupQueryCoords.builder()
             .parentType(parentType.getName())
@@ -184,6 +187,26 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
 
     coordsBuilder.exec(set);
     queryCoords.add(coordsBuilder.build());
+  }
+
+  /**
+   * Builds the companion COUNT(*) query for a paginated result. Adds MIN/MAX over the designated
+   * rowtime column when the result has one, so {@code firstEventTime}/{@code lastEventTime} can be
+   * populated. The rowtime column name is the same identifier as in the base query's output.
+   */
+  private static String buildCountSql(SqrlTableFunction tableFunction, String baseSql) {
+    var tsCol =
+        tableFunction.getRowTime().map(tableFunction::getField).map(RelDataTypeField::getName);
+    var select = new StringBuilder("SELECT COUNT(*) AS \"total_records\"");
+    tsCol.ifPresent(
+        col ->
+            select
+                .append(", MIN(\"")
+                .append(col)
+                .append("\") AS \"first_event_time\", MAX(\"")
+                .append(col)
+                .append("\") AS \"last_event_time\""));
+    return select.append(" FROM (").append(baseSql).append(") x").toString();
   }
 
   private static QueryParameterHandler convert(FunctionParameter fnParam) {

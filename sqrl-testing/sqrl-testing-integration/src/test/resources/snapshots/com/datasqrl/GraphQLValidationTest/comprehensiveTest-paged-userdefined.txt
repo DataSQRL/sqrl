@@ -1793,7 +1793,8 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
+              "database" : "POSTGRES",
+              "countSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM (SELECT *\n  FROM \"Customer\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1) x"
             }
           }
         },
@@ -1823,92 +1824,18 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Customer",
-          "fieldName" : "relatedByLength",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "path" : "length"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Customer\"\nWHERE $2 = \"customerid\" AND CHAR_LENGTH(\"email\") >= $1\nORDER BY \"timestamp\" NULLS FIRST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "path" : "length",
-                  "sqlType" : "INTEGER"
-                },
-                {
-                  "type" : "source",
-                  "key" : "customerid"
-                }
-              ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
+              "database" : "POSTGRES",
+              "countSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"Customer\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST) x"
             }
           }
         }
       ],
       "mutations" : [ ],
       "subscriptions" : [ ],
-      "operations" : [
-        {
-          "function" : {
-            "name" : "GetTableFunctionCallsTblFct",
-            "parameters" : {
-              "type" : "object",
-              "properties" : {
-                "arg2" : {
-                  "type" : "integer"
-                },
-                "offset" : {
-                  "type" : "integer"
-                },
-                "arg1" : {
-                  "type" : "integer"
-                },
-                "limit" : {
-                  "type" : "integer"
-                }
-              },
-              "required" : [
-                "arg2",
-                "arg1"
-              ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query TableFunctionCallsTblFct($arg2: Int!, $arg1: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg2: $arg2, arg1: $arg1, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "TableFunctionCallsTblFct",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}"
-        }
-      ],
+      "operations" : [ ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n    related(limit: Int = 10, offset: Int = 0): [Customer!]\n    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Query {\n    TableFunctionCallsTblFct(arg2: Int!, arg1: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n"
+        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype SqrlPagination {\n    totalRecords: Long!\n    pageSize: Int!\n    currentPage: Int!\n    totalPages: Int!\n    hasNextPage: Boolean!\n    hasPreviousPage: Boolean!\n    nextOffset: Int\n    prevOffset: Int\n    firstEventTime: DateTime\n    lastEventTime: DateTime\n}\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n    related(limit: Int = 10, offset: Int = 0): CustomerRelatedPage\n}\n\ntype CustomerRelatedPage {\n    items: [Customer!]\n    meta: SqrlPagination\n}\n\ntype CustomerPage {\n    items: [Customer!]\n    meta: SqrlPagination\n}\n\ntype Query {\n    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): CustomerPage!\n}\n"
       }
     }
   }

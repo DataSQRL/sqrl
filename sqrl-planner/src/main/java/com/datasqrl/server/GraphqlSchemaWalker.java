@@ -23,6 +23,7 @@ import static com.datasqrl.server.util.GraphqlSchemaUtil.isValidGraphQLName;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.plan.table.Multiplicity;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlTableFunction;
@@ -138,14 +139,34 @@ public abstract class GraphqlSchemaWalker {
         typeDefinition.getSourceLocation(),
         "Could not infer non-object type on graphql schema: %s",
         typeDefinition.getName());
+    var resultType = (ObjectTypeDefinition) typeDefinition;
+
+    // A page wrapper ({results: [Element!], pagination: SqrlPagination}) is treated like a list of
+    // Element: validate/walk the element type against the function row type and compute pagination
+    // metadata via a companion count query.
+    var pagedElement = SqrlPaginationUtil.getPagedElementType(resultType, registry);
+    var paged = pagedElement.isPresent();
+    if (paged) {
+      checkState(
+          tableFunction.getVisibility().access() == AccessModifier.QUERY,
+          atField.getSourceLocation(),
+          "Paginated result types are only supported for queries: %s",
+          atField.getName());
+      checkState(
+          tableFunction.getMultiplicity() == Multiplicity.MANY,
+          atField.getSourceLocation(),
+          "Paginated result types require a multi-row result (no LIMIT 1): %s",
+          atField.getName());
+      resultType = pagedElement.get();
+    }
+
     if (tableFunction.getVisibility().access()
         == AccessModifier.QUERY) { // walking a query table function
-      visitQuery(parentType, atField, tableFunction, registry);
+      visitQuery(parentType, atField, tableFunction, registry, paged);
     } else { // walking a subscription table function
       visitSubscription(atField, tableFunction, registry);
     }
     var functionRowType = tableFunction.getRowType();
-    var resultType = (ObjectTypeDefinition) typeDefinition;
     walkObjectType(true, resultType, Optional.of(functionRowType), registry);
   }
 
@@ -257,7 +278,8 @@ public abstract class GraphqlSchemaWalker {
       ObjectTypeDefinition parentType,
       FieldDefinition atField,
       SqrlTableFunction tableFunction,
-      TypeDefinitionRegistry registry);
+      TypeDefinitionRegistry registry,
+      boolean paged);
 
   protected abstract void visitSubscription(
       FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry);
