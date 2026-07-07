@@ -48,8 +48,8 @@ class JdbcPhysicalPlanTest {
         .containsExactly("-schema.sql", "-views.sql");
     assertThat(artifacts.get(0).content())
         .isEqualTo(
-            "CREATE EXTENSION vector;\n\nCREATE TABLE t1;\nCREATE TABLE t2;\n\nCREATE INDEX i1");
-    assertThat(artifacts.get(1).content()).isEqualTo("CREATE VIEW v1");
+            "CREATE EXTENSION vector;\n\nCREATE TABLE t1;\nCREATE TABLE t2;\n\nCREATE INDEX i1;\n");
+    assertThat(artifacts.get(1).content()).isEqualTo("CREATE VIEW v1;\n");
   }
 
   @Test
@@ -67,7 +67,7 @@ class JdbcPhysicalPlanTest {
     assertThat(artifacts)
         .extracting(DeploymentArtifact::fileSuffix)
         .containsExactly("-schema.sql", "-views.sql", "-partman.sql");
-    assertThat(artifacts.get(2).content()).isEqualTo("SELECT partman.create_parent");
+    assertThat(artifacts.get(2).content()).isEqualTo("SELECT partman.create_parent;\n");
   }
 
   @Test

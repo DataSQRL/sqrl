@@ -63,7 +63,7 @@ public record JdbcPhysicalPlan(
     artifacts.add(new DeploymentArtifact("-views.sql", toSql(getStatementsForType(Type.VIEW))));
 
     standaloneExtensionStatements.stream()
-        .map(stmt -> new DeploymentArtifact(formatSuffix(stmt.getName()), stmt.getSql()))
+        .map(stmt -> new DeploymentArtifact(formatSuffix(stmt.getName()), toSql(stmt)))
         .forEach(artifacts::add);
 
     return List.copyOf(artifacts);
@@ -80,6 +80,10 @@ public record JdbcPhysicalPlan(
 
   private static String toSql(List<JdbcStatement> statements) {
     return DeploymentArtifact.toSqlString(statements.stream().map(JdbcStatement::getSql));
+  }
+
+  private static String toSql(JdbcStatement stmt) {
+    return DeploymentArtifact.toSqlString(stmt.getSql());
   }
 
   private static String formatSuffix(String name) {
