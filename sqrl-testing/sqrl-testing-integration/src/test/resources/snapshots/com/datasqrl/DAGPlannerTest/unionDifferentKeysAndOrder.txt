@@ -144,17 +144,18 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`CombinedStream_1`
 SELECT `id_a`, `val`, `hash_columns`(`id_a`, `val`) AS `__pk_hash`
- FROM `default_catalog`.`default_database`.`CombinedStream`
+FROM `default_catalog`.`default_database`.`CombinedStream`
 ;
 INSERT INTO `default_catalog`.`default_database`.`source_a_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`source_a`
- ;
- INSERT INTO `default_catalog`.`default_database`.`source_b_3`
-  SELECT *
-   FROM `default_catalog`.`default_database`.`source_b`
-  ;
-  END
+SELECT *
+FROM `default_catalog`.`default_database`.`source_a`
+;
+INSERT INTO `default_catalog`.`default_database`.`source_b_3`
+SELECT *
+FROM `default_catalog`.`default_database`.`source_b`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [ ],

@@ -146,13 +146,14 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Json_1`
 SELECT *
- FROM `default_catalog`.`default_database`.`Json`
+FROM `default_catalog`.`default_database`.`Json`
 ;
 INSERT INTO `default_catalog`.`default_database`.`UnmodifiedJsonData_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`UnmodifiedJsonData`
- ;
- END
+SELECT *
+FROM `default_catalog`.`default_database`.`UnmodifiedJsonData`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [ ],
@@ -160,7 +161,8 @@ INSERT INTO `default_catalog`.`default_database`.`UnmodifiedJsonData_2`
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "Json" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "json_col" JSONB, "json_col_2" JSONB, "json_col_3" JSONB, "json_col_4" JSONB, PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "json_col" JSONB, "json_col_2" JSONB, "json_col_3" JSONB, "json_col_4" JSONB, PRIMARY KEY ("id"));
+
 >>>postgres-views.sql
 
 >>>vertx.json

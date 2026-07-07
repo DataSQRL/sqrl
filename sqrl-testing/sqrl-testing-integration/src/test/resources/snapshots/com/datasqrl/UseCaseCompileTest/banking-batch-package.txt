@@ -339,26 +339,28 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`ApplicationUpdates_1`
 SELECT *
- FROM `default_catalog`.`default_database`.`ApplicationUpdates`
+FROM `default_catalog`.`default_database`.`ApplicationUpdates`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Applications_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`Applications`
- ;
- INSERT INTO `default_catalog`.`default_database`.`CustomerUpdates_3`
-  SELECT *
-   FROM `default_catalog`.`default_database`.`CustomerUpdates`
-  ;
-  INSERT INTO `default_catalog`.`default_database`.`Customers_4`
-   SELECT *
-    FROM `default_catalog`.`default_database`.`Customers`
-   ;
-   END
+SELECT *
+FROM `default_catalog`.`default_database`.`Applications`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerUpdates_3`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerUpdates`
+;
+INSERT INTO `default_catalog`.`default_database`.`Customers_4`
+SELECT *
+FROM `default_catalog`.`default_database`.`Customers`
+;
+END;
+
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "ApplicationUpdates" ("loan_application_id" BIGINT NOT NULL, "status" TEXT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("loan_application_id","event_time"));
 CREATE TABLE IF NOT EXISTS "Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "CustomerUpdates" ("customer_id" BIGINT NOT NULL, "num_updates" BIGINT NOT NULL, PRIMARY KEY ("customer_id"));
-CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"))
+CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+
 >>>postgres-views.sql
 
 >>>vertx.json

@@ -218,17 +218,18 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`TotalOrgTokens_1`
 SELECT *
- FROM `default_catalog`.`default_database`.`TotalOrgTokens`
+FROM `default_catalog`.`default_database`.`TotalOrgTokens`
 ;
 INSERT INTO `default_catalog`.`default_database`.`TotalUserTokens_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`TotalUserTokens`
- ;
- INSERT INTO `default_catalog`.`default_database`.`UsageAlert_3`
-  SELECT *
-   FROM `default_catalog`.`default_database`.`UsageAlert`
-  ;
-  END
+SELECT *
+FROM `default_catalog`.`default_database`.`TotalUserTokens`
+;
+INSERT INTO `default_catalog`.`default_database`.`UsageAlert_3`
+SELECT *
+FROM `default_catalog`.`default_database`.`UsageAlert`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [
@@ -261,7 +262,8 @@ INSERT INTO `default_catalog`.`default_database`.`TotalUserTokens_2`
 CREATE TABLE IF NOT EXISTS "TotalOrgTokens" ("orgid" BIGINT NOT NULL, "total_tokens" BIGINT NOT NULL, "total_requests" BIGINT NOT NULL, PRIMARY KEY ("orgid"));
 CREATE TABLE IF NOT EXISTS "TotalUserTokens" ("userid" BIGINT NOT NULL, "total_tokens" BIGINT NOT NULL, "total_requests" BIGINT NOT NULL, PRIMARY KEY ("userid"));
 
-CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING btree ("total_tokens")
+CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING btree ("total_tokens");
+
 >>>postgres-views.sql
 
 >>>vertx.json

@@ -134,13 +134,14 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AppendStream_1`
 SELECT *
- FROM `default_catalog`.`default_database`.`AppendStream`
+FROM `default_catalog`.`default_database`.`AppendStream`
 ;
 INSERT INTO `default_catalog`.`default_database`.`InputAgg_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`InputAgg`
- ;
- END
+SELECT *
+FROM `default_catalog`.`default_database`.`InputAgg`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [ ],
@@ -148,7 +149,8 @@ INSERT INTO `default_catalog`.`default_database`.`InputAgg_2`
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "AppendStream" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NULL, PRIMARY KEY ("k","v_sum"));
-CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NULL, PRIMARY KEY ("k"))
+CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NULL, PRIMARY KEY ("k"));
+
 >>>postgres-views.sql
 
 >>>vertx.json

@@ -116,16 +116,18 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Res_1`
 SELECT *
- FROM `default_catalog`.`default_database`.`Res`
+FROM `default_catalog`.`default_database`.`Res`
 ;
-END
+END;
+
 >>>kafka.json
 {
   "topics" : [ ],
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "Res" ("uuidField" TEXT NOT NULL, "timestampMillisField" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "nullableTimestampMillisField" TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY ("uuidField","timestampMillisField"))
+CREATE TABLE IF NOT EXISTS "Res" ("uuidField" TEXT NOT NULL, "timestampMillisField" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "nullableTimestampMillisField" TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY ("uuidField","timestampMillisField"));
+
 >>>postgres-views.sql
 
 >>>vertx.json
