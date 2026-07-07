@@ -169,8 +169,6 @@ END;
 CREATE TABLE IF NOT EXISTS "OrderCount" ("id" BIGINT NOT NULL, "number" BIGINT NOT NULL, "volume" INTEGER NOT NULL, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TEXT NOT NULL, "items" JSONB, "_source_time" TIMESTAMP WITH TIME ZONE, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

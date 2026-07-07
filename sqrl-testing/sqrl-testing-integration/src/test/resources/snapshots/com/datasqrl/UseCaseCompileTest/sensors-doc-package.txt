@@ -265,8 +265,6 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("uuid" TEXT NOT NULL, "sensorid" INT
 
 CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash ("sensorid");
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

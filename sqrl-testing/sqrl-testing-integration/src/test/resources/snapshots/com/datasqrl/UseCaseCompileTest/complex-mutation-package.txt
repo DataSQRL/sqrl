@@ -204,13 +204,9 @@ END;
 CREATE TABLE IF NOT EXISTS "LatestTokens" ("userid" INTEGER NOT NULL, "total_tokens" BIGINT NOT NULL, "window_end" TIMESTAMP(3) NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("userid"));
 CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens" BIGINT NOT NULL, "window_end" TIMESTAMP WITH TIME ZONE, "window_time" TIMESTAMP WITH TIME ZONE);
 
->>>iceberg-duckdb-views.sql
-
 >>>iceberg-schema.sql
 CREATE TABLE IF NOT EXISTS "LatestTokens" ("userid" INTEGER NOT NULL, "total_tokens" BIGINT NOT NULL, "window_end" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("userid"));
 CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens" BIGINT NOT NULL, "window_end" TIMESTAMP WITH TIME ZONE, "window_time" TIMESTAMP WITH TIME ZONE);
-
->>>iceberg-views.sql
 
 >>>kafka.json
 {

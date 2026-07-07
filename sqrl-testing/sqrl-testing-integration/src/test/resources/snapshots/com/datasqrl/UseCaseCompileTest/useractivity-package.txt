@@ -264,8 +264,6 @@ CREATE TABLE IF NOT EXISTS "TotalUserTokens" ("userid" BIGINT NOT NULL, "total_t
 
 CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING btree ("total_tokens");
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

@@ -169,8 +169,6 @@ CREATE TABLE IF NOT EXISTS "VectorData" ("doc_id" INTEGER NOT NULL, "category_id
 
 CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING HNSW ("vector" vector_cosine_ops);
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

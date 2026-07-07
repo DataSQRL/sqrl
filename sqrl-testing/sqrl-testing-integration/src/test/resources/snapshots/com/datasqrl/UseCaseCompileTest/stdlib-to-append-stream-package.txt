@@ -151,8 +151,6 @@ END;
 CREATE TABLE IF NOT EXISTS "AppendStream" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NULL, PRIMARY KEY ("k","v_sum"));
 CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NULL, PRIMARY KEY ("k"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

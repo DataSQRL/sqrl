@@ -592,8 +592,6 @@ CREATE TABLE IF NOT EXISTS "_UserLikes" ("_uuid" TEXT NOT NULL, "eventid" BIGINT
 
 CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector('english', coalesce("title", '') || ' ' || coalesce("abstract", '') ));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

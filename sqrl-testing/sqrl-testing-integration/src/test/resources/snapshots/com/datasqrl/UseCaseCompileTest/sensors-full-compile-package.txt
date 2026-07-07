@@ -453,8 +453,6 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
 
 CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId");
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

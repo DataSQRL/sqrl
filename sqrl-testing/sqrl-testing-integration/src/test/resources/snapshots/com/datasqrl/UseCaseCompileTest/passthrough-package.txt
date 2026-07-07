@@ -220,8 +220,6 @@ CREATE TABLE IF NOT EXISTS "Reporting" ("employeeid" BIGINT NOT NULL, "managerid
 CREATE INDEX IF NOT EXISTS "Employees_hash_c1" ON "Employees" USING hash ("name");
 CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("managerid");
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

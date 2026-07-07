@@ -224,8 +224,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, "myFnc" BIGINT, PR
 CREATE TABLE IF NOT EXISTS "MyTableAnother" ("val" INTEGER NOT NULL, "myFnc" BIGINT, PRIMARY KEY ("val"));
 CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" BIGINT, PRIMARY KEY ("val"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

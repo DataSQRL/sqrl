@@ -169,8 +169,6 @@ END;
 CREATE TABLE IF NOT EXISTS "MyStringTable" ("val" TEXT NOT NULL, PRIMARY KEY ("val"));
 CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

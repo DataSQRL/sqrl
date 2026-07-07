@@ -143,8 +143,6 @@ END;
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid","lastUpdated"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

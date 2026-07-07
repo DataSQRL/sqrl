@@ -84,8 +84,6 @@ END;
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "FunctionApplied" ("id" INTEGER NOT NULL, "fct_result" BOOLEAN, PRIMARY KEY ("id"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

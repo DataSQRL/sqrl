@@ -361,8 +361,6 @@ CREATE TABLE IF NOT EXISTS "Applications" ("id" BIGINT NOT NULL, "customer_id" B
 CREATE TABLE IF NOT EXISTS "CustomerUpdates" ("customer_id" BIGINT NOT NULL, "num_updates" BIGINT NOT NULL, PRIMARY KEY ("customer_id"));
 CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

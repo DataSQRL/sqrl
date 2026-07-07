@@ -791,8 +791,6 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customerid"
 CREATE INDEX IF NOT EXISTS "ProductsByCountry_hash_c0" ON "ProductsByCountry" USING hash ("productid");
 CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

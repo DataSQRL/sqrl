@@ -255,8 +255,6 @@ CREATE TABLE IF NOT EXISTS "Recommendation" ("url" TEXT NOT NULL, "rec" TEXT NOT
 CREATE TABLE IF NOT EXISTS "Trending" ("url" TEXT NOT NULL, "total" BIGINT NOT NULL, PRIMARY KEY ("url"));
 CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

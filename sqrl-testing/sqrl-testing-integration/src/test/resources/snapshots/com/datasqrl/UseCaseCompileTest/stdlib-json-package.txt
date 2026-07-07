@@ -163,8 +163,6 @@ END;
 CREATE TABLE IF NOT EXISTS "Json" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEXT NOT NULL, "json_col" JSONB, "json_col_2" JSONB, "json_col_3" JSONB, "json_col_4" JSONB, PRIMARY KEY ("id"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

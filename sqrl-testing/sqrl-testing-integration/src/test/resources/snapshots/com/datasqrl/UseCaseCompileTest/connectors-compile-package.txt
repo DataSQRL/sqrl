@@ -364,8 +364,6 @@ CREATE TABLE IF NOT EXISTS "kafka_safe_csv_table" ("user_id" INTEGER, "name" TEX
 CREATE TABLE IF NOT EXISTS "kafka_safe_json_table" ("user_id" INTEGER, "name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT NULL, "name" TEXT, PRIMARY KEY ("user_id"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

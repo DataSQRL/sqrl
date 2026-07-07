@@ -128,8 +128,6 @@ END;
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "Res" ("uuidField" TEXT NOT NULL, "timestampMillisField" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "nullableTimestampMillisField" TIMESTAMP WITHOUT TIME ZONE, PRIMARY KEY ("uuidField","timestampMillisField"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

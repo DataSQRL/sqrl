@@ -374,5 +374,3 @@ FROM _Applications
 INNER JOIN _LoanTypes ON _Applications.loan_type_id = _LoanTypes.id
 LEFT JOIN _LoanTypes AS _LoanTypes0 ON _Applications.customer_id = _LoanTypes0.id;
 
->>>iceberg-views.sql
-

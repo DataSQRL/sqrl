@@ -394,8 +394,6 @@ CREATE TABLE IF NOT EXISTS "SensorMaxTemp" ("sensorid" BIGINT NOT NULL, "window_
 CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" BIGINT NOT NULL, "time" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL, "humidity" DOUBLE PRECISION NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid","time"));
 CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","placed"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

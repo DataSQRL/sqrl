@@ -103,8 +103,6 @@ END;
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"));
 
->>>postgres-views.sql
-
 >>>vertx.json
 {
   "models" : {

@@ -404,8 +404,6 @@ FROM "iceberg_scan"('/tmp/duckdb/default_database/_InputData', ALLOW_MOVED_PATHS
 CREATE TABLE IF NOT EXISTS "_ArrayData" ("id" INTEGER, "str_char" TEXT);
 CREATE TABLE IF NOT EXISTS "_InputData" ("dummy" INTEGER);
 
->>>iceberg-views.sql
-
 >>>vertx.json
 {
   "models" : {

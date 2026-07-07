@@ -41,6 +41,19 @@ public interface EnginePhysicalPlan {
       this(fileSuffix, content, ArtifactType.fromObject(content));
     }
 
+    @JsonIgnore
+    public boolean isEmpty() {
+      if (content == null) {
+        return true;
+      }
+
+      if (content instanceof String str) {
+        return str.isBlank();
+      }
+
+      return false;
+    }
+
     public static String toSqlString(String... statements) {
       return toSqlString(Arrays.stream(statements));
     }
@@ -50,9 +63,12 @@ public interface EnginePhysicalPlan {
     }
 
     public static String toSqlString(Stream<String> statements) {
-      var sqlStr = statements.collect(Collectors.joining(SQL_STATEMENT_DELIMITER));
+      var sqlStr =
+          statements
+              .filter(statement -> !statement.isBlank())
+              .collect(Collectors.joining(SQL_STATEMENT_DELIMITER));
 
-      if (sqlStr.stripTrailing().endsWith(";")) {
+      if (sqlStr.isBlank() || sqlStr.stripTrailing().endsWith(";")) {
         return sqlStr;
       }
 

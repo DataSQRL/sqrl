@@ -149,7 +149,3 @@ FROM `default_catalog`.`sources`.`ApplicationsStream`
 ;
 END;
 
->>>iceberg-schema.sql
-
->>>iceberg-views.sql
-
