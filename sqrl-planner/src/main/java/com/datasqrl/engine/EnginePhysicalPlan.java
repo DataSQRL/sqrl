@@ -27,6 +27,8 @@ import org.apache.flink.configuration.ConfigurationUtils;
 /** A jackson serializable object */
 public interface EnginePhysicalPlan {
 
+  String SQL_STATEMENT_DELIMITER = ";\n";
+
   @JsonIgnore
   default List<DeploymentArtifact> getDeploymentArtifacts() {
     return List.of();
@@ -39,7 +41,13 @@ public interface EnginePhysicalPlan {
     }
 
     public static String toSqlString(Stream<String> statements) {
-      return statements.collect(Collectors.joining(";\n"));
+      var sqlStr = statements.collect(Collectors.joining(SQL_STATEMENT_DELIMITER));
+
+      if (sqlStr.stripTrailing().endsWith(";")) {
+        return sqlStr;
+      }
+
+      return sqlStr + SQL_STATEMENT_DELIMITER;
     }
 
     public static String toSqlString(Collection<String> statements) {
