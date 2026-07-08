@@ -23,8 +23,8 @@ import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.server.ApiSource;
 import com.datasqrl.server.ApiSources;
 import com.datasqrl.server.GraphqlSchemaHandler;
+import com.datasqrl.server.OffsetPageInfoUtil;
 import com.datasqrl.server.ScriptFiles;
-import com.datasqrl.server.SqrlPaginationUtil;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -82,7 +82,7 @@ public class GraphqlSourceLoader {
                   apiVersion ->
                       new ApiSources(
                           apiVersion.version(),
-                          SqrlPaginationUtil.injectPaginationType(apiVersion.schema()),
+                          OffsetPageInfoUtil.injectPaginationType(apiVersion.schema()),
                           apiVersion.operations()))
               .toList();
       injected.forEach(apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));

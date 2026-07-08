@@ -301,10 +301,18 @@ public class RootGraphQLModel {
 
     /**
      * Companion COUNT(*) query producing pagination metadata. When non-null, the query returns a
-     * page wrapper ({@code {results, pagination}}) rather than a bare list.
+     * page wrapper ({@code {results, pagination}}) rather than a bare list. Only executed when the
+     * request selects pagination fields that require it.
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     String countSql;
+
+    /**
+     * Variant of {@link #countSql} that additionally computes MIN/MAX over the rowtime column for
+     * {@code firstEventTime}/{@code lastEventTime}. Null when the result has no rowtime.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    String countWithEventTimesSql;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
@@ -312,7 +320,14 @@ public class RootGraphQLModel {
     }
 
     public SqlQuery updateSql(String newSql) {
-      return new SqlQuery(newSql, parameters, pagination, cacheDurationMs, database, countSql);
+      return new SqlQuery(
+          newSql,
+          parameters,
+          pagination,
+          cacheDurationMs,
+          database,
+          countSql,
+          countWithEventTimesSql);
     }
   }
 
@@ -494,13 +509,6 @@ public class RootGraphQLModel {
 
     SqlQuery query;
     PreparedSqrlQuery preparedQueryContainer;
-
-    /** Prepared companion count query; null for non-paged queries or non-binding databases. */
-    PreparedSqrlQuery preparedCountQueryContainer;
-
-    public ResolvedSqlQuery(SqlQuery query, PreparedSqrlQuery preparedQueryContainer) {
-      this(query, preparedQueryContainer, null);
-    }
 
     @Override
     public <R, C> R accept(ResolvedQueryVisitor<R, C> visitor, C context) {

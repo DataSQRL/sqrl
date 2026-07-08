@@ -141,10 +141,10 @@ public abstract class GraphqlSchemaWalker {
         typeDefinition.getName());
     var resultType = (ObjectTypeDefinition) typeDefinition;
 
-    // A page wrapper ({results: [Element!], pagination: SqrlPagination}) is treated like a list of
+    // A page wrapper ({results: [Element!], pagination: OffsetPageInfo}) is treated like a list of
     // Element: validate/walk the element type against the function row type and compute pagination
     // metadata via a companion count query.
-    var pagedElement = SqrlPaginationUtil.getPagedElementType(resultType, registry);
+    var pagedElement = OffsetPageInfoUtil.getPagedElementType(resultType, registry);
     var paged = pagedElement.isPresent();
     if (paged) {
       checkState(

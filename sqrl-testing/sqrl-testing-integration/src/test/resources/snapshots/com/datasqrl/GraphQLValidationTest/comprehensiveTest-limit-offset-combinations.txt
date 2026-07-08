@@ -285,7 +285,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {
@@ -308,7 +308,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {
@@ -336,7 +336,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {
@@ -349,7 +349,7 @@ scalar DateTime
 "A 64-bit signed integer"
 scalar Long
 
-type SqrlPagination {
+type OffsetPageInfo {
     totalRecords: Long!
     pageSize: Int!
 }
@@ -364,7 +364,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {
@@ -535,7 +535,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {
@@ -548,7 +548,7 @@ scalar DateTime
 "A 64-bit signed integer"
 scalar Long
 
-type SqrlPagination {
+type OffsetPageInfo {
     totalRecords: Long!
     pageSize: Int!
     currentPage: Int!
@@ -572,12 +572,12 @@ type Customer {
 
 type CustomerRelatedPage {
     items: [Customer!]
-    meta: SqrlPagination
+    meta: OffsetPageInfo
 }
 
 type CustomerPage {
     items: [Customer!]
-    meta: SqrlPagination
+    meta: OffsetPageInfo
 }
 
 type Query {

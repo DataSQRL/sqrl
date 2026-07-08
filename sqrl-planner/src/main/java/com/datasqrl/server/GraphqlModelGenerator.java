@@ -169,7 +169,9 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
             .map(InputValueDefinition::getName)
             .anyMatch(
                 name -> name.equals(SchemaConstants.LIMIT) || name.equals(SchemaConstants.OFFSET));
-    var countSql = paged ? buildCountSql(tableFunction, executableJdbcReadQuery.getSql()) : null;
+    var countSql = paged ? buildCountSql(executableJdbcReadQuery.getSql()) : null;
+    var countWithEventTimesSql =
+        paged ? buildCountWithEventTimesSql(tableFunction, executableJdbcReadQuery.getSql()) : null;
     queryBase =
         new SqlQuery(
             executableJdbcReadQuery.getSql(),
@@ -177,7 +179,8 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
             hasLimitOrOffset ? PaginationType.LIMIT_AND_OFFSET : PaginationType.NONE,
             executableJdbcReadQuery.getCacheDuration().toMillis(),
             executableJdbcReadQuery.getDatabase(),
-            countSql);
+            countSql,
+            countWithEventTimesSql);
     var coordsBuilder =
         ArgumentLookupQueryCoords.builder()
             .parentType(parentType.getName())
@@ -189,24 +192,32 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     queryCoords.add(coordsBuilder.build());
   }
 
+  /** Builds the companion COUNT(*) query for a paginated result. */
+  private static String buildCountSql(String baseSql) {
+    return "SELECT COUNT(*) AS \"total_records\" FROM (" + baseSql + ") x";
+  }
+
   /**
-   * Builds the companion COUNT(*) query for a paginated result. Adds MIN/MAX over the designated
-   * rowtime column when the result has one, so {@code firstEventTime}/{@code lastEventTime} can be
-   * populated. The rowtime column name is the same identifier as in the base query's output.
+   * Variant of the count query that also computes MIN/MAX over the designated rowtime column for
+   * {@code firstEventTime}/{@code lastEventTime}. Returns null when the result has no rowtime. The
+   * rowtime column name is the same identifier as in the base query's output.
    */
-  private static String buildCountSql(SqrlTableFunction tableFunction, String baseSql) {
-    var tsCol =
-        tableFunction.getRowTime().map(tableFunction::getField).map(RelDataTypeField::getName);
-    var select = new StringBuilder("SELECT COUNT(*) AS \"total_records\"");
-    tsCol.ifPresent(
-        col ->
-            select
-                .append(", MIN(\"")
-                .append(col)
-                .append("\") AS \"first_event_time\", MAX(\"")
-                .append(col)
-                .append("\") AS \"last_event_time\""));
-    return select.append(" FROM (").append(baseSql).append(") x").toString();
+  private static String buildCountWithEventTimesSql(
+      SqrlTableFunction tableFunction, String baseSql) {
+    return tableFunction
+        .getRowTime()
+        .map(tableFunction::getField)
+        .map(RelDataTypeField::getName)
+        .map(
+            col ->
+                "SELECT COUNT(*) AS \"total_records\", MIN(\""
+                    + col
+                    + "\") AS \"first_event_time\", MAX(\""
+                    + col
+                    + "\") AS \"last_event_time\" FROM ("
+                    + baseSql
+                    + ") x")
+        .orElse(null);
   }
 
   private static QueryParameterHandler convert(FunctionParameter fnParam) {

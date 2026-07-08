@@ -44,13 +44,7 @@ public record VertxJdbcClient(Map<DatabaseType, SqlClient> clients) implements J
 
     var preparedQuery = sqlClient.preparedQuery(query.getSql());
 
-    PreparedVertxSqrlQuery preparedCountQuery = null;
-    if (query.getCountSql() != null) {
-      preparedCountQuery = new PreparedVertxSqrlQuery(sqlClient.preparedQuery(query.getCountSql()));
-    }
-
-    return new ResolvedSqlQuery(
-        query, new PreparedVertxSqrlQuery(preparedQuery), preparedCountQuery);
+    return new ResolvedSqlQuery(query, new PreparedVertxSqrlQuery(preparedQuery));
   }
 
   @Override

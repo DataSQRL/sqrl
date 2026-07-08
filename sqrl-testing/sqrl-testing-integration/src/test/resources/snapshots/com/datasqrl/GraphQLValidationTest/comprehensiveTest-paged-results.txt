@@ -285,7 +285,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {
@@ -308,7 +308,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {
@@ -336,7 +336,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {
@@ -349,7 +349,7 @@ scalar DateTime
 "A 64-bit signed integer"
 scalar Long
 
-type SqrlPagination {
+type OffsetPageInfo {
     totalRecords: Long!
     pageSize: Int!
 }
@@ -364,7 +364,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {
@@ -535,7 +535,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {
@@ -548,7 +548,7 @@ scalar DateTime
 "A 64-bit signed integer"
 scalar Long
 
-type SqrlPagination {
+type OffsetPageInfo {
     totalRecords: Long!
     pageSize: Int!
     currentPage: Int!
@@ -572,12 +572,12 @@ type Customer {
 
 type CustomerRelatedPage {
     items: [Customer!]
-    meta: SqrlPagination
+    meta: OffsetPageInfo
 }
 
 type CustomerPage {
     items: [Customer!]
-    meta: SqrlPagination
+    meta: OffsetPageInfo
 }
 
 type Query {
@@ -1617,73 +1617,74 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AnotherCustomer_1`
 SELECT *
- FROM `default_catalog`.`default_database`.`AnotherCustomer`
+FROM `default_catalog`.`default_database`.`AnotherCustomer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customer_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`Customer`
- ;
- INSERT INTO `default_catalog`.`default_database`.`Customer_3`
-  SELECT *
-   FROM `default_catalog`.`default_database`.`Customer`
-  ;
-  INSERT INTO `default_catalog`.`default_database`.`CustomerByMultipleTime_4`
-   SELECT *
-    FROM `default_catalog`.`default_database`.`Customer`
-   ;
-   INSERT INTO `default_catalog`.`default_database`.`CustomerByTime2_5`
-    SELECT *
-     FROM `default_catalog`.`default_database`.`Customer`
-    ;
-    INSERT INTO `default_catalog`.`default_database`.`CustomerFilteredDistinct_6`
-     SELECT *
-      FROM `default_catalog`.`default_database`.`CustomerFilteredDistinct`
-     ;
-     INSERT INTO `default_catalog`.`default_database`.`CustomerSubscription_7`
-      SELECT *
-       FROM `default_catalog`.`default_database`.`CustomerSubscription`
-      ;
-      INSERT INTO `default_catalog`.`default_database`.`TimeWindow_8`
-       SELECT *
-        FROM `default_catalog`.`default_database`.`CustomerTimeWindow`
-       ;
-       INSERT INTO `default_catalog`.`default_database`.`CustomerTimeWindow_9`
-        SELECT *
-         FROM `default_catalog`.`default_database`.`CustomerTimeWindow`
-        ;
-        INSERT INTO `default_catalog`.`default_database`.`ExplicitDistinct_10`
-         SELECT *
-          FROM `default_catalog`.`default_database`.`ExplicitDistinct`
-         ;
-         INSERT INTO `default_catalog`.`default_database`.`ExternalOrders_11`
-          SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
-           FROM `default_catalog`.`default_database`.`ExternalOrders`
-          ;
-          INSERT INTO `default_catalog`.`default_database`.`InvalidDistinct_12`
-           SELECT *
-            FROM `default_catalog`.`default_database`.`InvalidDistinct`
-           ;
-           INSERT INTO `default_catalog`.`default_database`.`Orders_13`
-            SELECT *
-             FROM `default_catalog`.`default_database`.`Orders`
-            ;
-            INSERT INTO `default_catalog`.`default_database`.`SelectCustomers_14`
-             SELECT *
-              FROM `default_catalog`.`default_database`.`SelectCustomers`
-             ;
-             INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
-              SELECT *
-               FROM `default_catalog`.`default_database`.`TemporalJoin`
-              ;
-              INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_15`
-               SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
-                FROM `default_catalog`.`default_database`.`TemporalJoin`
-               ;
-               INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`
-                SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
-                 FROM `default_catalog`.`default_database`.`UnnestOrders`
-                ;
-                END
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer`
+;
+INSERT INTO `default_catalog`.`default_database`.`Customer_3`
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerByMultipleTime_4`
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerByTime2_5`
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerFilteredDistinct_6`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerFilteredDistinct`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerSubscription_7`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerSubscription`
+;
+INSERT INTO `default_catalog`.`default_database`.`TimeWindow_8`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerTimeWindow`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerTimeWindow_9`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerTimeWindow`
+;
+INSERT INTO `default_catalog`.`default_database`.`ExplicitDistinct_10`
+SELECT *
+FROM `default_catalog`.`default_database`.`ExplicitDistinct`
+;
+INSERT INTO `default_catalog`.`default_database`.`ExternalOrders_11`
+SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+FROM `default_catalog`.`default_database`.`ExternalOrders`
+;
+INSERT INTO `default_catalog`.`default_database`.`InvalidDistinct_12`
+SELECT *
+FROM `default_catalog`.`default_database`.`InvalidDistinct`
+;
+INSERT INTO `default_catalog`.`default_database`.`Orders_13`
+SELECT *
+FROM `default_catalog`.`default_database`.`Orders`
+;
+INSERT INTO `default_catalog`.`default_database`.`SelectCustomers_14`
+SELECT *
+FROM `default_catalog`.`default_database`.`SelectCustomers`
+;
+INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
+SELECT *
+FROM `default_catalog`.`default_database`.`TemporalJoin`
+;
+INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_15`
+SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
+FROM `default_catalog`.`default_database`.`TemporalJoin`
+;
+INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`
+SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`UnnestOrders`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [
@@ -1743,11 +1744,13 @@ CREATE TABLE IF NOT EXISTS "SelectCustomers" ("customerid" BIGINT NOT NULL, "ema
 CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB, "customerid0" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL, PRIMARY KEY ("id","time"));
 CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION, "newId" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
-CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name")
+CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name");
+
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
 FROM "ExternalOrders" AS "ExternalOrders0"
- INNER JOIN "ExplicitDistinct" AS "ExplicitDistinct0" ON "ExternalOrders0"."customerid" = "ExplicitDistinct0"."customerid"
+ INNER JOIN "ExplicitDistinct" AS "ExplicitDistinct0" ON "ExternalOrders0"."customerid" = "ExplicitDistinct0"."customerid";
+
 >>>vertx.json
 {
   "models" : {
@@ -1775,7 +1778,8 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
               "database" : "POSTGRES",
-              "countSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"CustomerByTime2\") x"
+              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM \"CustomerByTime2\") x",
+              "countWithEventTimesSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"CustomerByTime2\") x"
             }
           }
         }
@@ -1812,7 +1816,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n}\n\ntype CustomerPage {\n    results: [Customer!]\n    pagination: SqrlPagination\n}\n\ntype Query {\n    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!\n}\n\ntype SqrlPagination {\n  totalRecords: Long!\n  pageSize: Int!\n  currentPage: Int!\n  totalPages: Int!\n  hasNextPage: Boolean!\n  hasPreviousPage: Boolean!\n  nextOffset: Int\n  prevOffset: Int\n  firstEventTime: DateTime\n  lastEventTime: DateTime\n}\n"
+        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n}\n\ntype CustomerPage {\n    results: [Customer!]\n    pagination: OffsetPageInfo\n}\n\ntype Query {\n    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!\n}\n\ntype OffsetPageInfo {\n  totalRecords: Long!\n  pageSize: Int!\n  currentPage: Int!\n  totalPages: Int!\n  hasNextPage: Boolean!\n  hasPreviousPage: Boolean!\n  nextOffset: Int\n  prevOffset: Int\n  firstEventTime: DateTime\n  lastEventTime: DateTime\n}\n"
       }
     }
   }

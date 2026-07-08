@@ -13,7 +13,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {

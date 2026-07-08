@@ -3,7 +3,7 @@ scalar DateTime
 "A 64-bit signed integer"
 scalar Long
 
-type SqrlPagination {
+type OffsetPageInfo {
     totalRecords: Long!
     pageSize: Int!
 }
@@ -18,7 +18,7 @@ type Customer {
 
 type CustomerPage {
     results: [Customer!]
-    pagination: SqrlPagination
+    pagination: OffsetPageInfo
 }
 
 type Query {

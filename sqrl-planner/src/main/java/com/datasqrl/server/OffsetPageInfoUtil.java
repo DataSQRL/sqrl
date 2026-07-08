@@ -31,15 +31,15 @@ import java.util.Optional;
 
 /**
  * Opt-in pagination support: a query whose result type is a page wrapper ({@code {results:
- * [Element!] pagination: SqrlPagination}}) returns its rows plus pagination metadata computed from
+ * [Element!] pagination: OffsetPageInfo}}) returns its rows plus pagination metadata computed from
  * a companion COUNT(*) query. This util detects the wrapper shape and injects/validates the
- * standard {@code SqrlPagination} type.
+ * standard {@code OffsetPageInfo} type.
  */
-public final class SqrlPaginationUtil {
+public final class OffsetPageInfoUtil {
 
-  private SqrlPaginationUtil() {}
+  private OffsetPageInfoUtil() {}
 
-  public static final String PAGINATION_TYPE_NAME = "SqrlPagination";
+  public static final String PAGINATION_TYPE_NAME = "OffsetPageInfo";
 
   /** Canonical field -> printed type, kept in declaration order for the injected SDL. */
   private static final Map<String, String> PAGINATION_FIELDS = new LinkedHashMap<>();
@@ -67,7 +67,7 @@ public final class SqrlPaginationUtil {
   }
 
   /**
-   * If the schema references {@code SqrlPagination} but does not define it, append the canonical
+   * If the schema references {@code OffsetPageInfo} but does not define it, append the canonical
    * definition (plus any missing scalar declarations). A user-provided definition is left untouched
    * here and validated later by {@link #validatePaginationType} within the schema validator's error
    * scope. Returns the (possibly rewritten) source.
@@ -100,7 +100,7 @@ public final class SqrlPaginationUtil {
   }
 
   /**
-   * Validates that a user-provided {@code SqrlPagination} type matches the canonical definition.
+   * Validates that a user-provided {@code OffsetPageInfo} type matches the canonical definition.
    * Must be called from within the schema validator so mismatches are reported like other schema
    * errors. No-op when the type is absent (it will have been injected) or unreferenced.
    */
@@ -119,7 +119,7 @@ public final class SqrlPaginationUtil {
 
   /**
    * Detects the page wrapper shape: an object type with exactly two fields, one a list of an object
-   * type (the results) and the other of type {@code SqrlPagination}. Returns the element object
+   * type (the results) and the other of type {@code OffsetPageInfo}. Returns the element object
    * type when the shape matches.
    */
   public static Optional<ObjectTypeDefinition> getPagedElementType(

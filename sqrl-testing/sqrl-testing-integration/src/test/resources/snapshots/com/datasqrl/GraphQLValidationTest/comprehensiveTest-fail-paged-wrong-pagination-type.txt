@@ -19,8 +19,8 @@ in script:comprehensiveTest.sqrl [51:1]:
 CustomerTimeWindow := SELECT
 ^
 
-[FATAL] User-defined SqrlPagination does not match the expected definition:
-type SqrlPagination {
+[FATAL] User-defined OffsetPageInfo does not match the expected definition:
+type OffsetPageInfo {
   totalRecords: Long!
   pageSize: Int!
   currentPage: Int!
@@ -36,6 +36,6 @@ type SqrlPagination {
 in script:comprehensiveTest-fail-paged-wrong-pagination-type.graphqls [6:1]:
 scalar Long
 
-type SqrlPagination {
+type OffsetPageInfo {
 ^
 
