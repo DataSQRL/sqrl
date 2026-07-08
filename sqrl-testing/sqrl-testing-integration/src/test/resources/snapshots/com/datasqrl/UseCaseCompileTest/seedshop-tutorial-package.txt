@@ -718,45 +718,46 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SinkTable_ex1`
 SELECT *
- FROM `default_catalog`.`default_database`.`CustomerPromotion`
+FROM `default_catalog`.`default_database`.`CustomerPromotion`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerPromotion_1`
- SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerPromotion`
- ;
- INSERT INTO `default_catalog`.`default_database`.`Customers_2`
-  SELECT *
-   FROM `default_catalog`.`default_database`.`_CustomersStream`
-  ;
-  INSERT INTO `default_catalog`.`default_database`.`CustomersOrderStats_3`
-   SELECT *
-    FROM `default_catalog`.`default_database`.`CustomersOrderStats`
-   ;
-   INSERT INTO `default_catalog`.`default_database`.`CustomersPastPurchases_4`
-    SELECT *
-     FROM `default_catalog`.`default_database`.`CustomersPastPurchases`
-    ;
-    INSERT INTO `default_catalog`.`default_database`.`CustomersSpending_5`
-     SELECT `customerid`, `week`, `spend`, `saved`, `hash_columns`(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
-      FROM `default_catalog`.`default_database`.`CustomersSpending`
-     ;
-     INSERT INTO `default_catalog`.`default_database`.`Orders_6`
-      SELECT `id`, `customerid`, `time`, `to_jsonb`(`items`) AS `items`
-       FROM `default_catalog`.`default_database`.`Orders`
-      ;
-      INSERT INTO `default_catalog`.`default_database`.`OrdersTotals_7`
-       SELECT `id`, `time`, `customerid`, `price`, `saving`, `hash_columns`(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
-        FROM `default_catalog`.`default_database`.`OrdersTotals`
-       ;
-       INSERT INTO `default_catalog`.`default_database`.`Products_8`
-        SELECT *
-         FROM `default_catalog`.`default_database`.`_ProductsStream`
-        ;
-        INSERT INTO `default_catalog`.`default_database`.`ProductsByCountry_9`
-         SELECT `productid`, `country`, `quantity`, `spend`, `weight`, `hash_columns`(`productid`, `country`) AS `__pk_hash`
-          FROM `default_catalog`.`default_database`.`ProductsByCountry`
-         ;
-         END
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerPromotion`
+;
+INSERT INTO `default_catalog`.`default_database`.`Customers_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`_CustomersStream`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomersOrderStats_3`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomersOrderStats`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomersPastPurchases_4`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomersPastPurchases`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomersSpending_5`
+SELECT `customerid`, `week`, `spend`, `saved`, `hash_columns`(`customerid`, `week`, `spend`, `saved`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomersSpending`
+;
+INSERT INTO `default_catalog`.`default_database`.`Orders_6`
+SELECT `id`, `customerid`, `time`, `to_jsonb`(`items`) AS `items`
+FROM `default_catalog`.`default_database`.`Orders`
+;
+INSERT INTO `default_catalog`.`default_database`.`OrdersTotals_7`
+SELECT `id`, `time`, `customerid`, `price`, `saving`, `hash_columns`(`id`, `time`, `customerid`, `price`, `saving`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrdersTotals`
+;
+INSERT INTO `default_catalog`.`default_database`.`Products_8`
+SELECT *
+FROM `default_catalog`.`default_database`.`_ProductsStream`
+;
+INSERT INTO `default_catalog`.`default_database`.`ProductsByCountry_9`
+SELECT `productid`, `country`, `quantity`, `spend`, `weight`, `hash_columns`(`productid`, `country`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`ProductsByCountry`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [
@@ -788,8 +789,7 @@ CREATE INDEX IF NOT EXISTS "Customers_hash_c3" ON "Customers" USING hash ("email
 CREATE INDEX IF NOT EXISTS "OrdersTotals_hash_c0" ON "OrdersTotals" USING hash ("id");
 CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customerid");
 CREATE INDEX IF NOT EXISTS "ProductsByCountry_hash_c0" ON "ProductsByCountry" USING hash ("productid");
-CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ))
->>>postgres-views.sql
+CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsvector('english', coalesce("name", '') || ' ' || coalesce("category", '') ));
 
 >>>vertx.json
 {

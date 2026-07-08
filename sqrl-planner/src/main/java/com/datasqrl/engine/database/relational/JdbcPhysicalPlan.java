@@ -63,22 +63,27 @@ public record JdbcPhysicalPlan(
     artifacts.add(new DeploymentArtifact("-views.sql", toSql(getStatementsForType(Type.VIEW))));
 
     standaloneExtensionStatements.stream()
-        .map(stmt -> new DeploymentArtifact(formatSuffix(stmt.getName()), stmt.getSql()))
+        .map(stmt -> new DeploymentArtifact(formatSuffix(stmt.getName()), toSql(stmt)))
         .forEach(artifacts::add);
 
     return List.copyOf(artifacts);
   }
 
   private String buildSchemaContent() {
+    // No need for ';' here in joining, cause toSql takes care of statement delimiters.
     return Stream.of(Type.EXTENSION, Type.TABLE, Type.INDEX)
         .map(this::getStatementsForType)
         .filter(Predicate.not(List::isEmpty))
         .map(JdbcPhysicalPlan::toSql)
-        .collect(Collectors.joining(";\n\n"));
+        .collect(Collectors.joining("\n"));
   }
 
   private static String toSql(List<JdbcStatement> statements) {
     return DeploymentArtifact.toSqlString(statements.stream().map(JdbcStatement::getSql));
+  }
+
+  private static String toSql(JdbcStatement stmt) {
+    return DeploymentArtifact.toSqlString(stmt.getSql());
   }
 
   private static String formatSuffix(String name) {

@@ -520,53 +520,54 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
- FROM `default_catalog`.`default_database`.`CustomerStream`
+FROM `default_catalog`.`default_database`.`CustomerStream`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerStream`
- ;
- INSERT INTO `default_catalog`.`default_database`.`ObjComplex_3`
-  SELECT *
-   FROM `default_catalog`.`default_database`.`ObjComplex`
-  ;
-  INSERT INTO `default_catalog`.`default_database`.`jsonArrayAggTable_4`
-   SELECT *
-    FROM `default_catalog`.`default_database`.`jsonArrayAggTable`
-   ;
-   INSERT INTO `default_catalog`.`default_database`.`jsonArrayTable_5`
-    SELECT *
-     FROM `default_catalog`.`default_database`.`jsonArrayTable`
-    ;
-    INSERT INTO `default_catalog`.`default_database`.`jsonConcatTable_6`
-     SELECT *
-      FROM `default_catalog`.`default_database`.`jsonConcatTable`
-     ;
-     INSERT INTO `default_catalog`.`default_database`.`jsonExistsTable_7`
-      SELECT *
-       FROM `default_catalog`.`default_database`.`jsonExistsTable`
-      ;
-      INSERT INTO `default_catalog`.`default_database`.`jsonExtractTable_8`
-       SELECT *
-        FROM `default_catalog`.`default_database`.`jsonExtractTable`
-       ;
-       INSERT INTO `default_catalog`.`default_database`.`jsonObjectAggTable_9`
-        SELECT *
-         FROM `default_catalog`.`default_database`.`jsonObjectAggTable`
-        ;
-        INSERT INTO `default_catalog`.`default_database`.`jsonQueryTable_10`
-         SELECT *
-          FROM `default_catalog`.`default_database`.`jsonQueryTable`
-         ;
-         INSERT INTO `default_catalog`.`default_database`.`jsonToStringTable_11`
-          SELECT *
-           FROM `default_catalog`.`default_database`.`jsonToStringTable`
-          ;
-          INSERT INTO `default_catalog`.`default_database`.`toJsonTable_12`
-           SELECT *
-            FROM `default_catalog`.`default_database`.`toJsonTable`
-           ;
-           END
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerStream`
+;
+INSERT INTO `default_catalog`.`default_database`.`ObjComplex_3`
+SELECT *
+FROM `default_catalog`.`default_database`.`ObjComplex`
+;
+INSERT INTO `default_catalog`.`default_database`.`jsonArrayAggTable_4`
+SELECT *
+FROM `default_catalog`.`default_database`.`jsonArrayAggTable`
+;
+INSERT INTO `default_catalog`.`default_database`.`jsonArrayTable_5`
+SELECT *
+FROM `default_catalog`.`default_database`.`jsonArrayTable`
+;
+INSERT INTO `default_catalog`.`default_database`.`jsonConcatTable_6`
+SELECT *
+FROM `default_catalog`.`default_database`.`jsonConcatTable`
+;
+INSERT INTO `default_catalog`.`default_database`.`jsonExistsTable_7`
+SELECT *
+FROM `default_catalog`.`default_database`.`jsonExistsTable`
+;
+INSERT INTO `default_catalog`.`default_database`.`jsonExtractTable_8`
+SELECT *
+FROM `default_catalog`.`default_database`.`jsonExtractTable`
+;
+INSERT INTO `default_catalog`.`default_database`.`jsonObjectAggTable_9`
+SELECT *
+FROM `default_catalog`.`default_database`.`jsonObjectAggTable`
+;
+INSERT INTO `default_catalog`.`default_database`.`jsonQueryTable_10`
+SELECT *
+FROM `default_catalog`.`default_database`.`jsonQueryTable`
+;
+INSERT INTO `default_catalog`.`default_database`.`jsonToStringTable_11`
+SELECT *
+FROM `default_catalog`.`default_database`.`jsonToStringTable`
+;
+INSERT INTO `default_catalog`.`default_database`.`toJsonTable_12`
+SELECT *
+FROM `default_catalog`.`default_database`.`toJsonTable`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [ ],

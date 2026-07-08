@@ -231,21 +231,22 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`HighTempAlert_1`
 SELECT `sensorid`, `temperature`, `event_time`, `hash_columns`(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
- FROM `default_catalog`.`default_database`.`HighTempAlert`
+FROM `default_catalog`.`default_database`.`HighTempAlert`
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`SensorMaxTemp`
- ;
- INSERT INTO `default_catalog`.`default_database`.`SensorReading_3`
-  SELECT `sensorid`, `temperature`, `event_time`, `hash_columns`(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
-   FROM `default_catalog`.`default_database`.`SensorReading`
-  ;
-  INSERT INTO `default_catalog`.`default_database`.`SensorReadingSubscription_4`
-   SELECT *
-    FROM `default_catalog`.`default_database`.`SensorReadingSubscription`
-   ;
-   END
+SELECT *
+FROM `default_catalog`.`default_database`.`SensorMaxTemp`
+;
+INSERT INTO `default_catalog`.`default_database`.`SensorReading_3`
+SELECT `sensorid`, `temperature`, `event_time`, `hash_columns`(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`SensorReading`
+;
+INSERT INTO `default_catalog`.`default_database`.`SensorReadingSubscription_4`
+SELECT *
+FROM `default_catalog`.`default_database`.`SensorReadingSubscription`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [
@@ -277,8 +278,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "HighTempAlert" ("sensorid" INTEGER NOT NULL, "temperature" NUMERIC NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "SensorMaxTemp" ("sensorid" INTEGER NOT NULL, "maxTemp" NUMERIC NOT NULL, PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" NUMERIC NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
->>>postgres-views.sql
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" NUMERIC NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
 >>>vertx.json
 {

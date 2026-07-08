@@ -152,13 +152,14 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyStringTable_1`
 SELECT *
- FROM `default_catalog`.`default_database`.`MyStringTable`
+FROM `default_catalog`.`default_database`.`MyStringTable`
 ;
 INSERT INTO `default_catalog`.`default_database`.`MyTable_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`MyTable`
- ;
- END
+SELECT *
+FROM `default_catalog`.`default_database`.`MyTable`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [ ],
@@ -166,8 +167,7 @@ INSERT INTO `default_catalog`.`default_database`.`MyTable_2`
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "MyStringTable" ("val" TEXT NOT NULL, PRIMARY KEY ("val"));
-CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"))
->>>postgres-views.sql
+CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"));
 
 >>>vertx.json
 {

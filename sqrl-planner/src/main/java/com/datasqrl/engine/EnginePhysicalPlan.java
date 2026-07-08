@@ -17,6 +17,7 @@ package com.datasqrl.engine;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +27,8 @@ import org.apache.flink.configuration.ConfigurationUtils;
 
 /** A jackson serializable object */
 public interface EnginePhysicalPlan {
+
+  String SQL_STATEMENT_DELIMITER = ";\n";
 
   @JsonIgnore
   default List<DeploymentArtifact> getDeploymentArtifacts() {
@@ -38,12 +41,38 @@ public interface EnginePhysicalPlan {
       this(fileSuffix, content, ArtifactType.fromObject(content));
     }
 
-    public static String toSqlString(Stream<String> statements) {
-      return statements.collect(Collectors.joining(";\n"));
+    @JsonIgnore
+    public boolean isEmpty() {
+      if (content == null) {
+        return true;
+      }
+
+      if (content instanceof String str) {
+        return str.isBlank();
+      }
+
+      return false;
+    }
+
+    public static String toSqlString(String... statements) {
+      return toSqlString(Arrays.stream(statements));
     }
 
     public static String toSqlString(Collection<String> statements) {
       return toSqlString(statements.stream());
+    }
+
+    public static String toSqlString(Stream<String> statements) {
+      var sqlStr =
+          statements
+              .filter(statement -> !statement.isBlank())
+              .collect(Collectors.joining(SQL_STATEMENT_DELIMITER));
+
+      if (sqlStr.isBlank() || sqlStr.stripTrailing().endsWith(";")) {
+        return sqlStr;
+      }
+
+      return sqlStr + SQL_STATEMENT_DELIMITER;
     }
 
     public static String toYamlString(Configuration config) {

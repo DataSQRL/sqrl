@@ -37,7 +37,8 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `customer_id_count`
 SELECT `customerid`, COUNT(*) AS `numEntries`
- FROM `Customer`
- GROUP BY `customerid`
+FROM `Customer`
+GROUP BY `customerid`
 ;
-END
+END;
+
