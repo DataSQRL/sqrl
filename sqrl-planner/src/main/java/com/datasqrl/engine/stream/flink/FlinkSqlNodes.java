@@ -21,11 +21,11 @@ import com.datasqrl.sql.SqlCallRewriter;
 import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.type.RelDataType;
@@ -171,7 +171,7 @@ public class FlinkSqlNodes {
           likeTable.getDistribution(),
           createPartitionKeys(likeTable.getPartitionKeyList()),
           likeTable.getWatermark().orElse(null),
-          SqlLiteral.createCharString(likeTable.getComment(), SqlParserPos.ZERO),
+          createStringLiteral(likeTable.getComment()),
           likeTable.getTableLike(),
           likeTable.isTemporary(),
           likeTable.ifNotExists);
@@ -186,28 +186,28 @@ public class FlinkSqlNodes {
         createTable.getDistribution(),
         createPartitionKeys(createTable.getPartitionKeyList()),
         createTable.getWatermark().orElse(null),
-        SqlLiteral.createCharString(createTable.getComment(), SqlParserPos.ZERO),
+        createStringLiteral(createTable.getComment()),
         createTable.isTemporary(),
         createTable.ifNotExists);
   }
 
   public static SqlNodeList createProperties(Map<String, String> options) {
-    List<SqlNode> props =
-        options.entrySet().stream()
-            .map(
-                option ->
-                    new SqlTableOption(
-                        SqlLiteral.createCharString(option.getKey(), SqlParserPos.ZERO),
-                        SqlLiteral.createCharString(
-                            Objects.toString(option.getValue()), SqlParserPos.ZERO),
-                        SqlParserPos.ZERO))
-            .collect(Collectors.toList());
+    var sqlNodes = new ArrayList<SqlNode>(options.size());
 
-    return new SqlNodeList(props, SqlParserPos.ZERO);
+    new TreeMap<>(options)
+        .forEach(
+            (key, val) -> {
+              var keyLiteral = createStringLiteral(key);
+              var valLiteral = createStringLiteral(val);
+
+              sqlNodes.add(new SqlTableOption(keyLiteral, valLiteral, SqlParserPos.ZERO));
+            });
+
+    return new SqlNodeList(sqlNodes, SqlParserPos.ZERO);
   }
 
   public static Map<String, String> resolveProperties(SqlNodeList nodeList) {
-    var res = new LinkedHashMap<String, String>();
+    var res = new HashMap<String, String>();
 
     for (var node : nodeList) {
       var option = (SqlTableOption) node;
@@ -220,7 +220,7 @@ public class FlinkSqlNodes {
   }
 
   public static Map<String, String> resolveProperties(Map<String, String> props) {
-    var res = new LinkedHashMap<String, String>();
+    var res = new TreeMap<String, String>();
     var resolver = NonSecretEnvVarResolver.builder().strict(false).build();
 
     props.forEach(
@@ -249,7 +249,7 @@ public class FlinkSqlNodes {
         original.getDistribution(),
         createPartitionKeys(original.getPartitionKeyList()),
         original.getWatermark().orElse(null),
-        createComment(original.getComment()),
+        createStringLiteral(original.getComment()),
         original.isTemporary(),
         original.ifNotExists);
   }
@@ -285,7 +285,7 @@ public class FlinkSqlNodes {
         original.getDistribution(),
         createPartitionKeys(original.getPartitionKeyList()),
         original.getWatermark().orElse(null),
-        createComment(original.getComment()),
+        createStringLiteral(original.getComment()),
         likeClause,
         original.isTemporary(),
         original.ifNotExists);
@@ -299,7 +299,7 @@ public class FlinkSqlNodes {
   }
 
   @Nullable
-  public static SqlCharStringLiteral createComment(@Nullable String comment) {
+  public static SqlCharStringLiteral createStringLiteral(@Nullable String comment) {
     return comment == null ? null : SqlLiteral.createCharString(comment, SqlParserPos.ZERO);
   }
 

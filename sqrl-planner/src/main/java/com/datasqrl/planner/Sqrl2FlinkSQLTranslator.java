@@ -98,7 +98,6 @@ import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOrderBy;
@@ -450,7 +449,7 @@ public class Sqrl2FlinkSQLTranslator {
               createView.getReplace(),
               createView.isTemporary(),
               createView.isIfNotExists(),
-              SqlLiteral.createCharString(createView.getComment(), SqlParserPos.ZERO),
+              FlinkSqlNodes.createStringLiteral(createView.getComment()),
               null);
     } else {
       var alterView = (SqlAlterViewAs) viewDef;

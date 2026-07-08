@@ -33,7 +33,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParserPos;
@@ -115,9 +114,7 @@ public class FlinkTableBuilder {
               new SqlRegularColumn(
                   columnMetadata.getParserPosition(),
                   columnMetadata.getName(),
-                  Optional.ofNullable(columnMetadata.getComment())
-                      .map(comment -> SqlLiteral.createCharString(comment, SqlParserPos.ZERO))
-                      .orElse(null),
+                  FlinkSqlNodes.createStringLiteral(columnMetadata.getComment()),
                   columnMetadata.getType(),
                   null);
           columnList.set(i, regularColumn);
