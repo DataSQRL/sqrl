@@ -145,10 +145,7 @@ LIKE `Iceberg_sink_ex1__schema`;
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Iceberg_sink_ex1`
 SELECT *
- FROM `default_catalog`.`sources`.`ApplicationsStream`
+FROM `default_catalog`.`sources`.`ApplicationsStream`
 ;
-END
->>>iceberg-schema.sql
-
->>>iceberg-views.sql
+END;
 

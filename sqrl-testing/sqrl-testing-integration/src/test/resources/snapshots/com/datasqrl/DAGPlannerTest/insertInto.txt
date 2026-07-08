@@ -93,14 +93,15 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `customer_id_count`
 SELECT `customerid`, COUNT(*) AS `numEntries`
- FROM `Customer`
- GROUP BY `customerid`
+FROM `Customer`
+GROUP BY `customerid`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
- SELECT *
-  FROM `default_catalog`.`default_database`.`Customer`
- ;
- END
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [ ],
