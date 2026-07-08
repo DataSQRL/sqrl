@@ -17,12 +17,18 @@ package com.datasqrl.server;
 
 import static com.datasqrl.server.util.GraphqlCheckUtil.checkState;
 
+import com.datasqrl.server.graphql.CustomScalars;
+import graphql.Scalars;
 import graphql.language.FieldDefinition;
 import graphql.language.ListType;
 import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.Type;
 import graphql.language.TypeName;
+import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLNonNull;
+import graphql.schema.GraphQLObjectType;
+import graphql.schema.GraphQLOutputType;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.LinkedHashMap;
@@ -58,6 +64,27 @@ public final class OffsetPageInfoUtil {
   }
 
   private static final String CANONICAL_SDL = buildCanonicalSdl();
+
+  /** Printed type -> GraphQL type, used to build the schema type from the canonical fields. */
+  private static final Map<String, GraphQLOutputType> GRAPHQL_TYPES =
+      Map.of(
+          "Long!", GraphQLNonNull.nonNull(CustomScalars.LONG),
+          "Int!", GraphQLNonNull.nonNull(Scalars.GraphQLInt),
+          "Boolean!", GraphQLNonNull.nonNull(Scalars.GraphQLBoolean),
+          "Int", Scalars.GraphQLInt,
+          "DateTime", CustomScalars.FLEXIBLE_DATETIME);
+
+  /** Builds the canonical {@code OffsetPageInfo} object type for generated schemas. */
+  public static GraphQLObjectType createPageInfoType() {
+    var builder = GraphQLObjectType.newObject().name(PAGINATION_TYPE_NAME);
+    PAGINATION_FIELDS.forEach(
+        (name, type) ->
+            builder.field(
+                GraphQLFieldDefinition.newFieldDefinition()
+                    .name(name)
+                    .type(GRAPHQL_TYPES.get(type))));
+    return builder.build();
+  }
 
   private static String buildCanonicalSdl() {
     var sb = new StringBuilder("type ").append(PAGINATION_TYPE_NAME).append(" {\n");

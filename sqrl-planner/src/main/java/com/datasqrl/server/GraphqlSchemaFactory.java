@@ -43,6 +43,7 @@ import graphql.schema.GraphQLArgument;
 import graphql.schema.GraphQLDirective;
 import graphql.schema.GraphQLEnumType;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import graphql.schema.GraphQLSchema;
@@ -72,11 +73,13 @@ public class GraphqlSchemaFactory {
   private final boolean extendedScalarTypes;
   private final boolean addApiDirective;
   private final int defaultLimit;
+  private final boolean generatePaginatedResults;
 
   public GraphqlSchemaFactory(CompilerConfig config) {
     this.extendedScalarTypes = config.isExtendedScalarTypes();
     this.addApiDirective = !config.getApiConfig().isGraphQLProtocolOnly();
     this.defaultLimit = config.getApiConfig().getDefaultLimit();
+    this.generatePaginatedResults = config.getApiConfig().generatePaginatedResults();
   }
 
   public GraphQLSchema generate(ServerPhysicalPlan serverPlan) {
@@ -284,9 +287,7 @@ public class GraphqlSchemaFactory {
 
       final var type =
           tableFunctionsType == AccessModifier.QUERY
-              ? (GraphQLOutputType)
-                  wrapMultiplicity(
-                      createTypeReference(tableFunction), tableFunction.getMultiplicity())
+              ? createQueryResultType(tableFunction)
               : createTypeReference(
                   tableFunction); // type is nullable because there can be no update in the
       // subscription
@@ -346,13 +347,15 @@ public class GraphqlSchemaFactory {
     }
 
     // reference the type that will be defined when the table function relationship is processed
+    var fieldType =
+        relationship.getVisibility().access() == AccessModifier.QUERY
+            ? createQueryResultType(relationship)
+            : (GraphQLOutputType)
+                wrapMultiplicity(createTypeReference(relationship), relationship.getMultiplicity());
     var field =
         GraphQLFieldDefinition.newFieldDefinition()
             .name(fieldName)
-            .type(
-                (GraphQLOutputType)
-                    wrapMultiplicity(
-                        createTypeReference(relationship), relationship.getMultiplicity()))
+            .type(fieldType)
             .arguments(createArguments(relationship));
     relationship.getDocumentation().getDocStringOpt().ifPresent(field::description);
 
@@ -430,6 +433,44 @@ public class GraphqlSchemaFactory {
             ? tableFunction.getBaseTable().getName()
             : uniquifyNameForPath(tableFunction.getFullPath());
     return new GraphQLTypeReference(typeName);
+  }
+
+  /**
+   * Result type of a query table function: when paginated results are enabled, MANY results are
+   * wrapped in a {@code <Type>Page {results, pagination}} type so the server computes {@code
+   * OffsetPageInfo} metadata; otherwise the plain multiplicity-wrapped type.
+   */
+  private GraphQLOutputType createQueryResultType(SqrlTableFunction tableFunction) {
+    if (generatePaginatedResults && tableFunction.getMultiplicity() == Multiplicity.MANY) {
+      return GraphQLNonNull.nonNull(createPageType(tableFunction));
+    }
+    return (GraphQLOutputType)
+        wrapMultiplicity(createTypeReference(tableFunction), tableFunction.getMultiplicity());
+  }
+
+  private GraphQLTypeReference createPageType(SqrlTableFunction tableFunction) {
+    var elementType = (GraphQLTypeReference) createTypeReference(tableFunction);
+    var pageTypeName = elementType.getName() + "Page";
+    if (!definedTypeNames.contains(pageTypeName)) {
+      definedTypeNames.add(pageTypeName);
+      objectTypes.add(
+          GraphQLObjectType.newObject()
+              .name(pageTypeName)
+              .field(
+                  GraphQLFieldDefinition.newFieldDefinition()
+                      .name("results")
+                      .type((GraphQLOutputType) wrapMultiplicity(elementType, Multiplicity.MANY)))
+              .field(
+                  GraphQLFieldDefinition.newFieldDefinition()
+                      .name("pagination")
+                      .type(new GraphQLTypeReference(OffsetPageInfoUtil.PAGINATION_TYPE_NAME)))
+              .build());
+      if (!definedTypeNames.contains(OffsetPageInfoUtil.PAGINATION_TYPE_NAME)) {
+        definedTypeNames.add(OffsetPageInfoUtil.PAGINATION_TYPE_NAME);
+        objectTypes.add(OffsetPageInfoUtil.createPageInfoType());
+      }
+    }
+    return new GraphQLTypeReference(pageTypeName);
   }
 
   public static final String API_DIRECTIVE_NAME = "api";

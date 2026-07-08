@@ -79,6 +79,8 @@ public interface PackageJson {
     int getMaxResultDepth();
 
     int getDefaultLimit();
+
+    boolean generatePaginatedResults();
   }
 
   interface ExplainConfig {

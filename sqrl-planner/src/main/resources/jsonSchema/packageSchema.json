@@ -97,6 +97,9 @@
             },
             "default-limit": {
               "type": "integer"
+            },
+            "paginated-results": {
+              "type": "boolean"
             }
           },
           "additionalProperties": false

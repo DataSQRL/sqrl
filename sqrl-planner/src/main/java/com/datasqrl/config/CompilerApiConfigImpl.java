@@ -57,6 +57,11 @@ public class CompilerApiConfigImpl implements CompilerApiConfig {
     return sqrlConfig.asInt("default-limit").get();
   }
 
+  @Override
+  public boolean generatePaginatedResults() {
+    return sqrlConfig.asBool("paginated-results").withDefault(false).get();
+  }
+
   public enum Endpoints {
     OPS_ONLY, // only support the pre-defined operations in the GraphQL API, do not support flexible
     // GraphQL queries TODO: not yet implemented
