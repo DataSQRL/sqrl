@@ -22,8 +22,8 @@ import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.WorkspacePaths;
+import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
-import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -98,6 +98,7 @@ import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOrderBy;
@@ -106,11 +107,11 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.PipelineOptions;
-import org.apache.flink.sql.parser.ddl.SqlAlterViewAs;
-import org.apache.flink.sql.parser.ddl.SqlCreateTable;
-import org.apache.flink.sql.parser.ddl.SqlCreateTableLike;
-import org.apache.flink.sql.parser.ddl.SqlCreateView;
-import org.apache.flink.sql.parser.ddl.SqlTableLike;
+import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
+import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
+import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
+import org.apache.flink.sql.parser.ddl.view.SqlAlterViewAs;
+import org.apache.flink.sql.parser.ddl.view.SqlCreateView;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.CompiledPlan;
@@ -443,20 +444,20 @@ public class Sqrl2FlinkSQLTranslator {
           ? createView
           : new SqlCreateView(
               createView.getParserPosition(),
-              createView.getViewName(),
+              createView.getName(),
               createView.getFieldList(),
               updatedQuery,
               createView.getReplace(),
               createView.isTemporary(),
               createView.isIfNotExists(),
-              createView.getComment().orElse(null),
-              createView.getProperties().orElse(null));
+              SqlLiteral.createCharString(createView.getComment(), SqlParserPos.ZERO),
+              null);
     } else {
       var alterView = (SqlAlterViewAs) viewDef;
       return updatedQuery == alterView.getNewQuery()
           ? alterView
           : new SqlAlterViewAs(
-              alterView.getParserPosition(), alterView.getViewIdentifier(), updatedQuery);
+              alterView.getParserPosition(), alterView.getOperator().getNameAsId(), updatedQuery);
     }
   }
 
@@ -761,8 +762,8 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public SqlCreateView createScanView(String viewName, ObjectIdentifier id) {
-    return FlinkSqlNodeFactory.createView(
-        viewName, FlinkSqlNodeFactory.selectAllFromTable(FlinkSqlNodeFactory.identifier(id)));
+    return FlinkSqlNodes.createView(
+        viewName, FlinkSqlNodes.selectAllFromTable(FlinkSqlNodes.identifier(id)));
   }
 
   private static final String TEMP_VIEW_SUFFIX = "__view";
@@ -836,16 +837,16 @@ public class Sqrl2FlinkSQLTranslator {
       Optional<MutationBuilder> mutationBuilder) {
     var tableSqlNode = parseSQL(createTableSql);
     checkArgument(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
-    var tableDefinition = FlinkSqlNodeFactory.resolveTableProperties((SqlCreateTable) tableSqlNode);
+    var tableDefinition = FlinkSqlNodes.resolveTableProperties((SqlCreateTable) tableSqlNode);
     var fullTable = tableDefinition;
-    var origTableName = fullTable.getTableName().getSimple();
+    var origTableName = fullTable.getName().getSimple();
     final var finalTableName = tableNameModifier.apply(origTableName);
-    String completeCreateTableSql = "";
+    var completeCreateTableSql = "";
     if (fullTable instanceof SqlCreateTableLike likeTable) {
       // Check if the LIKE clause is referencing an external schema
-      SqlTableLike likeClause = likeTable.getTableLike();
+      var likeClause = likeTable.getTableLike();
       var likeTableName = likeClause.getSourceTable().toString();
-      var likeTableProps = FlinkSqlNodeFactory.resolvePropertiesToMap(likeTable.getPropertyList());
+      var likeTableProps = FlinkSqlNodes.resolveProperties(likeTable.getProperties());
       Optional<SchemaConversionResult> schema =
           schemaLoader.loadSchema(finalTableName, likeTableName, likeTableProps);
       if (schema.isPresent()) {
@@ -857,46 +858,22 @@ public class Sqrl2FlinkSQLTranslator {
           connectorOptions = schema.get().connectorOptions();
         }
         var schemaTable =
-            FlinkSqlNodeFactory.createTable(
-                schemaTableName, schema.get().type(), connectorOptions, true);
+            FlinkSqlNodes.createTable(schemaTableName, schema.get().type(), connectorOptions, true);
         executeSqlNode(schemaTable);
         completeCreateTableSql += RelToFlinkSql.convertToString(schemaTable) + ";\n";
 
         likeClause =
             new SqlTableLike(
                 likeClause.getParserPosition(),
-                FlinkSqlNodeFactory.identifier(schemaTableName),
+                FlinkSqlNodes.identifier(schemaTableName),
                 likeClause.getOptions());
       }
-      fullTable =
-          new SqlCreateTableLike(
-              tableDefinition.getParserPosition(),
-              FlinkSqlNodeFactory.identifier(finalTableName),
-              tableDefinition.getColumnList(),
-              tableDefinition.getTableConstraints(),
-              tableDefinition.getPropertyList(),
-              tableDefinition.getDistribution(),
-              tableDefinition.getPartitionKeyList(),
-              tableDefinition.getWatermark().orElse(null),
-              tableDefinition.getComment().orElse(null),
-              likeClause,
-              tableDefinition.isTemporary(),
-              tableDefinition.ifNotExists);
-    } else if (!finalTableName.equals(tableDefinition.getTableName().getSimple())) {
+
+      fullTable = FlinkSqlNodes.createTableLike(finalTableName, tableDefinition, likeClause);
+
+    } else if (!finalTableName.equals(tableDefinition.getName().getSimple())) {
       // Replace name but leave everything else
-      fullTable =
-          new SqlCreateTable(
-              tableDefinition.getParserPosition(),
-              FlinkSqlNodeFactory.identifier(finalTableName),
-              tableDefinition.getColumnList(),
-              tableDefinition.getTableConstraints(),
-              tableDefinition.getPropertyList(),
-              tableDefinition.getDistribution(),
-              tableDefinition.getPartitionKeyList(),
-              tableDefinition.getWatermark().orElse(null),
-              tableDefinition.getComment().orElse(null),
-              tableDefinition.isTemporary(),
-              tableDefinition.ifNotExists);
+      fullTable = FlinkSqlNodes.createTable(finalTableName, tableDefinition);
     }
     MutationTableBuilder mutationBld = null;
     if (mutationBuilder.isPresent()) { // it's an internal CREATE TABLE for a mutation
@@ -999,7 +976,7 @@ public class Sqrl2FlinkSQLTranslator {
   public void insertInto(
       RelNode relNode, ObjectIdentifier sinkTableId, @Nullable Integer batchIdx) {
     var selectQuery = RelToFlinkSql.convertToSqlNode(relNode);
-    planBuilder.addInsert(FlinkSqlNodeFactory.createInsert(selectQuery, sinkTableId), batchIdx);
+    planBuilder.addInsert(FlinkSqlNodes.createInsert(selectQuery, sinkTableId), batchIdx);
   }
 
   public void insertInto(RichSqlInsert insert) {
@@ -1032,14 +1009,14 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public SqlNode addUserDefinedFunction(String name, String clazz, boolean isSystem) {
-    var functionSql = FlinkSqlNodeFactory.createFunction(name, clazz, isSystem);
+    var functionSql = FlinkSqlNodes.createFunction(name, clazz, isSystem);
     var addFctOp = executeSqlNode(functionSql);
     // Function definitions are not in the compiled plan, have to add them explicitly but with fully
     // resolved identifier
     if (addFctOp instanceof CreateCatalogFunctionOperation operation) {
       functionSql =
-          FlinkSqlNodeFactory.createFunction(
-              FlinkSqlNodeFactory.identifier(operation.getFunctionIdentifier()), clazz, isSystem);
+          FlinkSqlNodes.createFunction(
+              FlinkSqlNodes.identifier(operation.getFunctionIdentifier()), clazz, isSystem);
     }
     planBuilder.addFullyResolvedFunction(RelToFlinkSql.convertToString(functionSql));
     return functionSql;
