@@ -118,13 +118,14 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Category_1`
 SELECT `categoryid`, `name`, `description`, `updateTime`, `hash_columns`(`categoryid`, `name`, `description`, `updateTime`) AS `__pk_hash`
- FROM `default_catalog`.`default_database`.`Category`
+FROM `default_catalog`.`default_database`.`Category`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CategoryDistinct_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`Category`
- ;
- END
+SELECT *
+FROM `default_catalog`.`default_database`.`Category`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [ ],

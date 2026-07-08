@@ -162,13 +162,14 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Orders_1`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
- FROM `default_catalog`.`default_database`.`Orders`
+FROM `default_catalog`.`default_database`.`Orders`
 ;
 INSERT INTO `default_catalog`.`default_database`.`SpecialOrderSummary_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`SpecialOrderSummary`
- ;
- END
+SELECT *
+FROM `default_catalog`.`default_database`.`SpecialOrderSummary`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [ ],

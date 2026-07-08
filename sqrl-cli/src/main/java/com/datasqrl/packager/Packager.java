@@ -30,7 +30,6 @@ import com.datasqrl.util.FlinkCompileException;
 import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import java.io.File;
 import java.io.IOException;
@@ -136,15 +135,20 @@ public class Packager {
   private void writePlan(String name, EnginePhysicalPlan plan, Path planDir) {
     Files.createDirectories(planDir);
 
-    DefaultPrettyPrinter prettyPrinter = new DefaultPrettyPrinter();
+    var prettyPrinter = new DefaultPrettyPrinter();
     prettyPrinter.indentArraysWith(DefaultIndenter.SYSTEM_LINEFEED_INSTANCE);
-    ObjectWriter jsonWriter =
+    var jsonWriter =
         SqrlObjectMapper.INSTANCE.enable(SerializationFeature.INDENT_OUTPUT).writer(prettyPrinter);
 
     var artifacts =
         ListUtils.union(
             plan.getDeploymentArtifacts(), List.of(new DeploymentArtifact(".json", plan)));
+
     for (var artifact : artifacts) {
+      if (artifact.isEmpty()) {
+        continue;
+      }
+
       var filePath = planDir.resolve(name + artifact.fileSuffix()).toAbsolutePath();
 
       switch (artifact.artifactType()) {

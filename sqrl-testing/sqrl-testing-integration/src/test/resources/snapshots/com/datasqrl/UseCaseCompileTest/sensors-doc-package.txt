@@ -214,21 +214,22 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`HighTempAlert_1`
 SELECT *
- FROM `default_catalog`.`default_database`.`HighTempAlert`
+FROM `default_catalog`.`default_database`.`HighTempAlert`
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorAnalysis_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`SensorAnalysis`
- ;
- INSERT INTO `default_catalog`.`default_database`.`SensorMaxTempLastMin_3`
-  SELECT *
-   FROM `default_catalog`.`default_database`.`_SensorMaxTempLastMinWindow`
-  ;
-  INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
-   SELECT *
-    FROM `default_catalog`.`default_database`.`SensorReading`
-   ;
-   END
+SELECT *
+FROM `default_catalog`.`default_database`.`SensorAnalysis`
+;
+INSERT INTO `default_catalog`.`default_database`.`SensorMaxTempLastMin_3`
+SELECT *
+FROM `default_catalog`.`default_database`.`_SensorMaxTempLastMinWindow`
+;
+INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
+SELECT *
+FROM `default_catalog`.`default_database`.`SensorReading`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [
@@ -262,8 +263,7 @@ CREATE TABLE IF NOT EXISTS "SensorAnalysis" ("sensorid" INTEGER NOT NULL, "avg_t
 CREATE TABLE IF NOT EXISTS "SensorMaxTempLastMin" ("sensorid" INTEGER NOT NULL, "endOfMin" TIMESTAMP WITH TIME ZONE NOT NULL, "avg_temperature" FLOAT NOT NULL, PRIMARY KEY ("sensorid"));
 CREATE TABLE IF NOT EXISTS "SensorReading" ("uuid" TEXT NOT NULL, "sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE, PRIMARY KEY ("uuid"));
 
-CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash ("sensorid")
->>>postgres-views.sql
+CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash ("sensorid");
 
 >>>vertx.json
 {

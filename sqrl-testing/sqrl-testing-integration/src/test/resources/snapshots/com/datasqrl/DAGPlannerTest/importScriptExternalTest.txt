@@ -264,13 +264,14 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`CustomerAggregate1_1`
 SELECT *
- FROM `default_catalog`.`default_database`.`CustomerAggregate1`
+FROM `default_catalog`.`default_database`.`CustomerAggregate1`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerAggregate2_2`
- SELECT *
-  FROM `default_catalog`.`default_database`.`CustomerAggregate2`
- ;
- END
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerAggregate2`
+;
+END;
+
 >>>kafka.json
 {
   "topics" : [ ],
