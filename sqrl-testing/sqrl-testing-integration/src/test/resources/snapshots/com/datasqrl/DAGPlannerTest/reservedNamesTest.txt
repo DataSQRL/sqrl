@@ -35,10 +35,10 @@ CREATE TABLE `Order` (
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Order__schema`
 === Where
@@ -82,10 +82,10 @@ CREATE TABLE `Order` (
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Order__schema`;
 CREATE VIEW `Where`

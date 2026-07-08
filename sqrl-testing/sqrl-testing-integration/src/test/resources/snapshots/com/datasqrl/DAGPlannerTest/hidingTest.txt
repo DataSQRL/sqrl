@@ -62,10 +62,10 @@ CREATE TABLE `Customer` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Customer__schema`
 === FinalCustomer
@@ -127,10 +127,10 @@ CREATE TABLE `_Customer` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `_Customer__schema`
 === _SomeCustomer
@@ -174,10 +174,10 @@ CREATE TABLE `Customer` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Customer__schema`;
 CREATE TEMPORARY TABLE `_HiddenCustomer__schema` (
@@ -195,10 +195,10 @@ CREATE TABLE `_HiddenCustomer` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `_HiddenCustomer__schema`;
 CREATE TEMPORARY TABLE `_Customer__schema` (
@@ -216,10 +216,10 @@ CREATE TABLE `_Customer` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `_Customer__schema`;
 CREATE TEMPORARY TABLE `_Orders__schema` (
@@ -236,10 +236,10 @@ CREATE TABLE `_Orders` (
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `_Orders__schema`;
 CREATE TEMPORARY TABLE `_Product__schema` (
@@ -257,10 +257,10 @@ CREATE TABLE `_Product` (
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `_Product__schema`;
 CREATE VIEW `AnotherCustomer`

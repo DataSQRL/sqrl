@@ -88,10 +88,10 @@ CREATE TABLE `_MySchema` (
   WATERMARK FOR `timestampMillisField` AS `timestampMillisField`
 )
 WITH (
+  'avro.timestamp_mapping.legacy' = 'true',
   'connector' = 'filesystem',
   'format' = 'avro',
-  'path' = '${DATA_PATH}/data.avro',
-  'avro.timestamp_mapping.legacy' = 'true'
+  'path' = '${DATA_PATH}/data.avro'
 )
 LIKE `_MySchema__schema`;
 CREATE VIEW `Res`

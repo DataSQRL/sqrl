@@ -253,9 +253,9 @@ CREATE TABLE `MachineGroup` (
   WATERMARK FOR `created` AS `created` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/machine_group.jsonl',
-  'connector' = 'filesystem'
+  'path' = '${DATA_PATH}/machine_group.jsonl'
 )
 LIKE `MachineGroup__schema`;
 CREATE TEMPORARY TABLE `Sensors__schema` (
@@ -274,9 +274,9 @@ CREATE TABLE `Sensors` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/sensors.jsonl',
-  'connector' = 'filesystem'
+  'path' = '${DATA_PATH}/sensors.jsonl'
 )
 LIKE `Sensors__schema`;
 CREATE TEMPORARY TABLE `SensorReading__schema` (
@@ -294,10 +294,10 @@ CREATE TABLE `SensorReading` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
-  'format' = 'flexible-csv',
-  'path' = '${DATA_PATH}/sensor_reading.csv.gz',
   'connector' = 'filesystem',
-  'flexible-csv.skip-header' = 'true'
+  'flexible-csv.skip-header' = 'true',
+  'format' = 'flexible-csv',
+  'path' = '${DATA_PATH}/sensor_reading.csv.gz'
 )
 LIKE `SensorReading__schema`;
 USE CATALOG `default_catalog`;

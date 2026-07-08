@@ -135,11 +135,11 @@ CREATE TABLE `Iceberg_sink_ex1` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
 )
 WITH (
-  'connector' = 'iceberg',
+  'catalog-name' = 'mydatabase',
   'catalog-table' = 'my-table',
-  'warehouse' = '/tmp/test_iceberg_wh',
   'catalog-type' = 'hadoop',
-  'catalog-name' = 'mydatabase'
+  'connector' = 'iceberg',
+  'warehouse' = '/tmp/test_iceberg_wh'
 )
 LIKE `Iceberg_sink_ex1__schema`;
 EXECUTE STATEMENT SET BEGIN

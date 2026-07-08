@@ -44,7 +44,8 @@ WITH (
 >>>flink-sql-no-functions.sql
 CREATE DATABASE IF NOT EXISTS `iceberg`;
 USE `iceberg`;
-CREATE CATALOG `iceberg` WITH (
+CREATE CATALOG `iceberg`
+WITH (
   'type' = 'iceberg',
   'catalog-type' = 'hadoop',
   'warehouse' = 'file:///tmp/iceberg/warehouse'
