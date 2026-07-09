@@ -237,6 +237,23 @@ class PagedQueryIT {
         .containsEntry("hasNextPage", false);
   }
 
+  @Test
+  void givenEventTimesSelectedButNoRowtime_whenQuery_thenPlainCountRunsAndEventTimesAreNull() {
+    var customers =
+        execute(
+            "{ customers: customersNoRowtime(limit: 2) { results { customerid }"
+                + " pagination { totalRecords firstEventTime lastEventTime } } }");
+
+    assertThat(recordingClient.executed).hasSize(2);
+    // no rowtime => the MIN/MAX variant is absent; the plain count runs and event times stay null
+    assertThat(sqlOf(recordingClient.executed)).contains(COUNT_SQL);
+    assertThat(sqlOf(recordingClient.executed)).doesNotContain(COUNT_WITH_EVENT_TIMES_SQL);
+    var pagination = pagination(customers);
+    assertThat(pagination).containsEntry("totalRecords", 5L);
+    assertThat(pagination.get("firstEventTime")).isNull();
+    assertThat(pagination.get("lastEventTime")).isNull();
+  }
+
   @SneakyThrows
   private Map<String, Object> execute(String query) {
     var result = graphQL.execute(ExecutionInput.newExecutionInput().query(query).build());
@@ -270,6 +287,7 @@ class PagedQueryIT {
                 type Query {
                   customers(limit: Int = 10, offset: Int = 0): CustomerPage!
                   customersUnbounded(limit: Int, offset: Int = 0): CustomerPage!
+                  customersNoRowtime(limit: Int = 10, offset: Int = 0): CustomerPage!
                 }
                 type Customer {
                   customerid: Int
@@ -324,6 +342,23 @@ class PagedQueryIT {
                                 DatabaseType.POSTGRES,
                                 COUNT_SQL,
                                 COUNT_WITH_EVENT_TIMES_SQL))
+                        .build())
+                .build())
+        .query(
+            ArgumentLookupQueryCoords.builder()
+                .parentType("Query")
+                .fieldName("customersNoRowtime")
+                .exec(
+                    QueryWithArguments.builder()
+                        .query(
+                            new SqlQuery(
+                                BASE_SQL,
+                                List.of(),
+                                PaginationType.LIMIT_AND_OFFSET,
+                                0,
+                                DatabaseType.POSTGRES,
+                                COUNT_SQL,
+                                null))
                         .build())
                 .build())
         .build();
