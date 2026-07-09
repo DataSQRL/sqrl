@@ -189,10 +189,12 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
                   switch (key) {
                     case FlinkConnectorConfigWrapper.CONNECTOR_KEY:
                       connectors.add(val);
+                      break;
                     case FlinkConnectorConfigWrapper.FORMAT_KEY:
                     case FlinkConnectorConfigWrapper.KEY_FORMAT_KEY:
                     case FlinkConnectorConfigWrapper.VALUE_FORMAT_KEY:
                       formats.add(val);
+                      break;
                   }
                 });
       }
