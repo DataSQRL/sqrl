@@ -378,7 +378,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
       boolean paged) {
     checkValidArrayNonNullType(atField.getType());
     if (paged) {
-      OffsetPageInfoUtil.validatePaginationType(registry);
+      OffsetPageInfoUtil.validatePaginationType(registry, atField.getSourceLocation());
       var argNames =
           atField.getInputValueDefinitions().stream()
               .map(InputValueDefinition::getName)

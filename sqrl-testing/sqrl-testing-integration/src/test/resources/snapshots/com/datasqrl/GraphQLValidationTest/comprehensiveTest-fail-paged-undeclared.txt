@@ -19,10 +19,23 @@ in script:comprehensiveTest.sqrl [51:1]:
 CustomerTimeWindow := SELECT
 ^
 
-[FATAL] Paginated query [CustomerByTime2] must declare both 'limit' and 'offset' arguments
-in script:comprehensiveTest-fail-paged-no-limit-offset.graphqls [33:5]:
+[FATAL] Paginated results require the OffsetPageInfo type to be declared in the schema:
+type OffsetPageInfo {
+  totalRecords: Long!
+  pageSize: Int!
+  currentPage: Int!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  nextOffset: Int
+  prevOffset: Int
+  firstEventTime: DateTime
+  lastEventTime: DateTime
+}
+
+in script:comprehensiveTest-fail-paged-undeclared.graphqls [20:5]:
 
 type Query {
-    CustomerByTime2: CustomerPage!
+    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!
 ----^
 

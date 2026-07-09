@@ -16,6 +16,19 @@ type CustomerPage {
     pagination: OffsetPageInfo
 }
 
+type OffsetPageInfo {
+    totalRecords: Long!
+    pageSize: Int!
+    currentPage: Int!
+    totalPages: Int!
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    nextOffset: Int
+    prevOffset: Int
+    firstEventTime: DateTime
+    lastEventTime: DateTime
+}
+
 type Query {
     CustomerByTime2: CustomerPage!
 }

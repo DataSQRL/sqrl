@@ -23,7 +23,6 @@ import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.server.ApiSource;
 import com.datasqrl.server.ApiSources;
 import com.datasqrl.server.GraphqlSchemaHandler;
-import com.datasqrl.server.OffsetPageInfoUtil;
 import com.datasqrl.server.ScriptFiles;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -76,17 +75,9 @@ public class GraphqlSourceLoader {
     }
 
     if (!shouldUseInferredSchema(apiVersions)) {
-      var injected =
-          apiVersions.stream()
-              .map(
-                  apiVersion ->
-                      new ApiSources(
-                          apiVersion.version(),
-                          OffsetPageInfoUtil.injectPaginationType(apiVersion.schema()),
-                          apiVersion.operations()))
-              .toList();
-      injected.forEach(apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));
-      return new LoadResult(injected, Optional.empty());
+      apiVersions.forEach(
+          apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));
+      return new LoadResult(apiVersions, Optional.empty());
     }
 
     List<ApiSource> operations;

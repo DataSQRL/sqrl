@@ -23,13 +23,13 @@ import graphql.language.FieldDefinition;
 import graphql.language.ListType;
 import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
+import graphql.language.SourceLocation;
 import graphql.language.Type;
 import graphql.language.TypeName;
 import graphql.schema.GraphQLFieldDefinition;
 import graphql.schema.GraphQLNonNull;
 import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
-import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -38,8 +38,8 @@ import java.util.Optional;
 /**
  * Opt-in pagination support: a query whose result type is a page wrapper ({@code {results:
  * [Element!] pagination: OffsetPageInfo}}) returns its rows plus pagination metadata computed from
- * a companion COUNT(*) query. This util detects the wrapper shape and injects/validates the
- * standard {@code OffsetPageInfo} type.
+ * a companion COUNT(*) query. This util detects the wrapper shape and validates the user-declared
+ * {@code OffsetPageInfo} type.
  */
 public final class OffsetPageInfoUtil {
 
@@ -94,48 +94,20 @@ public final class OffsetPageInfoUtil {
   }
 
   /**
-   * If the schema references {@code OffsetPageInfo} but does not define it, append the canonical
-   * definition (plus any missing scalar declarations). A user-provided definition is left untouched
-   * here and validated later by {@link #validatePaginationType} within the schema validator's error
-   * scope. Returns the (possibly rewritten) source.
+   * Validates that a paginated query's schema declares the {@code OffsetPageInfo} type and that it
+   * matches the canonical definition. Users must declare the type themselves; we only validate it.
+   * Must be called from within the schema validator so errors are reported like other schema
+   * errors.
    */
-  public static ApiSource injectPaginationType(ApiSource schema) {
-    TypeDefinitionRegistry registry;
-    try {
-      registry = new SchemaParser().parse(schema.getDefinition());
-    } catch (Exception e) {
-      // Let the downstream validator report parse errors with proper source location; an
-      // unparseable schema cannot reference the pagination type anyway.
-      return schema;
-    }
-
-    if (!referencesPaginationType(registry) || registry.getType(PAGINATION_TYPE_NAME).isPresent()) {
-      return schema;
-    }
-
-    var injected = new StringBuilder(schema.getDefinition());
-    injected.append("\n");
-    if (registry.scalars().get("Long") == null) {
-      injected.append("scalar Long\n");
-    }
-    if (registry.scalars().get("DateTime") == null) {
-      injected.append("scalar DateTime\n");
-    }
-    injected.append(CANONICAL_SDL);
-
-    return new ApiSource(schema.getPath().orElse(null), injected.toString());
-  }
-
-  /**
-   * Validates that a user-provided {@code OffsetPageInfo} type matches the canonical definition.
-   * Must be called from within the schema validator so mismatches are reported like other schema
-   * errors. No-op when the type is absent (it will have been injected) or unreferenced.
-   */
-  public static void validatePaginationType(TypeDefinitionRegistry registry) {
+  public static void validatePaginationType(
+      TypeDefinitionRegistry registry, SourceLocation location) {
     var existing = registry.getType(PAGINATION_TYPE_NAME);
-    if (existing.isEmpty()) {
-      return;
-    }
+    checkState(
+        existing.isPresent(),
+        location,
+        "Paginated results require the %s type to be declared in the schema:\n%s",
+        PAGINATION_TYPE_NAME,
+        CANONICAL_SDL);
     checkState(
         existing.get() instanceof ObjectTypeDefinition,
         existing.get().getSourceLocation(),
@@ -177,22 +149,6 @@ public final class OffsetPageInfoUtil {
     }
 
     return hasPagination ? Optional.ofNullable(elementType) : Optional.empty();
-  }
-
-  private static boolean referencesPaginationType(TypeDefinitionRegistry registry) {
-    return registry.types().values().stream()
-        .filter(t -> t instanceof ObjectTypeDefinition)
-        .flatMap(t -> ((ObjectTypeDefinition) t).getFieldDefinitions().stream())
-        .anyMatch(field -> referencesPaginationType(field.getType()));
-  }
-
-  private static boolean referencesPaginationType(Type<?> type) {
-    var unwrapped = unwrapNonNull(type);
-    if (unwrapped instanceof ListType listType) {
-      return referencesPaginationType(listType.getType());
-    }
-    return unwrapped instanceof TypeName typeName
-        && PAGINATION_TYPE_NAME.equals(typeName.getName());
   }
 
   private static void validateMatchesCanonical(ObjectTypeDefinition userType) {
