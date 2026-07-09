@@ -59,10 +59,10 @@ CREATE TABLE `Product` (
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Product__schema`
 >>>flink-sql-no-functions.sql
@@ -81,10 +81,10 @@ CREATE TABLE `Product` (
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Product__schema`;
 CREATE VIEW `FunctionCalls`

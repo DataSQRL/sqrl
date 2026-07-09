@@ -101,9 +101,9 @@ CREATE TABLE `Json` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/json.jsonl',
-  'connector' = 'filesystem'
+  'path' = '${DATA_PATH}/json.jsonl'
 )
 LIKE `Json__schema`;
 CREATE VIEW `UnmodifiedJsonData`

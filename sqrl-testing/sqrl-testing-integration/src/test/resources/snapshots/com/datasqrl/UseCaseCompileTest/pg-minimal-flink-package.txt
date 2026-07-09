@@ -102,17 +102,17 @@ CREATE TABLE `SensorReading` (
 )
 WITH (
   'connector' = 'datagen',
-  'number-of-rows' = '10',
-  'rows-per-second' = '10',
-  'fields.sensorid.kind' = 'random',
-  'fields.sensorid.min' = '1',
-  'fields.sensorid.max' = '1',
-  'fields.temperature.kind' = 'sequence',
-  'fields.temperature.start' = '20',
-  'fields.temperature.end' = '29',
+  'fields.event_time.end' = '1750533429',
   'fields.event_time.kind' = 'sequence',
   'fields.event_time.start' = '1750533400',
-  'fields.event_time.end' = '1750533429'
+  'fields.sensorid.kind' = 'random',
+  'fields.sensorid.max' = '1',
+  'fields.sensorid.min' = '1',
+  'fields.temperature.end' = '29',
+  'fields.temperature.kind' = 'sequence',
+  'fields.temperature.start' = '20',
+  'number-of-rows' = '10',
+  'rows-per-second' = '10'
 );
 CREATE VIEW `SensorAggregate`
 AS

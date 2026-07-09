@@ -98,10 +98,10 @@ CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Orders__schema`
 >>>flink-sql-no-functions.sql
@@ -119,10 +119,10 @@ CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Orders__schema`;
 CREATE VIEW `CustomerAgg1`

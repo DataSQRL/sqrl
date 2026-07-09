@@ -35,10 +35,10 @@ CREATE TABLE `Customer` (
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Customer__schema`
 === CustomerOrdersJoin
@@ -109,10 +109,10 @@ CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Orders__schema`
 >>>flink-sql-no-functions.sql
@@ -130,10 +130,10 @@ CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Orders__schema`;
 CREATE TEMPORARY TABLE `Customer__schema` (
@@ -150,10 +150,10 @@ CREATE TABLE `Customer` (
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Customer__schema`;
 CREATE VIEW `CustomerOrdersJoin`

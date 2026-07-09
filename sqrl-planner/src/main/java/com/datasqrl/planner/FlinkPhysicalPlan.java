@@ -39,8 +39,7 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
-import org.apache.flink.sql.parser.ddl.SqlCreateTable;
-import org.apache.flink.sql.parser.ddl.SqlTableOption;
+import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.sql.parser.dml.SqlExecute;
 import org.apache.flink.sql.parser.dml.SqlStatementSet;
@@ -183,20 +182,21 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       nodes.add(node);
 
       if (node instanceof SqlCreateTable table) {
-        for (SqlNode option : table.getPropertyList().getList()) {
-          var sqlTableOption = (SqlTableOption) option;
-          if (sqlTableOption
-              .getKeyString()
-              .equalsIgnoreCase(FlinkConnectorConfigWrapper.CONNECTOR_KEY)) {
-            connectors.add(sqlTableOption.getValueString());
-          }
-          switch (sqlTableOption.getKeyString()) {
-            case FlinkConnectorConfigWrapper.FORMAT_KEY:
-            case FlinkConnectorConfigWrapper.KEY_FORMAT_KEY:
-            case FlinkConnectorConfigWrapper.VALUE_FORMAT_KEY:
-              formats.add(sqlTableOption.getValueString());
-          }
-        }
+        table
+            .getProperties()
+            .forEach(
+                (key, val) -> {
+                  switch (key) {
+                    case FlinkConnectorConfigWrapper.CONNECTOR_KEY:
+                      connectors.add(val);
+                      break;
+                    case FlinkConnectorConfigWrapper.FORMAT_KEY:
+                    case FlinkConnectorConfigWrapper.KEY_FORMAT_KEY:
+                    case FlinkConnectorConfigWrapper.VALUE_FORMAT_KEY:
+                      formats.add(val);
+                      break;
+                  }
+                });
       }
 
       if (!(node instanceof SqlCreateFunction)) {

@@ -83,10 +83,10 @@ CREATE TABLE `Orders` (
   PRIMARY KEY (`id`, `customerid`, `time`) NOT ENFORCED
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/orders.jsonl',
-  'source.monitor-interval' = '10000',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10000'
 )
 LIKE `Orders__schema`;
 CREATE TABLE `Orders_1` (

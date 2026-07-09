@@ -16,7 +16,7 @@
 package com.datasqrl.planner.tables;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.engine.stream.flink.plan.FlinkSqlNodeFactory;
+import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
 import com.datasqrl.server.ResolvedMetadata;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -36,17 +36,17 @@ import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.flink.sql.parser.ddl.SqlCreateTable;
-import org.apache.flink.sql.parser.ddl.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
-import org.apache.flink.sql.parser.ddl.SqlTableLike;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
+import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
+import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
+import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
 
 /**
  * A builder for tables in Flink that is used as the central table builder in DataSQRL. It's a light
- * wrapper around the SqlNode relying heavily on {@link FlinkSqlNodeFactory} for translation.
+ * wrapper around the SqlNode relying heavily on {@link FlinkSqlNodes} for translation.
  */
 @Data
 @AllArgsConstructor
@@ -59,7 +59,7 @@ public class FlinkTableBuilder {
 
   private SqlNodeList propertyList = SqlNodeList.EMPTY;
 
-  private List<SqlTableConstraint> tableConstraints = Collections.emptyList();
+  private List<SqlTableConstraint> tableConstraints = List.of();
 
   private SqlNodeList partitionKeyList = SqlNodeList.EMPTY;
 
@@ -73,7 +73,7 @@ public class FlinkTableBuilder {
   }
 
   public FlinkTableBuilder setName(String name) {
-    setTableName(FlinkSqlNodeFactory.identifier(name));
+    setTableName(FlinkSqlNodes.identifier(name));
     return this;
   }
 
@@ -82,12 +82,12 @@ public class FlinkTableBuilder {
   }
 
   public FlinkTableBuilder setColumns(RelDataType relDataType) {
-    setColumnList(FlinkSqlNodeFactory.createColumns(relDataType));
+    setColumnList(FlinkSqlNodes.createColumns(relDataType));
     return this;
   }
 
   public FlinkTableBuilder addColumns(RelDataType relDataType) {
-    SqlNodeList addCols = FlinkSqlNodeFactory.createColumns(relDataType);
+    SqlNodeList addCols = FlinkSqlNodes.createColumns(relDataType);
     List<SqlNode> nodes = new ArrayList<>(addCols.getList());
     if (columnList != null) {
       nodes.addAll(columnList.getList());
@@ -114,7 +114,7 @@ public class FlinkTableBuilder {
               new SqlRegularColumn(
                   columnMetadata.getParserPosition(),
                   columnMetadata.getName(),
-                  columnMetadata.getComment().orElse(null),
+                  FlinkSqlNodes.createStringLiteral(columnMetadata.getComment()),
                   columnMetadata.getType(),
                   null);
           columnList.set(i, regularColumn);
@@ -125,20 +125,16 @@ public class FlinkTableBuilder {
   }
 
   public FlinkTableBuilder setConnectorOptions(Map<String, String> options) {
-    setPropertyList(FlinkSqlNodeFactory.createProperties(options));
+    setPropertyList(FlinkSqlNodes.createProperties(options));
     return this;
   }
 
   public Map<String, String> getConnectorOptions() {
-    return FlinkSqlNodeFactory.resolvePropertiesToMap(getPropertyList());
-  }
-
-  public FlinkTableBuilder setDummyConnector() {
-    return setConnectorOptions(Map.of(FlinkConnectorConfigWrapper.CONNECTOR_KEY, "datagen"));
+    return FlinkSqlNodes.resolveProperties(getPropertyList());
   }
 
   public FlinkTableBuilder setWatermarkMillis(String timestampColumnName, long watermarkMillis) {
-    setWatermark(FlinkSqlNodeFactory.createWatermark(timestampColumnName, watermarkMillis));
+    setWatermark(FlinkSqlNodes.createWatermark(timestampColumnName, watermarkMillis));
     return this;
   }
 
@@ -150,7 +146,7 @@ public class FlinkTableBuilder {
     if (partitionColumns.isEmpty()) {
       setPartitionKeyList(SqlNodeList.EMPTY);
     }
-    setPartitionKeyList(FlinkSqlNodeFactory.createPartitionKeys(partitionColumns));
+    setPartitionKeyList(FlinkSqlNodes.createPartitionKeys(partitionColumns));
     return this;
   }
 
@@ -168,7 +164,7 @@ public class FlinkTableBuilder {
     if (pkColumns.isEmpty()) {
       setTableConstraints(List.of());
     }
-    var pkConstraint = FlinkSqlNodeFactory.createPrimaryKeyConstraint(pkColumns);
+    var pkConstraint = FlinkSqlNodes.createPrimaryKeyConstraint(pkColumns);
     setTableConstraints(Collections.singletonList(pkConstraint));
     return this;
   }
@@ -204,7 +200,7 @@ public class FlinkTableBuilder {
           columnList,
           tableConstraints,
           propertyList,
-          FlinkSqlNodeFactory.NO_DISTRIBUTION,
+          FlinkSqlNodes.NO_DISTRIBUTION,
           partitionKeyList,
           watermark,
           null,
@@ -218,7 +214,7 @@ public class FlinkTableBuilder {
         columnList,
         tableConstraints,
         propertyList,
-        FlinkSqlNodeFactory.NO_DISTRIBUTION,
+        FlinkSqlNodes.NO_DISTRIBUTION,
         partitionKeyList,
         watermark,
         null,
@@ -232,11 +228,11 @@ public class FlinkTableBuilder {
       likeClause = likeTable.getTableLike();
     }
     return new FlinkTableBuilder(
-        table.getTableName(),
+        table.getName(),
         table.getColumnList(),
-        table.getPropertyList(),
+        FlinkSqlNodes.createProperties(table.getProperties()),
         table.getTableConstraints(),
-        table.getPartitionKeyList(),
+        FlinkSqlNodes.createPartitionKeys(table.getPartitionKeyList()),
         table.getWatermark().orElse(null),
         likeClause);
   }

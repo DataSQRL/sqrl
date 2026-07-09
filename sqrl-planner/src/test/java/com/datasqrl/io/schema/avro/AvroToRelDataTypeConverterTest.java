@@ -116,14 +116,14 @@ class AvroToRelDataTypeConverterTest {
     LogicalTypes.timeMillis().addToSchema(timeMillisSchema);
     var timeMillisType = converter.convert(timeMillisSchema);
     assertThat(timeMillisType.getSqlTypeName()).isEqualTo(SqlTypeName.TIME);
-    assertThat(timeMillisType.getPrecision()).isEqualTo(0);
+    assertThat(timeMillisType.getPrecision()).isEqualTo(3);
 
     // Time (micros)
     var timeMicrosSchema = Schema.create(Type.LONG);
     LogicalTypes.timeMicros().addToSchema(timeMicrosSchema);
     var timeMicrosType = converter.convert(timeMicrosSchema);
     assertThat(timeMicrosType.getSqlTypeName()).isEqualTo(SqlTypeName.TIME);
-    assertThat(timeMicrosType.getPrecision()).isEqualTo(0);
+    assertThat(timeMicrosType.getPrecision()).isEqualTo(3);
 
     // Timestamp (millis)
     var timestampMillisSchema = Schema.create(Type.LONG);

@@ -75,10 +75,10 @@ CREATE TABLE `Customer` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Customer__schema`
 === CustomerAggregate
@@ -139,10 +139,10 @@ CREATE TABLE `Customer` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Customer__schema`
 === CustomerAggregate
@@ -183,10 +183,10 @@ CREATE TABLE `Customer` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Customer__schema`;
 CREATE VIEW `CustomerAggregate`
@@ -214,10 +214,10 @@ CREATE TABLE `Customer` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Customer__schema`;
 CREATE VIEW `CustomerAggregate`

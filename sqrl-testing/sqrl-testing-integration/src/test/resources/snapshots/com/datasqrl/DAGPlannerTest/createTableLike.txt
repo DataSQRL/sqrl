@@ -26,15 +26,15 @@ CREATE TABLE `SensorReading` (
 )
 WITH (
   'connector' = 'datagen',
-  'number-of-rows' = '1000',
-  'fields.sensorid.kind' = 'sequence',
-  'fields.sensorid.start' = '0',
-  'fields.sensorid.end' = '9',
+  'fields.epoch_timestamp.end' = '1719319565000',
   'fields.epoch_timestamp.kind' = 'sequence',
   'fields.epoch_timestamp.start' = '1719318565000',
-  'fields.epoch_timestamp.end' = '1719319565000',
+  'fields.sensorid.end' = '9',
+  'fields.sensorid.kind' = 'sequence',
+  'fields.sensorid.start' = '0',
+  'fields.temperature.kind' = 'random',
   'fields.uuid.kind' = 'random',
-  'fields.temperature.kind' = 'random'
+  'number-of-rows' = '1000'
 )
 LIKE `_SensorReading_schema`
 === SensorReadingInput
@@ -111,15 +111,15 @@ CREATE TABLE `SensorReading` (
 )
 WITH (
   'connector' = 'datagen',
-  'number-of-rows' = '1000',
-  'fields.sensorid.kind' = 'sequence',
-  'fields.sensorid.start' = '0',
-  'fields.sensorid.end' = '9',
+  'fields.epoch_timestamp.end' = '1719319565000',
   'fields.epoch_timestamp.kind' = 'sequence',
   'fields.epoch_timestamp.start' = '1719318565000',
-  'fields.epoch_timestamp.end' = '1719319565000',
+  'fields.sensorid.end' = '9',
+  'fields.sensorid.kind' = 'sequence',
+  'fields.sensorid.start' = '0',
+  'fields.temperature.kind' = 'random',
   'fields.uuid.kind' = 'random',
-  'fields.temperature.kind' = 'random'
+  'number-of-rows' = '1000'
 )
 LIKE `_SensorReading_schema`;
 CREATE TABLE `SensorReadingMutation` (
