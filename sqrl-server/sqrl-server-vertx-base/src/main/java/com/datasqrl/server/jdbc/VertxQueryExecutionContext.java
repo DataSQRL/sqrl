@@ -104,9 +104,10 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
               && selection.containsAnyOf(pag + "/hasNextPage", pag + "/nextOffset");
     }
 
-    // The aggregate query is bound with the base parameters only, without the runtime
-    // limit/offset.
-    var countParams = aggregateSql != null ? Tuple.from(List.copyOf(paramObj)) : null;
+    // The aggregate query binds the base parameters only, without the runtime limit/offset.
+    // Tuple.from snapshots the list here (before limit/offset are appended below) and, unlike
+    // List.copyOf, tolerates null bind values (SQL NULL).
+    var countParams = aggregateSql != null ? Tuple.from(paramObj) : null;
 
     int limitValue = Integer.MAX_VALUE;
     int offsetValue = 0;
@@ -238,6 +239,11 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
     var pagination =
         buildPaginationMetadata(
             totalRecords, hasNextPage, limit, offset, firstEventTime, lastEventTime);
+    // An absent limit means "return everything" (limit == Integer.MAX_VALUE); report the actual
+    // number of rows on this page as pageSize rather than leaking the sentinel.
+    if (limit == Integer.MAX_VALUE) {
+      pagination.put("pageSize", results.size());
+    }
     return new JsonObject()
         .put(fieldNames.resultsField(), results)
         .put(fieldNames.paginationField(), pagination);

@@ -222,6 +222,21 @@ class PagedQueryIT {
     assertThat(String.valueOf(pagination.get("lastEventTime"))).startsWith("2024-01-05");
   }
 
+  @Test
+  void givenNoLimitArgument_whenQuery_thenPageSizeReportsRowCountNotSentinel() {
+    var customers =
+        execute(
+            "{ customers: customersUnbounded { results { customerid }"
+                + " pagination { pageSize totalRecords hasNextPage } } }");
+
+    assertThat(results(customers)).hasSize(5);
+    // an absent limit fetches every row; pageSize reflects the rows returned, not Integer.MAX_VALUE
+    assertThat(pagination(customers))
+        .containsEntry("pageSize", 5)
+        .containsEntry("totalRecords", 5L)
+        .containsEntry("hasNextPage", false);
+  }
+
   @SneakyThrows
   private Map<String, Object> execute(String query) {
     var result = graphQL.execute(ExecutionInput.newExecutionInput().query(query).build());
@@ -254,6 +269,7 @@ class PagedQueryIT {
                 scalar Long
                 type Query {
                   customers(limit: Int = 10, offset: Int = 0): CustomerPage!
+                  customersUnbounded(limit: Int, offset: Int = 0): CustomerPage!
                 }
                 type Customer {
                   customerid: Int
@@ -280,6 +296,23 @@ class PagedQueryIT {
             ArgumentLookupQueryCoords.builder()
                 .parentType("Query")
                 .fieldName("customers")
+                .exec(
+                    QueryWithArguments.builder()
+                        .query(
+                            new SqlQuery(
+                                BASE_SQL,
+                                List.of(),
+                                PaginationType.LIMIT_AND_OFFSET,
+                                0,
+                                DatabaseType.POSTGRES,
+                                COUNT_SQL,
+                                COUNT_WITH_EVENT_TIMES_SQL))
+                        .build())
+                .build())
+        .query(
+            ArgumentLookupQueryCoords.builder()
+                .parentType("Query")
+                .fieldName("customersUnbounded")
                 .exec(
                     QueryWithArguments.builder()
                         .query(
