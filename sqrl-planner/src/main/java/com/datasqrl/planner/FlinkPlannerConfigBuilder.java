@@ -55,17 +55,7 @@ public class FlinkPlannerConfigBuilder {
           FlinkStreamProgram.PHYSICAL_REWRITE(),
           FlinkStreamProgram.TIME_INDICATOR());
 
-  /** Rules to remove in case of {@link PredicatePushdownRules#LIMITED_TABLE_SOURCE_RULES}. */
-  private static final List<? extends RelOptRule> TABLE_SOURCE_RULES_TO_REMOVE =
-      List.of(
-          PushFilterIntoLegacyTableSourceScanRule.INSTANCE,
-          PushFilterIntoTableSourceScanRule.INSTANCE,
-          PushPartitionIntoLegacyTableSourceScanRule.INSTANCE(),
-          PushPartitionIntoTableSourceScanRule.INSTANCE,
-          PushProjectIntoLegacyTableSourceScanRule.INSTANCE(),
-          PushProjectIntoTableSourceScanRule.INSTANCE);
-
-  /** Extra rules to remove in case of {@link PredicatePushdownRules#LIMITED_RULES}. */
+  /** Rules to remove in case of {@link PredicatePushdownRules#LIMITED_RULES_NO_SOURCE}. */
   private static final List<? extends RelOptRule> GENERAL_FILTER_RULES_TO_REMOVE =
       List.of(
           // Removing prevents push filter through an aggregation
@@ -84,6 +74,16 @@ public class FlinkPlannerConfigBuilder {
           // leading to wider joins (less column pruning) but fewer per-arm Calcs and more identical
           // subgraphs around (temporal) joins.
           FlinkProjectJoinTransposeRule.INSTANCE);
+
+  /** Extra rules to remove in case of {@link PredicatePushdownRules#LIMITED_RULES}. */
+  private static final List<? extends RelOptRule> TABLE_SOURCE_RULES_TO_REMOVE =
+      List.of(
+          PushFilterIntoLegacyTableSourceScanRule.INSTANCE,
+          PushFilterIntoTableSourceScanRule.INSTANCE,
+          PushPartitionIntoLegacyTableSourceScanRule.INSTANCE(),
+          PushPartitionIntoTableSourceScanRule.INSTANCE,
+          PushProjectIntoLegacyTableSourceScanRule.INSTANCE(),
+          PushProjectIntoTableSourceScanRule.INSTANCE);
 
   private final CompilerConfig compilerConfig;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
@@ -125,6 +125,10 @@ public class FlinkPlannerConfigBuilder {
 
       if (rules == PredicatePushdownRules.LIMITED_TABLE_SOURCE_RULES) {
         removeTableSourceScanRules(programName, program);
+      }
+
+      if (rules == PredicatePushdownRules.LIMITED_RULES_NO_SOURCE) {
+        stripRules(programName, program, r -> anyMatch(GENERAL_FILTER_RULES_TO_REMOVE, r));
       }
 
       if (rules == PredicatePushdownRules.LIMITED_RULES) {
