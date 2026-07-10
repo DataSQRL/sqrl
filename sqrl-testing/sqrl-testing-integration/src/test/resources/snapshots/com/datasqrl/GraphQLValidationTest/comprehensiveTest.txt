@@ -289,10 +289,8 @@ type CustomerPage {
 }
 
 type OffsetPageInfo {
-    totalRecords: Long!
     pageSize: Int!
     currentPage: Int!
-    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int
@@ -376,10 +374,8 @@ type CustomerPage {
 }
 
 type OffsetPageInfo {
-    totalRecords: Long!
     pageSize: Int!
     currentPage: Int!
-    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int
@@ -588,10 +584,8 @@ type CustomerPage {
 }
 
 type OffsetPageInfo {
-    totalRecords: Long!
     pageSize: Int!
     currentPage: Int!
-    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int
@@ -611,10 +605,8 @@ scalar DateTime
 scalar Long
 
 type OffsetPageInfo {
-    totalRecords: Long!
     pageSize: Int!
     currentPage: Int!
-    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int

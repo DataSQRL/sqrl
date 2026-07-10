@@ -51,10 +51,8 @@ public final class OffsetPageInfoUtil {
   private static final Map<String, String> PAGINATION_FIELDS = new LinkedHashMap<>();
 
   static {
-    PAGINATION_FIELDS.put("totalRecords", "Long!");
     PAGINATION_FIELDS.put("pageSize", "Int!");
     PAGINATION_FIELDS.put("currentPage", "Int!");
-    PAGINATION_FIELDS.put("totalPages", "Int!");
     PAGINATION_FIELDS.put("hasNextPage", "Boolean!");
     PAGINATION_FIELDS.put("hasPreviousPage", "Boolean!");
     PAGINATION_FIELDS.put("nextOffset", "Int");
@@ -68,11 +66,14 @@ public final class OffsetPageInfoUtil {
   /** Printed type -> GraphQL type, used to build the schema type from the canonical fields. */
   private static final Map<String, GraphQLOutputType> GRAPHQL_TYPES =
       Map.of(
-          "Long!", GraphQLNonNull.nonNull(CustomScalars.LONG),
-          "Int!", GraphQLNonNull.nonNull(Scalars.GraphQLInt),
-          "Boolean!", GraphQLNonNull.nonNull(Scalars.GraphQLBoolean),
-          "Int", Scalars.GraphQLInt,
-          "DateTime", CustomScalars.FLEXIBLE_DATETIME);
+          "Int!",
+          GraphQLNonNull.nonNull(Scalars.GraphQLInt),
+          "Boolean!",
+          GraphQLNonNull.nonNull(Scalars.GraphQLBoolean),
+          "Int",
+          Scalars.GraphQLInt,
+          "DateTime",
+          CustomScalars.FLEXIBLE_DATETIME);
 
   /** Builds the canonical {@code OffsetPageInfo} object type for generated schemas. */
   public static GraphQLObjectType createPageInfoType() {

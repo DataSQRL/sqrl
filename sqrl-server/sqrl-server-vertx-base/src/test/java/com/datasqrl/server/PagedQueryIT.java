@@ -59,20 +59,17 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * Proves that pagination metadata is computed lazily from the selection set: the aggregate query
- * only runs when totals or event times are selected, event times pick the MIN/MAX variant, and
- * {@code hasNextPage} alone is answered by fetching LIMIT+1 rows instead of any count query.
+ * Proves that pagination metadata is computed lazily from the selection set: the MIN/MAX aggregate
+ * query only runs when event times are selected, and {@code hasNextPage} alone is answered by
+ * fetching LIMIT+1 rows instead of any aggregate.
  */
 @ExtendWith(VertxExtension.class)
 @Testcontainers
 class PagedQueryIT {
 
   private static final String BASE_SQL = "SELECT customerid, ts FROM customer ORDER BY customerid";
-  private static final String COUNT_SQL =
-      "SELECT COUNT(*) AS \"total_records\" FROM (" + BASE_SQL + ") x";
-  private static final String COUNT_WITH_EVENT_TIMES_SQL =
-      "SELECT COUNT(*) AS \"total_records\", MIN(\"ts\") AS \"first_event_time\","
-          + " MAX(\"ts\") AS \"last_event_time\" FROM ("
+  private static final String EVENT_TIMES_SQL =
+      "SELECT MIN(\"ts\") AS \"first_event_time\", MAX(\"ts\") AS \"last_event_time\" FROM ("
           + BASE_SQL
           + ") x";
 
@@ -187,36 +184,15 @@ class PagedQueryIT {
   }
 
   @Test
-  void givenTotalsSelected_whenQuery_thenPlainCountRunsWithoutExtraRow() {
-    var customers =
-        execute(
-            "{ customers(limit: 2, offset: 0) { results { customerid }"
-                + " pagination { totalRecords totalPages hasNextPage } } }");
-
-    assertThat(recordingClient.executed).hasSize(2);
-    assertThat(sqlOf(recordingClient.executed)).contains(COUNT_SQL);
-    // hasNextPage is derived from the count, so the data query does not fetch an extra row
-    var dataStatement =
-        recordingClient.executed.stream().filter(s -> !s.sql().contains("COUNT")).findFirst();
-    assertThat(dataStatement).isPresent();
-    assertThat(dataStatement.get().params().getInteger(0)).isEqualTo(2);
-    assertThat(pagination(customers))
-        .containsEntry("totalRecords", 5L)
-        .containsEntry("totalPages", 3)
-        .containsEntry("hasNextPage", true);
-  }
-
-  @Test
-  void givenEventTimesSelected_whenQuery_thenMinMaxVariantRuns() {
+  void givenEventTimesSelected_whenQuery_thenMinMaxAggregateRuns() {
     var customers =
         execute(
             "{ customers(limit: 2, offset: 2) { results { customerid }"
-                + " pagination { totalRecords firstEventTime lastEventTime } } }");
+                + " pagination { firstEventTime lastEventTime } } }");
 
     assertThat(recordingClient.executed).hasSize(2);
-    assertThat(sqlOf(recordingClient.executed)).contains(COUNT_WITH_EVENT_TIMES_SQL);
+    assertThat(sqlOf(recordingClient.executed)).contains(EVENT_TIMES_SQL);
     var pagination = pagination(customers);
-    assertThat(pagination).containsEntry("totalRecords", 5L);
     // MIN/MAX cover the whole result, not just the requested page
     assertThat(String.valueOf(pagination.get("firstEventTime"))).startsWith("2024-01-01");
     assertThat(String.valueOf(pagination.get("lastEventTime"))).startsWith("2024-01-05");
@@ -227,29 +203,26 @@ class PagedQueryIT {
     var customers =
         execute(
             "{ customers: customersUnbounded { results { customerid }"
-                + " pagination { pageSize totalRecords hasNextPage } } }");
+                + " pagination { pageSize hasNextPage } } }");
 
     assertThat(results(customers)).hasSize(5);
     // an absent limit fetches every row; pageSize reflects the rows returned, not Integer.MAX_VALUE
     assertThat(pagination(customers))
         .containsEntry("pageSize", 5)
-        .containsEntry("totalRecords", 5L)
         .containsEntry("hasNextPage", false);
   }
 
   @Test
-  void givenEventTimesSelectedButNoRowtime_whenQuery_thenPlainCountRunsAndEventTimesAreNull() {
+  void givenEventTimesSelectedButNoRowtime_whenQuery_thenNoAggregateRunsAndEventTimesAreNull() {
     var customers =
         execute(
             "{ customers: customersNoRowtime(limit: 2) { results { customerid }"
-                + " pagination { totalRecords firstEventTime lastEventTime } } }");
+                + " pagination { firstEventTime lastEventTime } } }");
 
-    assertThat(recordingClient.executed).hasSize(2);
-    // no rowtime => the MIN/MAX variant is absent; the plain count runs and event times stay null
-    assertThat(sqlOf(recordingClient.executed)).contains(COUNT_SQL);
-    assertThat(sqlOf(recordingClient.executed)).doesNotContain(COUNT_WITH_EVENT_TIMES_SQL);
+    // no rowtime => no aggregate query exists, so only the data query runs and event times stay
+    // null
+    assertThat(recordingClient.executed).hasSize(1);
     var pagination = pagination(customers);
-    assertThat(pagination).containsEntry("totalRecords", 5L);
     assertThat(pagination.get("firstEventTime")).isNull();
     assertThat(pagination.get("lastEventTime")).isNull();
   }
@@ -283,7 +256,6 @@ class PagedQueryIT {
                 .schema(
                     """
                 scalar DateTime
-                scalar Long
                 type Query {
                   customers(limit: Int = 10, offset: Int = 0): CustomerPage!
                   customersUnbounded(limit: Int, offset: Int = 0): CustomerPage!
@@ -297,10 +269,8 @@ class PagedQueryIT {
                   pagination: OffsetPageInfo
                 }
                 type OffsetPageInfo {
-                  totalRecords: Long!
                   pageSize: Int!
                   currentPage: Int!
-                  totalPages: Int!
                   hasNextPage: Boolean!
                   hasPreviousPage: Boolean!
                   nextOffset: Int
@@ -320,11 +290,10 @@ class PagedQueryIT {
                             new SqlQuery(
                                 BASE_SQL,
                                 List.of(),
-                                PaginationType.LIMIT_AND_OFFSET,
+                                PaginationType.OFFSET_PAGE_INFO,
                                 0,
                                 DatabaseType.POSTGRES,
-                                COUNT_SQL,
-                                COUNT_WITH_EVENT_TIMES_SQL))
+                                EVENT_TIMES_SQL))
                         .build())
                 .build())
         .query(
@@ -337,11 +306,10 @@ class PagedQueryIT {
                             new SqlQuery(
                                 BASE_SQL,
                                 List.of(),
-                                PaginationType.LIMIT_AND_OFFSET,
+                                PaginationType.OFFSET_PAGE_INFO,
                                 0,
                                 DatabaseType.POSTGRES,
-                                COUNT_SQL,
-                                COUNT_WITH_EVENT_TIMES_SQL))
+                                EVENT_TIMES_SQL))
                         .build())
                 .build())
         .query(
@@ -354,10 +322,9 @@ class PagedQueryIT {
                             new SqlQuery(
                                 BASE_SQL,
                                 List.of(),
-                                PaginationType.LIMIT_AND_OFFSET,
+                                PaginationType.OFFSET_PAGE_INFO,
                                 0,
                                 DatabaseType.POSTGRES,
-                                COUNT_SQL,
                                 null))
                         .build())
                 .build())

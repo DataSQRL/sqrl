@@ -289,10 +289,8 @@ type CustomerPage {
 }
 
 type OffsetPageInfo {
-    totalRecords: Long!
     pageSize: Int!
     currentPage: Int!
-    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int
@@ -376,10 +374,8 @@ type CustomerPage {
 }
 
 type OffsetPageInfo {
-    totalRecords: Long!
     pageSize: Int!
     currentPage: Int!
-    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int
@@ -588,10 +584,8 @@ type CustomerPage {
 }
 
 type OffsetPageInfo {
-    totalRecords: Long!
     pageSize: Int!
     currentPage: Int!
-    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int
@@ -611,10 +605,8 @@ scalar DateTime
 scalar Long
 
 type OffsetPageInfo {
-    totalRecords: Long!
     pageSize: Int!
     currentPage: Int!
-    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int
@@ -1220,10 +1212,10 @@ CREATE TABLE `Customer` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Customer__schema`;
 CREATE TEMPORARY TABLE `ExternalOrders__schema` (
@@ -1240,10 +1232,10 @@ CREATE TABLE `ExternalOrders` (
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `ExternalOrders__schema`;
 CREATE TEMPORARY TABLE `_Customer__schema` (
@@ -1261,10 +1253,10 @@ CREATE TABLE `_Customer` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `_Customer__schema`;
 CREATE TEMPORARY TABLE `_Orders__schema` (
@@ -1281,10 +1273,10 @@ CREATE TABLE `_Orders` (
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `_Orders__schema`;
 CREATE TEMPORARY TABLE `_Product__schema` (
@@ -1302,10 +1294,10 @@ CREATE TABLE `_Product` (
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `_Product__schema`;
 CREATE VIEW `CustomerByTime2`
@@ -1807,6 +1799,7 @@ CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BI
 CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION, "newId" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
 CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name");
+CREATE INDEX IF NOT EXISTS "CustomerByTime2_btree_c4" ON "CustomerByTime2" USING btree ("timestamp");
 
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
@@ -1837,11 +1830,10 @@ FROM "ExternalOrders" AS "ExternalOrders0"
               "type" : "SqlQuery",
               "sql" : "SELECT *\nFROM \"CustomerByTime2\"",
               "parameters" : [ ],
-              "pagination" : "LIMIT_AND_OFFSET",
+              "pagination" : "OFFSET_PAGE_INFO",
               "cacheDurationMs" : 0,
               "database" : "POSTGRES",
-              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM \"CustomerByTime2\") x",
-              "countWithEventTimesSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"CustomerByTime2\") x"
+              "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"CustomerByTime2\") x"
             }
           }
         }
@@ -1867,7 +1859,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query CustomerByTime2($limit: Int = 10, $offset: Int = 0) {\nCustomerByTime2(limit: $limit, offset: $offset) {\nresults {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\npagination {\ntotalRecords\npageSize\ncurrentPage\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
+            "query" : "query CustomerByTime2($limit: Int = 10, $offset: Int = 0) {\nCustomerByTime2(limit: $limit, offset: $offset) {\nresults {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\npagination {\npageSize\ncurrentPage\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "CustomerByTime2",
             "operationType" : "QUERY"
           },
@@ -1878,7 +1870,7 @@ FROM "ExternalOrders" AS "ExternalOrders0"
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n}\n\ntype CustomerPage {\n    results: [Customer!]\n    pagination: OffsetPageInfo\n}\n\ntype OffsetPageInfo {\n    totalRecords: Long!\n    pageSize: Int!\n    currentPage: Int!\n    totalPages: Int!\n    hasNextPage: Boolean!\n    hasPreviousPage: Boolean!\n    nextOffset: Int\n    prevOffset: Int\n    firstEventTime: DateTime\n    lastEventTime: DateTime\n}\n\ntype Query {\n    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!\n}\n"
+        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n}\n\ntype CustomerPage {\n    results: [Customer!]\n    pagination: OffsetPageInfo\n}\n\ntype OffsetPageInfo {\n    pageSize: Int!\n    currentPage: Int!\n    hasNextPage: Boolean!\n    hasPreviousPage: Boolean!\n    nextOffset: Int\n    prevOffset: Int\n    firstEventTime: DateTime\n    lastEventTime: DateTime\n}\n\ntype Query {\n    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!\n}\n"
       }
     }
   }

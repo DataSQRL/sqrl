@@ -20,7 +20,7 @@ CustomerTimeWindow := SELECT
 ^
 
 [FATAL] Paginated query [CustomerByTime2] must declare both 'limit' and 'offset' arguments
-in script:comprehensiveTest-fail-paged-no-limit-offset.graphqls [33:5]:
+in script:comprehensiveTest-fail-paged-no-limit-offset.graphqls [31:5]:
 
 type Query {
     CustomerByTime2: CustomerPage!

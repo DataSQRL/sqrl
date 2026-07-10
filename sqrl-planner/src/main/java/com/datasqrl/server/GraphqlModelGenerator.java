@@ -22,6 +22,7 @@ import com.datasqrl.engine.database.relational.ExecutableJdbcReadQuery;
 import com.datasqrl.engine.log.kafka.KafkaLogEngine;
 import com.datasqrl.engine.log.kafka.KafkaQuery;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
@@ -50,6 +51,7 @@ import graphql.language.InputValueDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,6 +70,10 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
   List<QueryCoords> queryCoords = new ArrayList<>();
   List<MutationCoords> mutations = new ArrayList<>();
   List<SubscriptionCoords> subscriptions = new ArrayList<>();
+
+  /** Base tables of paginated queries, so a rowtime index can be generated for them. */
+  Set<TableAnalysis> pagedRowtimeTables = new LinkedHashSet<>();
+
   private final ErrorCollector errorCollector;
 
   public GraphqlModelGenerator(
@@ -169,18 +175,23 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
             .map(InputValueDefinition::getName)
             .anyMatch(
                 name -> name.equals(SchemaConstants.LIMIT) || name.equals(SchemaConstants.OFFSET));
-    var countSql = paged ? buildCountSql(executableJdbcReadQuery.getSql()) : null;
-    var countWithEventTimesSql =
-        paged ? buildCountWithEventTimesSql(tableFunction, executableJdbcReadQuery.getSql()) : null;
+    var pagination =
+        paged
+            ? PaginationType.OFFSET_PAGE_INFO
+            : hasLimitOrOffset ? PaginationType.LIMIT_AND_OFFSET : PaginationType.NONE;
+    var eventTimesSql =
+        paged ? buildEventTimesSql(tableFunction, executableJdbcReadQuery.getSql()) : null;
+    if (eventTimesSql != null) {
+      pagedRowtimeTables.add(tableFunction.getBaseTable());
+    }
     queryBase =
         new SqlQuery(
             executableJdbcReadQuery.getSql(),
             parameters,
-            hasLimitOrOffset ? PaginationType.LIMIT_AND_OFFSET : PaginationType.NONE,
+            pagination,
             executableJdbcReadQuery.getCacheDuration().toMillis(),
             executableJdbcReadQuery.getDatabase(),
-            countSql,
-            countWithEventTimesSql);
+            eventTimesSql);
     var coordsBuilder =
         ArgumentLookupQueryCoords.builder()
             .parentType(parentType.getName())
@@ -192,25 +203,19 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     queryCoords.add(coordsBuilder.build());
   }
 
-  /** Builds the companion COUNT(*) query for a paginated result. */
-  private static String buildCountSql(String baseSql) {
-    return "SELECT COUNT(*) AS \"total_records\" FROM (" + baseSql + ") x";
-  }
-
   /**
-   * Variant of the count query that also computes MIN/MAX over the designated rowtime column for
+   * Builds the companion aggregate query computing MIN/MAX over the designated rowtime column for
    * {@code firstEventTime}/{@code lastEventTime}. Returns null when the result has no rowtime. The
    * rowtime column name is the same identifier as in the base query's output.
    */
-  private static String buildCountWithEventTimesSql(
-      SqrlTableFunction tableFunction, String baseSql) {
+  private static String buildEventTimesSql(SqrlTableFunction tableFunction, String baseSql) {
     return tableFunction
         .getRowTime()
         .map(tableFunction::getField)
         .map(RelDataTypeField::getName)
         .map(
             col ->
-                "SELECT COUNT(*) AS \"total_records\", MIN(\""
+                "SELECT MIN(\""
                     + col
                     + "\") AS \"first_event_time\", MAX(\""
                     + col

@@ -26,6 +26,7 @@ import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.MainScript;
+import com.datasqrl.plan.global.PagedRowtimeIndexRewriter;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.SqlScriptPlanner;
@@ -104,6 +105,17 @@ public class CompilationProcess {
             var model = generateServerModel.generateGraphQLModel(api, serverPlan);
             serverPlan.getModels().put(api.version(), model);
           });
+
+      // Paginated queries run a MIN/MAX(rowtime) aggregate; index their base tables' rowtime
+      // column.
+      // Which queries are paginated is only known now (after the GraphQL walk), so this runs as a
+      // second rewrite pass over the already-planned database DDL.
+      if (!serverPlan.getPagedRowtimeTables().isEmpty()) {
+        physicalPlan =
+            physicalPlan.applyRewriting(
+                List.of(new PagedRowtimeIndexRewriter(serverPlan.getPagedRowtimeTables())),
+                environment);
+      }
 
       // create test artifact
       if (executionGoal == ExecutionGoal.TEST) {

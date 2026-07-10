@@ -300,19 +300,13 @@ public class RootGraphQLModel {
     DatabaseType database;
 
     /**
-     * Companion COUNT(*) query producing pagination metadata. When non-null, the query returns a
-     * page wrapper ({@code {results, pagination}}) rather than a bare list. Only executed when the
-     * request selects pagination fields that require it.
+     * Companion aggregate query computing MIN/MAX over the rowtime column for {@code
+     * firstEventTime}/{@code lastEventTime}. Only relevant when {@link #pagination} is {@link
+     * PaginationType#OFFSET_PAGE_INFO}, and only executed when the request selects an event-time
+     * field. Null when the result has no rowtime column.
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    String countSql;
-
-    /**
-     * Variant of {@link #countSql} that additionally computes MIN/MAX over the rowtime column for
-     * {@code firstEventTime}/{@code lastEventTime}. Null when the result has no rowtime.
-     */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    String countWithEventTimesSql;
+    String eventTimesSql;
 
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
@@ -320,14 +314,7 @@ public class RootGraphQLModel {
     }
 
     public SqlQuery updateSql(String newSql) {
-      return new SqlQuery(
-          newSql,
-          parameters,
-          pagination,
-          cacheDurationMs,
-          database,
-          countSql,
-          countWithEventTimesSql);
+      return new SqlQuery(newSql, parameters, pagination, cacheDurationMs, database, eventTimesSql);
     }
   }
 

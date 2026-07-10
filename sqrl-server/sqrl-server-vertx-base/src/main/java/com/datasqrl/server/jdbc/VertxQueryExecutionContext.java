@@ -18,10 +18,12 @@ package com.datasqrl.server.jdbc;
 import static com.datasqrl.server.jdbc.SchemaConstants.LIMIT;
 import static com.datasqrl.server.jdbc.SchemaConstants.OFFSET;
 
+import com.datasqrl.server.PaginationType;
 import com.datasqrl.server.VertxServerContext;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.graphql.RootGraphQLModel.Argument;
 import com.datasqrl.server.graphql.RootGraphQLModel.ResolvedSqlQuery;
+import com.datasqrl.server.graphql.RootGraphQLModel.SqlQuery;
 import graphql.schema.DataFetchingEnvironment;
 import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNonNull;
@@ -65,129 +67,36 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
             (paramObj, throwable) -> {
               if (throwable != null) {
                 cf.completeExceptionally(throwable);
+              } else if (resolvedQuery.getQuery().getPagination()
+                  == PaginationType.OFFSET_PAGE_INFO) {
+                runPaginatedQuery(resolvedQuery, paramObj);
               } else {
-                runQueryInternal(resolvedQuery, isList, paramObj);
+                runPlainQuery(resolvedQuery, isList, paramObj);
               }
             });
 
     return cf;
   }
 
-  private CompletableFuture<Object> runQueryInternal(
+  /** Executes a bare (non-paged) query, applying limit/offset when the query declares them. */
+  private void runPlainQuery(
       ResolvedSqlQuery resolvedQuery, boolean isList, List<Object> paramObj) {
-
-    var preparedQueryContainer = (PreparedVertxSqrlQuery) resolvedQuery.getPreparedQueryContainer();
     var query = resolvedQuery.getQuery();
-    var unpreparedSqlQuery = query.getSql();
-    var database = query.getDatabase();
-    var paged = query.getCountSql() != null;
-
-    // Pagination metadata is computed lazily from the selection set: the aggregate query only
-    // runs when totals or event times are selected, and hasNextPage without totals is derived
-    // by fetching one extra row instead.
-    PageFieldNames fieldNames = null;
-    String aggregateSql = null;
-    var needNextWithoutAggregate = false;
-    if (paged) {
-      fieldNames = pageFieldNames(environment.getFieldType());
-      var pag = fieldNames.paginationField();
-      var selection = environment.getSelectionSet();
-      var needEventTimes = selection.containsAnyOf(pag + "/firstEventTime", pag + "/lastEventTime");
-      var needTotals = selection.containsAnyOf(pag + "/totalRecords", pag + "/totalPages");
-      if (needEventTimes && query.getCountWithEventTimesSql() != null) {
-        aggregateSql = query.getCountWithEventTimesSql();
-      } else if (needTotals) {
-        aggregateSql = query.getCountSql();
-      }
-      needNextWithoutAggregate =
-          aggregateSql == null
-              && selection.containsAnyOf(pag + "/hasNextPage", pag + "/nextOffset");
+    var sql = query.getSql();
+    if (query.getPagination() == PaginationType.LIMIT_AND_OFFSET) {
+      var limit = Optional.<Integer>ofNullable(environment.getArgument(LIMIT));
+      var offset = Optional.<Integer>ofNullable(environment.getArgument(OFFSET));
+      sql =
+          applyLimitOffset(
+              query,
+              sql,
+              paramObj,
+              limit.orElse(Integer.MAX_VALUE),
+              offset.orElse(0),
+              limit.isPresent());
     }
 
-    // The aggregate query binds the base parameters only, without the runtime limit/offset.
-    // Tuple.from snapshots the list here (before limit/offset are appended below) and, unlike
-    // List.copyOf, tolerates null bind values (SQL NULL).
-    var countParams = aggregateSql != null ? Tuple.from(paramObj) : null;
-
-    int limitValue = Integer.MAX_VALUE;
-    int offsetValue = 0;
-    var fetchExtraRow = false;
-    switch (query.getPagination()) {
-      case NONE:
-        break;
-      case LIMIT_AND_OFFSET:
-        var limit = Optional.<Integer>ofNullable(environment.getArgument(LIMIT));
-        var offset = Optional.<Integer>ofNullable(environment.getArgument(OFFSET));
-        limitValue = limit.orElse(Integer.MAX_VALUE);
-        offsetValue = offset.orElse(0);
-
-        // without a limit the page contains every remaining row, so there is no next page and
-        // no extra row to fetch
-        fetchExtraRow = needNextWithoutAggregate && limitValue != Integer.MAX_VALUE;
-        var fetchLimit = fetchExtraRow ? limitValue + 1 : limitValue;
-
-        // special case where database doesn't support binding for limit/offset => need
-        // to execute dynamically
-        if (!query.getDatabase().supportsLimitOffsetBinding) {
-          assert preparedQueryContainer == null;
-          unpreparedSqlQuery =
-              AbstractQueryExecutionContext.addLimitOffsetToQuery(
-                  unpreparedSqlQuery,
-                  limit.isPresent() ? String.valueOf(fetchLimit) : "ALL",
-                  String.valueOf(offsetValue));
-        } else {
-          paramObj.add(fetchLimit);
-          paramObj.add(offsetValue);
-        }
-        break;
-      default:
-        throw new UnsupportedOperationException("Unsupported pagination: " + query.getPagination());
-    }
-
-    // execute the preparedQuery with the arguments extracted above
-    Future<RowSet<Row>> future;
-    var params = Tuple.from(paramObj);
-
-    if (preparedQueryContainer == null) {
-      future = serverContext.getSqlClient().execute(database, unpreparedSqlQuery, params);
-    } else {
-      var preparedQuery = preparedQueryContainer.preparedQuery();
-      future = serverContext.getSqlClient().execute(preparedQuery, params);
-    }
-
-    if (paged) {
-      Future<RowSet<Row>> aggregateFuture =
-          aggregateSql == null
-              ? Future.succeededFuture(null)
-              : serverContext.getSqlClient().execute(database, aggregateSql, countParams);
-      var dataFuture = future;
-      var pageNames = fieldNames;
-      var effectiveLimit = limitValue;
-      var effectiveOffset = offsetValue;
-      var extraRowFetched = fetchExtraRow;
-      var deriveNextFromResults = needNextWithoutAggregate;
-      Future.all(dataFuture, aggregateFuture)
-          .map(
-              c ->
-                  pagedResultMapper(
-                      dataFuture.result(),
-                      aggregateFuture.result(),
-                      pageNames,
-                      effectiveLimit,
-                      effectiveOffset,
-                      extraRowFetched,
-                      deriveNextFromResults))
-          .onSuccess(cf::complete)
-          .onFailure(
-              f -> {
-                f.printStackTrace();
-                cf.completeExceptionally(f);
-              });
-      return cf;
-    }
-
-    // map the resultSet to json for GraphQL response
-    future
+    execute(resolvedQuery, sql, paramObj)
         .map(r -> resultMapper(r, isList))
         .onSuccess(cf::complete)
         .onFailure(
@@ -195,7 +104,99 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
               f.printStackTrace();
               cf.completeExceptionally(f);
             });
-    return cf;
+  }
+
+  /**
+   * Executes an {@link PaginationType#OFFSET_PAGE_INFO} query: the page data query always runs,
+   * while the pagination metadata is computed lazily from the selection set. The event-time
+   * aggregate runs only when an event-time field is selected; {@code hasNextPage}/{@code
+   * nextOffset} are answered by fetching one extra row instead of any aggregate.
+   */
+  private void runPaginatedQuery(ResolvedSqlQuery resolvedQuery, List<Object> paramObj) {
+    var query = resolvedQuery.getQuery();
+    var fieldNames = pageFieldNames(environment.getFieldType());
+    var pag = fieldNames.paginationField();
+    var selection = environment.getSelectionSet();
+
+    var needEventTimes = selection.containsAnyOf(pag + "/firstEventTime", pag + "/lastEventTime");
+    var eventTimesSql = needEventTimes ? query.getEventTimesSql() : null;
+
+    var limit = Optional.<Integer>ofNullable(environment.getArgument(LIMIT));
+    var offset = Optional.<Integer>ofNullable(environment.getArgument(OFFSET));
+    var limitValue = limit.orElse(Integer.MAX_VALUE);
+    var offsetValue = offset.orElse(0);
+
+    // hasNextPage/nextOffset are derived by fetching one extra row. Without a limit the page holds
+    // every remaining row, so there is no next page and no extra row to fetch.
+    var deriveNext = selection.containsAnyOf(pag + "/hasNextPage", pag + "/nextOffset");
+    var fetchExtraRow = deriveNext && limitValue != Integer.MAX_VALUE;
+    var fetchLimit = fetchExtraRow ? limitValue + 1 : limitValue;
+
+    // The aggregate binds the base parameters only. Tuple.from snapshots the list here (before
+    // limit/offset are appended below) and, unlike List.copyOf, tolerates null bind values.
+    var aggregateParams = eventTimesSql != null ? Tuple.from(paramObj) : null;
+
+    var sql =
+        applyLimitOffset(
+            query, query.getSql(), paramObj, fetchLimit, offsetValue, limit.isPresent());
+
+    var dataFuture = execute(resolvedQuery, sql, paramObj);
+    Future<RowSet<Row>> aggregateFuture =
+        eventTimesSql == null
+            ? Future.succeededFuture(null)
+            : serverContext
+                .getSqlClient()
+                .execute(query.getDatabase(), eventTimesSql, aggregateParams);
+
+    Future.all(dataFuture, aggregateFuture)
+        .map(
+            c ->
+                pagedResultMapper(
+                    dataFuture.result(),
+                    aggregateFuture.result(),
+                    fieldNames,
+                    limitValue,
+                    offsetValue,
+                    fetchExtraRow,
+                    deriveNext))
+        .onSuccess(cf::complete)
+        .onFailure(
+            f -> {
+              f.printStackTrace();
+              cf.completeExceptionally(f);
+            });
+  }
+
+  /**
+   * Binds limit/offset as parameters (databases that support it) or rewrites the SQL text
+   * (databases that don't, e.g. Snowflake). Returns the SQL to execute.
+   */
+  private static String applyLimitOffset(
+      SqlQuery query,
+      String sql,
+      List<Object> paramObj,
+      int limit,
+      int offset,
+      boolean limitPresent) {
+    if (!query.getDatabase().supportsLimitOffsetBinding) {
+      return AbstractQueryExecutionContext.addLimitOffsetToQuery(
+          sql, limitPresent ? String.valueOf(limit) : "ALL", String.valueOf(offset));
+    }
+    paramObj.add(limit);
+    paramObj.add(offset);
+    return sql;
+  }
+
+  private Future<RowSet<Row>> execute(
+      ResolvedSqlQuery resolvedQuery, String sql, List<Object> paramObj) {
+    var container = (PreparedVertxSqrlQuery) resolvedQuery.getPreparedQueryContainer();
+    var params = Tuple.from(paramObj);
+    if (container == null) {
+      return serverContext
+          .getSqlClient()
+          .execute(resolvedQuery.getQuery().getDatabase(), sql, params);
+    }
+    return serverContext.getSqlClient().execute(container.preparedQuery(), params);
   }
 
   private Object resultMapper(RowSet<Row> r, boolean isList) {
@@ -206,7 +207,7 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
 
   private Object pagedResultMapper(
       RowSet<Row> dataRows,
-      RowSet<Row> aggregateRows,
+      RowSet<Row> eventTimeRows,
       PageFieldNames fieldNames,
       int limit,
       int offset,
@@ -224,21 +225,17 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
       hasNextPage = false; // no limit given: the page contains every remaining row
     }
 
-    Long totalRecords = null;
     Object firstEventTime = null;
     Object lastEventTime = null;
-    if (aggregateRows != null) {
-      var aggregateIterator = aggregateRows.iterator();
-      var aggregateJson =
-          aggregateIterator.hasNext() ? aggregateIterator.next().toJson() : new JsonObject();
-      totalRecords = aggregateJson.getLong("total_records", 0L);
-      firstEventTime = aggregateJson.getValue("first_event_time");
-      lastEventTime = aggregateJson.getValue("last_event_time");
+    if (eventTimeRows != null) {
+      var it = eventTimeRows.iterator();
+      var eventTimeJson = it.hasNext() ? it.next().toJson() : new JsonObject();
+      firstEventTime = eventTimeJson.getValue("first_event_time");
+      lastEventTime = eventTimeJson.getValue("last_event_time");
     }
 
     var pagination =
-        buildPaginationMetadata(
-            totalRecords, hasNextPage, limit, offset, firstEventTime, lastEventTime);
+        buildPaginationMetadata(hasNextPage, limit, offset, firstEventTime, lastEventTime);
     // An absent limit means "return everything" (limit == Integer.MAX_VALUE); report the actual
     // number of rows on this page as pageSize rather than leaking the sentinel.
     if (limit == Integer.MAX_VALUE) {
@@ -274,17 +271,12 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
   private record PageFieldNames(String resultsField, String paginationField) {}
 
   /**
-   * Builds the pagination metadata object. {@code totalRecords} and {@code hasNextPage} are null
-   * when the request did not select fields requiring them; the corresponding fields are then left
-   * out (GraphQL never reads unselected fields).
+   * Builds the pagination metadata object. {@code hasNextPage} is null when the request did not
+   * select fields requiring it; the corresponding fields are then left out (GraphQL never reads
+   * unselected fields).
    */
   static JsonObject buildPaginationMetadata(
-      Long totalRecords,
-      Boolean hasNextPage,
-      int limit,
-      int offset,
-      Object firstEventTime,
-      Object lastEventTime) {
+      Boolean hasNextPage, int limit, int offset, Object firstEventTime, Object lastEventTime) {
     boolean hasPreviousPage = offset > 0;
     var pagination =
         new JsonObject()
@@ -296,12 +288,6 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
             .put("firstEventTime", firstEventTime)
             .put("lastEventTime", lastEventTime);
 
-    if (totalRecords != null) {
-      pagination
-          .put("totalRecords", totalRecords)
-          .put("totalPages", limit == 0 ? 0 : (int) Math.ceil((double) totalRecords / limit));
-      hasNextPage = (long) offset + limit < totalRecords;
-    }
     if (hasNextPage != null) {
       pagination
           .put("hasNextPage", hasNextPage)

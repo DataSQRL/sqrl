@@ -26,10 +26,8 @@ scalar LocalTime
 scalar Long
 
 type OffsetPageInfo {
-  totalRecords: Long!
   pageSize: Int!
   currentPage: Int!
-  totalPages: Int!
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   nextOffset: Int
@@ -184,10 +182,10 @@ CREATE TABLE `Click` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/click.jsonl',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 LIKE `Click__schema`;
 CREATE VIEW `Trending`
@@ -288,6 +286,9 @@ CREATE TABLE IF NOT EXISTS "Recommendation" ("url" TEXT NOT NULL, "rec" TEXT NOT
 CREATE TABLE IF NOT EXISTS "Trending" ("url" TEXT NOT NULL, "total" BIGINT NOT NULL, PRIMARY KEY ("url"));
 CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" TEXT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
+CREATE INDEX IF NOT EXISTS "Click_btree_c1" ON "Click" USING btree ("timestamp");
+CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("timestamp");
+
 >>>vertx.json
 {
   "models" : {
@@ -312,11 +313,10 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
               "type" : "SqlQuery",
               "sql" : "SELECT *\nFROM \"Click\"",
               "parameters" : [ ],
-              "pagination" : "LIMIT_AND_OFFSET",
+              "pagination" : "OFFSET_PAGE_INFO",
               "cacheDurationMs" : 0,
               "database" : "POSTGRES",
-              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM \"Click\") x",
-              "countWithEventTimesSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"Click\") x"
+              "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"Click\") x"
             }
           }
         },
@@ -349,10 +349,9 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
                   "sqlType" : "VARCHAR"
                 }
               ],
-              "pagination" : "LIMIT_AND_OFFSET",
+              "pagination" : "OFFSET_PAGE_INFO",
               "cacheDurationMs" : 0,
-              "database" : "POSTGRES",
-              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM (SELECT \"url\", \"rec\", \"frequency\"\n  FROM \"Recommendation\"\n  ORDER BY \"url\" NULLS FIRST, \"frequency\" DESC NULLS LAST) AS \"t\"\nWHERE \"url\" = $1) x"
+              "database" : "POSTGRES"
             }
           }
         },
@@ -375,10 +374,9 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
               "type" : "SqlQuery",
               "sql" : "SELECT *\nFROM (SELECT \"url\", \"total\"\n  FROM \"Trending\"\n  ORDER BY \"total\" DESC NULLS LAST, \"url\" NULLS FIRST) AS \"t\"",
               "parameters" : [ ],
-              "pagination" : "LIMIT_AND_OFFSET",
+              "pagination" : "OFFSET_PAGE_INFO",
               "cacheDurationMs" : 0,
-              "database" : "POSTGRES",
-              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM (SELECT \"url\", \"total\"\n  FROM \"Trending\"\n  ORDER BY \"total\" DESC NULLS LAST, \"url\" NULLS FIRST) AS \"t\") x"
+              "database" : "POSTGRES"
             }
           }
         },
@@ -401,11 +399,10 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
               "type" : "SqlQuery",
               "sql" : "SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter\"",
               "parameters" : [ ],
-              "pagination" : "LIMIT_AND_OFFSET",
+              "pagination" : "OFFSET_PAGE_INFO",
               "cacheDurationMs" : 0,
               "database" : "POSTGRES",
-              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter\") x",
-              "countWithEventTimesSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter\") x"
+              "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter\") x"
             }
           }
         }
@@ -431,7 +428,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query Click($limit: Int = 10, $offset: Int = 0) {\nClick(limit: $limit, offset: $offset) {\nresults {\nurl\ntimestamp\nuserid\n}\npagination {\ntotalRecords\npageSize\ncurrentPage\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
+            "query" : "query Click($limit: Int = 10, $offset: Int = 0) {\nClick(limit: $limit, offset: $offset) {\nresults {\nurl\ntimestamp\nuserid\n}\npagination {\npageSize\ncurrentPage\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "Click",
             "operationType" : "QUERY"
           },
@@ -464,7 +461,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query Recommendation($url: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendation(url: $url, limit: $limit, offset: $offset) {\nresults {\nurl\nrec\nfrequency\n}\npagination {\ntotalRecords\npageSize\ncurrentPage\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
+            "query" : "query Recommendation($url: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendation(url: $url, limit: $limit, offset: $offset) {\nresults {\nurl\nrec\nfrequency\n}\npagination {\npageSize\ncurrentPage\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "Recommendation",
             "operationType" : "QUERY"
           },
@@ -491,7 +488,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query Trending($limit: Int = 10, $offset: Int = 0) {\nTrending(limit: $limit, offset: $offset) {\nresults {\nurl\ntotal\n}\npagination {\ntotalRecords\npageSize\ncurrentPage\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
+            "query" : "query Trending($limit: Int = 10, $offset: Int = 0) {\nTrending(limit: $limit, offset: $offset) {\nresults {\nurl\ntotal\n}\npagination {\npageSize\ncurrentPage\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "Trending",
             "operationType" : "QUERY"
           },
@@ -517,7 +514,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query VisitAfter($limit: Int = 10, $offset: Int = 0) {\nVisitAfter(limit: $limit, offset: $offset) {\nresults {\nbeforeURL\nafterURL\ntimestamp\n}\npagination {\ntotalRecords\npageSize\ncurrentPage\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
+            "query" : "query VisitAfter($limit: Int = 10, $offset: Int = 0) {\nVisitAfter(limit: $limit, offset: $offset) {\nresults {\nbeforeURL\nafterURL\ntimestamp\n}\npagination {\npageSize\ncurrentPage\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "VisitAfter",
             "operationType" : "QUERY"
           },
@@ -528,7 +525,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Click {\n  url: String!\n  timestamp: DateTime!\n  userid: String!\n}\n\ntype ClickPage {\n  results: [Click!]\n  pagination: OffsetPageInfo\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OffsetPageInfo {\n  totalRecords: Long!\n  pageSize: Int!\n  currentPage: Int!\n  totalPages: Int!\n  hasNextPage: Boolean!\n  hasPreviousPage: Boolean!\n  nextOffset: Int\n  prevOffset: Int\n  firstEventTime: DateTime\n  lastEventTime: DateTime\n}\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): ClickPage!\n  \"Recommend pages that are visited shortly after\"\n  Recommendation(\n    \"the URL to get recommendations for\"\n    url: String!,\n    limit: Int = 10,\n    offset: Int = 0\n  ): RecommendationPage!\n  \"Most visited pages\"\n  Trending(limit: Int = 10, offset: Int = 0): TrendingPage!\n  VisitAfter(limit: Int = 10, offset: Int = 0): VisitAfterPage!\n}\n\n\"Recommend pages that are visited shortly after\"\ntype Recommendation {\n  url: String!\n  \"the recommended page URL\"\n  rec: String!\n  \"the number of visitors that co-visited that page\"\n  frequency: Long!\n}\n\ntype RecommendationPage {\n  results: [Recommendation!]\n  pagination: OffsetPageInfo\n}\n\n\"Most visited pages\"\ntype Trending {\n  \"URL of the top visited page\"\n  url: String!\n  \"Total number of visitors\"\n  total: Long!\n}\n\ntype TrendingPage {\n  results: [Trending!]\n  pagination: OffsetPageInfo\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n\ntype VisitAfterPage {\n  results: [VisitAfter!]\n  pagination: OffsetPageInfo\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Click {\n  url: String!\n  timestamp: DateTime!\n  userid: String!\n}\n\ntype ClickPage {\n  results: [Click!]\n  pagination: OffsetPageInfo\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OffsetPageInfo {\n  pageSize: Int!\n  currentPage: Int!\n  hasNextPage: Boolean!\n  hasPreviousPage: Boolean!\n  nextOffset: Int\n  prevOffset: Int\n  firstEventTime: DateTime\n  lastEventTime: DateTime\n}\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): ClickPage!\n  \"Recommend pages that are visited shortly after\"\n  Recommendation(\n    \"the URL to get recommendations for\"\n    url: String!,\n    limit: Int = 10,\n    offset: Int = 0\n  ): RecommendationPage!\n  \"Most visited pages\"\n  Trending(limit: Int = 10, offset: Int = 0): TrendingPage!\n  VisitAfter(limit: Int = 10, offset: Int = 0): VisitAfterPage!\n}\n\n\"Recommend pages that are visited shortly after\"\ntype Recommendation {\n  url: String!\n  \"the recommended page URL\"\n  rec: String!\n  \"the number of visitors that co-visited that page\"\n  frequency: Long!\n}\n\ntype RecommendationPage {\n  results: [Recommendation!]\n  pagination: OffsetPageInfo\n}\n\n\"Most visited pages\"\ntype Trending {\n  \"URL of the top visited page\"\n  url: String!\n  \"Total number of visitors\"\n  total: Long!\n}\n\ntype TrendingPage {\n  results: [Trending!]\n  pagination: OffsetPageInfo\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n\ntype VisitAfterPage {\n  results: [VisitAfter!]\n  pagination: OffsetPageInfo\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

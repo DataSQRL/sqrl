@@ -18,10 +18,8 @@ type CustomerPage {
 }
 
 type OffsetPageInfo {
-    totalRecords: Long!
     pageSize: Int!
     currentPage: Int!
-    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int

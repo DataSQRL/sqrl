@@ -22,25 +22,11 @@ import org.junit.jupiter.api.Test;
 class PaginationMetadataTest {
 
   @Test
-  void givenEmptyResult_whenBuildMetadata_thenSinglePageNoRecords() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(0L, null, 10, 0, null, null);
+  void givenFirstPageWithNext_whenBuildMetadata_thenHasNextNoPrevious() {
+    var json = VertxQueryExecutionContext.buildPaginationMetadata(true, 10, 0, null, null);
 
-    assertThat(json.getLong("totalRecords")).isZero();
     assertThat(json.getInteger("pageSize")).isEqualTo(10);
     assertThat(json.getInteger("currentPage")).isEqualTo(1);
-    assertThat(json.getInteger("totalPages")).isZero();
-    assertThat(json.getBoolean("hasNextPage")).isFalse();
-    assertThat(json.getBoolean("hasPreviousPage")).isFalse();
-    assertThat(json.getInteger("nextOffset")).isNull();
-    assertThat(json.getInteger("prevOffset")).isNull();
-  }
-
-  @Test
-  void givenFirstPage_whenBuildMetadata_thenHasNextNoPrevious() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(25L, null, 10, 0, null, null);
-
-    assertThat(json.getInteger("currentPage")).isEqualTo(1);
-    assertThat(json.getInteger("totalPages")).isEqualTo(3);
     assertThat(json.getBoolean("hasNextPage")).isTrue();
     assertThat(json.getBoolean("hasPreviousPage")).isFalse();
     assertThat(json.getInteger("nextOffset")).isEqualTo(10);
@@ -48,8 +34,8 @@ class PaginationMetadataTest {
   }
 
   @Test
-  void givenMiddlePage_whenBuildMetadata_thenHasBothNeighbours() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(25L, null, 10, 10, null, null);
+  void givenMiddlePageWithNext_whenBuildMetadata_thenHasBothNeighbours() {
+    var json = VertxQueryExecutionContext.buildPaginationMetadata(true, 10, 10, null, null);
 
     assertThat(json.getInteger("currentPage")).isEqualTo(2);
     assertThat(json.getBoolean("hasNextPage")).isTrue();
@@ -59,30 +45,20 @@ class PaginationMetadataTest {
   }
 
   @Test
-  void givenLastPartialPage_whenBuildMetadata_thenNoNextHasPrevious() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(25L, null, 10, 20, null, null);
+  void givenLastPage_whenBuildMetadata_thenNoNextHasPrevious() {
+    var json = VertxQueryExecutionContext.buildPaginationMetadata(false, 10, 20, null, null);
 
     assertThat(json.getInteger("currentPage")).isEqualTo(3);
     assertThat(json.getBoolean("hasNextPage")).isFalse();
-    assertThat(json.getBoolean("hasPreviousPage")).isTrue();
     assertThat(json.getInteger("nextOffset")).isNull();
+    assertThat(json.getBoolean("hasPreviousPage")).isTrue();
     assertThat(json.getInteger("prevOffset")).isEqualTo(10);
   }
 
   @Test
-  void givenOffsetBeyondTotal_whenBuildMetadata_thenNoNextPage() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(25L, null, 10, 30, null, null);
-
-    assertThat(json.getBoolean("hasNextPage")).isFalse();
-    assertThat(json.getBoolean("hasPreviousPage")).isTrue();
-    assertThat(json.getInteger("prevOffset")).isEqualTo(20);
-  }
-
-  @Test
   void givenZeroLimit_whenBuildMetadata_thenDoesNotDivideByZero() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(25L, null, 0, 0, null, null);
+    var json = VertxQueryExecutionContext.buildPaginationMetadata(null, 0, 0, null, null);
 
-    assertThat(json.getInteger("totalPages")).isZero();
     assertThat(json.getInteger("currentPage")).isEqualTo(1);
   }
 
@@ -90,39 +66,19 @@ class PaginationMetadataTest {
   void givenEventTimes_whenBuildMetadata_thenPassedThrough() {
     var json =
         VertxQueryExecutionContext.buildPaginationMetadata(
-            5L, null, 10, 0, "2024-01-01T00:00:00Z", "2024-01-02T00:00:00Z");
+            null, 10, 0, "2024-01-01T00:00:00Z", "2024-01-02T00:00:00Z");
 
     assertThat(json.getString("firstEventTime")).isEqualTo("2024-01-01T00:00:00Z");
     assertThat(json.getString("lastEventTime")).isEqualTo("2024-01-02T00:00:00Z");
   }
 
   @Test
-  void givenNoTotalsQueried_whenBuildMetadata_thenTotalsOmitted() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(null, true, 10, 10, null, null);
-
-    assertThat(json.containsKey("totalRecords")).isFalse();
-    assertThat(json.containsKey("totalPages")).isFalse();
-    assertThat(json.getBoolean("hasNextPage")).isTrue();
-    assertThat(json.getInteger("nextOffset")).isEqualTo(20);
-    assertThat(json.getBoolean("hasPreviousPage")).isTrue();
-    assertThat(json.getInteger("prevOffset")).isZero();
-  }
-
-  @Test
   void givenNoNextPageInfoQueried_whenBuildMetadata_thenNextFieldsOmitted() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(null, null, 10, 0, null, null);
+    var json = VertxQueryExecutionContext.buildPaginationMetadata(null, 10, 0, null, null);
 
     assertThat(json.containsKey("hasNextPage")).isFalse();
     assertThat(json.containsKey("nextOffset")).isFalse();
     assertThat(json.getInteger("pageSize")).isEqualTo(10);
     assertThat(json.getBoolean("hasPreviousPage")).isFalse();
-  }
-
-  @Test
-  void givenTotalsQueried_whenBuildMetadata_thenHasNextDerivedFromTotals() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(25L, false, 10, 0, null, null);
-
-    assertThat(json.getBoolean("hasNextPage")).isTrue();
-    assertThat(json.getInteger("nextOffset")).isEqualTo(10);
   }
 }
