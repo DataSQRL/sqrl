@@ -16,6 +16,7 @@
       "printf_example" : "Hello world 42",
       "startswith_example" : true,
       "endswith_example" : true,
+      "substring_example" : "Fli",
       "regexp_extract_example" : "123",
       "regexp_extract_group_example" : "123",
       "regexp_extract_all_example" : [ "1", "2", "3" ],
