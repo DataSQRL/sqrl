@@ -159,10 +159,10 @@ CREATE TABLE `kafka_avro_table` (
 )
 WITH (
   'connector' = 'kafka',
-  'topic' = 'users-avro',
+  'format' = 'avro',
   'properties.bootstrap.servers' = 'localhost:9092',
   'properties.group.id' = 'flink-kafka-avro-group',
-  'format' = 'avro'
+  'topic' = 'users-avro'
 );
 CREATE TABLE `kafka_safe_json_table` (
   `user_id` INTEGER,
@@ -170,10 +170,10 @@ CREATE TABLE `kafka_safe_json_table` (
 )
 WITH (
   'connector' = 'kafka-safe',
-  'topic' = 'users-json-avro',
+  'format' = 'flexible-json',
   'properties.bootstrap.servers' = 'localhost:9092',
   'properties.group.id' = 'test',
-  'format' = 'flexible-json'
+  'topic' = 'users-json-avro'
 );
 CREATE TABLE `kafka_safe_csv_table` (
   `user_id` INTEGER,
@@ -181,10 +181,10 @@ CREATE TABLE `kafka_safe_csv_table` (
 )
 WITH (
   'connector' = 'kafka-safe',
-  'topic' = 'users-csv-avro',
+  'format' = 'flexible-csv',
   'properties.bootstrap.servers' = 'localhost:9092',
   'properties.group.id' = 'test',
-  'format' = 'flexible-csv'
+  'topic' = 'users-csv-avro'
 );
 CREATE TABLE `upsert_kafka_confluent_avro` (
   `user_id` INTEGER,
@@ -193,13 +193,13 @@ CREATE TABLE `upsert_kafka_confluent_avro` (
 )
 WITH (
   'connector' = 'upsert-kafka',
-  'topic' = 'users-upsert',
-  'properties.group.id' = 'flink-kafka-avro-group',
-  'properties.bootstrap.servers' = 'localhost:9092',
-  'key.format' = 'avro-confluent',
   'key.avro-confluent.schema-registry.url' = 'http://localhost:8081',
-  'value.format' = 'avro-confluent',
-  'value.avro-confluent.schema-registry.url' = 'http://localhost:8081'
+  'key.format' = 'avro-confluent',
+  'properties.bootstrap.servers' = 'localhost:9092',
+  'properties.group.id' = 'flink-kafka-avro-group',
+  'topic' = 'users-upsert',
+  'value.avro-confluent.schema-registry.url' = 'http://localhost:8081',
+  'value.format' = 'avro-confluent'
 );
 CREATE TABLE `kafka_debezium_table` (
   `user_id` INTEGER,
@@ -207,10 +207,10 @@ CREATE TABLE `kafka_debezium_table` (
 )
 WITH (
   'connector' = 'kafka',
-  'topic' = 'users-debezium',
-  'properties.group.id' = 'flink-kafka-avro-group',
+  'format' = 'debezium-json',
   'properties.bootstrap.servers' = 'localhost:9092',
-  'format' = 'debezium-json'
+  'properties.group.id' = 'flink-kafka-avro-group',
+  'topic' = 'users-debezium'
 );
 CREATE TABLE `iceberg_parquet_table` (
   `user_id` INTEGER,
@@ -218,11 +218,11 @@ CREATE TABLE `iceberg_parquet_table` (
 )
 PARTITIONED BY (`user_id`)
 WITH (
-  'connector' = 'iceberg',
   'catalog-name' = 'local_fs',
   'catalog-type' = 'hadoop',
-  'warehouse' = 'file:///tmp/iceberg/warehouse',
+  'connector' = 'iceberg',
   'format-version' = '2',
+  'warehouse' = 'file:///tmp/iceberg/warehouse',
   'write.format.default' = 'parquet'
 );
 CREATE TABLE `_jdbc_table` (
@@ -231,10 +231,10 @@ CREATE TABLE `_jdbc_table` (
 )
 WITH (
   'connector' = 'jdbc',
-  'url' = 'jdbc:postgresql://localhost:5432/mydb',
+  'password' = 'mypassword',
   'table-name' = 'users',
-  'username' = 'myuser',
-  'password' = 'mypassword'
+  'url' = 'jdbc:postgresql://localhost:5432/mydb',
+  'username' = 'myuser'
 );
 CREATE TABLE `iceberg_parquet_table_1` (
   `user_id` INTEGER,

@@ -103,12 +103,12 @@ CREATE TABLE `Orders` (
   WATERMARK FOR `_source_time` AS `_source_time`
 )
 WITH (
+  'avro.timestamp_mapping.legacy' = 'false',
+  'connector' = 'kafka',
   'format' = 'avro',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.group.id' = 'datasqrl-orders',
-  'topic' = 'dummy-topic',
-  'connector' = 'kafka',
-  'avro.timestamp_mapping.legacy' = 'false'
+  'topic' = 'dummy-topic'
 )
 LIKE `Orders__schema`;
 CREATE VIEW `OrderCount`

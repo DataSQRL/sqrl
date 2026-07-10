@@ -10,9 +10,9 @@ CREATE TABLE `Customer` (
 )
 WITH (
   'connector' = 'datagen',
+  'fields.customerid.end' = '10',
   'fields.customerid.kind' = 'sequence',
   'fields.customerid.start' = '1',
-  'fields.customerid.end' = '10',
   'fields.email.length' = '15',
   'fields.name.length' = '10',
   'rows-per-second' = '5'

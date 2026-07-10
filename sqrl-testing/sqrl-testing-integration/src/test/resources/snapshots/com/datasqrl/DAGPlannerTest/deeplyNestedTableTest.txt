@@ -22,10 +22,10 @@ CREATE TABLE `NestedCustomers` (
   `customer` ROW(`name` VARCHAR, `profile` ROW(`email` VARCHAR, `address` ROW(`street` VARCHAR, `city` VARCHAR, `geo` ROW(`lat` DOUBLE, `lon` DOUBLE, `prec` ROW(`source` VARCHAR, `meters` INTEGER)))))
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 )
 >>>flink-sql-no-functions.sql
 CREATE TABLE `NestedCustomers` (
@@ -33,10 +33,10 @@ CREATE TABLE `NestedCustomers` (
   `customer` ROW(`name` VARCHAR, `profile` ROW(`email` VARCHAR, `address` ROW(`street` VARCHAR, `city` VARCHAR, `geo` ROW(`lat` DOUBLE, `lon` DOUBLE, `prec` ROW(`source` VARCHAR, `meters` INTEGER)))))
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = 'file:/mock',
-  'source.monitor-interval' = '10 sec',
-  'connector' = 'filesystem'
+  'source.monitor-interval' = '10 sec'
 );
 CREATE TABLE `NestedCustomers_1` (
   `customer_id` BIGINT,

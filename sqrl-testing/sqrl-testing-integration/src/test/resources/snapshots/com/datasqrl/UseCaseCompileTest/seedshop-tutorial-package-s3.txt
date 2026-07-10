@@ -434,9 +434,9 @@ CREATE TABLE `Orders` (
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/order_items.jsonl',
-  'connector' = 'filesystem'
+  'path' = '${DATA_PATH}/order_items.jsonl'
 )
 LIKE `Orders__schema`;
 CREATE TEMPORARY TABLE `_ProductsStream__schema` (
@@ -457,9 +457,9 @@ CREATE TABLE `_ProductsStream` (
   WATERMARK FOR `updated` AS `updated` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/products.jsonl',
-  'connector' = 'filesystem'
+  'path' = '${DATA_PATH}/products.jsonl'
 )
 LIKE `_ProductsStream__schema`;
 CREATE TEMPORARY TABLE `_CustomersStream__schema` (
@@ -480,9 +480,9 @@ CREATE TABLE `_CustomersStream` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/customers.jsonl',
-  'connector' = 'filesystem'
+  'path' = '${DATA_PATH}/customers.jsonl'
 )
 LIKE `_CustomersStream__schema`;
 CREATE VIEW `_OrderItems`

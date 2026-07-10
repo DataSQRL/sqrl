@@ -322,11 +322,11 @@ CREATE TABLE `_InputData` (
 )
 WITH (
   'connector' = 'datagen',
-  'number-of-rows' = '20',
-  'rows-per-second' = '1',
+  'fields.dummy.end' = '20',
   'fields.dummy.kind' = 'sequence',
   'fields.dummy.start' = '1',
-  'fields.dummy.end' = '20'
+  'number-of-rows' = '20',
+  'rows-per-second' = '1'
 );
 CREATE VIEW `FunctionCalls`
 AS
@@ -338,11 +338,11 @@ CREATE TABLE `_ArrayData` (
 )
 WITH (
   'connector' = 'datagen',
-  'number-of-rows' = '20',
-  'rows-per-second' = '1',
+  'fields.id.end' = '20',
   'fields.id.kind' = 'sequence',
   'fields.id.start' = '1',
-  'fields.id.end' = '20'
+  'number-of-rows' = '20',
+  'rows-per-second' = '1'
 );
 CREATE VIEW `ArrayFunctions`
 AS

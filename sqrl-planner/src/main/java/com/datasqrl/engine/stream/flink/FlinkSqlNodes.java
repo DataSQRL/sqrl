@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.engine.stream.flink.plan;
+package com.datasqrl.engine.stream.flink;
 
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.planner.util.NonSecretEnvVarResolver;
 import com.datasqrl.sql.SqlCallRewriter;
+import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
@@ -32,30 +32,33 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
-import org.apache.flink.sql.parser.ddl.SqlCreateTable;
-import org.apache.flink.sql.parser.ddl.SqlCreateTableLike;
-import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlDistribution;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlMetadataColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.ddl.constraint.SqlConstraintEnforcement;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 import org.apache.flink.sql.parser.ddl.constraint.SqlUniqueSpec;
+import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
+import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
+import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
+import org.apache.flink.sql.parser.ddl.view.SqlCreateView;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
-public class FlinkSqlNodeFactory {
+public class FlinkSqlNodes {
 
   public static final SqlDistribution NO_DISTRIBUTION = null;
 
@@ -142,7 +145,7 @@ public class FlinkSqlNodeFactory {
     var pk = SqlUniqueSpec.PRIMARY_KEY.symbol(SqlParserPos.ZERO);
     var pkColumns =
         new SqlNodeList(
-            primaryKey.stream().map(FlinkSqlNodeFactory::identifier).collect(Collectors.toList()),
+            primaryKey.stream().map(FlinkSqlNodes::identifier).collect(Collectors.toList()),
             SqlParserPos.ZERO);
 
     return new SqlTableConstraint(
@@ -155,20 +158,20 @@ public class FlinkSqlNodeFactory {
   }
 
   public static SqlCreateTable resolveTableProperties(SqlCreateTable createTable) {
-    var resolvedPropMap = resolvePropertiesToMap(createTable.getPropertyList());
+    var resolvedPropMap = resolveProperties(createTable.getProperties());
     var resolvedPropList = createProperties(resolvedPropMap);
 
     if (createTable instanceof SqlCreateTableLike likeTable) {
       return new SqlCreateTableLike(
           likeTable.getParserPosition(),
-          likeTable.getTableName(),
+          likeTable.getName(),
           likeTable.getColumnList(),
           likeTable.getTableConstraints(),
           resolvedPropList,
           likeTable.getDistribution(),
-          likeTable.getPartitionKeyList(),
+          createPartitionKeys(likeTable.getPartitionKeyList()),
           likeTable.getWatermark().orElse(null),
-          likeTable.getComment().orElse(null),
+          createStringLiteral(likeTable.getComment()),
           likeTable.getTableLike(),
           likeTable.isTemporary(),
           likeTable.ifNotExists);
@@ -176,88 +179,79 @@ public class FlinkSqlNodeFactory {
 
     return new SqlCreateTable(
         createTable.getParserPosition(),
-        createTable.getTableName(),
+        createTable.getName(),
         createTable.getColumnList(),
         createTable.getTableConstraints(),
         resolvedPropList,
         createTable.getDistribution(),
-        createTable.getPartitionKeyList(),
+        createPartitionKeys(createTable.getPartitionKeyList()),
         createTable.getWatermark().orElse(null),
-        createTable.getComment().orElse(null),
+        createStringLiteral(createTable.getComment()),
         createTable.isTemporary(),
         createTable.ifNotExists);
   }
 
   public static SqlNodeList createProperties(Map<String, String> options) {
-    List<SqlNode> props =
-        options.entrySet().stream()
-            .map(
-                option ->
-                    new SqlTableOption(
-                        SqlLiteral.createCharString(option.getKey(), SqlParserPos.ZERO),
-                        SqlLiteral.createCharString(
-                            Objects.toString(option.getValue()), SqlParserPos.ZERO),
-                        SqlParserPos.ZERO))
-            .collect(Collectors.toList());
+    var sqlNodes = new ArrayList<SqlNode>(options.size());
 
-    return new SqlNodeList(props, SqlParserPos.ZERO);
+    new TreeMap<>(options)
+        .forEach(
+            (key, val) -> {
+              var keyLiteral = createStringLiteral(key);
+              var valLiteral = createStringLiteral(val);
+
+              sqlNodes.add(new SqlTableOption(keyLiteral, valLiteral, SqlParserPos.ZERO));
+            });
+
+    return new SqlNodeList(sqlNodes, SqlParserPos.ZERO);
   }
 
-  public static Map<String, String> resolvePropertiesToMap(SqlNodeList nodeList) {
-    var res = new LinkedHashMap<String, String>();
-    var resolver = NonSecretEnvVarResolver.builder().strict(false).build();
+  public static Map<String, String> resolveProperties(SqlNodeList nodeList) {
+    var res = new HashMap<String, String>();
 
     for (var node : nodeList) {
       var option = (SqlTableOption) node;
       var keyLiteral = (SqlLiteral) option.getKey();
       var valueLiteral = (SqlLiteral) option.getValue();
-      var resolvedVal = resolver.resolve(valueLiteral.toValue());
-
-      res.put(keyLiteral.toValue(), resolvedVal);
+      res.put(keyLiteral.toValue(), valueLiteral.toValue());
     }
+
+    return resolveProperties(res);
+  }
+
+  public static Map<String, String> resolveProperties(Map<String, String> props) {
+    var res = new TreeMap<String, String>();
+    var resolver = NonSecretEnvVarResolver.builder().strict(false).build();
+
+    props.forEach(
+        (key, val) -> {
+          var resolvedVal = resolver.resolve(val);
+          res.put(key, resolvedVal);
+        });
 
     return res;
   }
 
   public static SqlNodeList createPartitionKeys(List<String> partitionKeys) {
     List<SqlIdentifier> keys =
-        partitionKeys.stream().map(FlinkSqlNodeFactory::identifier).collect(Collectors.toList());
+        partitionKeys.stream().map(FlinkSqlNodes::identifier).collect(Collectors.toList());
 
     return new SqlNodeList(keys, SqlParserPos.ZERO);
   }
 
-  // New method to replace FlinkSqlTableBuilder
-  public static SqlCreateTable createTable(
-      String tableName,
-      RelDataType relDataType,
-      Optional<List<String>> partitionKeys,
-      long watermarkMillis,
-      Optional<String> timestampColumn,
-      Map<String, MetadataEntry> metadataConfig,
-      List<String> primaryKeyConstraint,
-      Map<String, String> connectorProperties,
-      MetadataExpressionParser expressionParser) {
-
-    var partitionKeysNode =
-        partitionKeys.map(FlinkSqlNodeFactory::createPartitionKeys).orElse(SqlNodeList.EMPTY);
-    var watermark =
-        timestampColumn
-            .filter(ts -> watermarkMillis >= 0)
-            .map(ts -> createWatermark(ts, watermarkMillis))
-            .orElse(null);
-
+  public static SqlCreateTable createTable(String tableName, SqlCreateTable original) {
     return new SqlCreateTable(
-        SqlParserPos.ZERO,
-        FlinkSqlNodeFactory.identifier(tableName),
-        createColumns(relDataType, metadataConfig, expressionParser),
-        createConstraints(primaryKeyConstraint),
-        createPropertiesAndRemoveDefaults(connectorProperties),
-        NO_DISTRIBUTION,
-        partitionKeysNode,
-        watermark,
-        null,
-        false,
-        false);
+        original.getParserPosition(),
+        identifier(tableName),
+        original.getColumnList(),
+        original.getTableConstraints(),
+        createProperties(original.getProperties()),
+        original.getDistribution(),
+        createPartitionKeys(original.getPartitionKeyList()),
+        original.getWatermark().orElse(null),
+        createStringLiteral(original.getComment()),
+        original.isTemporary(),
+        original.ifNotExists);
   }
 
   public static SqlCreateTable createTable(
@@ -265,12 +259,13 @@ public class FlinkSqlNodeFactory {
       RelDataType relDataType,
       Map<String, String> connectorOptions,
       boolean isTemporary) {
+
     return new SqlCreateTable(
         SqlParserPos.ZERO,
-        FlinkSqlNodeFactory.identifier(tableName),
+        FlinkSqlNodes.identifier(tableName),
         createColumns(relDataType),
-        Collections.emptyList(),
-        FlinkSqlNodeFactory.createProperties(connectorOptions),
+        List.of(),
+        FlinkSqlNodes.createProperties(connectorOptions),
         NO_DISTRIBUTION,
         SqlNodeList.EMPTY,
         null,
@@ -279,12 +274,33 @@ public class FlinkSqlNodeFactory {
         false);
   }
 
+  public static SqlCreateTableLike createTableLike(
+      String tableName, SqlCreateTable original, SqlTableLike likeClause) {
+    return new SqlCreateTableLike(
+        original.getParserPosition(),
+        identifier(tableName),
+        original.getColumnList(),
+        original.getTableConstraints(),
+        createProperties(original.getProperties()),
+        original.getDistribution(),
+        createPartitionKeys(original.getPartitionKeyList()),
+        original.getWatermark().orElse(null),
+        createStringLiteral(original.getComment()),
+        likeClause,
+        original.isTemporary(),
+        original.ifNotExists);
+  }
+
   public static SqlWatermark createWatermark(String ts, long watermarkMillis) {
-    var eventTimeColumn = FlinkSqlNodeFactory.identifier(ts);
-    return FlinkSqlNodeFactory.createWatermark(
+    var eventTimeColumn = identifier(ts);
+    return createWatermark(
         eventTimeColumn,
-        FlinkSqlNodeFactory.boundedStrategy(
-            eventTimeColumn, Double.toString(watermarkMillis / 1000d)));
+        boundedStrategy(eventTimeColumn, Double.toString(watermarkMillis / 1000d)));
+  }
+
+  @Nullable
+  public static SqlCharStringLiteral createStringLiteral(@Nullable String comment) {
+    return comment == null ? null : SqlLiteral.createCharString(comment, SqlParserPos.ZERO);
   }
 
   public static SqlNodeList createColumns(RelDataType relDataType) {
@@ -326,9 +342,9 @@ public class FlinkSqlNodeFactory {
           node = getComputedColumn(columnName, call);
         } else {
           node =
-              new SqlTableColumn.SqlMetadataColumn(
+              new SqlMetadataColumn(
                   SqlParserPos.ZERO,
-                  FlinkSqlNodeFactory.identifier(columnName),
+                  identifier(columnName),
                   null,
                   SqlDataTypeSpecBuilder.convertTypeToFlinkSpec(column.getType()),
                   metadataFnc,
@@ -336,9 +352,9 @@ public class FlinkSqlNodeFactory {
         }
       } else {
         node =
-            new SqlTableColumn.SqlRegularColumn(
+            new SqlRegularColumn(
                 SqlParserPos.ZERO,
-                FlinkSqlNodeFactory.identifier(columnName),
+                identifier(columnName),
                 null,
                 SqlDataTypeSpecBuilder.convertTypeToFlinkSpec(column.getType()),
                 null);
@@ -351,30 +367,7 @@ public class FlinkSqlNodeFactory {
 
   public static SqlNode getComputedColumn(String columnName, SqlCall call) {
     return new SqlTableColumn.SqlComputedColumn(
-        SqlParserPos.ZERO, FlinkSqlNodeFactory.identifier(columnName), null, call);
-  }
-
-  public static SqlCall getCallWithNoArgs(SqlOperator operator) {
-    return new SqlBasicCall(operator, List.of(), SqlParserPos.ZERO);
-  }
-
-  private static List<SqlTableConstraint> createConstraints(List<String> primaryKey) {
-    if (primaryKey.isEmpty()) {
-      return Collections.emptyList();
-    }
-    var pkConstraint = FlinkSqlNodeFactory.createPrimaryKeyConstraint(primaryKey);
-    return Collections.singletonList(pkConstraint);
-  }
-
-  private static SqlNodeList createPropertiesAndRemoveDefaults(
-      Map<String, String> connectorProperties) {
-    Map<String, String> options = new TreeMap<>(connectorProperties);
-    options.remove("version");
-    options.remove("type");
-    if (options.isEmpty()) {
-      return SqlNodeList.EMPTY;
-    }
-    return FlinkSqlNodeFactory.createProperties(options);
+        SqlParserPos.ZERO, identifier(columnName), null, call);
   }
 
   public static SqlSelect selectAllFromTable(SqlIdentifier tableName) {

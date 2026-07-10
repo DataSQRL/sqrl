@@ -207,9 +207,9 @@ CREATE TABLE `_CustomersStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/customers.jsonl',
-  'connector' = 'filesystem'
+  'path' = '${DATA_PATH}/customers.jsonl'
 )
 LIKE `_CustomersStream__schema`;
 CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (
@@ -228,9 +228,9 @@ CREATE TABLE `_ApplicationsStream` (
   PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/applications.jsonl',
-  'connector' = 'filesystem'
+  'path' = '${DATA_PATH}/applications.jsonl'
 )
 LIKE `_ApplicationsStream__schema`;
 CREATE TEMPORARY TABLE `ApplicationUpdates__schema` (
@@ -246,9 +246,9 @@ CREATE TABLE `ApplicationUpdates` (
   PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED
 )
 WITH (
+  'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/application_updates.jsonl',
-  'connector' = 'filesystem'
+  'path' = '${DATA_PATH}/application_updates.jsonl'
 )
 LIKE `ApplicationUpdates__schema`;
 CREATE VIEW `Customers`
