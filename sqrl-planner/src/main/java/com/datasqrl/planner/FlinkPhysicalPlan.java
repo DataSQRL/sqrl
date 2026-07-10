@@ -58,6 +58,10 @@ import org.apache.flink.table.api.ExplainFormat;
 @Builder
 public class FlinkPhysicalPlan implements EnginePhysicalPlan {
 
+  static final String ICEBERG_USE_V2_SINK = "table.exec.iceberg.use-v2-sink";
+  static final String ICEBERG_INFER_SOURCE_PARALLELISM =
+      "table.exec.iceberg.infer-source-parallelism";
+
   List<String> flinkSql;
   Set<String> connectors;
   Set<String> formats;
@@ -229,8 +233,8 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
                       ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE));
 
       if (connectors.contains(IcebergEngineFactory.ENGINE_NAME)) {
-        // Make sure we use the V2 sink
-        config.setString("table.exec.iceberg.use-v2-sink", "true");
+        config.setString(ICEBERG_USE_V2_SINK, "true");
+        config.setString(ICEBERG_INFER_SOURCE_PARALLELISM, "false");
       }
 
       return new FlinkPhysicalPlan(
