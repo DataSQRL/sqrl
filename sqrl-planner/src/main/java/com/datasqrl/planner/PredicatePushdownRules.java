@@ -21,11 +21,15 @@ public enum PredicatePushdownRules {
   DEFAULT,
 
   /** Strip all table source related predicate pushdown rules from any stream program. */
+  @Deprecated
   LIMITED_TABLE_SOURCE_RULES,
 
+  /** Strip downstream filter rules from the LOGICAL program to maximize subgraph elimination */
+  LIMITED_RULES_NO_SOURCE,
+
   /**
-   * All {@code LIMITED_TABLE_SOURCE_RULES} changes, and also strip some additional filter rules
-   * from the LOGICAL program.
+   * All {@code LIMITED_RULES_NO_SOURCE} changes, and also strip all table source pushdown rules
+   * from any stream program.
    */
   LIMITED_RULES
 }

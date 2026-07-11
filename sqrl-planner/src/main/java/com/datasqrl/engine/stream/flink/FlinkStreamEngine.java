@@ -74,13 +74,6 @@ public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEng
     return conf;
   }
 
-  public Configuration getTemporalJoinConfig() {
-    var conf = new Configuration();
-    conf.set(TABLE_EXEC_SOURCE_IDLE_TIMEOUT, sec(10));
-
-    return conf;
-  }
-
   private Duration sec(int amount) {
     return Duration.ofSeconds(amount);
   }

@@ -78,7 +78,7 @@ public class DAGPlannerTest {
   @Disabled
   @Test
   void specificScript() {
-    var script = SCRIPT_DIR.resolve("imports.sqrl");
+    var script = SCRIPT_DIR.resolve("mutationNestedTypeTest.sqrl");
     scripts(script);
   }
 
