@@ -1,0 +1,27 @@
+== Abstract Syntax Tree ==
+LogicalProject(user_id=[$0])
++- LogicalFilter(condition=[>($1, 10)])
+   +- LogicalJoin(condition=[=($0, $2)], joinType=[inner])
+      :- LogicalProject(user_id=[$0], amount_plus=[+($1, 1)])
+      :  +- LogicalTableScan(table=[[default_catalog, default_database, events]])
+      +- LogicalTableScan(table=[[default_catalog, default_database, dim_users]])
+
+== Optimized Physical Plan ==
+Calc(select=[user_id])
++- Join(joinType=[InnerJoin], where=[=(user_id, user_id0)], select=[user_id, user_id0], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])
+   :- Exchange(distribution=[hash[user_id]])
+   :  +- Calc(select=[user_id], where=[>(+(amount, 1), 10)])
+   :     +- TableSourceScan(table=[[default_catalog, default_database, events]], fields=[user_id, amount])
+   +- Exchange(distribution=[hash[user_id]])
+      +- Calc(select=[user_id])
+         +- TableSourceScan(table=[[default_catalog, default_database, dim_users]], fields=[user_id, segment])
+
+== Optimized Execution Plan ==
+Calc(select=[user_id])
++- Join(joinType=[InnerJoin], where=[(user_id = user_id0)], select=[user_id, user_id0], leftInputSpec=[NoUniqueKey], rightInputSpec=[NoUniqueKey])
+   :- Exchange(distribution=[hash[user_id]])
+   :  +- Calc(select=[user_id], where=[((amount + 1) > 10)])
+   :     +- TableSourceScan(table=[[default_catalog, default_database, events]], fields=[user_id, amount])
+   +- Exchange(distribution=[hash[user_id]])
+      +- Calc(select=[user_id])
+         +- TableSourceScan(table=[[default_catalog, default_database, dim_users]], fields=[user_id, segment])
