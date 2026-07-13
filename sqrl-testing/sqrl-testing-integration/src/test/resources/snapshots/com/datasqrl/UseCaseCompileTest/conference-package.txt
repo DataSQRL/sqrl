@@ -575,8 +575,7 @@ INSERT INTO `default_catalog`.`default_database`.`_UserLikes_4`
 SELECT *
 FROM `default_catalog`.`default_database`.`_Likes`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],
@@ -590,8 +589,7 @@ CREATE TABLE IF NOT EXISTS "Events" ("url" TEXT NOT NULL, "date" TEXT NOT NULL, 
 CREATE TABLE IF NOT EXISTS "_UserInterests" ("userid" TEXT NOT NULL, "interestVector" VECTOR(1536), PRIMARY KEY ("userid"));
 CREATE TABLE IF NOT EXISTS "_UserLikes" ("_uuid" TEXT NOT NULL, "eventid" BIGINT NOT NULL, "userid" TEXT NOT NULL, "liked" BOOLEAN NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("userid","eventid"));
 
-CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector('english', coalesce("title", '') || ' ' || coalesce("abstract", '') ));
-
+CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector('english', coalesce("title", '') || ' ' || coalesce("abstract", '') ))
 >>>vertx.json
 {
   "models" : {

@@ -116,8 +116,7 @@ INSERT INTO `default_catalog`.`default_database`.`results_2`
 SELECT `completions_result`, `extract_json_result_response`, `extract_json_result_with_schema_response`, 1 AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`results`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],
@@ -125,8 +124,7 @@ END;
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "data" ("val" INTEGER NOT NULL, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_result_response" TEXT, "extract_json_result_with_schema_response" TEXT, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"));
-
+CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_result_response" TEXT, "extract_json_result_with_schema_response" TEXT, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"))
 >>>vertx.json
 {
   "models" : {

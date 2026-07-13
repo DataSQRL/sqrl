@@ -127,8 +127,7 @@ INSERT INTO `default_catalog`.`default_database`.`ProductId_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`ProductId`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],

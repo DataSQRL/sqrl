@@ -205,8 +205,7 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_2`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`Orders`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],

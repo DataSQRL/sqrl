@@ -306,8 +306,7 @@ INSERT INTO `default_catalog`.`default_database`.`StreamJoin_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`_FakeStreamJoin`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [

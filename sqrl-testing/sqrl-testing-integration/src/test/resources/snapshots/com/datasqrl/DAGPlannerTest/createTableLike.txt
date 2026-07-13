@@ -211,8 +211,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingMutation_3`
 SELECT `uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `testField`, `recordedTime`, `hash_columns`(`uuid`, `sensorid`, `epoch_timestamp`, `temperature`, `testField`, `recordedTime`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`SensorReadingMutation`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [
