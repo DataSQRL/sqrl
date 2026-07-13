@@ -556,7 +556,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec</artifactId>
-        <version>4.2.15.Final</version>
+        <version>4.2.16.Final</version>
       </dependency>
       <dependency>
         <groupId>org.postgresql</groupId>
