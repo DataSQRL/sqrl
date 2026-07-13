@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
@@ -53,6 +54,8 @@ import org.testcontainers.redpanda.RedpandaContainer;
 import org.testcontainers.utility.DockerImageName;
 
 public class TestContainersForTestGoal implements TestEngineVisitor<TestContainerHook, Void> {
+
+  private static final int KAFKA_ADMIN_TIMEOUT_MS = 10_000;
 
   @Override
   public TestContainerHook accept(TestEngines testEngines, Void context) {
@@ -130,7 +133,7 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
       // Using Docker Hub image to avoid rate limiting from docker.redpanda.com registry
       final RedpandaContainer testKafka =
           new RedpandaContainer(
-              DockerImageName.parse("redpandadata/redpanda:v23.1.2")
+              DockerImageName.parse("redpandadata/redpanda:v26.1.12")
                   .asCompatibleSubstituteFor("docker.redpanda.com/redpandadata/redpanda"));
 
       @Override
@@ -144,11 +147,18 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
       public void clear() {
         var props = new Properties();
         props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, testKafka.getBootstrapServers());
+        props.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, KAFKA_ADMIN_TIMEOUT_MS);
+        props.put(AdminClientConfig.DEFAULT_API_TIMEOUT_MS_CONFIG, KAFKA_ADMIN_TIMEOUT_MS);
         try (var admin = AdminClient.create(props)) {
           // List all topics
-          List<String> topics = new ArrayList<>(admin.listTopics().names().get());
+          List<String> topics =
+              new ArrayList<>(
+                  admin.listTopics().names().get(KAFKA_ADMIN_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+          if (topics.isEmpty()) {
+            return;
+          }
           // Delete all topics
-          admin.deleteTopics(topics).all().get();
+          admin.deleteTopics(topics).all().get(KAFKA_ADMIN_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (Exception e) {
           throw new RuntimeException("Failed to delete topics", e);
         }

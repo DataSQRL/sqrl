@@ -46,13 +46,12 @@ import java.nio.file.attribute.FileTime;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -273,7 +272,8 @@ public class DatasqrlRun {
     props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
     props.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, TOPIC_CREATE_TIMEOUT_MS);
     try (var adminClient = AdminClient.create(props)) {
-      Set<String> existingTopics = adminClient.listTopics().names().get();
+      var existingTopics =
+          adminClient.listTopics().names().get(TOPIC_CREATE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
       for (var topicName : topicsToCreate) {
         if (existingTopics.contains(topicName)) {
           continue;
@@ -281,7 +281,10 @@ public class DatasqrlRun {
         // We need to limit both partitions and replication factor to 1 here,
         // cause this will run on the Redpanda "cluster" inside the cmd image.
         var newTopic = new NewTopic(topicName, 1, (short) 1);
-        adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
+        adminClient
+            .createTopics(List.of(newTopic))
+            .all()
+            .get(TOPIC_CREATE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
       }
     } catch (Exception e) {
       log.warn(
