@@ -140,8 +140,7 @@ INSERT INTO `default_catalog`.`default_database`.`InputAgg_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`InputAgg`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],
@@ -149,8 +148,7 @@ END;
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "AppendStream" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NULL, PRIMARY KEY ("k","v_sum"));
-CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NULL, PRIMARY KEY ("k"));
-
+CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NULL, PRIMARY KEY ("k"))
 >>>vertx.json
 {
   "models" : {

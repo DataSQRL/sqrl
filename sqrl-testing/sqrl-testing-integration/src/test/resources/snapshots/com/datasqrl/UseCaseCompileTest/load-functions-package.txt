@@ -74,16 +74,14 @@ INSERT INTO `default_catalog`.`default_database`.`FunctionApplied_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`FunctionApplied`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "FunctionApplied" ("id" INTEGER NOT NULL, "fct_result" BOOLEAN, PRIMARY KEY ("id"));
-
+CREATE TABLE IF NOT EXISTS "FunctionApplied" ("id" INTEGER NOT NULL, "fct_result" BOOLEAN, PRIMARY KEY ("id"))
 >>>vertx.json
 {
   "models" : {

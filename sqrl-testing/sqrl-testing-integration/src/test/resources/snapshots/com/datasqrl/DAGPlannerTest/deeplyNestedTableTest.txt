@@ -58,8 +58,7 @@ INSERT INTO `default_catalog`.`default_database`.`NestedCustomers_1`
 SELECT `customer_id`, `to_jsonb`(`customer`) AS `customer`, `hash_columns`(`customer_id`, `customer`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`NestedCustomers`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],

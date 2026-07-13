@@ -148,8 +148,7 @@ INSERT INTO `default_catalog`.`default_database`.`_OrderEntries_1`
 SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`_OrderEntries`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],

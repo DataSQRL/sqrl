@@ -70,12 +70,11 @@ public record JdbcPhysicalPlan(
   }
 
   private String buildSchemaContent() {
-    // No need for ';' here in joining, cause toSql takes care of statement delimiters.
     return Stream.of(Type.EXTENSION, Type.TABLE, Type.INDEX)
         .map(this::getStatementsForType)
         .filter(Predicate.not(List::isEmpty))
         .map(JdbcPhysicalPlan::toSql)
-        .collect(Collectors.joining("\n"));
+        .collect(Collectors.joining(";\n\n"));
   }
 
   private static String toSql(List<JdbcStatement> statements) {

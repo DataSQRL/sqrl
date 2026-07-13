@@ -257,8 +257,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_6`
 SELECT *
 FROM `default_catalog`.`default_database`.`SensorUpdates`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [
@@ -297,8 +296,7 @@ END;
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "EnrichedSensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "placement" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "sensor_name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "placement" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid"));
-
+CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "lastUpdated" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid"))
 >>>vertx.json
 {
   "models" : {

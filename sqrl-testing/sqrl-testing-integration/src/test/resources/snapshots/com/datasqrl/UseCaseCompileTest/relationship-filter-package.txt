@@ -268,16 +268,14 @@ INSERT INTO `default_catalog`.`default_database`.`subqueryQuery_6`
 SELECT *
 FROM `default_catalog`.`default_database`.`subqueryQuery`
 ;
-END;
-
+END
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "Detail" ("id" TEXT NOT NULL, "info" TEXT NOT NULL, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "Thing" ("id" TEXT NOT NULL, "label" TEXT NOT NULL, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "Tombstone" ("id" TEXT NOT NULL, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "cleanQuery" ("id" TEXT NOT NULL, "label" TEXT NOT NULL, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "joinQuery" ("id" TEXT NOT NULL, "label" TEXT NOT NULL, PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT NULL, PRIMARY KEY ("id"));
-
+CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT NULL, PRIMARY KEY ("id"))
 >>>vertx.json
 {
   "models" : {
