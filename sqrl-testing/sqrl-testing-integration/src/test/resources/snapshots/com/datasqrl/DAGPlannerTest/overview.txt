@@ -523,8 +523,7 @@ INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_8`
 SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`UnnestOrders`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [

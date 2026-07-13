@@ -437,8 +437,7 @@ INSERT INTO `default_catalog`.`default_database`.`Sensors_5`
 SELECT *
 FROM `default_catalog`.`sources`.`Sensors`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],
@@ -451,8 +450,7 @@ CREATE TABLE IF NOT EXISTS "SecReading" ("sensorid" BIGINT NOT NULL, "timeSec" T
 CREATE TABLE IF NOT EXISTS "SensorLastHour" ("sensorid" BIGINT NOT NULL, "window_time" TIMESTAMP WITH TIME ZONE NOT NULL, "avgTemp" DOUBLE PRECISION NOT NULL, "maxTemp" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("sensorid"));
 CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT NOT NULL, "placed" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
 
-CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId");
-
+CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId")
 >>>vertx.json
 {
   "models" : {

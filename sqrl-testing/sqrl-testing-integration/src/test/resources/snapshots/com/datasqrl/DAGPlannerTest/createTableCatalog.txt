@@ -86,8 +86,7 @@ INSERT INTO `default_catalog`.`default_database`.`Output_1`
 SELECT `key_col`, `int_col`, `hash_columns`(`key_col`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`Output`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],

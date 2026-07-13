@@ -139,23 +139,20 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReading_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`SensorReading`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
-CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" BIGINT NOT NULL, PRIMARY KEY ("sensorid","event_time"));
-
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" BIGINT NOT NULL, PRIMARY KEY ("sensorid","event_time"))
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "SensorAggregate"("sensorid", "maxTemp", "avgTemp") AS SELECT *
 FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS "avgTemp"
   FROM "SensorReading"
   GROUP BY "sensorid"
-  ORDER BY "sensorid" NULLS FIRST) AS "t5";
-
+  ORDER BY "sensorid" NULLS FIRST) AS "t5"
 >>>vertx.json
 {
   "models" : {

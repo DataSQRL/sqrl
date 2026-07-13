@@ -460,8 +460,7 @@ INSERT INTO `default_catalog`.`default_database`.`VerifyStream_4`
 SELECT *
 FROM `default_catalog`.`default_database`.`VerifyStream`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],

@@ -168,8 +168,7 @@ INSERT INTO `default_catalog`.`default_database`.`SpecialOrderSummary_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`SpecialOrderSummary`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],

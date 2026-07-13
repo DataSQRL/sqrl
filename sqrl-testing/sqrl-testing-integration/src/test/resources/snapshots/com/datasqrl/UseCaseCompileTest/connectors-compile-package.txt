@@ -349,8 +349,7 @@ INSERT INTO `default_catalog`.`default_database`.`upsert_kafka_confluent_avro_6`
 SELECT *
 FROM `default_catalog`.`default_database`.`upsert_kafka_confluent_avro`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],
@@ -362,8 +361,7 @@ CREATE TABLE IF NOT EXISTS "kafka_avro_table" ("user_id" INTEGER, "name" TEXT, "
 CREATE TABLE IF NOT EXISTS "kafka_debezium_table" ("user_id" INTEGER, "name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "kafka_safe_csv_table" ("user_id" INTEGER, "name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "kafka_safe_json_table" ("user_id" INTEGER, "name" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
-CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT NULL, "name" TEXT, PRIMARY KEY ("user_id"));
-
+CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT NULL, "name" TEXT, PRIMARY KEY ("user_id"))
 >>>vertx.json
 {
   "models" : {

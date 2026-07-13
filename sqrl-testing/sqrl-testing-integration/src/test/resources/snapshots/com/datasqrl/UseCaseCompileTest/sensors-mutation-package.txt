@@ -245,8 +245,7 @@ INSERT INTO `default_catalog`.`default_database`.`SensorReadingSubscription_4`
 SELECT *
 FROM `default_catalog`.`default_database`.`SensorReadingSubscription`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [
@@ -278,8 +277,7 @@ END;
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "HighTempAlert" ("sensorid" INTEGER NOT NULL, "temperature" NUMERIC NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "SensorMaxTemp" ("sensorid" INTEGER NOT NULL, "maxTemp" NUMERIC NOT NULL, PRIMARY KEY ("sensorid"));
-CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" NUMERIC NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
-
+CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temperature" NUMERIC NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
 >>>vertx.json
 {
   "models" : {

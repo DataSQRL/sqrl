@@ -147,5 +147,4 @@ INSERT INTO `default_catalog`.`default_database`.`Iceberg_sink_ex1`
 SELECT *
 FROM `default_catalog`.`sources`.`ApplicationsStream`
 ;
-END;
-
+END

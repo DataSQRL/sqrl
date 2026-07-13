@@ -134,8 +134,7 @@ INSERT INTO `default_catalog`.`default_database`.`_OrdersTotals_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`_OrdersTotals`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],

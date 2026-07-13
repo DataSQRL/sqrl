@@ -358,8 +358,7 @@ INSERT INTO `default_catalog`.`default_database`.`StreamJoin_6`
 SELECT `window_start`, `window_end`, `window_time`, `total`, `customerid`, `window_start0`, `window_end0`, CAST(`window_time0` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `window_time0`, `total0`
 FROM `default_catalog`.`default_database`.`StreamJoin`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],

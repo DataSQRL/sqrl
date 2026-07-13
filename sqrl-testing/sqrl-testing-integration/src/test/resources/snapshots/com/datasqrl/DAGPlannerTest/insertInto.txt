@@ -100,8 +100,7 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],

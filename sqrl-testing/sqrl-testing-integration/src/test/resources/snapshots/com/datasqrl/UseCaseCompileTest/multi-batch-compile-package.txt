@@ -69,8 +69,7 @@ INSERT INTO `default_catalog`.`default_database`.`SinkA_ex1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
-END;
-
+END
 >>>flink-sql-no-functions-1.sql
 CREATE TABLE `Src` (
   `val` INTEGER NOT NULL
@@ -116,8 +115,7 @@ INSERT INTO `default_catalog`.`default_database`.`SinkB_ex2`
 SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
-END;
-
+END
 >>>flink-sql-no-functions-2.sql
 CREATE TABLE `Src` (
   `val` INTEGER NOT NULL
@@ -165,8 +163,7 @@ INSERT INTO `TableC`
 SELECT *
 FROM `Src`
 ;
-END;
-
+END
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Src` (
   `val` INTEGER NOT NULL
@@ -234,5 +231,4 @@ INSERT INTO `TableC`
 SELECT *
 FROM `Src`
 ;
-END;
-
+END

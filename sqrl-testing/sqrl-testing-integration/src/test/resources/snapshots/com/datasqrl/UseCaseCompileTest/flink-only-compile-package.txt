@@ -40,5 +40,4 @@ SELECT `customerid`, COUNT(*) AS `numEntries`
 FROM `Customer`
 GROUP BY `customerid`
 ;
-END;
-
+END
