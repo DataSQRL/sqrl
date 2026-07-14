@@ -20,9 +20,9 @@ import com.google.auto.service.AutoService;
 import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 
 @AutoService(SqlTranslation.class)
-public class SubstringSqlTranslation extends AbstractSubstringSqlTranslation {
+public class SubstrSqlTranslation extends AbstractSubstringSqlTranslation {
 
-  public SubstringSqlTranslation() {
-    super(BuiltInFunctionDefinitions.SUBSTRING, "substring");
+  public SubstrSqlTranslation() {
+    super(BuiltInFunctionDefinitions.SUBSTR, "substr");
   }
 }
