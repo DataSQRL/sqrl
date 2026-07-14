@@ -1,0 +1,8 @@
+IMPORT connectors.sources.*;
+
+CustomersByBirth := SELECT * FROM Customers ORDER BY date_of_birth;
+
+{{#addNoSource}}/*+ no_source */{{/addNoSource}}
+IMPORT connectors.sinks.*;
+
+EXPORT CustomersByBirth TO KafkaSink;

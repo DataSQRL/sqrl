@@ -1,0 +1,6 @@
+[FATAL] Querying an unbounded table 'default_catalog.default_database.KafkaSink' in batch mode is not allowed. The table source is unbounded.
+in script:sinks.sqrl [1:1]:
+CREATE TABLE KafkaSink (
+^
+In case this table is solely used as a sink, apply the /*+ no_source */ hint to avoid marking it as a source.
+

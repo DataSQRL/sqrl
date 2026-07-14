@@ -1,0 +1,17 @@
+IMPORT ecommerceTs.orders;
+
+MaterializedOrders := SELECT * FROM Orders;
+
+/*+ no_source */
+CREATE TABLE KafkaSink (
+    PRIMARY KEY (id, `time`) NOT ENFORCED
+) WITH (
+    'connector' = 'upsert-kafka',
+    'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+    'key.format' = 'json',
+    'value.format' = 'json',
+    'value.fields-include' = 'ALL',
+    'topic' = 'customers'
+) LIKE Orders__schema;
+
+EXPORT MaterializedOrders TO KafkaSink;

@@ -740,10 +740,16 @@ public class Sqrl2FlinkSQLTranslator {
       Optional<MutationBuilder> mutationBuilder,
       SchemaLoader schemaLoader,
       HintsAndDoc hintsAndDoc) {
+
     var result = addTable(Function.identity(), tableDefinition, schemaLoader, mutationBuilder);
     hintsAndDoc = updateDocumentationFromLike(result, hintsAndDoc);
-    if (result.isSourceTable()) return Optional.of(addSourceTable(result, hintsAndDoc));
-    else return Optional.empty();
+
+    if (!result.isSourceTable() || hintsAndDoc.hints().isNoSource()) {
+      return Optional.empty();
+    }
+
+    var srcTable = addSourceTable(result, hintsAndDoc);
+    return Optional.of(srcTable);
   }
 
   private HintsAndDoc updateDocumentationFromLike(

@@ -1,0 +1,18 @@
+CREATE TABLE KafkaSink (
+    id STRING NOT NULL,
+    first_name STRING,
+    last_name STRING,
+    email STRING,
+    phone STRING,
+    address STRING,
+    date_of_birth DATE,
+    updated_at TIMESTAMP_LTZ(3) NOT NULL,
+    PRIMARY KEY(id, updated_at) NOT ENFORCED
+) WITH (
+    'connector' = 'upsert-kafka',
+    'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+    'key.format' = 'json',
+    'value.format' = 'json',
+    'value.fields-include' = 'ALL',
+    'topic' = 'customers'
+);

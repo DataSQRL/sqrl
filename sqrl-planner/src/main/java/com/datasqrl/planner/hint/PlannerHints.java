@@ -76,6 +76,10 @@ public class PlannerHints {
     return getHint(WorkloadHint.class).isPresent();
   }
 
+  public boolean isNoSource() {
+    return getHint(NoSourceHint.class).isPresent();
+  }
+
   public <H> Optional<H> getHint(Class<H> hintClass) {
     return getHints(hintClass).findFirst();
   }

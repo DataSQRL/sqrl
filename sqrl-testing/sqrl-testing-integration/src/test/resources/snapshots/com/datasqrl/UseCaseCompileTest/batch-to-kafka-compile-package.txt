@@ -1,0 +1,320 @@
+>>>inferred_schema.graphqls
+type Customers {
+  id: Long!
+  first_name: String!
+  last_name: String!
+  email: String!
+  phone: String!
+  address: String!
+  date_of_birth: String!
+  updated_at: DateTime!
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  Customers(limit: Int = 10, offset: Int = 0): [Customers!]
+  CustomersByBirth(limit: Int = 10, offset: Int = 0): [Customers!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== KafkaSink
+ID:          KafkaSink
+Type:        export
+Stage:       flink
+Connector:   upsert-kafka
+---
+Inputs:
+ - default_catalog.default_database.CustomersByBirth
+
+=== Customers
+ID:          default_catalog.default_database.Customers
+Type:        stream
+Stage:       flink
+Primary key: id, updated_at
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - last_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - phone: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Inputs:
+ - default_catalog.default_database.Customers__base
+Annotations:
+ - stream-root: Customers
+
+=== CustomersByBirth
+ID:          default_catalog.default_database.CustomersByBirth
+Type:        stream
+Stage:       flink
+Primary key: id, updated_at
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - last_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - phone: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - updated_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Inputs:
+ - default_catalog.default_database.Customers
+Annotations:
+ - stream-root: Customers
+ - sort: [6 ASC-nulls-first]
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Customers__schema` (
+  `id` BIGINT NOT NULL,
+  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/customers.jsonl'
+);
+CREATE TABLE `Customers` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
+)
+LIKE `Customers__schema`;
+CREATE VIEW `CustomersByBirth`
+AS
+SELECT *
+FROM `Customers`;
+CREATE TABLE `KafkaSink` (
+  `id` STRING NOT NULL,
+  `first_name` STRING,
+  `last_name` STRING,
+  `email` STRING,
+  `phone` STRING,
+  `address` STRING,
+  `date_of_birth` DATE,
+  `updated_at` TIMESTAMP_LTZ(3) NOT NULL,
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'upsert-kafka',
+  'key.format' = 'json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'topic' = 'customers',
+  'value.fields-include' = 'ALL',
+  'value.format' = 'json'
+);
+CREATE TABLE `Customers_1` (
+  `id` BIGINT NOT NULL,
+  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Customers',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomersByBirth_2` (
+  `id` BIGINT NOT NULL,
+  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomersByBirth',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Customers_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`Customers`
+;
+INSERT INTO `default_catalog`.`default_database`.`KafkaSink`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomersByBirth`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomersByBirth_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomersByBirth`
+;
+END
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"));
+CREATE TABLE IF NOT EXISTS "CustomersByBirth" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customers",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customers\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomersByBirth",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", \"first_name\", \"last_name\", \"email\", \"phone\", \"address\", \"date_of_birth\", \"updated_at\"\n  FROM \"CustomersByBirth\"\n  ORDER BY \"date_of_birth\" NULLS FIRST) AS \"t\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomers",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Customers($limit: Int = 10, $offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nphone\naddress\ndate_of_birth\nupdated_at\n}\n\n}",
+            "queryName" : "Customers",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customers{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetCustomersByBirth",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomersByBirth($limit: Int = 10, $offset: Int = 0) {\nCustomersByBirth(limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nphone\naddress\ndate_of_birth\nupdated_at\n}\n\n}",
+            "queryName" : "CustomersByBirth",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersByBirth{?offset,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Customers {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  CustomersByBirth(limit: Int = 10, offset: Int = 0): [Customers!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

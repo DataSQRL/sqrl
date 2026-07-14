@@ -66,7 +66,7 @@ public class UseCaseCompileTest {
   @Test
   @Disabled("Intended for manual usage")
   void runTestCaseByName() {
-    var pkg = USECASE_DIR.resolve("banking").resolve("package.json");
+    var pkg = USECASE_DIR.resolve("batch-to-kafka-compile").resolve("package-fail.json");
     UseCaseTestHelper.testUseCase(
         snapshotExtension,
         getClass(),

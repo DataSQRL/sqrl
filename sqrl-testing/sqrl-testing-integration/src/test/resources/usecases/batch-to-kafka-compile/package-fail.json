@@ -1,0 +1,20 @@
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "flink"],
+  "script": {
+    "main": "batch-to-kafka.sqrl",
+    "config": {
+      "addNoSource": false
+    }
+  },
+  "engines": {
+    "flink" : {
+      "config": {
+        "execution.runtime-mode": "batch"
+      }
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}
