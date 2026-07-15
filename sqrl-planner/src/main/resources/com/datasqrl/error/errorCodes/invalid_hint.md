@@ -1,7 +1,8 @@
-Invalid HINT provided.
+Invalid SQL hint provided.
 
-A hint comment block has the following structure
+A SQL hint comment block has the following structure:
 ```
-/*+ hint1, hint2(argument) */
+/*+ hint_without_arg, hint_with_args(arg1, arg2) */
 ```
-Make sure a hint comment block contains ONLY hints and no other comments. Move additional comments into a separate comment block.
+Make sure a hint comment block contains ONLY hints, separated by commas and no other comments.
+Move any additional comments into a separate comment block.

@@ -45,7 +45,7 @@ public class RowCountHint extends ColumnNamesHint {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      var args = source.get().getOptions();
+      var args = source.get().options();
       if (args.isEmpty()) {
         throw new StatementParserException(
             ErrorLabel.GENERIC,
