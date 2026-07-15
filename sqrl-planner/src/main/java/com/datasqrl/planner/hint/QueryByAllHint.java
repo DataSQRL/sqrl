@@ -28,7 +28,7 @@ public class QueryByAllHint extends ColumnNamesHint implements QueryByHint {
   public static final String HINT_NAME = "query_by_all";
 
   protected QueryByAllHint(ParsedObject<SqrlHint> source) {
-    super(source, Type.ANALYZER, source.get().getOptions());
+    super(source, Type.ANALYZER, source.get().options());
   }
 
   @AutoService(Factory.class)

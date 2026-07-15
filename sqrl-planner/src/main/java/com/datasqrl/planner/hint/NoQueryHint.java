@@ -35,7 +35,7 @@ public class NoQueryHint extends ColumnNamesHint implements QueryByHint {
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
       Preconditions.checkArgument(
-          source.get().getOptions().isEmpty(), "no_query hint does not accept options");
+          source.get().options().isEmpty(), "no_query hint does not accept options");
       return new NoQueryHint(source);
     }
 

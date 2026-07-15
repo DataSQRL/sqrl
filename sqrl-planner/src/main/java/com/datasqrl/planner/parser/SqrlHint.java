@@ -17,35 +17,34 @@ package com.datasqrl.planner.parser;
 
 import static com.datasqrl.planner.parser.SqrlStatementParser.relativeLocation;
 import static com.datasqrl.planner.parser.StatementParserException.checkFatal;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.error.ErrorCode;
-import com.google.common.base.Preconditions;
+import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.google.common.base.Supplier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import lombok.Value;
 
 /**
  * Represents a hint in SQRL. SQRL hints give the user control over many aspects of the planning
  * process.
  */
-@Value
-public class SqrlHint {
+public record SqrlHint(String name, List<String> options) {
 
-  public static final Pattern hintPattern =
+  private static final Pattern HINT_PATTERN =
       Pattern.compile(
-          "\\s*(?<name>\\w+)(?:\\((?<args>[\\w`,\\s]*)\\))?\\s*(,\\s*|$)",
+          "\\s*(?<name>\\w+)(?:\\((?<args>[^)]*)\\))?\\s*(,\\s*|$)",
           Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
-  String name;
-  List<String> options;
+  private static final Pattern HINT_ARGS_PATTERN = Pattern.compile("[\\w`,\\s]*");
 
   public static List<ParsedObject<SqrlHint>> parse(ParsedObject<String> hint) {
-    Preconditions.checkArgument(hint.isPresent());
-    var hintMatcher = hintPattern.matcher(hint.get());
-    List<ParsedObject<SqrlHint>> hints = new ArrayList<>();
+    checkArgument(hint.isPresent());
+
+    var hintMatcher = HINT_PATTERN.matcher(hint.get());
+    var hints = new ArrayList<ParsedObject<SqrlHint>>();
     var lastMatchEnd = 0;
     while (hintMatcher.find()) {
       checkFatal(
@@ -53,21 +52,18 @@ public class SqrlHint {
           relativeLocation(hint, lastMatchEnd),
           ErrorCode.INVALID_HINT,
           "Hint block contains non-hints");
+
       var hintName = hintMatcher.group("name");
-      var argumentStr = hintMatcher.group("args");
-      List<String> arguments = List.of();
-      if (argumentStr != null) {
-        arguments =
-            Arrays.stream(hintMatcher.group(2).split(","))
-                .map(String::trim)
-                .collect(Collectors.toUnmodifiableList());
-      }
-      lastMatchEnd = hintMatcher.end();
+      var rawArgs = hintMatcher.group("args");
+      var arguments = parseArgs(rawArgs, () -> relativeLocation(hint, hintMatcher.start("args")));
       var loc =
           hint.getFileLocation()
               .add(SqrlStatementParser.computeFileLocation(hint.get(), hintMatcher.start()));
+
+      lastMatchEnd = hintMatcher.end();
       hints.add(new ParsedObject<>(new SqrlHint(hintName, arguments), loc));
     }
+
     checkFatal(
         lastMatchEnd == hint.get().length(),
         relativeLocation(hint, lastMatchEnd),
@@ -75,5 +71,19 @@ public class SqrlHint {
         "Hint block contains non-hints");
 
     return hints;
+  }
+
+  private static List<String> parseArgs(String args, Supplier<FileLocation> locationSupplier) {
+    if (args == null) {
+      return List.of();
+    }
+
+    checkFatal(
+        HINT_ARGS_PATTERN.matcher(args).matches(),
+        locationSupplier.get(),
+        ErrorCode.INVALID_HINT_ARG,
+        "Hint contains invalid argument characters");
+
+    return Arrays.stream(args.split(",")).map(String::trim).toList();
   }
 }
