@@ -1,0 +1,14 @@
+[FATAL] Hint contains invalid argument characters
+in script:parserError-hintsInvalidArg-fail.sqrl [3:17]:
+IMPORT ecommerceTs.customer;
+
+/*+ primary_key(t.id, t.name) */
+----------------^
+Invalid SQL hint argument provided.
+
+Hint arguments may only contain column names separated by commas.
+Column names may contain letters, numbers, underscores, or be wrapped in backticks.
+
+Do not qualify column names with table names, aliases, namespaces, or paths.
+For example, use `id` instead of `Customer.id` or `customer.id`.
+

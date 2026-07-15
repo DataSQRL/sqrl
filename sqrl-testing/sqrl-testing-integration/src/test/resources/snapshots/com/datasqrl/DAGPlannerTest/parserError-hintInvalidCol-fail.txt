@@ -1,0 +1,7 @@
+[FATAL] primary_key hint reference column [asd] that does not exist in table
+in script:parserError-hintInvalidCol-fail.sqrl [3:4]:
+IMPORT ecommerceTs.customer;
+
+/*+ primary_key(asd, bsd) */
+---^
+

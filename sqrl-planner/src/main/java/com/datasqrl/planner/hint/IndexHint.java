@@ -46,7 +46,7 @@ public class IndexHint extends ColumnNamesHint {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      var arguments = source.get().getOptions();
+      var arguments = source.get().options();
       if (arguments == null || arguments.isEmpty()) {
         return new IndexHint(source, null, List.of()); // no hint
       }
