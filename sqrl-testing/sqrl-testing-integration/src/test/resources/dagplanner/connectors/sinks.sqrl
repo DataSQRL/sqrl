@@ -1,0 +1,17 @@
+CREATE TABLE CustomerExport (
+    customerid BIGINT,
+    name STRING,
+    `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+) WITH (
+    'connector' = 'kafka',
+    'format' = 'json',
+    'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+    'topic' = 'customerexport'
+);
+
+/*+ engine(kafka) */
+CREATE TABLE CustomerExportInternal (
+    customerid BIGINT,
+    name STRING,
+    `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);

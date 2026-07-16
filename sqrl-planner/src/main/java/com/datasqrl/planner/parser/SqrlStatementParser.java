@@ -27,6 +27,7 @@ import com.datasqrl.planner.parser.SqrlTableFunctionStatement.ParsedArgument;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.tuple.Pair;
@@ -122,21 +123,33 @@ public class SqrlStatementParser {
    * @return
    */
   public List<ParsedStatement> parseScript(String script, ErrorCollector scriptErrors) {
-    List<ParsedStatement> sqlStatements = new ArrayList<>();
+    return parseScript(script, scriptErrors, stmt -> true);
+  }
+
+  public List<ParsedStatement> parseCreateTables(String script, ErrorCollector scriptErrors) {
+    return parseScript(script, scriptErrors, stmt -> stmt instanceof SqrlCreateTableStatement);
+  }
+
+  private List<ParsedStatement> parseScript(
+      String script, ErrorCollector scriptErrors, Predicate<SQLStatement> pred) {
+    var sqlStatements = new ArrayList<ParsedStatement>();
     var localErrors = scriptErrors;
     try {
       var statements = SqlScriptStatementSplitter.splitStatements(script);
       for (ParsedObject<String> statement : statements) {
         localErrors = scriptErrors.atFile(statement.getFileLocation());
-        sqlStatements.add(
-            new ParsedStatement(
-                new ParsedObject<>(
-                    parseStatement(statement.getObject()), statement.getFileLocation()),
-                statement.get()));
+
+        var parsedStmt = parseStatement(statement.getObject());
+        if (pred.test(parsedStmt)) {
+          sqlStatements.add(
+              new ParsedStatement(
+                  new ParsedObject<>(parsedStmt, statement.getFileLocation()), statement.get()));
+        }
       }
     } catch (StatementParserException e) {
       throw localErrors.handle(e);
     }
+
     return sqlStatements;
   }
 

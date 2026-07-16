@@ -21,13 +21,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
-public class SqrlDirectoryModule implements SqrlModule {
-  List<NamespaceObject> nsObjects;
+public class DirectorySqrlModule implements SqrlModule {
 
-  public SqrlDirectoryModule(List<NamespaceObject> nsObjects) {
-    if (nsObjects
-        instanceof
-        ArrayList) { // check for mutable lists to sort (for consistent tests and behavior)
+  private final List<NamespaceObject> nsObjects;
+
+  public DirectorySqrlModule(List<NamespaceObject> nsObjects) {
+    // check for mutable lists to sort (for consistent tests and behavior)
+    if (nsObjects instanceof ArrayList) {
       nsObjects.sort(Comparator.comparing(NamespaceObject::name));
     }
     this.nsObjects = nsObjects;

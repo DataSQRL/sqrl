@@ -27,6 +27,7 @@ import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
+import com.datasqrl.planner.parser.SqrlStatementParser;
 import jakarta.inject.Inject;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -50,15 +51,18 @@ public final class ModuleLoaders {
   public ModuleLoaders(
       PackageJson packageJson,
       ResourceResolver resourceResolver,
+      SqrlStatementParser sqrlStatementParser,
       WorkspacePaths workspacePaths,
       ClasspathFunctionLoader classpathFunctionLoader,
       ErrorCollector errors) {
 
     mainLoader =
-        new ModuleLoaderImpl(resourceResolver, workspacePaths, classpathFunctionLoader, errors);
+        new ModuleLoaderImpl(
+            resourceResolver, sqrlStatementParser, workspacePaths, classpathFunctionLoader, errors);
     rootLoader =
         new ModuleLoaderImpl(
             new FileResourceResolver(workspacePaths.buildDir()),
+            sqrlStatementParser,
             workspacePaths,
             classpathFunctionLoader,
             errors);
