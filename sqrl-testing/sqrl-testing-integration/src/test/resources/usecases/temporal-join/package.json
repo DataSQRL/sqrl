@@ -12,6 +12,11 @@
       }
     }
   },
+  "connectors": {
+    "kafka-mutation": {
+      "scan.startup.mode": "earliest-offset"
+    }
+  },
   "test-runner": {
     "delay-sec": 30,
     "mutation-delay-sec": 1,
