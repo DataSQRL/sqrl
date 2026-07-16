@@ -217,6 +217,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       connectorConfig.put(
           FlinkConnectorConfigWrapper.CONNECTOR_KEY,
           UPSERT_FORMAT.formatted(connectorConfig.get(FlinkConnectorConfigWrapper.CONNECTOR_KEY)));
+      // scan.startup.mode config option is invalid for upsert-kafka
+      connectorConfig.remove("scan.startup.mode");
       topicConfig.put("cleanup.policy", "compact");
     }
 
