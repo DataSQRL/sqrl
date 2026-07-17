@@ -294,7 +294,7 @@ EXPORT source_identifier TO sinkPath.QualifiedName ;
 
 ```sql
 EXPORT CustomerTimeWindow TO print.TimeWindow;
-EXPORT MyAlerts          TO log.AlertStream;
+EXPORT MyAlerts           TO log.AlertStream;
 ```
 
 
@@ -317,9 +317,9 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **filtered_distinct_order** | flag                                                                       | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                |
 | **engine**                  | `enigne(engine_id)`                                                        | table          | pin execution engine (`process`, `database`, `flink`, ...)                                                                                                                         |
 | **maintenance**             | `maintenance(type)`                                                        | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                 |
-| **test**                    | `test`                                                                     | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                       |
+| **test**                    | `test` or `test(no_rows)`                                                  | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                       |
 | **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                    |
-| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                  | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                  |
+| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                  | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                   |
 
 This example configures a primary key and vector index for the `SensorTempByHour` table:
 
@@ -330,15 +330,17 @@ SensorTempByHour := SELECT ... ;
 
 ### Testing
 
-Add test cases to SQRL scripts with the `/*+test */` hint in front of a table definition:
+Add test cases to SQRL scripts with the `/*+ test */` hint in front of a table definition:
 
 ```sql
-/*+test */
+/*+ test */
 InvalidCustomers := SELECT * FROM Customer WHERE name = '' OR email IS NULL ORDER BY customerid;
 ```
 
-Test annotated tables are only executed when running the [`test` command](compiler#test-command) and otherwise ignored.
+Test-annotated tables are only executed when running the [`test` command](compiler#test-command) and otherwise ignored.
 DataSQRL queries all test tables at the end of the test and snapshots the results in the [configured](configuration) `snapshot-folder`.
+
+Use `/*+ test(no_rows) */` to assert that a test table returns no rows. These tests will succeed without generating snapshots.
 
 :::warning
 Ensure that test tables have a well-defined order and that only predictable columns are selected for the results are stable between test runs.
