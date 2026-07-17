@@ -15,8 +15,6 @@
  */
 package com.datasqrl.function.translation.postgres.extensions;
 
-import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory.quoteIdentifier;
-
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
 import com.datasqrl.sql.DatabaseTableExtension;
@@ -57,7 +55,10 @@ public class PgPartmanExtension implements DatabaseTableExtension {
 
   private void appendTableDdl(StringBuilder sb, CreateTableJdbcStatement createTable) {
 
-    var parentTable = "public." + quoteIdentifier(createTable.getName());
+    // pg_partman resolves p_parent_table by matching split_part(name, '.', 2) against
+    // pg_class.relname, so the name must be schema-qualified but NOT identifier-quoted:
+    // 'public."Readings"' never matches relname 'Readings' and create_parent fails.
+    var parentTable = "public." + createTable.getName();
     var ttl = createTable.getTtl();
 
     // p_type was removed in pg_partman 5.x; the default (range) is what we need
