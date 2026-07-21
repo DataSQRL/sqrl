@@ -15,7 +15,6 @@
  */
 package com.datasqrl.util;
 
-import com.datasqrl.io.file.FilePath;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Strings;
 import java.io.IOException;
@@ -26,11 +25,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.apache.flink.connector.file.src.compression.StandardDeCompressors;
 
 public class FileCompression {
 
   public static final Set<String> SUPPORTED_COMPRESSION_EXTENSIONS =
-      FilePath.COMPRESSION_EXTENSIONS.stream()
+      StandardDeCompressors.getCommonSuffixes().stream()
           .map(String::toLowerCase)
           .collect(Collectors.toUnmodifiableSet());
 
