@@ -151,6 +151,10 @@
     </dependency>
     <dependency>
       <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>stdlib-json</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>stdlib-text</artifactId>
     </dependency>
     <dependency>

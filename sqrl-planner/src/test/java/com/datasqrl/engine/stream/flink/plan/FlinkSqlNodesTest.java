@@ -26,11 +26,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlUserDefinedTypeNameSpec;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlMetadataColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
+import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
+import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
+import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
 import org.junit.jupiter.api.Test;
 
 class FlinkSqlNodesTest {
@@ -173,5 +181,70 @@ class FlinkSqlNodesTest {
     var sql = unparse(partitionKeysNode);
     var expectedSql = "`year`, `month`, `day`";
     assertThat(sql.trim()).isEqualTo(expectedSql);
+  }
+
+  @Test
+  void resolveRawJsonTypAliases() {
+    var position = new SqlParserPos(3, 20, 3, 32);
+    var rawJsonType =
+        new SqlDataTypeSpec(new SqlUserDefinedTypeNameSpec("RAW_JSON", position), position)
+            .withNullable(false);
+    var regularColumn =
+        new SqlRegularColumn(
+            position,
+            FlinkSqlNodes.identifier("payload"),
+            FlinkSqlNodes.createStringLiteral("payload comment"),
+            rawJsonType,
+            null);
+    var metadataColumn =
+        new SqlMetadataColumn(
+            position,
+            FlinkSqlNodes.identifier("event_time"),
+            FlinkSqlNodes.createStringLiteral("metadata comment"),
+            rawJsonType,
+            SqlLiteral.createCharString("timestamp", position),
+            true);
+    var tableLike = new SqlTableLike(position, FlinkSqlNodes.identifier("base_table"), List.of());
+    var table =
+        new SqlCreateTableLike(
+            position,
+            FlinkSqlNodes.identifier("source_table"),
+            new SqlNodeList(List.of(regularColumn, metadataColumn), position),
+            List.of(),
+            FlinkSqlNodes.createProperties(Map.of("connector", "kafka")),
+            FlinkSqlNodes.NO_DISTRIBUTION,
+            SqlNodeList.EMPTY,
+            null,
+            FlinkSqlNodes.createStringLiteral("table comment"),
+            tableLike,
+            true,
+            true);
+
+    var resolved = FlinkSqlNodes.resolveRawJsonTypAliases(table);
+
+    assertThat(resolved).isInstanceOf(SqlCreateTableLike.class);
+    assertThat(((SqlCreateTableLike) resolved).getTableLike()).isSameAs(tableLike);
+    assertThat(resolved.getProperties()).isEqualTo(table.getProperties());
+    assertThat(resolved.getColumnList().get(0)).isInstanceOf(SqlRegularColumn.class);
+    assertThat(resolved.getColumnList().get(1)).isInstanceOf(SqlMetadataColumn.class);
+
+    var resolvedRegularColumn = (SqlRegularColumn) resolved.getColumnList().get(0);
+    assertThat(resolvedRegularColumn.getType().getTypeNameSpec())
+        .isInstanceOf(SqlRawTypeNameSpec.class);
+    assertThat(resolvedRegularColumn.getType().getNullable()).isFalse();
+    assertThat(resolvedRegularColumn.getComment()).isEqualTo("payload comment");
+    assertThat(resolvedRegularColumn.getType().getParserPosition().getLineNum())
+        .isEqualTo(position.getLineNum());
+    assertThat(resolvedRegularColumn.getType().getParserPosition().getColumnNum())
+        .isEqualTo(position.getColumnNum());
+    assertThat(resolvedRegularColumn.getType().getParserPosition().getEndColumnNum())
+        .isEqualTo(position.getColumnNum() + unparse(resolvedRegularColumn.getType()).length() - 1);
+
+    var resolvedMetadataColumn = (SqlMetadataColumn) resolved.getColumnList().get(1);
+    assertThat(resolvedMetadataColumn.getType().getTypeNameSpec())
+        .isInstanceOf(SqlRawTypeNameSpec.class);
+    assertThat(resolvedMetadataColumn.getMetadataAlias()).contains("timestamp");
+    assertThat(resolvedMetadataColumn.isVirtual()).isTrue();
+    assertThat(resolvedMetadataColumn.getComment()).isEqualTo("metadata comment");
   }
 }

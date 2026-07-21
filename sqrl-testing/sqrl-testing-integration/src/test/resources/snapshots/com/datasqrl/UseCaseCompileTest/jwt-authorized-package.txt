@@ -2,18 +2,18 @@
 type AuthInputData {
   event_id: String!
   val: Long!
-  message: String!
+  payload: JSON
   event_time: DateTime!
 }
 
 input AuthInputDataInput {
-  message: String!
+  payload: JSON
 }
 
 type AuthInputDataResultOutput {
   event_id: String!
   val: Long!
-  message: String!
+  payload: JSON
   event_time: DateTime!
 }
 
@@ -82,7 +82,7 @@ Row count:   ~1e8
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - val: BIGINT NOT NULL
- - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - payload: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.AuthInputData__base
@@ -166,12 +166,12 @@ Type:        stream
 Stage:       flink
 Primary key: event_id
 Timestamp:   event_time
-Row count:   ~5e7
+Row count:   ~9e7
 ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - val: BIGINT NOT NULL
- - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - payload: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.AuthInputData
@@ -202,7 +202,7 @@ FROM (VALUES ROW('a'),
 CREATE TABLE `AuthInputData` (
   `event_id` STRING NOT NULL,
   `val` BIGINT NOT NULL,
-  `message` STRING NOT NULL,
+  `payload` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
 )
@@ -219,7 +219,7 @@ CREATE VIEW `_Messages`
 AS
 SELECT *
 FROM `AuthInputData`
-WHERE `message` <> '';
+WHERE `payload` IS NOT NULL;
 CREATE TABLE `MyStringTable_1` (
   `val` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`val`) NOT ENFORCED
@@ -247,7 +247,7 @@ WITH (
 CREATE TABLE `_Messages_3` (
   `event_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `val` BIGINT NOT NULL,
-  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `payload` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
@@ -644,18 +644,14 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
             "parameters" : {
               "type" : "object",
               "properties" : {
-                "message" : {
-                  "type" : "string"
-                }
+                "payload" : { }
               },
-              "required" : [
-                "message"
-              ]
+              "required" : [ ]
             }
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "mutation AuthInputData($message: String!) {\nAuthInputData(event: { message: $message }) {\nevent_id\nval\nmessage\nevent_time\n}\n\n}",
+            "query" : "mutation AuthInputData($payload: JSON) {\nAuthInputData(event: { payload: $payload }) {\nevent_id\nval\npayload\nevent_time\n}\n\n}",
             "queryName" : "AuthInputData",
             "operationType" : "MUTATION"
           },
@@ -666,7 +662,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type AuthInputData {\n  event_id: String!\n  val: Long!\n  message: String!\n  event_time: DateTime!\n}\n\ninput AuthInputDataInput {\n  message: String!\n}\n\ntype AuthInputDataResultOutput {\n  event_id: String!\n  val: Long!\n  message: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  AuthInputData(event: AuthInputDataInput!): AuthInputDataResultOutput!\n}\n\ntype MyStringTable {\n  val: String!\n}\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyStringTable(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthStringMyTableValues(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n}\n\ntype Subscription {\n  MessageSubscription: AuthInputData\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type AuthInputData {\n  event_id: String!\n  val: Long!\n  payload: JSON\n  event_time: DateTime!\n}\n\ninput AuthInputDataInput {\n  payload: JSON\n}\n\ntype AuthInputDataResultOutput {\n  event_id: String!\n  val: Long!\n  payload: JSON\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  AuthInputData(event: AuthInputDataInput!): AuthInputDataResultOutput!\n}\n\ntype MyStringTable {\n  val: String!\n}\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyStringTable(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthStringMyTableValues(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n}\n\ntype Subscription {\n  MessageSubscription: AuthInputData\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
