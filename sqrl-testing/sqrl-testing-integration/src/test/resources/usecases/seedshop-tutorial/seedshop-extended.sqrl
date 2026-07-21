@@ -1,6 +1,4 @@
-IMPORT seedshop.order_items AS Orders;
-IMPORT seedshop.products AS _ProductsStream;
-IMPORT seedshop.customers AS _CustomersStream;
+IMPORT connectors.sources.*;
 
 _OrderItems := SELECT o.id, o.`time`, o.customerid, i.* FROM Orders o CROSS JOIN UNNEST(o.items) i;
 
@@ -51,7 +49,7 @@ CustomerPromotion := SUBSCRIBE SELECT s.customerid, c.first_name, c.last_name, c
         FROM CustomersSpending s JOIN Customers FOR SYSTEM_TIME AS OF `week` c ON s.customerid = c.id
         WHERE s.spend > 250;
 
-EXPORT CustomerPromotion TO {{variant}}-sink.promotion;
+EXPORT CustomerPromotion TO connectors.{{variant}}-sink;
 
 /*+test */
 CustomerPromotionTest := SELECT COUNT(*) AS numPromotions FROM CustomerPromotion;

@@ -1,0 +1,11 @@
+CREATE TABLE _CustomersStream (
+    PRIMARY KEY (id, `updated_at`) NOT ENFORCED
+) LIKE `testdata/customers.jsonl`;
+
+CREATE TABLE _ApplicationsStream (
+    PRIMARY KEY (id, `updated_at`) NOT ENFORCED
+) LIKE `testdata/applications.jsonl`;
+
+CREATE TABLE ApplicationUpdates (
+    PRIMARY KEY (loan_application_id, `event_time`) NOT ENFORCED
+) LIKE `testdata/application_updates.jsonl`;
