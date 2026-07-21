@@ -644,9 +644,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
             "parameters" : {
               "type" : "object",
               "properties" : {
-                "payload" : {
-                  "type" : "string"
-                }
+                "payload" : { }
               },
               "required" : [ ]
             }

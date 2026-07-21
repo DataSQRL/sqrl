@@ -232,7 +232,7 @@ public class GraphQLSchemaConverter {
     List<ApiOperation> functions = new ArrayList<>();
 
     List<GraphQLFieldDefinition> queries =
-        Optional.ofNullable(schema.getQueryType())
+        Optional.of(schema.getQueryType())
             .map(GraphQLObjectType::getFieldDefinitions)
             .orElse(List.of());
     List<GraphQLFieldDefinition> mutations =
@@ -269,23 +269,24 @@ public class GraphQLSchemaConverter {
       return convert(((NonNullType) type).getType(), schema);
     }
     Argument argument = new Argument();
-    if (type instanceof ListType) {
+    if (type instanceof ListType listType) {
       argument.setType("array");
-      argument.setItems(convert(((ListType) type).getType(), schema));
-    } else if (type instanceof TypeName) {
-      String typeName = ((TypeName) type).getName();
-      GraphQLType graphQLType = schema.getType(typeName);
+      argument.setItems(convert(listType.getType(), schema));
+    } else if (type instanceof TypeName typeName) {
+      GraphQLType graphQLType = schema.getType(typeName.getName());
       if (graphQLType instanceof GraphQLInputType graphQLInputType) {
         return GraphQLSchemaConverter.this.convert(graphQLInputType);
       } else {
         throw new UnsupportedOperationException(
             "Unexpected type [" + typeName + "] with class: " + graphQLType);
       }
-    } else throw new UnsupportedOperationException("Unexpected type:  " + type);
+    } else {
+      throw new UnsupportedOperationException("Unexpected type:  " + type);
+    }
     return argument;
   }
 
-  private record Context(String opName, String prefix, int numArgs, List<GraphQLObjectType> path) {
+  public record Context(String opName, String prefix, int numArgs, List<GraphQLObjectType> path) {
 
     public Context nested(String fieldName, GraphQLObjectType type, int additionalArgs) {
       List<GraphQLObjectType> nestedPath = new ArrayList<>(path);
@@ -395,8 +396,8 @@ public class GraphQLSchemaConverter {
 
   public String convertScalarTypeToJsonType(GraphQLScalarType scalarType) {
     return switch (scalarType.getName()) {
-      case "Int" -> "integer";
-      case "Long" -> "integer";
+      case "JSON" -> null;
+      case "Int", "Long" -> "integer";
       case "Float" -> "number";
       case "String" -> "string";
       case "Boolean" -> "boolean";
@@ -413,8 +414,7 @@ public class GraphQLSchemaConverter {
       Context ctx,
       GraphQLSchemaConverterConfig config) {
     GraphQLOutputType type = unwrapType(fieldDef.getType());
-    if (type instanceof GraphQLObjectType) {
-      GraphQLObjectType objectType = (GraphQLObjectType) type;
+    if (type instanceof GraphQLObjectType objectType) {
       // Don't recurse in a cycle or if depth limit is exceeded
       if (ctx.path().contains(objectType)) {
         log.info("Detected cycle on operation `{}`. Aborting traversal.", ctx.opName());
@@ -487,8 +487,7 @@ public class GraphQLSchemaConverter {
       }
       queryBody.append(")");
     }
-    if (type instanceof GraphQLObjectType) {
-      GraphQLObjectType objectType = (GraphQLObjectType) type;
+    if (type instanceof GraphQLObjectType objectType) {
       List<GraphQLObjectType> nestedPath = new ArrayList<>(ctx.path());
       nestedPath.add(objectType);
       queryBody.append(" {\n");
