@@ -837,6 +837,7 @@ public class Sqrl2FlinkSQLTranslator {
     var tableSqlNode = parseSQL(createTableSql);
     checkArgument(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
     var tableDefinition = FlinkSqlNodeFactory.resolveTableProperties((SqlCreateTable) tableSqlNode);
+    tableDefinition = FlinkSqlNodeFactory.resolveRawJsonTypAliases(tableDefinition);
     var fullTable = tableDefinition;
     var origTableName = fullTable.getTableName().getSimple();
     final var finalTableName = tableNameModifier.apply(origTableName);

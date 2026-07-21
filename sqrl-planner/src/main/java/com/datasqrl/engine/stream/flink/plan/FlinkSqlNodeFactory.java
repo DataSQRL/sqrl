@@ -16,6 +16,8 @@
 package com.datasqrl.engine.stream.flink.plan;
 
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
+import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
+import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonTypeSerializer;
 import com.datasqrl.planner.util.NonSecretEnvVarResolver;
 import com.datasqrl.sql.SqlCallRewriter;
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
+import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlLiteral;
@@ -47,17 +50,25 @@ import org.apache.flink.sql.parser.ddl.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.SqlDistribution;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlMetadataColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
 import org.apache.flink.sql.parser.ddl.SqlWatermark;
 import org.apache.flink.sql.parser.ddl.constraint.SqlConstraintEnforcement;
 import org.apache.flink.sql.parser.ddl.constraint.SqlTableConstraint;
 import org.apache.flink.sql.parser.ddl.constraint.SqlUniqueSpec;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
+import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.types.logical.RawType;
 
 public class FlinkSqlNodeFactory {
 
   public static final SqlDistribution NO_DISTRIBUTION = null;
+
+  private static final String RAW_JSON = "RAW_JSON";
+  private static final RawType<FlinkJsonType> RAW_JSON_TYPE =
+      new RawType<>(FlinkJsonType.class, new FlinkJsonTypeSerializer());
 
   public static SqlIdentifier identifier(String str) {
     return new SqlIdentifier(str, SqlParserPos.ZERO);
@@ -186,6 +197,109 @@ public class FlinkSqlNodeFactory {
         createTable.getComment().orElse(null),
         createTable.isTemporary(),
         createTable.ifNotExists);
+  }
+
+  /**
+   * Replaces the RAW_JSON column type alias with the actual RAW type used by the Flink JSON
+   * functions.
+   */
+  public static SqlCreateTable resolveRawJsonTypAliases(SqlCreateTable createTable) {
+    var columns = new ArrayList<SqlNode>(createTable.getColumnList().size());
+    var changed = false;
+    for (var column : createTable.getColumnList()) {
+      var resolvedColumn = resolveRawJsonType(column);
+      columns.add(resolvedColumn);
+      changed |= resolvedColumn != column;
+    }
+
+    if (!changed) {
+      return createTable;
+    }
+
+    var resolvedColumns = new SqlNodeList(columns, createTable.getColumnList().getParserPosition());
+    if (createTable instanceof SqlCreateTableLike likeTable) {
+      return new SqlCreateTableLike(
+          likeTable.getParserPosition(),
+          likeTable.getTableName(),
+          resolvedColumns,
+          likeTable.getTableConstraints(),
+          likeTable.getPropertyList(),
+          likeTable.getDistribution(),
+          likeTable.getPartitionKeyList(),
+          likeTable.getWatermark().orElse(null),
+          likeTable.getComment().orElse(null),
+          likeTable.getTableLike(),
+          likeTable.isTemporary(),
+          likeTable.ifNotExists);
+    }
+
+    return new SqlCreateTable(
+        createTable.getParserPosition(),
+        createTable.getTableName(),
+        resolvedColumns,
+        createTable.getTableConstraints(),
+        createTable.getPropertyList(),
+        createTable.getDistribution(),
+        createTable.getPartitionKeyList(),
+        createTable.getWatermark().orElse(null),
+        createTable.getComment().orElse(null),
+        createTable.isTemporary(),
+        createTable.ifNotExists);
+  }
+
+  private static SqlNode resolveRawJsonType(SqlNode column) {
+    if (column instanceof SqlRegularColumn regularColumn
+        && isRawJsonType(regularColumn.getType())) {
+
+      return new SqlRegularColumn(
+          regularColumn.getParserPosition(),
+          regularColumn.getName(),
+          regularColumn.getComment().orElse(null),
+          createFlexibleJsonRawType(regularColumn.getType()),
+          regularColumn.getConstraint().orElse(null));
+    }
+
+    if (column instanceof SqlMetadataColumn metadataColumn
+        && isRawJsonType(metadataColumn.getType())) {
+
+      return new SqlMetadataColumn(
+          metadataColumn.getParserPosition(),
+          metadataColumn.getName(),
+          metadataColumn.getComment().orElse(null),
+          createFlexibleJsonRawType(metadataColumn.getType()),
+          metadataColumn
+              .getMetadataAlias()
+              .map(alias -> SqlLiteral.createCharString(alias, SqlParserPos.ZERO))
+              .orElse(null),
+          metadataColumn.isVirtual());
+    }
+
+    return column;
+  }
+
+  private static boolean isRawJsonType(SqlDataTypeSpec type) {
+    var typeName = type.getTypeNameSpec().getTypeName();
+    return typeName != null && RAW_JSON.equalsIgnoreCase(typeName.getSimple());
+  }
+
+  private static SqlDataTypeSpec createFlexibleJsonRawType(SqlDataTypeSpec originalType) {
+    var originalPosition = originalType.getParserPosition();
+    var rawTypeSql = RAW_JSON_TYPE.asSerializableString();
+
+    var position =
+        new SqlParserPos(
+            originalPosition.getLineNum(),
+            originalPosition.getColumnNum(),
+            originalPosition.getLineNum(),
+            originalPosition.getColumnNum() + rawTypeSql.length() - 1);
+
+    var rawTypeName =
+        new SqlRawTypeNameSpec(
+            SqlLiteral.createCharString(RAW_JSON_TYPE.getOriginatingClass().getName(), position),
+            SqlLiteral.createCharString(RAW_JSON_TYPE.getSerializerString(), position),
+            position);
+
+    return new SqlDataTypeSpec(rawTypeName, position).withNullable(originalType.getNullable());
   }
 
   public static SqlNodeList createProperties(Map<String, String> options) {
@@ -326,7 +440,7 @@ public class FlinkSqlNodeFactory {
           node = getComputedColumn(columnName, call);
         } else {
           node =
-              new SqlTableColumn.SqlMetadataColumn(
+              new SqlMetadataColumn(
                   SqlParserPos.ZERO,
                   FlinkSqlNodeFactory.identifier(columnName),
                   null,
@@ -336,7 +450,7 @@ public class FlinkSqlNodeFactory {
         }
       } else {
         node =
-            new SqlTableColumn.SqlRegularColumn(
+            new SqlRegularColumn(
                 SqlParserPos.ZERO,
                 FlinkSqlNodeFactory.identifier(columnName),
                 null,

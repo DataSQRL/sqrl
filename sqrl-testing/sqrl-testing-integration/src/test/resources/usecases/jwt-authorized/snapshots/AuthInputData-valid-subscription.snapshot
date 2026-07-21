@@ -2,14 +2,18 @@
   "data" : {
     "MessageSubscription" : {
       "val" : 1,
-      "message" : "Hello"
+      "payload" : {
+        "message" : "Hello"
+      }
     }
   }
 }, {
   "data" : {
     "MessageSubscription" : {
       "val" : 1,
-      "message" : "World"
+      "payload" : {
+        "message" : "World"
+      }
     }
   }
 } ]

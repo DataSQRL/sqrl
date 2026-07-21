@@ -28,13 +28,22 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
+import org.apache.calcite.sql.SqlCharStringLiteral;
+import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlUserDefinedTypeNameSpec;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.sql.parser.ddl.SqlCreateTableLike;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlMetadataColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableLike;
+import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
 import org.junit.jupiter.api.Test;
 
 class FlinkSqlNodeFactoryTest {
@@ -257,5 +266,75 @@ class FlinkSqlNodeFactoryTest {
           'path' = '/tmp/data'
         )""";
     assertThat(sql.trim()).isEqualTo(expectedSql.trim());
+  }
+
+  @Test
+  void resolveRawJsonTypAliases() {
+    var position = new SqlParserPos(3, 20, 3, 32);
+    var rawJsonType =
+        new SqlDataTypeSpec(new SqlUserDefinedTypeNameSpec("RAW_JSON", position), position)
+            .withNullable(false);
+    var regularColumn =
+        new SqlRegularColumn(
+            position,
+            FlinkSqlNodeFactory.identifier("payload"),
+            createStrLiteral("payload comment"),
+            rawJsonType,
+            null);
+    var metadataColumn =
+        new SqlMetadataColumn(
+            position,
+            FlinkSqlNodeFactory.identifier("event_time"),
+            createStrLiteral("metadata comment"),
+            rawJsonType,
+            SqlLiteral.createCharString("timestamp", position),
+            true);
+    var tableLike =
+        new SqlTableLike(position, FlinkSqlNodeFactory.identifier("base_table"), List.of());
+    var table =
+        new SqlCreateTableLike(
+            position,
+            FlinkSqlNodeFactory.identifier("source_table"),
+            new SqlNodeList(List.of(regularColumn, metadataColumn), position),
+            List.of(),
+            FlinkSqlNodeFactory.createProperties(Map.of("connector", "kafka")),
+            FlinkSqlNodeFactory.NO_DISTRIBUTION,
+            SqlNodeList.EMPTY,
+            null,
+            createStrLiteral("table comment"),
+            tableLike,
+            true,
+            true);
+
+    var resolved = FlinkSqlNodeFactory.resolveRawJsonTypAliases(table);
+
+    assertThat(resolved).isInstanceOf(SqlCreateTableLike.class);
+    assertThat(((SqlCreateTableLike) resolved).getTableLike()).isSameAs(tableLike);
+    assertThat(resolved.getPropertyList()).isEqualTo(table.getPropertyList());
+    assertThat(resolved.getColumnList().get(0)).isInstanceOf(SqlRegularColumn.class);
+    assertThat(resolved.getColumnList().get(1)).isInstanceOf(SqlMetadataColumn.class);
+
+    var resolvedRegularColumn = (SqlRegularColumn) resolved.getColumnList().get(0);
+    assertThat(resolvedRegularColumn.getType().getTypeNameSpec())
+        .isInstanceOf(SqlRawTypeNameSpec.class);
+    assertThat(resolvedRegularColumn.getType().getNullable()).isFalse();
+    assertThat(resolvedRegularColumn.getComment()).isPresent();
+    assertThat(resolvedRegularColumn.getType().getParserPosition().getLineNum())
+        .isEqualTo(position.getLineNum());
+    assertThat(resolvedRegularColumn.getType().getParserPosition().getColumnNum())
+        .isEqualTo(position.getColumnNum());
+    assertThat(resolvedRegularColumn.getType().getParserPosition().getEndColumnNum())
+        .isEqualTo(position.getColumnNum() + unparse(resolvedRegularColumn.getType()).length() - 1);
+
+    var resolvedMetadataColumn = (SqlMetadataColumn) resolved.getColumnList().get(1);
+    assertThat(resolvedMetadataColumn.getType().getTypeNameSpec())
+        .isInstanceOf(SqlRawTypeNameSpec.class);
+    assertThat(resolvedMetadataColumn.getMetadataAlias()).contains("timestamp");
+    assertThat(resolvedMetadataColumn.isVirtual()).isTrue();
+    assertThat(resolvedMetadataColumn.getComment()).isPresent();
+  }
+
+  private static SqlCharStringLiteral createStrLiteral(String content) {
+    return SqlLiteral.createCharString(content, SqlParserPos.ZERO);
   }
 }
