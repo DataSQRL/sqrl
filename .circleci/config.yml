@@ -402,6 +402,8 @@ jobs:
             set -x
 
             # Push to Docker Hub for tagged releases (datasqrl/*) and main=:dev (datasqrl/*).
+            # Tagged releases are also mirrored to ghcr.io/datasqrl/* so downstream can pull
+            # without hitting Docker Hub rate limits.
             # Push PR images to ghcr.io/datasqrl/* so downstream CI (e.g. datasqrl-examples) can
             # validate examples against the snapshot built from this PR.
             if [ "$IS_RELEASE" != "true" ] && [ "$TAG_SUFFIX" != "dev" ] && [[ "$TAG_SUFFIX" != pr-* ]]; then
@@ -446,11 +448,18 @@ jobs:
               local dir="$1"  ; shift
               local extra_args="$@"
 
+              # Mirror releases to GHCR alongside Docker Hub so downstream can pull
+              # without hitting Docker Hub rate limits.
+              local tags=(-t $REGISTRY/$repo:$TAG_SUFFIX)
+              if [ "$IS_RELEASE" = "true" ]; then
+                tags+=(-t ghcr.io/datasqrl/$repo:$TAG_SUFFIX)
+              fi
+
               docker buildx build \
                 --platform linux/amd64,linux/arm64 \
                 --push \
                 $extra_args \
-                -t $REGISTRY/$repo:$TAG_SUFFIX \
+                "${tags[@]}" \
                 -f $dir/Dockerfile \
                 $dir
 
@@ -459,6 +468,11 @@ jobs:
                 docker buildx imagetools create \
                   -t $REGISTRY/$repo:latest \
                   $REGISTRY/$repo:$TAG_SUFFIX
+                if [ "$IS_RELEASE" = "true" ]; then
+                  docker buildx imagetools create \
+                    -t ghcr.io/datasqrl/$repo:latest \
+                    $REGISTRY/$repo:$TAG_SUFFIX
+                fi
               fi
             }
 
