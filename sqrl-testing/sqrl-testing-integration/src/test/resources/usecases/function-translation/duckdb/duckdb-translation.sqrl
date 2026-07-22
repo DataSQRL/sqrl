@@ -27,6 +27,8 @@ FunctionCalls := SELECT
     PRINTF('Hello %s %d', 'world', 42)               AS printf_example,
     STARTSWITH('FlinkSQL', 'Flink')                  AS startswith_example,
     ENDSWITH('FlinkSQL', 'SQL')                      AS endswith_example,
+    SUBSTRING('FlinkSQL', 0, 3)                      AS substring_example,
+    SUBSTR('FlinkSQL', 0, 3)                         AS substr_example,
     REGEXP_EXTRACT('abc-123-def', '(\d+)')           AS regexp_extract_example,
     REGEXP_EXTRACT('abc-123-def', '(\d+)', 1)        AS regexp_extract_group_example,
     REGEXP_EXTRACT_ALL('a1b2c3', '(\d)', 1)          AS regexp_extract_all_example,

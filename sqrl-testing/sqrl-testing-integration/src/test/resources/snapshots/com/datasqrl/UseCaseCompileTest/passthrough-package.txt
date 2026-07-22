@@ -211,15 +211,13 @@ INSERT INTO `default_catalog`.`default_database`.`Reporting_2`
 SELECT *
 FROM `default_catalog`.`hr`.`Reporting`
 ;
-END;
-
+END
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "Employees" ("employeeid" BIGINT NOT NULL, "name" TEXT NOT NULL, "email" TEXT NOT NULL, "updatedDate" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("employeeid"));
 CREATE TABLE IF NOT EXISTS "Reporting" ("employeeid" BIGINT NOT NULL, "managerid" BIGINT NOT NULL, "updatedDate" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("employeeid","managerid"));
 
 CREATE INDEX IF NOT EXISTS "Employees_hash_c1" ON "Employees" USING hash ("name");
-CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("managerid");
-
+CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("managerid")
 >>>vertx.json
 {
   "models" : {

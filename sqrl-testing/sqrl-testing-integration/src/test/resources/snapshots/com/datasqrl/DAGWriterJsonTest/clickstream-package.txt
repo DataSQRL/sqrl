@@ -12,7 +12,7 @@
     "name" : "base-table",
     "description" : "Click"
   } ],
-  "plan" : "LogicalProject(url=[$0], timestamp=[$1], userid=[$2])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
+  "plan" : "LogicalProject(timestamp=[$0], userid=[$1], url=[$2])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
   "sql" : "SELECT *\nFROM `default_catalog`.`default_database`.`Click`"
 }, {
   "id" : "access:Recommendation",
@@ -65,17 +65,17 @@
     "name" : "stream-root",
     "description" : "Click"
   } ],
-  "plan" : "LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($1, 1000:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
-  "sql" : "CREATE TEMPORARY TABLE `Click__schema` (\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n)\nWITH (\n  'connector' = 'datagen'\n);\nCREATE TABLE `Click` (\n  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND\n)\nWITH (\n  'connector' = 'filesystem',\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/click.jsonl',\n  'source.monitor-interval' = '10 sec'\n)\nLIKE `Click__schema`",
+  "plan" : "LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($0, 1000:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
+  "sql" : "CREATE TEMPORARY TABLE `Click__schema` (\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n)\nWITH (\n  'connector' = 'filesystem',\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/click.jsonl'\n);\nCREATE TABLE `Click` (\n  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '1' SECOND\n)\nWITH (\n  'connector' = 'filesystem',\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/click.jsonl',\n  'source.monitor-interval' = '10 sec'\n)\nLIKE `Click__schema`",
   "timestamp" : "timestamp",
   "schema" : [ {
-    "name" : "url",
-    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
-  }, {
     "name" : "timestamp",
     "type" : "TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL"
   }, {
     "name" : "userid",
+    "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
+  }, {
+    "name" : "url",
     "type" : "VARCHAR(2147483647) CHARACTER SET \"UTF-16LE\" NOT NULL"
   } ],
   "primary_key" : [ "url", "userid", "timestamp" ],
@@ -130,7 +130,7 @@
     "name" : "sort",
     "description" : "[1 DESC-nulls-last, 0 ASC-nulls-first]"
   } ],
-  "plan" : "LogicalAggregate(group=[{0}], total=[COUNT()])\n  LogicalProject(url=[$0])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
+  "plan" : "LogicalAggregate(group=[{0}], total=[COUNT()])\n  LogicalProject(url=[$2])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
   "sql" : "CREATE VIEW `Trending` AS  SELECT url, count(1) AS total\n    FROM Click\n    GROUP BY url ORDER BY total DESC, url ASC;\n",
   "timestamp" : "-",
   "schema" : [ {
@@ -151,7 +151,7 @@
   "stage" : "flink",
   "inputs" : [ "default_catalog.default_database.Click" ],
   "annotations" : [ ],
-  "plan" : "LogicalProject(beforeURL=[$0], afterURL=[$3], timestamp=[$4])\n  LogicalJoin(condition=[AND(=($2, $5), <($1, $4), >=($1, -($4, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
+  "plan" : "LogicalProject(beforeURL=[$2], afterURL=[$5], timestamp=[$3])\n  LogicalJoin(condition=[AND(=($1, $4), <($0, $3), >=($0, -($3, *(10, 60000:INTERVAL MINUTE))))], joinType=[inner])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n    LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
   "sql" : "CREATE VIEW `VisitAfter` AS  SELECT b.url AS beforeURL, a.url AS afterURL,\n    a.`timestamp` AS `timestamp`\n    FROM Click b JOIN Click a ON b.userid=a.userid AND\n        b.`timestamp` < a.`timestamp` AND\n        b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;\n",
   "timestamp" : "timestamp",
   "schema" : [ {
@@ -168,12 +168,14 @@
 } ]
 >>>pipeline_source.sqrl
 CREATE TEMPORARY TABLE `Click__schema` (
-  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
+  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
 )
 WITH (
-  'connector' = 'datagen'
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/click.jsonl'
 );
 CREATE TABLE `Click` (
   PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,

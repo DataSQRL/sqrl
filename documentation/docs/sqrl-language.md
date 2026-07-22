@@ -13,14 +13,14 @@ Only one statement is allowed per line, but a statement may span multiple lines.
 Typical order of statements:
 
 ```text
-IMPORT ...            -- import other SQRL scripts
+IMPORT ...            -- import from other SQRL scripts
 CREATE TABLE ...      -- define internal & external sources
 MyTable := SELECT ... -- define tables or functions (with hints)
 EXPORT MyTable TO ... -- write table data to sinks
 ```
 
 At compile time the statements form a *directed-acyclic graph* (DAG).  
-Each node is then assigned to an enabled execution engine according to the optimizer and the compiler generates the data processing code for that engine.
+Each node is then assigned to an enabled execution engine according to the optimizer, and the compiler generates the data processing code for that engine.
 
 ## Flink SQL
 
@@ -56,19 +56,28 @@ The table type determines what operators a table supports and how those operator
 ## IMPORT Statement
 
 ```
-IMPORT qualifiedPath (AS identifier)?;
-IMPORT qualifiedPath.*; -- wildcard
+IMPORT qualifiedPath.*;                          -- 1. wildcard
+IMPORT qualifiedPath (AS identifier)?;           -- 2. other namespace
+IMPORT qualifiedPath.tableName (AS identifier)?; -- 3. individual table
 ```
 
-Imports another SQRL script into the current script. The `qualifiedPath` is a `.` separated path that maps to the local file system relative to the current script, e.g. `IMPORT my.custom.script` maps to the relative path `./my/custom/script.sqrl`.
+Imports another SQRL script or a table declared in one into the current script. The `qualifiedPath` is a `.` separated path that maps to the local file system relative to the current script, e.g. `IMPORT my.custom.script` maps to the relative path `./my/custom/script.sqrl`.
 
-Imports that end in `.*` are imported inline which means that the statement from that script are executed verbatim in the current script.
-Otherwise, imports are available within a namespace that's equal to the name of the script or the optional `AS` identifier.
+1. Imports that end in `.*` are imported inline which means that the statement from that script are executed verbatim in the current script.
+2. Whole-script imports will be available within a namespace that's equal to the name of the script or the optional `AS` identifier.
+3. Individual table imports are available directly under the table name or the optional `AS` identifier.
 
 Examples:
 * `IMPORT my.custom.script.*`: All table definitions from the script are imported inline and can be referenced directly as `MyTable` in `FROM` clauses.
 * `IMPORT my.custom.script`: Tables are imported into the `script` namespace and can be referenced as `script.MyTable`
 * `IMPORT my.custom.script AS myNamespace`: Tables are imported into the `myNamespace` namespace and can be referenced as `myNamespace.MyTable`
+* `IMPORT connectors.sources.Click`: Imports the `Click` table declared in `./connectors/sources.sqrl` and makes it available as `Click`.
+* `IMPORT connectors.sources.Click AS ClickEvents`: Imports the same table and makes it available as `ClickEvents`.
+
+:::warning
+Individual table imports will select a `CREATE TABLE` statement from a SQRL script. They only support [external tables](#create-table-internal-vs-external), which defines all necessary table properties in the `WITH (...)` clause.
+Import the script inline or as a namespace when it contains internal tables or other SQRL definitions.
+:::
 
 ## CREATE TABLE (internal vs external)
 
@@ -288,14 +297,22 @@ EXPORT source_identifier TO sinkPath.QualifiedName ;
 ```
 
 * `sinkPath` maps to a connector table definition when present, or one of the **built-in** sinks:
-    * `print.*` – stdout
-    * `logger.*` – uses configured logger
-    * `log.*` – topic in configured log engine
+  * `print.*` – stdout
+  * `logger.*` – uses configured logger
+  * `log.*` – topic in configured log engine
 
 ```sql
 EXPORT CustomerTimeWindow TO print.TimeWindow;
-EXPORT MyAlerts          TO log.AlertStream;
+EXPORT MyAlerts           TO log.AlertStream;
 ```
+
+An export can also target an individual external table declared in another SQRL script. The final path segment names the table and the preceding segments identify the script:
+
+```sql
+EXPORT CustomerSubset TO connectors.sinks.CustomerExport;
+```
+
+This resolves `CustomerExport` from `./connectors/sinks.sqrl`. As with individual imports, the referenced table must be an [external table](#create-table-internal-vs-external) with a connector `WITH (...)` clause. Internal tables cannot be used as individual export sinks.
 
 
 ## Hints
@@ -317,9 +334,9 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **filtered_distinct_order** | flag                                                                       | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                |
 | **engine**                  | `enigne(engine_id)`                                                        | table          | pin execution engine (`process`, `database`, `flink`, ...)                                                                                                                         |
 | **maintenance**             | `maintenance(type)`                                                        | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                 |
-| **test**                    | `test`                                                                     | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                       |
+| **test**                    | `test` or `test(no_rows)`                                                  | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                       |
 | **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                    |
-| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                  | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                  |
+| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                  | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                   |
 
 This example configures a primary key and vector index for the `SensorTempByHour` table:
 
@@ -330,15 +347,17 @@ SensorTempByHour := SELECT ... ;
 
 ### Testing
 
-Add test cases to SQRL scripts with the `/*+test */` hint in front of a table definition:
+Add test cases to SQRL scripts with the `/*+ test */` hint in front of a table definition:
 
 ```sql
-/*+test */
+/*+ test */
 InvalidCustomers := SELECT * FROM Customer WHERE name = '' OR email IS NULL ORDER BY customerid;
 ```
 
-Test annotated tables are only executed when running the [`test` command](compiler#test-command) and otherwise ignored.
+Test-annotated tables are only executed when running the [`test` command](compiler#test-command) and otherwise ignored.
 DataSQRL queries all test tables at the end of the test and snapshots the results in the [configured](configuration) `snapshot-folder`.
+
+Use `/*+ test(no_rows) */` to assert that a test table returns no rows. These tests will succeed without generating snapshots.
 
 :::warning
 Ensure that test tables have a well-defined order and that only predictable columns are selected for the results are stable between test runs.
@@ -400,7 +419,7 @@ The following produce compile time errors:
 
 | Construct        | Example                                                               |
 |------------------|-----------------------------------------------------------------------|
-| Import package   | `IMPORT mypackage.sources AS mySources;`                              |
+| Import           | `IMPORT mypackage.sources AS mySources;`                              |
 | Internal table   | `CREATE TABLE Orders ( ... );`                                        |
 | External table   | `CREATE TABLE kafka_table (...) WITH ('connector'='kafka');`          |
 | Table def.       | `BigOrders := SELECT * FROM Orders WHERE amount > 100;`               |

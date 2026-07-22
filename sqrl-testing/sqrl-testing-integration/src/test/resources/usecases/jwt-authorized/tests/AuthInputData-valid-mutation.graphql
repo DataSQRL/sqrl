@@ -1,8 +1,8 @@
 mutation {
-  mut1: AuthInputData(event: {message: "Hello"}) {
+  mut1: AuthInputData(event: {payload: {message: "Hello"}}) {
     val
   }
-  mut2: AuthInputData(event: {message: "World"}) {
+  mut2: AuthInputData(event: {payload: {message: "World"}}) {
     val
   }
 }

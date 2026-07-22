@@ -50,13 +50,13 @@ public class VectorDimensionHint extends ColumnNamesHint implements DataTypeHint
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      if (source.get().getOptions().size() != 2) {
+      if (source.get().options().size() != 2) {
         throw new StatementParserException(
             ErrorLabel.GENERIC,
             source.getFileLocation(),
             "Vector dimension hint requires two arguments: the name of the vector column and the number of dimensions.");
       }
-      String dimensionsString = source.get().getOptions().get(1);
+      String dimensionsString = source.get().options().get(1);
       int dimensions;
       try {
         dimensions = Integer.parseInt(dimensionsString);
@@ -75,7 +75,7 @@ public class VectorDimensionHint extends ColumnNamesHint implements DataTypeHint
             "Vector dimension must be a positive number: %s.",
             dimensionsString);
       }
-      return new VectorDimensionHint(source, source.get().getOptions().get(0), dimensions);
+      return new VectorDimensionHint(source, source.get().options().get(0), dimensions);
     }
 
     @Override

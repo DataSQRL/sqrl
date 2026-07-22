@@ -21,10 +21,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.ResultKind;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
@@ -36,19 +34,16 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.testcontainers.containers.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
+import org.testcontainers.kafka.KafkaContainer;
 
-// @ExtendWith(MiniClusterExtension.class)
 class FlinkKafkaIntegrationIT {
 
   private static KafkaContainer kafkaContainer;
 
-  @SuppressWarnings("resource")
   @BeforeAll
   static void setup() {
     kafkaContainer =
-        new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.9.2"))
+        new KafkaContainer("apache/kafka-native:4.3.1")
             .withEnv(
                 "KAFKA_MESSAGE_MAX_BYTES",
                 "50000000") // Increase broker's max message size to 50 MB
@@ -83,12 +78,15 @@ class FlinkKafkaIntegrationIT {
     consumerProps.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, "50000000");
     consumerProps.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, "50000000");
 
-    AdminClient.create(consumerProps)
-        .createTopics(List.of(new NewTopic("test-topic", 1, (short) 1)));
+    try (var adminClient = AdminClient.create(consumerProps)) {
+      adminClient
+          .createTopics(List.of(new NewTopic("test-topic", 1, (short) 1)))
+          .all()
+          .get(10, TimeUnit.SECONDS);
+    }
 
     // Set up Flink execution environments
-    var env =
-        StreamExecutionEnvironment.createLocalEnvironmentWithWebUI(Configuration.fromMap(Map.of()));
+    var env = StreamExecutionEnvironment.createLocalEnvironment();
     var tableEnv = StreamTableEnvironment.create(env);
 
     // Define the DataGen source table with a large message field
@@ -172,7 +170,5 @@ class FlinkKafkaIntegrationIT {
     // For this example, we'll check the lengths
     // Since the 'large_message' field is 1 MB, the value should be at least 1 MB in size
     assertThat(value).hasSizeGreaterThanOrEqualTo(1048576);
-
-    System.out.println("Message successfully written and read from Kafka.");
   }
 }

@@ -284,8 +284,7 @@ INSERT INTO `default_catalog`.`default_database`.`TopicSearch_5`
 SELECT *
 FROM `default_catalog`.`default_database`.`TopicSearch`
 ;
-END;
-
+END
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "Package" ("name" TEXT NOT NULL, PRIMARY KEY ("name"));
 CREATE TABLE IF NOT EXISTS "Submission" ("name" TEXT NOT NULL, "version" TEXT NOT NULL, "variant" TEXT NOT NULL, "latest" BOOLEAN NOT NULL, "type" TEXT NOT NULL, "license" TEXT NOT NULL, "repository" TEXT NOT NULL, "homepage" TEXT NOT NULL, "documentation" TEXT NOT NULL, "readme" TEXT NOT NULL, "description" TEXT NOT NULL, "keywords" JSONB, "uniqueId" TEXT NOT NULL, "file" TEXT NOT NULL, "hash" TEXT NOT NULL, "authorId" TEXT NOT NULL, "submissionTime" TIMESTAMP WITH TIME ZONE NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "variant0" TEXT NOT NULL, "repoURL" TEXT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
@@ -295,8 +294,7 @@ CREATE TABLE IF NOT EXISTS "TopicSearch" ("topicName" TEXT NOT NULL, "numPackage
 
 CREATE INDEX IF NOT EXISTS "Submission_btree_c0c1c2" ON "Submission" USING btree ("name","version","variant");
 CREATE INDEX IF NOT EXISTS "Submission_btree_c0c2" ON "Submission" USING btree ("name","variant");
-CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree ("name","latest");
-
+CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree ("name","latest")
 >>>vertx.json
 {
   "models" : {

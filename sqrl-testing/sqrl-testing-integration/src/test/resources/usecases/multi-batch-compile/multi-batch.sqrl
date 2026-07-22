@@ -1,4 +1,4 @@
-IMPORT tables.source AS Src;
+IMPORT tables.sources.Numbers AS Src;
 
 CREATE TABLE TableA (
   val INT
@@ -14,13 +14,13 @@ CREATE TABLE TableB (
 
 INSERT INTO TableA SELECT * FROM Src;
 
-EXPORT Src TO tables.sink_a;
+EXPORT Src TO tables.sinks.SinkA;
 
 NEXT_BATCH;
 
 INSERT INTO TableB SELECT * FROM Src;
 
-EXPORT Src TO tables.sink_b;
+EXPORT Src TO tables.sinks.SinkB;
 
 NEXT_BATCH;
 

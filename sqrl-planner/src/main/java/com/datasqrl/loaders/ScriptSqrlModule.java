@@ -17,30 +17,43 @@ package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
+import com.datasqrl.error.ErrorCode;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.plan.MainScript;
+import com.datasqrl.planner.parser.SqrlCreateTableStatement;
+import com.datasqrl.planner.parser.SqrlStatementParser;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ScriptSqrlModule implements SqrlModule {
 
   private final String scriptContent;
   private final Path scriptPath;
   private final NamePath namePath;
+  private final SqrlStatementParser sqrlStatementParser;
   private final ModuleLoader moduleLoader;
+  private final ErrorCollector errors;
+
+  private Map<Name, Supplier<NamespaceObject>> tables = null;
 
   @Override
   public Optional<NamespaceObject> getNamespaceObject(Name name) {
-    throw new UnsupportedOperationException(
-        "Cannot import an individual table from SQRL script. "
-            + "Use `%s;` to import entire script in a separate database or `%s.*;` to import script inline."
-                .formatted(namePath, namePath));
+    initTables();
+
+    return Optional.ofNullable(tables.get(name)).map(Supplier::get);
   }
 
-  // Planning all tables. Return a single planning ns object and add all tables
   @Override
   public List<NamespaceObject> getNamespaceObjects() {
     return List.of(new ScriptNamespaceObject(true));
@@ -48,6 +61,58 @@ public class ScriptSqrlModule implements SqrlModule {
 
   public NamespaceObject asNamespaceObject() {
     return new ScriptNamespaceObject(false);
+  }
+
+  /**
+   * Initializes all {@code CREATE TABLE} statements defined in the scrip for individual table
+   * imports and exports.
+   *
+   * <p>The script is parsed eagerly so table names can be resolved through the module namespace,
+   * but validation and construction only run when that specific table is referenced.
+   */
+  private void initTables() {
+    if (tables != null) {
+      return;
+    }
+
+    tables = new HashMap<>();
+
+    var scriptErrors = errors.withScript(scriptPath, scriptContent);
+    var parsedCreateTables = sqrlStatementParser.parseCreateTables(scriptContent, scriptErrors);
+
+    for (var parsedCreateTable : parsedCreateTables) {
+      var createTableStmt = (SqrlCreateTableStatement) parsedCreateTable.statement().get();
+
+      var sql = createTableStmt.toSql();
+      var sqlNode = FlinkCalciteParser.parseSql(sql);
+
+      if (!(sqlNode instanceof SqlCreateTable createTable)) {
+        throw new IllegalStateException("Expected SqlCreateTable but got " + sqlNode.getClass());
+      }
+
+      var tableName = createTable.getName().getSimple();
+
+      // Wrap to a supplier so validation is only triggerred when the table is referenced
+      Supplier<NamespaceObject> nsObjectSupplier =
+          () -> {
+            var finalLocation =
+                createTableStmt.mapSqlLocation(parsedCreateTable.statement().getFileLocation());
+
+            scriptErrors
+                .atFile(finalLocation)
+                .checkFatal(
+                    !createTable.getProperties().isEmpty(),
+                    ErrorCode.INVALID_INDIVIDUAL_SCRIPT_TABLE,
+                    "Referenced table '%s' is not an external table",
+                    tableName);
+
+            return new FlinkTableNamespaceObject(
+                new FlinkTable(Name.system(tableName), sql, scriptPath),
+                moduleLoader.getSchemaLoader());
+          };
+
+      tables.put(Name.system(tableName), nsObjectSupplier);
+    }
   }
 
   @AllArgsConstructor

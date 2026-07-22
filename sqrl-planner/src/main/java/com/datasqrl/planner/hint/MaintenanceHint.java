@@ -46,7 +46,7 @@ public class MaintenanceHint extends PlannerHint {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      var arguments = source.get().getOptions();
+      var arguments = source.get().options();
 
       if (arguments.size() == 1) {
         var optIndex = EnumUtil.getByName(MaintenanceType.class, arguments.get(0));

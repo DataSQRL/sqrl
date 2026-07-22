@@ -566,8 +566,7 @@ INSERT INTO `default_catalog`.`default_database`.`toJsonTable_12`
 SELECT *
 FROM `default_catalog`.`default_database`.`toJsonTable`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [ ],

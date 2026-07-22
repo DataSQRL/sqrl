@@ -1737,8 +1737,7 @@ INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`
 SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`UnnestOrders`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [
@@ -1798,13 +1797,11 @@ CREATE TABLE IF NOT EXISTS "SelectCustomers" ("customerid" BIGINT NOT NULL, "ema
 CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB, "customerid0" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL, PRIMARY KEY ("id","time"));
 CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION, "newId" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
-CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name");
-
+CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name")
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
 FROM "ExternalOrders" AS "ExternalOrders0"
- INNER JOIN "ExplicitDistinct" AS "ExplicitDistinct0" ON "ExternalOrders0"."customerid" = "ExplicitDistinct0"."customerid";
-
+ INNER JOIN "ExplicitDistinct" AS "ExplicitDistinct0" ON "ExternalOrders0"."customerid" = "ExplicitDistinct0"."customerid"
 >>>vertx.json
 {
   "models" : {

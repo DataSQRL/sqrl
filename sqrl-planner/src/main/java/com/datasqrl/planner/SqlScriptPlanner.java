@@ -1170,12 +1170,12 @@ public class SqlScriptPlanner {
       var flinkTable = nsObject.table();
 
       // Parse SQL
-      var tableSql = flinkTable.flinkSql();
-      var tableError = errorCollector.withScript(flinkTable.flinkSqlFile(), tableSql);
+      var tableSql = flinkTable.sql();
+      var tableError = errorCollector.withScript(flinkTable.scriptPath(), tableSql);
       tableSql = SqlScriptStatementSplitter.formatEndOfSqlFile(tableSql);
 
       return new ExternalFlinkTable(
-          tableSql, nsObject.schemaLoader(), flinkTable.flinkSqlFile(), tableError);
+          tableSql, nsObject.schemaLoader(), flinkTable.scriptPath(), tableError);
     }
 
     public void writeExportWithSchema(FlinkTableBuilder table) {

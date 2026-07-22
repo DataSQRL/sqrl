@@ -7,5 +7,7 @@ IMPORT `root`.`ecommerceSql`.`category`;
 /*+ ttl(14 days) */
 IMPORT `mutation`.`events`.*;
 
+IMPORT connectors.sources.Customer AS CustomerOther;
+
 -- Export mutation table explicitly for test snapshot
 EXPORT MyEvents TO `logger`.`myevents`;

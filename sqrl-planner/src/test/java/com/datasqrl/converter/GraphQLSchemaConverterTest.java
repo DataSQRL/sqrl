@@ -37,12 +37,9 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLScalarType;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -111,17 +108,6 @@ public class GraphQLSchemaConverterTest {
         GraphQLSchemaConverterConfig.DEFAULT, underTest.getSchema(schemaString));
   }
 
-  @Test
-  @Disabled
-  public void testSchemaConversion() throws IOException {
-    String schemaString =
-        Files.readString(
-            Path.of(
-                "../../../datasqrl-examples/finance-credit-card-chatbot/creditcard-analytics.graphqls"));
-    String result = convertToJsonDefault(getFunctions(schemaString));
-    System.out.println(result);
-  }
-
   @SneakyThrows
   public static String convertToJsonDefault(List<ApiOperation> functions) {
     return toJsonString(functions);
@@ -162,6 +148,29 @@ public class GraphQLSchemaConverterTest {
     snapshot(functions, "rick-morty");
   }
 
+  @Test
+  @SneakyThrows
+  void givenJsonArgument_whenConvertSchema_thenCreatesUnconstrainedJsonSchema() {
+    var schema =
+        underTest.getSchema(
+            """
+            scalar JSON
+            type Query {
+              lookup(payload: JSON): String
+            }
+            """);
+
+    var functions = underTest.convertSchema(GraphQLSchemaConverterConfig.DEFAULT, schema);
+    var payload = functions.get(0).getFunction().getParameters().getProperties().get("payload");
+    var payloadSchema =
+        new ObjectMapper()
+            .readTree(toJsonString(functions))
+            .at("/0/function/parameters/properties/payload");
+
+    assertThat(payload.getType()).isNull();
+    assertThat(payloadSchema.has("type")).isFalse();
+  }
+
   @ParameterizedTest
   @MethodSource("scalarTypeToJsonTypeProvider")
   void givenScalarType_whenConvertToJsonType_thenReturnsExpectedJsonType(
@@ -180,7 +189,8 @@ public class GraphQLSchemaConverterTest {
         Arguments.of(GraphQLFloat, "number"),
         Arguments.of(GraphQLString, "string"),
         Arguments.of(GraphQLBoolean, "boolean"),
-        Arguments.of(GraphQLID, "string"));
+        Arguments.of(GraphQLID, "string"),
+        Arguments.of(CustomScalars.JSON, null));
   }
 
   @SneakyThrows

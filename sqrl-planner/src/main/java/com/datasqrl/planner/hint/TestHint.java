@@ -51,7 +51,7 @@ public class TestHint extends PlannerHint {
     }
 
     private static boolean parseNoRows(ParsedObject<SqrlHint> source) {
-      var arguments = source.get().getOptions();
+      var arguments = source.get().options();
       if (arguments == null || arguments.isEmpty()) {
         return false;
       }
@@ -61,7 +61,7 @@ public class TestHint extends PlannerHint {
             ErrorLabel.GENERIC,
             source.getFileLocation(),
             "%s hint only supports 'no_rows' as argument",
-            source.get().getName());
+            source.get().name());
       }
 
       return true;

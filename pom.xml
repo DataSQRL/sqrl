@@ -119,7 +119,7 @@
     <avro.version>1.12.1</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
     <aws-msk-iam-auth.version>2.3.7</aws-msk-iam-auth.version>
-    <aws-sdk-bom.version>2.46.21</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.48.3</aws-sdk-bom.version>
     <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-csv.version>1.14.1</commons-csv.version>
     <commons-exec.version>1.6.0</commons-exec.version>
@@ -141,14 +141,14 @@
     <hadoop.version>3.3.4</hadoop.version>
     <httpcomponents.version>4.5.14</httpcomponents.version>
     <iceberg.version>1.11.0</iceberg.version>
-    <jackson.version>2.22.0</jackson.version>
+    <jackson.version>2.22.1</jackson.version>
     <jacoco.version>0.8.15</jacoco.version>
     <jakarta.annotation.version>3.0.0</jakarta.annotation.version>
     <jakarta.inject.version>2.0.1</jakarta.inject.version>
     <javax.validation.version>2.0.1.Final</javax.validation.version>
     <jjwt.version>0.13.0</jjwt.version>
-    <json-schema.version>2.0.3</json-schema.version>
-    <junit.jupiter.version>6.1.1</junit.jupiter.version>
+    <json-schema.version>2.0.4</json-schema.version>
+    <junit.jupiter.version>6.1.2</junit.jupiter.version>
     <kafka.version>3.9.1</kafka.version>
     <log4j.version>2.26.1</log4j.version>
     <lombok.version>1.18.46</lombok.version>
@@ -159,18 +159,18 @@
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
     <opencsv.version>5.12.0</opencsv.version>
     <picocli.version>4.7.7</picocli.version>
-    <postgres.version>42.7.12</postgres.version>
+    <postgres.version>42.7.13</postgres.version>
     <projectreactor.version>3.8.6</projectreactor.version>
     <protobuf.version>4.35.1</protobuf.version>
     <scala.version>2.12</scala.version>
     <scram.version>2.1</scram.version>
     <slf4j.version>1.7.36</slf4j.version>
-    <snowflake-jdbc.version>4.3.1</snowflake-jdbc.version>
+    <snowflake-jdbc.version>4.3.2</snowflake-jdbc.version>
     <snakeyaml.version>2.6</snakeyaml.version>
     <swagger-core.version>2.2.52</swagger-core.version>
     <system-stubs.version>2.1.8</system-stubs.version>
     <testcontainers.version>2.0.5</testcontainers.version>
-    <vertx.version>5.1.3</vertx.version>
+    <vertx.version>5.1.5</vertx.version>
 
     <!-- Plugin versions -->
     <docker-maven-plugin.version>0.48.1</docker-maven-plugin.version>
@@ -556,7 +556,7 @@
       <dependency>
         <groupId>io.netty</groupId>
         <artifactId>netty-codec</artifactId>
-        <version>4.2.15.Final</version>
+        <version>4.2.16.Final</version>
       </dependency>
       <dependency>
         <groupId>org.postgresql</groupId>

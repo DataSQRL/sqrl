@@ -22,6 +22,7 @@ import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.WorkspacePaths;
+import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
 import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
@@ -136,12 +137,10 @@ import org.apache.flink.table.operations.ddl.CreateViewOperation;
 import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.planner.delegation.ParserImpl;
 import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.expressions.RexNodeExpression;
 import org.apache.flink.table.planner.operations.SqlNodeConvertContext;
 import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
-import org.apache.flink.table.planner.parse.CalciteParser;
 import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
 import org.apache.flink.table.types.CollectionDataType;
 import org.apache.flink.table.types.DataType;
@@ -249,24 +248,7 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public SqlNode parseSQL(String sqlStatement) {
-    CalciteParser parser;
-    try {
-      // TODO: This is a hack - is there a better way to get the calcite parser?
-      var calciteSupplierField = ParserImpl.class.getDeclaredField("calciteParserSupplier");
-      calciteSupplierField.setAccessible(true);
-      parser = ((Supplier<CalciteParser>) calciteSupplierField.get(tEnv.getParser())).get();
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    var sqlNodeList = parser.parseSqlList(sqlStatement);
-    var parsed = sqlNodeList.getList();
-    checkArgument(
-        parsed.size() == 1,
-        "Expected exactly 1 SQL statement but found %s. SQL: [%s]",
-        parsed.size(),
-        sqlStatement.length() > 500 ? sqlStatement.substring(0, 500) + "..." : sqlStatement);
-
-    return parsed.get(0);
+    return FlinkCalciteParser.parseSql(sqlStatement, tEnv);
   }
 
   /**
@@ -837,6 +819,7 @@ public class Sqrl2FlinkSQLTranslator {
     var tableSqlNode = parseSQL(createTableSql);
     checkArgument(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
     var tableDefinition = FlinkSqlNodes.resolveTableProperties((SqlCreateTable) tableSqlNode);
+    tableDefinition = FlinkSqlNodes.resolveRawJsonTypAliases(tableDefinition);
     var fullTable = tableDefinition;
     var origTableName = fullTable.getName().getSimple();
     final var finalTableName = tableNameModifier.apply(origTableName);

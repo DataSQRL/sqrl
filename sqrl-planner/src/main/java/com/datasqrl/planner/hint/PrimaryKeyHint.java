@@ -25,7 +25,7 @@ public class PrimaryKeyHint extends ColumnNamesHint {
   public static final String HINT_NAME = "primary_key";
 
   protected PrimaryKeyHint(ParsedObject<SqrlHint> source) {
-    super(source, Type.ANALYZER, source.get().getOptions());
+    super(source, Type.ANALYZER, source.get().options());
   }
 
   @AutoService(Factory.class)

@@ -17,6 +17,7 @@ package com.datasqrl.planner;
 
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -55,18 +56,11 @@ public class FlinkPlannerConfigBuilder {
           FlinkStreamProgram.PHYSICAL_REWRITE(),
           FlinkStreamProgram.TIME_INDICATOR());
 
-  /** Rules to remove in case of {@link PredicatePushdownRules#LIMITED_TABLE_SOURCE_RULES}. */
-  private static final List<? extends RelOptRule> TABLE_SOURCE_RULES_TO_REMOVE =
-      List.of(
-          PushFilterIntoLegacyTableSourceScanRule.INSTANCE,
-          PushFilterIntoTableSourceScanRule.INSTANCE,
-          PushPartitionIntoLegacyTableSourceScanRule.INSTANCE(),
-          PushPartitionIntoTableSourceScanRule.INSTANCE,
-          PushProjectIntoLegacyTableSourceScanRule.INSTANCE(),
-          PushProjectIntoTableSourceScanRule.INSTANCE);
-
-  /** Extra rules to remove in case of {@link PredicatePushdownRules#LIMITED_RULES}. */
-  private static final List<? extends RelOptRule> GENERAL_FILTER_RULES_TO_REMOVE =
+  /**
+   * Downstream filter rules to remove in case of {@link
+   * PredicatePushdownRules#LIMITED_RULES_NO_SOURCE}.
+   */
+  private static final List<RelOptRule> BASE_FILTER_RULES_TO_REMOVE =
       List.of(
           // Removing prevents push filter through an aggregation
           CoreRules.FILTER_AGGREGATE_TRANSPOSE,
@@ -79,11 +73,30 @@ public class FlinkPlannerConfigBuilder {
           // Removing keeps WHERE conditions above projections (no time-aware rewrite), limiting
           // pushdown and simplification but avoiding duplicated Calcs across branches—useful for
           // subgraph elimination.
-          FlinkFilterProjectTransposeRule.INSTANCE,
-          // Removing FlinkProjectJoinTransposeRule stops pushing projects into each join input,
-          // leading to wider joins (less column pruning) but fewer per-arm Calcs and more identical
-          // subgraphs around (temporal) joins.
-          FlinkProjectJoinTransposeRule.INSTANCE);
+          FlinkFilterProjectTransposeRule.INSTANCE);
+
+  /** Downstream rules to remove in case of {@link PredicatePushdownRules#LIMITED_RULES} */
+  private static final List<RelOptRule> EXTENDED_FILTER_RULES_TO_REMOVE =
+      ImmutableList.<RelOptRule>builder()
+          .addAll(BASE_FILTER_RULES_TO_REMOVE)
+          .add(
+              // Removing FlinkProjectJoinTransposeRule stops pushing projects into each join input,
+              // leading to wider joins (less column pruning) but fewer per-arm Calcs and more
+              // identical
+              // subgraphs around (temporal) joins.
+              FlinkProjectJoinTransposeRule.INSTANCE)
+          .build();
+
+  /** Table source rules to remove in case of {@link PredicatePushdownRules#LIMITED_RULES}. */
+  private static final List<RelOptRule> TABLE_SOURCE_RULES_TO_REMOVE =
+      List.of(
+          PushFilterIntoLegacyTableSourceScanRule.INSTANCE,
+          PushFilterIntoTableSourceScanRule.INSTANCE,
+          PushFilterInCalcIntoTableSourceScanRule.INSTANCE,
+          PushPartitionIntoLegacyTableSourceScanRule.INSTANCE(),
+          PushPartitionIntoTableSourceScanRule.INSTANCE,
+          PushProjectIntoLegacyTableSourceScanRule.INSTANCE(),
+          PushProjectIntoTableSourceScanRule.INSTANCE);
 
   private final CompilerConfig compilerConfig;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
@@ -127,9 +140,13 @@ public class FlinkPlannerConfigBuilder {
         removeTableSourceScanRules(programName, program);
       }
 
+      if (rules == PredicatePushdownRules.LIMITED_RULES_NO_SOURCE) {
+        stripRules(programName, program, r -> anyMatch(BASE_FILTER_RULES_TO_REMOVE, r));
+      }
+
       if (rules == PredicatePushdownRules.LIMITED_RULES) {
         removeTableSourceScanRules(programName, program);
-        stripRules(programName, program, r -> anyMatch(GENERAL_FILTER_RULES_TO_REMOVE, r));
+        stripRules(programName, program, r -> anyMatch(EXTENDED_FILTER_RULES_TO_REMOVE, r));
       }
 
       customStreamProgram.addLast(programName, program);
@@ -152,16 +169,10 @@ public class FlinkPlannerConfigBuilder {
     }
 
     stripRules(programName, program, r -> anyMatch(TABLE_SOURCE_RULES_TO_REMOVE, r));
-    stripRules(
-        programName, program, r -> matches(PushFilterInCalcIntoTableSourceScanRule.INSTANCE, r));
   }
 
-  private <T extends RelOptRule> boolean matches(T ruleToMatch, RelOptRule rule) {
-    return anyMatch(List.of(ruleToMatch), rule);
-  }
-
-  private boolean anyMatch(List<? extends RelOptRule> rulesToMatch, RelOptRule rule) {
-    return rulesToMatch.stream().map(fr -> fr.getClass()).anyMatch(cls -> cls.isInstance(rule));
+  private boolean anyMatch(List<RelOptRule> rulesToMatch, RelOptRule rule) {
+    return rulesToMatch.stream().map(RelOptRule::getClass).anyMatch(cls -> cls.isInstance(rule));
   }
 
   ////////////////////////////////////////////////////////////////////////////////

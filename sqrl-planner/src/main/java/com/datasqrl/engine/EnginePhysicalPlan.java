@@ -63,16 +63,9 @@ public interface EnginePhysicalPlan {
     }
 
     public static String toSqlString(Stream<String> statements) {
-      var sqlStr =
-          statements
-              .filter(statement -> !statement.isBlank())
-              .collect(Collectors.joining(SQL_STATEMENT_DELIMITER));
-
-      if (sqlStr.isBlank() || sqlStr.stripTrailing().endsWith(";")) {
-        return sqlStr;
-      }
-
-      return sqlStr + SQL_STATEMENT_DELIMITER;
+      return statements
+          .filter(statement -> !statement.isBlank())
+          .collect(Collectors.joining(SQL_STATEMENT_DELIMITER));
     }
 
     public static String toYamlString(Configuration config) {

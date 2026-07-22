@@ -1,4 +1,4 @@
-IMPORT clickstream-local.click;  -- Import data
+IMPORT connectors.sources.Click;  -- Import data
 /** Most visited pages
 
     Columns:

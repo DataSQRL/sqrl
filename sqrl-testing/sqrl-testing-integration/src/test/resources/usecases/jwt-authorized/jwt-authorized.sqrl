@@ -4,11 +4,11 @@ IMPORT jwt-authorized-base.*;
 CREATE TABLE AuthInputData (
     event_id STRING NOT NULL METADATA FROM 'uuid',
     val BIGINT NOT NULL METADATA FROM 'auth.val',
-    message STRING NOT NULL,
+    payload RAW_JSON,
     event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
 );
 
-_Messages := SELECT * FROM AuthInputData WHERE message <> '';
+_Messages := SELECT * FROM AuthInputData WHERE payload IS NOT NULL;
 
 MessageSubscription(val BIGINT NOT NULL METADATA FROM 'auth.val') :=
                 SUBSCRIBE SELECT * FROM _Messages WHERE val = :val;

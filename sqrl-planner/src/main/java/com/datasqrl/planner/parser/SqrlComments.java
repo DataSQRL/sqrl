@@ -39,14 +39,14 @@ public record SqrlComments(
   public SqrlComments removeHintsByName(Predicate<String> remove) {
     return new SqrlComments(
         documentation,
-        hints.stream().filter(p -> !p.isPresent() || !remove.test(p.get().getName())).toList());
+        hints.stream().filter(p -> !p.isPresent() || !remove.test(p.get().name())).toList());
   }
 
   public boolean containsHintByName(Predicate<String> match) {
     return hints.stream()
         .filter(ParsedObject::isPresent)
         .map(ParsedObject::get)
-        .map(SqrlHint::getName)
+        .map(SqrlHint::name)
         .anyMatch(match);
   }
 

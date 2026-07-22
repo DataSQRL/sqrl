@@ -741,8 +741,7 @@ INSERT INTO `default_catalog`.`default_database`.`LoanTypesStream_11`
 SELECT *
 FROM `default_catalog`.`default_database`.`LoanTypesStream`
 ;
-END;
-
+END
 >>>kafka.json
 {
   "topics" : [
@@ -795,8 +794,7 @@ CREATE TABLE IF NOT EXISTS "LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT NU
 CREATE TABLE IF NOT EXISTS "LoanTypesStream" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"));
 
 CREATE INDEX IF NOT EXISTS "ApplicationUpdates_hash_c1" ON "ApplicationUpdates" USING hash ("loan_application_id");
-CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash ("customer_id");
-
+CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash ("customer_id")
 >>>vertx.json
 {
   "models" : {
