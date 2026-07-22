@@ -1,0 +1,20 @@
+CREATE TABLE Customer (
+    customer_id BIGINT NOT NULL,
+    full_name STRING,
+    last_updated BIGINT,
+    `timestamp` AS COALESCE(TO_TIMESTAMP_LTZ(last_updated, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+    PRIMARY KEY (customer_id, last_updated) NOT ENFORCED,
+    WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+    'connector' = 'filesystem',
+    'format' = 'flexible-json',
+    'path' = 'file:/mock',
+    'source.monitor-interval' = '10 sec'
+);
+
+/*+ engine(kafka) */
+CREATE TABLE CustomerInternal (
+    customer_id  BIGINT NOT NULL,
+    full_name    STRING,
+    `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);

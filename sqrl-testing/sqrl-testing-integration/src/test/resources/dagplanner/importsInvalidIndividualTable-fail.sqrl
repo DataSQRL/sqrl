@@ -1,0 +1,3 @@
+IMPORT connectors.sources.CustomerInternal;
+
+EXPORT CustomerInternal TO print.customer;

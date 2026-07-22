@@ -28,5 +28,5 @@ public record FlinkTableNamespaceObject(FlinkTable table, SchemaLoader schemaLoa
     return table.name();
   }
 
-  public record FlinkTable(Name name, String flinkSql, Path flinkSqlFile) {}
+  public record FlinkTable(Name name, String sql, Path scriptPath) {}
 }

@@ -26,6 +26,7 @@ import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.loaders.schema.SchemaLoader;
 import com.datasqrl.loaders.schema.SchemaLoaderImpl;
+import com.datasqrl.planner.parser.SqrlStatementParser;
 import com.datasqrl.serializer.Deserializer;
 import com.datasqrl.util.FunctionUtil;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -57,12 +58,14 @@ public class ModuleLoaderImpl implements ModuleLoader {
       CacheBuilder.newBuilder().maximumSize(1000).build();
 
   private final ResourceResolver resourceResolver;
+  private final SqrlStatementParser sqrlStatementParser;
   private final WorkspacePaths workspacePaths;
   private final ClasspathFunctionLoader classpathFunctionLoader;
   private final ErrorCollector errors;
 
   private ModuleLoaderImpl withResourceResolver(ResourceResolver resourceResolver) {
-    return new ModuleLoaderImpl(resourceResolver, workspacePaths, classpathFunctionLoader, errors);
+    return new ModuleLoaderImpl(
+        resourceResolver, sqrlStatementParser, workspacePaths, classpathFunctionLoader, errors);
   }
 
   @Override
@@ -92,7 +95,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
     if (lib.isEmpty()) {
       return Optional.empty();
     }
-    return Optional.of(new SqrlDirectoryModule(lib));
+    return Optional.of(new DirectorySqrlModule(lib));
   }
 
   private Optional<SqrlModule> loadFromFileSystem(NamePath directory) {
@@ -115,7 +118,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
             .flatMap(url -> load(url, directory).stream())
             .collect(Collectors.toList());
 
-    return items.isEmpty() ? Optional.empty() : Optional.of(new SqrlDirectoryModule(items));
+    return items.isEmpty() ? Optional.empty() : Optional.of(new DirectorySqrlModule(items));
   }
 
   private Optional<Path> getFile(NamePath directory, Name name) {
@@ -149,7 +152,9 @@ public class ModuleLoaderImpl implements ModuleLoader {
         Files.readString(path),
         path,
         namePath,
-        withResourceResolver(resourceResolver.getNested(path.getParent())));
+        sqrlStatementParser,
+        withResourceResolver(resourceResolver.getNested(path.getParent())),
+        errors);
   }
 
   @SneakyThrows

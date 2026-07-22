@@ -1,0 +1,11 @@
+CREATE TABLE SinkA (
+    val INT
+) WITH (
+    'connector' = 'print'
+);
+
+CREATE TABLE SinkB (
+    val INT
+) WITH (
+    'connector' = 'print'
+);
