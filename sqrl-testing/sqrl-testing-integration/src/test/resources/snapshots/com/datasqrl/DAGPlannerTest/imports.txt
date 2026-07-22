@@ -70,6 +70,42 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+=== CustomerOther
+ID:          default_catalog.default_database.CustomerOther
+Type:        stream
+Stage:       flink
+Primary key: customer_id, last_updated
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - customer_id: BIGINT NOT NULL
+ - full_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - last_updated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomerOther__base
+Annotations:
+ - stream-root: CustomerOther
+Plan:
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($3, 1:INTERVAL SECOND)])
+  LogicalProject(customer_id=[$0], full_name=[$1], last_updated=[$2], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($2, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerOther]])
+SQL:
+CREATE TABLE `CustomerOther` (
+  `customer_id` BIGINT NOT NULL,
+  `full_name` STRING,
+  `last_updated` BIGINT NOT NULL,
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`last_updated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
+  PRIMARY KEY (`customer_id`, `last_updated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+)
 === MyEvents
 ID:          default_catalog.default_database.MyEvents
 Type:        stream
@@ -210,6 +246,20 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-MyEvents'
 );
+CREATE TABLE `CustomerOther` (
+  `customer_id` BIGINT NOT NULL,
+  `full_name` STRING,
+  `last_updated` BIGINT,
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`last_updated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customer_id`, `last_updated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+);
 CREATE TABLE `Category_1` (
   `categoryid` INTEGER NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -244,7 +294,23 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `myevents_3` (
+CREATE TABLE `CustomerOther_3` (
+  `customer_id` BIGINT NOT NULL,
+  `full_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `last_updated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customer_id`, `last_updated`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerOther_3',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `myevents_4` (
   `id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `payload` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -254,7 +320,7 @@ WITH (
   'connector' = 'print',
   'print-identifier' = 'myevents'
 );
-CREATE TABLE `Product_4` (
+CREATE TABLE `Product_5` (
   `productid` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -267,7 +333,7 @@ WITH (
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
   'sink.on-conflict.action' = 'IGNORE',
-  'table-name' = 'Product_4',
+  'table-name' = 'Product_5',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
@@ -280,11 +346,15 @@ INSERT INTO `default_catalog`.`default_database`.`Customer_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
 ;
-INSERT INTO `default_catalog`.`default_database`.`myevents_3`
+INSERT INTO `default_catalog`.`default_database`.`CustomerOther_3`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerOther`
+;
+INSERT INTO `default_catalog`.`default_database`.`myevents_4`
 SELECT *
 FROM `default_catalog`.`default_database`.`MyEvents`
 ;
-INSERT INTO `default_catalog`.`default_database`.`Product_4`
+INSERT INTO `default_catalog`.`default_database`.`Product_5`
 SELECT *
 FROM `default_catalog`.`default_database`.`Product`
 ;
@@ -391,9 +461,44 @@ END
       "ttl" : 0.0
     },
     {
-      "name" : "Product_4",
+      "name" : "CustomerOther_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Product_4\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerOther_3\" (\"customer_id\" BIGINT NOT NULL, \"full_name\" TEXT, \"last_updated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customer_id\",\"last_updated\"))",
+      "fields" : [
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "full_name",
+          "type" : "TEXT",
+          "nullable" : true
+        },
+        {
+          "name" : "last_updated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "customer_id",
+        "last_updated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "Product_5",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Product_5\" (\"productid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"description\" TEXT NOT NULL, \"category\" TEXT NOT NULL, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"productid\",\"name\",\"description\",\"category\"))",
       "fields" : [
         {
           "name" : "productid",
@@ -490,6 +595,33 @@ END
           "nullable" : false
         }
       ]
+    },
+    {
+      "name" : "CustomerOther",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerOther\"(\"customer_id\", \"full_name\", \"last_updated\", \"timestamp\") AS SELECT *\nFROM \"CustomerOther_3\"",
+      "fields" : [
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "full_name",
+          "type" : "TEXT",
+          "nullable" : true
+        },
+        {
+          "name" : "last_updated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
     }
   ],
   "standaloneExtensionStatements" : [ ]
@@ -552,6 +684,31 @@ END
         {
           "type" : "args",
           "parentType" : "Query",
+          "fieldName" : "CustomerOther",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"CustomerOther_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
           "fieldName" : "Product",
           "exec" : {
             "arguments" : [
@@ -570,7 +727,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Product_4\"\nWHERE \"productid\" = $1",
+              "sql" : "SELECT *\nFROM \"Product_5\"\nWHERE \"productid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -664,6 +821,32 @@ END
         },
         {
           "function" : {
+            "name" : "GetCustomerOther",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerOther($limit: Int = 10, $offset: Int = 0) {\nCustomerOther(limit: $limit, offset: $offset) {\ncustomer_id\nfull_name\nlast_updated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerOther",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerOther{?offset,limit}"
+        },
+        {
+          "function" : {
             "name" : "GetProduct",
             "parameters" : {
               "type" : "object",
@@ -719,7 +902,7 @@ END
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Category {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  MyEvents(event: MyEventsInput!): MyEventsResultOutput!\n}\n\ninput MyEventsInput {\n  payload: String\n}\n\ntype MyEventsResultOutput {\n  id: String!\n  payload: String\n  timestamp: DateTime!\n}\n\ntype Product {\n  productid: Long!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Category(limit: Int = 10, offset: Int = 0): [Category!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  Product(productid: Long!, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Category {\n  categoryid: Int!\n  name: String!\n  description: String\n  updateTime: DateTime!\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerOther {\n  customer_id: Long!\n  full_name: String\n  last_updated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  MyEvents(event: MyEventsInput!): MyEventsResultOutput!\n}\n\ninput MyEventsInput {\n  payload: String\n}\n\ntype MyEventsResultOutput {\n  id: String!\n  payload: String\n  timestamp: DateTime!\n}\n\ntype Product {\n  productid: Long!\n  name: String!\n  description: String!\n  category: String!\n}\n\ntype Query {\n  Category(limit: Int = 10, offset: Int = 0): [Category!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerOther(limit: Int = 10, offset: Int = 0): [CustomerOther!]\n  Product(productid: Long!, limit: Int = 10, offset: Int = 0): [Product!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
