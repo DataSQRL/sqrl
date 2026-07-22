@@ -15,11 +15,6 @@ type DocumentSimilarity {
   score: Float
 }
 
-type DocumentSimilarityIndex {
-  doc_id: Int!
-  category_id: Int!
-}
-
 "A JSON scalar"
 scalar JSON
 
@@ -33,7 +28,7 @@ type Query {
   CategoryCentroids(category_id: Int!, limit: Int = 10, offset: Int = 0): [CategoryCentroids!]
   VectorData(limit: Int = 10, offset: Int = 0): [VectorData!]
   DocumentSimilarity(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarity!]
-  DocumentSimilarityIndex(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarityIndex!]
+  DocumentSimilarityIndex(doc_id: Int!, limit: Int = 10, offset: Int = 0): [VectorData!]
 }
 
 type VectorData {
@@ -90,7 +85,7 @@ Inputs:
  - default_catalog.default_database.VectorData
 Annotations:
  - parameters: doc_id
- - base-table: DocumentSimilarityIndex
+ - base-table: VectorData
 
 === VectorData
 ID:          default_catalog.default_database.VectorData
@@ -288,7 +283,7 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"VectorData0\".\"doc_id\", \"VectorData0\".\"category_id\", \"VectorData0\".\"vector\", 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\")\nFROM \"VectorData\"\n INNER JOIN \"VectorData\" AS \"VectorData0\" ON 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") > 0.5\nWHERE \"VectorData\".\"doc_id\" = $1 AND \"VectorData\".\"doc_id\" <> \"VectorData0\".\"doc_id\"\nORDER BY 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") DESC NULLS LAST",
+              "sql" : "SELECT \"t1\".\"doc_id\", \"t1\".\"category_id\", \"t1\".\"vector\"\nFROM (SELECT \"VectorData0\".\"doc_id\", \"VectorData0\".\"category_id\", \"VectorData0\".\"vector\", 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") AS \"EXPR$3\"\n  FROM \"VectorData\"\n   INNER JOIN \"VectorData\" AS \"VectorData0\" ON 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") > 0.5\n  WHERE \"VectorData\".\"doc_id\" = $1 AND \"VectorData\".\"doc_id\" <> \"VectorData0\".\"doc_id\"\n  ORDER BY 1 - (\"VectorData\".\"vector\" <=> \"VectorData0\".\"vector\") DESC NULLS LAST) AS \"t1\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -428,7 +423,7 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type CategoryCentroids {\n  category_id: Int!\n  center_vector: [Float]\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DocumentSimilarity {\n  doc_id: Int!\n  score: Float\n}\n\ntype DocumentSimilarityIndex {\n  doc_id: Int!\n  category_id: Int!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  CategoryCentroids(category_id: Int!, limit: Int = 10, offset: Int = 0): [CategoryCentroids!]\n  VectorData(limit: Int = 10, offset: Int = 0): [VectorData!]\n  DocumentSimilarity(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarity!]\n  DocumentSimilarityIndex(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarityIndex!]\n}\n\ntype VectorData {\n  doc_id: Int!\n  category_id: Int!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type CategoryCentroids {\n  category_id: Int!\n  center_vector: [Float]\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype DocumentSimilarity {\n  doc_id: Int!\n  score: Float\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  CategoryCentroids(category_id: Int!, limit: Int = 10, offset: Int = 0): [CategoryCentroids!]\n  VectorData(limit: Int = 10, offset: Int = 0): [VectorData!]\n  DocumentSimilarity(doc_id: Int!, limit: Int = 10, offset: Int = 0): [DocumentSimilarity!]\n  DocumentSimilarityIndex(doc_id: Int!, limit: Int = 10, offset: Int = 0): [VectorData!]\n}\n\ntype VectorData {\n  doc_id: Int!\n  category_id: Int!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
