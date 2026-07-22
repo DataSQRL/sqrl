@@ -16,9 +16,7 @@
 package com.datasqrl.discovery.stats;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
-import com.google.common.base.Preconditions;
 import java.util.Map;
 import lombok.ToString;
 
@@ -51,27 +49,5 @@ public class SourceTableStatistics
 
   public long getCount() {
     return relation.getCount();
-  }
-
-  public RelationStats getRelationStats(NamePath path) {
-    var current = relation;
-    for (var i = 0; i < path.size(); i++) {
-      var n = path.get(i);
-      var field = current.fieldStats.get(n);
-      if (field == null) {
-        return RelationStats.EMPTY;
-      }
-      Preconditions.checkNotNull(field, "Could not find nested table: %s", n);
-      current =
-          field.types.values().stream()
-              .filter(fts -> fts.nestedRelationStats != null)
-              .map(fts -> fts.nestedRelationStats)
-              .reduce(
-                  (a, b) -> {
-                    throw new IllegalStateException("Expected single RelationStats for nested");
-                  })
-              .orElse(RelationStats.EMPTY);
-    }
-    return current;
   }
 }

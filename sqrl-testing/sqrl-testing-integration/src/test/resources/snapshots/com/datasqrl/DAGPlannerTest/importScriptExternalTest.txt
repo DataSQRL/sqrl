@@ -60,16 +60,11 @@ LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, mysources, Customer]])
 SQL:
-CREATE TEMPORARY TABLE `Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
 CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -80,7 +75,6 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
-LIKE `Customer__schema`
 === CustomerAggregate
 ID:          default_catalog.mysources.CustomerAggregate
 Type:        state
@@ -124,16 +118,11 @@ LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, sources, Customer]])
 SQL:
-CREATE TEMPORARY TABLE `Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
 CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -144,7 +133,6 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
-LIKE `Customer__schema`
 === CustomerAggregate
 ID:          default_catalog.sources.CustomerAggregate
 Type:        state
@@ -168,16 +156,11 @@ CREATE VIEW `CustomerAggregate` AS  SELECT customerid, COUNT(*) AS num_updates F
 >>>flink-sql-no-functions.sql
 CREATE DATABASE IF NOT EXISTS `sources`;
 USE `sources`;
-CREATE TEMPORARY TABLE `Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
 CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -187,8 +170,7 @@ WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `Customer__schema`;
+);
 CREATE VIEW `CustomerAggregate`
 AS
 SELECT `customerid`, COUNT(*) AS `num_updates`
@@ -199,16 +181,11 @@ CREATE DATABASE IF NOT EXISTS `default_database`;
 USE `default_database`;
 CREATE DATABASE IF NOT EXISTS `mysources`;
 USE `mysources`;
-CREATE TEMPORARY TABLE `Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
 CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -218,8 +195,7 @@ WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `Customer__schema`;
+);
 CREATE VIEW `CustomerAggregate`
 AS
 SELECT `customerid`, COUNT(*) AS `num_updates`

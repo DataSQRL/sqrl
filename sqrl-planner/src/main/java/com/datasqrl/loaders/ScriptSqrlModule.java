@@ -34,6 +34,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
+import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
 
 @RequiredArgsConstructor
 public class ScriptSqrlModule implements SqrlModule {
@@ -98,10 +99,13 @@ public class ScriptSqrlModule implements SqrlModule {
             var finalLocation =
                 createTableStmt.mapSqlLocation(parsedCreateTable.statement().getFileLocation());
 
+            var isExternalTable =
+                !createTable.getProperties().isEmpty() || createTable instanceof SqlCreateTableLike;
+
             scriptErrors
                 .atFile(finalLocation)
                 .checkFatal(
-                    !createTable.getProperties().isEmpty(),
+                    isExternalTable,
                     ErrorCode.INVALID_INDIVIDUAL_SCRIPT_TABLE,
                     "Referenced table '%s' is not an external table",
                     tableName);

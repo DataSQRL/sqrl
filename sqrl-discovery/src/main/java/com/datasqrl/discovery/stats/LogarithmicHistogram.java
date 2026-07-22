@@ -26,24 +26,16 @@ public class LogarithmicHistogram implements Serializable {
 
   public static final LogarithmicHistogram EMPTY = new LogarithmicHistogram(2, 0, new long[0]);
 
-  private float base;
-  private long count;
-  private long[] buckets;
-  private long numZeros;
+  float base;
+  long count;
+  long[] buckets;
+  long numZeros;
 
   public LogarithmicHistogram(float base, long count, long[] buckets) {
     this.base = base;
     this.count = count;
     this.buckets = buckets;
     this.numZeros = count - Arrays.stream(buckets).sum();
-  }
-
-  public float getBase() {
-    return base;
-  }
-
-  public long getCount() {
-    return count;
   }
 
   @ToString

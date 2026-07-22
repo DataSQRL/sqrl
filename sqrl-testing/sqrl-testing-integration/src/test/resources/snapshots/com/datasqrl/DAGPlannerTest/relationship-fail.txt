@@ -43,7 +43,7 @@ Was expecting one of:
     <UNICODE_QUOTED_IDENTIFIER> ...
     "AS" ...
     
-in script:relationship-fail.sqrl [5:17]:
+in script:relationship-fail.sqrl [4:17]:
 IMPORT ecommerceTs.orders; --base table = Orders
 
 rootFunction($i : INT) := SELECT id FROM Orders WHERE id = $i; -- no base table

@@ -201,15 +201,12 @@ CREATE TEMPORARY TABLE `_CustomersStream__schema` (
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_CustomersStream` (
-  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-)
-WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/customers.jsonl'
+);
+CREATE TABLE `_CustomersStream` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
 )
 LIKE `_CustomersStream__schema`;
 CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (
@@ -222,15 +219,12 @@ CREATE TEMPORARY TABLE `_ApplicationsStream__schema` (
   `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_ApplicationsStream` (
-  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
-)
-WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/applications.jsonl'
+);
+CREATE TABLE `_ApplicationsStream` (
+  PRIMARY KEY (`id`, `updated_at`) NOT ENFORCED
 )
 LIKE `_ApplicationsStream__schema`;
 CREATE TEMPORARY TABLE `ApplicationUpdates__schema` (
@@ -240,15 +234,12 @@ CREATE TEMPORARY TABLE `ApplicationUpdates__schema` (
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `ApplicationUpdates` (
-  PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED
-)
-WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/application_updates.jsonl'
+);
+CREATE TABLE `ApplicationUpdates` (
+  PRIMARY KEY (`loan_application_id`, `event_time`) NOT ENFORCED
 )
 LIKE `ApplicationUpdates__schema`;
 CREATE VIEW `Customers`

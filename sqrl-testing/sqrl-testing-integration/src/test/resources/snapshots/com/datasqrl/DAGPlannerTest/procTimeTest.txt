@@ -21,16 +21,11 @@ Plan:
 LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest_time=[PROCTIME()])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
-CREATE TEMPORARY TABLE `Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
 CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `_ingest_time` AS PROCTIME(),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 )
@@ -40,7 +35,6 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
-LIKE `Customer__schema`
 === CustomerOrdersJoin
 ID:          default_catalog.default_database.CustomerOrdersJoin
 Type:        stream
@@ -95,16 +89,11 @@ Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[PROCTIME()])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE TEMPORARY TABLE `Orders__schema` (
+CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Orders` (
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ARRAY< ROW< `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE > NOT NULL > NOT NULL,
   `_ingest_time` AS PROCTIME(),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 )
@@ -114,18 +103,12 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
-LIKE `Orders__schema`
 >>>flink-sql-no-functions.sql
-CREATE TEMPORARY TABLE `Orders__schema` (
+CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Orders` (
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ARRAY< ROW< `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE > NOT NULL > NOT NULL,
   `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 )
@@ -134,18 +117,12 @@ WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `Orders__schema`;
-CREATE TEMPORARY TABLE `Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
 );
 CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
 )
@@ -154,8 +131,7 @@ WITH (
   'format' = 'json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `Customer__schema`;
+);
 CREATE VIEW `CustomerOrdersJoin`
 AS
 SELECT *
