@@ -90,7 +90,7 @@ Row count:   ~1e8
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
- - time: TIMESTAMP(6) NOT NULL
+ - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
  - _ingest_time: TIMESTAMP_LTZ(3) *PROCTIME* NOT NULL
 Inputs:
@@ -105,7 +105,7 @@ SQL:
 CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP NOT NULL,
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
   `entries` ARRAY< ROW< `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE > NOT NULL > NOT NULL,
   `_ingest_time` AS PROCTIME(),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
@@ -134,7 +134,7 @@ WITH (
 CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP NOT NULL,
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
   `entries` ARRAY< ROW< `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE > NOT NULL > NOT NULL,
   `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
@@ -205,7 +205,7 @@ WITH (
 CREATE TABLE `Orders_4` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(6) NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
@@ -331,7 +331,7 @@ END
     {
       "name" : "Orders_4",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITHOUT TIME ZONE NOT NULL, \"entries\" JSONB, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_4\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, \"_ingest_time\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -345,7 +345,7 @@ END
         },
         {
           "name" : "time",
-          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         },
         {
@@ -441,7 +441,7 @@ END
         },
         {
           "name" : "time",
-          "type" : "TIMESTAMP WITHOUT TIME ZONE",
+          "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         },
         {
