@@ -19,13 +19,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import jakarta.annotation.Nullable;
 import java.util.Optional;
-import java.util.function.Supplier;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
-import org.apache.flink.table.planner.delegation.ParserImpl;
+import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.parse.CalciteParser;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -51,6 +50,7 @@ public final class FlinkCalciteParser {
 
   private static CalciteParser getCalciteParser(Optional<TableEnvironmentImpl> tEnv) {
     var tEnvImpl = tEnv.orElseGet(() -> TableEnvironmentImpl.create(new Configuration()));
+
     return ((PlannerBase) tEnvImpl.getPlanner()).createFlinkPlanner().parser();
   }
 }
