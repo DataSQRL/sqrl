@@ -50,13 +50,7 @@ public final class FlinkCalciteParser {
   }
 
   private static CalciteParser getCalciteParser(Optional<TableEnvironmentImpl> tEnv) {
-    try {
-      var tEnvImpl = tEnv.orElse(TableEnvironmentImpl.create(new Configuration()));
-      var calciteSupplierField = ParserImpl.class.getDeclaredField("calciteParserSupplier");
-      calciteSupplierField.setAccessible(true);
-      return ((Supplier<CalciteParser>) calciteSupplierField.get(tEnvImpl.getParser())).get();
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
+    var tEnvImpl = tEnv.orElseGet(() -> TableEnvironmentImpl.create(new Configuration()));
+    return ((PlannerBase) tEnvImpl.getPlanner()).createFlinkPlanner().parser();
   }
 }
