@@ -26,6 +26,7 @@ type Query {
   cleanQuery(limit: Int = 10, offset: Int = 0): [Thing!]
   joinQuery(limit: Int = 10, offset: Int = 0): [Thing!]
   subqueryQuery(limit: Int = 10, offset: Int = 0): [Thing!]
+  sortedQuery(minId: String!, limit: Int = 10, offset: Int = 0): [Thing!]
 }
 
 type Thing {
@@ -116,6 +117,18 @@ Schema:
 Inputs:
  - default_catalog.default_database.Thing
  - default_catalog.default_database.Tombstone
+
+=== sortedQuery
+ID:          default_catalog.default_database.sortedQuery
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Detail
+ - default_catalog.default_database.Thing
+Annotations:
+ - parameters: minId
+ - base-table: Thing
 
 === subqueryQuery
 ID:          default_catalog.default_database.subqueryQuery
@@ -451,6 +464,41 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "database" : "POSTGRES"
             }
           }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "sortedQuery",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "minId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"t1\".\"id\", \"t1\".\"label\"\nFROM (SELECT \"Thing\".\"id\", \"Thing\".\"label\", \"Detail\".\"info\"\n  FROM \"Thing\"\n   INNER JOIN \"Detail\" ON \"Thing\".\"id\" = \"Detail\".\"id\"\n  WHERE \"Thing\".\"id\" >= $1\n  ORDER BY \"Detail\".\"info\" DESC NULLS LAST) AS \"t1\"",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "minId",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
         }
       ],
       "mutations" : [ ],
@@ -611,11 +659,42 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/subqueryQuery{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetsortedQuery",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "minId" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "minId"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query sortedQuery($minId: String!, $limit: Int = 10, $offset: Int = 0) {\nsortedQuery(minId: $minId, limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
+            "queryName" : "sortedQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/sortedQuery{?offset,limit,minId}"
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Detail {\n  id: String!\n  info: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Detail(limit: Int = 10, offset: Int = 0): [Detail!]\n  Thing(limit: Int = 10, offset: Int = 0): [Thing!]\n  Tombstone(limit: Int = 10, offset: Int = 0): [Tombstone!]\n  cleanQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  joinQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  subqueryQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n}\n\ntype Thing {\n  id: String!\n  label: String!\n  detail: Detail\n}\n\ntype Tombstone {\n  id: String!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Detail {\n  id: String!\n  info: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Detail(limit: Int = 10, offset: Int = 0): [Detail!]\n  Thing(limit: Int = 10, offset: Int = 0): [Thing!]\n  Tombstone(limit: Int = 10, offset: Int = 0): [Tombstone!]\n  cleanQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  joinQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  subqueryQuery(limit: Int = 10, offset: Int = 0): [Thing!]\n  sortedQuery(minId: String!, limit: Int = 10, offset: Int = 0): [Thing!]\n}\n\ntype Thing {\n  id: String!\n  label: String!\n  detail: Detail\n}\n\ntype Tombstone {\n  id: String!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

@@ -23,3 +23,9 @@ WHERE id NOT IN (SELECT id FROM Tombstone);
 joinQuery := SELECT th.* FROM Thing th
 LEFT JOIN Tombstone tomb ON th.id = tomb.id
 WHERE tomb.id IS NULL;
+
+-- D) table function ordered by a joined column not in the SELECT list
+sortedQuery(minId String NOT NULL) := SELECT th.* FROM Thing th
+JOIN Detail d ON th.id = d.id
+WHERE th.id >= :minId
+ORDER BY d.info DESC;

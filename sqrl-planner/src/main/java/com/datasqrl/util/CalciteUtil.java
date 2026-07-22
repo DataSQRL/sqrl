@@ -38,6 +38,7 @@ import org.apache.calcite.avatica.util.TimeUnit;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.AggregateCall;
+import org.apache.calcite.rel.core.Project;
 import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.type.RelDataType;
@@ -208,6 +209,10 @@ public class CalciteUtil {
 
   public static Optional<Integer> getLimit(RelNode relNode) {
     Optional<Integer> limit = Optional.empty();
+    // A sort whose keys are not all in the SELECT clause is wrapped in a trimming projection
+    if (relNode instanceof Project project) {
+      relNode = project.getInput();
+    }
     if (relNode instanceof Sort sort) {
       limit = SqrlRexUtil.getLimit(sort.fetch);
     }

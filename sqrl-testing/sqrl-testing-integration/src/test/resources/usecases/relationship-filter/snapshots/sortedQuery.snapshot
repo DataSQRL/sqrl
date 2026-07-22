@@ -1,0 +1,20 @@
+{
+  "data" : {
+    "sortedQuery" : [ {
+      "id" : "c",
+      "detail" : {
+        "info" : "detail-c"
+      }
+    }, {
+      "id" : "b",
+      "detail" : {
+        "info" : "detail-b"
+      }
+    }, {
+      "id" : "a",
+      "detail" : {
+        "info" : "detail-a"
+      }
+    } ]
+  }
+}
