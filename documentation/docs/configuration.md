@@ -162,7 +162,8 @@ Configuration options that control the compiler, such as where logging output is
       "endpoints": "FULL",         // endpoint generation strategy ("FULL", "GRAPHQL", "OPS_ONLY")
       "add-prefix": true,          // add an operation-type prefix to function names to ensure uniqueness
       "max-result-depth": 3,       // maximum depth of graph traversal when generating operations from a schema
-      "default-limit": 10          // default query result limit
+      "default-limit": 10,         // default query result limit
+      "paginated-results": false   // wrap generated query results in a page with pagination metadata
     }
   }
 }

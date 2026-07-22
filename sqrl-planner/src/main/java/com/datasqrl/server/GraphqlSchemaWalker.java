@@ -142,8 +142,8 @@ public abstract class GraphqlSchemaWalker {
     var resultType = (ObjectTypeDefinition) typeDefinition;
 
     // A page wrapper ({results: [Element!], pagination: OffsetPageInfo}) is treated like a list of
-    // Element: validate/walk the element type against the function row type and compute pagination
-    // metadata via a companion count query.
+    // Element: validate/walk the element type against the function row type; the pagination
+    // metadata is computed by the server.
     var pagedElement = OffsetPageInfoUtil.getPagedElementType(resultType, registry);
     var paged = pagedElement.isPresent();
     if (paged) {

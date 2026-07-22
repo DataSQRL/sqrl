@@ -23,7 +23,7 @@ class PaginationMetadataTest {
 
   @Test
   void givenFirstPageWithNext_whenBuildMetadata_thenHasNextNoPrevious() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(true, 10, 0, null, null);
+    var json = OffsetPageInfoQuery.paginationMetadata(10, 0, true, null, null);
 
     assertThat(json.getInteger("pageSize")).isEqualTo(10);
     assertThat(json.getInteger("currentPage")).isEqualTo(1);
@@ -35,7 +35,7 @@ class PaginationMetadataTest {
 
   @Test
   void givenMiddlePageWithNext_whenBuildMetadata_thenHasBothNeighbours() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(true, 10, 10, null, null);
+    var json = OffsetPageInfoQuery.paginationMetadata(10, 10, true, null, null);
 
     assertThat(json.getInteger("currentPage")).isEqualTo(2);
     assertThat(json.getBoolean("hasNextPage")).isTrue();
@@ -46,7 +46,7 @@ class PaginationMetadataTest {
 
   @Test
   void givenLastPage_whenBuildMetadata_thenNoNextHasPrevious() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(false, 10, 20, null, null);
+    var json = OffsetPageInfoQuery.paginationMetadata(10, 20, false, null, null);
 
     assertThat(json.getInteger("currentPage")).isEqualTo(3);
     assertThat(json.getBoolean("hasNextPage")).isFalse();
@@ -57,7 +57,7 @@ class PaginationMetadataTest {
 
   @Test
   void givenZeroLimit_whenBuildMetadata_thenDoesNotDivideByZero() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(null, 0, 0, null, null);
+    var json = OffsetPageInfoQuery.paginationMetadata(0, 0, null, null, null);
 
     assertThat(json.getInteger("currentPage")).isEqualTo(1);
   }
@@ -65,8 +65,8 @@ class PaginationMetadataTest {
   @Test
   void givenEventTimes_whenBuildMetadata_thenPassedThrough() {
     var json =
-        VertxQueryExecutionContext.buildPaginationMetadata(
-            null, 10, 0, "2024-01-01T00:00:00Z", "2024-01-02T00:00:00Z");
+        OffsetPageInfoQuery.paginationMetadata(
+            10, 0, null, "2024-01-01T00:00:00Z", "2024-01-02T00:00:00Z");
 
     assertThat(json.getString("firstEventTime")).isEqualTo("2024-01-01T00:00:00Z");
     assertThat(json.getString("lastEventTime")).isEqualTo("2024-01-02T00:00:00Z");
@@ -74,7 +74,7 @@ class PaginationMetadataTest {
 
   @Test
   void givenNoNextPageInfoQueried_whenBuildMetadata_thenNextFieldsOmitted() {
-    var json = VertxQueryExecutionContext.buildPaginationMetadata(null, 10, 0, null, null);
+    var json = OffsetPageInfoQuery.paginationMetadata(10, 0, null, null, null);
 
     assertThat(json.containsKey("hasNextPage")).isFalse();
     assertThat(json.containsKey("nextOffset")).isFalse();

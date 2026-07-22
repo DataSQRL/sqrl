@@ -37,9 +37,8 @@ import java.util.Optional;
 
 /**
  * Opt-in pagination support: a query whose result type is a page wrapper ({@code {results:
- * [Element!] pagination: OffsetPageInfo}}) returns its rows plus pagination metadata computed from
- * a companion COUNT(*) query. This util detects the wrapper shape and validates the user-declared
- * {@code OffsetPageInfo} type.
+ * [Element!] pagination: OffsetPageInfo}}) returns its rows plus pagination metadata. This util
+ * detects the wrapper shape and validates the user-declared {@code OffsetPageInfo} type.
  */
 public final class OffsetPageInfoUtil {
 
