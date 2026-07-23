@@ -19,7 +19,9 @@ import com.datasqrl.planner.PredicatePushdownRules;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel.Type;
+import java.time.Duration;
 import lombok.AllArgsConstructor;
+import org.apache.flink.util.TimeUtils;
 
 @AllArgsConstructor
 public class CompilerConfigImpl implements PackageJson.CompilerConfig {
@@ -61,5 +63,12 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   @Override
   public CompilerApiConfigImpl getApiConfig() {
     return new CompilerApiConfigImpl(sqrlConfig.getSubConfig("api"));
+  }
+
+  @Override
+  public Duration getJBangJarMaxAge() {
+    var maxAgeStr = sqrlConfig.as("jbang-jar-max-age", String.class).get();
+
+    return TimeUtils.parseDuration(maxAgeStr);
   }
 }

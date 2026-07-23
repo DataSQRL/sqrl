@@ -20,6 +20,7 @@ import com.datasqrl.planner.PredicatePushdownRules;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.server.operation.ApiProtocol;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,8 @@ public interface PackageJson {
     String getLogger();
 
     boolean isExtendedScalarTypes();
+
+    Duration getJBangJarMaxAge();
   }
 
   interface CompilerApiConfig {
