@@ -15,6 +15,7 @@
  */
 package com.datasqrl.packager.preprocess;
 
+import static com.datasqrl.packager.preprocess.JBangPreprocessor.JBANG_FILE_SHA256;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
@@ -23,13 +24,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.datasqrl.config.PackageJson;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.FilePreprocessingPipeline;
 import com.datasqrl.util.JBangRunner;
+import com.google.common.hash.Hashing;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
@@ -48,11 +50,7 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class JBangPreprocessorTest {
 
-  private static final Duration JBANG_JAR_MAX_AGE = Duration.ofHours(2);
-
   @Mock private JBangRunner jBangRunner;
-  @Mock private PackageJson packageJson;
-  @Mock private PackageJson.CompilerConfig compilerConfig;
   @Mock private FilePreprocessingPipeline.Context context;
 
   private JBangPreprocessor underTest;
@@ -69,10 +67,8 @@ class JBangPreprocessorTest {
     when(context.createNewBuildFile(any()))
         .thenAnswer(inv -> tempDir.resolve((Path) inv.getArgument(0)));
     when(jBangRunner.isJBangAvailable()).thenReturn(true);
-    when(packageJson.getCompilerConfig()).thenReturn(compilerConfig);
-    when(compilerConfig.getJBangJarMaxAge()).thenReturn(JBANG_JAR_MAX_AGE);
 
-    underTest = new JBangPreprocessor(jBangRunner, packageJson);
+    underTest = new JBangPreprocessor(jBangRunner, ErrorCollector.root());
   }
 
   @Test
@@ -117,9 +113,10 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void givenJbangJarBuiltWithinConfiguredAge_whenProcess_thenSkipsExport() throws IOException {
-    var javaFile = createJavaFile("TestClass.java", validScalarFunctionContent());
-    createJbangJar(System.currentTimeMillis() - JBANG_JAR_MAX_AGE.minusMinutes(1).toMillis());
+  void givenJbangJarWithMatchingFileHash_whenProcess_thenSkipsExport() throws IOException {
+    var content = validScalarFunctionContent();
+    var javaFile = createJavaFile("TestClass.java", content);
+    createJbangJar("SimpleUDF", sha256Hash(content));
 
     underTest.process(javaFile, context);
     underTest.complete();
@@ -128,9 +125,9 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void givenJbangJarBuiltAfterConfiguredAge_whenProcess_thenExportsJar() throws IOException {
+  void givenJbangJarWithDifferentFileHash_whenProcess_thenExportsJar() throws IOException {
     var javaFile = createJavaFile("TestClass.java", validScalarFunctionContent());
-    createJbangJar(System.currentTimeMillis() - JBANG_JAR_MAX_AGE.plusMinutes(1).toMillis());
+    createJbangJar("SimpleUDF", "stale-hash");
 
     underTest.process(javaFile, context);
     underTest.complete();
@@ -404,15 +401,21 @@ class JBangPreprocessorTest {
             any());
   }
 
-  private void createJbangJar(long buildTime) throws IOException {
+  private void createJbangJar(String udfClassName, String sha256Hash) throws IOException {
     var manifest = new Manifest();
     manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
-    manifest.getMainAttributes().putValue("Build-Time", String.valueOf(buildTime));
+    var attributes = new Attributes();
+    attributes.putValue(JBANG_FILE_SHA256, sha256Hash);
+    manifest.getEntries().put(udfClassName, attributes);
     try (var ignored =
         new JarOutputStream(
             Files.newOutputStream(tempDir.resolve(JBangPreprocessor.JBANG_JAR_NAME)), manifest)) {
       // The manifest is sufficient for JBang JAR validity checks.
     }
+  }
+
+  private String sha256Hash(String content) {
+    return Hashing.sha256().hashString(content, StandardCharsets.UTF_8).toString();
   }
 
   private String validScalarFunctionContent() {

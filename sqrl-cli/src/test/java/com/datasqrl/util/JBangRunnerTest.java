@@ -15,6 +15,7 @@
  */
 package com.datasqrl.util;
 
+import static com.datasqrl.packager.preprocess.JBangPreprocessor.JBANG_FILE_SHA256;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -54,9 +55,16 @@ class JBangRunnerTest {
   }
 
   @Test
-  void givenFatJarWithSignatureFiles_whenRebuildFatJar_thenRemovesSignaturesAndAddsBuildTime()
+  void givenFatJarWithSignatureFiles_whenRebuildFatJar_thenRemovesSignaturesAndAddsJbangFileHashes()
       throws IOException {
     var fatJar = tempDir.resolve("fat.jar");
+    var firstUdf = tempDir.resolve("FirstUdf.java");
+    var secondUdf = tempDir.resolve("SecondUdf.java");
+    var jBangFiles =
+        List.of(
+            new JBangFileInfo(firstUdf, "com.example.FirstUdf", "some.Service", "abc123"),
+            new JBangFileInfo(secondUdf, "com.example.SecondUdf", "some.Service", "def456"));
+
     try (var out = new JarOutputStream(Files.newOutputStream(fatJar))) {
       out.putNextEntry(new JarEntry("META-INF/MANIFEST.MF"));
       out.write("Manifest-Version: 1.0\n".getBytes());
@@ -78,9 +86,7 @@ class JBangRunnerTest {
       out.closeEntry();
     }
 
-    var earliestBuildTime = System.currentTimeMillis();
-    JBangRunner.create().rebuildFatJar(fatJar, List.of());
-    var latestBuildTime = System.currentTimeMillis();
+    JBangRunner.create().rebuildFatJar(fatJar, jBangFiles);
 
     try (var jar = new JarFile(fatJar.toFile())) {
       var entryNames = new HashSet<String>();
@@ -91,8 +97,16 @@ class JBangRunnerTest {
       assertThat(entryNames)
           .doesNotContain(
               "META-INF/SIG-VENDOR.SF", "META-INF/SIG-VENDOR.DSA", "META-INF/SIG-VENDOR.RSA");
-      assertThat(Long.parseLong(jar.getManifest().getMainAttributes().getValue("Build-Time")))
-          .isBetween(earliestBuildTime, latestBuildTime);
+      assertThat(
+              jar.getManifest()
+                  .getAttributes(jBangFiles.get(0).udfClassName())
+                  .getValue(JBANG_FILE_SHA256))
+          .isEqualTo("abc123");
+      assertThat(
+              jar.getManifest()
+                  .getAttributes(jBangFiles.get(1).udfClassName())
+                  .getValue(JBANG_FILE_SHA256))
+          .isEqualTo("def456");
     }
   }
 
@@ -132,11 +146,14 @@ class JBangRunnerTest {
     var jBangFiles =
         List.of(
             new JBangFileInfo(
-                tempDir.resolve("FirstUdf.java"), "com.example.FirstUdf", scalarFunction),
+                tempDir.resolve("FirstUdf.java"), "com.example.FirstUdf", scalarFunction, "abc123"),
             new JBangFileInfo(
-                tempDir.resolve("SecondUdf.java"), "com.example.SecondUdf", scalarFunction),
+                tempDir.resolve("SecondUdf.java"),
+                "com.example.SecondUdf",
+                scalarFunction,
+                "def456"),
             new JBangFileInfo(
-                tempDir.resolve("TableUdf.java"), "com.example.TableUdf", tableFunction));
+                tempDir.resolve("TableUdf.java"), "com.example.TableUdf", tableFunction, "ghi789"));
 
     JBangRunner.create().rebuildFatJar(fatJar, jBangFiles);
 

@@ -15,15 +15,19 @@
  */
 package com.datasqrl.packager.preprocess;
 
-import com.datasqrl.config.PackageJson;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.FilePreprocessingPipeline;
 import com.datasqrl.util.FilenameAnalyzer;
 import com.datasqrl.util.JBangRunner;
+import com.google.common.hash.Hashing;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.List;
 import java.util.StringJoiner;
 import java.util.jar.JarFile;
 import java.util.regex.Pattern;
@@ -38,7 +42,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class JBangPreprocessor extends UdfManifestPreprocessor {
 
-  public static final String JBANG_BUILD_TIME = "Build-Time";
+  public static final String JBANG_FILE_SHA256 = "SHA-256-Digest";
 
   static final String JBANG_JAR_NAME = "jbang-udfs.jar";
 
@@ -52,24 +56,13 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
   private final Deque<JBangFileInfo> collectedFiles = new ArrayDeque<>();
 
   private final JBangRunner jBangRunner;
-  private final PackageJson packageJson;
+  private final ErrorCollector errorCollector;
 
   private FilePreprocessingPipeline.Context ctx;
-  private boolean skipJBangBuild = false;
 
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
-    if (skipJBangBuild || !jBangRunner.isJBangAvailable() || !isJBangFile(file)) {
-      return;
-    }
-
-    var jbangJarPath = file.getParent().resolve(JBANG_JAR_NAME);
-    if (isJBangJarExistsAnValid(jbangJarPath)) {
-      log.info(
-          "Skip preprocessing JBang UDFs, as a valid JBang JAR is already present. To rebuild, delete the '{}' file from your project.",
-          jbangJarPath);
-
-      skipJBangBuild = true;
+    if (!jBangRunner.isJBangAvailable() || !isJBangFile(file)) {
       return;
     }
 
@@ -90,9 +83,19 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
       return;
     }
 
-    var targetPath = ctx.libDir().resolve(JBANG_JAR_NAME);
     var allClassNames = collectedFiles.stream().map(JBangFileInfo::udfClassName).toList();
+    var srcPath = collectedFiles.peekFirst().file().getParent();
+    var cachedJarPath = srcPath.resolve(JBANG_JAR_NAME);
 
+    if (isJBangJarExistsAnValid(cachedJarPath, List.copyOf(collectedFiles))) {
+      errorCollector.notice(
+          "Skip preprocessing JBang UDFs, as a valid JBang JAR is already present."
+              + " To rebuild, delete the '%s' file from your project.",
+          cachedJarPath);
+      return;
+    }
+
+    var targetPath = ctx.libDir().resolve(JBANG_JAR_NAME);
     try {
       jBangRunner.exportFatJar(collectedFiles, targetPath);
       createUdfManifests(allClassNames, JBANG_JAR_NAME, ctx);
@@ -107,8 +110,7 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     }
 
     try {
-      var srcPath = collectedFiles.peekFirst().file().getParent();
-      Files.copy(targetPath, srcPath.resolve(JBANG_JAR_NAME));
+      Files.copy(targetPath, srcPath.resolve(JBANG_JAR_NAME), StandardCopyOption.REPLACE_EXISTING);
     } catch (Exception e) {
       log.warn("Failed to copy JBang JAR to source directory", e);
     }
@@ -124,7 +126,7 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
     return JBANG_SHEBANG.equals(firstLine);
   }
 
-  private boolean isJBangJarExistsAnValid(Path jbangJar) {
+  private boolean isJBangJarExistsAnValid(Path jbangJar, List<JBangFileInfo> jBangFiles) {
     if (!Files.isRegularFile(jbangJar)) {
       return false;
     }
@@ -135,19 +137,16 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
         return false;
       }
 
-      var buildTimeValue = manifest.getMainAttributes().getValue(JBANG_BUILD_TIME);
-      if (buildTimeValue == null) {
-        return false;
-      }
+      return jBangFiles.stream()
+          .allMatch(
+              jBangFile -> {
+                var attributes = manifest.getAttributes(jBangFile.udfClassName());
+                return attributes != null
+                    && jBangFile.sha256Digest().equals(attributes.getValue(JBANG_FILE_SHA256));
+              });
 
-      var buildTime = Long.parseLong(buildTimeValue);
-      var age = System.currentTimeMillis() - buildTime;
-      var maxAge = packageJson.getCompilerConfig().getJBangJarMaxAge();
-
-      return age >= 0 && age < maxAge.toMillis();
-
-    } catch (IOException | NumberFormatException e) {
-      log.warn("Failed to read build time from JBang JAR '{}', rebuilding...", jbangJar);
+    } catch (IOException e) {
+      log.warn("Failed to read JBang file hashes from JBang JAR '{}', rebuilding...", jbangJar);
       return false;
     }
   }
@@ -203,8 +202,11 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
 
     className.add(classMatcherRes.group(1)); // group 1 is the class name
 
-    return new JBangFileInfo(file, className.toString(), extendedUdfClass.get());
+    var sha256Digest = Hashing.sha256().hashString(content, StandardCharsets.UTF_8).toString();
+
+    return new JBangFileInfo(file, className.toString(), extendedUdfClass.get(), sha256Digest);
   }
 
-  public record JBangFileInfo(Path file, String udfClassName, String parentUdfClassName) {}
+  public record JBangFileInfo(
+      Path file, String udfClassName, String parentUdfClassName, String sha256Digest) {}
 }

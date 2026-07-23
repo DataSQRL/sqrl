@@ -15,7 +15,7 @@
  */
 package com.datasqrl.util;
 
-import static com.datasqrl.packager.preprocess.JBangPreprocessor.JBANG_BUILD_TIME;
+import static com.datasqrl.packager.preprocess.JBangPreprocessor.JBANG_FILE_SHA256;
 
 import com.datasqrl.packager.preprocess.JBangPreprocessor.JBangFileInfo;
 import java.io.IOException;
@@ -95,7 +95,7 @@ public class JBangRunner {
    * Rebuilds the JBang fat JAR to:
    *
    * <ol>
-   *   <li>add the current build time and generated UDF Service Loader descriptors,
+   *   <li>add JBang file hashes and generated UDF Service Loader descriptors,
    *   <li>remove signed-JAR signature files, and
    *   <li>deduplicate entries that otherwise trigger SecurityException or ZipException when Flink
    *       loads the UDF JAR.
@@ -118,9 +118,14 @@ public class JBangRunner {
         manifest = new Manifest();
         manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
       }
-      manifest
-          .getMainAttributes()
-          .putValue(JBANG_BUILD_TIME, String.valueOf(System.currentTimeMillis()));
+
+      for (var jBangFile : jBangFiles) {
+        var attributes =
+            manifest
+                .getEntries()
+                .computeIfAbsent(jBangFile.udfClassName(), ignored -> new Attributes());
+        attributes.putValue(JBANG_FILE_SHA256, jBangFile.sha256Digest());
+      }
 
       try (var outJar = new JarOutputStream(Files.newOutputStream(tempJar), manifest)) {
         var entries = inJar.entries();
@@ -128,13 +133,10 @@ public class JBangRunner {
           var entry = entries.nextElement();
           var name = entry.getName();
 
-          if (entry.isDirectory() || name.equalsIgnoreCase("META-INF/MANIFEST.MF")) {
-            continue;
-          }
-          if (isSignatureFile(name)) {
-            continue;
-          }
-          if (!addedEntries.add(name)) {
+          if (JarFile.MANIFEST_NAME.equals(name)
+              || entry.isDirectory()
+              || isSignatureFile(name)
+              || !addedEntries.add(name)) {
             continue;
           }
 
