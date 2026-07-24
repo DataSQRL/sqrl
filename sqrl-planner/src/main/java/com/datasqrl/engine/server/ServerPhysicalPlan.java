@@ -52,5 +52,5 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
    * Base tables of paginated queries, collected during model generation so a rowtime index can be
    * added to their physical tables afterwards.
    */
-  @JsonIgnore final Set<TableAnalysis> pagedRowtimeTables = new LinkedHashSet<>();
+  @JsonIgnore final Set<TableAnalysis> pagedRowTimeTables = new LinkedHashSet<>();
 }

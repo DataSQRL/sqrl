@@ -16,40 +16,50 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcStatement;
+import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
-import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.google.auto.service.AutoService;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 
 /**
  * Adds a btree index on the rowtime column of every physical table that backs a paginated ({@code
  * OffsetPageInfo}) query. Those queries run a companion {@code MIN/MAX(rowtime)} aggregate for
  * their {@code first/lastEventTime}; the btree lets the database answer it from the index endpoints
  * instead of scanning the table.
- *
- * <p>Unlike {@link JdbcIndexOptimization} this rewriter is constructed with the set of paginated
- * base tables (only known after the GraphQL schema walk) and is applied in a second pass.
  */
-@RequiredArgsConstructor
-public class PagedRowtimeIndexRewriter implements PhysicalPlanRewriter {
-
-  private final Set<TableAnalysis> pagedBaseTables;
+@AutoService(PhysicalPlanRewriter.class)
+public class PagedRowTimeIndexRewriter implements PhysicalPlanRewriter {
 
   @Override
-  public boolean appliesTo(EnginePhysicalPlan plan) {
-    return !pagedBaseTables.isEmpty()
-        && plan instanceof JdbcPhysicalPlan jpp
+  public boolean appliesTo(EnginePhysicalPlan enginePlan) {
+    return enginePlan instanceof JdbcPhysicalPlan jpp
         && jpp.stage().engine() instanceof AbstractJDBCDatabaseEngine;
   }
 
   @Override
-  public JdbcPhysicalPlan rewrite(EnginePhysicalPlan plan, Sqrl2FlinkSQLTranslator sqrlEnv) {
-    var jdbcPlan = (JdbcPhysicalPlan) plan;
+  public boolean satisfied(PhysicalPlan fullPlan) {
+    return getServerPlan(fullPlan).isPresent();
+  }
+
+  @Override
+  public JdbcPhysicalPlan rewrite(
+      PhysicalPlan fullPlan, EnginePhysicalPlan enginePlan, Sqrl2FlinkSQLTranslator sqrlEnv) {
+    var jdbcPlan = (JdbcPhysicalPlan) enginePlan;
+    var serverPlan =
+        getServerPlan(fullPlan)
+            .orElseThrow(() -> new IllegalStateException("Server physical plan is missing"));
+
+    var pagedTables = serverPlan.getPagedRowTimeTables();
+    if (pagedTables.isEmpty()) {
+      return jdbcPlan;
+    }
+
     var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.stage().engine();
     if (!engine.getIndexSelectorConfig().supportedIndexTypes().contains(IndexType.BTREE)) {
       return jdbcPlan;
@@ -65,13 +75,16 @@ public class PagedRowtimeIndexRewriter implements PhysicalPlanRewriter {
     for (var createTbl : jdbcPlan.tableIdMap().values()) {
       var engineTable = createTbl.getEngineTable();
       var tableAnalysis = engineTable.tableAnalysis();
-      if (!isPaged(tableAnalysis)) {
+      if (!pagedTables.contains(tableAnalysis)
+          && !pagedTables.contains(tableAnalysis.getBaseTable())) {
         continue;
       }
+
       var rowTime = tableAnalysis.getRowTime();
       if (rowTime.isEmpty()) {
         continue;
       }
+
       var index =
           new IndexDefinition(
               engineTable.tableName(),
@@ -79,15 +92,16 @@ public class PagedRowtimeIndexRewriter implements PhysicalPlanRewriter {
               tableAnalysis.getRowType().getFieldNames(),
               -1,
               IndexType.BTREE);
+
       if (existingIndexNames.add(index.getName())) {
         builder.statement(stmtFactory.addIndex(index));
       }
     }
+
     return builder.build();
   }
 
-  private boolean isPaged(TableAnalysis tableAnalysis) {
-    return pagedBaseTables.contains(tableAnalysis)
-        || pagedBaseTables.contains(tableAnalysis.getBaseTable());
+  private Optional<ServerPhysicalPlan> getServerPlan(PhysicalPlan fullPlan) {
+    return fullPlan.getPlans(ServerPhysicalPlan.class).findAny();
   }
 }

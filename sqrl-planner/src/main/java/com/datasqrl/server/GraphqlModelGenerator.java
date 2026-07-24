@@ -71,8 +71,8 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
   List<MutationCoords> mutations = new ArrayList<>();
   List<SubscriptionCoords> subscriptions = new ArrayList<>();
 
-  /** Base tables of paginated queries, so a rowtime index can be generated for them. */
-  Set<TableAnalysis> pagedRowtimeTables = new LinkedHashSet<>();
+  /** Base tables of paginated queries, so a row-time index can be generated for them. */
+  Set<TableAnalysis> pagedRowTimeTables = new LinkedHashSet<>();
 
   private final ErrorCollector errorCollector;
 
@@ -182,7 +182,7 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     var eventTimesSql =
         paged ? buildEventTimesSql(tableFunction, executableJdbcReadQuery.getSql()) : null;
     if (eventTimesSql != null) {
-      pagedRowtimeTables.add(tableFunction.getBaseTable());
+      pagedRowTimeTables.add(tableFunction.getBaseTable());
     }
     queryBase =
         new SqlQuery(

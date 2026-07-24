@@ -26,7 +26,6 @@ import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.MainScript;
-import com.datasqrl.plan.global.PagedRowtimeIndexRewriter;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.SqlScriptPlanner;
@@ -71,8 +70,6 @@ public class CompilationProcess {
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);
-    var rewriters = ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
-    physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
     var mutationDatabase = physicalPlan.getMutationDatabase();
     writeDeploymentArtifactsHook.run(dag, planner.getCompleteScript().toString(), mutationDatabase);
 
@@ -106,17 +103,6 @@ public class CompilationProcess {
             serverPlan.getModels().put(api.version(), model);
           });
 
-      // Paginated queries run a MIN/MAX(rowtime) aggregate; index their base tables' rowtime
-      // column.
-      // Which queries are paginated is only known now (after the GraphQL walk), so this runs as a
-      // second rewrite pass over the already-planned database DDL.
-      if (!serverPlan.getPagedRowtimeTables().isEmpty()) {
-        physicalPlan =
-            physicalPlan.applyRewriting(
-                List.of(new PagedRowtimeIndexRewriter(serverPlan.getPagedRowtimeTables())),
-                environment);
-      }
-
       // create test artifact
       if (executionGoal == ExecutionGoal.TEST) {
         var gqlGenerator = new GqlGenerator(serverPlan.getFunctions());
@@ -131,6 +117,9 @@ public class CompilationProcess {
         testPlan = testPlanner.generateTestPlan(apiVersions, testsPath);
       }
     }
+
+    var rewriters = ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
+    physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
 
     // Read database file if configured and check compatibility
     mainScript

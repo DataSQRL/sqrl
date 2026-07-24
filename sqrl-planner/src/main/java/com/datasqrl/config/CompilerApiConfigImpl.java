@@ -59,7 +59,7 @@ public class CompilerApiConfigImpl implements CompilerApiConfig {
 
   @Override
   public boolean generatePaginatedResults() {
-    return sqrlConfig.asBool("paginated-results").withDefault(false).get();
+    return sqrlConfig.asBool("paginated-results").get();
   }
 
   public enum Endpoints {
