@@ -16,28 +16,28 @@
 package com.datasqrl.calcite.convert;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.DynamicParamSqlPrettyWriter;
-import com.datasqrl.calcite.SqrlConfigurations;
-import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
-import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
+import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.google.auto.service.AutoService;
-import org.apache.calcite.sql.pretty.SqlPrettyWriter;
+import java.util.Map;
+import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.sql.SqlNode;
 
-@AutoService(SqlNodeToString.class)
-public class PostgresSqlNodeToString implements SqlNodeToString {
+@AutoService(SqlConverters.class)
+public class FlinkSqlConverters implements SqlConverters {
 
   @Override
-  public SqlStrings convert(SqlNodes sqlNode) {
-    var config =
-        SqrlConfigurations.sqlToString.apply(
-            SqlPrettyWriter.config().withDialect(ExtendedPostgresSqlDialect.DEFAULT));
-    var writer = new DynamicParamSqlPrettyWriter(config);
-    sqlNode.getSqlNode().unparse(writer, 0, 0);
-    return () -> writer.toSqlString().getSql();
+  public SqlNode convert(RelNode relNode, Map<String, String> tableNameMapping) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public String convert(SqlNode sqlNode) {
+    // TODO: Migrate remaining FlinkRelToSqlConverter to this paradigm
+    return RelToFlinkSql.convertToString(sqlNode);
   }
 
   @Override
   public Dialect getDialect() {
-    return Dialect.POSTGRES;
+    return Dialect.FLINK;
   }
 }

@@ -20,7 +20,7 @@ import org.apache.calcite.sql.SqlWriterConfig;
 
 public class SqrlConfigurations {
 
-  public static final UnaryOperator<SqlWriterConfig> sqlToString =
+  public static final UnaryOperator<SqlWriterConfig> SQL_TO_STRING =
       c ->
           c.withAlwaysUseParentheses(false)
               .withSelectListItemsOnSeparateLines(false)

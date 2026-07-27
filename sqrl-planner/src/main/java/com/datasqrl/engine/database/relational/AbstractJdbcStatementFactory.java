@@ -17,10 +17,10 @@ package com.datasqrl.engine.database.relational;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.OperatorRuleTransformer;
-import com.datasqrl.calcite.convert.RelToSqlNode;
-import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
-import com.datasqrl.calcite.convert.SqlNodeToString;
+import com.datasqrl.calcite.convert.SqlConverters;
+import com.datasqrl.calcite.convert.SqlConvertersFactory;
 import com.datasqrl.calcite.dialect.postgres.SqlCreatePostgresView;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.CreateTableDdlFactory;
@@ -49,7 +49,8 @@ import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -64,16 +65,23 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
-@AllArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public abstract class AbstractJdbcStatementFactory implements JdbcStatementFactory {
 
   private static final Pattern POSITIONAL_ARG_PATTERN =
       Pattern.compile(Pattern.quote(SqrlStatementParser.POSITIONAL_ARGUMENT_PREFIX) + "(\\d+)");
 
   protected final OperatorRuleTransformer dialectCallConverter;
-  protected final RelToSqlNode relToSqlConverter;
-  protected final SqlNodeToString sqlNodeToString;
+  protected final SqlConverters sqlConverters;
   protected final CreateTableDdlFactory createTableDdlFactory;
+
+  protected AbstractJdbcStatementFactory(
+      Dialect dialect, CreateTableDdlFactory createTableDdlFactory) {
+    this(
+        new OperatorRuleTransformer(dialect),
+        SqlConvertersFactory.get(dialect),
+        createTableDdlFactory);
+  }
 
   @Override
   public QueryResult createQuery(
@@ -134,14 +142,14 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       Map<String, String> tableNameMapping,
       Documented.Documentation documentation) {
     var rewrittenRelNode = dialectCallConverter.convert(relNode);
-    var sqlNodes = relToSqlConverter.convert(rewrittenRelNode, tableNameMapping);
-    var sql = sqlNodeToString.convert(sqlNodes).getSql();
+    var sqlNode = sqlConverters.convert(rewrittenRelNode, tableNameMapping);
+    var sql = sqlConverters.convert(sqlNode);
     var qBuilder = ExecutableJdbcReadQuery.builder();
     qBuilder.sql(sql);
 
     JdbcStatement view = null;
     if (withView) {
-      view = getViewStatement(viewName, relNode.getRowType(), sqlNodes, documentation);
+      view = getViewStatement(viewName, relNode.getRowType(), sqlNode, documentation);
     }
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
   }
@@ -225,7 +233,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     var createView =
         new SqlCreatePostgresView(
             SqlParserPos.ZERO, true, viewNameIdentifier, columnList, viewSqlNode);
-    return sqlNodeToString.convert(() -> createView).getSql();
+
+    return sqlConverters.convert(createView);
   }
 
   public static List<String> quoteIdentifier(List<String> columns) {
@@ -299,7 +308,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   private JdbcStatement getViewStatement(
       String viewName,
       RelDataType rowType,
-      SqlNodes sqlNodes,
+      SqlNode sqlNode,
       Documented.Documentation documentation) {
     var viewNameIdentifier = new SqlIdentifier(viewName, SqlParserPos.ZERO);
     var columnList =
@@ -308,7 +317,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
                 .map(f -> new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
                 .collect(Collectors.toList()),
             SqlParserPos.ZERO);
-    var viewSql = createView(viewNameIdentifier, columnList, sqlNodes.getSqlNode());
+    var viewSql = createView(viewNameIdentifier, columnList, sqlNode);
 
     return new GenericJdbcStatement(
         viewName,

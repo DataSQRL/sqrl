@@ -15,8 +15,6 @@
  */
 package com.datasqrl.engine.stream.flink.sql;
 
-import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
-import com.datasqrl.calcite.convert.SqlNodeToString.SqlStrings;
 import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import java.util.List;
 import java.util.function.Function;
@@ -42,10 +40,6 @@ public class RelToFlinkSql {
                   .withIndentation(indentation)
                   .withDialect(FlinkDialect.DEFAULT)
                   .withSelectFolding(null);
-
-  public static SqlStrings convertToString(SqlNodes sqlNode) {
-    return () -> convertToString(sqlNode.getSqlNode());
-  }
 
   public static List<String> convertToSqlString(List<? extends SqlNode> sqlNode) {
     return sqlNode.stream().map(RelToFlinkSql::convertToString).toList();

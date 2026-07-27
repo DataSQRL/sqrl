@@ -23,9 +23,6 @@ import static com.datasqrl.config.SqrlConstants.ICEBERG_WAREHOUSE_KEY;
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.OperatorRuleTransformer;
-import com.datasqrl.calcite.convert.DuckDbRelToSqlNode;
-import com.datasqrl.calcite.convert.DuckdbSqlNodeToString;
 import com.datasqrl.calcite.dialect.DuckDbSqlDialect;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.config.JdbcDialect;
@@ -58,9 +55,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
 
   public DuckDbStatementFactory(EngineConfig engineConfig) {
     super(
-        new OperatorRuleTransformer(Dialect.DUCKDB),
-        new DuckDbRelToSqlNode(),
-        new DuckdbSqlNodeToString(),
+        Dialect.DUCKDB,
         new GenericCreateTableDdlFactory()); // Iceberg creates the tables, DuckDB only queries
     this.engineConfig = engineConfig;
   }
