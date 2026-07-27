@@ -23,6 +23,7 @@ import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
 import com.datasqrl.planner.parser.StatementParserException;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -97,5 +98,44 @@ class TtlHintTest {
   void givenTwoArgs_whenCreateCacheHint_thenThrows() {
     assertThatThrownBy(() -> cacheFactory.create(hint("cache", "5 min", "1 day")))
         .isInstanceOf(StatementParserException.class);
+  }
+
+  @Test
+  void givenNullOptions_whenCreate_thenEmptyTtlAndPartitionInterval() {
+    var hint = (TtlHint) ttlFactory.create(nullArgsHint("ttl", (List<String>) null));
+
+    assertThat(hint.getTtl()).isEmpty();
+    assertThat(hint.getPartitionInterval()).isEmpty();
+  }
+
+  @Test
+  void givenNullOptions_whenCreateCacheHint_thenZeroDuration() {
+    var hint = (CacheHint) cacheFactory.create(nullArgsHint("cache", (List<String>) null));
+
+    assertThat(hint.getDuration()).isEqualTo(Duration.ZERO);
+  }
+
+  @Test
+  void givenNullFirstArg_whenCreate_thenThrows() {
+    assertThatThrownBy(() -> ttlFactory.create(nullArgsHint("ttl", Arrays.asList((String) null))))
+        .isInstanceOf(StatementParserException.class);
+  }
+
+  @Test
+  void givenNullFirstArg_whenCreateCacheHint_thenThrows() {
+    assertThatThrownBy(
+            () -> cacheFactory.create(nullArgsHint("cache", Arrays.asList((String) null))))
+        .isInstanceOf(StatementParserException.class);
+  }
+
+  @Test
+  void givenNullPartitionInterval_whenCreate_thenThrows() {
+    assertThatThrownBy(() -> ttlFactory.create(nullArgsHint("ttl", Arrays.asList("14 days", null))))
+        .isInstanceOf(StatementParserException.class)
+        .hasMessageContaining("partition interval");
+  }
+
+  private static ParsedObject<SqrlHint> nullArgsHint(String name, List<String> args) {
+    return new ParsedObject<>(new SqrlHint(name, args), FileLocation.START);
   }
 }
