@@ -1549,8 +1549,8 @@ CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BI
 CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name")
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
-FROM "ExternalOrders" AS "ExternalOrders0"
- INNER JOIN "ExplicitDistinct" AS "ExplicitDistinct0" ON "ExternalOrders0"."customerid" = "ExplicitDistinct0"."customerid"
+FROM "ExternalOrders"
+ INNER JOIN "ExplicitDistinct" ON "ExternalOrders"."customerid" = "ExplicitDistinct"."customerid"
 >>>vertx.json
 {
   "models" : {

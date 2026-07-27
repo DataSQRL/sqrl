@@ -620,7 +620,7 @@ END
     {
       "name" : "OrderCustomer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer\"(\"id\", \"name\", \"customerid\") AS SELECT \"Orders_32\".\"id\", \"Customer_12\".\"name\", \"Orders_32\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_32\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomer\"(\"id\", \"name\", \"customerid\") AS SELECT \"Orders_30\".\"id\", \"Customer_10\".\"name\", \"Orders_30\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_30\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\"",
       "fields" : [
         {
           "name" : "id",
@@ -642,7 +642,7 @@ END
     {
       "name" : "OrderCustomerConstant",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerConstant\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT \"Orders_32\".\"time\", \"Orders_32\".\"id\", \"Customer_12\".\"name\", \"Orders_32\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_32\"\n INNER JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\" AND \"Customer_12\".\"name\" = 'Robert' AND \"Orders_32\".\"id\" > 5",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerConstant\"(\"time\", \"id\", \"name\", \"customerid\") AS SELECT \"Orders_30\".\"time\", \"Orders_30\".\"id\", \"Customer_10\".\"name\", \"Orders_30\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_30\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\" AND \"Customer_10\".\"name\" = 'Robert' AND \"Orders_30\".\"id\" > 5",
       "fields" : [
         {
           "name" : "time",
@@ -669,7 +669,7 @@ END
     {
       "name" : "OrderCustomerLeft",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeft\"(\"cid\", \"ctime\", \"id\", \"name\", \"customerid\") AS SELECT COALESCE(\"Customer_12\".\"customerid\", 0) AS \"cid\", COALESCE(\"Customer_12\".\"lastUpdated\", 0) AS \"ctime\", \"Orders_32\".\"id\", \"Customer_12\".\"name\", \"Orders_32\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_32\"\n LEFT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeft\"(\"cid\", \"ctime\", \"id\", \"name\", \"customerid\") AS SELECT COALESCE(\"Customer_10\".\"customerid\", 0) AS \"cid\", COALESCE(\"Customer_10\".\"lastUpdated\", 0) AS \"ctime\", \"Orders_30\".\"id\", \"Customer_10\".\"name\", \"Orders_30\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_30\"\n LEFT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\"",
       "fields" : [
         {
           "name" : "cid",
@@ -701,7 +701,7 @@ END
     {
       "name" : "OrderCustomerLeftExcluded",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcluded\"(\"time\", \"id\", \"customerid\") AS SELECT \"Orders_32\".\"time\", \"Orders_32\".\"id\", \"Orders_32\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_32\"\n LEFT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\"\nWHERE \"Customer_12\".\"customerid\" IS NULL AND \"Customer_12\".\"lastUpdated\" IS NULL",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerLeftExcluded\"(\"time\", \"id\", \"customerid\") AS SELECT \"Orders_30\".\"time\", \"Orders_30\".\"id\", \"Orders_30\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_30\"\n LEFT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\"\nWHERE \"Customer_10\".\"customerid\" IS NULL AND \"Customer_10\".\"lastUpdated\" IS NULL",
       "fields" : [
         {
           "name" : "time",
@@ -745,7 +745,7 @@ END
     {
       "name" : "OrderCustomerRight",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRight\"(\"ouuid\", \"otime\", \"id\", \"name\", \"customerid\") AS SELECT COALESCE(\"Orders_32\".\"id\", 0) AS \"ouuid\", COALESCE(\"Orders_32\".\"time\", PROCTIME()) AS \"otime\", \"Orders_32\".\"id\", \"Customer_12\".\"name\", \"Orders_32\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_32\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRight\"(\"ouuid\", \"otime\", \"id\", \"name\", \"customerid\") AS SELECT COALESCE(\"Orders_30\".\"id\", 0) AS \"ouuid\", COALESCE(\"Orders_30\".\"time\", PROCTIME()) AS \"otime\", \"Orders_30\".\"id\", \"Customer_10\".\"name\", \"Orders_30\".\"customerid\"\nFROM \"Orders_3\" AS \"Orders_30\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\"",
       "fields" : [
         {
           "name" : "ouuid",
@@ -777,7 +777,7 @@ END
     {
       "name" : "OrderCustomerRightExcluded",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\") AS SELECT \"Customer_12\".\"lastUpdated\", \"Customer_12\".\"customerid\", \"Customer_12\".\"name\"\nFROM \"Orders_3\" AS \"Orders_32\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_12\" ON \"Orders_32\".\"customerid\" = \"Customer_12\".\"customerid\"\nWHERE \"Orders_32\".\"id\" IS NULL AND \"Orders_32\".\"time\" IS NULL",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderCustomerRightExcluded\"(\"lastUpdated\", \"customerid\", \"name\") AS SELECT \"Customer_10\".\"lastUpdated\", \"Customer_10\".\"customerid\", \"Customer_10\".\"name\"\nFROM \"Orders_3\" AS \"Orders_30\"\n RIGHT JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_30\".\"customerid\" = \"Customer_10\".\"customerid\"\nWHERE \"Orders_30\".\"id\" IS NULL AND \"Orders_30\".\"time\" IS NULL",
       "fields" : [
         {
           "name" : "lastUpdated",

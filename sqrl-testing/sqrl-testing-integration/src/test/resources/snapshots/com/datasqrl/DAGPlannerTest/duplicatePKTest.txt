@@ -287,7 +287,7 @@ END
     {
       "name" : "JoinTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"JoinTable\"(\"_uuid\", \"userid\", \"event_time\", \"unique_id\", \"_uuid0\", \"userid0\", \"event_time0\", \"unique_id0\") AS SELECT *\nFROM (SELECT \"_uuid\", \"userid\", \"event_time\", \"unique_id\"\n  FROM \"InputDistinct_1\") AS \"t2\"\n INNER JOIN \"_Input_2\" AS \"_Input_22\" ON \"t2\".\"userid\" = \"_Input_22\".\"userid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"JoinTable\"(\"_uuid\", \"userid\", \"event_time\", \"unique_id\", \"_uuid0\", \"userid0\", \"event_time0\", \"unique_id0\") AS SELECT *\nFROM (SELECT \"_uuid\", \"userid\", \"event_time\", \"unique_id\"\n  FROM \"InputDistinct_1\") AS \"t\"\n INNER JOIN \"_Input_2\" AS \"_Input_20\" ON \"t\".\"userid\" = \"_Input_20\".\"userid\"",
       "fields" : [
         {
           "name" : "_uuid",

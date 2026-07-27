@@ -1880,7 +1880,7 @@ END
     {
       "name" : "MissedTemporalJoin",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"MissedTemporalJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"customerid0\", \"timestamp\", \"name\") AS SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_112\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_102\" ON \"ExternalOrders_112\".\"customerid\" = \"ExplicitDistinct_102\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"MissedTemporalJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"customerid0\", \"timestamp\", \"name\") AS SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_110\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_100\" ON \"ExternalOrders_110\".\"customerid\" = \"ExplicitDistinct_100\".\"customerid\"",
       "fields" : [
         {
           "name" : "id",
@@ -1942,7 +1942,7 @@ END
     {
       "name" : "SelectCustomers",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectCustomers\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers_14\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"SelectCustomers\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers_14\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t\"",
       "description" : "This is for selected customers\n    and their orders",
       "fields" : [
         {
