@@ -58,7 +58,6 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
@@ -83,6 +82,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         SqlConvertersFactory.get(dialect),
         createTableDdlFactory);
   }
+
+  protected abstract SqlNode getSqlType(RelDataType type, Optional<DataTypeHint> hint);
 
   @Override
   public QueryResult createQuery(
@@ -121,7 +122,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     var viewName = query.function().getSimpleName();
     var rowType = query.relNode().getRowType();
     var viewSql =
-        new GenericCreateViewDdlFactory()
+        new GenericCreateViewDdlFactory(sqlConverters.getCalciteSqlDialect())
             .createView(viewName, rowType.getFieldNames(), passthroughSql);
     var view =
         new GenericJdbcStatement(
@@ -232,8 +233,6 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         documentation.getColumn(field.getName(), null));
   }
 
-  protected abstract SqlDataTypeSpec getSqlType(RelDataType type, Optional<DataTypeHint> hint);
-
   protected String createView(
       SqlIdentifier viewNameIdentifier, SqlNodeList columnList, SqlNode viewSqlNode) {
     var createView =
@@ -241,22 +240,6 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
             SqlParserPos.ZERO, true, viewNameIdentifier, columnList, viewSqlNode);
 
     return sqlConverters.convert(createView);
-  }
-
-  public static List<String> quoteIdentifier(List<String> columns) {
-    return columns.stream()
-        .map(AbstractJdbcStatementFactory::quoteIdentifier)
-        .collect(Collectors.toList());
-  }
-
-  public static String quoteIdentifier(String column) {
-    return "\"" + column + "\"";
-  }
-
-  public static List<String> quoteIdentifiers(List<String> values) {
-    return values.stream()
-        .map(AbstractJdbcStatementFactory::quoteIdentifier)
-        .collect(Collectors.toList());
   }
 
   protected Set<DatabaseTypeExtension> extractTypeExtensions(

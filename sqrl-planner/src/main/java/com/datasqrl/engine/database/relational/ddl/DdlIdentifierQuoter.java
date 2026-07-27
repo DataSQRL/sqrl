@@ -15,24 +15,33 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
+import jakarta.annotation.Nullable;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.apache.calcite.sql.SqlDialect;
 
+/**
+ * Quotes DDL identifiers using the configured Calcite SQL dialect, or double quotes when no dialect
+ * is configured.
+ */
 @RequiredArgsConstructor
-public class GenericCreateViewDdlFactory {
+public final class DdlIdentifierQuoter {
 
-  private final DdlIdentifierQuoter identifierQuoter;
+  @Nullable private final SqlDialect dialect;
 
-  public GenericCreateViewDdlFactory(SqlDialect dialect) {
-    this(new DdlIdentifierQuoter(dialect));
+  public DdlIdentifierQuoter() {
+    this(null);
   }
 
-  public String createView(String viewName, List<String> columns, String select) {
-    var colStr = columns.stream().map(identifierQuoter::quote).collect(Collectors.joining(", "));
+  public String quote(String identifier) {
+    if (dialect != null) {
+      return dialect.quoteIdentifier(identifier);
+    }
 
-    return "CREATE OR REPLACE VIEW %s (%s) AS %s"
-        .formatted(identifierQuoter.quote(viewName), colStr, select);
+    return "\"" + identifier + "\"";
+  }
+
+  public List<String> quoteAll(List<String> identifiers) {
+    return identifiers.stream().map(this::quote).toList();
   }
 }

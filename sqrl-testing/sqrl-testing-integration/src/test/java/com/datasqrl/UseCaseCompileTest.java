@@ -66,7 +66,7 @@ public class UseCaseCompileTest {
   @Test
   @Disabled("Intended for manual usage")
   void runTestCaseByName() {
-    var pkg = USECASE_DIR.resolve("jwt-authorized").resolve("package.json");
+    var pkg = USECASE_DIR.resolve("dialects/spark-sql-compile").resolve("package.json");
     UseCaseTestHelper.testUseCase(
         snapshotExtension,
         getClass(),

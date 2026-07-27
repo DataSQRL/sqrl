@@ -15,18 +15,26 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
-import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory.quoteIdentifier;
-import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory.quoteIdentifiers;
-
 import com.datasqrl.deployment.model.JdbcStatementModel.Field;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.CreateTableDdlFactory;
 import java.util.List;
 import java.util.StringJoiner;
+import org.apache.calcite.sql.SqlDialect;
 
 public class GenericCreateTableDdlFactory implements CreateTableDdlFactory {
 
   private static final String CREATE_TABLE_TEMPLATE = "CREATE TABLE IF NOT EXISTS %s (%s)";
+
+  private final DdlIdentifierQuoter identifierQuoter;
+
+  public GenericCreateTableDdlFactory(SqlDialect dialect) {
+    this.identifierQuoter = new DdlIdentifierQuoter(dialect);
+  }
+
+  protected GenericCreateTableDdlFactory() {
+    this.identifierQuoter = new DdlIdentifierQuoter();
+  }
 
   @Override
   public String createTableDdl(CreateTableJdbcStatement stmt) {
@@ -34,9 +42,7 @@ public class GenericCreateTableDdlFactory implements CreateTableDdlFactory {
     var tableElements = new StringJoiner(", ");
 
     // Add field definitions
-    stmt.getFields().stream()
-        .map(GenericCreateTableDdlFactory::fieldToSql)
-        .forEach(tableElements::add);
+    stmt.getFields().stream().map(this::fieldToSql).forEach(tableElements::add);
 
     // Add primary key constraint if present
     if (!stmt.getPrimaryKey().isEmpty()) {
@@ -47,13 +53,21 @@ public class GenericCreateTableDdlFactory implements CreateTableDdlFactory {
         quoteIdentifier(stmt.getName()), tableElements.toString());
   }
 
-  protected static String listToSql(List<String> columns) {
+  protected String listToSql(List<String> columns) {
     return String.join(",", quoteIdentifiers(columns));
   }
 
-  protected static String fieldToSql(Field field) {
+  protected String fieldToSql(Field field) {
     var notNull = field.nullable() ? "" : "NOT NULL";
 
-    return "\"%s\" %s %s".formatted(field.name(), field.type(), notNull).trim();
+    return "%s %s %s".formatted(quoteIdentifier(field.name()), field.type(), notNull).trim();
+  }
+
+  protected String quoteIdentifier(String identifier) {
+    return identifierQuoter.quote(identifier);
+  }
+
+  protected List<String> quoteIdentifiers(List<String> identifiers) {
+    return identifierQuoter.quoteAll(identifiers);
   }
 }

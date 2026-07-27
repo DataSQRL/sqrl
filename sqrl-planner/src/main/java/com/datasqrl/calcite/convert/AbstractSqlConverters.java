@@ -62,14 +62,15 @@ abstract class AbstractSqlConverters implements SqlConverters {
     return dialect;
   }
 
+  @Override
+  public final SqlDialect getCalciteSqlDialect() {
+    return calciteSqlDialect;
+  }
+
   protected SqlPrettyWriter createWriter() {
     var baseConfig = SqlPrettyWriter.config().withDialect(calciteSqlDialect);
     var config = SqrlConfigurations.SQL_TO_STRING.apply(baseConfig);
 
     return new DynamicParamSqlPrettyWriter(config);
-  }
-
-  protected final SqlDialect getCalciteSqlDialect() {
-    return calciteSqlDialect;
   }
 }
