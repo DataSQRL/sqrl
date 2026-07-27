@@ -60,6 +60,10 @@ public class PgPartmanExtension implements DatabaseTableExtension {
     // 'public."Readings"' never matches relname 'Readings' and create_parent fails.
     var parentTable = "public." + createTable.getName();
     var ttl = createTable.getTtl();
+    var interval =
+        createTable.getPartitionInterval() != null
+            ? createTable.getPartitionInterval()
+            : deriveInterval(ttl);
 
     // p_type was removed in pg_partman 5.x; the default (range) is what we need
     sb.append(
@@ -72,7 +76,7 @@ public class PgPartmanExtension implements DatabaseTableExtension {
         );
 
         """
-            .formatted(parentTable, createTable.getPartitionKey().get(0), deriveInterval(ttl)));
+            .formatted(parentTable, createTable.getPartitionKey().get(0), interval));
 
     sb.append(
         """

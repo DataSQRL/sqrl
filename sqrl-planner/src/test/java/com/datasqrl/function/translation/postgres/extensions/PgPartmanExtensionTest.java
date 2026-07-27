@@ -29,8 +29,25 @@ class PgPartmanExtensionTest {
 
   private static CreateTableJdbcStatement table(
       String name, PartitionType partitionType, List<String> partitionKey, Duration ttl) {
+    return table(name, partitionType, partitionKey, ttl, null);
+  }
+
+  private static CreateTableJdbcStatement table(
+      String name,
+      PartitionType partitionType,
+      List<String> partitionKey,
+      Duration ttl,
+      String partitionInterval) {
     return new CreateTableJdbcStatement(
-        name, null, List.of(), List.of("id", "time"), partitionKey, partitionType, 1, ttl);
+        name,
+        null,
+        List.of(),
+        List.of("id", "time"),
+        partitionKey,
+        partitionType,
+        1,
+        ttl,
+        partitionInterval);
   }
 
   @Test
@@ -80,6 +97,31 @@ class PgPartmanExtensionTest {
     assertThat(sql).doesNotContain("hashed");
     assertThat(sql.indexOf("alpha")).isLessThan(sql.indexOf("zebra"));
     assertThat(sql).doesNotContain("p_type");
+  }
+
+  @Test
+  void givenExplicitPartitionInterval_whenGetDdl_thenIntervalOverridesDerived() {
+    assertThat(
+            extension.getDdl(
+                List.of(
+                    table(
+                        "Metrics",
+                        PartitionType.RANGE,
+                        List.of("time"),
+                        Duration.ofDays(14),
+                        "1 day"))))
+        .contains("p_interval => '1 day'")
+        .contains("retention = '14 days'");
+  }
+
+  @Test
+  void givenNoPartitionInterval_whenGetDdl_thenIntervalDerivedFromTtl() {
+    assertThat(
+            extension.getDdl(
+                List.of(
+                    table("Metrics", PartitionType.RANGE, List.of("time"), Duration.ofDays(14)))))
+        .contains("p_interval => '1 week'")
+        .contains("retention = '14 days'");
   }
 
   @Test

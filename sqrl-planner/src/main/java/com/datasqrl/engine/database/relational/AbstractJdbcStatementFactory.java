@@ -160,13 +160,9 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     // DagPlanner validates that partition keys are part of primary key
 
     PartitionType partitionType = getPartitionType(createTable, partitionKeys);
-    Duration ttl =
-        createTable
-            .tableAnalysis()
-            .getHints()
-            .getHint(TtlHint.class)
-            .flatMap(TtlHint::getTtl)
-            .orElse(Duration.ZERO);
+    var ttlHint = createTable.tableAnalysis().getHints().getHint(TtlHint.class);
+    Duration ttl = ttlHint.flatMap(TtlHint::getTtl).orElse(Duration.ZERO);
+    String partitionInterval = ttlHint.flatMap(TtlHint::getPartitionInterval).orElse(null);
 
     return new CreateTableJdbcStatement(
         tableName,
@@ -180,6 +176,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         partitionType,
         partitionType == PartitionType.NONE ? 0 : 1,
         ttl,
+        partitionInterval,
         createTable,
         createTableDdlFactory);
   }
