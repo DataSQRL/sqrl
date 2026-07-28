@@ -15,12 +15,16 @@
  */
 package com.datasqrl.util;
 
+import static com.datasqrl.packager.preprocess.JBangPreprocessor.JBANG_FILE_SHA256;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
+import com.datasqrl.packager.preprocess.JBangPreprocessor.JBangFileInfo;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -43,16 +47,24 @@ class JBangRunnerTest {
   @Test
   void given_disabledRunner_when_exportFatJar_then_doesNothing() {
     var runner = JBangRunner.disabled();
-    var src = tempDir.resolve("Dummy.java");
     var target = tempDir.resolve("Dummy.jar");
 
-    assertThatCode(() -> runner.exportFatJar(List.of(src), target)).doesNotThrowAnyException();
+    assertThatCode(() -> runner.exportFatJar(new ArrayDeque<>(), target))
+        .doesNotThrowAnyException();
     assertThat(target).doesNotExist();
   }
 
   @Test
-  void given_fatJarWithSignatureFiles_when_cleanFatJar_then_signaturesRemoved() throws IOException {
+  void givenFatJarWithSignatureFiles_whenRebuildFatJar_thenRemovesSignaturesAndAddsJbangFileHashes()
+      throws IOException {
     var fatJar = tempDir.resolve("fat.jar");
+    var firstUdf = tempDir.resolve("FirstUdf.java");
+    var secondUdf = tempDir.resolve("SecondUdf.java");
+    var jBangFiles =
+        List.of(
+            new JBangFileInfo(firstUdf, "com.example.FirstUdf", "some.Service", "abc123"),
+            new JBangFileInfo(secondUdf, "com.example.SecondUdf", "some.Service", "def456"));
+
     try (var out = new JarOutputStream(Files.newOutputStream(fatJar))) {
       out.putNextEntry(new JarEntry("META-INF/MANIFEST.MF"));
       out.write("Manifest-Version: 1.0\n".getBytes());
@@ -74,7 +86,7 @@ class JBangRunnerTest {
       out.closeEntry();
     }
 
-    JBangRunner.create().cleanFatJar(fatJar);
+    JBangRunner.create().rebuildFatJar(fatJar, jBangFiles);
 
     try (var jar = new JarFile(fatJar.toFile())) {
       var entryNames = new HashSet<String>();
@@ -85,11 +97,21 @@ class JBangRunnerTest {
       assertThat(entryNames)
           .doesNotContain(
               "META-INF/SIG-VENDOR.SF", "META-INF/SIG-VENDOR.DSA", "META-INF/SIG-VENDOR.RSA");
+      assertThat(
+              jar.getManifest()
+                  .getAttributes(jBangFiles.get(0).udfClassName())
+                  .getValue(JBANG_FILE_SHA256))
+          .isEqualTo("abc123");
+      assertThat(
+              jar.getManifest()
+                  .getAttributes(jBangFiles.get(1).udfClassName())
+                  .getValue(JBANG_FILE_SHA256))
+          .isEqualTo("def456");
     }
   }
 
   @Test
-  void given_fatJarWithDirectoryEntry_when_cleanFatJar_then_directoryDropped() throws IOException {
+  void givenFatJarWithDirectoryEntry_whenRebuildFatJar_thenDropsDirectory() throws IOException {
     var fatJar = tempDir.resolve("fat.jar");
     try (var out = new JarOutputStream(Files.newOutputStream(fatJar))) {
       out.putNextEntry(new JarEntry("com/"));
@@ -99,13 +121,51 @@ class JBangRunnerTest {
       out.closeEntry();
     }
 
-    JBangRunner.create().cleanFatJar(fatJar);
+    JBangRunner.create().rebuildFatJar(fatJar, List.of());
 
     try (var jar = new JarFile(fatJar.toFile())) {
       var entryNames = new HashSet<String>();
       jar.entries().asIterator().forEachRemaining(e -> entryNames.add(e.getName()));
 
       assertThat(entryNames).contains("MyUDF.class").doesNotContain("com/");
+    }
+  }
+
+  @Test
+  void givenUdfClasses_whenRebuildFatJar_thenCreatesAndAppendsServiceDescriptors()
+      throws IOException {
+    var fatJar = tempDir.resolve("fat.jar");
+    var scalarFunction = "org.apache.flink.table.functions.ScalarFunction";
+    var tableFunction = "org.apache.flink.table.functions.TableFunction";
+    try (var out = new JarOutputStream(Files.newOutputStream(fatJar))) {
+      out.putNextEntry(new JarEntry("META-INF/services/" + scalarFunction));
+      out.write("com.example.ExistingUdf\n".getBytes(StandardCharsets.UTF_8));
+      out.closeEntry();
+    }
+
+    var jBangFiles =
+        List.of(
+            new JBangFileInfo(
+                tempDir.resolve("FirstUdf.java"), "com.example.FirstUdf", scalarFunction, "abc123"),
+            new JBangFileInfo(
+                tempDir.resolve("SecondUdf.java"),
+                "com.example.SecondUdf",
+                scalarFunction,
+                "def456"),
+            new JBangFileInfo(
+                tempDir.resolve("TableUdf.java"), "com.example.TableUdf", tableFunction, "ghi789"));
+
+    JBangRunner.create().rebuildFatJar(fatJar, jBangFiles);
+
+    try (var jar = new JarFile(fatJar.toFile());
+        var scalarService =
+            jar.getInputStream(jar.getJarEntry("META-INF/services/" + scalarFunction));
+        var tableService =
+            jar.getInputStream(jar.getJarEntry("META-INF/services/" + tableFunction))) {
+      assertThat(new String(scalarService.readAllBytes(), StandardCharsets.UTF_8))
+          .isEqualTo("com.example.ExistingUdf\ncom.example.FirstUdf\ncom.example.SecondUdf\n");
+      assertThat(new String(tableService.readAllBytes(), StandardCharsets.UTF_8))
+          .isEqualTo("com.example.TableUdf\n");
     }
   }
 }

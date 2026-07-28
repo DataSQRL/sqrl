@@ -15,20 +15,27 @@
  */
 package com.datasqrl.packager.preprocess;
 
+import static com.datasqrl.packager.preprocess.JBangPreprocessor.JBANG_FILE_SHA256;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.FilePreprocessingPipeline;
 import com.datasqrl.util.JBangRunner;
+import com.google.common.hash.Hashing;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.jar.Attributes;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import org.apache.commons.exec.ExecuteException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -61,7 +68,7 @@ class JBangPreprocessorTest {
         .thenAnswer(inv -> tempDir.resolve((Path) inv.getArgument(0)));
     when(jBangRunner.isJBangAvailable()).thenReturn(true);
 
-    underTest = new JBangPreprocessor(jBangRunner);
+    underTest = new JBangPreprocessor(jBangRunner, ErrorCollector.root());
   }
 
   @Test
@@ -101,8 +108,31 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
     underTest.complete();
 
-    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
+    verifyExportedFiles(javaFile);
     verify(context).createNewBuildFile(Path.of("TestClass.function.json"));
+  }
+
+  @Test
+  void givenJbangJarWithMatchingFileHash_whenProcess_thenSkipsExport() throws IOException {
+    var content = validScalarFunctionContent();
+    var javaFile = createJavaFile("TestClass.java", content);
+    createJbangJar("SimpleUDF", sha256Hash(content));
+
+    underTest.process(javaFile, context);
+    underTest.complete();
+
+    verify(jBangRunner, never()).exportFatJar(any(), any());
+  }
+
+  @Test
+  void givenJbangJarWithDifferentFileHash_whenProcess_thenExportsJar() throws IOException {
+    var javaFile = createJavaFile("TestClass.java", validScalarFunctionContent());
+    createJbangJar("SimpleUDF", "stale-hash");
+
+    underTest.process(javaFile, context);
+    underTest.complete();
+
+    verifyExportedFiles(javaFile);
   }
 
   @Test
@@ -121,7 +151,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
     underTest.complete();
 
-    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
+    verifyExportedFiles(javaFile);
     verify(context).createNewBuildFile(Path.of("MyUDF.function.json"));
   }
 
@@ -133,7 +163,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
     underTest.complete();
 
-    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
+    verifyExportedFiles(javaFile);
     verify(context).createNewBuildFile(Path.of("SimpleUDF.function.json"));
   }
 
@@ -153,7 +183,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
     underTest.complete();
 
-    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
+    verifyExportedFiles(javaFile);
     verify(context).createNewBuildFile(Path.of("MultiLineUDF.function.json"));
   }
 
@@ -238,7 +268,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
     underTest.complete();
 
-    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
+    verifyExportedFiles(javaFile);
     verify(context, never()).createNewBuildFile(any());
   }
 
@@ -251,7 +281,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
     underTest.complete();
 
-    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
+    verifyExportedFiles(javaFile);
     verify(context, never()).createNewBuildFile(any());
   }
 
@@ -269,7 +299,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
     underTest.complete();
 
-    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
+    verifyExportedFiles(javaFile);
     verify(context).createNewBuildFile(Path.of("MyAggregateUDF.function.json"));
   }
 
@@ -288,7 +318,7 @@ class JBangPreprocessorTest {
     underTest.process(javaFile, context);
     underTest.complete();
 
-    verify(jBangRunner).exportFatJar(eq(List.of(javaFile)), any());
+    verifyExportedFiles(javaFile);
   }
 
   @Test
@@ -348,7 +378,7 @@ class JBangPreprocessorTest {
     underTest.process(file2, context);
     underTest.complete();
 
-    verify(jBangRunner).exportFatJar(eq(List.of(file1, file2)), any());
+    verifyExportedFiles(file1, file2);
     verify(context).createNewBuildFile(Path.of("FirstUDF.function.json"));
     verify(context).createNewBuildFile(Path.of("SecondUDF.function.json"));
   }
@@ -357,6 +387,35 @@ class JBangPreprocessorTest {
     var file = tempDir.resolve(filename);
     Files.writeString(file, content);
     return file;
+  }
+
+  private void verifyExportedFiles(Path... expectedFiles) throws IOException {
+    verify(jBangRunner)
+        .exportFatJar(
+            argThat(
+                jBangFiles ->
+                    jBangFiles.stream()
+                        .map(JBangPreprocessor.JBangFileInfo::file)
+                        .toList()
+                        .equals(List.of(expectedFiles))),
+            any());
+  }
+
+  private void createJbangJar(String udfClassName, String sha256Hash) throws IOException {
+    var manifest = new Manifest();
+    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, "1.0");
+    var attributes = new Attributes();
+    attributes.putValue(JBANG_FILE_SHA256, sha256Hash);
+    manifest.getEntries().put(udfClassName, attributes);
+    try (var ignored =
+        new JarOutputStream(
+            Files.newOutputStream(tempDir.resolve(JBangPreprocessor.JBANG_JAR_NAME)), manifest)) {
+      // The manifest is sufficient for JBang JAR validity checks.
+    }
+  }
+
+  private String sha256Hash(String content) {
+    return Hashing.sha256().hashString(content, StandardCharsets.UTF_8).toString();
   }
 
   private String validScalarFunctionContent() {
