@@ -140,7 +140,8 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
       planBuilder.statement(stmt);
 
       if (stmt instanceof CreateTableJdbcStatement createTbl) {
-        tableIdMap.put(createTbl.getEngineTable().table().getTableName(), createTbl);
+        var engineTable = (JdbcEngineCreateTable) createTbl.getEngineTable();
+        tableIdMap.put(engineTable.table().getTableName(), createTbl);
       }
 
       if (!tableNames.add(stmt.getName())) {

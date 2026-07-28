@@ -20,6 +20,7 @@ import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
+import com.datasqrl.planner.dag.plan.MutationDatabases;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.util.StreamUtil;
 import java.util.Collection;
@@ -43,7 +44,7 @@ public class PhysicalPlan {
   }
 
   public MutationDatabase getMutationDatabase() {
-    return MutationDatabase.from(mutationTables.values());
+    return MutationDatabases.from(mutationTables.values());
   }
 
   public PhysicalPlan applyRewriting(

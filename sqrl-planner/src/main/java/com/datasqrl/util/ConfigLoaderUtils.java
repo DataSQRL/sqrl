@@ -20,7 +20,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
+import com.datasqrl.engine.database.relational.JdbcPlan;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
@@ -260,16 +260,16 @@ public final class ConfigLoaderUtils {
 
   /**
    * Loads PostgreSQL physical plan from the plan directory by parsing the {@code postgres.json}
-   * configuration file. This method constructs a complete {@link JdbcPhysicalPlan} containing
-   * database statements for schema creation, views, indexes, and other database artifacts.
+   * configuration file. This method constructs a complete {@link JdbcPlan} containing database
+   * statements for schema creation, views, indexes, and other database artifacts.
    *
    * @param planDir the plan directory containing the {@code postgres.json} file
-   * @return an {@link Optional} containing a {@link JdbcPhysicalPlan} with database statements, or
-   *     empty if no {@code postgres.json} file exists
+   * @return an {@link Optional} containing a {@link JdbcPlan} with database statements, or empty if
+   *     no {@code postgres.json} file exists
    * @throws IllegalArgumentException if the plan directory is null or does not exist
    * @throws IllegalStateException if the {@code postgres.json} file exists but cannot be parsed
    */
-  public static Optional<JdbcPhysicalPlan> loadPostgresPhysicalPlan(Path planDir) {
+  public static Optional<JdbcPlan> loadPostgresPhysicalPlan(Path planDir) {
     validatePlanDir(planDir);
 
     var postgresFile = planDir.resolve("postgres.json").toFile();
@@ -278,7 +278,7 @@ public final class ConfigLoaderUtils {
     }
 
     try {
-      var jdbcPlan = MAPPER.readValue(postgresFile, JdbcPhysicalPlan.class);
+      var jdbcPlan = MAPPER.readValue(postgresFile, JdbcPlan.class);
       return Optional.of(jdbcPlan);
 
     } catch (Exception ex) {

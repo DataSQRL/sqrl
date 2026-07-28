@@ -31,6 +31,7 @@ import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
+import com.datasqrl.planner.dag.plan.MutationDatabases;
 import com.datasqrl.server.GenerateServerModel;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.nio.file.Path;
@@ -126,7 +127,8 @@ public class CompilationProcess {
         .ifPresent(
             compareDb ->
                 errors.checkFatal(
-                    mutationDatabase.isBackwardsCompatible(compareDb, environment, errors),
+                    MutationDatabases.isBackwardsCompatible(
+                        mutationDatabase, compareDb, environment, errors),
                     "The mutation tables defined by the script are not backwards compatible with the provided database. See warnings above for incompatibilities."));
     return Pair.of(physicalPlan, testPlan);
   }

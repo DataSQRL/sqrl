@@ -17,6 +17,7 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
+import com.datasqrl.engine.database.relational.JdbcEngineCreateTable;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.google.auto.service.AutoService;
@@ -61,7 +62,7 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
         .values()
         .forEach(
             stmt -> {
-              var createTable = stmt.getEngineTable();
+              var createTable = (JdbcEngineCreateTable) stmt.getEngineTable();
               var tableName = createTable.tableName();
               var table = createTable.tableAnalysis();
               indexSelector

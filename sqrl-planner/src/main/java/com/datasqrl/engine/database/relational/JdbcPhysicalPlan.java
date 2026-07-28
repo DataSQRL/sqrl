@@ -18,15 +18,9 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.util.ArrayList;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.Builder;
 import lombok.Singular;
 import org.apache.calcite.rel.RelNode;
@@ -38,54 +32,24 @@ import org.apache.calcite.rel.RelNode;
  */
 @Builder(toBuilder = true)
 public record JdbcPhysicalPlan(
-    @JsonIgnore ExecutionStage stage,
+    ExecutionStage stage,
     @Singular List<JdbcStatement> statements,
     @Singular List<JdbcStatement> standaloneExtensionStatements,
-    @JsonIgnore @Singular List<RelNode> queries,
-    @JsonIgnore Map<String, CreateTableJdbcStatement> tableIdMap)
+    @Singular List<RelNode> queries,
+    Map<String, CreateTableJdbcStatement> tableIdMap)
     implements DatabasePhysicalPlan {
 
-  @SuppressWarnings("unused")
-  @JsonCreator
-  public JdbcPhysicalPlan(@JsonProperty("statements") List<JdbcStatement> statements) {
-    this(null, new ArrayList<>(statements), List.of(), List.of(), Map.of());
+  @JsonValue
+  public JdbcPlan toModel() {
+    return new JdbcPlan(statements, standaloneExtensionStatements);
   }
 
   public List<JdbcStatement> getStatementsForType(Type type) {
-    return statements.stream().filter(s -> s.getType() == type).collect(Collectors.toList());
+    return toModel().getStatementsForType(type);
   }
 
-  @JsonIgnore
   @Override
   public List<DeploymentArtifact> getDeploymentArtifacts() {
-    var artifacts = new ArrayList<DeploymentArtifact>();
-    artifacts.add(new DeploymentArtifact("-schema.sql", buildSchemaContent()));
-    artifacts.add(new DeploymentArtifact("-views.sql", toSql(getStatementsForType(Type.VIEW))));
-
-    standaloneExtensionStatements.stream()
-        .map(stmt -> new DeploymentArtifact(formatSuffix(stmt.getName()), toSql(stmt)))
-        .forEach(artifacts::add);
-
-    return List.copyOf(artifacts);
-  }
-
-  private String buildSchemaContent() {
-    return Stream.of(Type.EXTENSION, Type.TABLE, Type.INDEX)
-        .map(this::getStatementsForType)
-        .filter(Predicate.not(List::isEmpty))
-        .map(JdbcPhysicalPlan::toSql)
-        .collect(Collectors.joining(";\n\n"));
-  }
-
-  private static String toSql(List<JdbcStatement> statements) {
-    return DeploymentArtifact.toSqlString(statements.stream().map(JdbcStatement::getSql));
-  }
-
-  private static String toSql(JdbcStatement stmt) {
-    return DeploymentArtifact.toSqlString(stmt.getSql());
-  }
-
-  private static String formatSuffix(String name) {
-    return "-" + name + ".sql";
+    return toModel().getDeploymentArtifacts();
   }
 }

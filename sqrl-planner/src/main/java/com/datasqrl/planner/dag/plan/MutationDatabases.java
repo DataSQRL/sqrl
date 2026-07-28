@@ -19,18 +19,21 @@ import com.datasqrl.calcite.type.TypeCompatibility;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.ParsedRelDataTypeResult;
+import com.datasqrl.planner.dag.plan.MutationDatabase.ColumnDefinition;
+import com.datasqrl.planner.dag.plan.MutationDatabase.Table;
+import com.datasqrl.planner.dag.plan.MutationDatabase.TableDefinition;
 import com.datasqrl.server.exec.FlinkExecFunction;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MutationDatabase(List<Table> tables) {
+/** Builds and compares {@link MutationDatabase} models during planning. */
+public final class MutationDatabases {
+
+  private MutationDatabases() {}
 
   public static MutationDatabase from(Collection<MutationTable> mutationTables) {
     var tables =
@@ -69,13 +72,16 @@ public record MutationDatabase(List<Table> tables) {
     return new MutationDatabase(tables);
   }
 
-  public boolean isBackwardsCompatible(
-      MutationDatabase compareDb, Sqrl2FlinkSQLTranslator env, ErrorCollector errors) {
+  public static boolean isBackwardsCompatible(
+      MutationDatabase database,
+      MutationDatabase compareDb,
+      Sqrl2FlinkSQLTranslator env,
+      ErrorCollector errors) {
     var compareTablesByName =
         compareDb.tables().stream().collect(Collectors.toMap(Table::canonicalName, t -> t));
 
     var compatible = true;
-    for (var table : tables) {
+    for (var table : database.tables()) {
       var compareTable = compareTablesByName.get(table.canonicalName());
       if (compareTable == null) {
         continue;
@@ -160,17 +166,4 @@ public record MutationDatabase(List<Table> tables) {
 
     return compatible;
   }
-
-  public record Table(
-      String canonicalName,
-      String engine,
-      String createTableSql,
-      TableDefinition definition,
-      Map<String, String> configOptions,
-      String documentation) {}
-
-  public record TableDefinition(
-      List<ColumnDefinition> columns, List<String> primaryKey, List<String> partitionKey) {}
-
-  public record ColumnDefinition(String name, String spec, String documentation) {}
 }

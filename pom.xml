@@ -69,6 +69,7 @@
     <module>sqrl-cli</module>
     <module>sqrl-discovery</module>
     <module>sqrl-planner</module>
+    <module>sqrl-planner-model</module>
     <module>sqrl-server</module>
     <module>sqrl-testing</module>
   </modules>

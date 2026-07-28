@@ -15,14 +15,15 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.engine.database.EngineCreateTable;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.google.common.base.Preconditions;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
@@ -61,7 +62,7 @@ public class CreateTableJdbcStatement implements JdbcStatement {
   Duration ttl;
 
   /** The engine table - nullable and not set when deserialized */
-  @JsonIgnore JdbcEngineCreateTable engineTable;
+  @JsonIgnore EngineCreateTable engineTable;
 
   /** The DDL factory to create the SQL string - nullable and not set when deserialized */
   @JsonIgnore CreateTableDdlFactory ddlFactory;
@@ -95,7 +96,7 @@ public class CreateTableJdbcStatement implements JdbcStatement {
 
   @Override
   public String getSql() {
-    Preconditions.checkNotNull(ddlFactory);
+    Objects.requireNonNull(ddlFactory);
     return getSql(ddlFactory);
   }
 

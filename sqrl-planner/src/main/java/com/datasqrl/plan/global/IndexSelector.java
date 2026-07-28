@@ -17,6 +17,7 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
+import com.datasqrl.engine.database.relational.JdbcEngineCreateTable;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -477,7 +478,7 @@ public class IndexSelector {
     var names = scan.getTable().getQualifiedName();
     var nameId = names.get(names.size() - 1);
     CreateTableJdbcStatement stmt = tableMap.get(nameId);
-    var createTable = stmt.getEngineTable();
+    var createTable = (JdbcEngineCreateTable) stmt.getEngineTable();
     return new NamedTable(nameId, createTable.tableName(), createTable.tableAnalysis(), stmt);
   }
 

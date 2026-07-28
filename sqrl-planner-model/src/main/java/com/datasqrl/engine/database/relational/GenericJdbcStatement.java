@@ -16,17 +16,13 @@
 package com.datasqrl.engine.database.relational;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
-import lombok.AllArgsConstructor;
 import lombok.Value;
-import org.apache.calcite.rel.type.RelDataType;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Value
-@AllArgsConstructor
 public class GenericJdbcStatement implements JdbcStatement {
 
   /** The name of the table/view/query/index */
@@ -40,9 +36,6 @@ public class GenericJdbcStatement implements JdbcStatement {
 
   /** The docstring for this table if defined */
   String description;
-
-  /** The datatype for table, view, and query. Is null for other types. */
-  @JsonIgnore RelDataType dataType;
 
   /** The datatype converted to a list of Field. It's null if there is no dataType. */
   List<Field> fields;
@@ -58,6 +51,10 @@ public class GenericJdbcStatement implements JdbcStatement {
       @JsonProperty("sql") String sql,
       @JsonProperty("description") String description,
       @JsonProperty("fields") List<Field> fields) {
-    this(name, type, sql, description, null, fields);
+    this.name = name;
+    this.type = type;
+    this.sql = sql;
+    this.description = description;
+    this.fields = fields;
   }
 }

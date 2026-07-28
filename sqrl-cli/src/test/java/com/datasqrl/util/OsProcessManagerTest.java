@@ -23,7 +23,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import com.datasqrl.engine.database.relational.GenericJdbcStatement;
-import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
+import com.datasqrl.engine.database.relational.JdbcPlan;
 import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.engine.log.kafka.NewTopic;
@@ -397,7 +397,7 @@ class OsProcessManagerTest {
           .thenReturn(Optional.empty());
       var mockStatement =
           new GenericJdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
-      var mockJdbcPlan = JdbcPhysicalPlan.builder().statement(mockStatement).build();
+      var mockJdbcPlan = JdbcPlan.builder().statement(mockStatement).build();
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.of(mockJdbcPlan));
@@ -448,7 +448,7 @@ class OsProcessManagerTest {
           .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
       var mockStatement =
           new GenericJdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
-      var mockJdbcPlan = JdbcPhysicalPlan.builder().statement(mockStatement).build();
+      var mockJdbcPlan = JdbcPlan.builder().statement(mockStatement).build();
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.of(mockJdbcPlan));

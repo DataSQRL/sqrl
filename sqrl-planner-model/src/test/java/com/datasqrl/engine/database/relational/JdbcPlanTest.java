@@ -20,10 +20,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 
-class JdbcPhysicalPlanTest {
+class JdbcPlanTest {
 
   private static GenericJdbcStatement stmt(String name, Type type, String sql) {
     return new GenericJdbcStatement(name, type, sql);
@@ -32,13 +31,12 @@ class JdbcPhysicalPlanTest {
   @Test
   void givenMixedStatements_whenGetDeploymentArtifacts_thenSchemaAndViewsArtifacts() {
     var plan =
-        JdbcPhysicalPlan.builder()
+        JdbcPlan.builder()
             .statement(stmt("ext", Type.EXTENSION, "CREATE EXTENSION vector"))
             .statement(stmt("t1", Type.TABLE, "CREATE TABLE t1"))
             .statement(stmt("t2", Type.TABLE, "CREATE TABLE t2"))
             .statement(stmt("i1", Type.INDEX, "CREATE INDEX i1"))
             .statement(stmt("v1", Type.VIEW, "CREATE VIEW v1"))
-            .tableIdMap(Map.of())
             .build();
 
     var artifacts = plan.getDeploymentArtifacts();
@@ -55,9 +53,8 @@ class JdbcPhysicalPlanTest {
   @Test
   void givenStandaloneExtensionStatements_whenGetDeploymentArtifacts_thenAppendedAfterDefaults() {
     var plan =
-        JdbcPhysicalPlan.builder()
+        JdbcPlan.builder()
             .statement(stmt("t1", Type.TABLE, "CREATE TABLE t1"))
-            .tableIdMap(Map.of())
             .standaloneExtensionStatement(
                 stmt("partman", Type.EXTENSION, "SELECT partman.create_parent"))
             .build();
@@ -71,10 +68,10 @@ class JdbcPhysicalPlanTest {
   }
 
   @Test
-  void givenJsonCreatorPlan_whenGetStatementsForType_thenFiltersByType() {
+  void givenStatementsOnlyPlan_whenGetStatementsForType_thenFiltersByType() {
     var table = stmt("t1", Type.TABLE, "CREATE TABLE t1");
     var view = stmt("v1", Type.VIEW, "CREATE VIEW v1");
-    var plan = new JdbcPhysicalPlan(List.of(table, view));
+    var plan = new JdbcPlan(List.of(table, view), null);
 
     assertThat(plan.getStatementsForType(Type.TABLE)).containsExactly(table);
     assertThat(plan.getStatementsForType(Type.INDEX)).isEmpty();

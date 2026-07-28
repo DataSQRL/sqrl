@@ -120,7 +120,6 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
             Type.VIEW,
             viewSql,
             description,
-            rowType,
             getColumns(
                 rowType.getFieldList(), PlannerHints.EMPTY, query.function().getDocumentation()));
 
@@ -315,7 +314,6 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         Type.VIEW,
         viewSql,
         documentation.getDocString(null),
-        rowType,
         getColumns(rowType.getFieldList(), PlannerHints.EMPTY, documentation));
   }
 }
