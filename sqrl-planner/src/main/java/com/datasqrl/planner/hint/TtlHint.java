@@ -21,6 +21,9 @@ import com.datasqrl.planner.parser.SqrlHint;
 import com.datasqrl.planner.parser.StatementParserException;
 import com.google.auto.service.AutoService;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.apache.flink.util.TimeUtils;
@@ -29,26 +32,40 @@ public class TtlHint extends PlannerHint {
 
   public static final String HINT_NAME = "ttl";
 
-  /** Subset of postgres interval syntax accepted as an explicit partition interval */
-  private static final Pattern PARTITION_INTERVAL_PATTERN =
-      Pattern.compile(
-          "^\\d+\\s*(second|minute|hour|day|week|month|year)s?$", Pattern.CASE_INSENSITIVE);
+  private static final Pattern TTL_PATTERN = Pattern.compile("^(\\d+)\\s*([a-zA-Z]+)$");
+
+  /** Allowed TTL units: at least a minute, at most a week */
+  private static final Map<String, ChronoUnit> TTL_UNITS =
+      Map.ofEntries(
+          Map.entry("min", ChronoUnit.MINUTES),
+          Map.entry("minute", ChronoUnit.MINUTES),
+          Map.entry("minutes", ChronoUnit.MINUTES),
+          Map.entry("h", ChronoUnit.HOURS),
+          Map.entry("hour", ChronoUnit.HOURS),
+          Map.entry("hours", ChronoUnit.HOURS),
+          Map.entry("d", ChronoUnit.DAYS),
+          Map.entry("day", ChronoUnit.DAYS),
+          Map.entry("days", ChronoUnit.DAYS),
+          Map.entry("w", ChronoUnit.WEEKS),
+          Map.entry("week", ChronoUnit.WEEKS),
+          Map.entry("weeks", ChronoUnit.WEEKS));
 
   private final Duration ttl;
-  private final String partitionInterval;
+  private final ChronoUnit ttlUnit;
 
-  protected TtlHint(ParsedObject<SqrlHint> source, Duration ttlDuration, String partitionInterval) {
+  protected TtlHint(ParsedObject<SqrlHint> source, Duration ttl, ChronoUnit ttlUnit) {
     super(source, Type.DAG);
-    this.ttl = ttlDuration;
-    this.partitionInterval = partitionInterval;
+    this.ttl = ttl;
+    this.ttlUnit = ttlUnit;
   }
 
   public Optional<Duration> getTtl() {
     return Optional.ofNullable(ttl);
   }
 
-  public Optional<String> getPartitionInterval() {
-    return Optional.ofNullable(partitionInterval);
+  /** The unit the TTL was declared with - determines the smallest allowed partition width */
+  public Optional<ChronoUnit> getTtlUnit() {
+    return Optional.ofNullable(ttlUnit);
   }
 
   @AutoService(Factory.class)
@@ -60,26 +77,47 @@ public class TtlHint extends PlannerHint {
       if (arguments == null || arguments.isEmpty()) {
         return new TtlHint(source, null, null);
       }
-      if (arguments.size() > 2 || arguments.get(0) == null) {
+      if (arguments.size() != 1 || arguments.get(0) == null) {
         throw new StatementParserException(
             ErrorLabel.GENERIC,
             source.getFileLocation(),
-            "%s hint supports a duration argument and an optional partition interval argument"
-                + " (e.g. `14 days, 1 day`).",
+            "%s hint only supports one duration argument (e.g. `2 days`).",
             source.get().name());
       }
-      var ttl = parseDurationArgument(source, arguments.get(0));
-      String partitionInterval = null;
-      if (arguments.size() == 2) {
-        partitionInterval = parsePartitionInterval(source, arguments.get(1));
-      }
-      return new TtlHint(source, ttl, partitionInterval);
+      return parseTtlArgument(source, arguments.get(0).trim());
     }
 
     @Override
     public String getName() {
       return HINT_NAME;
     }
+  }
+
+  private static TtlHint parseTtlArgument(ParsedObject<SqrlHint> source, String argument) {
+    var matcher = TTL_PATTERN.matcher(argument);
+    ChronoUnit unit = null;
+    if (matcher.matches()) {
+      unit = TTL_UNITS.get(matcher.group(2).toLowerCase(Locale.ROOT));
+    }
+    if (unit == null) {
+      throw new StatementParserException(
+          ErrorLabel.GENERIC,
+          source.getFileLocation(),
+          "%s hint does not have a valid duration argument: %s. Expected a positive number with a"
+              + " unit between minute and week, e.g. `30 min`, `36 hours`, `14 days`, or `2 weeks`.",
+          source.get().name(),
+          argument);
+    }
+    var value = Long.parseLong(matcher.group(1));
+    var ttl =
+        switch (unit) {
+          case MINUTES -> Duration.ofMinutes(value);
+          case HOURS -> Duration.ofHours(value);
+          case DAYS -> Duration.ofDays(value);
+          case WEEKS -> Duration.ofDays(value * 7L);
+          default -> throw new IllegalStateException("Unexpected TTL unit: " + unit);
+        };
+    return new TtlHint(source, ttl, unit);
   }
 
   public static Duration parseDuration(ParsedObject<SqrlHint> source) {
@@ -109,18 +147,5 @@ public class TtlHint extends PlannerHint {
           source.get().name(),
           argument);
     }
-  }
-
-  private static String parsePartitionInterval(ParsedObject<SqrlHint> source, String argument) {
-    if (argument == null || !PARTITION_INTERVAL_PATTERN.matcher(argument).matches()) {
-      throw new StatementParserException(
-          ErrorLabel.GENERIC,
-          source.getFileLocation(),
-          "%s hint does not have a valid partition interval argument: %s. Expected an interval"
-              + " like `1 day` or `1 month`.",
-          source.get().name(),
-          argument);
-    }
-    return argument;
   }
 }

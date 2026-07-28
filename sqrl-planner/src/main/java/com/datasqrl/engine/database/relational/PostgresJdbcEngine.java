@@ -60,7 +60,7 @@ public class PostgresJdbcEngine extends AbstractJDBCDatabaseEngine {
 
   @Override
   public JdbcStatementFactory getStatementFactory() {
-    return new PostgresStatementFactory();
+    return new PostgresStatementFactory(engineConfig);
   }
 
   @Override

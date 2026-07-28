@@ -29,7 +29,7 @@ class PgPartmanExtensionTest {
 
   private static CreateTableJdbcStatement table(
       String name, PartitionType partitionType, List<String> partitionKey, Duration ttl) {
-    return table(name, partitionType, partitionKey, ttl, null);
+    return table(name, partitionType, partitionKey, ttl, "1 day");
   }
 
   private static CreateTableJdbcStatement table(
@@ -74,7 +74,7 @@ class PgPartmanExtensionTest {
         .contains("SELECT partman.create_parent")
         .contains("p_parent_table => 'public.Orders_1'")
         .contains("p_control => 'time'")
-        .contains("p_interval => '1 week'")
+        .contains("p_interval => '1 day'")
         .contains("p_premake => 4")
         .contains("UPDATE partman.part_config")
         .contains("retention = '30 days'")
@@ -100,7 +100,7 @@ class PgPartmanExtensionTest {
   }
 
   @Test
-  void givenExplicitPartitionInterval_whenGetDdl_thenIntervalOverridesDerived() {
+  void givenPartitionInterval_whenGetDdl_thenUsedAsIs() {
     assertThat(
             extension.getDdl(
                 List.of(
@@ -109,29 +109,9 @@ class PgPartmanExtensionTest {
                         PartitionType.RANGE,
                         List.of("time"),
                         Duration.ofDays(14),
-                        "1 day"))))
-        .contains("p_interval => '1 day'")
+                        "2 weeks"))))
+        .contains("p_interval => '2 weeks'")
         .contains("retention = '14 days'");
-  }
-
-  @Test
-  void givenNoPartitionInterval_whenGetDdl_thenIntervalDerivedFromTtl() {
-    assertThat(
-            extension.getDdl(
-                List.of(
-                    table("Metrics", PartitionType.RANGE, List.of("time"), Duration.ofDays(14)))))
-        .contains("p_interval => '1 week'")
-        .contains("retention = '14 days'");
-  }
-
-  @Test
-  void givenTtl_whenDeriveInterval_thenBucketedByDuration() {
-    assertThat(PgPartmanExtension.deriveInterval(Duration.ofHours(6))).isEqualTo("1 day");
-    assertThat(PgPartmanExtension.deriveInterval(Duration.ofDays(6))).isEqualTo("1 day");
-    assertThat(PgPartmanExtension.deriveInterval(Duration.ofDays(7))).isEqualTo("1 week");
-    assertThat(PgPartmanExtension.deriveInterval(Duration.ofDays(89))).isEqualTo("1 week");
-    assertThat(PgPartmanExtension.deriveInterval(Duration.ofDays(90))).isEqualTo("1 month");
-    assertThat(PgPartmanExtension.deriveInterval(Duration.ofDays(365))).isEqualTo("1 month");
   }
 
   @Test

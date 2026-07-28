@@ -67,18 +67,11 @@ class AbstractJdbcStatementFactoryTest {
   }
 
   @Test
-  void givenTtlHintWithPartitionInterval_whenCreateTable_thenBothPopulated() {
-    var stmt = createTable(hints(new SqrlHint("ttl", List.of("14 days", "1 day"))));
-
-    assertThat(stmt.getTtl()).isEqualTo(Duration.ofDays(14));
-    assertThat(stmt.getPartitionInterval()).isEqualTo("1 day");
-  }
-
-  @Test
-  void givenTtlHintWithoutPartitionInterval_whenCreateTable_thenIntervalNull() {
+  void givenTtlHint_whenCreateTable_thenTtlPopulated() {
     var stmt = createTable(hints(new SqrlHint("ttl", List.of("30 days"))));
 
     assertThat(stmt.getTtl()).isEqualTo(Duration.ofDays(30));
+    // no partition_key hint, so the table is not range-partitioned
     assertThat(stmt.getPartitionInterval()).isNull();
   }
 

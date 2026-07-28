@@ -39,6 +39,7 @@ import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.sql.DatabaseTypeExtension;
 import com.datasqrl.util.CalciteUtil;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -162,7 +163,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     PartitionType partitionType = getPartitionType(createTable, partitionKeys);
     var ttlHint = createTable.tableAnalysis().getHints().getHint(TtlHint.class);
     Duration ttl = ttlHint.flatMap(TtlHint::getTtl).orElse(Duration.ZERO);
-    String partitionInterval = ttlHint.flatMap(TtlHint::getPartitionInterval).orElse(null);
+    ChronoUnit ttlUnit = ttlHint.flatMap(TtlHint::getTtlUnit).orElse(null);
+    String partitionInterval = derivePartitionInterval(partitionType, ttl, ttlUnit);
 
     return new CreateTableJdbcStatement(
         tableName,
@@ -184,6 +186,15 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   protected PartitionType getPartitionType(
       JdbcEngineCreateTable createTable, List<String> partitionKey) {
     return partitionKey.isEmpty() ? PartitionType.NONE : PartitionType.LIST;
+  }
+
+  /**
+   * The width of the partitions for range-partitioned tables with a TTL - null when the dialect
+   * does not support time-based partitioning.
+   */
+  protected String derivePartitionInterval(
+      PartitionType partitionType, Duration ttl, ChronoUnit ttlUnit) {
+    return null;
   }
 
   protected List<Field> getColumns(

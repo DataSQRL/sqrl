@@ -23,9 +23,13 @@ import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
 import com.datasqrl.planner.parser.StatementParserException;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class TtlHintTest {
 
@@ -37,54 +41,55 @@ class TtlHintTest {
   }
 
   @Test
-  void givenSingleDurationArg_whenCreate_thenTtlSetAndNoPartitionInterval() {
+  void givenSingleDurationArg_whenCreate_thenTtlAndUnitSet() {
     var hint = (TtlHint) ttlFactory.create(hint("ttl", "14 days"));
 
     assertThat(hint.getTtl()).contains(Duration.ofDays(14));
-    assertThat(hint.getPartitionInterval()).isEmpty();
+    assertThat(hint.getTtlUnit()).contains(ChronoUnit.DAYS);
   }
 
   @Test
-  void givenNoArgs_whenCreate_thenEmptyTtlAndPartitionInterval() {
+  void givenNoArgs_whenCreate_thenEmptyTtlAndUnit() {
     var hint = (TtlHint) ttlFactory.create(hint("ttl"));
 
     assertThat(hint.getTtl()).isEmpty();
-    assertThat(hint.getPartitionInterval()).isEmpty();
+    assertThat(hint.getTtlUnit()).isEmpty();
   }
 
-  @Test
-  void givenDurationAndPartitionIntervalArgs_whenCreate_thenBothSet() {
-    var hint = (TtlHint) ttlFactory.create(hint("ttl", "14 days", "1 day"));
+  @ParameterizedTest
+  @CsvSource({
+    "30 min, 30, MINUTES",
+    "45 minutes, 45, MINUTES",
+    "36 hours, 2160, HOURS",
+    "1 h, 60, HOURS",
+    "14 days, 20160, DAYS",
+    "1 d, 1440, DAYS",
+    "2 weeks, 20160, WEEKS",
+    "5 week, 50400, WEEKS",
+    "14days, 20160, DAYS"
+  })
+  void givenSupportedUnit_whenCreate_thenTtlAndUnitParsed(
+      String argument, long expectedMinutes, ChronoUnit expectedUnit) {
+    var hint = (TtlHint) ttlFactory.create(hint("ttl", argument));
 
-    assertThat(hint.getTtl()).contains(Duration.ofDays(14));
-    assertThat(hint.getPartitionInterval()).contains("1 day");
+    assertThat(hint.getTtl()).contains(Duration.ofMinutes(expectedMinutes));
+    assertThat(hint.getTtlUnit()).contains(expectedUnit);
   }
 
-  @Test
-  void givenPluralPartitionInterval_whenCreate_thenAccepted() {
-    var hint = (TtlHint) ttlFactory.create(hint("ttl", "90 days", "2 weeks"));
-
-    assertThat(hint.getPartitionInterval()).contains("2 weeks");
-  }
-
-  @Test
-  void givenInvalidPartitionInterval_whenCreate_thenThrows() {
-    assertThatThrownBy(() -> ttlFactory.create(hint("ttl", "14 days", "daily")))
+  @ParameterizedTest
+  @ValueSource(
+      strings = {"10 s", "10 seconds", "500 ms", "3 months", "1 year", "fortnight", "14", "days"})
+  void givenUnsupportedUnitOrFormat_whenCreate_thenThrows(String argument) {
+    assertThatThrownBy(() -> ttlFactory.create(hint("ttl", argument)))
         .isInstanceOf(StatementParserException.class)
-        .hasMessageContaining("partition interval");
+        .hasMessageContaining("unit between minute and week");
   }
 
   @Test
-  void givenThreeArgs_whenCreate_thenThrows() {
-    assertThatThrownBy(() -> ttlFactory.create(hint("ttl", "14 days", "1 day", "extra")))
-        .isInstanceOf(StatementParserException.class);
-  }
-
-  @Test
-  void givenInvalidDuration_whenCreate_thenThrows() {
-    assertThatThrownBy(() -> ttlFactory.create(hint("ttl", "fortnight")))
+  void givenTwoArgs_whenCreate_thenThrows() {
+    assertThatThrownBy(() -> ttlFactory.create(hint("ttl", "14 days", "1 day")))
         .isInstanceOf(StatementParserException.class)
-        .hasMessageContaining("duration");
+        .hasMessageContaining("one duration argument");
   }
 
   @Test
@@ -101,11 +106,11 @@ class TtlHintTest {
   }
 
   @Test
-  void givenNullOptions_whenCreate_thenEmptyTtlAndPartitionInterval() {
+  void givenNullOptions_whenCreate_thenEmptyTtlAndUnit() {
     var hint = (TtlHint) ttlFactory.create(nullArgsHint("ttl", (List<String>) null));
 
     assertThat(hint.getTtl()).isEmpty();
-    assertThat(hint.getPartitionInterval()).isEmpty();
+    assertThat(hint.getTtlUnit()).isEmpty();
   }
 
   @Test
@@ -126,13 +131,6 @@ class TtlHintTest {
     assertThatThrownBy(
             () -> cacheFactory.create(nullArgsHint("cache", Arrays.asList((String) null))))
         .isInstanceOf(StatementParserException.class);
-  }
-
-  @Test
-  void givenNullPartitionInterval_whenCreate_thenThrows() {
-    assertThatThrownBy(() -> ttlFactory.create(nullArgsHint("ttl", Arrays.asList("14 days", null))))
-        .isInstanceOf(StatementParserException.class)
-        .hasMessageContaining("partition interval");
   }
 
   private static ParsedObject<SqrlHint> nullArgsHint(String name, List<String> args) {

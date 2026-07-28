@@ -60,7 +60,7 @@ public class CreateTableJdbcStatement implements JdbcStatement {
   /** The time-to-live of records in this table - ZERO to disable */
   Duration ttl;
 
-  /** Explicit partition interval for range-partitioned tables - null to derive from ttl */
+  /** Partition width for range-partitioned tables, derived from the ttl - null when not ranged */
   String partitionInterval;
 
   /** The engine table - nullable and not set when deserialized */

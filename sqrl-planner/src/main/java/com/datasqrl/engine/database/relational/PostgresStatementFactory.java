@@ -23,6 +23,7 @@ import com.datasqrl.calcite.convert.PostgresRelToSqlNode;
 import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.config.JdbcDialect;
+import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
 import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.database.relational.ddl.CreateIndexDDL;
@@ -37,6 +38,8 @@ import com.datasqrl.sql.DatabaseTableExtension;
 import com.datasqrl.sql.DatabaseTypeExtension;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,12 +53,51 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 public class PostgresStatementFactory extends AbstractJdbcStatementFactory
     implements JdbcStatementFactory {
 
+  public static final String PARTITION_DIVISOR_KEY = "partition-divisor";
+  public static final int DEFAULT_PARTITION_DIVISOR = 100;
+
+  /**
+   * Calendar-aligned partition widths pg_partman can use, in minutes, with their interval labels.
+   */
+  private static final long[] PARTITION_MENU_MINUTES = {
+    15, 30, 60, 120, 240, 360, 480, 720, 1440, 2880, 5760, 10080, 20160, 40320, 80640, 120960
+  };
+
+  private static final String[] PARTITION_MENU_LABELS = {
+    "15 minutes", "30 minutes", "1 hour", "2 hours", "4 hours", "6 hours", "8 hours", "12 hours",
+    "1 day", "2 days", "4 days", "1 week", "2 weeks", "4 weeks", "8 weeks", "12 weeks"
+  };
+
+  private final int partitionDivisor;
+
   public PostgresStatementFactory() {
+    this(DEFAULT_PARTITION_DIVISOR);
+  }
+
+  public PostgresStatementFactory(EngineConfig engineConfig) {
+    this(parsePartitionDivisor(engineConfig));
+  }
+
+  public PostgresStatementFactory(int partitionDivisor) {
     super(
         new OperatorRuleTransformer(Dialect.POSTGRES),
         new PostgresRelToSqlNode(),
         new PostgresSqlNodeToString(),
         new PostgresCreateTableDdlFactory(true));
+    checkArgument(partitionDivisor > 0, "%s must be a positive number", PARTITION_DIVISOR_KEY);
+    this.partitionDivisor = partitionDivisor;
+  }
+
+  private static int parsePartitionDivisor(EngineConfig engineConfig) {
+    var setting =
+        engineConfig.getSetting(
+            PARTITION_DIVISOR_KEY, Optional.of(String.valueOf(DEFAULT_PARTITION_DIVISOR)));
+    try {
+      return Integer.parseInt(setting.trim());
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException(
+          "%s must be a positive number, but was: %s".formatted(PARTITION_DIVISOR_KEY, setting), e);
+    }
   }
 
   @Override
@@ -98,6 +140,32 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory
 
     // Look up field reldatatype to determine partition type
     return CalciteUtil.isTimestamp(colType.getType()) ? PartitionType.RANGE : PartitionType.HASH;
+  }
+
+  @Override
+  protected String derivePartitionInterval(
+      PartitionType partitionType, Duration ttl, ChronoUnit ttlUnit) {
+    if (partitionType != PartitionType.RANGE || ttl == null || ttl.isZero() || ttlUnit == null) {
+      return null;
+    }
+    return derivePartitionInterval(ttl, ttlUnit, partitionDivisor);
+  }
+
+  /**
+   * Picks the partition width for a range-partitioned table with a TTL: the TTL divided by the
+   * configured divisor caps the partition count, while the unit the TTL was declared with sets the
+   * floor. The result is snapped down to the closest calendar-aligned width from the menu.
+   */
+  static String derivePartitionInterval(Duration ttl, ChronoUnit ttlUnit, int partitionDivisor) {
+    var floorMinutes = ttlUnit.getDuration().toMinutes();
+    var targetMinutes = Math.max(ttl.toMinutes() / (double) partitionDivisor, floorMinutes);
+    var interval = PARTITION_MENU_LABELS[0];
+    for (var i = 0; i < PARTITION_MENU_MINUTES.length; i++) {
+      if (PARTITION_MENU_MINUTES[i] <= targetMinutes) {
+        interval = PARTITION_MENU_LABELS[i];
+      }
+    }
+    return interval;
   }
 
   @Override
