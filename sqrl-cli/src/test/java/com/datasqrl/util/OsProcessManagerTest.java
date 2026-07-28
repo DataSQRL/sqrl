@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -147,7 +146,7 @@ class OsProcessManagerTest {
       // Mock that no services are needed
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(), List.of())));
+          .thenReturn(Optional.of(KafkaPhysicalPlan.builder().build()));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
@@ -345,7 +344,7 @@ class OsProcessManagerTest {
       var mockTopic = mock(NewTopic.class);
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
+          .thenReturn(Optional.of(KafkaPhysicalPlan.builder().topic(mockTopic).build()));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
@@ -445,7 +444,7 @@ class OsProcessManagerTest {
       var mockTopic = mock(NewTopic.class);
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
+          .thenReturn(Optional.of(KafkaPhysicalPlan.builder().topic(mockTopic).build()));
       var mockStatement =
           new GenericJdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
       var mockJdbcPlan = JdbcPlan.builder().statement(mockStatement).build();
