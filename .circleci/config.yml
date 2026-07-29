@@ -375,8 +375,15 @@ jobs:
               -Dit.test="$SHARD_TESTS" \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
+      - run:
+          name: Collect test results
+          command: |
+            mkdir -p ~/test-results/container-${CIRCLE_NODE_INDEX}/
+            find sqrl-testing/sqrl-testing-container/target/failsafe-reports -name "TEST-*.xml" \
+              -exec cp {} ~/test-results/container-${CIRCLE_NODE_INDEX}/ \;
+          when: always
       - store_test_results:
-          path: sqrl-testing/sqrl-testing-container/target/failsafe-reports
+          path: ~/test-results
           when: always
 
   deploy:
