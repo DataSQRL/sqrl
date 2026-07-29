@@ -33,6 +33,9 @@
     "duckdb": {
       "url": "jdbc:duckdb:"
     },
+    "postgres": {
+      "partition-divisor": 100
+    },
     "kafka": {
       "retention": null,
       "watermark": "0 ms",

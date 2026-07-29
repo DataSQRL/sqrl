@@ -172,7 +172,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     var ttlHint = createTable.tableAnalysis().getHints().getHint(TtlHint.class);
     Duration ttl = ttlHint.flatMap(TtlHint::getTtl).orElse(Duration.ZERO);
     ChronoUnit ttlUnit = ttlHint.flatMap(TtlHint::getTtlUnit).orElse(null);
-    String partitionInterval = derivePartitionInterval(partitionType, ttl, ttlUnit);
+    String partitionInterval = derivePartitionInterval(partitionType, ttl, ttlUnit).orElse(null);
 
     return new CreateTableJdbcStatement(
         tableName,
@@ -197,12 +197,12 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   }
 
   /**
-   * The width of the partitions for range-partitioned tables with a TTL - null when the dialect
+   * The width of the partitions for range-partitioned tables with a TTL - empty when the dialect
    * does not support time-based partitioning.
    */
-  protected String derivePartitionInterval(
+  protected Optional<String> derivePartitionInterval(
       PartitionType partitionType, Duration ttl, ChronoUnit ttlUnit) {
-    return null;
+    return Optional.empty();
   }
 
   protected List<Field> getColumns(

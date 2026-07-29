@@ -64,8 +64,6 @@ class TtlHintTest {
     "1 h, 60, HOURS",
     "14 days, 20160, DAYS",
     "1 d, 1440, DAYS",
-    "2 weeks, 20160, WEEKS",
-    "5 week, 50400, WEEKS",
     "14days, 20160, DAYS"
   })
   void givenSupportedUnit_whenCreate_thenTtlAndUnitParsed(
@@ -78,11 +76,22 @@ class TtlHintTest {
 
   @ParameterizedTest
   @ValueSource(
-      strings = {"10 s", "10 seconds", "500 ms", "3 months", "1 year", "fortnight", "14", "days"})
+      strings = {
+        "10 s",
+        "10 seconds",
+        "500 ms",
+        "2 weeks",
+        "5 week",
+        "3 months",
+        "1 year",
+        "fortnight",
+        "14",
+        "days"
+      })
   void givenUnsupportedUnitOrFormat_whenCreate_thenThrows(String argument) {
     assertThatThrownBy(() -> ttlFactory.create(hint("ttl", argument)))
         .isInstanceOf(StatementParserException.class)
-        .hasMessageContaining("unit between minute and week");
+        .hasMessageContaining("unit between minute and day");
   }
 
   @Test
