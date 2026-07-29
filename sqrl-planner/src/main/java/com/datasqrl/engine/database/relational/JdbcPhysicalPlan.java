@@ -15,12 +15,12 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.deployment.model.JdbcPlanModel;
+import com.datasqrl.deployment.model.JdbcStatementModel;
+import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
-import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,34 +38,33 @@ import org.apache.calcite.rel.RelNode;
  */
 @Builder(toBuilder = true)
 public record JdbcPhysicalPlan(
-    @JsonIgnore ExecutionStage stage,
+    ExecutionStage stage,
     @Singular List<JdbcStatement> statements,
     @Singular List<JdbcStatement> standaloneExtensionStatements,
-    @JsonIgnore @Singular List<RelNode> queries,
-    @JsonIgnore Map<String, CreateTableJdbcStatement> tableIdMap)
+    @Singular List<RelNode> queries,
+    Map<String, CreateTableJdbcStatement> tableIdMap)
     implements DatabasePhysicalPlan {
 
-  @SuppressWarnings("unused")
-  @JsonCreator
-  public JdbcPhysicalPlan(@JsonProperty("statements") List<JdbcStatement> statements) {
-    this(null, new ArrayList<>(statements), List.of(), List.of(), Map.of());
+  @JsonValue
+  public JdbcPlanModel toModel() {
+    return new JdbcPlanModel(
+        statements.stream().map(JdbcPhysicalPlan::toStatementModel).toList(),
+        standaloneExtensionStatements.stream().map(JdbcPhysicalPlan::toStatementModel).toList());
   }
 
   public List<JdbcStatement> getStatementsForType(Type type) {
-    return statements.stream().filter(s -> s.getType() == type).collect(Collectors.toList());
+    return statements.stream().filter(statement -> statement.getType() == type).toList();
   }
 
-  @JsonIgnore
-  @Override
   public List<DeploymentArtifact> getDeploymentArtifacts() {
     var artifacts = new ArrayList<DeploymentArtifact>();
     artifacts.add(new DeploymentArtifact("-schema.sql", buildSchemaContent()));
     artifacts.add(new DeploymentArtifact("-views.sql", toSql(getStatementsForType(Type.VIEW))));
-
     standaloneExtensionStatements.stream()
-        .map(stmt -> new DeploymentArtifact(formatSuffix(stmt.getName()), toSql(stmt)))
+        .map(
+            statement ->
+                new DeploymentArtifact("-" + statement.getName() + ".sql", toSql(statement)))
         .forEach(artifacts::add);
-
     return List.copyOf(artifacts);
   }
 
@@ -77,15 +76,42 @@ public record JdbcPhysicalPlan(
         .collect(Collectors.joining(";\n\n"));
   }
 
+  private static JdbcStatementModel toStatementModel(JdbcStatement statement) {
+    var fields =
+        statement.getFields() == null
+            ? null
+            : statement.getFields().stream()
+                .map(
+                    field ->
+                        new JdbcStatementModel.Field(
+                            field.name(), field.type(), field.nullable(), field.description()))
+                .toList();
+    if (statement instanceof CreateTableJdbcStatement createTable) {
+      return new JdbcStatementModel(
+          statement.getName(),
+          statement.getType(),
+          statement.getSql(),
+          statement.getDescription(),
+          fields,
+          createTable.getPrimaryKey(),
+          createTable.getPartitionKey(),
+          createTable.getPartitionType(),
+          createTable.getNumPartitions(),
+          createTable.getTtl());
+    }
+    return new JdbcStatementModel(
+        statement.getName(),
+        statement.getType(),
+        statement.getSql(),
+        statement.getDescription(),
+        fields);
+  }
+
   private static String toSql(List<JdbcStatement> statements) {
     return DeploymentArtifact.toSqlString(statements.stream().map(JdbcStatement::getSql));
   }
 
-  private static String toSql(JdbcStatement stmt) {
-    return DeploymentArtifact.toSqlString(stmt.getSql());
-  }
-
-  private static String formatSuffix(String name) {
-    return "-" + name + ".sql";
+  private static String toSql(JdbcStatement statement) {
+    return DeploymentArtifact.toSqlString(statement.getSql());
   }
 }

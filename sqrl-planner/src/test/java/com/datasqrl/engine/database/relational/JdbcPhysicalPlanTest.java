@@ -17,8 +17,8 @@ package com.datasqrl.engine.database.relational;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
-import com.datasqrl.engine.database.relational.JdbcStatement.Type;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -74,7 +74,7 @@ class JdbcPhysicalPlanTest {
   void givenJsonCreatorPlan_whenGetStatementsForType_thenFiltersByType() {
     var table = stmt("t1", Type.TABLE, "CREATE TABLE t1");
     var view = stmt("v1", Type.VIEW, "CREATE VIEW v1");
-    var plan = new JdbcPhysicalPlan(List.of(table, view));
+    var plan = new JdbcPhysicalPlan(null, List.of(table, view), List.of(), List.of(), Map.of());
 
     assertThat(plan.getStatementsForType(Type.TABLE)).containsExactly(table);
     assertThat(plan.getStatementsForType(Type.INDEX)).isEmpty();

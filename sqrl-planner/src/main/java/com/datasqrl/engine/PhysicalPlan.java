@@ -16,6 +16,7 @@
 package com.datasqrl.engine;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.deployment.model.MutationDatabaseModel;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
@@ -42,7 +43,7 @@ public class PhysicalPlan {
     return StreamUtil.filterByClass(stagePlans.stream().map(PhysicalStagePlan::plan), clazz);
   }
 
-  public MutationDatabase getMutationDatabase() {
+  public MutationDatabaseModel getMutationDatabase() {
     return MutationDatabase.from(mutationTables.values());
   }
 

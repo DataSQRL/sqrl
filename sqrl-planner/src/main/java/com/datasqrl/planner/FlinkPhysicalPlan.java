@@ -17,12 +17,13 @@ package com.datasqrl.planner;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import com.datasqrl.deployment.model.FlinkPlanModel;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.relational.IcebergEngineFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.util.CompiledPlanCondenser;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
@@ -38,6 +39,7 @@ import lombok.Value;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.ConfigurationUtils;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
@@ -66,18 +68,27 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
   Set<String> connectors;
   Set<String> formats;
   Set<String> functions;
-  @JsonIgnore Optional<String> compiledPlan;
-  @JsonIgnore Optional<String> explainedPlan;
-  @JsonIgnore List<String> flinkSqlNoFunctions;
-  @JsonIgnore Configuration config;
-  @JsonIgnore ListMultimap<Integer, String> flinkSqlBatched;
-  @JsonIgnore ListMultimap<Integer, String> flinkSqlNoFunctionsBatched;
+  Optional<String> compiledPlan;
+  Optional<String> explainedPlan;
+  List<String> flinkSqlNoFunctions;
+  Configuration config;
+  ListMultimap<Integer, String> flinkSqlBatched;
+  ListMultimap<Integer, String> flinkSqlNoFunctionsBatched;
+
+  @JsonValue
+  public FlinkPlanModel toModel() {
+    return new FlinkPlanModel(flinkSql, connectors, formats, functions);
+  }
+
+  private static String toYamlString(Configuration config) {
+    return String.join("\n", ConfigurationUtils.convertConfigToWritableLines(config, false));
+  }
 
   @Override
   public List<DeploymentArtifact> getDeploymentArtifacts() {
     var builder = ImmutableList.<DeploymentArtifact>builder();
     builder.add(
-        new DeploymentArtifact("-config.yaml", DeploymentArtifact.toYamlString(config)),
+        new DeploymentArtifact("-config.yaml", toYamlString(config)),
         new DeploymentArtifact("-sql.sql", DeploymentArtifact.toSqlString(flinkSql)),
         new DeploymentArtifact(
             "-sql-no-functions.sql", DeploymentArtifact.toSqlString(flinkSqlNoFunctions)),

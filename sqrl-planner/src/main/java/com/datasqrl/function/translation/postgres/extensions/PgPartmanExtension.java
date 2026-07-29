@@ -15,8 +15,8 @@
  */
 package com.datasqrl.function.translation.postgres.extensions;
 
+import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
-import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
 import com.datasqrl.sql.DatabaseTableExtension;
 import com.google.auto.service.AutoService;
 import com.google.common.base.Preconditions;

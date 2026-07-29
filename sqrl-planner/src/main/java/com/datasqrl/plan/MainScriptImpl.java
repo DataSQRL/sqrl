@@ -16,9 +16,9 @@
 package com.datasqrl.plan;
 
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.deployment.model.MutationDatabaseModel;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.resolver.ResourceResolver;
-import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FileUtil;
 import java.nio.file.Path;
@@ -55,7 +55,7 @@ public class MainScriptImpl implements MainScript {
   }
 
   @Override
-  public Optional<MutationDatabase> getMutationDatabase() {
+  public Optional<MutationDatabaseModel> getMutationDatabase() {
     return config
         .getScriptConfig()
         .getDatabase()

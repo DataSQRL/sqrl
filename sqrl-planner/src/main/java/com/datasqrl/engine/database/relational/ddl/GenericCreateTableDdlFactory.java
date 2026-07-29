@@ -18,9 +18,9 @@ package com.datasqrl.engine.database.relational.ddl;
 import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory.quoteIdentifier;
 import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory.quoteIdentifiers;
 
+import com.datasqrl.deployment.model.JdbcStatementModel.Field;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.CreateTableDdlFactory;
-import com.datasqrl.engine.database.relational.JdbcStatement.Field;
 import java.util.List;
 import java.util.StringJoiner;
 

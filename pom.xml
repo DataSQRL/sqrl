@@ -69,6 +69,7 @@
     <module>sqrl-cli</module>
     <module>sqrl-discovery</module>
     <module>sqrl-planner</module>
+    <module>sqrl-deployment-model</module>
     <module>sqrl-server</module>
     <module>sqrl-testing</module>
   </modules>
@@ -220,6 +221,11 @@
       </dependency>
 
       <!-- SQRL deps, please keep this in order -->
+      <dependency>
+        <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-deployment-model</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-server-core</artifactId>

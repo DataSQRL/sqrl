@@ -21,7 +21,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
+import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;

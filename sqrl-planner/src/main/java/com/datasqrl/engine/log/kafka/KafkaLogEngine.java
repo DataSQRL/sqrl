@@ -24,6 +24,7 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.json.FlexibleJsonFlinkFormatTypeMapper;
+import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -339,21 +340,21 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         Streams.concat(
                 stagePlan.getTables().stream()
                     .map(Table.class::cast)
-                    .map(t -> createNewTopic(t, NewTopic.Type.SUBSCRIPTION)),
+                    .map(t -> createNewTopic(t, KafkaNewTopicModel.Type.SUBSCRIPTION)),
                 stagePlan.getMutations().stream()
                     .map(Table.class::cast)
-                    .map(t -> createNewTopic(t, NewTopic.Type.MUTATION)))
+                    .map(t -> createNewTopic(t, KafkaNewTopicModel.Type.MUTATION)))
             .toList();
 
     var testRunnerTopics =
         testRunnerConfig.getCreateTopics().stream()
-            .map(topicName -> new NewTopic(topicName, topicName))
+            .map(topicName -> new KafkaNewTopic(new KafkaNewTopicModel(topicName, topicName)))
             .toList();
 
     return new KafkaPhysicalPlan(topics, testRunnerTopics);
   }
 
-  private NewTopic createNewTopic(Table table, NewTopic.Type type) {
+  private KafkaNewTopic createNewTopic(Table table, KafkaNewTopicModel.Type type) {
     String messageSchema;
     if (format.startsWith("avro")) {
       messageSchema =
@@ -361,16 +362,17 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     } else {
       messageSchema = ""; // TODO: generate JSON schema
     }
-    return new NewTopic(
-        table.topicName(),
-        table.tableName(),
-        table.format(),
-        numPartitions,
-        replicationFactor,
-        type,
-        table.messageKeys(),
-        messageSchema,
-        table.config());
+    return new KafkaNewTopic(
+        new KafkaNewTopicModel(
+            table.topicName(),
+            table.tableName(),
+            table.format(),
+            numPartitions,
+            replicationFactor,
+            type,
+            table.messageKeys(),
+            messageSchema,
+            table.config()));
   }
 
   public record Table(

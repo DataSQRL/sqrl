@@ -17,8 +17,8 @@ package com.datasqrl.engine.database.relational.ddl;
 
 import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory.quoteIdentifier;
 
+import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
-import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
 import java.time.Duration;
 import java.util.EnumSet;
 import java.util.Optional;
