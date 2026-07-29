@@ -32,7 +32,6 @@ public class IcebergStatementFactory extends AbstractJdbcStatementFactory {
     super(
         new OperatorRuleTransformer(Dialect.POSTGRES),
         null, // Iceberg does not support queries
-        null, // Iceberg does not support queries
         new IcebergCreateTableDdlFactory());
   }
 

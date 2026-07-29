@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.util;
+package com.datasqrl.calcite.convert;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
-import com.datasqrl.calcite.convert.SqlNodeToString;
-import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
+import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.google.auto.service.AutoService;
 
-@AutoService(SqlNodeToString.class)
-public class FlinkSqlNodeToString implements SqlNodeToString {
+@AutoService(SqlConverters.class)
+public class PostgresSqlConverters extends AbstractSqlConverters {
 
-  @Override
-  public SqlStrings convert(SqlNodes sqlNode) {
-    // TODO: Migrate remaining FlinkRelToSqlConverter to this paradigm
-    return RelToFlinkSql.convertToString(sqlNode);
-  }
-
-  @Override
-  public Dialect getDialect() {
-    return Dialect.FLINK;
+  public PostgresSqlConverters() {
+    super(Dialect.POSTGRES, ExtendedPostgresSqlDialect.DEFAULT, false);
   }
 }

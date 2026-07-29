@@ -16,9 +16,6 @@
 package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.OperatorRuleTransformer;
-import com.datasqrl.calcite.convert.SnowflakeRelToSqlNode;
-import com.datasqrl.calcite.convert.SnowflakeSqlNodeToString;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromObjectStorage;
 import com.datasqrl.config.JdbcDialect;
@@ -39,11 +36,7 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
   private final EngineConfig engineConfig;
 
   public SnowflakeStatementFactory(EngineConfig engineConfig) {
-    super(
-        new OperatorRuleTransformer(Dialect.SNOWFLAKE),
-        new SnowflakeRelToSqlNode(),
-        new SnowflakeSqlNodeToString(),
-        new GenericCreateTableDdlFactory()); // Iceberg does not support queries
+    super(Dialect.SNOWFLAKE, new GenericCreateTableDdlFactory());
     this.engineConfig = engineConfig;
   }
 
@@ -78,7 +71,7 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
             null,
             null);
 
-    return sqlNodeToString.convert(() -> icebergTable).getSql();
+    return sqlConverters.convert(icebergTable);
   }
 
   @Override

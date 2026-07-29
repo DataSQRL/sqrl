@@ -495,7 +495,7 @@ END
     {
       "name" : "MachineIntervalJoin",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"MachineIntervalJoin\"(\"sensorid\", \"temperature\", \"event_time\", \"machineid\") AS SELECT \"_SensorReading_32\".\"sensorid\", \"_SensorReading_32\".\"temperature\", \"_SensorReading_32\".\"event_time\", \"_Sensors_42\".\"machineid\"\nFROM \"_SensorReading_3\" AS \"_SensorReading_32\"\n INNER JOIN \"_Sensors_4\" AS \"_Sensors_42\" ON \"_SensorReading_32\".\"sensorid\" = \"_Sensors_42\".\"sensorid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"MachineIntervalJoin\"(\"sensorid\", \"temperature\", \"event_time\", \"machineid\") AS SELECT \"_SensorReading_30\".\"sensorid\", \"_SensorReading_30\".\"temperature\", \"_SensorReading_30\".\"event_time\", \"_Sensors_40\".\"machineid\"\nFROM \"_SensorReading_3\" AS \"_SensorReading_30\"\n INNER JOIN \"_Sensors_4\" AS \"_Sensors_40\" ON \"_SensorReading_30\".\"sensorid\" = \"_Sensors_40\".\"sensorid\"",
       "fields" : [
         {
           "name" : "sensorid",
@@ -522,7 +522,7 @@ END
     {
       "name" : "MachineIntervalJoinLimit",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"MachineIntervalJoinLimit\"(\"sensorid\", \"temperature\", \"event_time\", \"machineid\") AS SELECT \"_SensorReading_32\".\"sensorid\", \"_SensorReading_32\".\"temperature\", \"_SensorReading_32\".\"event_time\", \"_Sensors_42\".\"machineid\"\nFROM \"_SensorReading_3\" AS \"_SensorReading_32\"\n INNER JOIN \"_Sensors_4\" AS \"_Sensors_42\" ON \"_SensorReading_32\".\"sensorid\" = \"_Sensors_42\".\"sensorid\" AND \"_SensorReading_32\".\"event_time\" >= \"_Sensors_42\".\"updatedTime\" AND \"_SensorReading_32\".\"event_time\" < \"_Sensors_42\".\"updatedTime\" + INTERVAL '10' MINUTE",
+      "sql" : "CREATE OR REPLACE VIEW \"MachineIntervalJoinLimit\"(\"sensorid\", \"temperature\", \"event_time\", \"machineid\") AS SELECT \"_SensorReading_30\".\"sensorid\", \"_SensorReading_30\".\"temperature\", \"_SensorReading_30\".\"event_time\", \"_Sensors_40\".\"machineid\"\nFROM \"_SensorReading_3\" AS \"_SensorReading_30\"\n INNER JOIN \"_Sensors_4\" AS \"_Sensors_40\" ON \"_SensorReading_30\".\"sensorid\" = \"_Sensors_40\".\"sensorid\" AND \"_SensorReading_30\".\"event_time\" >= \"_Sensors_40\".\"updatedTime\" AND \"_SensorReading_30\".\"event_time\" < \"_Sensors_40\".\"updatedTime\" + INTERVAL '10' MINUTE",
       "fields" : [
         {
           "name" : "sensorid",

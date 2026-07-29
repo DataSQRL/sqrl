@@ -18,9 +18,6 @@ package com.datasqrl.engine.database.relational;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.OperatorRuleTransformer;
-import com.datasqrl.calcite.convert.PostgresRelToSqlNode;
-import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
@@ -50,8 +47,7 @@ import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.parser.SqlParserPos;
 
-public class PostgresStatementFactory extends AbstractJdbcStatementFactory
-    implements JdbcStatementFactory {
+public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
 
   public static final String PARTITION_DIVISOR_KEY = "partition-divisor";
   public static final int DEFAULT_PARTITION_DIVISOR = 100;
@@ -79,11 +75,7 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory
   }
 
   public PostgresStatementFactory(int partitionDivisor) {
-    super(
-        new OperatorRuleTransformer(Dialect.POSTGRES),
-        new PostgresRelToSqlNode(),
-        new PostgresSqlNodeToString(),
-        new PostgresCreateTableDdlFactory(true));
+    super(Dialect.POSTGRES, new PostgresCreateTableDdlFactory(true));
     checkArgument(partitionDivisor > 0, "%s must be a positive number", PARTITION_DIVISOR_KEY);
     this.partitionDivisor = partitionDivisor;
   }
