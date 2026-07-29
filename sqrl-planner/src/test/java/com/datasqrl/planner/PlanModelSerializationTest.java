@@ -52,6 +52,7 @@ class PlanModelSerializationTest {
             4,
             Duration.ofSeconds(30),
             null,
+            null,
             statement -> "CREATE TABLE orders");
     var view =
         new GenericJdbcStatement(

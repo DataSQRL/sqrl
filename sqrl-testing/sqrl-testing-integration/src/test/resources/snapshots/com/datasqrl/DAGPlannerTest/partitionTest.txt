@@ -246,8 +246,7 @@ END
       ],
       "partitionType" : "RANGE",
       "numPartitions" : 1,
-      "ttl" : 172800.000000000,
-      "partitionInterval" : "1 hour"
+      "ttl" : 172800.000000000
     },
     {
       "name" : "OrderUpdates_2",
@@ -284,8 +283,7 @@ END
       ],
       "partitionType" : "RANGE",
       "numPartitions" : 1,
-      "ttl" : 2592000.000000000,
-      "partitionInterval" : "1 day"
+      "ttl" : 2592000.000000000
     },
     {
       "name" : "Orders_3",
