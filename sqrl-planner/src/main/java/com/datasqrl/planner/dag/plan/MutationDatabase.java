@@ -16,23 +16,28 @@
 package com.datasqrl.planner.dag.plan;
 
 import com.datasqrl.calcite.type.TypeCompatibility;
+import com.datasqrl.deployment.model.MutationDatabaseModel;
+import com.datasqrl.deployment.model.MutationDatabaseModel.ColumnDefinition;
+import com.datasqrl.deployment.model.MutationDatabaseModel.Table;
+import com.datasqrl.deployment.model.MutationDatabaseModel.TableDefinition;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.ParsedRelDataTypeResult;
 import com.datasqrl.server.exec.FlinkExecFunction;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record MutationDatabase(List<Table> tables) {
+/** Builds and compares {@link MutationDatabaseModel}s during planning. */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class MutationDatabase {
 
-  public static MutationDatabase from(Collection<MutationTable> mutationTables) {
+  public static MutationDatabaseModel from(Collection<MutationTable> mutationTables) {
     var tables =
         mutationTables.stream()
             .map(
@@ -66,16 +71,20 @@ public record MutationDatabase(List<Table> tables) {
                       mutTbl.getDocumentation().getDocString(null));
                 })
             .toList();
-    return new MutationDatabase(tables);
+
+    return new MutationDatabaseModel(tables);
   }
 
-  public boolean isBackwardsCompatible(
-      MutationDatabase compareDb, Sqrl2FlinkSQLTranslator env, ErrorCollector errors) {
+  public static boolean isBackwardsCompatible(
+      MutationDatabaseModel database,
+      MutationDatabaseModel compareDb,
+      Sqrl2FlinkSQLTranslator env,
+      ErrorCollector errors) {
     var compareTablesByName =
         compareDb.tables().stream().collect(Collectors.toMap(Table::canonicalName, t -> t));
 
     var compatible = true;
-    for (var table : tables) {
+    for (var table : database.tables()) {
       var compareTable = compareTablesByName.get(table.canonicalName());
       if (compareTable == null) {
         continue;
@@ -160,17 +169,4 @@ public record MutationDatabase(List<Table> tables) {
 
     return compatible;
   }
-
-  public record Table(
-      String canonicalName,
-      String engine,
-      String createTableSql,
-      TableDefinition definition,
-      Map<String, String> configOptions,
-      String documentation) {}
-
-  public record TableDefinition(
-      List<ColumnDefinition> columns, List<String> primaryKey, List<String> partitionKey) {}
-
-  public record ColumnDefinition(String name, String spec, String documentation) {}
 }

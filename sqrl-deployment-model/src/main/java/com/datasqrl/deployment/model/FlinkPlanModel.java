@@ -13,19 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.plan;
+package com.datasqrl.deployment.model;
 
-import com.datasqrl.deployment.model.MutationDatabaseModel;
-import java.nio.file.Path;
-import java.util.Optional;
+import java.util.List;
+import java.util.Set;
 
-public interface MainScript {
-
-  Optional<Path> getPath();
-
-  String getContent();
-
-  default Optional<MutationDatabaseModel> getMutationDatabase() {
-    return Optional.empty();
-  }
-}
+/** The contents of the {@code flink.json} deployment file. */
+public record FlinkPlanModel(
+    List<String> flinkSql, Set<String> connectors, Set<String> formats, Set<String> functions) {}

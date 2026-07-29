@@ -15,6 +15,8 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
+import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -101,13 +103,6 @@ public class CreateTableJdbcStatement implements JdbcStatement {
 
   public String getSql(CreateTableDdlFactory ddlFactory) {
     return ddlFactory.createTableDdl(this);
-  }
-
-  public enum PartitionType {
-    NONE,
-    HASH,
-    LIST,
-    RANGE
   }
 
   public interface CreateTableDdlFactory {

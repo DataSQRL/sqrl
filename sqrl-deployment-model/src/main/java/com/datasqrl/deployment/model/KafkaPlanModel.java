@@ -13,27 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.engine.log.kafka;
+package com.datasqrl.deployment.model;
 
-import com.datasqrl.deployment.model.KafkaPlanModel;
-import com.datasqrl.engine.EnginePhysicalPlan;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
-import lombok.Builder;
-import lombok.Singular;
 
-@Builder
-public record KafkaPhysicalPlan(
-    @Singular List<KafkaNewTopic> topics, @Singular List<KafkaNewTopic> testRunnerTopics)
-    implements EnginePhysicalPlan {
+/** The contents of a Kafka deployment file. */
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record KafkaPlanModel(
+    List<KafkaNewTopicModel> topics, List<KafkaNewTopicModel> testRunnerTopics) {
 
-  public boolean isEmpty() {
-    return topics.isEmpty() && testRunnerTopics.isEmpty();
+  public KafkaPlanModel {
+    topics = topics == null ? List.of() : List.copyOf(topics);
+    testRunnerTopics = testRunnerTopics == null ? List.of() : List.copyOf(testRunnerTopics);
   }
 
-  @Override
-  public KafkaPlanModel toFileModel() {
-    return new KafkaPlanModel(
-        topics.stream().map(KafkaNewTopic::topic).toList(),
-        testRunnerTopics.stream().map(KafkaNewTopic::topic).toList());
+  @JsonIgnore
+  public boolean isEmpty() {
+    return topics.isEmpty() && testRunnerTopics.isEmpty();
   }
 }

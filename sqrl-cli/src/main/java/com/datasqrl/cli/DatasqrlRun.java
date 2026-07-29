@@ -21,6 +21,7 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.flinkrunner.SqrlRunner;
 import com.datasqrl.flinkrunner.utils.EnvUtils;
@@ -260,7 +261,7 @@ public class DatasqrlRun {
     var topicsToCreate = new HashSet<String>();
 
     Stream.concat(kafkaPlan.topics().stream(), kafkaPlan.testRunnerTopics().stream())
-        .map(com.datasqrl.engine.log.kafka.NewTopic::topicName)
+        .map(KafkaNewTopicModel::topicName)
         .forEach(topicsToCreate::add);
 
     var bootstrapServers = getenv(KAFKA_BOOTSTRAP_SERVERS);
@@ -304,9 +305,9 @@ public class DatasqrlRun {
         DriverManager.getConnection(
             getenv(POSTGRES_JDBC_URL), getenv(POSTGRES_USERNAME), getenv(POSTGRES_PASSWORD))) {
       for (var jdbcStmt : statements) {
-        log.info("Executing statement {} of type {}", jdbcStmt.getName(), jdbcStmt.getType());
+        log.info("Executing statement {} of type {}", jdbcStmt.name(), jdbcStmt.type());
         try (Statement stmt = connection.createStatement()) {
-          stmt.execute(jdbcStmt.getSql());
+          stmt.execute(jdbcStmt.sql());
         } catch (Exception e) {
           e.printStackTrace();
           assert false : e.getMessage();

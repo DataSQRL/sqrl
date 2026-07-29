@@ -17,8 +17,8 @@ package com.datasqrl.function.translation.postgres.extensions;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
-import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.PartitionType;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;

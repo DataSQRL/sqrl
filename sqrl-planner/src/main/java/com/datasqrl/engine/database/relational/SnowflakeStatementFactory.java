@@ -23,7 +23,7 @@ import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromObjectStorage;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.engine.database.relational.JdbcStatement.Type;
+import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.database.relational.ddl.GenericCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;

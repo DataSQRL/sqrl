@@ -13,19 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.plan;
+package com.datasqrl.deployment.model;
 
-import com.datasqrl.deployment.model.MutationDatabaseModel;
-import java.nio.file.Path;
-import java.util.Optional;
+import java.util.Map;
 
-public interface MainScript {
+/** The contents of a deployment file that combines plans from multiple database engines. */
+public record CombinedPlanModel(Map<String, Object> plans) {
 
-  Optional<Path> getPath();
-
-  String getContent();
-
-  default Optional<MutationDatabaseModel> getMutationDatabase() {
-    return Optional.empty();
+  public CombinedPlanModel {
+    plans = Map.copyOf(plans);
   }
 }

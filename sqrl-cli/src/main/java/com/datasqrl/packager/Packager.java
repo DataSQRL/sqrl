@@ -142,7 +142,8 @@ public class Packager {
 
     var artifacts =
         ListUtils.union(
-            plan.getDeploymentArtifacts(), List.of(new DeploymentArtifact(".json", plan)));
+            plan.getDeploymentArtifacts(),
+            List.of(new DeploymentArtifact(".json", plan.toFileModel())));
 
     for (var artifact : artifacts) {
       if (artifact.isEmpty()) {

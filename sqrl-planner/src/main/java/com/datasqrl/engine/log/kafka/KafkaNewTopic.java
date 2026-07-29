@@ -15,25 +15,8 @@
  */
 package com.datasqrl.engine.log.kafka;
 
-import com.datasqrl.deployment.model.KafkaPlanModel;
-import com.datasqrl.engine.EnginePhysicalPlan;
-import java.util.List;
-import lombok.Builder;
-import lombok.Singular;
+import com.datasqrl.deployment.model.KafkaNewTopicModel;
+import com.datasqrl.engine.database.EngineCreateTable;
 
-@Builder
-public record KafkaPhysicalPlan(
-    @Singular List<KafkaNewTopic> topics, @Singular List<KafkaNewTopic> testRunnerTopics)
-    implements EnginePhysicalPlan {
-
-  public boolean isEmpty() {
-    return topics.isEmpty() && testRunnerTopics.isEmpty();
-  }
-
-  @Override
-  public KafkaPlanModel toFileModel() {
-    return new KafkaPlanModel(
-        topics.stream().map(KafkaNewTopic::topic).toList(),
-        testRunnerTopics.stream().map(KafkaNewTopic::topic).toList());
-  }
-}
+/** Planner lifecycle wrapper for a Kafka topic deployment model. */
+public record KafkaNewTopic(KafkaNewTopicModel topic) implements EngineCreateTable {}
