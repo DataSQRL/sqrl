@@ -15,7 +15,7 @@
  */
 package com.datasqrl.plan;
 
-import com.datasqrl.planner.dag.plan.MutationDatabase;
+import com.datasqrl.deployment.model.MutationDatabaseModel;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -25,7 +25,7 @@ public interface MainScript {
 
   String getContent();
 
-  default Optional<MutationDatabase> getMutationDatabase() {
+  default Optional<MutationDatabaseModel> getMutationDatabase() {
     return Optional.empty();
   }
 }

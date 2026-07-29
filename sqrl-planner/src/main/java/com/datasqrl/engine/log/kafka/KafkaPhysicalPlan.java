@@ -15,15 +15,26 @@
  */
 package com.datasqrl.engine.log.kafka;
 
+import com.datasqrl.deployment.model.KafkaPlanModel;
 import com.datasqrl.engine.EnginePhysicalPlan;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.List;
+import lombok.Builder;
+import lombok.Singular;
 
-public record KafkaPhysicalPlan(List<NewTopic> topics, List<NewTopic> testRunnerTopics)
+@Builder
+public record KafkaPhysicalPlan(
+    @Singular List<KafkaNewTopic> topics, @Singular List<KafkaNewTopic> testRunnerTopics)
     implements EnginePhysicalPlan {
 
-  @JsonIgnore
   public boolean isEmpty() {
     return topics.isEmpty() && testRunnerTopics.isEmpty();
+  }
+
+  @JsonValue
+  public KafkaPlanModel toModel() {
+    return new KafkaPlanModel(
+        topics.stream().map(KafkaNewTopic::topic).toList(),
+        testRunnerTopics.stream().map(KafkaNewTopic::topic).toList());
   }
 }

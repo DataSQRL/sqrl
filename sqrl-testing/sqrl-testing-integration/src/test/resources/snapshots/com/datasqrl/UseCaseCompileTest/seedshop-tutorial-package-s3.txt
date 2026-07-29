@@ -143,6 +143,15 @@ enum _RestMethodType {
 directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
+=== s3-sink
+ID:          connectors.s3-sink
+Type:        export
+Stage:       flink
+Connector:   filesystem
+---
+Inputs:
+ - default_catalog.default_database.CustomerPromotion
+
 === CustomerPromotion
 ID:          default_catalog.default_database.CustomerPromotion
 Type:        stream
@@ -410,35 +419,27 @@ Inputs:
 Annotations:
  - stream-root: _ProductsStream
 
-=== promotion
-ID:          s3-sink.promotion
-Type:        export
-Stage:       flink
-Connector:   filesystem
----
-Inputs:
- - default_catalog.default_database.CustomerPromotion
-
 >>>flink-sql-no-functions.sql
-CREATE TEMPORARY TABLE `Orders__schema` (
+CREATE TEMPORARY TABLE `_CustomersStream__schema` (
   `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `items` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Orders` (
-  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
-  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `changed_on` BIGINT NOT NULL
 )
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/order_items.jsonl'
+  'path' = '${DATA_PATH}/customers.jsonl'
+);
+CREATE TABLE `_CustomersStream` (
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`changed_on`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
-LIKE `Orders__schema`;
+LIKE `_CustomersStream__schema`;
 CREATE TEMPORARY TABLE `_ProductsStream__schema` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -450,41 +451,31 @@ CREATE TEMPORARY TABLE `_ProductsStream__schema` (
   `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
-  'connector' = 'datagen'
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/products.jsonl'
 );
 CREATE TABLE `_ProductsStream` (
   PRIMARY KEY (`id`, `updated`) NOT ENFORCED,
   WATERMARK FOR `updated` AS `updated` - INTERVAL '0.001' SECOND
 )
-WITH (
-  'connector' = 'filesystem',
-  'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/products.jsonl'
-)
 LIKE `_ProductsStream__schema`;
-CREATE TEMPORARY TABLE `_CustomersStream__schema` (
+CREATE TEMPORARY TABLE `Orders__schema` (
   `id` BIGINT NOT NULL,
-  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `ip_address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `country` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
-  `changed_on` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `_CustomersStream` (
-  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`changed_on`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
-  PRIMARY KEY (`id`, `changed_on`) NOT ENFORCED,
-  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `items` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
 )
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'path' = '${DATA_PATH}/customers.jsonl'
+  'path' = '${DATA_PATH}/orders.jsonl'
+);
+CREATE TABLE `Orders` (
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
-LIKE `_CustomersStream__schema`;
+LIKE `Orders__schema`;
 CREATE VIEW `_OrderItems`
 AS
 SELECT `o`.`id`, `o`.`time`, `o`.`customerid`, `i`.*

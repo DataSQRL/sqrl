@@ -20,7 +20,6 @@ import com.datasqrl.canonicalizer.NameCanonicalizer;
 import com.datasqrl.error.ErrorCollector;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -29,7 +28,8 @@ import java.util.Set;
 public class RelationStats
     implements Accumulator<Map<String, Object>, RelationStats, NameCanonicalizer> {
 
-  public static final RelationStats EMPTY = new RelationStats(0, Collections.EMPTY_MAP);
+  public static final RelationStats EMPTY = new RelationStats(0, Map.of());
+
   private static final int INITIAL_CAPACITY = 8;
 
   long count;

@@ -17,7 +17,6 @@ package com.datasqrl.io.schema.flexible.input;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.io.schema.flexible.constraint.Constraint;
-import java.util.Collections;
 import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -54,7 +53,7 @@ public class FlexibleTableSchema extends FlexibleFieldSchema {
 
     protected boolean isPartialSchema = true;
     protected RelationType<Field> fields;
-    protected List<Constraint> constraints = Collections.EMPTY_LIST;
+    protected List<Constraint> constraints = List.of();
 
     public void copyFrom(FlexibleTableSchema f) {
       super.copyFrom(f);

@@ -15,6 +15,8 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.deployment.model.JdbcStatementModel.Field;
+import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
 
@@ -30,14 +32,4 @@ public interface JdbcStatement {
   String getDescription();
 
   List<Field> getFields();
-
-  enum Type {
-    TABLE,
-    VIEW,
-    QUERY,
-    INDEX,
-    EXTENSION
-  }
-
-  record Field(String name, String type, boolean nullable, String description) {}
 }

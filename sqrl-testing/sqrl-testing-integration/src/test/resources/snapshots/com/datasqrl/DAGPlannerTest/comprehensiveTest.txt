@@ -49,16 +49,11 @@ LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
-CREATE TEMPORARY TABLE `Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
 CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -69,7 +64,6 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
-LIKE `Customer__schema`
 === CustomerById
 ID:          default_catalog.default_database.CustomerById
 Type:        query
@@ -328,16 +322,11 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders]])
 SQL:
-CREATE TEMPORARY TABLE `ExternalOrders__schema` (
+CREATE TABLE `ExternalOrders` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `ExternalOrders` (
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
@@ -347,7 +336,6 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
-LIKE `ExternalOrders__schema`
 === InvalidDistinct
 ID:          default_catalog.default_database.InvalidDistinct
 Type:        state
@@ -561,16 +549,11 @@ LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, _Customer]])
 SQL:
-CREATE TEMPORARY TABLE `_Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
 CREATE TABLE `_Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -581,7 +564,6 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
-LIKE `_Customer__schema`
 === customersink
 ID:          mysink.customersink
 Type:        export
@@ -600,16 +582,11 @@ Inputs:
  - default_catalog.default_database.CustomerTimeWindow
 
 >>>flink-sql-no-functions.sql
-CREATE TEMPORARY TABLE `Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
 CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -619,18 +596,12 @@ WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `Customer__schema`;
-CREATE TEMPORARY TABLE `ExternalOrders__schema` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
 );
 CREATE TABLE `ExternalOrders` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
@@ -639,18 +610,12 @@ WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `ExternalOrders__schema`;
-CREATE TEMPORARY TABLE `_Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
 );
 CREATE TABLE `_Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -660,18 +625,12 @@ WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `_Customer__schema`;
-CREATE TEMPORARY TABLE `_Orders__schema` (
-  `id` BIGINT NOT NULL,
-  `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
 );
 CREATE TABLE `_Orders` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
@@ -680,19 +639,13 @@ WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `_Orders__schema`;
-CREATE TEMPORARY TABLE `_Product__schema` (
-  `productid` BIGINT NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `category` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `_ingest_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
 );
 CREATE TABLE `_Product` (
+  `productid` BIGINT NOT NULL,
+  `name` STRING NOT NULL,
+  `description` STRING NOT NULL,
+  `category` STRING NOT NULL,
+  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
   PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
   WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
 )
@@ -701,8 +654,7 @@ WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `_Product__schema`;
+);
 CREATE VIEW `CustomerByTime2`
 AS
 SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
@@ -1928,7 +1880,7 @@ END
     {
       "name" : "MissedTemporalJoin",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"MissedTemporalJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"customerid0\", \"timestamp\", \"name\") AS SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_112\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_102\" ON \"ExternalOrders_112\".\"customerid\" = \"ExplicitDistinct_102\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"MissedTemporalJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"customerid0\", \"timestamp\", \"name\") AS SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_110\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_100\" ON \"ExternalOrders_110\".\"customerid\" = \"ExplicitDistinct_100\".\"customerid\"",
       "fields" : [
         {
           "name" : "id",
@@ -1990,7 +1942,7 @@ END
     {
       "name" : "SelectCustomers",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"SelectCustomers\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers_14\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"SelectCustomers\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers_14\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t\"",
       "description" : "This is for selected customers\n    and their orders",
       "fields" : [
         {

@@ -22,11 +22,10 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
-import com.datasqrl.engine.database.relational.GenericJdbcStatement;
-import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
-import com.datasqrl.engine.database.relational.JdbcStatement;
-import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
-import com.datasqrl.engine.log.kafka.NewTopic;
+import com.datasqrl.deployment.model.JdbcPlanModel;
+import com.datasqrl.deployment.model.JdbcStatementModel;
+import com.datasqrl.deployment.model.KafkaNewTopicModel;
+import com.datasqrl.deployment.model.KafkaPlanModel;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import java.io.File;
 import java.io.IOException;
@@ -78,7 +77,7 @@ class OsProcessManagerTest {
       filesMocked.when(() -> Files.exists(mockLogFile)).thenReturn(true);
       filesMocked
           .when(() -> Files.readAllLines(mockLogFile))
-          .thenReturn(java.util.List.of("Line 1", "Line 2", "Line 3"));
+          .thenReturn(List.of("Line 1", "Line 2", "Line 3"));
 
       // When
       String result = serviceManager.readServiceLogFile(serviceName);
@@ -147,7 +146,7 @@ class OsProcessManagerTest {
       // Mock that no services are needed
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(), List.of())));
+          .thenReturn(Optional.of(new KafkaPlanModel(List.of(), List.of())));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
@@ -342,10 +341,10 @@ class OsProcessManagerTest {
       filesMocked.when(() -> Files.createDirectories(any(Path.class))).thenReturn(mockPath);
 
       // Mock that Kafka topics are found but no Postgres statements
-      var mockTopic = mock(NewTopic.class);
+      var mockTopic = mock(KafkaNewTopicModel.class);
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
+          .thenReturn(Optional.of(new KafkaPlanModel(List.of(mockTopic), List.of())));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
@@ -396,8 +395,9 @@ class OsProcessManagerTest {
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
       var mockStatement =
-          new GenericJdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
-      var mockJdbcPlan = JdbcPhysicalPlan.builder().statement(mockStatement).build();
+          new JdbcStatementModel(
+              "test", JdbcStatementModel.Type.TABLE, "CREATE TABLE test", null, null);
+      var mockJdbcPlan = new JdbcPlanModel(List.of(mockStatement), List.of());
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.of(mockJdbcPlan));
@@ -442,13 +442,14 @@ class OsProcessManagerTest {
       filesMocked.when(() -> Files.list(any(Path.class))).thenReturn(Stream.of(mockPath));
 
       // Mock that both Kafka topics and Postgres statements are found
-      var mockTopic = mock(NewTopic.class);
+      var mockTopic = mock(KafkaNewTopicModel.class);
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(Optional.of(new KafkaPhysicalPlan(List.of(mockTopic), List.of())));
+          .thenReturn(Optional.of(new KafkaPlanModel(List.of(mockTopic), List.of())));
       var mockStatement =
-          new GenericJdbcStatement("test", JdbcStatement.Type.TABLE, "CREATE TABLE test");
-      var mockJdbcPlan = JdbcPhysicalPlan.builder().statement(mockStatement).build();
+          new JdbcStatementModel(
+              "test", JdbcStatementModel.Type.TABLE, "CREATE TABLE test", null, null);
+      var mockJdbcPlan = new JdbcPlanModel(List.of(mockStatement), List.of());
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.of(mockJdbcPlan));

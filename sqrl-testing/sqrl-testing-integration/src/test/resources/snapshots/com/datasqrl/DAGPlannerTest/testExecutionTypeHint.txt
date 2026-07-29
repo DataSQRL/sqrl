@@ -84,16 +84,11 @@ Plan:
 LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], _ingest_time=[PROCTIME()])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE TEMPORARY TABLE `Orders__schema` (
+CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Orders` (
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ARRAY< ROW< `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE > NOT NULL > NOT NULL,
   `_ingest_time` AS PROCTIME(),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 )
@@ -103,18 +98,12 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
-LIKE `Orders__schema`
 >>>flink-sql-no-functions.sql
-CREATE TEMPORARY TABLE `Orders__schema` (
+CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Orders` (
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ARRAY< ROW< `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE > NOT NULL > NOT NULL,
   `_ingest_time` AS `PROCTIME`(),
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
 )
@@ -123,8 +112,7 @@ WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `Orders__schema`;
+);
 CREATE VIEW `CustomerAgg1`
 AS
 SELECT `customerid`, COUNT(`id`) AS `num`

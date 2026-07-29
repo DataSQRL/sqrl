@@ -20,15 +20,19 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConstants;
-import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
-import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
+import com.datasqrl.deployment.model.JdbcPlanModel;
+import com.datasqrl.deployment.model.KafkaPlanModel;
+import com.datasqrl.deployment.model.MutationDatabaseModel;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ResourceFileUtil;
-import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.planner.util.NonSecretEnvVarResolver;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
@@ -57,15 +61,11 @@ public final class ConfigLoaderUtils {
   public static final String PACKAGE_SCHEMA_PATH = "/jsonSchema/packageSchema.json";
 
   public static final ObjectMapper MAPPER =
-      new ObjectMapper()
-          .setVisibility(
-              com.fasterxml.jackson.annotation.PropertyAccessor.FIELD,
-              com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY)
-          .configure(
-              com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES,
-              false)
-          .configure(
-              com.fasterxml.jackson.databind.SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+      JsonUtils.MAPPER
+          .copy()
+          .setVisibility(PropertyAccessor.FIELD, Visibility.ANY)
+          .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+          .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
 
   private static final List<String> DEFAULTS = List.of("/default-package.json");
   private static final List<String> RUN_DEFAULTS =
@@ -216,24 +216,24 @@ public final class ConfigLoaderUtils {
   }
 
   /**
-   * Loads the Kafka physical plan from the plan directory by parsing the {@code kafka.json}
-   * configuration file. This method constructs a complete {@link KafkaPhysicalPlan} containing both
+   * Loads the Kafka deployment file from the plan directory by parsing the {@code kafka.json}
+   * configuration file. This method constructs a complete {@link KafkaPlanModel} containing both
    * regular topics and test runner topics.
    *
    * @param planDir the plan directory containing the {@code kafka.json} file
-   * @return an {@link Optional} containing a {@link KafkaPhysicalPlan} with topics and test runner
+   * @return an {@link Optional} containing a {@link KafkaPlanModel} with topics and test runner
    *     topics, or empty if no {@code kafka.json} file exists
    * @throws IllegalArgumentException if the plan directory is null or does not exist
    * @throws IllegalStateException if the {@code kafka.json} file exists but cannot be parsed
    */
-  public static Optional<KafkaPhysicalPlan> loadKafkaPhysicalPlan(Path planDir) {
+  public static Optional<KafkaPlanModel> loadKafkaPhysicalPlan(Path planDir) {
     validatePlanDir(planDir);
 
     var kafkaFile = planDir.resolve("kafka.json").toFile();
     if (kafkaFile.exists()) {
 
       try {
-        var kafkaPlan = MAPPER.readValue(kafkaFile, KafkaPhysicalPlan.class);
+        var kafkaPlan = MAPPER.readValue(kafkaFile, KafkaPlanModel.class);
         return Optional.of(kafkaPlan);
 
       } catch (Exception ex) {
@@ -244,14 +244,15 @@ public final class ConfigLoaderUtils {
     return Optional.empty();
   }
 
-  public static MutationDatabase loadMutationDatabase(Path databaseFile, ErrorCollector errors) {
+  public static MutationDatabaseModel loadMutationDatabase(
+      Path databaseFile, ErrorCollector errors) {
     checkArgument(
         Files.isRegularFile(databaseFile),
         "Mutation database file does not exist: %s",
         databaseFile);
 
     try {
-      return MAPPER.readValue(databaseFile.toFile(), MutationDatabase.class);
+      return MAPPER.readValue(databaseFile.toFile(), MutationDatabaseModel.class);
     } catch (IOException e) {
       throw errors.exception(
           "Failed to load mutation database from '%s': %s", databaseFile, e.getMessage());
@@ -259,17 +260,18 @@ public final class ConfigLoaderUtils {
   }
 
   /**
-   * Loads PostgreSQL physical plan from the plan directory by parsing the {@code postgres.json}
-   * configuration file. This method constructs a complete {@link JdbcPhysicalPlan} containing
-   * database statements for schema creation, views, indexes, and other database artifacts.
+   * Loads the PostgreSQL deployment file from the plan directory by parsing the {@code
+   * postgres.json} configuration file. This method constructs a complete {@link JdbcPlanModel}
+   * containing database statements for schema creation, views, indexes, and other database
+   * artifacts.
    *
    * @param planDir the plan directory containing the {@code postgres.json} file
-   * @return an {@link Optional} containing a {@link JdbcPhysicalPlan} with database statements, or
+   * @return an {@link Optional} containing a {@link JdbcPlanModel} with database statements, or
    *     empty if no {@code postgres.json} file exists
    * @throws IllegalArgumentException if the plan directory is null or does not exist
    * @throws IllegalStateException if the {@code postgres.json} file exists but cannot be parsed
    */
-  public static Optional<JdbcPhysicalPlan> loadPostgresPhysicalPlan(Path planDir) {
+  public static Optional<JdbcPlanModel> loadPostgresPhysicalPlan(Path planDir) {
     validatePlanDir(planDir);
 
     var postgresFile = planDir.resolve("postgres.json").toFile();
@@ -278,7 +280,7 @@ public final class ConfigLoaderUtils {
     }
 
     try {
-      var jdbcPlan = MAPPER.readValue(postgresFile, JdbcPhysicalPlan.class);
+      var jdbcPlan = MAPPER.readValue(postgresFile, JdbcPlanModel.class);
       return Optional.of(jdbcPlan);
 
     } catch (Exception ex) {

@@ -1,6 +1,4 @@
-IMPORT loan-batch.customers AS _CustomersStream;
-IMPORT loan-batch.applications AS _ApplicationsStream;
-IMPORT loan-batch.application_updates;
+IMPORT `connectors`.`sources-test`.*;
 
 Customers := DISTINCT _CustomersStream ON id ORDER BY updated_at DESC;
 Applications := DISTINCT _ApplicationsStream ON id ORDER BY updated_at DESC;

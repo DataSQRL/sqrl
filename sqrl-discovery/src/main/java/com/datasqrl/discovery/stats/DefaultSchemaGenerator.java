@@ -123,8 +123,8 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
     }
     var types =
         merge(
-            fieldStats != null ? fieldStats.types.keySet() : Collections.EMPTY_SET,
-            fieldDef != null ? fieldDef.getTypes() : Collections.EMPTY_LIST,
+            fieldStats != null ? fieldStats.types.keySet() : Set.of(),
+            fieldDef != null ? fieldDef.getTypes() : List.of(),
             statsNotNull,
             fieldName,
             errors);
@@ -147,8 +147,7 @@ public class DefaultSchemaGenerator extends FlexibleTypeMatcher implements Schem
       errors.checkFatal(
           !isComplete, "Schema marked as complete but found additional field: %s", fieldName);
       FlexibleFieldSchema.FieldType result = null;
-      List<Constraint> constraints =
-          statsNotNull ? List.of(NotNull.INSTANCE) : Collections.EMPTY_LIST;
+      List<Constraint> constraints = statsNotNull ? List.of(NotNull.INSTANCE) : List.of();
       var maxArrayDepth = 0;
       if (statTypes.isEmpty()) { // All field values where null, use String as default type
         Preconditions.checkArgument(!statsNotNull);

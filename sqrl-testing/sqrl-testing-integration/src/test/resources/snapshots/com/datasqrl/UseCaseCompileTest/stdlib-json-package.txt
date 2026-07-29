@@ -94,7 +94,9 @@ CREATE TEMPORARY TABLE `Json__schema` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
-  'connector' = 'datagen'
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/json.jsonl'
 );
 CREATE TABLE `Json` (
   PRIMARY KEY (`id`) NOT ENFORCED,

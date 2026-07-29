@@ -1,10 +1,13 @@
 CREATE TABLE Customer (
-  `_ingest_time` AS PROCTIME(),
+    customerid BIGINT NOT NULL,
+    email STRING,
+    name STRING NOT NULL,
+    lastUpdated BIGINT NOT NULL,
+    `_ingest_time` AS PROCTIME(),
   PRIMARY KEY (customerid, lastUpdated) NOT ENFORCED
 ) WITH (
-      'format' = 'json',
-      'path' = 'file:/mock',
-      'source.monitor-interval' = '10 sec',
-      'connector' = 'filesystem'
-      )
-LIKE `customer.schema.yml`;
+    'connector' = 'filesystem',
+    'format' = 'json',
+    'path' = 'file:/mock',
+    'source.monitor-interval' = '10 sec'
+);

@@ -69,6 +69,7 @@
     <module>sqrl-cli</module>
     <module>sqrl-discovery</module>
     <module>sqrl-planner</module>
+    <module>sqrl-deployment-model</module>
     <module>sqrl-server</module>
     <module>sqrl-testing</module>
   </modules>
@@ -119,13 +120,13 @@
     <avro.version>1.12.1</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
     <aws-msk-iam-auth.version>2.3.7</aws-msk-iam-auth.version>
-    <aws-sdk-bom.version>2.48.3</aws-sdk-bom.version>
+    <aws-sdk-bom.version>2.49.3</aws-sdk-bom.version>
     <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-csv.version>1.14.1</commons-csv.version>
     <commons-exec.version>1.6.0</commons-exec.version>
     <commons-io.version>2.22.0</commons-io.version>
     <commons-lang3.version>3.20.0</commons-lang3.version>
-    <duckdb.version>1.5.4.0</duckdb.version>
+    <duckdb.version>1.5.5.0</duckdb.version>
     <feign.version>13.13</feign.version>
     <freemarker.version>2.3.34</freemarker.version>
     <glassfish.version>3.0.0</glassfish.version>
@@ -176,7 +177,7 @@
     <docker-maven-plugin.version>0.48.1</docker-maven-plugin.version>
     <easy-jacoco-maven-plugin.version>0.1.4</easy-jacoco-maven-plugin.version>
     <git-code-format-maven-plugin.version>5.6</git-code-format-maven-plugin.version>
-    <license-maven-plugin.version>5.0.0</license-maven-plugin.version>
+    <license-maven-plugin.version>5.1.1</license-maven-plugin.version>
     <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
     <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
@@ -220,6 +221,11 @@
       </dependency>
 
       <!-- SQRL deps, please keep this in order -->
+      <dependency>
+        <groupId>com.datasqrl</groupId>
+        <artifactId>sqrl-deployment-model</artifactId>
+        <version>${project.version}</version>
+      </dependency>
       <dependency>
         <groupId>com.datasqrl</groupId>
         <artifactId>sqrl-server-core</artifactId>
@@ -956,7 +962,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>3.5.0</version>
+        <version>3.5.1</version>
         <configuration>
           <!-- do not build an empty jar if the project is
                e.g. a pom project -->

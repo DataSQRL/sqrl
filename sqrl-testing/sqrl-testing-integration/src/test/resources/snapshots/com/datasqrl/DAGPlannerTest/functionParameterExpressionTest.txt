@@ -22,16 +22,11 @@ LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND
   LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
-CREATE TEMPORARY TABLE `Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
 CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -42,7 +37,6 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
-LIKE `Customer__schema`
 === CustomerVectorEmbed
 ID:          default_catalog.default_database.CustomerVectorEmbed
 Type:        stream
@@ -95,26 +89,22 @@ Inputs:
 Annotations:
  - stream-root: Customer
  - parameters: name, vector
- - base-table: CustomersByVector
+ - base-table: CustomerVectorEmbed
 Plan:
-LogicalSort(sort0=[$3], dir0=[DESC-nulls-last])
-  LogicalProject(customerid=[$0], name=[$1], name_vector=[$2], EXPR$3=[cosine_similarity(?1, $2)])
-    LogicalTableScan(table=[[default_catalog, default_database, CustomerVectorEmbed]])
+LogicalProject(customerid=[$0], name=[$1], name_vector=[$2])
+  LogicalSort(sort0=[$3], dir0=[DESC-nulls-last])
+    LogicalProject(customerid=[$0], name=[$1], name_vector=[$2], EXPR$3=[cosine_similarity(?1, $2)])
+      LogicalTableScan(table=[[default_catalog, default_database, CustomerVectorEmbed]])
 SQL:
 CREATE VIEW `CustomersByVector` AS 
                 SELECT * FROM CustomerVectorEmbed ORDER BY cosine_similarity(?      , name_vector) DESC;
 
 >>>flink-sql-no-functions.sql
-CREATE TEMPORARY TABLE `Customer__schema` (
-  `customerid` BIGINT NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `lastUpdated` BIGINT NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
 CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
@@ -124,8 +114,7 @@ WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `Customer__schema`;
+);
 CREATE VIEW `CustomerVectorEmbed`
 AS
 SELECT `customerid`, `name`, `vector_embed`(`name`, 'test-model') AS `name_vector`
@@ -583,7 +572,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"customerid\", \"name\", \"name_vector\", 1 - (($2 ::vector) <=> \"name_vector\")\nFROM \"CustomerVectorEmbed_2\"\nORDER BY 1 - (($2 ::vector) <=> \"name_vector\") DESC NULLS LAST",
+              "sql" : "SELECT \"customerid\", \"name\", \"name_vector\"\nFROM (SELECT \"customerid\", \"name\", \"name_vector\", 1 - (($2 ::vector) <=> \"name_vector\") AS \"EXPR$3\"\n  FROM \"CustomerVectorEmbed_2\"\n  ORDER BY 1 - (($2 ::vector) <=> \"name_vector\") DESC NULLS LAST) AS \"t1\"",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -722,7 +711,7 @@ END
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerVectorEmbed {\n  customerid: Long!\n  name: String!\n}\n\ntype CustomersByVector {\n  customerid: Long!\n  name: String!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerVectorEmbed(limit: Int = 10, offset: Int = 0): [CustomerVectorEmbed!]\n  CustomersByName(inputName: String!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByVector(name: String!, limit: Int = 10, offset: Int = 0): [CustomersByVector!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerVectorEmbed {\n  customerid: Long!\n  name: String!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerVectorEmbed(limit: Int = 10, offset: Int = 0): [CustomerVectorEmbed!]\n  CustomersByName(inputName: String!, limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomersByVector(name: String!, limit: Int = 10, offset: Int = 0): [CustomerVectorEmbed!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

@@ -327,6 +327,12 @@ public class Sqrl2FlinkSQLTranslator {
       } else {
         errors.warn("Expected top-level sort on relnode: %s", relNode.explain());
       }
+    } else {
+      /* We keep the sort (e.g. for table functions), but Calcite projects any ORDER BY key that is
+      not in the SELECT clause into the sort's input. Trim those again so the result type stays the
+      declared one - otherwise the extra columns show up in the API and base table (and hence
+      relationship) inference fails because the row types no longer match. */
+      relNode = relRoot.project();
     }
     var analyzer =
         new SQRLLogicalPlanAnalyzer(

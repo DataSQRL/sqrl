@@ -21,16 +21,11 @@ Plan:
 LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
   LogicalTableScan(table=[[default_catalog, default_database, Order]])
 SQL:
-CREATE TEMPORARY TABLE `Order__schema` (
+CREATE TABLE `Order` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Order` (
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
@@ -40,7 +35,6 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
-LIKE `Order__schema`
 === Where
 ID:          default_catalog.default_database.Where
 Type:        stream
@@ -68,16 +62,11 @@ SQL:
 ALTER VIEW `Where` AS SELECT `id`, `customerid`, `time`, `entries`,  'some value' AS `select` FROM 
 (  SELECT * FROM `Order` WHERE customerid > 0 );
 >>>flink-sql-no-functions.sql
-CREATE TEMPORARY TABLE `Order__schema` (
+CREATE TABLE `Order` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
-  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL
-)
-WITH (
-  'connector' = 'datagen'
-);
-CREATE TABLE `Order` (
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED,
   WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
 )
@@ -86,8 +75,7 @@ WITH (
   'format' = 'flexible-json',
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
-)
-LIKE `Order__schema`;
+);
 CREATE VIEW `Where`
 AS
 SELECT *

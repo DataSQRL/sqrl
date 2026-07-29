@@ -1,0 +1,8 @@
+query sortedQuery {
+    sortedQuery(minId: "a") {
+        id
+        detail {
+            info
+        }
+    }
+}

@@ -17,8 +17,7 @@ package com.datasqrl.calcite.dialect;
 
 import static org.apache.calcite.sql.SqlKind.COLLECTION_TABLE;
 
-import com.datasqrl.function.translation.SqlTranslation;
-import java.util.Map;
+import com.datasqrl.calcite.Dialect;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.PostgresqlSqlDialect;
@@ -29,7 +28,7 @@ abstract class BasePostgresSqlDialect extends PostgresqlSqlDialect {
     super(context);
   }
 
-  protected abstract Map<String, SqlTranslation> getTranslationMap();
+  protected abstract Dialect getTranslationDialect();
 
   @Override
   public void unparseCall(SqlWriter writer, SqlCall call, int leftPrec, int rightPrec) {
@@ -38,9 +37,8 @@ abstract class BasePostgresSqlDialect extends PostgresqlSqlDialect {
       return;
     }
 
-    var operatorName = call.getOperator().getName().toLowerCase();
-    if (getTranslationMap().containsKey(operatorName)) {
-      getTranslationMap().get(operatorName).unparse(call, writer, leftPrec, rightPrec);
+    if (SqlTranslationDispatcher.tryUnparseTranslatedCall(
+        getTranslationDialect(), call, writer, leftPrec, rightPrec)) {
       return;
     }
     try {

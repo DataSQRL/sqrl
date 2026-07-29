@@ -16,10 +16,6 @@
 package com.datasqrl.calcite.dialect;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.function.translation.SqlTranslation;
-import com.datasqrl.util.ServiceLoaderDiscovery;
-import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
@@ -29,24 +25,13 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class DuckDbSqlDialect extends BasePostgresSqlDialect {
 
-  public static final SqlDialect.Context DEFAULT_CONTEXT;
-  public static final SqlDialect DEFAULT;
+  public static final SqlDialect.Context DEFAULT_CONTEXT =
+      SqlDialect.EMPTY_CONTEXT
+          .withDatabaseProduct(DatabaseProduct.POSTGRESQL)
+          .withIdentifierQuoteString("\"")
+          .withUnquotedCasing(Casing.TO_LOWER);
 
-  private static final Map<String, SqlTranslation> TRANSLATION_MAP;
-
-  static {
-    DEFAULT_CONTEXT =
-        SqlDialect.EMPTY_CONTEXT
-            .withDatabaseProduct(DatabaseProduct.POSTGRESQL)
-            .withIdentifierQuoteString("\"")
-            .withUnquotedCasing(Casing.TO_LOWER);
-    DEFAULT = new DuckDbSqlDialect(DEFAULT_CONTEXT);
-
-    TRANSLATION_MAP =
-        ServiceLoaderDiscovery.getAll(SqlTranslation.class).stream()
-            .filter(f -> f.getDialect() == Dialect.DUCKDB)
-            .collect(Collectors.toMap(f -> f.getOperator().getName().toLowerCase(), f -> f));
-  }
+  public static final SqlDialect DEFAULT = new DuckDbSqlDialect(DEFAULT_CONTEXT);
 
   public DuckDbSqlDialect(Context context) {
     super(context);
@@ -69,7 +54,7 @@ public class DuckDbSqlDialect extends BasePostgresSqlDialect {
   }
 
   @Override
-  protected Map<String, SqlTranslation> getTranslationMap() {
-    return TRANSLATION_MAP;
+  protected Dialect getTranslationDialect() {
+    return Dialect.DUCKDB;
   }
 }

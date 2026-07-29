@@ -22,7 +22,8 @@ import com.datasqrl.discovery.stats.SourceTableStatistics;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.io.schema.TableSchemaFactory;
-import com.datasqrl.io.schema.flexible.FlexibleTableSchemaFactory;
+import com.datasqrl.io.schema.flexible.FlexibleTableConverter;
+import com.datasqrl.io.schema.flexible.converters.FlexibleTable2RelDataTypeConverter;
 import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
 import com.datasqrl.io.schema.flexible.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.FileCompression;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.calcite.rel.type.RelDataType;
 
 @Slf4j
 public abstract class AbstractDiscoveryTableSchemaFactory implements TableSchemaFactory {
@@ -96,7 +98,7 @@ public abstract class AbstractDiscoveryTableSchemaFactory implements TableSchema
     var tableName = location.getFileName().toString();
     schema = generator.mergeSchema(statistics.get(), Name.system(tableName), localErrors);
 
-    var rowType = FlexibleTableSchemaFactory.convert(schema, tableName);
+    var rowType = convert(schema, tableName);
     var options = new LinkedHashMap<String, String>();
     options.put("connector", "filesystem");
     options.put("format", readerOpt.get().getFormat());
@@ -119,5 +121,11 @@ public abstract class AbstractDiscoveryTableSchemaFactory implements TableSchema
 
     acc.add(data, null);
     return Stream.of(acc);
+  }
+
+  private static RelDataType convert(FlexibleTableSchema tableSchema, String tableName) {
+    var converter = new FlexibleTableConverter(tableSchema, Name.system(tableName));
+    var relDataTypeConverter = new FlexibleTable2RelDataTypeConverter();
+    return converter.apply(relDataTypeConverter);
   }
 }

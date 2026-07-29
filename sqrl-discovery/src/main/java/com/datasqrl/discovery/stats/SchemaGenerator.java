@@ -21,12 +21,13 @@ import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
 import lombok.NonNull;
 
 public interface SchemaGenerator {
-  public FlexibleTableSchema mergeSchema(
+
+  FlexibleTableSchema mergeSchema(
       @NonNull SourceTableStatistics tableStats,
       @NonNull FlexibleTableSchema tableDef,
       @NonNull ErrorCollector errors);
 
-  public FlexibleTableSchema mergeSchema(
+  FlexibleTableSchema mergeSchema(
       @NonNull SourceTableStatistics tableStats,
       @NonNull Name tableName,
       @NonNull ErrorCollector errors);
