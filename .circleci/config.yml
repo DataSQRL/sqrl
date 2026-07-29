@@ -339,6 +339,7 @@ jobs:
 
   container-e2e-test:
     executor: default-machine
+    parallelism: 2
     steps:
       - checkout-and-version
       - skip-if-docs-only
@@ -363,10 +364,20 @@ jobs:
       - run:
           name: Run container tests using TestContainers
           command: |
+            SHARD_TESTS=$(circleci tests glob "sqrl-testing/sqrl-testing-container/src/test/java/**/*IT.java" \
+              | sed 's|.*/src/test/java/||; s|/|.|g; s|\.java$||' \
+              | circleci tests split --split-by=timings --timings-type=classname \
+              | sed 's|.*\.||' \
+              | paste -sd,)
+            echo "Running shard ${CIRCLE_NODE_INDEX}: $SHARD_TESTS"
             mvn -B install -DonlyContainerE2E \
               -pl :sqrl-testing-container \
+              -Dit.test="$SHARD_TESTS" \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
+      - store_test_results:
+          path: sqrl-testing/sqrl-testing-container/target/failsafe-reports
+          when: always
 
   deploy:
     docker:
