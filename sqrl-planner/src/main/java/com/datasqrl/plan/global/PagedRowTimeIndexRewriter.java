@@ -15,6 +15,7 @@
  */
 package com.datasqrl.plan.global;
 
+import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
@@ -67,7 +68,7 @@ public class PagedRowTimeIndexRewriter implements PhysicalPlanRewriter {
     var stmtFactory = engine.getStatementFactory();
     // Existing indexes (e.g. from JdbcIndexOptimization) may already cover the rowtime column.
     var existingIndexNames =
-        jdbcPlan.getStatementsForType(JdbcStatement.Type.INDEX).stream()
+        jdbcPlan.getStatementsForType(Type.INDEX).stream()
             .map(JdbcStatement::getName)
             .collect(Collectors.toSet());
 
