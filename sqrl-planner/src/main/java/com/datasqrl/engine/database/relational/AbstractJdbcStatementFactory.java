@@ -23,10 +23,10 @@ import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
 import com.datasqrl.calcite.convert.SqlNodeToString;
 import com.datasqrl.calcite.dialect.postgres.SqlCreatePostgresView;
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.deployment.model.JdbcStatementModel.Field;
 import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.CreateTableDdlFactory;
-import com.datasqrl.engine.database.relational.JdbcStatement.Field;
 import com.datasqrl.engine.database.relational.ddl.GenericCreateViewDdlFactory;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
@@ -195,8 +195,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         .collect(Collectors.toList());
   }
 
-  protected JdbcStatement.Field toField(
-      RelDataTypeField field, PlannerHints hints, Documentation documentation) {
+  protected Field toField(RelDataTypeField field, PlannerHints hints, Documentation documentation) {
     var castSpec =
         getSqlType(
             field.getType(),

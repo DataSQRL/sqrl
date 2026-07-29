@@ -17,6 +17,7 @@ package com.datasqrl.engine.log.kafka;
 
 import com.datasqrl.deployment.model.KafkaPlanModel;
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.List;
 import lombok.Builder;
 import lombok.Singular;
@@ -30,8 +31,8 @@ public record KafkaPhysicalPlan(
     return topics.isEmpty() && testRunnerTopics.isEmpty();
   }
 
-  @Override
-  public KafkaPlanModel toFileModel() {
+  @JsonValue
+  public KafkaPlanModel toModel() {
     return new KafkaPlanModel(
         topics.stream().map(KafkaNewTopic::topic).toList(),
         testRunnerTopics.stream().map(KafkaNewTopic::topic).toList());

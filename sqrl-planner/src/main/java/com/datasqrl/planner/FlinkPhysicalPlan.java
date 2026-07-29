@@ -23,7 +23,7 @@ import com.datasqrl.engine.database.relational.IcebergEngineFactory;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.util.CompiledPlanCondenser;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ListMultimap;
@@ -68,15 +68,15 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
   Set<String> connectors;
   Set<String> formats;
   Set<String> functions;
-  @JsonIgnore Optional<String> compiledPlan;
-  @JsonIgnore Optional<String> explainedPlan;
-  @JsonIgnore List<String> flinkSqlNoFunctions;
-  @JsonIgnore Configuration config;
-  @JsonIgnore ListMultimap<Integer, String> flinkSqlBatched;
-  @JsonIgnore ListMultimap<Integer, String> flinkSqlNoFunctionsBatched;
+  Optional<String> compiledPlan;
+  Optional<String> explainedPlan;
+  List<String> flinkSqlNoFunctions;
+  Configuration config;
+  ListMultimap<Integer, String> flinkSqlBatched;
+  ListMultimap<Integer, String> flinkSqlNoFunctionsBatched;
 
-  @Override
-  public FlinkPlanModel toFileModel() {
+  @JsonValue
+  public FlinkPlanModel toModel() {
     return new FlinkPlanModel(flinkSql, connectors, formats, functions);
   }
 

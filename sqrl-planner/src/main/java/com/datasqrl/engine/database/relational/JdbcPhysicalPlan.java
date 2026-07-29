@@ -20,6 +20,7 @@ import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,8 +45,8 @@ public record JdbcPhysicalPlan(
     Map<String, CreateTableJdbcStatement> tableIdMap)
     implements DatabasePhysicalPlan {
 
-  @Override
-  public JdbcPlanModel toFileModel() {
+  @JsonValue
+  public JdbcPlanModel toModel() {
     return new JdbcPlanModel(
         statements.stream().map(JdbcPhysicalPlan::toStatementModel).toList(),
         standaloneExtensionStatements.stream().map(JdbcPhysicalPlan::toStatementModel).toList());

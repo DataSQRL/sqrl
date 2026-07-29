@@ -18,9 +18,9 @@ package com.datasqrl.engine.database.relational.ddl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.datasqrl.deployment.model.JdbcStatementModel.Field;
 import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
-import com.datasqrl.engine.database.relational.JdbcStatement.Field;
 import java.time.Duration;
 import java.util.List;
 import org.junit.jupiter.api.Test;

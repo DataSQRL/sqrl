@@ -20,13 +20,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datasqrl.deployment.model.FlinkPlanModel;
 import com.datasqrl.deployment.model.JdbcPlanModel;
 import com.datasqrl.deployment.model.JdbcStatementModel;
+import com.datasqrl.deployment.model.JdbcStatementModel.Field;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.deployment.model.KafkaNewTopicModel;
-import com.datasqrl.engine.database.CombinedEnginePlan;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.GenericJdbcStatement;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
-import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.engine.log.kafka.KafkaNewTopic;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -34,8 +33,6 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
-import org.apache.calcite.sql.type.SqlTypeName;
 import org.junit.jupiter.api.Test;
 
 /** Guards the explicit mappings from planner state to deployment-file models. */
@@ -43,7 +40,7 @@ class PlanModelSerializationTest {
 
   @Test
   void givenJdbcPhysicalPlan_whenMapped_thenReturnsJdbcPlanModel() {
-    var field = new JdbcStatement.Field("id", "BIGINT", false, "primary key");
+    var field = new Field("id", "BIGINT", false, "primary key");
     var createTable =
         new CreateTableJdbcStatement(
             "orders",
@@ -74,7 +71,7 @@ class PlanModelSerializationTest {
             .tableIdMap(Map.of())
             .build();
 
-    JdbcPlanModel model = plan.toFileModel();
+    JdbcPlanModel model = plan.toModel();
 
     assertThat(model.statements()).hasSize(2);
     var table = model.statements().get(0);
@@ -123,7 +120,7 @@ class PlanModelSerializationTest {
             .functions(Set.of("CREATE FUNCTION f"))
             .build();
 
-    FlinkPlanModel model = plan.toFileModel();
+    FlinkPlanModel model = plan.toModel();
 
     assertThat(model.flinkSql()).containsExactly("CREATE TABLE x");
     assertThat(model.connectors()).containsExactly("kafka");
@@ -141,7 +138,7 @@ class PlanModelSerializationTest {
             .testRunnerTopic(new KafkaNewTopic(testRunnerTopic))
             .build();
 
-    var model = plan.toFileModel();
+    var model = plan.toModel();
 
     assertThat(model.topics()).containsExactly(topic);
     assertThat(model.testRunnerTopics()).containsExactly(testRunnerTopic);
@@ -160,24 +157,5 @@ class PlanModelSerializationTest {
     assertThat(List.copyOf(json.properties()))
         .extracting(Map.Entry::getKey)
         .containsExactly("topics", "testRunnerTopics");
-  }
-
-  @Test
-  void givenCombinedPlanWithCalciteType_whenSerialized_thenUsesNestedFileModels() {
-    var typeFactory = new JavaTypeFactoryImpl();
-    var statement =
-        new GenericJdbcStatement(
-            "orders",
-            Type.TABLE,
-            "CREATE TABLE orders",
-            null,
-            typeFactory.createSqlType(SqlTypeName.BIGINT),
-            List.of(new JdbcStatement.Field("id", "BIGINT", false, null)));
-    var jdbcPlan = JdbcPhysicalPlan.builder().statement(statement).tableIdMap(Map.of()).build();
-    var plan = CombinedEnginePlan.builder().plan("postgres", jdbcPlan).build();
-
-    var json = SqrlObjectMapper.INSTANCE.valueToTree(plan.toFileModel());
-
-    assertThat(json.at("/plans/postgres/statements/0/fields/0/type").asText()).isEqualTo("BIGINT");
   }
 }

@@ -33,12 +33,6 @@ public interface EnginePhysicalPlan {
     return List.of();
   }
 
-  /** Returns the object written to this stage's JSON plan file. */
-  @JsonIgnore
-  default Object toFileModel() {
-    return this;
-  }
-
   record DeploymentArtifact(String fileSuffix, Object content, ArtifactType artifactType) {
 
     public DeploymentArtifact(String fileSuffix, Object content) {

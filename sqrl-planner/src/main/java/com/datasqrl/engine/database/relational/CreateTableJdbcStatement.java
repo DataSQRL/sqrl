@@ -15,6 +15,7 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.deployment.model.JdbcStatementModel.Field;
 import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.fasterxml.jackson.annotation.JsonCreator;

@@ -15,12 +15,10 @@
  */
 package com.datasqrl.engine.database;
 
-import com.datasqrl.deployment.model.CombinedPlanModel;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.Singular;
 import lombok.Value;
@@ -30,13 +28,6 @@ import lombok.Value;
 public class CombinedEnginePlan implements EnginePhysicalPlan {
 
   @Singular Map<String, EnginePhysicalPlan> plans;
-
-  @Override
-  public CombinedPlanModel toFileModel() {
-    return new CombinedPlanModel(
-        plans.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().toFileModel())));
-  }
 
   @Override
   public List<DeploymentArtifact> getDeploymentArtifacts() {
