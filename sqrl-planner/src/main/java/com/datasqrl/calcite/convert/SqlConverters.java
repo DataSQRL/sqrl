@@ -20,14 +20,25 @@ import java.util.Map;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
 
-/** Converts a RelNode to a SqlNode for a given dialect */
-public interface RelToSqlNode {
+/** Provides conversions to SQL representations for a specific dialect. */
+public interface SqlConverters {
 
-  SqlNodes convert(RelNode relNode, Map<String, String> tableNameMapping);
+  /**
+   * Converts a relational plan to a SQL node for this converter's dialect.
+   *
+   * @param relNode relational plan to convert
+   * @param tableNameMapping mapping from planner table identifiers to physical table names
+   * @return the dialect-specific SQL node
+   */
+  SqlNode convert(RelNode relNode, Map<String, String> tableNameMapping);
+
+  /**
+   * Serializes a SQL node as SQL for this converter's dialect.
+   *
+   * @param sqlNode SQL node to unparse
+   * @return the dialect-specific SQL string
+   */
+  String convert(SqlNode sqlNode);
 
   Dialect getDialect();
-
-  interface SqlNodes {
-    SqlNode getSqlNode();
-  }
 }

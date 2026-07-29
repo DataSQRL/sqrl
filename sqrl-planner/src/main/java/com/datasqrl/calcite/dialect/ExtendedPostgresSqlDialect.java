@@ -16,12 +16,9 @@
 package com.datasqrl.calcite.dialect;
 
 import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.dialect.postgres.PostgresConformance;
 import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType;
-import com.datasqrl.function.translation.SqlTranslation;
-import com.datasqrl.util.ServiceLoaderDiscovery;
-import java.util.Map;
-import java.util.stream.Collectors;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelRecordType;
@@ -36,24 +33,16 @@ import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 public class ExtendedPostgresSqlDialect extends BasePostgresSqlDialect {
 
-  public static final Map<String, SqlTranslation> translationMap =
-      ServiceLoaderDiscovery.getAll(SqlTranslation.class).stream()
-          .filter(f -> f.getDialect() == Dialect.POSTGRES)
-          .collect(Collectors.toMap(f -> f.getOperator().getName().toLowerCase(), f -> f));
+  public static final ExtendedPostgresSqlDialect.Context DEFAULT_CONTEXT =
+      SqlDialect.EMPTY_CONTEXT
+          .withDatabaseProduct(DatabaseProduct.POSTGRESQL)
+          .withIdentifierQuoteString("\"")
+          .withUnquotedCasing(Casing.TO_LOWER)
+          .withDataTypeSystem(POSTGRESQL_TYPE_SYSTEM)
+          .withConformance(new PostgresConformance());
 
-  public static final ExtendedPostgresSqlDialect.Context DEFAULT_CONTEXT;
-  public static final ExtendedPostgresSqlDialect DEFAULT;
-
-  static {
-    DEFAULT_CONTEXT =
-        SqlDialect.EMPTY_CONTEXT
-            .withDatabaseProduct(DatabaseProduct.POSTGRESQL)
-            .withIdentifierQuoteString("\"")
-            .withUnquotedCasing(Casing.TO_LOWER)
-            .withDataTypeSystem(POSTGRESQL_TYPE_SYSTEM)
-            .withConformance(new PostgresConformance());
-    DEFAULT = new ExtendedPostgresSqlDialect(DEFAULT_CONTEXT);
-  }
+  public static final ExtendedPostgresSqlDialect DEFAULT =
+      new ExtendedPostgresSqlDialect(DEFAULT_CONTEXT);
 
   public ExtendedPostgresSqlDialect(Context context) {
     super(context);
@@ -146,7 +135,7 @@ public class ExtendedPostgresSqlDialect extends BasePostgresSqlDialect {
   }
 
   @Override
-  protected Map<String, SqlTranslation> getTranslationMap() {
-    return translationMap;
+  protected Dialect getTranslationDialect() {
+    return Dialect.POSTGRES;
   }
 }

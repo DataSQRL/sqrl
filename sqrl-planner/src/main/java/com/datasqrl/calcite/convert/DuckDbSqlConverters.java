@@ -16,28 +16,13 @@
 package com.datasqrl.calcite.convert;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.DynamicParamSqlPrettyWriter;
-import com.datasqrl.calcite.SqrlConfigurations;
-import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
 import com.datasqrl.calcite.dialect.DuckDbSqlDialect;
 import com.google.auto.service.AutoService;
-import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 
-@AutoService(SqlNodeToString.class)
-public class DuckdbSqlNodeToString implements SqlNodeToString {
+@AutoService(SqlConverters.class)
+public class DuckDbSqlConverters extends AbstractSqlConverters {
 
-  @Override
-  public SqlStrings convert(SqlNodes sqlNode) {
-    var config =
-        SqrlConfigurations.sqlToString.apply(
-            SqlPrettyWriter.config().withDialect(DuckDbSqlDialect.DEFAULT));
-    var writer = new DynamicParamSqlPrettyWriter(config);
-    sqlNode.getSqlNode().unparse(writer, 0, 0);
-    return () -> writer.toSqlString().getSql();
-  }
-
-  @Override
-  public Dialect getDialect() {
-    return Dialect.DUCKDB;
+  public DuckDbSqlConverters() {
+    super(Dialect.DUCKDB, DuckDbSqlDialect.DEFAULT, true);
   }
 }

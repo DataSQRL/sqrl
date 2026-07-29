@@ -16,23 +16,15 @@
 package com.datasqrl.calcite.convert;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
-import java.util.Map;
-import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
-import org.apache.calcite.rel.rel2sql.RelToSqlConverterWithHints;
+import com.datasqrl.util.ServiceLoaderDiscovery;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-public class PostgresRelToSqlNode implements RelToSqlNode {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class SqlConvertersFactory {
 
-  @Override
-  public SqlNodes convert(RelNode relNode, Map<String, String> tableNameMapping) {
-    RelToSqlConverter converter =
-        new RelToSqlConverterWithHints(ExtendedPostgresSqlDialect.DEFAULT, tableNameMapping);
-    return () -> converter.visitRoot(relNode).asStatement();
-  }
-
-  @Override
-  public Dialect getDialect() {
-    return Dialect.POSTGRES;
+  public static SqlConverters get(Dialect dialect) {
+    return ServiceLoaderDiscovery.get(
+        SqlConverters.class, converter -> converter.getDialect().name(), dialect.name());
   }
 }

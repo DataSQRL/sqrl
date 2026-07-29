@@ -18,14 +18,12 @@ package com.datasqrl.engine.stream.flink.plan;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.convert.SqlToStringFactory;
+import com.datasqrl.calcite.convert.SqlConvertersFactory;
 import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
-import com.datasqrl.engine.stream.flink.FlinkSqlNodes.MetadataEntry;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
@@ -43,13 +41,8 @@ import org.junit.jupiter.api.Test;
 
 class FlinkSqlNodesTest {
 
-  public record MockMetadataEntry(
-      Optional<String> type, Optional<String> attribute, Optional<Boolean> virtual)
-      implements MetadataEntry {}
-
   private String unparse(SqlNode node) {
-    var sqlToString = SqlToStringFactory.get(Dialect.FLINK);
-    return sqlToString.convert(() -> node).getSql();
+    return SqlConvertersFactory.get(Dialect.FLINK).convert(node);
   }
 
   @Test

@@ -16,28 +16,25 @@
 package com.datasqrl.calcite.convert;
 
 import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.convert.RelToSqlNode.SqlNodes;
 import com.datasqrl.calcite.dialect.ExtendedSnowflakeSqlDialect;
 import com.google.auto.service.AutoService;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 
-@AutoService(SqlNodeToString.class)
-public class SnowflakeSqlNodeToString implements SqlNodeToString {
+@AutoService(SqlConverters.class)
+public class SnowflakeSqlConverters extends AbstractSqlConverters {
 
-  @Override
-  public SqlStrings convert(SqlNodes sqlNode) {
-    var config =
-        SqlPrettyWriter.config()
-            .withDialect(ExtendedSnowflakeSqlDialect.DEFAULT)
-            .withQuoteAllIdentifiers(false)
-            .withIndentation(0);
-    var prettyWriter = new SqlPrettyWriter(config);
-    sqlNode.getSqlNode().unparse(prettyWriter, 0, 0);
-    return () -> prettyWriter.toSqlString().getSql();
+  public SnowflakeSqlConverters() {
+    super(Dialect.SNOWFLAKE, ExtendedSnowflakeSqlDialect.DEFAULT, true);
   }
 
   @Override
-  public Dialect getDialect() {
-    return Dialect.SNOWFLAKE;
+  protected SqlPrettyWriter createWriter() {
+    var config =
+        SqlPrettyWriter.config()
+            .withDialect(getCalciteSqlDialect())
+            .withQuoteAllIdentifiers(false)
+            .withIndentation(0);
+
+    return new SqlPrettyWriter(config);
   }
 }

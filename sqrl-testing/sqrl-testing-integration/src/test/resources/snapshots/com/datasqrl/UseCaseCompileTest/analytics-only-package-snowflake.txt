@@ -366,7 +366,7 @@ CREATE OR REPLACE ICEBERG TABLE ApplicationStatus EXTERNAL_VOLUME = 'MyNewVolume
 CREATE OR REPLACE ICEBERG TABLE _Applications EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = '_Applications';
 CREATE OR REPLACE ICEBERG TABLE _LoanTypes EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = '_LoanTypes'
 >>>iceberg-snowflake-views.sql
-CREATE OR REPLACE VIEW ApplicationInfo(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, id1, id2) AS SELECT _Applications.id, _Applications.customer_id, _Applications.loan_type_id, _Applications.amount, _Applications.duration, _Applications.application_date, _Applications.updated_at, _LoanTypes.id AS id1, _LoanTypes0.id AS id2
+CREATE OR REPLACE VIEW ApplicationInfo(id, customer_id, loan_type_id, amount, duration, application_date, updated_at, id1, id2) AS SELECT "_Applications"."id", "_Applications"."customer_id", "_Applications"."loan_type_id", "_Applications"."amount", "_Applications"."duration", "_Applications"."application_date", "_Applications"."updated_at", "_LoanTypes"."id" AS "id1", "_LoanTypes0"."id" AS "id2"
 FROM _Applications
-INNER JOIN _LoanTypes ON _Applications.loan_type_id = _LoanTypes.id
-LEFT JOIN _LoanTypes AS _LoanTypes0 ON _Applications.customer_id = _LoanTypes0.id
+INNER JOIN _LoanTypes ON "_Applications"."loan_type_id" = "_LoanTypes"."id"
+LEFT JOIN _LoanTypes AS "_LoanTypes0" ON "_Applications"."customer_id" = "_LoanTypes0"."id"

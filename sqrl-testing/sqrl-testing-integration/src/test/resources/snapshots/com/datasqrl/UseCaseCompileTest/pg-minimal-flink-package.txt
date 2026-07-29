@@ -152,7 +152,7 @@ CREATE OR REPLACE VIEW "SensorAggregate"("sensorid", "maxTemp", "avgTemp") AS SE
 FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS "avgTemp"
   FROM "SensorReading"
   GROUP BY "sensorid"
-  ORDER BY "sensorid" NULLS FIRST) AS "t5"
+  ORDER BY "sensorid" NULLS FIRST) AS "t1"
 >>>vertx.json
 {
   "models" : {

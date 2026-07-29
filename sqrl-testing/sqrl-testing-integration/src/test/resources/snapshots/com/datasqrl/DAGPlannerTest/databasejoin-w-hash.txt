@@ -197,7 +197,7 @@ END
     {
       "name" : "OrderEntryJoin",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderEntryJoin\"(\"id1\", \"id2\", \"multi\") AS SELECT \"t3\".\"id\" AS \"id1\", \"t4\".\"id\" AS \"id2\", \"t3\".\"quantity\" * \"t4\".\"quantity\" AS \"multi\"\nFROM (SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\n  FROM \"_OrderEntries_1\") AS \"t3\"\n INNER JOIN (SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\n  FROM \"_OrderEntries_1\") AS \"t4\" ON \"t3\".\"customerid\" = \"t4\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderEntryJoin\"(\"id1\", \"id2\", \"multi\") AS SELECT \"t\".\"id\" AS \"id1\", \"t0\".\"id\" AS \"id2\", \"t\".\"quantity\" * \"t0\".\"quantity\" AS \"multi\"\nFROM (SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\n  FROM \"_OrderEntries_1\") AS \"t\"\n INNER JOIN (SELECT \"id\", \"customerid\", \"time\", \"productid\", \"quantity\", \"discount\"\n  FROM \"_OrderEntries_1\") AS \"t0\" ON \"t\".\"customerid\" = \"t0\".\"customerid\"",
       "fields" : [
         {
           "name" : "id1",

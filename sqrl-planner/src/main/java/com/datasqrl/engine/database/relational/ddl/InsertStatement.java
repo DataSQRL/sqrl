@@ -15,7 +15,8 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
-import com.datasqrl.calcite.convert.PostgresSqlNodeToString;
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.convert.SqlConvertersFactory;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.SqlDynamicParam;
@@ -36,13 +38,9 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 @AllArgsConstructor
 public class InsertStatement implements SqlDDLStatement {
 
-  String tableName;
+  @Getter String tableName;
 
   RelDataType tableSchema;
-
-  public String getTableName() {
-    return tableName;
-  }
 
   public List<String> getParams() {
     return tableSchema.getFieldList().stream()
@@ -77,7 +75,7 @@ public class InsertStatement implements SqlDDLStatement {
         new SqlInsert(SqlParserPos.ZERO, SqlNodeList.EMPTY, targetTable, values, columns);
 
     // Convert the INSERT statement to a SQL string
-    var sql = addValuesKeyword(new PostgresSqlNodeToString().convert(() -> sqlInsert).getSql());
+    var sql = addValuesKeyword(SqlConvertersFactory.get(Dialect.POSTGRES).convert(sqlInsert));
     return sql;
   }
 
