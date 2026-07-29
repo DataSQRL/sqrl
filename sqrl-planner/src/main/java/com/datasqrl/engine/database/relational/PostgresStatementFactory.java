@@ -49,18 +49,19 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
 
-  public static final String PARTITION_DIVISOR_KEY = "partition-divisor";
+  public static final String PARTITION_TTL_DIVISOR_KEY = "partition-ttl-divisor";
 
-  private final int partitionDivisor;
+  private final int partitionTtlDivisor;
 
   public PostgresStatementFactory(EngineConfig engineConfig) {
-    this(Integer.parseInt(engineConfig.getSetting(PARTITION_DIVISOR_KEY)));
+    this(Integer.parseInt(engineConfig.getSetting(PARTITION_TTL_DIVISOR_KEY)));
   }
 
-  public PostgresStatementFactory(int partitionDivisor) {
+  public PostgresStatementFactory(int partitionTtlDivisor) {
     super(Dialect.POSTGRES, new PostgresCreateTableDdlFactory(true));
-    checkArgument(partitionDivisor > 0, "%s must be a positive number", PARTITION_DIVISOR_KEY);
-    this.partitionDivisor = partitionDivisor;
+    checkArgument(
+        partitionTtlDivisor > 0, "%s must be a positive number", PARTITION_TTL_DIVISOR_KEY);
+    this.partitionTtlDivisor = partitionTtlDivisor;
   }
 
   @Override
@@ -111,7 +112,8 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
     if (partitionType != PartitionType.RANGE || ttl == null || ttl.isZero() || ttlUnit == null) {
       return Optional.empty();
     }
-    return Optional.of(PostgresPartitionInterval.of(ttl, ttlUnit, partitionDivisor).getInterval());
+    return Optional.of(
+        PostgresPartitionInterval.of(ttl, ttlUnit, partitionTtlDivisor).getInterval());
   }
 
   @Override

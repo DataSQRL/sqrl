@@ -6,9 +6,9 @@ PostgreSQL is a realtime database that stores the materialized views and tables 
 
 No mandatory configuration keys are required. Physical DDL (tables, indexes, views) is produced automatically by the DataSQRL compiler.
 
-| Key                 | Type        | Default | Description                                                                                                    |
-|---------------------|-------------|---------|----------------------------------------------------------------------------------------------------------------|
-| `partition-divisor` | **integer** | `100`   | Controls the number of partitions for range-partitioned tables with a TTL (see [Partitioning](#partitioning)). |
+| Key                     | Type        | Default | Description                                                                                                    |
+|-------------------------|-------------|---------|----------------------------------------------------------------------------------------------------------------|
+| `partition-ttl-divisor` | **integer** | `100`   | Controls the number of partitions for range-partitioned tables with a TTL (see [Partitioning](#partitioning)). |
 
 ## Basic Configuration
 
@@ -16,7 +16,7 @@ No mandatory configuration keys are required. Physical DDL (tables, indexes, vie
 {
   "engines": {
     "postgres": {
-      "partition-divisor": 100,
+      "partition-ttl-divisor": 100,
       "config": {
         // Optional PostgreSQL-specific settings
       }
@@ -29,7 +29,7 @@ No mandatory configuration keys are required. Physical DDL (tables, indexes, vie
 
 Tables annotated with `partition_key` on a timestamp column and a `ttl` hint are range-partitioned with pg_partman, and expired partitions are dropped automatically. The partition width is derived from the TTL:
 
-- The TTL duration divided by `partition-divisor` caps the number of partitions.
+- The TTL duration divided by `partition-ttl-divisor` caps the number of partitions.
 - The unit the TTL is declared with sets the minimum width: `ttl(14 days)` never produces partitions smaller than 1 day, while `ttl(336 hours)` allows hourly partitions.
 - The result is snapped down to the closest calendar-aligned width from: 15 min, 30 min, 1, 2, 4, 6, 8, 12 hours, 1, 2, 4 days, 1, 2, 4, 8, 12 weeks.
 

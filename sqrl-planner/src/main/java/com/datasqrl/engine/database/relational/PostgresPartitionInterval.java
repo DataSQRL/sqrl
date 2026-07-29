@@ -54,9 +54,9 @@ public class PostgresPartitionInterval {
    * the closest calendar-aligned width from the menu.
    */
   public static PostgresPartitionInterval of(
-      Duration ttl, ChronoUnit ttlUnit, int partitionDivisor) {
+      Duration ttl, ChronoUnit ttlUnit, int partitionTtlDivisor) {
     var floorMinutes = ttlUnit.getDuration().toMinutes();
-    var targetMinutes = Math.max(ttl.toMinutes() / (double) partitionDivisor, floorMinutes);
+    var targetMinutes = Math.max(ttl.toMinutes() / (double) partitionTtlDivisor, floorMinutes);
     var interval = PARTITION_MENU.values().iterator().next();
     for (var entry : PARTITION_MENU.entrySet()) {
       if (entry.getKey() <= targetMinutes) {

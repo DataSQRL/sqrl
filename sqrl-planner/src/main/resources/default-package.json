@@ -34,7 +34,7 @@
       "url": "jdbc:duckdb:"
     },
     "postgres": {
-      "partition-divisor": 100
+      "partition-ttl-divisor": 100
     },
     "kafka": {
       "retention": null,

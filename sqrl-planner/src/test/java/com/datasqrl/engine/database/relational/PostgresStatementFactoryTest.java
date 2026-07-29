@@ -56,7 +56,8 @@ class PostgresStatementFactoryTest {
   @Test
   void givenConfiguredDivisor_whenCreate_thenDivisorApplied() {
     var engineConfig = mock(EngineConfig.class);
-    when(engineConfig.getSetting(PostgresStatementFactory.PARTITION_DIVISOR_KEY)).thenReturn("4");
+    when(engineConfig.getSetting(PostgresStatementFactory.PARTITION_TTL_DIVISOR_KEY))
+        .thenReturn("4");
     var factory = new PostgresStatementFactory(engineConfig);
 
     assertThat(
@@ -68,7 +69,7 @@ class PostgresStatementFactoryTest {
   @Test
   void givenInvalidDivisor_whenCreate_thenThrows() {
     var engineConfig = mock(EngineConfig.class);
-    when(engineConfig.getSetting(PostgresStatementFactory.PARTITION_DIVISOR_KEY))
+    when(engineConfig.getSetting(PostgresStatementFactory.PARTITION_TTL_DIVISOR_KEY))
         .thenReturn("not-a-number");
 
     assertThatThrownBy(() -> new PostgresStatementFactory(engineConfig))
@@ -76,6 +77,6 @@ class PostgresStatementFactoryTest {
 
     assertThatThrownBy(() -> new PostgresStatementFactory(0))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageContaining("partition-divisor");
+        .hasMessageContaining("partition-ttl-divisor");
   }
 }
