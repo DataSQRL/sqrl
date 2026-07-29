@@ -23,7 +23,11 @@ import static org.mockito.Mockito.when;
 
 import com.datasqrl.cli.output.NoOutputFormatter;
 import com.datasqrl.cli.output.TestOutputManager;
+import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.deployment.model.JdbcStatementModel;
+import com.datasqrl.engine.database.relational.GenericJdbcStatement;
+import com.datasqrl.util.SqrlObjectMapper;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -67,5 +71,29 @@ class DatasqrlTestTest {
 
     var exitCode = underTest.run();
     assertThat(exitCode).isNotZero();
+  }
+
+  @Test
+  void givenTestPlanWithJdbcViews_whenDeserialized_thenUsesGenericJdbcStatements()
+      throws Exception {
+    var json =
+        """
+        {
+          "jdbcViews": [{
+            "name": "orders_view",
+            "type": "VIEW",
+            "sql": "CREATE VIEW orders_view AS SELECT 1"
+          }],
+          "queries": [],
+          "mutations": [],
+          "subscriptions": []
+        }
+        """;
+
+    var plan = SqrlObjectMapper.INSTANCE.readValue(json, TestPlan.class);
+
+    assertThat(plan.getJdbcViews()).hasSize(1);
+    assertThat(plan.getJdbcViews().get(0)).isInstanceOf(GenericJdbcStatement.class);
+    assertThat(plan.getJdbcViews().get(0).getType()).isEqualTo(JdbcStatementModel.Type.VIEW);
   }
 }

@@ -18,9 +18,9 @@ package com.datasqrl.compile;
 import com.datasqrl.config.GraphqlSourceLoader;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.WorkspacePaths;
+import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
-import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.error.ErrorCode;
@@ -31,6 +31,7 @@ import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
+import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.server.GenerateServerModel;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.nio.file.Path;
@@ -111,7 +112,7 @@ public class CompilationProcess {
         var jdbcViews =
             physicalPlan
                 .getPlans(JdbcPhysicalPlan.class)
-                .map(p -> p.getStatementsForType(JdbcStatement.Type.VIEW))
+                .map(p -> p.getStatementsForType(Type.VIEW))
                 .findFirst()
                 .orElse(List.of());
 
@@ -126,7 +127,8 @@ public class CompilationProcess {
         .ifPresent(
             compareDb ->
                 errors.checkFatal(
-                    mutationDatabase.isBackwardsCompatible(compareDb, environment, errors),
+                    MutationDatabase.isBackwardsCompatible(
+                        mutationDatabase, compareDb, environment, errors),
                     "The mutation tables defined by the script are not backwards compatible with the provided database. See warnings above for incompatibilities."));
     return Pair.of(physicalPlan, testPlan);
   }

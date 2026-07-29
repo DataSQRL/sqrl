@@ -13,19 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.plan;
+package com.datasqrl.engine.log.kafka;
 
-import com.datasqrl.deployment.model.MutationDatabaseModel;
-import java.nio.file.Path;
-import java.util.Optional;
+import com.datasqrl.deployment.model.KafkaNewTopicModel;
+import com.datasqrl.engine.database.EngineCreateTable;
 
-public interface MainScript {
-
-  Optional<Path> getPath();
-
-  String getContent();
-
-  default Optional<MutationDatabaseModel> getMutationDatabase() {
-    return Optional.empty();
-  }
-}
+/** Planner lifecycle wrapper for a Kafka topic deployment model. */
+public record KafkaNewTopic(KafkaNewTopicModel topic) implements EngineCreateTable {}

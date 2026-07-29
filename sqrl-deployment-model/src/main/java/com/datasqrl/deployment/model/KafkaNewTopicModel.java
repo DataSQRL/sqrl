@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.engine.log.kafka;
+package com.datasqrl.deployment.model;
 
-import com.datasqrl.engine.database.EngineCreateTable;
 import java.util.List;
 import java.util.Map;
 
-public record NewTopic(
+/** A Kafka topic definition in a deployment file. */
+public record KafkaNewTopicModel(
     String topicName,
     String tableName,
     String format,
@@ -28,10 +28,10 @@ public record NewTopic(
     Type type,
     List<String> messageKeys,
     String messageSchema,
-    Map<String, String> config)
-    implements EngineCreateTable {
+    Map<String, String> config) {
 
-  public NewTopic(String topicName, String tableName, int numPartitions, short replicationFactor) {
+  public KafkaNewTopicModel(
+      String topicName, String tableName, int numPartitions, short replicationFactor) {
     this(
         topicName,
         tableName,
@@ -44,8 +44,8 @@ public record NewTopic(
         Map.of());
   }
 
-  public NewTopic(String topicName, String tableName) {
-    this(topicName, tableName, null, 1, (short) 1, Type.SUBSCRIPTION, List.of(), "", Map.of());
+  public KafkaNewTopicModel(String topicName, String tableName) {
+    this(topicName, tableName, 1, (short) 1);
   }
 
   public enum Type {

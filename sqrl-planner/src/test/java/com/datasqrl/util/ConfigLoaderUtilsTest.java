@@ -22,13 +22,14 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.SqrlConfig;
 import com.datasqrl.config.SqrlConfigTest;
-import com.datasqrl.engine.database.relational.JdbcStatement;
-import com.datasqrl.engine.log.kafka.NewTopic;
+import com.datasqrl.deployment.model.JdbcStatementModel;
+import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.apache.flink.configuration.Configuration;
@@ -324,7 +325,7 @@ class ConfigLoaderUtilsTest {
     assertThat(kafkaPlan.topics().get(1).topicName()).isEqualTo("customers");
     assertThat(kafkaPlan.topics().get(1).numPartitions()).isEqualTo(1);
 
-    assertThat(kafkaPlan.testRunnerTopics().stream().map(NewTopic::topicName))
+    assertThat(kafkaPlan.testRunnerTopics().stream().map(KafkaNewTopicModel::topicName))
         .containsExactlyInAnyOrder("test-topic-1", "test-topic-2");
     assertThat(kafkaPlan.isEmpty()).isFalse();
   }
@@ -373,7 +374,7 @@ class ConfigLoaderUtilsTest {
   }
 
   @Test
-  void givenPlanDirWithValidPostgresJson_whenLoadPostgresPhysicalPlan_thenReturnsJdbcPlan()
+  void givenPlanDirWithValidPostgresJson_whenLoadPostgresPhysicalPlan_thenReturnsJdbcPlanModel()
       throws IOException {
     // Given
     Path planDir = tempDir.resolve("plan");
@@ -384,9 +385,10 @@ class ConfigLoaderUtilsTest {
         {
           "statements": [
             {
-              "name": "create_users_table",
-              "type": "TABLE",
-              "sql": "CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100))"
+               "name": "create_users_table",
+               "type": "TABLE",
+               "sql": "CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100))",
+               "ttl": 30.0
             },
             {
               "name": "create_orders_table",
@@ -414,17 +416,18 @@ class ConfigLoaderUtilsTest {
     assertThat(jdbcPlan.statements()).hasSize(3);
 
     var statements = jdbcPlan.statements();
-    assertThat(statements.get(0).getName()).isEqualTo("create_users_table");
-    assertThat(statements.get(0).getType()).isEqualTo(JdbcStatement.Type.TABLE);
-    assertThat(statements.get(0).getSql()).contains("CREATE TABLE users");
+    assertThat(statements.get(0).name()).isEqualTo("create_users_table");
+    assertThat(statements.get(0).type()).isEqualTo(JdbcStatementModel.Type.TABLE);
+    assertThat(statements.get(0).sql()).contains("CREATE TABLE users");
+    assertThat(statements.get(0).ttl()).isEqualTo(Duration.ofSeconds(30));
 
-    assertThat(statements.get(1).getName()).isEqualTo("create_orders_table");
-    assertThat(statements.get(1).getType()).isEqualTo(JdbcStatement.Type.TABLE);
-    assertThat(statements.get(1).getSql()).contains("CREATE TABLE orders");
+    assertThat(statements.get(1).name()).isEqualTo("create_orders_table");
+    assertThat(statements.get(1).type()).isEqualTo(JdbcStatementModel.Type.TABLE);
+    assertThat(statements.get(1).sql()).contains("CREATE TABLE orders");
 
-    assertThat(statements.get(2).getName()).isEqualTo("create_index");
-    assertThat(statements.get(2).getType()).isEqualTo(JdbcStatement.Type.INDEX);
-    assertThat(statements.get(2).getSql()).contains("CREATE INDEX");
+    assertThat(statements.get(2).name()).isEqualTo("create_index");
+    assertThat(statements.get(2).type()).isEqualTo(JdbcStatementModel.Type.INDEX);
+    assertThat(statements.get(2).sql()).contains("CREATE INDEX");
   }
 
   @Test

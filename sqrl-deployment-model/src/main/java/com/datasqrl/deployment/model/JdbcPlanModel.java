@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.engine.database.relational;
+package com.datasqrl.deployment.model;
 
-import com.datasqrl.deployment.model.JdbcStatementModel.Field;
-import com.datasqrl.deployment.model.JdbcStatementModel.Type;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
-@JsonDeserialize(as = GenericJdbcStatement.class)
-public interface JdbcStatement {
+/** The contents of a JDBC database plan file such as {@code postgres.json}. */
+@JsonIgnoreProperties(ignoreUnknown = true)
+public record JdbcPlanModel(
+    List<JdbcStatementModel> statements, List<JdbcStatementModel> standaloneExtensionStatements) {
 
-  String getName();
-
-  Type getType();
-
-  String getSql();
-
-  String getDescription();
-
-  List<Field> getFields();
+  public JdbcPlanModel {
+    statements = statements == null ? List.of() : List.copyOf(statements);
+    standaloneExtensionStatements =
+        standaloneExtensionStatements == null
+            ? List.of()
+            : List.copyOf(standaloneExtensionStatements);
+  }
 }

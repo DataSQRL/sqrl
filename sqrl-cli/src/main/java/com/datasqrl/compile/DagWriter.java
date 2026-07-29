@@ -18,9 +18,9 @@ package com.datasqrl.compile;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.PackageJson.ExplainConfig;
 import com.datasqrl.config.WorkspacePaths;
+import com.datasqrl.deployment.model.MutationDatabaseModel;
 import com.datasqrl.plan.global.PipelineDAGExporter;
 import com.datasqrl.planner.dag.PipelineDAG;
-import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.serializer.Deserializer;
 import com.google.common.io.Resources;
 import java.io.IOException;
@@ -55,12 +55,12 @@ public class DagWriter {
   private final CompilerConfig compilerConfig;
 
   @SneakyThrows
-  void run(PipelineDAG dag, String source, MutationDatabase mutationDatabase) {
+  void run(PipelineDAG dag, String source, MutationDatabaseModel mutationDatabaseModel) {
     writeExplain(dag);
     writeFile(workspacePaths.buildDir().resolve(FULL_SOURCE_FILENAME), source);
     writeFile(
         workspacePaths.buildDir().resolve(DATABASE_FILENAME),
-        Deserializer.INSTANCE.toJson(mutationDatabase));
+        Deserializer.INSTANCE.toJson(mutationDatabaseModel));
   }
 
   void writeInferredSchema(String inferredSchema) {

@@ -22,8 +22,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import org.apache.flink.configuration.Configuration;
-import org.apache.flink.configuration.ConfigurationUtils;
 
 /** A jackson serializable object */
 public interface EnginePhysicalPlan {
@@ -66,10 +64,6 @@ public interface EnginePhysicalPlan {
       return statements
           .filter(statement -> !statement.isBlank())
           .collect(Collectors.joining(SQL_STATEMENT_DELIMITER));
-    }
-
-    public static String toYamlString(Configuration config) {
-      return String.join("\n", ConfigurationUtils.convertConfigToWritableLines(config, false));
     }
   }
 
