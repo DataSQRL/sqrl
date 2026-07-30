@@ -113,6 +113,7 @@ public class ExtendedPostgresSqlDialect extends BasePostgresSqlDialect {
         // May need to create user-defined types in PostgreSQL or use JSON/JSONB types
         case ROW:
         case MAP:
+        case VARIANT:
           castSpec = "jsonb";
           break;
         case SYMBOL:

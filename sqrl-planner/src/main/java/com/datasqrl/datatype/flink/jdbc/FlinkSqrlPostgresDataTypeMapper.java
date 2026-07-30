@@ -45,6 +45,7 @@ public class FlinkSqrlPostgresDataTypeMapper implements DataTypeMapping {
       case VARCHAR:
       case BINARY:
       case VARBINARY:
+      case VARIANT:
         return Optional.empty();
     }
     if (type.getSqlTypeName() == SqlTypeName.MAP

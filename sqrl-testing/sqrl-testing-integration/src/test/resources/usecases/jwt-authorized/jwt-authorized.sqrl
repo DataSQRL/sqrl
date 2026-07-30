@@ -4,7 +4,7 @@ IMPORT jwt-authorized-base.*;
 CREATE TABLE AuthInputData (
     event_id STRING NOT NULL METADATA FROM 'uuid',
     val BIGINT NOT NULL METADATA FROM 'auth.val',
-    payload RAW_JSON,
+    payload VARIANT,
     event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
 );
 

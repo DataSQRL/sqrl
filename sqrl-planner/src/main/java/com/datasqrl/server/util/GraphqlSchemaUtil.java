@@ -179,6 +179,7 @@ public class GraphqlSchemaUtil {
         return createGraphQLStructuredType(
             metaType, type, namePath, extendedScalarTypes, fieldDocs);
       case MAP:
+      case VARIANT:
         return Optional.of(CustomScalars.JSON);
       case BINARY:
       case VARBINARY:
