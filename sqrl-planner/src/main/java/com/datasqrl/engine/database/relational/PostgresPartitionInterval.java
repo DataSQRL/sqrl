@@ -19,11 +19,12 @@ import com.google.common.collect.ImmutableMap;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
-import lombok.Value;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
-/** The pg_partman partition width for a range-partitioned table with a TTL. */
-@Value
-public class PostgresPartitionInterval {
+/** Computes the pg_partman partition width for a range-partitioned table with a TTL. */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class PostgresPartitionInterval {
 
   /** Calendar-aligned partition widths pg_partman can use, keyed by width in minutes. */
   private static final Map<Integer, String> PARTITION_MENU =
@@ -46,23 +47,22 @@ public class PostgresPartitionInterval {
           .put(120960, "12 weeks")
           .buildOrThrow();
 
-  String interval;
-
   /**
    * Picks the partition width for the given TTL: the TTL divided by the divisor caps the partition
    * count, while the unit the TTL was declared with sets the floor. The result is snapped down to
    * the closest calendar-aligned width from the menu.
    */
-  public static PostgresPartitionInterval of(
-      Duration ttl, ChronoUnit ttlUnit, int partitionTtlDivisor) {
+  public static String asString(Duration ttl, ChronoUnit ttlUnit, int partitionTtlDivisor) {
     var floorMinutes = ttlUnit.getDuration().toMinutes();
     var targetMinutes = Math.max(ttl.toMinutes() / (double) partitionTtlDivisor, floorMinutes);
-    var interval = PARTITION_MENU.values().iterator().next();
+
+    String interval = null;
     for (var entry : PARTITION_MENU.entrySet()) {
-      if (entry.getKey() <= targetMinutes) {
+      if (interval == null || entry.getKey() <= targetMinutes) {
         interval = entry.getValue();
       }
     }
-    return new PostgresPartitionInterval(interval);
+
+    return interval;
   }
 }

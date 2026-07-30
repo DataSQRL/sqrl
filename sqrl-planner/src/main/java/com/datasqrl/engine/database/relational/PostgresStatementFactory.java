@@ -112,8 +112,7 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
     if (partitionType != PartitionType.RANGE || ttl == null || ttl.isZero() || ttlUnit == null) {
       return Optional.empty();
     }
-    return Optional.of(
-        PostgresPartitionInterval.of(ttl, ttlUnit, partitionTtlDivisor).getInterval());
+    return Optional.of(PostgresPartitionInterval.asString(ttl, ttlUnit, partitionTtlDivisor));
   }
 
   @Override

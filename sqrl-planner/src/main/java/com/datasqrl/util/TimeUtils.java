@@ -18,11 +18,12 @@ package com.datasqrl.util;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /** Duration parsing utilities built on top of Flink's {@link org.apache.flink.util.TimeUtils}. */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TimeUtils {
-
-  private TimeUtils() {}
 
   /**
    * Parses the given string to a {@link Duration}, accepting the same formats as Flink's {@link

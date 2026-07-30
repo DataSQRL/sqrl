@@ -94,33 +94,4 @@ public class TtlHint extends PlannerHint {
     }
     return new TtlHint(source, ttl, unit);
   }
-
-  public static Duration parseDuration(ParsedObject<SqrlHint> source) {
-    var arguments = source.get().options();
-    if (arguments == null || arguments.isEmpty()) {
-      return null;
-    }
-    if (arguments.size() != 1 || arguments.get(0) == null) {
-      throw new StatementParserException(
-          ErrorLabel.GENERIC,
-          source.getFileLocation(),
-          "%s hint only supports one duration argument (e.g. `2 days`).",
-          source.get().name());
-    }
-    return parseDurationArgument(source, arguments.get(0));
-  }
-
-  private static Duration parseDurationArgument(ParsedObject<SqrlHint> source, String argument) {
-    try {
-      return TimeUtils.parseDuration(argument);
-    } catch (Exception e) {
-      throw new StatementParserException(
-          ErrorLabel.GENERIC,
-          source.getFileLocation(),
-          "%s hint does not have a valid duration argument: %s. Expected `2 days` or `10 s`. "
-              + e.getMessage(),
-          source.get().name(),
-          argument);
-    }
-  }
 }

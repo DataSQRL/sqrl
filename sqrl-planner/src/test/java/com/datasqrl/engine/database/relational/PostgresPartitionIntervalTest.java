@@ -38,10 +38,10 @@ class PostgresPartitionIntervalTest {
     // target below the smallest menu entry falls back to the smallest
     "30, MINUTES, 100, 15 minutes"
   })
-  void givenTtlAndDivisor_whenOf_thenMenuWidth(
+  void givenTtlAndDivisor_whenAsString_thenMenuWidth(
       long amount, ChronoUnit unit, int divisor, String expected) {
     var ttl = Duration.of(amount, unit);
 
-    assertThat(PostgresPartitionInterval.of(ttl, unit, divisor).getInterval()).isEqualTo(expected);
+    assertThat(PostgresPartitionInterval.asString(ttl, unit, divisor)).isEqualTo(expected);
   }
 }
