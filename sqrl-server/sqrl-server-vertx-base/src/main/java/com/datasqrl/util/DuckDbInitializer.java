@@ -18,6 +18,7 @@ package com.datasqrl.util;
 import static com.datasqrl.env.EnvVariableNames.DUCKDB_EXTENSIONS_DIR;
 
 import com.datasqrl.server.config.JdbcConfig;
+import com.google.common.annotations.VisibleForTesting;
 import java.util.Optional;
 import java.util.StringJoiner;
 import lombok.RequiredArgsConstructor;
@@ -56,9 +57,24 @@ public final class DuckDbInitializer {
       return;
     }
 
+    buildInitSql(extensionDir);
+  }
+
+  @VisibleForTesting
+  String buildInitSql(String extensionDir) {
     joiner.add("SET extension_directory='" + extensionDir + "'");
     joiner.add("LOAD iceberg");
     joiner.add("LOAD httpfs");
+
+    if (config.isUseCredentialChain()) {
+      // Let DuckDB use the AWS SDK default credential provider chain, which includes the
+      // web-identity provider that backs EKS IRSA. The default chain is required here: an explicit
+      // CHAIN containing 'sts' is rejected unless an ASSUME_ROLE_ARN is also supplied, since DuckDB
+      // maps 'sts' to AssumeRole, not to the web-identity token flow.
+      joiner.add("LOAD aws");
+      joiner.add(
+          "CREATE OR REPLACE SECRET sqrl_s3_credential_chain (TYPE S3, PROVIDER credential_chain)");
+    }
 
     if (config.isUseDiskCache()) {
       joiner.add("LOAD cache_httpfs");
@@ -67,5 +83,7 @@ public final class DuckDbInitializer {
     if (config.isUseVersionGuessing()) {
       joiner.add("SET unsafe_enable_version_guessing = true");
     }
+
+    return joiner.toString();
   }
 }

@@ -48,5 +48,8 @@ public class JdbcConfig {
 
     @JsonProperty("memory-limit")
     private String memoryLimit;
+
+    @JsonProperty("use-credential-chain")
+    private boolean useCredentialChain;
   }
 }
