@@ -265,6 +265,10 @@
         "postgres": {
           "type": "object",
           "properties": {
+            "partition-ttl-divisor": {
+              "description": "Divisor applied to a table's TTL to cap the number of pg_partman partitions.",
+              "type": "integer"
+            },
             "config": {
               "type": "object",
               "minProperties": 1

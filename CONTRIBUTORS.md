@@ -11,3 +11,4 @@ This file recognizes the people who have made contributions to SQRL.
 | Etienne Chauchot    | echauchot          |
 | Tianchen Wu         | wutianchen         |
 | Brad Bailey         | bradjbailey        |
+| Wellington Mafra    | WellMafra          |

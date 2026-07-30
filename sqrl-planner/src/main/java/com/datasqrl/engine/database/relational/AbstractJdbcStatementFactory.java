@@ -39,6 +39,7 @@ import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.sql.DatabaseTypeExtension;
 import com.datasqrl.util.CalciteUtil;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -167,13 +168,10 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     // DagPlanner validates that partition keys are part of primary key
 
     PartitionType partitionType = getPartitionType(createTable, partitionKeys);
-    Duration ttl =
-        createTable
-            .tableAnalysis()
-            .getHints()
-            .getHint(TtlHint.class)
-            .flatMap(TtlHint::getTtl)
-            .orElse(Duration.ZERO);
+    var ttlHint = createTable.tableAnalysis().getHints().getHint(TtlHint.class);
+    Duration ttl = ttlHint.flatMap(TtlHint::getTtl).orElse(Duration.ZERO);
+    ChronoUnit ttlUnit = ttlHint.flatMap(TtlHint::getTtlUnit).orElse(null);
+    String partitionInterval = derivePartitionInterval(partitionType, ttl, ttlUnit).orElse(null);
 
     return new CreateTableJdbcStatement(
         tableName,
@@ -187,6 +185,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         partitionType,
         partitionType == PartitionType.NONE ? 0 : 1,
         ttl,
+        partitionInterval,
         createTable,
         createTableDdlFactory);
   }
@@ -194,6 +193,15 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   protected PartitionType getPartitionType(
       JdbcEngineCreateTable createTable, List<String> partitionKey) {
     return partitionKey.isEmpty() ? PartitionType.NONE : PartitionType.LIST;
+  }
+
+  /**
+   * The width of the partitions for range-partitioned tables with a TTL - empty when the dialect
+   * does not support time-based partitioning.
+   */
+  protected Optional<String> derivePartitionInterval(
+      PartitionType partitionType, Duration ttl, ChronoUnit ttlUnit) {
+    return Optional.empty();
   }
 
   protected List<Field> getColumns(

@@ -1,4 +1,27 @@
 >>>pipeline_explain.txt
+=== OrderMetrics
+ID:          default_catalog.default_database.OrderMetrics
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database._OrdersStream
+Annotations:
+ - stream-root: _OrdersStream
+Plan:
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, _OrdersStream]])
+SQL:
+CREATE VIEW `OrderMetrics` AS  SELECT * FROM _OrdersStream;
+
 === OrderUpdates
 ID:          default_catalog.default_database.OrderUpdates
 Type:        stream
@@ -113,7 +136,11 @@ SELECT `id`, `customerid`, `time`, `entries`
 FROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`_OrdersStream`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1;
-CREATE TABLE `OrderUpdates_1` (
+CREATE VIEW `OrderMetrics`
+AS
+SELECT *
+FROM `_OrdersStream`;
+CREATE TABLE `OrderMetrics_1` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -125,11 +152,27 @@ WITH (
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
   'sink.on-conflict.action' = 'IGNORE',
-  'table-name' = 'OrderUpdates_1',
+  'table-name' = 'OrderMetrics_1',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `Orders_2` (
+CREATE TABLE `OrderUpdates_2` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrderUpdates_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Orders_3` (
   `id` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -142,16 +185,20 @@ WITH (
   'password' = '${POSTGRES_PASSWORD}',
   'sink.on-conflict.action' = 'TIMESTAMP',
   'sink.on-conflict.timestamp-column' = 'time',
-  'table-name' = 'Orders_2',
+  'table-name' = 'Orders_3',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `default_catalog`.`default_database`.`OrderUpdates_1`
+INSERT INTO `default_catalog`.`default_database`.`OrderMetrics_1`
+SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+FROM `default_catalog`.`default_database`.`OrderMetrics`
+;
+INSERT INTO `default_catalog`.`default_database`.`OrderUpdates_2`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`OrderUpdates`
 ;
-INSERT INTO `default_catalog`.`default_database`.`Orders_2`
+INSERT INTO `default_catalog`.`default_database`.`Orders_3`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`_OrdersStream`
 ;
@@ -165,9 +212,46 @@ END
 {
   "statements" : [
     {
-      "name" : "OrderUpdates_1",
+      "name" : "OrderMetrics_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderUpdates_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\")) PARTITION BY RANGE (\"time\")",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderMetrics_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\")) PARTITION BY RANGE (\"time\")",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [
+        "time"
+      ],
+      "partitionType" : "RANGE",
+      "numPartitions" : 1,
+      "ttl" : 172800.000000000
+    },
+    {
+      "name" : "OrderUpdates_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrderUpdates_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\")) PARTITION BY RANGE (\"time\")",
       "fields" : [
         {
           "name" : "id",
@@ -202,9 +286,9 @@ END
       "ttl" : 2592000.000000000
     },
     {
-      "name" : "Orders_2",
+      "name" : "Orders_3",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_2\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\")) PARTITION BY HASH (\"id\");\n\nCREATE TABLE IF NOT EXISTS \"Orders_2_all\" PARTITION OF \"Orders_2\" FOR VALUES WITH (MODULUS 1, REMAINDER 0)",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_3\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\")) PARTITION BY HASH (\"id\");\n\nCREATE TABLE IF NOT EXISTS \"Orders_3_all\" PARTITION OF \"Orders_3\" FOR VALUES WITH (MODULUS 1, REMAINDER 0)",
       "fields" : [
         {
           "name" : "id",
@@ -238,9 +322,36 @@ END
       "ttl" : 0.0
     },
     {
+      "name" : "OrderMetrics",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderMetrics\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"OrderMetrics_1\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
       "name" : "OrderUpdates",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderUpdates\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"OrderUpdates_1\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderUpdates\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"OrderUpdates_2\"",
       "fields" : [
         {
           "name" : "id",
@@ -267,7 +378,7 @@ END
     {
       "name" : "Orders",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_2\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_3\"",
       "fields" : [
         {
           "name" : "id",
@@ -296,7 +407,7 @@ END
     {
       "name" : "partman",
       "type" : "EXTENSION",
-      "sql" : "CREATE SCHEMA IF NOT EXISTS partman;\nCREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;\n\nSELECT partman.create_parent(\n    p_parent_table => 'public.OrderUpdates_1',\n    p_control => 'time',\n    p_interval => '1 week',\n    p_premake => 4\n);\n\nUPDATE partman.part_config\n   SET retention = '30 days',\n       retention_keep_table = false\n WHERE parent_table = 'public.OrderUpdates_1';"
+      "sql" : "CREATE SCHEMA IF NOT EXISTS partman;\nCREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;\n\nSELECT partman.create_parent(\n    p_parent_table => 'public.OrderMetrics_1',\n    p_control => 'time',\n    p_interval => '1 hour',\n    p_premake => 4\n);\n\nUPDATE partman.part_config\n   SET retention = '2 days',\n       retention_keep_table = false\n WHERE parent_table = 'public.OrderMetrics_1';\n\nSELECT partman.create_parent(\n    p_parent_table => 'public.OrderUpdates_2',\n    p_control => 'time',\n    p_interval => '1 day',\n    p_premake => 4\n);\n\nUPDATE partman.part_config\n   SET retention = '30 days',\n       retention_keep_table = false\n WHERE parent_table = 'public.OrderUpdates_2';"
     }
   ]
 }
@@ -305,6 +416,31 @@ END
   "models" : {
     "v1" : {
       "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrderMetrics",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"OrderMetrics_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
         {
           "type" : "args",
           "parentType" : "Query",
@@ -322,7 +458,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"OrderUpdates_1\"",
+              "sql" : "SELECT *\nFROM \"OrderUpdates_2\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -347,7 +483,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Orders_2\"",
+              "sql" : "SELECT *\nFROM \"Orders_3\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -359,6 +495,32 @@ END
       "mutations" : [ ],
       "subscriptions" : [ ],
       "operations" : [
+        {
+          "function" : {
+            "name" : "GetOrderMetrics",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query OrderMetrics($limit: Int = 10, $offset: Int = 0) {\nOrderMetrics(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "OrderMetrics",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderMetrics{?offset,limit}"
+        },
         {
           "function" : {
             "name" : "GetOrderUpdates",
@@ -414,7 +576,7 @@ END
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OrderUpdates {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [OrderUpdates_entriesOutput]!\n}\n\ntype OrderUpdates_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  OrderUpdates(limit: Int = 10, offset: Int = 0): [OrderUpdates!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OrderMetrics {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [OrderMetrics_entriesOutput]!\n}\n\ntype OrderMetrics_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype OrderUpdates {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [OrderUpdates_entriesOutput]!\n}\n\ntype OrderUpdates_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  OrderMetrics(limit: Int = 10, offset: Int = 0): [OrderMetrics!]\n  OrderUpdates(limit: Int = 10, offset: Int = 0): [OrderUpdates!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

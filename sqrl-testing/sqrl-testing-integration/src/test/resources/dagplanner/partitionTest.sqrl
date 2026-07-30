@@ -5,3 +5,6 @@ OrderUpdates := SELECT * FROM _OrdersStream;
 
 /*+ partition_key(id) */
 Orders := DISTINCT _OrdersStream ON id ORDER BY `time` DESC;
+
+/*+ partition_key(time), ttl(48 hours) */
+OrderMetrics := SELECT * FROM _OrdersStream;
