@@ -22,15 +22,16 @@ import com.datasqrl.sql.SqlDDLStatement;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.Value;
+import java.util.stream.IntStream;
+import org.apache.calcite.rel.RelFieldCollation.Direction;
 
-@Value
-public class CreateIndexDDL implements SqlDDLStatement {
-
-  String indexName;
-  String tableName;
-  List<String> columns;
-  IndexType type;
+public record CreateIndexDDL(
+    String indexName,
+    String tableName,
+    List<String> columns,
+    List<Direction> directions,
+    IndexType type)
+    implements SqlDDLStatement {
 
   @Override
   public String getSql() {
@@ -41,7 +42,7 @@ public class CreateIndexDDL implements SqlDDLStatement {
             "to_tsvector('english', %s )"
                 .formatted(
                     quoteIdentifier(columns).stream()
-                        .map(col -> "coalesce(%s, '')".formatted(col))
+                        .map("coalesce(%s, '')"::formatted)
                         .collect(Collectors.joining(" || ' ' || ")));
         indexType = "GIN";
         break;
@@ -59,7 +60,10 @@ public class CreateIndexDDL implements SqlDDLStatement {
         indexType = "HNSW";
         break;
       default:
-        columnExpression = String.join(",", quoteIdentifier(columns));
+        columnExpression =
+            IntStream.range(0, columns.size())
+                .mapToObj(this::formatIndexColumn)
+                .collect(Collectors.joining(","));
         indexType = type.name().toLowerCase();
     }
 
@@ -68,5 +72,10 @@ public class CreateIndexDDL implements SqlDDLStatement {
         createTable.formatted(
             quoteIdentifier(indexName), quoteIdentifier(tableName), indexType, columnExpression);
     return sql;
+  }
+
+  private String formatIndexColumn(int index) {
+    var sortOrder = directions.get(index).isDescending() ? " DESC" : "";
+    return quoteIdentifier(columns.get(index)) + sortOrder;
   }
 }
