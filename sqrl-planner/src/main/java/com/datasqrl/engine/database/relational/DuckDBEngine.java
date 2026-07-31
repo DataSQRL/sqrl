@@ -20,6 +20,7 @@ import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.server.jdbc.DatabaseType;
 import jakarta.inject.Inject;
+import java.util.Optional;
 import lombok.NonNull;
 
 public class DuckDBEngine extends AbstractJDBCQueryEngine {
@@ -33,8 +34,8 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
   }
 
   @Override
-  public String serverConfigName() {
-    return "duckDbConfig";
+  public Optional<String> serverConfigName() {
+    return Optional.of("duckDbConfig");
   }
 
   @Override
@@ -49,6 +50,6 @@ public class DuckDBEngine extends AbstractJDBCQueryEngine {
 
   @Override
   public JdbcStatementFactory getStatementFactory() {
-    return new DuckDbStatementFactory(engineConfig);
+    return new DuckDbStatementFactory();
   }
 }

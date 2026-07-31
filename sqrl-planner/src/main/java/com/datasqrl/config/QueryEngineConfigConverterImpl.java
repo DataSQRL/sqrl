@@ -36,14 +36,19 @@ public class QueryEngineConfigConverterImpl implements QueryEngineConfigConverte
 
     for (var engine : enabledQueryEngines) {
       var queryEngine = (QueryEngine) engine;
-      var engineConf = packageJson.getEngines().getEngineConfig(queryEngine.getName()).get();
+      var engineConf = packageJson.getEngines().getEngineConfig(queryEngine.getName());
+      if (engineConf.isEmpty()) {
+        continue;
+      }
 
-      if (engineConf instanceof EngineConfigImpl impl) {
+      if (engineConf.get() instanceof EngineConfigImpl impl) {
         var engineConfigMap = impl.sqrlConfig.toMap();
 
         var rootNode = JsonUtils.MAPPER.createObjectNode();
         var configNode = JsonUtils.MAPPER.valueToTree(engineConfigMap);
-        rootNode.set(queryEngine.serverConfigName(), configNode);
+        queryEngine
+            .serverConfigName()
+            .ifPresent(engineConfigName -> rootNode.set(engineConfigName, configNode));
 
         convertedConfigs.add(rootNode);
       }

@@ -1,0 +1,69 @@
+>>>iceberg-schema.sql
+CREATE TABLE IF NOT EXISTS "Numbers" ("id" INTEGER NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL, PRIMARY KEY ("id"))
+>>>iceberg-snowflake-schema.sql
+CREATE OR REPLACE ICEBERG TABLE Numbers EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers';
+CREATE OR REPLACE ICEBERG TABLE Numbers2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers2'
+>>>iceberg.json
+{
+  "plans" : {
+    "" : {
+      "statements" : [
+        {
+          "name" : "Numbers",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers\" (\"id\" INTEGER NOT NULL, PRIMARY KEY (\"id\"))",
+          "fields" : [
+            {
+              "name" : "id",
+              "type" : "INTEGER",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [
+            "id"
+          ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0
+        },
+        {
+          "name" : "Numbers2",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers2\" (\"id\" INTEGER NOT NULL, PRIMARY KEY (\"id\"))",
+          "fields" : [
+            {
+              "name" : "id",
+              "type" : "INTEGER",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [
+            "id"
+          ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0
+        }
+      ],
+      "standaloneExtensionStatements" : [ ]
+    },
+    "snowflake" : {
+      "statements" : [
+        {
+          "name" : "Numbers",
+          "type" : "TABLE",
+          "sql" : "CREATE OR REPLACE ICEBERG TABLE Numbers EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers'"
+        },
+        {
+          "name" : "Numbers2",
+          "type" : "TABLE",
+          "sql" : "CREATE OR REPLACE ICEBERG TABLE Numbers2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers2'"
+        }
+      ],
+      "standaloneExtensionStatements" : [ ]
+    }
+  }
+}

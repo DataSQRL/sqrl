@@ -25,8 +25,6 @@ import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.dialect.DuckDbSqlDialect;
 import com.datasqrl.calcite.type.TypeFactory;
-import com.datasqrl.config.JdbcDialect;
-import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.relational.ddl.GenericCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
@@ -51,18 +49,10 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
 
-  private final EngineConfig engineConfig;
-
-  public DuckDbStatementFactory(EngineConfig engineConfig) {
+  public DuckDbStatementFactory() {
     super(
         Dialect.DUCKDB,
         new GenericCreateTableDdlFactory()); // Iceberg creates the tables, DuckDB only queries
-    this.engineConfig = engineConfig;
-  }
-
-  @Override
-  public JdbcDialect getDialect() {
-    return JdbcDialect.DuckDB;
   }
 
   @Override
