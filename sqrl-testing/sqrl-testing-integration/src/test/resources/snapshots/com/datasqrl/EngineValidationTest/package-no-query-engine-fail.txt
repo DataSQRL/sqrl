@@ -1,0 +1,2 @@
+[FATAL] When 'vertx' is enabled as a server, 'iceberg' requires a query engine to process server queries, but none are listed under 'enabled-engines'. Available query engines: 'duckdb'
+

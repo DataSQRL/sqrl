@@ -25,13 +25,11 @@ public enum JdbcDialect {
   SQLServer,
   H2,
   SQLite,
-  Iceberg,
-  Snowflake,
-  DuckDB;
+  Iceberg;
 
   private final String[] synonyms;
 
-  private JdbcDialect(String... synonyms) {
+  JdbcDialect(String... synonyms) {
     this.synonyms = synonyms;
   }
 

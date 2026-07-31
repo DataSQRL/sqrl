@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A simple pipeline that has a single stream, log, and server engine with support for multiple
@@ -38,8 +39,8 @@ public record SimplePipeline(
     HashMultimap<ExecutionStage, ExecutionStage> downstream)
     implements ExecutionPipeline {
 
-  private static final List<String> AVAILABLE_QUERY_ENGINES =
-      EngineUtil.getAvailableQueryEngineNames();
+  private static final String QUERY_ENGINE_NAMES =
+      EngineUtil.formatEngineNames(EngineUtil.getAvailableQueryEngines());
 
   public static SimplePipeline of(Map<String, ExecutionEngine> engines, ErrorCollector errors) {
     var upstream = HashMultimap.<ExecutionStage, ExecutionStage>create();
@@ -76,8 +77,28 @@ public record SimplePipeline(
       streamStage.ifPresent(ss -> upstream.put(dbStage, ss));
       serverStage.ifPresent(vs -> downstream.put(dbStage, vs));
 
+      // Make sure if server is present, then a non-view query engine is also present
       if (serverStage.isPresent() && dbStage.engine() instanceof AbstractJDBCTableFormatEngine) {
-        validatePipelineForQueryEngine(dbStage.name(), engines, errors);
+        var queryStages = getStage(EngineType.QUERY, engines);
+        var shallowQueryStages = getStage(EngineType.SHALLOW_QUERY, engines);
+
+        if (queryStages.isEmpty() && !shallowQueryStages.isEmpty()) {
+          var shallowQueryEngines =
+              shallowQueryStages.stream()
+                  .map(EngineStage::name)
+                  .map(s -> '\'' + s + '\'')
+                  .collect(Collectors.joining(", "));
+
+          errors.fatal(
+              "When '%s' is enabled as a server, '%s' cannot use shallow query engines (%s) to process server queries because they are not integrated at the database level. Available query engines: %s",
+              serverStage.get().name(), dbStage.name(), shallowQueryEngines, QUERY_ENGINE_NAMES);
+        }
+
+        if (queryStages.isEmpty()) {
+          errors.fatal(
+              "When '%s' is enabled as a server, '%s' requires a query engine to process server queries, but none are listed under 'enabled-engines'. Available query engines: %s",
+              serverStage.get().name(), dbStage.name(), QUERY_ENGINE_NAMES);
+        }
       }
     }
 
@@ -127,18 +148,6 @@ public record SimplePipeline(
     }
     throw new IllegalArgumentException(
         "Expected a single %s engine but found multiple: %s".formatted(engineType, engineList));
-  }
-
-  private static void validatePipelineForQueryEngine(
-      String tableFormatEngineName, Map<String, ExecutionEngine> engines, ErrorCollector errors) {
-    var queryStages = getStage(EngineType.QUERY, engines);
-    if (!queryStages.isEmpty()) {
-      return;
-    }
-
-    errors.fatal(
-        "Engine '%s' requires a query engine, but none are listed under 'enabled-engines'. Available options: %s",
-        tableFormatEngineName, AVAILABLE_QUERY_ENGINES);
   }
 
   @Override

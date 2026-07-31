@@ -1,0 +1,2 @@
+[FATAL] When 'vertx' is enabled as a server, 'iceberg' cannot use shallow query engines ('snowflake') to process server queries because they are not integrated at the database level. Available query engines: 'duckdb'
+

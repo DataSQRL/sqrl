@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
-import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
@@ -62,11 +61,6 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
     checkArgument(
         partitionTtlDivisor > 0, "%s must be a positive number", PARTITION_TTL_DIVISOR_KEY);
     this.partitionTtlDivisor = partitionTtlDivisor;
-  }
-
-  @Override
-  public JdbcDialect getDialect() {
-    return JdbcDialect.Postgres;
   }
 
   @Override
