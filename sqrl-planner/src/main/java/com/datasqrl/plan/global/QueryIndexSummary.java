@@ -53,18 +53,13 @@ public class QueryIndexSummary {
   private static final QueryIndexSummary EMPTY =
       new QueryIndexSummary(null, Set.of(), Set.of(), Set.of(), 1.0);
 
-  public static final String INDEX_NAME = "_index_";
-
   @Include NamedTable table;
   @Include Set<Integer> equalityColumns;
   @Include Set<Integer> inequalityColumns;
   @Include Set<IndexableFunctionCall> functionCalls;
 
-  // TODO: add support for sort orders
-  // List<IndexableSort> sorts;
-
   /** Keeps track of the relative frequency of query conjunctions as we reduce them */
-  double count = 1.0;
+  double count;
 
   public static List<QueryIndexSummary> ofFilter(
       @NonNull NamedTable table, RexNode filter, SqrlRexUtil rexUtil) {
@@ -104,16 +99,22 @@ public class QueryIndexSummary {
   }
 
   public static Optional<QueryIndexSummary> ofSort(@NonNull NamedTable table, RexNode node) {
-    if (node instanceof RexCall call) {
-      var idxFinder = new IndexableFinder();
-      call.accept(idxFinder);
-      if (idxFinder.isIndexable && idxFinder.idxCall != null) {
-        return Optional.of(
-            new QueryIndexSummary(
-                table, Set.of(), Set.of(), ImmutableSet.of(idxFinder.idxCall), 1.0));
-      }
+    if (node instanceof RexInputRef inputRef) {
+      return ofSort(table, inputRef.getIndex());
     }
-    return Optional.empty();
+
+    if (!(node instanceof RexCall call)) {
+      return Optional.empty();
+    }
+
+    var idxFinder = new IndexableFinder();
+    call.accept(idxFinder);
+    if (!idxFinder.isIndexable || idxFinder.idxCall == null) {
+      return Optional.empty();
+    }
+
+    return Optional.of(
+        new QueryIndexSummary(table, Set.of(), Set.of(), ImmutableSet.of(idxFinder.idxCall), 1.0));
   }
 
   public static Optional<QueryIndexSummary> ofSort(@NonNull NamedTable table, int columnIndex) {
@@ -151,11 +152,11 @@ public class QueryIndexSummary {
       // See which of the indexable function calls are covered
       List<IndexableFunctionCall> coveredCalls = new ArrayList<>();
       Set<Integer> indexCols = ImmutableSet.copyOf(indexDef.getColumns());
-      for (IndexableFunctionCall fcall : this.functionCalls) {
-        var function = fcall.function();
+      for (IndexableFunctionCall fnCall : this.functionCalls) {
+        var function = fnCall.function();
         if (function.getSupportedIndexes().contains(indexType)
-            && indexCols.containsAll(fcall.columnIndexes())) {
-          coveredCalls.add(fcall);
+            && indexCols.containsAll(fnCall.columnIndexes())) {
+          coveredCalls.add(fnCall);
         }
       }
       if (coveredCalls.isEmpty()) {

@@ -32,8 +32,6 @@ public enum IndexType {
   /**
    * A general index covers comparison operators and can cover multiple columns. If it is not a
    * general index, it is a function index that has a specific indexing method.
-   *
-   * @return
    */
   public boolean isGeneralIndex() {
     return this == HASH || this == BTREE || this == PBTREE;
@@ -41,6 +39,10 @@ public enum IndexType {
 
   public boolean isPartitioned() {
     return this == PBTREE;
+  }
+
+  public boolean supportsSortOrder() {
+    return this == BTREE || this == PBTREE;
   }
 
   public static Optional<IndexType> fromName(String name) {
