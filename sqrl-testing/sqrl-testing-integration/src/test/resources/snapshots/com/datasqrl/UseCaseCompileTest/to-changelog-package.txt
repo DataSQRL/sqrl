@@ -104,7 +104,7 @@ GROUP BY `k`;
 CREATE VIEW `AppendStream`
 AS
 SELECT `k`, `v_sum`
-FROM TABLE(`to_append_stream`(TABLE `InputAgg`));
+FROM TABLE(`TO_CHANGELOG`(TABLE `InputAgg`));
 CREATE TABLE `AppendStream_1` (
   `k` CHAR(1) CHARACTER SET `UTF-16LE` NOT NULL,
   `v_sum` INTEGER NOT NULL,

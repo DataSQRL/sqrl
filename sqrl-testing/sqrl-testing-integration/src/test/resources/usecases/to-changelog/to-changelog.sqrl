@@ -15,7 +15,7 @@ InputAgg := SELECT k, SUM(v) AS v_sum FROM _InputValues GROUP BY k;
 
 /*+ engine(flink) */
 /*+ primary_key(k, v_sum) */
-AppendStream := SELECT k, v_sum FROM to_append_stream(TABLE InputAgg);
+AppendStream := SELECT k, v_sum FROM TO_CHANGELOG(TABLE InputAgg);
 
 /*+ test */
 AppendStreamTest := SELECT * FROM AppendStream ORDER BY k ASC, v_sum DESC;
