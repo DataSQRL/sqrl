@@ -141,8 +141,13 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
   public JdbcStatement addIndex(IndexDefinition index) {
     var ddl =
         new CreateIndexDDL(
-            index.getName(), index.getTableName(), index.getColumnNames(), index.getType());
-    return new GenericJdbcStatement(ddl.getIndexName(), Type.INDEX, ddl.getSql());
+            index.getName(),
+            index.getTableName(),
+            index.getColumnNames(),
+            index.getDirections(),
+            index.getType());
+
+    return new GenericJdbcStatement(ddl.indexName(), Type.INDEX, ddl.getSql());
   }
 
   /*

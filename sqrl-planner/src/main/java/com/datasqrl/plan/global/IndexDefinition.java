@@ -15,10 +15,13 @@
  */
 package com.datasqrl.plan.global;
 
-import com.google.common.base.Preconditions;
+import static com.google.common.base.Preconditions.checkArgument;
+
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.Value;
+import org.apache.calcite.rel.RelFieldCollation.Direction;
 
 @Value
 public class IndexDefinition implements Comparable<IndexDefinition> {
@@ -28,6 +31,7 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
   String tableName;
   List<Integer> columns;
   List<String> columnNames;
+  List<Direction> directions;
   int partitionOffset;
   IndexType type;
 
@@ -37,28 +41,59 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
       List<String> allFieldNames,
       int partitionOffset,
       IndexType type) {
-    Preconditions.checkArgument(
+    this(
+        tableName,
+        columns,
+        allFieldNames,
+        partitionOffset,
+        type,
+        columns.stream().map(column -> Direction.ASCENDING).toList());
+  }
+
+  public IndexDefinition(
+      String tableName,
+      List<Integer> columns,
+      List<String> allFieldNames,
+      int partitionOffset,
+      IndexType type,
+      List<Direction> directions) {
+
+    checkArgument(
         type.isPartitioned() ^ partitionOffset < 0,
         "Index must be partitioned XOR partition offset must be negative: %s | %s",
         type,
         partitionOffset);
-    Preconditions.checkArgument(
+
+    checkArgument(
         partitionOffset <= columns.size(),
         "Invalid partition offset: %s | %s",
         partitionOffset,
         columns.size());
+
+    checkArgument(
+        columns.size() == directions.size(),
+        "Number of index column directions must match number of columns: %s | %s",
+        columns.size(),
+        directions.size());
+
     this.tableName = tableName;
     this.columns = columns;
     this.partitionOffset = partitionOffset;
     this.columnNames = columns.stream().map(allFieldNames::get).collect(Collectors.toList());
     this.type = type;
+    this.directions = directions;
   }
 
   private IndexDefinition(
-      String tableName, List<Integer> columns, List<String> columnNames, IndexType type) {
+      String tableName,
+      List<Integer> columns,
+      List<String> columnNames,
+      List<Direction> directions,
+      IndexType type) {
     this.tableName = tableName;
     this.columns = columns;
     this.columnNames = columnNames;
+    this.directions = directions;
     this.partitionOffset = -1;
     this.type = type;
   }
@@ -68,12 +103,19 @@ public class IndexDefinition implements Comparable<IndexDefinition> {
         + "_"
         + type.name().toLowerCase()
         + "_"
-        + columns.stream().map(i -> "c" + i).collect(Collectors.joining());
+        + IntStream.range(0, columns.size())
+            .mapToObj(i -> "c" + columns.get(i) + (directions.get(i).isDescending() ? "d" : ""))
+            .collect(Collectors.joining());
   }
 
   public static IndexDefinition getPrimaryKeyIndex(
       String tableId, List<Integer> primaryKeys, List<String> pkNames) {
-    return new IndexDefinition(tableId, primaryKeys, pkNames, IndexType.BTREE);
+    return new IndexDefinition(
+        tableId,
+        primaryKeys,
+        pkNames,
+        primaryKeys.stream().map(column -> Direction.ASCENDING).toList(),
+        IndexType.BTREE);
   }
 
   public int numEqualityColumnsRequired() {

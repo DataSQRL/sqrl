@@ -9,7 +9,7 @@ MyOrdersIndexHash := SELECT * FROM _Orders WHERE id > 10;
 /*+index */
 MyOrdersNoIndex := SELECT * FROM _Orders WHERE id > 10;
 
-/*+index(btree, time, id), index(hash, customerid) */
+/*+index(btree, time DESC, id), index(hash, customerid) */
 MyOrdersTwoIndex := SELECT * FROM _Orders WHERE id > 10;
 
 MyOrdersNoHint := SELECT * FROM _Orders WHERE id > 10;

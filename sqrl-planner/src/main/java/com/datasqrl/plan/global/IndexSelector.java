@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
@@ -111,28 +110,32 @@ public class IndexSelector {
 
   public Optional<List<IndexDefinition>> getIndexHints(
       String tableName, TableAnalysis tableAnalysis) {
+
     var hints = tableAnalysis.getHints();
-    List<IndexHint> indexHints =
-        hints.getHints(IndexHint.class).collect(Collectors.toUnmodifiableList());
-    if (!indexHints.isEmpty()) {
-      return Optional.of(
-          indexHints.stream()
-              .filter(idxHint -> idxHint.getIndexType() != null) // filter out no-index hints
-              .filter(idxHint -> config.supportedIndexTypes().contains(idxHint.getIndexType()))
-              .map(
-                  idxHint ->
-                      new IndexDefinition(
-                          tableName,
-                          idxHint.getColumnIndexes(),
-                          tableAnalysis.getRowType().getFieldNames(),
-                          idxHint.getIndexType().isPartitioned()
-                              ? idxHint.getColumnNames().size()
-                              : -1,
-                          idxHint.getIndexType()))
-              .collect(Collectors.toUnmodifiableList()));
-    } else {
+    var indexHints = hints.getHints(IndexHint.class).toList();
+
+    if (indexHints.isEmpty()) {
       return Optional.empty();
     }
+
+    var indexDefinitions =
+        indexHints.stream()
+            .filter(idxHint -> idxHint.getIndexType() != null) // filter out no-index hints
+            .filter(idxHint -> config.supportedIndexTypes().contains(idxHint.getIndexType()))
+            .map(
+                idxHint ->
+                    new IndexDefinition(
+                        tableName,
+                        idxHint.getColumnIndexes(),
+                        tableAnalysis.getRowType().getFieldNames(),
+                        idxHint.getIndexType().isPartitioned()
+                            ? idxHint.getColumnNames().size()
+                            : -1,
+                        idxHint.getIndexType(),
+                        idxHint.getDirections()))
+            .toList();
+
+    return Optional.of(indexDefinitions);
   }
 
   private Map<IndexDefinition, Double> optimizeIndexes(
@@ -192,7 +195,7 @@ public class IndexSelector {
     // Determine all index candidates
     Set<IndexDefinition> candidates = new LinkedHashSet<>();
     indexes.forEach(idx -> candidates.addAll(generateIndexCandidates(idx)));
-    Function<QueryIndexSummary, Double> initialCost = idx -> idx.getBaseCost();
+    Function<QueryIndexSummary, Double> initialCost = QueryIndexSummary::getBaseCost;
     if (config.hasPrimaryKeyIndex() && table.getAnalysis().getPrimaryKey().isDefined()) {
       // The baseline cost is the cost of doing the lookup with the primary key index
       // we need to use the primary key on the physical table (i.e. from the statement)
