@@ -17,6 +17,7 @@ package com.datasqrl.server.config;
 
 import static com.datasqrl.server.config.ServerConfigUtil.getVersionedEndpoint;
 
+import com.datasqrl.util.ProjectConstants;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -33,7 +34,7 @@ public class SwaggerConfig {
   private String uiEndpoint = "/swagger-ui";
   private String title = "DataSQRL REST API";
   private String description = "Auto-generated REST API documentation for DataSQRL endpoints";
-  private String version = "1.0.0";
+  private String version = ProjectConstants.SQRL_VERSION;
   private String contact = "DataSQRL";
   private String contactUrl = "https://datasqrl.com";
   private String contactEmail = "contact@datasqrl.com";

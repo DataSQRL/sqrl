@@ -60,9 +60,13 @@ public class SwaggerService {
   private final String modelVersion;
   private final String restEndpoint;
 
+  public String generateSwaggerJson() {
+    return generateSwaggerJson(null);
+  }
+
   public String generateSwaggerJson(String requestHost) {
     try {
-      var openAPI = createOpenAPI(requestHost);
+      var openAPI = createOpenAPI(Optional.ofNullable(requestHost));
       return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(openAPI);
     } catch (JsonProcessingException e) {
       log.error("Failed to generate Swagger JSON", e);
@@ -70,7 +74,7 @@ public class SwaggerService {
     }
   }
 
-  private OpenAPI createOpenAPI(String requestHost) {
+  private OpenAPI createOpenAPI(Optional<String> requestHost) {
     var openAPI = new OpenAPI();
 
     // Set API info
@@ -98,7 +102,7 @@ public class SwaggerService {
     openAPI.info(info);
 
     // Add server based on request host
-    var serverUrl = requestHost != null ? requestHost : "http://localhost:8888";
+    var serverUrl = requestHost.orElse("http://localhost:8888");
     var server = new Server().url(serverUrl).description("DataSQRL API Server");
     openAPI.addServersItem(server);
 

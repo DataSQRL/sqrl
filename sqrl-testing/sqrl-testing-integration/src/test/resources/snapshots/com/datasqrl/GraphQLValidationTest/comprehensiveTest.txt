@@ -1551,6 +1551,1088 @@ CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING 
 CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
 FROM "ExternalOrders"
  INNER JOIN "ExplicitDistinct" ON "ExternalOrders"."customerid" = "ExplicitDistinct"."customerid"
+>>>vertx-v1-swagger.json
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "DataSQRL REST API",
+    "description" : "Auto-generated REST API documentation for DataSQRL endpoints",
+    "contact" : {
+      "name" : "DataSQRL",
+      "url" : "https://datasqrl.com",
+      "email" : "contact@datasqrl.com"
+    },
+    "license" : {
+      "name" : "Apache License 2.0",
+      "url" : "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "version" : "unknown"
+  },
+  "servers" : [ {
+    "url" : "http://localhost:8888",
+    "description" : "DataSQRL API Server"
+  } ],
+  "paths" : {
+    "/v1/rest/queries/AnotherCustomer" : {
+      "get" : {
+        "summary" : "GetAnotherCustomer",
+        "operationId" : "GetAnotherCustomer",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/Customer" : {
+      "get" : {
+        "summary" : "GetCustomer",
+        "operationId" : "GetCustomer",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/CustomerByMultipleTime" : {
+      "get" : {
+        "summary" : "GetCustomerByMultipleTime",
+        "operationId" : "GetCustomerByMultipleTime",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/CustomerByTime2" : {
+      "get" : {
+        "summary" : "GetCustomerByTime2",
+        "operationId" : "GetCustomerByTime2",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/CustomerFilteredDistinct" : {
+      "get" : {
+        "summary" : "GetCustomerFilteredDistinct",
+        "operationId" : "GetCustomerFilteredDistinct",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/CustomerTimeWindow" : {
+      "get" : {
+        "summary" : "GetCustomerTimeWindow",
+        "operationId" : "GetCustomerTimeWindow",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/ExplicitDistinct" : {
+      "get" : {
+        "summary" : "GetExplicitDistinct",
+        "operationId" : "GetExplicitDistinct",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/ExternalOrders" : {
+      "get" : {
+        "summary" : "GetExternalOrders",
+        "operationId" : "GetExternalOrders",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/InvalidDistinct" : {
+      "get" : {
+        "summary" : "GetInvalidDistinct",
+        "operationId" : "GetInvalidDistinct",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/MissedTemporalJoin" : {
+      "get" : {
+        "summary" : "GetMissedTemporalJoin",
+        "operationId" : "GetMissedTemporalJoin",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/Orders" : {
+      "get" : {
+        "summary" : "GetOrders",
+        "operationId" : "GetOrders",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/SelectCustomers" : {
+      "get" : {
+        "summary" : "GetSelectCustomers",
+        "description" : "This is for selected customers\nand their orders",
+        "operationId" : "GetSelectCustomers",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/TemporalJoin" : {
+      "get" : {
+        "summary" : "GetTemporalJoin",
+        "operationId" : "GetTemporalJoin",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/UnnestOrders" : {
+      "get" : {
+        "summary" : "GetUnnestOrders",
+        "operationId" : "GetUnnestOrders",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/CustomerById" : {
+      "get" : {
+        "summary" : "GetCustomerById",
+        "operationId" : "GetCustomerById",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "minId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/CustomerQuery" : {
+      "get" : {
+        "summary" : "GetCustomerQuery",
+        "operationId" : "GetCustomerQuery",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "id",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/TableFunctionCallsTblFct" : {
+      "get" : {
+        "summary" : "GetTableFunctionCallsTblFct",
+        "operationId" : "GetTableFunctionCallsTblFct",
+        "parameters" : [ {
+          "name" : "arg2",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "arg1",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/mutations/Orders" : {
+      "post" : {
+        "summary" : "AddOrders",
+        "operationId" : "AddOrders",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "required" : [ "orderid" ],
+                "type" : "object",
+                "properties" : {
+                  "amount" : {
+                    "type" : "number"
+                  },
+                  "orderid" : {
+                    "type" : "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 >>>vertx.json
 {
   "models" : {
