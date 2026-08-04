@@ -17,8 +17,8 @@ package com.datasqrl.config;
 
 import static com.datasqrl.config.PackageJsonImpl.CONFIG_KEY;
 
+import com.datasqrl.config.PackageJson.IncludeConfig;
 import com.datasqrl.config.PackageJson.ScriptApiConfig;
-import com.datasqrl.config.PackageJson.SharedScriptConfig;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +31,7 @@ public class ScriptConfigImpl implements PackageJson.ScriptConfig {
   SqrlConfig sqrlConfig;
 
   public static final String MAIN_KEY = "main";
-  public static final String SHARED_KEY = "shared";
+  public static final String INCLUDE_KEY = "include";
   public static final String API_KEY = "api";
   public static final String GRAPHQL_KEY = "graphql";
   public static final String OPERATIONS_KEY = "operations";
@@ -43,15 +43,15 @@ public class ScriptConfigImpl implements PackageJson.ScriptConfig {
   }
 
   @Override
-  public List<SharedScriptConfig> getSharedScriptConfigs() {
-    if (!sqrlConfig.hasSubConfig(SHARED_KEY)) {
+  public List<IncludeConfig> getIncludeConfigs() {
+    if (!sqrlConfig.hasSubConfig(INCLUDE_KEY)) {
       return List.of();
     }
 
-    var sharedConf = sqrlConfig.getSubConfig(SHARED_KEY);
-    var sharedCongList = new ArrayList<SharedScriptConfig>();
+    var sharedConf = sqrlConfig.getSubConfig(INCLUDE_KEY);
+    var sharedCongList = new ArrayList<IncludeConfig>();
     for (var name : sharedConf.getKeys()) {
-      sharedCongList.add(new SharedScriptConfigImpl(sharedConf.getSubConfig(name)));
+      sharedCongList.add(new IncludeConfigImpl(sharedConf.getSubConfig(name)));
     }
 
     return List.copyOf(sharedCongList);

@@ -54,8 +54,10 @@ public class SqrlConfig {
   public static final int CURRENT_VERSION = 1;
   public static final String VERSION_KEY = "version";
 
+  private static final String INCLUDE_PREFIX = "script.include";
   private static final String KEY_PATTERN =
       "^[a-z0-9](?!.*[.-]{2})(?!.*[-\\.][\\.\\-])[a-z0-9.-]*[a-z0-9]$";
+  private static final String INCLUDE_KEY_PATTERN = "^[a-z0-9](?!.*[._-]{2})[a-z0-9._-]*[a-z0-9]$";
 
   private final ErrorCollector errors;
   private ObjectNode root;
@@ -122,11 +124,13 @@ public class SqrlConfig {
   }
 
   private String getFullKey(String key) {
+    var isIncludeKey = prefix.equals(INCLUDE_PREFIX);
+    var keyPattern = isIncludeKey ? INCLUDE_KEY_PATTERN : KEY_PATTERN;
     errors.checkFatal(
-        key.matches(KEY_PATTERN),
+        key.matches(keyPattern),
         String.format(
-            "Invalid config key '%s'. A SQRL config key must only contain lowercase letters or digits, separated by dots or dashes.",
-            key));
+            "Invalid config key '%s'. A SQRL config key must only contain lowercase letters or digits, separated by %s.",
+            key, isIncludeKey ? "dots, dashes, or underscores" : "dots or dashes"));
 
     return prefix.isEmpty() ? key : prefix + "." + key;
   }

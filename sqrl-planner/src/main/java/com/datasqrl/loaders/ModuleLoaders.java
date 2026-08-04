@@ -19,7 +19,7 @@ import static com.datasqrl.planner.parser.StatementParserException.checkFatal;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.PackageJson.SharedScriptConfig;
+import com.datasqrl.config.PackageJson.IncludeConfig;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -45,7 +45,7 @@ public final class ModuleLoaders {
 
   private final ModuleLoader mainLoader;
   private final ModuleLoader rootLoader;
-  private final Set<String> sharedScriptNames;
+  private final Set<String> includeNamespaces;
 
   @Inject
   public ModuleLoaders(
@@ -66,14 +66,14 @@ public final class ModuleLoaders {
             workspacePaths,
             classpathFunctionLoader,
             errors);
-    sharedScriptNames =
-        packageJson.getScriptConfig().getSharedScriptConfigs().stream()
-            .map(SharedScriptConfig::getName)
+    includeNamespaces =
+        packageJson.getScriptConfig().getIncludeConfigs().stream()
+            .map(IncludeConfig::getNamespace)
             .collect(Collectors.toSet());
   }
 
   public ModuleLoaders withMainLoader(ModuleLoader mainLoader) {
-    return new ModuleLoaders(mainLoader, rootLoader, sharedScriptNames);
+    return new ModuleLoaders(mainLoader, rootLoader, includeNamespaces);
   }
 
   public ModuleContext loadImportModule(NamePath namePath, FileLocation fileLocation) {
@@ -110,10 +110,10 @@ public final class ModuleLoaders {
     var pathHead = ctx.finalPath.getFirst().getDisplay();
 
     checkFatal(
-        ctx.module != null || ctx.rootImport || !sharedScriptNames.contains(pathHead),
+        ctx.module != null || ctx.rootImport || !includeNamespaces.contains(pathHead),
         fileLocation,
         export ? ErrorCode.INVALID_EXPORT : ErrorCode.INVALID_IMPORT,
-        "Invalid %s, to access a shared script in a submodule make sure to use the '%s' prefix",
+        "Invalid %s, to access an included script in a submodule make sure to use the '%s' prefix",
         export ? "export" : "import",
         ROOT_PREFIX);
 

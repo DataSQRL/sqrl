@@ -1,4 +1,4 @@
-IMPORT root.banking-catalog.sources;
+IMPORT root.banking_catalog.sources;
 
 _Applications := DISTINCT sources.ApplicationsStream ON id ORDER BY updated_at DESC;
 _LoanTypes := DISTINCT sources.LoanTypesStream ON id ORDER BY updated_at DESC;

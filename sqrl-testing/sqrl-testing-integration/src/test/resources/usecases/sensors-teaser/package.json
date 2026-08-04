@@ -2,9 +2,9 @@
   "version": "1",
   "script": {
     "main": "sensors-teaser.sqrl",
-    "shared": {
-      "sensors-shared": {
-        "path": "../sensors-shared"
+    "include": {
+      "sensors_shared": {
+        "package": "../sensors-shared/package.json"
       }
     }
   },

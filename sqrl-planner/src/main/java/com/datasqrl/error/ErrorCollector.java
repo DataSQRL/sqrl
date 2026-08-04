@@ -138,8 +138,8 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     return withLocation(ErrorPrefix.CONFIG.resolve(filename));
   }
 
-  public ErrorCollector withShared(String sharedName) {
-    return withLocation(ErrorPrefix.SHARED.resolve(sharedName));
+  public ErrorCollector withInclude(String includeName) {
+    return withLocation(ErrorPrefix.INCLUDE.resolve(includeName));
   }
 
   /*
