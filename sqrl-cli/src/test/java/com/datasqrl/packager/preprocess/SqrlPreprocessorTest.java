@@ -16,6 +16,7 @@
 package com.datasqrl.packager.preprocess;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -29,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -105,12 +107,13 @@ class SqrlPreprocessorTest {
   @Test
   void givenSqrlFileInSharedScriptDirectory_whenProcess_thenRendersSharedPackageValues()
       throws IOException {
-    givenSharedConfig("shared-catalog", "shared", Map.of("tableName", "OverrideOrders"));
+    var sharedScript = givenSharedConfig();
+    when(sharedScript.getConfig()).thenReturn(Map.of("tableName", "OverrideOrders"));
 
     var sharedDir = sourceDir.resolve("shared");
     Files.createDirectories(sharedDir);
     Files.writeString(
-        sharedDir.resolve("package.json"),
+        sharedDir.resolve("shared-package.json"),
         """
         {
           "version": "1",
@@ -134,7 +137,8 @@ class SqrlPreprocessorTest {
   @Test
   void givenSqrlFileBelowSharedScriptPath_whenProcess_thenRendersSharedPackageValues()
       throws IOException {
-    givenSharedConfig("shared-catalog", "shared", Map.of("limit", 50));
+    var sharedScript = givenSharedConfig();
+    when(sharedScript.getConfig()).thenReturn(Map.of("limit", 50));
 
     var nestedSharedDir = sourceDir.resolve("shared/nested");
     Files.createDirectories(nestedSharedDir);
@@ -160,18 +164,83 @@ class SqrlPreprocessorTest {
         .isEqualTo("IMPORT NestedOrders; LIMIT 50;");
   }
 
+  @Test
+  void givenMultipleSharedPackageFiles_whenProcess_thenFails() throws IOException {
+    givenSharedConfig();
+
+    var sharedDir = sourceDir.resolve("shared");
+    Files.createDirectories(sharedDir);
+    Files.writeString(sharedDir.resolve("catalog-package.json"), "{}");
+    Files.writeString(sharedDir.resolve("backup-package.json"), "{}");
+    var sqrlFile = sharedDir.resolve("catalog.sqrl");
+    Files.writeString(sqrlFile, "IMPORT {{tableName}};");
+
+    assertThatThrownBy(() -> underTest.process(sqrlFile, context))
+        .hasMessageContaining("Cannot infer shared package file")
+        .hasMessageContaining("Specify the shared package file explicitly")
+        .hasMessageContaining("catalog-package.json")
+        .hasMessageContaining("backup-package.json");
+  }
+
+  @Test
+  void givenExplicitSharedPackageFile_whenProcess_thenLoadsIt() throws IOException {
+    var sharedConfig = givenSharedConfig();
+    when(sharedConfig.getPackageFile()).thenReturn(Optional.of("shared-config.json"));
+
+    var sharedDir = sourceDir.resolve("shared");
+    Files.createDirectories(sharedDir);
+    Files.writeString(
+        sharedDir.resolve("shared-config.json"),
+        """
+        {
+          "version": "1",
+          "script": {
+            "config": {
+              "tableName": "ExplicitOrders"
+            }
+          }
+        }
+        """);
+    var sqrlFile = sharedDir.resolve("catalog.sqrl");
+    Files.writeString(sqrlFile, "IMPORT {{tableName}};");
+
+    underTest.process(sqrlFile, context);
+
+    assertThat(Files.readString(buildDir.resolve("shared/catalog.sqrl")))
+        .isEqualTo("IMPORT ExplicitOrders;");
+  }
+
+  @Test
+  void givenMissingExplicitSharedPackageFile_whenProcess_thenFailsWithResolvedPath()
+      throws IOException {
+    var sharedConfig = givenSharedConfig();
+    when(sharedConfig.getPackageFile()).thenReturn(Optional.of("missing-package.json"));
+
+    var sharedDir = sourceDir.resolve("shared");
+    Files.createDirectories(sharedDir);
+    var sqrlFile = sharedDir.resolve("catalog.sqrl");
+    Files.writeString(sqrlFile, "IMPORT {{tableName}};");
+
+    assertThatThrownBy(() -> underTest.process(sqrlFile, context))
+        .hasMessageContaining("Given shared package file does not exist")
+        .hasMessageContaining(
+            sharedDir.resolve("missing-package.json").toAbsolutePath().toString());
+  }
+
   private void givenProjectConfig(Map<String, Object> templateValues) {
     when(packageJson.getScriptConfig()).thenReturn(scriptConfig);
     when(scriptConfig.getSharedScriptConfigs()).thenReturn(List.of());
     when(scriptConfig.getConfig()).thenReturn(templateValues);
   }
 
-  private void givenSharedConfig(String name, String path, Map<String, Object> templateOverrides) {
+  private SharedScriptConfig givenSharedConfig() {
     var sharedScript = mock(SharedScriptConfig.class);
-    when(sharedScript.getName()).thenReturn(name);
-    when(sharedScript.getPath()).thenReturn(path);
-    when(sharedScript.getConfig()).thenReturn(templateOverrides);
+    when(sharedScript.getName()).thenReturn("shared-catalog");
+    when(sharedScript.getPath()).thenReturn("shared");
+    when(sharedScript.getPackageFile()).thenReturn(Optional.empty());
     when(packageJson.getScriptConfig()).thenReturn(scriptConfig);
     when(scriptConfig.getSharedScriptConfigs()).thenReturn(List.of(sharedScript));
+
+    return sharedScript;
   }
 }

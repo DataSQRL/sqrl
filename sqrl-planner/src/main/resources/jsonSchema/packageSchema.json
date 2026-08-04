@@ -158,6 +158,9 @@
                 "path": {
                   "type": "string"
                 },
+                "package-file": {
+                  "type": "string"
+                },
                 "config": {
                   "type": "object",
                   "minProperties": 1,

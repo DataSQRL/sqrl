@@ -119,6 +119,8 @@ public interface PackageJson {
 
     String getPath();
 
+    Optional<String> getPackageFile();
+
     Map<String, Object> getConfig();
   }
 

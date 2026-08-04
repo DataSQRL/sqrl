@@ -23,12 +23,16 @@ import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.FilenameAnalyzer;
 import com.github.mustachejava.DefaultMustacheFactory;
 import com.github.mustachejava.MustacheFactory;
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -82,7 +86,10 @@ public class SqrlPreprocessor implements Preprocessor {
       if (containsSubpath(scriptDir, sharedScript.getPath())) {
         var sharedPackageConfig =
             sharedConfigs.computeIfAbsent(
-                sharedScript.getName(), k -> loadSharedPackage(scriptDir, k));
+                sharedScript.getName(),
+                k ->
+                    loadSharedPackage(
+                        errors.withShared(k), scriptDir, sharedScript.getPackageFile()));
 
         var templateValues = new HashMap<>(sharedPackageConfig.getScriptConfig().getConfig());
         // Apply any overrides
@@ -96,14 +103,43 @@ public class SqrlPreprocessor implements Preprocessor {
     return config.getScriptConfig().getConfig();
   }
 
-  private PackageJson loadSharedPackage(Path sharedDir, String sharedName) {
-    var localErrors = errors.withShared(sharedName);
-    var packageFile = sharedDir.resolve(SqrlConstants.PACKAGE_JSON);
-    if (!Files.exists(packageFile)) {
-      localErrors.fatal("Shared script directory must contain a %s", SqrlConstants.PACKAGE_JSON);
+  private PackageJson loadSharedPackage(
+      ErrorCollector localErrors, Path sharedDir, Optional<String> packageFile) {
+    if (packageFile.isPresent()) {
+      var resolvedPackageFile = sharedDir.resolve(packageFile.get());
+      if (!Files.exists(resolvedPackageFile)) {
+        localErrors.fatal("Given shared package file does not exist: %s", resolvedPackageFile);
+      }
+
+      return ConfigLoaderUtils.loadResolvedConfigFromFile(localErrors, resolvedPackageFile);
     }
 
-    return ConfigLoaderUtils.loadResolvedConfig(localErrors, sharedDir);
+    try (var packageFiles = Files.newDirectoryStream(sharedDir, "*package*.json")) {
+      List<Path> matchingPackageFiles = new ArrayList<>();
+      for (var candidate : packageFiles) {
+        if (Files.isRegularFile(candidate)) {
+          matchingPackageFiles.add(candidate);
+        }
+      }
+
+      if (matchingPackageFiles.isEmpty()) {
+        localErrors.fatal(
+            "Cannot infer shared package file because no files match '*package*.json' in %s.",
+            sharedDir);
+      }
+
+      if (matchingPackageFiles.size() > 1) {
+        localErrors.fatal(
+            "Cannot infer shared package file because multiple files match '*package*.json': %s. "
+                + "Specify the shared package file explicitly in your main package JSON.",
+            matchingPackageFiles);
+      }
+
+      return ConfigLoaderUtils.loadResolvedConfigFromFile(localErrors, matchingPackageFiles.get(0));
+
+    } catch (IOException e) {
+      throw new IllegalStateException("Failed to load shared package file from " + sharedDir, e);
+    }
   }
 
   private static boolean containsSubpath(Path path, String subpathStr) {

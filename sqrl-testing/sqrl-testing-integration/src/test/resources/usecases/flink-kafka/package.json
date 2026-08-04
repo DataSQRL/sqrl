@@ -6,6 +6,7 @@
     "shared": {
       "banking-catalog": {
         "path": "../banking-shared",
+        "package-file": "package-shared.json",
         "config": {
           "monitorInterval": "5s"
         }

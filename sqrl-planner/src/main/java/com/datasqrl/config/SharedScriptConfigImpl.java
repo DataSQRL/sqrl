@@ -19,6 +19,7 @@ import static com.datasqrl.config.PackageJsonImpl.CONFIG_KEY;
 
 import com.datasqrl.config.PackageJson.SharedScriptConfig;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -34,6 +35,11 @@ public class SharedScriptConfigImpl implements SharedScriptConfig {
   @Override
   public String getPath() {
     return sqrlConfig.asString("path").get();
+  }
+
+  @Override
+  public Optional<String> getPackageFile() {
+    return sqrlConfig.asString("package-file").getOptional();
   }
 
   @Override
