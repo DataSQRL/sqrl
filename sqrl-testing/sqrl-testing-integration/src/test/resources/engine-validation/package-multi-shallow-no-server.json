@@ -1,0 +1,7 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "iceberg", "sparksql", "redshift"],
+  "script": {
+    "main": "script.sqrl"
+  }
+}

@@ -1,0 +1,205 @@
+>>>pipeline_explain.txt
+=== RedshiftAggregates
+ID:          default_catalog.default_database.RedshiftAggregates
+Type:        state
+Stage:       flink
+Primary key: boolean_value
+Timestamp:   -
+Row count:   ~1e7
+---
+Schema:
+ - boolean_value: BOOLEAN
+ - record_count: BIGINT NOT NULL
+ - decimal_sum: DECIMAL(38, 2)
+ - double_average: DOUBLE
+ - latest_event: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Inputs:
+ - default_catalog.default_database.RedshiftTypeSource
+Annotations:
+ - stream-root: RedshiftTypeSource
+
+=== RedshiftTypeMappings
+ID:          default_catalog.default_database.RedshiftTypeMappings
+Type:        stream
+Stage:       flink
+Primary key: id
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - tiny_value: TINYINT
+ - small_value: SMALLINT
+ - int_value: INTEGER
+ - float_value: FLOAT
+ - double_value: DOUBLE
+ - decimal_value: DECIMAL(12, 2)
+ - boolean_value: BOOLEAN
+ - string_value: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - varchar_value: VARCHAR(32) CHARACTER SET "UTF-16LE"
+ - char_value: CHAR(8) CHARACTER SET "UTF-16LE"
+ - binary_value: BINARY(16)
+ - varbinary_value: VARBINARY(32)
+ - date_value: DATE
+ - timestamp_value: TIMESTAMP(3)
+ - timestamp_ltz_value: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - string_array: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY
+ - string_to_int: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE", INTEGER) MAP
+ - attributes: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" source, INTEGER priority)
+Inputs:
+ - default_catalog.default_database.RedshiftTypeSource
+Annotations:
+ - stream-root: RedshiftTypeSource
+
+=== RedshiftTypeSource
+ID:          default_catalog.default_database.RedshiftTypeSource
+Type:        stream
+Stage:       flink
+Primary key: id
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - tiny_value: TINYINT
+ - small_value: SMALLINT
+ - int_value: INTEGER
+ - float_value: FLOAT
+ - double_value: DOUBLE
+ - decimal_value: DECIMAL(12, 2)
+ - boolean_value: BOOLEAN
+ - string_value: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - varchar_value: VARCHAR(32) CHARACTER SET "UTF-16LE"
+ - char_value: CHAR(8) CHARACTER SET "UTF-16LE"
+ - binary_value: BINARY(16)
+ - varbinary_value: VARBINARY(32)
+ - date_value: DATE
+ - timestamp_value: TIMESTAMP(3)
+ - timestamp_ltz_value: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+ - string_array: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY
+ - string_to_int: (VARCHAR(2147483647) CHARACTER SET "UTF-16LE", INTEGER) MAP
+ - attributes: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" source, INTEGER priority)
+Inputs:
+ - default_catalog.default_database.RedshiftTypeSource__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: RedshiftTypeSource
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `RedshiftTypeSource` (
+  `id` BIGINT NOT NULL,
+  `tiny_value` TINYINT,
+  `small_value` SMALLINT,
+  `int_value` INTEGER,
+  `float_value` FLOAT,
+  `double_value` DOUBLE,
+  `decimal_value` DECIMAL(12, 2),
+  `boolean_value` BOOLEAN,
+  `string_value` STRING,
+  `varchar_value` VARCHAR(32),
+  `char_value` CHAR(8),
+  `binary_value` BINARY(16),
+  `varbinary_value` VARBINARY(32),
+  `date_value` DATE,
+  `timestamp_value` TIMESTAMP(3),
+  `timestamp_ltz_value` TIMESTAMP_LTZ(3),
+  `string_array` ARRAY< STRING >,
+  `string_to_int` MAP< STRING, INTEGER >,
+  `attributes` ROW< `source` STRING, `priority` INTEGER >,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'catalog-name' = 'default_catalog',
+  'catalog-table' = 'RedshiftTypeSource',
+  'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
+  'connector' = 'iceberg',
+  'format-version' = '2',
+  'warehouse' = 'sqrl_iceberg_data',
+  'write.distribution-mode' = 'hash',
+  'write.upsert.enabled' = 'true'
+);
+CREATE VIEW `RedshiftTypeMappings`
+AS
+SELECT `id`, `tiny_value`, `small_value`, `int_value`, `float_value`, `double_value`, `decimal_value`, `boolean_value`, `string_value`, `varchar_value`, `char_value`, `binary_value`, `varbinary_value`, `date_value`, `timestamp_value`, `timestamp_ltz_value`, `string_array`, `string_to_int`, `attributes`
+FROM `RedshiftTypeSource`;
+CREATE VIEW `RedshiftAggregates`
+AS
+SELECT `boolean_value`, COUNT(*) AS `record_count`, SUM(`decimal_value`) AS `decimal_sum`, AVG(`double_value`) AS `double_average`, MAX(`timestamp_ltz_value`) AS `latest_event`
+FROM `RedshiftTypeSource`
+GROUP BY `boolean_value`;
+CREATE TABLE `RedshiftAggregates_1` (
+  `boolean_value` BOOLEAN,
+  `record_count` BIGINT NOT NULL,
+  `decimal_sum` DECIMAL(38, 2),
+  `double_average` DOUBLE,
+  `latest_event` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`boolean_value`) NOT ENFORCED
+)
+WITH (
+  'catalog-name' = 'default_catalog',
+  'catalog-table' = 'RedshiftAggregates',
+  'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
+  'connector' = 'iceberg',
+  'format-version' = '2',
+  'warehouse' = 'sqrl_iceberg_data',
+  'write.distribution-mode' = 'hash',
+  'write.upsert.enabled' = 'true'
+);
+CREATE TABLE `RedshiftTypeMappings_2` (
+  `id` BIGINT NOT NULL,
+  `tiny_value` TINYINT,
+  `small_value` SMALLINT,
+  `int_value` INTEGER,
+  `float_value` FLOAT,
+  `double_value` DOUBLE,
+  `decimal_value` DECIMAL(12, 2),
+  `boolean_value` BOOLEAN,
+  `string_value` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `varchar_value` VARCHAR(32) CHARACTER SET `UTF-16LE`,
+  `char_value` CHAR(8) CHARACTER SET `UTF-16LE`,
+  `binary_value` BINARY(16),
+  `varbinary_value` VARBINARY(32),
+  `date_value` DATE,
+  `timestamp_value` TIMESTAMP(3),
+  `timestamp_ltz_value` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `string_array` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` ARRAY,
+  `string_to_int` MAP< VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, INTEGER >,
+  `attributes` ROW(`source` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `priority` INTEGER),
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'catalog-name' = 'default_catalog',
+  'catalog-table' = 'RedshiftTypeMappings',
+  'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
+  'connector' = 'iceberg',
+  'format-version' = '2',
+  'warehouse' = 'sqrl_iceberg_data',
+  'write.distribution-mode' = 'hash'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`RedshiftAggregates_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`RedshiftAggregates`
+;
+INSERT INTO `default_catalog`.`default_database`.`RedshiftTypeMappings_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`RedshiftTypeMappings`
+;
+END
+>>>iceberg-redshift-schema.sql
+CREATE TABLE IF NOT EXISTS "RedshiftAggregates" ("boolean_value" BOOLEAN, "record_count" BIGINT NOT NULL, "decimal_sum" DECIMAL(38, 2), "double_average" "float8", "latest_event" TIMESTAMP(3) WITH LOCAL TIME ZONE, PRIMARY KEY ("boolean_value"));
+CREATE TABLE IF NOT EXISTS "RedshiftTypeMappings" ("id" BIGINT NOT NULL, "tiny_value" "int2", "small_value" SMALLINT, "int_value" INTEGER, "float_value" FLOAT, "double_value" "float8", "decimal_value" DECIMAL(12, 2), "boolean_value" BOOLEAN, "string_value" VARCHAR(65535), "varchar_value" VARCHAR(32), "char_value" CHAR(8), "binary_value" BINARY(16), "varbinary_value" VARBINARY(32), "date_value" DATE, "timestamp_value" TIMESTAMP(3), "timestamp_ltz_value" TIMESTAMP(3) WITH LOCAL TIME ZONE, "string_array" VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY, "string_to_int" MAP< VARCHAR(2147483647) CHARACTER SET "UTF-16LE", INTEGER >, "attributes" ROW("source" VARCHAR(2147483647) CHARACTER SET "UTF-16LE", "priority" INTEGER), PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "RedshiftTypeSource" ("id" BIGINT NOT NULL, "tiny_value" "int2", "small_value" SMALLINT, "int_value" INTEGER, "float_value" FLOAT, "double_value" "float8", "decimal_value" DECIMAL(12, 2), "boolean_value" BOOLEAN, "string_value" VARCHAR(65535), "varchar_value" VARCHAR(32), "char_value" CHAR(8), "binary_value" BINARY(16), "varbinary_value" VARBINARY(32), "date_value" DATE, "timestamp_value" TIMESTAMP(3), "timestamp_ltz_value" TIMESTAMP(3) WITH LOCAL TIME ZONE, "string_array" VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY, "string_to_int" MAP< VARCHAR(2147483647) CHARACTER SET "UTF-16LE", INTEGER >, "attributes" ROW("source" VARCHAR(2147483647) CHARACTER SET "UTF-16LE", "priority" INTEGER), PRIMARY KEY ("id"))
+>>>iceberg-schema.sql
+CREATE TABLE IF NOT EXISTS "RedshiftAggregates" ("boolean_value" BOOLEAN, "record_count" BIGINT NOT NULL, "decimal_sum" NUMERIC, "double_average" DOUBLE PRECISION, "latest_event" TIMESTAMP WITH TIME ZONE, PRIMARY KEY ("boolean_value"));
+CREATE TABLE IF NOT EXISTS "RedshiftTypeMappings" ("id" BIGINT NOT NULL, "tiny_value" SMALLINT, "small_value" SMALLINT, "int_value" INTEGER, "float_value" FLOAT, "double_value" DOUBLE PRECISION, "decimal_value" NUMERIC, "boolean_value" BOOLEAN, "string_value" TEXT, "varchar_value" TEXT, "char_value" TEXT, "binary_value" BYTEA, "varbinary_value" BYTEA, "date_value" DATE, "timestamp_value" TIMESTAMP WITHOUT TIME ZONE, "timestamp_ltz_value" TIMESTAMP WITH TIME ZONE, "string_array" TEXT ARRAY, "string_to_int" JSONB, "attributes" JSONB, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "RedshiftTypeSource" ("id" BIGINT NOT NULL, "tiny_value" SMALLINT, "small_value" SMALLINT, "int_value" INTEGER, "float_value" FLOAT, "double_value" DOUBLE PRECISION, "decimal_value" NUMERIC, "boolean_value" BOOLEAN, "string_value" TEXT, "varchar_value" TEXT, "char_value" TEXT, "binary_value" BYTEA, "varbinary_value" BYTEA, "date_value" DATE, "timestamp_value" TIMESTAMP WITHOUT TIME ZONE, "timestamp_ltz_value" TIMESTAMP WITH TIME ZONE, "string_array" TEXT ARRAY, "string_to_int" JSONB, "attributes" JSONB, PRIMARY KEY ("id"))
