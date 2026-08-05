@@ -46,6 +46,7 @@ import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -158,11 +159,17 @@ public class OpenApiService {
   }
 
   private Operation createOpenApiOperation(ApiOperation operation, String uriTemplate) {
+    var description = operation.getFunction().getDescription();
+
     var openApiOperation =
         new Operation()
             .operationId(operation.getName())
             .summary(operation.getName())
-            .description(operation.getFunction().getDescription());
+            .description(description);
+
+    if (StringUtils.isNotBlank(description)) {
+      openApiOperation.summary(getSummary(description));
+    }
 
     // Add parameters
     if (operation.getRestMethod() == RestMethodType.GET) {
@@ -222,6 +229,12 @@ public class OpenApiService {
     openApiOperation.responses(responses);
 
     return openApiOperation;
+  }
+
+  private String getSummary(String description) {
+    var firstLine = description.lines().findFirst().orElse("").trim();
+
+    return firstLine.substring(0, Math.min(firstLine.length(), 120));
   }
 
   private List<Parameter> extractParameters(String uriTemplate) {

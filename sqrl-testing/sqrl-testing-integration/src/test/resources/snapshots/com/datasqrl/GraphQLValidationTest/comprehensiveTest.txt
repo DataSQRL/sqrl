@@ -2202,7 +2202,7 @@ FROM "ExternalOrders"
     },
     "/v1/rest/queries/SelectCustomers" : {
       "get" : {
-        "summary" : "GetSelectCustomers",
+        "summary" : "This is for selected customers",
         "description" : "This is for selected customers\nand their orders",
         "operationId" : "GetSelectCustomers",
         "parameters" : [ {
