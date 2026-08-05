@@ -21,11 +21,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import lombok.SneakyThrows;
 import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 
-@Disabled
 public class ServerFunctionContainerIT {
 
   @RegisterExtension
