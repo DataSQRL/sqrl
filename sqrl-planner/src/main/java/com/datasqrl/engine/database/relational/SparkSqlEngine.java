@@ -38,6 +38,6 @@ public class SparkSqlEngine extends AbstractJDBCShallowQueryEngine {
 
   @Override
   public JdbcStatementFactory getStatementFactory() {
-    return new SparkSqlStatementFactory();
+    return new SparkSqlStatementFactory(engineConfig);
   }
 }

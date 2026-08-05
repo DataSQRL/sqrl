@@ -242,6 +242,10 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     return sqlConverters.convert(createView);
   }
 
+  protected SqlIdentifier getViewStatementIdentifier(String viewName) {
+    return new SqlIdentifier(viewName, SqlParserPos.ZERO);
+  }
+
   protected Set<DatabaseTypeExtension> extractTypeExtensions(
       Stream<RelNode> relNodes, List<DatabaseTypeExtension> extensions) {
     return relNodes
@@ -299,7 +303,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       RelDataType rowType,
       SqlNode sqlNode,
       Documented.Documentation documentation) {
-    var viewNameIdentifier = new SqlIdentifier(viewName, SqlParserPos.ZERO);
+    var viewNameIdentifier = getViewStatementIdentifier(viewName);
     var columnList =
         new SqlNodeList(
             rowType.getFieldList().stream()

@@ -17,22 +17,43 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.dialect.ExtendedSparkSqlDialect;
+import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.relational.ddl.GenericCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;
+import java.util.ArrayList;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class SparkSqlStatementFactory extends AbstractJdbcStatementFactory {
 
-  public SparkSqlStatementFactory() {
+  private final EngineConfig engineConfig;
+
+  public SparkSqlStatementFactory(EngineConfig engineConfig) {
     super(Dialect.SPARK_SQL, new GenericCreateTableDdlFactory(ExtendedSparkSqlDialect.DEFAULT));
+    this.engineConfig = engineConfig;
   }
 
   @Override
   protected SqlNode getSqlType(RelDataType type, Optional<DataTypeHint> hint) {
     return ExtendedSparkSqlDialect.DEFAULT.getCastSpec(type);
+  }
+
+  @Override
+  protected SqlIdentifier getViewStatementIdentifier(String viewName) {
+    var names = new ArrayList<String>();
+    var catalog = engineConfig.getSettingOptional("view-catalog");
+    if (catalog.isPresent()) {
+      names.add(catalog.get());
+      names.add(engineConfig.getSettingOptional("view-database").orElse("default"));
+    } else {
+      engineConfig.getSettingOptional("view-database").ifPresent(names::add);
+    }
+    names.add(viewName);
+    return new SqlIdentifier(names, SqlParserPos.ZERO);
   }
 
   @Override
