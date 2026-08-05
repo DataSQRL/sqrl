@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.11c193f7.css">
-<script src="/assets/js/runtime~main.0bf84a8b.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.b521011b.js" defer="defer"></script>
 <script src="/assets/js/main.ed45ed57.js" defer="defer"></script>
 </head>
 <body>
@@ -79,15 +79,23 @@ exposing the Flink UI on port 8081, the Vert.x server on port 8888, and Redpanda
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="engines">Engines<a href="#engines" class="hash-link" aria-label="Direct link to Engines" title="Direct link to Engines" translate="no">​</a></h3>
 <p>The run command uses the following engines:</p>
 <ul>
-<li class="">Flink as the stream engine: The Flink cluster is accessible through the WebUI at <a href="http://localhost:8081/" target="_blank" rel="noopener noreferrer" class="">http://localhost:8081/</a>.</li>
-<li class="">Postgres as the transactional database engine</li>
-<li class="">Iceberg+DuckDB as the analytic database engine</li>
-<li class="">Redpanda as the log engine: The Redpanda cluster is accessible on port 9092 (via Kafka command line tooling).</li>
-<li class="">Vertx as the server engine:<!-- -->
+<li class="">Flink as the stream engine<!-- -->
 <ul>
-<li class="">The GraphQL API is accessible at <a href="http://localhost:8888/v1/graphiql/" target="_blank" rel="noopener noreferrer" class="">http://localhost:8888/v1/graphiql/</a>.</li>
+<li class="">The Flink cluster is accessible through the WebUI at <a href="http://localhost:8081/" target="_blank" rel="noopener noreferrer" class="">http://localhost:8081/</a></li>
+</ul>
+</li>
+<li class="">PostgreSQL as the transactional database engine</li>
+<li class="">Iceberg + DuckDB as the analytic database engine</li>
+<li class="">Redpanda as the log engine<!-- -->
+<ul>
+<li class="">The Redpanda cluster is accessible on port 9092 (via Kafka command line tooling)</li>
+</ul>
+</li>
+<li class="">Vertx as the server engine<!-- -->
+<ul>
+<li class="">The GraphQL API is accessible at <a href="http://localhost:8888/v1/graphiql/" target="_blank" rel="noopener noreferrer" class="">http://localhost:8888/v1/graphiql/</a></li>
 <li class="">The Swagger UI for the REST API is accessible at <a href="http://localhost:8888/v1/swagger-ui" target="_blank" rel="noopener noreferrer" class="">http://localhost:8888/v1/swagger-ui</a></li>
-<li class="">The MCP API is accessible at <code>http://localhost:8888/v1/mcp/</code></li>
+<li class="">The MCP API is accessible at <a href="http://localhost:8888/v1/mcp/" target="_blank" rel="noopener noreferrer" class="">http://localhost:8888/v1/mcp/</a></li>
 </ul>
 </li>
 </ul>
@@ -96,7 +104,7 @@ exposing the Flink UI on port 8081, the Vert.x server on port 8888, and Redpanda
 To access this data in your DataSQRL jobs during local execution use:</p>
 <ul>
 <li class=""><code>${KAFKA_BOOTSTRAP_SERVERS}</code> to connect to the Redpanda Kafka cluster</li>
-<li class=""><code>${DATA_PATH}/</code> to reference <code>.jsonl</code> or <code>.csv</code> data in your project.</li>
+<li class=""><code>${DATA_PATH}/</code> to reference <code>.jsonl</code> or <code>.csv</code> data in your project</li>
 </ul>
 <p>This allows DataSQRL to map connectors correctly and also applies to <a href="#test-command" class="">testing</a>.</p>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="data-persistence">Data Persistence<a href="#data-persistence" class="hash-link" aria-label="Direct link to Data Persistence" title="Direct link to Data Persistence" translate="no">​</a></h3>
