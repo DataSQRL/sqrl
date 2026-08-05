@@ -10,7 +10,7 @@ Iceberg is used as a *table-format* engine and must be paired with an [Iceberg q
 
 Since Iceberg is not a standalone data system but a data format, the configuration for Iceberg is managed through the shared `iceberg` connector:
 
-```json5
+```json
 {
   "connectors": {
     "iceberg": {
