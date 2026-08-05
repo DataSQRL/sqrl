@@ -189,6 +189,21 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
+        "flink": {
+          "type": "object",
+          "minProperties": 1,
+          "properties": {
+            "config": {
+              "type": "object",
+              "minProperties": 1
+            },
+            "deployment": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
+        },
         "duckdb": {
           "type": "object",
           "properties": {
@@ -208,17 +223,26 @@
           "additionalProperties": false,
           "required": ["url"]
         },
-        "flink": {
+        "redshift": {
           "type": "object",
-          "minProperties": 1,
           "properties": {
-            "config": {
-              "type": "object",
-              "minProperties": 1
+            "view-database": {
+              "type": "string"
             },
-            "deployment": {
-              "type": "object",
-              "additionalProperties": true
+            "view-schema": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sparksql": {
+          "type": "object",
+          "properties": {
+            "view-catalog": {
+              "type": "string"
+            },
+            "view-database": {
+              "type": "string"
             }
           },
           "additionalProperties": false

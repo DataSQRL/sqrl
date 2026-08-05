@@ -38,6 +38,6 @@ public class RedshiftEngine extends AbstractJDBCShallowQueryEngine {
 
   @Override
   public JdbcStatementFactory getStatementFactory() {
-    return new RedshiftStatementFactory();
+    return new RedshiftStatementFactory(engineConfig);
   }
 }
