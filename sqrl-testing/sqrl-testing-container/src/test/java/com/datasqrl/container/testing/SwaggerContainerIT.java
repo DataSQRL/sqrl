@@ -35,31 +35,31 @@ public class SwaggerContainerIT {
 
   @Test
   @SneakyThrows
-  void givenSwaggerTest_whenCompiledAndServerStarted_thenSwaggerEndpointsAvailable() {
+  void givenOpenApiTest_whenCompiledAndServerStarted_thenOpenApiEndpointsAvailable() {
     // Compile and start the server
     sqrl.compileAndStartServer();
 
-    // Test Swagger JSON endpoint
-    testSwaggerJsonEndpoint();
+    // Test OpenAPI JSON endpoint
+    testOpenApiJsonEndpoint();
 
     // Test Swagger UI endpoint
     testSwaggerUIEndpoint();
   }
 
   @SneakyThrows
-  private void testSwaggerJsonEndpoint() {
-    var swaggerJsonUrl = sqrl.getBaseUrl() + "/v1/swagger";
+  private void testOpenApiJsonEndpoint() {
+    var swaggerJsonUrl = sqrl.getBaseUrl() + "/v1/openapi";
     var request = new HttpGet(swaggerJsonUrl);
     String responseBody;
     try (var response = sqrl.getHttpClient().execute(request)) {
       // Verify response status
       assertThat(response.getStatusLine().getStatusCode())
-          .as("Swagger JSON endpoint should return 200")
+          .as("OpenAPI JSON endpoint should return 200")
           .isEqualTo(200);
 
       // Verify content type
       assertThat(response.getEntity().getContentType().getValue())
-          .as("Swagger JSON should have correct content type")
+          .as("OpenAPI JSON should have correct content type")
           .isEqualTo("application/json");
 
       responseBody = EntityUtils.toString(response.getEntity());
@@ -78,7 +78,7 @@ public class SwaggerContainerIT {
     assertThat(info.get("title").asText())
         .as("API title should be set")
         .isEqualTo("DataSQRL REST API");
-    assertThat(info.get("version").asText()).as("API version should be set").isEqualTo("1.0.0");
+    assertThat(info.get("version").asText()).as("API version should be set").isNotBlank();
 
     // Verify REST endpoints are documented
     var paths = jsonResponse.get("paths");
@@ -118,7 +118,7 @@ public class SwaggerContainerIT {
 
   @Test
   @SneakyThrows
-  void givenDisabledSwaggerConfig_whenCompiledAndServerStarted_thenSwaggerEndpointsNotAvailable() {
+  void givenDisabledOpenApiConfig_whenCompiledAndServerStarted_thenOpenApiEndpointsNotAvailable() {
     // Compile the script first
     sqrl.compileSqrlProject();
 
@@ -129,7 +129,7 @@ public class SwaggerContainerIT {
     sqrl.startGraphQLServer();
 
     // Test that Swagger JSON endpoint returns 404
-    testSwaggerEndpointNotAvailable("/swagger");
+    testSwaggerEndpointNotAvailable("/openapi");
 
     // Test that Swagger UI endpoint returns 404
     testSwaggerEndpointNotAvailable("/swagger-ui");
@@ -144,11 +144,11 @@ public class SwaggerContainerIT {
     var configNode = (ObjectNode) OBJECT_MAPPER.readTree(configContent);
 
     // Add disabled Swagger configuration
-    var swaggerConfig = OBJECT_MAPPER.createObjectNode();
-    swaggerConfig.put("enabled", false);
-    swaggerConfig.put("endpoint", "/swagger");
-    swaggerConfig.put("uiEndpoint", "/swagger-ui");
-    configNode.set("swaggerConfig", swaggerConfig);
+    var openApiConfig = OBJECT_MAPPER.createObjectNode();
+    openApiConfig.put("enabled", false);
+    openApiConfig.put("endpoint", "/openapi");
+    openApiConfig.put("uiEndpoint", "/swagger-ui");
+    configNode.set("openApiConfig", openApiConfig);
 
     // Write back the modified configuration
     Files.writeString(

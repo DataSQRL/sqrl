@@ -158,13 +158,13 @@
     "allowedHeaders" : [ "*" ],
     "exposedHeaders" : [ ]
   },
-  "swaggerConfig" : {
+  "openApiConfig" : {
     "enabled" : true,
-    "endpoint" : "/swagger",
+    "endpoint" : "/openapi",
     "uiEndpoint" : "/swagger-ui",
     "title" : "DataSQRL REST API",
     "description" : "Auto-generated REST API documentation for DataSQRL endpoints",
-    "version" : "1.0.0",
+    "version" : "0.11.0",
     "contact" : "DataSQRL",
     "contactUrl" : "https://datasqrl.com",
     "contactEmail" : "contact@datasqrl.com",

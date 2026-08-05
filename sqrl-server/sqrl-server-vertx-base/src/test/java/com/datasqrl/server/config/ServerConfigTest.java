@@ -37,7 +37,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getPoolOptions()).isNotNull();
     assertThat(serverConfig.getCorsHandlerOptions()).isNotNull();
     assertThat(serverConfig.getJwtAuth()).isNull();
-    assertThat(serverConfig.getSwaggerConfig()).isNotNull();
+    assertThat(serverConfig.getOpenApiConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig().isEnabled()).isFalse();
     assertThat(serverConfig.getKafkaMutationConfig()).isNull();
@@ -57,7 +57,7 @@ class ServerConfigTest {
     json.set("poolOptions", MAPPER.createObjectNode().put("maxSize", 20));
     json.set("corsHandlerOptions", MAPPER.createObjectNode().put("allowCredentials", true));
     json.set("jwtAuth", MAPPER.createObjectNode().put("algorithm", "HS256"));
-    json.set("swaggerConfig", MAPPER.createObjectNode().put("enabled", true));
+    json.set("openApiConfig", MAPPER.createObjectNode().put("enabled", true));
     json.set(
         "graphQLTailSampleTracingConfig",
         MAPPER
@@ -87,7 +87,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getPoolOptions()).isNotNull();
     assertThat(serverConfig.getCorsHandlerOptions()).isNotNull();
     assertThat(serverConfig.getJwtAuth()).isNotNull();
-    assertThat(serverConfig.getSwaggerConfig()).isNotNull();
+    assertThat(serverConfig.getOpenApiConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig().isEnabled()).isTrue();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig().getDefaultThresholdMs())
         .isEqualTo(750);
@@ -109,7 +109,7 @@ class ServerConfigTest {
     json.putNull("poolOptions");
     json.putNull("corsHandlerOptions");
     json.putNull("jwtAuth");
-    json.putNull("swaggerConfig");
+    json.putNull("openApiConfig");
     json.putNull("graphQLTailSampleTracingConfig");
     json.putNull("kafkaMutationConfig");
     json.putNull("kafkaSubscriptionConfig");
@@ -122,7 +122,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getHttpServerOptions()).isNotNull();
     assertThat(serverConfig.getPoolOptions()).isNotNull();
     assertThat(serverConfig.getCorsHandlerOptions()).isNotNull();
-    assertThat(serverConfig.getSwaggerConfig()).isNotNull();
+    assertThat(serverConfig.getOpenApiConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig()).isNotNull();
 
     // PgConnectOptions uses empty default when null
