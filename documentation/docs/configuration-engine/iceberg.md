@@ -4,7 +4,7 @@ Apache Iceberg is an analytic database format that provides ACID transactions, s
 
 ## Configuration Options
 
-Iceberg is used as a *table-format* engine and must be paired with a query engine such as Snowflake, or DuckDB for query access.
+Iceberg is used as a *table-format* engine and must be paired with an [Iceberg query engine](iceberg-query.md) for query access.
 
 ## Basic Configuration
 
@@ -24,9 +24,7 @@ Since Iceberg is not a standalone data system but a data format, the configurati
 ## Usage Notes
 
 - Iceberg serves as a storage format, not a query engine
-- Must be combined with compatible query engines:
-  - **DuckDB**: For local analytics and testing
-  - **Snowflake**: For cloud-scale analytics  
+- Must be combined with [compatible query engine(s)](iceberg-query.md)
 - Provides schema evolution capabilities for long-running pipelines
 - Supports time travel queries for historical data analysis
 - Optimized for large-scale analytical workloads

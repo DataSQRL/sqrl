@@ -21,8 +21,7 @@ DataSQRL supports the following engines:
 * **[postgres](configuration-engine/postgres)**: PostgreSQL is a realtime database
 * **[kafka](configuration-engine/kafka)**: Apache Kafka is a streaming data platform (i.e. log engine)
 * **[iceberg](configuration-engine/iceberg)**: Apache Iceberg is an analytic database format. Iceberg must be paired with a query engine for data access
-* **[duckdb](configuration-engine/duckdb)**: DuckDB is a vectorized database query engine that can read Iceberg tables.
-* **[snowflake](configuration-engine/snowflake)**: Snowflake is an analytic database query engine that can read Iceberg tables.
+* **[Iceberg query engines](configuration-engine/iceberg-query)**: DuckDB, Snowflake, Spark SQL, and Redshift provide query access to Iceberg tables.
 * **[vertx](configuration-engine/vertx)**: Eclipse Vert.x is a reactive server framework
 
 Guidelines for choosing the enabled engines in a pipeline:
