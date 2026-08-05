@@ -60,7 +60,7 @@ public class ServerConfig {
   private PgConnectOptions pgConnectOptions = new PgConnectOptions();
   private PoolOptions poolOptions = new PoolOptions();
   private CorsHandlerOptions corsHandlerOptions = new CorsHandlerOptions();
-  private SwaggerConfig swaggerConfig = new SwaggerConfig();
+  private OpenApiConfig openApiConfig = new OpenApiConfig();
   private GraphQLTailSampleTracingConfig graphQLTailSampleTracingConfig =
       new GraphQLTailSampleTracingConfig();
   private Map<String, Object> jwtAuth;
@@ -170,10 +170,10 @@ public class ServerConfig {
             : MAPPER.convertValue(options, CorsHandlerOptions.class);
   }
 
-  @JsonSetter("swaggerConfig")
-  public void setSwaggerConfigFromJson(Map<String, Object> options) {
-    this.swaggerConfig =
-        options == null ? new SwaggerConfig() : MAPPER.convertValue(options, SwaggerConfig.class);
+  @JsonSetter("openApiConfig")
+  public void setOpenApiConfigFromJson(Map<String, Object> options) {
+    this.openApiConfig =
+        options == null ? new OpenApiConfig() : MAPPER.convertValue(options, OpenApiConfig.class);
   }
 
   @JsonSetter("graphQLTailSampleTracingConfig")

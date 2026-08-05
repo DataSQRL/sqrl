@@ -1551,7 +1551,7 @@ CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING 
 CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
 FROM "ExternalOrders"
  INNER JOIN "ExplicitDistinct" ON "ExternalOrders"."customerid" = "ExplicitDistinct"."customerid"
->>>vertx-v1-swagger.json
+>>>vertx-v1-openapi.json
 {
   "openapi" : "3.0.1",
   "info" : {

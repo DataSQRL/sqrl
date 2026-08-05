@@ -55,14 +55,14 @@ public class GraphQLValidationTest {
       var fileName = file.getFileName().toString();
       return fileName.equals(DagWriter.EXPLAIN_TEXT_FILENAME)
           || fileName.endsWith(".graphqls")
-          || fileName.endsWith("swagger.json");
+          || fileName.endsWith("openapi.json");
     };
   }
 
   private Predicate<Path> getPlanDirFilter() {
     return file ->
         UseCaseTestHelper.defaultPlanDirFilter().test(file)
-            || file.getFileName().toString().endsWith("swagger.json");
+            || file.getFileName().toString().endsWith("openapi.json");
   }
 
   static class GraphQLSchemas extends ArgumentsProviders.GraphQLSchemaProvider {

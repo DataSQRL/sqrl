@@ -34,9 +34,9 @@ import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.server.GenerateServerModel;
+import com.datasqrl.server.config.OpenApiConfig;
 import com.datasqrl.server.config.ServletConfig;
-import com.datasqrl.server.config.SwaggerConfig;
-import com.datasqrl.server.swagger.SwaggerService;
+import com.datasqrl.server.openapi.OpenApiService;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -107,9 +107,9 @@ public class CompilationProcess {
       apiVersions.forEach(
           api -> {
             var model = generateServerModel.generateGraphQLModel(api, serverPlan);
-            var swaggerService =
-                new SwaggerService(
-                    new SwaggerConfig(),
+            var openApiService =
+                new OpenApiService(
+                    new OpenApiConfig(),
                     model,
                     api.version(),
                     new ServletConfig().getRestEndpoint(api.version()));
@@ -119,8 +119,8 @@ public class CompilationProcess {
                 .getDeploymentArtifacts()
                 .add(
                     new DeploymentArtifact(
-                        '-' + api.version() + "-swagger.json",
-                        swaggerService.generateSwaggerJson()));
+                        '-' + api.version() + "-openapi.json",
+                        openApiService.generateOpenApiJson()));
           });
 
       // create test artifact

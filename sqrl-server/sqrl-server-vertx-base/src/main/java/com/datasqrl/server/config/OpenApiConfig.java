@@ -27,10 +27,10 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SwaggerConfig {
+public class OpenApiConfig {
 
   private boolean enabled = true;
-  private String endpoint = "/swagger";
+  private String endpoint = "/openapi";
   private String uiEndpoint = "/swagger-ui";
   private String title = "DataSQRL REST API";
   private String description = "Auto-generated REST API documentation for DataSQRL endpoints";
