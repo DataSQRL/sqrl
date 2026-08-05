@@ -60,7 +60,8 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   public boolean supportsQueryEngine(QueryEngine engine) {
     return engine instanceof SnowflakeEngine
         || engine instanceof DuckDBEngine
-        || engine instanceof SparkSqlEngine;
+        || engine instanceof SparkSqlEngine
+        || engine instanceof RedshiftEngine;
   }
 
   @Override
