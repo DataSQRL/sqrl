@@ -52,7 +52,8 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
   public DuckDbStatementFactory() {
     super(
         Dialect.DUCKDB,
-        new GenericCreateTableDdlFactory()); // Iceberg creates the tables, DuckDB only queries
+        new GenericCreateTableDdlFactory(
+            DuckDbSqlDialect.DEFAULT)); // Iceberg creates the tables, DuckDB only queries
   }
 
   @Override

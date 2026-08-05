@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.calcite;
+package com.datasqrl.calcite.convert;
 
-public enum Dialect {
-  SQRL,
-  CALCITE,
-  FLINK,
-  POSTGRES,
-  SNOWFLAKE,
-  DUCKDB,
-  SPARK_SQL
+import com.datasqrl.calcite.Dialect;
+import com.datasqrl.calcite.dialect.ExtendedSparkSqlDialect;
+import com.google.auto.service.AutoService;
+
+@AutoService(SqlConverters.class)
+public class SparkSqlSqlConverters extends AbstractSqlConverters {
+
+  public SparkSqlSqlConverters() {
+    super(Dialect.SPARK_SQL, ExtendedSparkSqlDialect.DEFAULT, false);
+  }
 }

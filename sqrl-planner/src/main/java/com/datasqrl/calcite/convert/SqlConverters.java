@@ -18,6 +18,7 @@ package com.datasqrl.calcite.convert;
 import com.datasqrl.calcite.Dialect;
 import java.util.Map;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlNode;
 
 /** Provides conversions to SQL representations for a specific dialect. */
@@ -39,6 +40,13 @@ public interface SqlConverters {
    * @return the dialect-specific SQL string
    */
   String convert(SqlNode sqlNode);
+
+  /**
+   * Returns the Calcite dialect used for conversion and dialect-specific DDL generation.
+   *
+   * @return the configured Calcite SQL dialect
+   */
+  SqlDialect getCalciteSqlDialect();
 
   Dialect getDialect();
 }

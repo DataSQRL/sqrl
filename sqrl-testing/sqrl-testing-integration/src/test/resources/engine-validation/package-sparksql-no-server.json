@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "iceberg", "sparksql"],
+  "script": {
+    "main": "script.sqrl"
+  },
+  "engines": {
+    "snowflake": {
+      "catalog-name": "MyCatalog",
+      "external-volume": "MyNewVolume",
+      "url": "${SNOWFLAKE_JDBC_URL}"
+    }
+  }
+}

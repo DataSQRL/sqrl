@@ -15,17 +15,14 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
-import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory.quoteIdentifier;
-
+import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import java.time.Duration;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.Set;
-import lombok.AllArgsConstructor;
 
-@AllArgsConstructor
 public class PostgresCreateTableDdlFactory extends GenericCreateTableDdlFactory {
 
   private static final Set<PartitionType> SUPPORTED_PARTITIONS =
@@ -34,6 +31,11 @@ public class PostgresCreateTableDdlFactory extends GenericCreateTableDdlFactory 
   private static final String PARTITION_SUFFIX = "_all";
 
   private final boolean addDefaultPartition;
+
+  public PostgresCreateTableDdlFactory(boolean addDefaultPartition) {
+    super(ExtendedPostgresSqlDialect.DEFAULT);
+    this.addDefaultPartition = addDefaultPartition;
+  }
 
   @Override
   public String createTableDdl(CreateTableJdbcStatement stmt) {

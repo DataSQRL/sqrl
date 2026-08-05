@@ -17,6 +17,7 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
+import com.datasqrl.calcite.dialect.ExtendedSnowflakeSqlDialect;
 import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromObjectStorage;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
@@ -35,7 +36,7 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
   private final EngineConfig engineConfig;
 
   public SnowflakeStatementFactory(EngineConfig engineConfig) {
-    super(Dialect.SNOWFLAKE, new GenericCreateTableDdlFactory());
+    super(Dialect.SNOWFLAKE, new GenericCreateTableDdlFactory(ExtendedSnowflakeSqlDialect.DEFAULT));
     this.engineConfig = engineConfig;
   }
 

@@ -1,0 +1,56 @@
+/*+engine(iceberg), no_query */
+CREATE TABLE SparkTypeSource (
+  id BIGINT NOT NULL,
+  tiny_value TINYINT,
+  small_value SMALLINT,
+  int_value INT,
+  float_value FLOAT,
+  double_value DOUBLE,
+  decimal_value DECIMAL(12, 2),
+  boolean_value BOOLEAN,
+  string_value STRING,
+  varchar_value VARCHAR(32),
+  char_value CHAR(8),
+  binary_value BINARY(16),
+  varbinary_value VARBINARY(32),
+  date_value DATE,
+  timestamp_value TIMESTAMP(3),
+  timestamp_ltz_value TIMESTAMP_LTZ(3),
+  string_array ARRAY<STRING>,
+  string_to_int MAP<STRING, INT>,
+  attributes ROW<source STRING, priority INT>,
+  PRIMARY KEY (id) NOT ENFORCED
+);
+
+SparkTypeMappings :=
+  SELECT
+    id,
+    tiny_value,
+    small_value,
+    int_value,
+    float_value,
+    double_value,
+    decimal_value,
+    boolean_value,
+    string_value,
+    varchar_value,
+    char_value,
+    binary_value,
+    varbinary_value,
+    date_value,
+    timestamp_value,
+    timestamp_ltz_value,
+    string_array,
+    string_to_int,
+    attributes
+  FROM SparkTypeSource;
+
+SparkAggregates :=
+  SELECT
+    boolean_value,
+    COUNT(*) AS record_count,
+    SUM(decimal_value) AS decimal_sum,
+    AVG(double_value) AS double_average,
+    MAX(timestamp_ltz_value) AS latest_event
+  FROM SparkTypeSource
+  GROUP BY boolean_value;
