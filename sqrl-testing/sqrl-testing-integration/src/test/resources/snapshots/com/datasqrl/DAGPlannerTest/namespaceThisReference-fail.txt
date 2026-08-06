@@ -1,0 +1,15 @@
+[FATAL] Namespaced function [backend.bad] cannot reference `this`. It has no parent table.
+in script:namespaceThisReference-fail.sqrl [4:1]:
+
+-- A namespaced function has no parent table, so it cannot reference `this`.
+backend.bad := SELECT * FROM Customer c WHERE this.customerid = c.customerid;
+^
+Invalid table function arguments provided.
+
+Table function arguments are defined like columns in a CREATE TABLE statement: the argument name followed by the argument type with multiple arguments separated by a comma `,`.
+Inside the query body, arguments are referenced by name prefixed with a colon `:`.
+
+For example:
+```
+MyTableFunction(argument INT, arg2 STRING NOT NULL) := SELECT * FROM MyTable WHERE col1 = :arg2 AND col2 > :argument
+```

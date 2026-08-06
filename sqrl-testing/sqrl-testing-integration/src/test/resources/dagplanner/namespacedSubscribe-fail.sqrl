@@ -1,0 +1,5 @@
+IMPORT ecommerceTs.customer;
+
+-- Subscriptions cannot be namespaced: a GraphQL subscription operation must have a single root
+-- field, so grouping subscriptions under a namespace object is not supported.
+backend.updates := SUBSCRIBE SELECT * FROM Customer;

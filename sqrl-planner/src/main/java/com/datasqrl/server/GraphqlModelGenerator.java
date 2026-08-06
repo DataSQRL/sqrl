@@ -101,7 +101,10 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
 
   @Override
   protected void visitMutation(
-      FieldDefinition atField, TypeDefinitionRegistry registry, MutationTable mutation) {
+      ObjectTypeDefinition parentType,
+      FieldDefinition atField,
+      TypeDefinitionRegistry registry,
+      MutationTable mutation) {
 
     var computedCols = mutation.getComputedColumns();
     var returnList = GraphqlSchemaUtil.isListType(atField.getType());
@@ -115,11 +118,22 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
               mutationTopic.messageKeys(),
               computedCols,
               mutation.getInsertType() == MutationInsertType.TRANSACTION,
-              Map.of()));
+              Map.of(),
+              parentType == null ? null : parentType.getName()));
     } else {
       throw new RuntimeException(
           "Unsupported mutation implementation: " + mutation.getCreateTable());
     }
+  }
+
+  @Override
+  protected void visitQueryNamespace(
+      ObjectTypeDefinition parentType, FieldDefinition atField, TypeDefinitionRegistry registry) {
+    queryCoords.add(
+        RootGraphQLModel.StaticQueryCoords.builder()
+            .parentType(parentType.getName())
+            .fieldName(atField.getName())
+            .build());
   }
 
   @Override

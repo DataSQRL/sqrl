@@ -34,6 +34,7 @@ import com.datasqrl.server.graphql.RootGraphQLModel.ResolvedSqlQuery;
 import com.datasqrl.server.graphql.RootGraphQLModel.RootVisitor;
 import com.datasqrl.server.graphql.RootGraphQLModel.SchemaVisitor;
 import com.datasqrl.server.graphql.RootGraphQLModel.SqlQuery;
+import com.datasqrl.server.graphql.RootGraphQLModel.StaticQueryCoords;
 import com.datasqrl.server.graphql.RootGraphQLModel.StringSchema;
 import com.datasqrl.server.graphql.RootGraphQLModel.SubscriptionCoords;
 import com.datasqrl.server.jdbc.AbstractQueryExecutionContext;
@@ -150,9 +151,10 @@ public class GraphQLEngineBuilder
       for (MutationCoords mc : root.mutations) {
         DataFetcher<?> fetcher =
             mc.accept(mutationConfiguration.createSinkFetcherVisitor(), context);
+        var parentType =
+            mc.getParentType() != null ? mc.getParentType() : getMutationTypeName(registry);
         codeRegistry.dataFetcher(
-            FieldCoordinates.coordinates(getMutationTypeName(registry), mc.getFieldName()),
-            fetcher);
+            FieldCoordinates.coordinates(parentType, mc.getFieldName()), fetcher);
       }
     }
 
@@ -236,6 +238,14 @@ public class GraphQLEngineBuilder
   @Override
   public DataFetcher<?> visitFieldLookup(FieldLookupQueryCoords coords, ServerContext context) {
     return context.createPropertyFetcher(coords.getColumnName());
+  }
+
+  @Override
+  public DataFetcher<?> visitStatic(StaticQueryCoords coords, ServerContext context) {
+    // Return the namespace field's arguments as a non-null source object so GraphQL descends into
+    // the namespace's sub-fields; sub-queries bind namespace arguments (e.g. asTenantId) from this
+    // source via parent parameters. Empty map when the namespace has no arguments.
+    return env -> env.getArguments();
   }
 
   @Override

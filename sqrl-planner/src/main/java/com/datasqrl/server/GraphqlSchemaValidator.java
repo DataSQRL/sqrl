@@ -80,8 +80,17 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
   }
 
   @Override
+  protected void visitQueryNamespace(
+      ObjectTypeDefinition parentType, FieldDefinition atField, TypeDefinitionRegistry registry) {
+    // structural checks (object type, no arguments) are performed by the walker
+  }
+
+  @Override
   protected void visitMutation(
-      FieldDefinition atField, TypeDefinitionRegistry registry, MutationTable mutation) {
+      ObjectTypeDefinition parentType,
+      FieldDefinition atField,
+      TypeDefinitionRegistry registry,
+      MutationTable mutation) {
     validateStructurallyEqualMutation(
         atField,
         getValidMutationOutputType(atField, registry),

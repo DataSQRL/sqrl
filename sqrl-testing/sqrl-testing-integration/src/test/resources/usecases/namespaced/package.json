@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "script": {
+    "main": "namespaced.sqrl",
+    "graphql": "schema.graphqls"
+  },
+  "test-runner": {
+    "use-inferred-schema": false
+  }
+}

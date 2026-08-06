@@ -1,0 +1,9 @@
+query {
+    backend(minTokens: 300) {
+        tokensAbove {
+            userid
+            total_tokens
+            total_requests
+        }
+    }
+}

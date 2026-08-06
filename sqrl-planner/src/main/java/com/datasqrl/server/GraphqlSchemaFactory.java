@@ -55,6 +55,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -277,6 +278,9 @@ public class GraphqlSchemaFactory {
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
 
     for (SqrlTableFunction tableFunction : rootTableFunctions) {
+      if (tableFunction.isNamespaced()) {
+        continue; // namespaced functions are grouped separately below
+      }
       var tableFunctionName = tableFunction.getFullPath().getDisplay();
       if (!isValidGraphQLName(tableFunctionName)) {
         continue;
@@ -298,6 +302,9 @@ public class GraphqlSchemaFactory {
       tableFunction.getDocumentation().getDocStringOpt().ifPresent(fieldBuilder::description);
       fields.add(fieldBuilder.build());
     }
+
+    createNamespaceFields(rootTableFunctions).forEach(fields::add);
+
     if (fields.isEmpty()) {
       return Optional.empty();
     }
@@ -310,6 +317,57 @@ public class GraphqlSchemaFactory {
     definedTypeNames.add(rootTypeName);
 
     return Optional.of(rootQueryObjectType);
+  }
+
+  /**
+   * Groups namespaced root functions (path size 2, e.g. {@code backend.dormantDeployments}) under a
+   * namespace object type (e.g. {@code BackendQueries}) and returns one field per namespace on the
+   * root Query type (e.g. {@code backend: BackendQueries}). The namespace object types themselves
+   * are added to {@link #objectTypes}.
+   */
+  private List<GraphQLFieldDefinition> createNamespaceFields(
+      List<SqrlTableFunction> rootTableFunctions) {
+    Map<String, List<SqrlTableFunction>> byNamespace =
+        rootTableFunctions.stream()
+            .filter(SqrlTableFunction::isNamespaced)
+            .collect(
+                Collectors.groupingBy(
+                    fn -> fn.getFullPath().getFirst().getDisplay(),
+                    LinkedHashMap::new,
+                    Collectors.toList()));
+
+    List<GraphQLFieldDefinition> namespaceFields = new ArrayList<>();
+    for (var entry : byNamespace.entrySet()) {
+      var namespace = entry.getKey();
+      if (!isValidGraphQLName(namespace)) {
+        continue;
+      }
+      List<GraphQLFieldDefinition> nsFields = new ArrayList<>();
+      for (SqrlTableFunction fn : entry.getValue()) {
+        createRelationshipField(fn).map(nsFields::add);
+      }
+      if (nsFields.isEmpty()) {
+        continue;
+      }
+      var nsTypeName = namespaceTypeName(namespace);
+      if (definedTypeNames.add(nsTypeName)) {
+        objectTypes.add(GraphQLObjectType.newObject().name(nsTypeName).fields(nsFields).build());
+      }
+      // All functions in a namespace share the same namespace-level arguments (e.g. asTenantId),
+      // which are exposed on the namespace field itself.
+      var namespaceArgs = entry.getValue().get(0).getNamespaceArguments();
+      namespaceFields.add(
+          GraphQLFieldDefinition.newFieldDefinition()
+              .name(namespace)
+              .type(new GraphQLTypeReference(nsTypeName))
+              .arguments(buildParameterArguments(namespaceArgs, name -> Optional.empty()))
+              .build());
+    }
+    return namespaceFields;
+  }
+
+  private static String namespaceTypeName(String namespace) {
+    return Character.toUpperCase(namespace.charAt(0)) + namespace.substring(1) + "Queries";
   }
 
   /**
@@ -366,40 +424,42 @@ public class GraphqlSchemaFactory {
             .toList();
 
     final List<GraphQLArgument> parametersArguments =
-        parameters.stream()
-            .filter(
-                p ->
-                    GraphqlSchemaUtil.getGraphQLInputType(
-                            p.getType(null),
-                            NamePath.of(p.getName()),
-                            extendedScalarTypes,
-                            Documented.NO_LOOKUP)
-                        .isPresent())
-            .map(
-                parameter -> {
-                  var builder =
-                      GraphQLArgument.newArgument()
-                          .name(parameter.getName())
-                          .type(
-                              GraphqlSchemaUtil.getGraphQLInputType(
-                                      parameter.getType(null),
-                                      NamePath.of(parameter.getName()),
-                                      extendedScalarTypes,
-                                      Documented.NO_LOOKUP)
-                                  .get());
-                  tableFunction
-                      .getDocumentation()
-                      .getArgumentOpt(parameter.getName())
-                      .ifPresent(builder::description);
-                  return builder.build();
-                })
-            .collect(Collectors.toList());
+        buildParameterArguments(parameters, tableFunction.getDocumentation()::getArgumentOpt);
     List<GraphQLArgument> limitAndOffsetArguments = List.of();
     if (tableFunction.getVisibility().access() != AccessModifier.SUBSCRIPTION
         && tableFunction.getMultiplicity() == Multiplicity.MANY) {
       limitAndOffsetArguments = generateLimitAndOffsetArguments(tableFunction);
     }
     return ListUtils.union(parametersArguments, limitAndOffsetArguments);
+  }
+
+  private List<GraphQLArgument> buildParameterArguments(
+      List<FunctionParameter> parameters, Function<String, Optional<String>> doc) {
+    return parameters.stream()
+        .filter(
+            p ->
+                GraphqlSchemaUtil.getGraphQLInputType(
+                        p.getType(null),
+                        NamePath.of(p.getName()),
+                        extendedScalarTypes,
+                        Documented.NO_LOOKUP)
+                    .isPresent())
+        .map(
+            parameter -> {
+              var builder =
+                  GraphQLArgument.newArgument()
+                      .name(parameter.getName())
+                      .type(
+                          GraphqlSchemaUtil.getGraphQLInputType(
+                                  parameter.getType(null),
+                                  NamePath.of(parameter.getName()),
+                                  extendedScalarTypes,
+                                  Documented.NO_LOOKUP)
+                              .get());
+              doc.apply(parameter.getName()).ifPresent(builder::description);
+              return builder.build();
+            })
+        .collect(Collectors.toList());
   }
 
   private List<GraphQLArgument> generateLimitAndOffsetArguments(SqrlTableFunction tableFunction) {

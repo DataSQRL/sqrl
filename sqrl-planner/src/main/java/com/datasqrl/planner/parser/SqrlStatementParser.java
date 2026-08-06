@@ -64,6 +64,11 @@ public class SqrlStatementParser {
           + ")\\s*(\\((?<arguments>.*?)\\))?\\s*(?:RETURNS\\s*\\((?<returntype>.*?)\\)\\s*)?:=)";
   public static final String CREATE_TABLE_REGEX =
       BEGINNING_COMMENT + "(?<fullmatch>create\\s+(temporary\\s+)?table)";
+  public static final String CREATE_NAMESPACE_REGEX =
+      BEGINNING_COMMENT
+          + "create\\s+namespace\\s+(?<name>"
+          + IDENTIFIER_REGEX
+          + ")\\s*\\((?<params>.*)\\)\\s*;?\\s*";
 
   public static final Pattern IMPORT_PARSER =
       Pattern.compile(
@@ -88,6 +93,8 @@ public class SqrlStatementParser {
       Pattern.compile(SQRL_DEFINITION_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
   private static final Pattern CREATE_TABLE =
       Pattern.compile(CREATE_TABLE_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+  private static final Pattern CREATE_NAMESPACE =
+      Pattern.compile(CREATE_NAMESPACE_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   public static final String DISTINCT_REGEX =
       "DISTINCT\\s+(?<from>"
@@ -107,7 +114,7 @@ public class SqrlStatementParser {
   public static final String VARIABLE_REGEX =
       "(?<prefix>\\W)(?<type>:|@|"
           + SELF_REFERENCE_KEYWORD
-          + "\\.)((?<name1>\\w+)|`(?<name2>[^` ]+)`)";
+          + "\\.)((?<name1>\\w+(?:\\.\\w+)?)|`(?<name2>[^` ]+)`)";
   public static final Pattern VARIABLE_PARSER =
       Pattern.compile(VARIABLE_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
@@ -301,7 +308,27 @@ public class SqrlStatementParser {
       return definition;
     }
 
-    // #3: Create Table
+    // #3: Create Namespace (grouping + shared parameters)
+    var createNamespace = CREATE_NAMESPACE.matcher(statement);
+    if (createNamespace.matches()) {
+      var name = parseName(createNamespace, "name", statement);
+      checkFatal(
+          name.isPresent(),
+          name.getFileLocation(),
+          ErrorCode.INVALID_SQRL_DEFINITION,
+          "Invalid name for namespace");
+      var params =
+          parse(createNamespace, "params", statement).map(str -> str.isBlank() ? null : str);
+      checkFatal(
+          !params.isEmpty(),
+          params.getFileLocation(),
+          ErrorCode.INVALID_SQRL_DEFINITION,
+          "Namespace [%s] must declare at least one parameter",
+          name.get());
+      return new SqrlCreateNamespaceStatement(name, params, SqrlComments.EMPTY);
+    }
+
+    // #4: Create Table
     var createTable = CREATE_TABLE.matcher(statement);
     if (createTable.find()) {
       var createTableStmt =
