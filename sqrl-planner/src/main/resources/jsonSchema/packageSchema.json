@@ -218,6 +218,10 @@
             },
             "use-version-guessing": {
               "type": "boolean"
+            },
+            "scan-cte-cardinality-divisor": {
+              "type": "integer",
+              "exclusiveMinimum": 0
             }
           },
           "additionalProperties": false,

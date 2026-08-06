@@ -21,18 +21,23 @@ import static com.datasqrl.config.SqrlConstants.ICEBERG_CATALOG_IMPL_KEY;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_GLUE_CATALOG_IMPL;
 import static com.datasqrl.config.SqrlConstants.ICEBERG_WAREHOUSE_KEY;
 import static com.datasqrl.function.CalciteFunctionUtil.lightweightOp;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.dialect.DuckDbSqlDialect;
 import com.datasqrl.calcite.type.TypeFactory;
+import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.engine.database.relational.DuckDbMaterializedScanCtePlanner.MaterializedScanCte;
 import com.datasqrl.engine.database.relational.ddl.GenericCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.TableScan;
@@ -49,11 +54,23 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 
 public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
 
-  public DuckDbStatementFactory() {
+  public static final String SCAN_CTE_CARDINALITY_DIVISOR = "scan-cte-cardinality-divisor";
+
+  private final DuckDbMaterializedScanCtePlanner materializedScanCtePlanner;
+
+  public DuckDbStatementFactory(EngineConfig engineConfig) {
     super(
         Dialect.DUCKDB,
         new GenericCreateTableDdlFactory(
             DuckDbSqlDialect.DEFAULT)); // Iceberg creates the tables, DuckDB only queries
+
+    var scanCteCardinalityDivisor =
+        Integer.parseInt(engineConfig.getSetting(SCAN_CTE_CARDINALITY_DIVISOR));
+    checkArgument(
+        Double.isFinite(scanCteCardinalityDivisor) && scanCteCardinalityDivisor > 0,
+        "'%s' must be a positive finite number",
+        SCAN_CTE_CARDINALITY_DIVISOR);
+    materializedScanCtePlanner = new DuckDbMaterializedScanCtePlanner(scanCteCardinalityDivisor);
   }
 
   @Override
@@ -73,15 +90,50 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
   @Override
   public QueryResult createQuery(
       Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap) {
-    var relNode = query.relNode();
-    var replaced = relNode.accept(new IcebergTableScanRewriter(tableIdMap));
+
+    var ctes = materializedScanCtePlanner.getMaterializedScanCtes(query.relNode());
+    if (ctes.isEmpty()) {
+      var replaced = query.relNode().accept(new IcebergTableScanRewriter(tableIdMap, Set.of()));
+      return createQueryInternal(
+          query.function().getSimpleName(),
+          replaced,
+          true,
+          getTableNameMapping(tableIdMap),
+          query.function().getDocumentation());
+    }
+
+    var tableNameMapping = new HashMap<>(getTableNameMapping(tableIdMap));
+    ctes.forEach(cte -> tableNameMapping.put(cte.tableId(), cte.name()));
+
+    var materializedTableIds =
+        ctes.stream().map(MaterializedScanCte::tableId).collect(Collectors.toSet());
+    var queryRelNode =
+        query.relNode().accept(new IcebergTableScanRewriter(tableIdMap, materializedTableIds));
+    var querySql = toSql(queryRelNode, tableNameMapping);
+    var cteSql =
+        ctes.stream()
+            .map(
+                cte ->
+                    "%s AS MATERIALIZED (%s)"
+                        .formatted(
+                            cte.name(),
+                            toSql(
+                                cte.source()
+                                    .accept(new IcebergTableScanRewriter(tableIdMap, Set.of())),
+                                getTableNameMapping(tableIdMap))))
+            .collect(Collectors.joining(", "));
 
     return createQueryInternal(
         query.function().getSimpleName(),
-        replaced,
+        query.relNode().getRowType(),
         true,
-        getTableNameMapping(tableIdMap),
+        "WITH %s %s".formatted(cteSql, querySql),
         query.function().getDocumentation());
+  }
+
+  private String toSql(RelNode relNode, Map<String, String> tableNameMapping) {
+    var rewrittenRelNode = dialectCallConverter.convert(relNode);
+    return sqlConverters.convert(sqlConverters.convert(rewrittenRelNode, tableNameMapping));
   }
 
   @Override
@@ -92,6 +144,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
   private static class IcebergTableScanRewriter extends RelShuttleImpl {
 
     private final Map<String, JdbcEngineCreateTable> tableIdMap;
+    private final Set<String> materializedTableIds;
     private final RexShuttle subQueryRexShuttle =
         new RexShuttle() {
           @Override
@@ -101,13 +154,18 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
           }
         };
 
-    IcebergTableScanRewriter(Map<String, JdbcEngineCreateTable> tableIdMap) {
+    IcebergTableScanRewriter(
+        Map<String, JdbcEngineCreateTable> tableIdMap, Set<String> materializedTableIds) {
       this.tableIdMap = tableIdMap;
+      this.materializedTableIds = materializedTableIds;
     }
 
     @Override
     public RelNode visit(TableScan scan) {
-      var tableId = scan.getTable().getQualifiedName().get(2);
+      var tableId = DuckDbMaterializedScanCtePlanner.getTableId(scan);
+      if (materializedTableIds.contains(tableId)) {
+        return scan;
+      }
       var createTable = tableIdMap.get(tableId);
       var connector = createTable.table().getConnectorOptions();
 
