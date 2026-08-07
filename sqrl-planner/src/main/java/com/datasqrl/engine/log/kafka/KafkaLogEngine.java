@@ -66,7 +66,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlMetadataColumn;
 import org.apache.flink.util.TimeUtils;
 
 @Slf4j
@@ -86,6 +86,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   // === SETTINGS ===
   private final Optional<Duration> defaultTTL;
+  private final boolean useSourceWatermark;
+  private final boolean useTransactionSourceWatermark;
   private final Duration defaultWatermark;
   private final Duration transactionWatermark;
   private final int numPartitions;
@@ -106,6 +108,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .map(
                 value ->
                     value.equals("-1") ? Duration.ofMillis(-1) : TimeUtils.parseDuration(value));
+    useSourceWatermark = Boolean.parseBoolean(engineConfig.getSetting("use-source-watermark"));
+    useTransactionSourceWatermark =
+        Boolean.parseBoolean(engineConfig.getSetting("use-transaction-source-watermark"));
     defaultWatermark = TimeUtils.parseDuration(engineConfig.getSetting("watermark"));
     transactionWatermark =
         TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
@@ -188,16 +193,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     if (isMutation) {
       // Set watermark column for mutations based on 'timestamp' metadata
       for (SqlNode node : tableBuilder.getColumnList().getList()) {
-        if (node instanceof SqlTableColumn.SqlMetadataColumn metadataColumn) {
-          if (metadataColumn
-                  .getMetadataAlias()
-                  .filter(s -> s.equalsIgnoreCase("timestamp"))
-                  .isPresent()
-              && !tableBuilder.hasWatermark()) {
-            long watermarkMillis =
-                isTransactional ? transactionWatermark.toMillis() : defaultWatermark.toMillis();
-            tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), watermarkMillis);
-          }
+        if (node instanceof SqlMetadataColumn metadataColumn) {
+          setWatermark(tableBuilder, metadataColumn, isTransactional);
         }
       }
     }
@@ -352,6 +349,25 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .toList();
 
     return new KafkaPhysicalPlan(topics, testRunnerTopics);
+  }
+
+  private void setWatermark(
+      FlinkTableBuilder tableBuilder, SqlMetadataColumn metadataCol, boolean isTransactional) {
+    var timestampMetadata =
+        metadataCol.getMetadataAlias().filter(s -> s.equalsIgnoreCase("timestamp")).isPresent();
+
+    if (!timestampMetadata || tableBuilder.hasWatermark()) {
+      return;
+    }
+
+    var tsColName = metadataCol.getName().getSimple();
+    var sourceWatermark = isTransactional ? useTransactionSourceWatermark : useSourceWatermark;
+    var watermarkDelay = isTransactional ? transactionWatermark : defaultWatermark;
+    if (sourceWatermark) {
+      tableBuilder.setSourceWatermark(tsColName);
+    } else {
+      tableBuilder.setWatermarkMillis(tsColName, watermarkDelay.toMillis());
+    }
   }
 
   private KafkaNewTopic createNewTopic(Table table, KafkaNewTopicModel.Type type) {
