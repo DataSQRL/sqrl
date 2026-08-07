@@ -1,0 +1,4 @@
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders;
+
+OrderCustomer := SELECT o.id, o.`time` AS createdAt, c.`timestamp` AS updatedAt FROM Orders o JOIN Customer c ON o.customerid = c.customerid;

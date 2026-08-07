@@ -540,7 +540,7 @@ public class DAGPlanner {
                     sqrlEnv.lookupUserDefinedFunction(castFunction),
                     List.of(relBuilder.field(field.getIndex()))));
       } else if (mapDirection == Direction.TO_DATABASE
-          && CalciteUtil.isRowTime(field.getType())
+          && CalciteUtil.isTimeIndicator(field.getType())
           && i != timestampIndex) {
         // We need to cast all other rowtime fields to their underlying type or Flink will complain
         var rowtimeType = (TimeIndicatorRelDataType) field.getType();
@@ -702,7 +702,7 @@ public class DAGPlanner {
       @Override
       public RexNode visitInputRef(RexInputRef inputRef) {
         var type = inputRef.getType();
-        if (CalciteUtil.isRowTime(type)) {
+        if (CalciteUtil.isTimeIndicator(type)) {
           return new RexInputRef(inputRef.getIndex(), getNormalTimestampType(type));
         } else if (newRowType != null) {
           var index = inputRef.getIndex();
@@ -716,7 +716,7 @@ public class DAGPlanner {
 
       @Override
       public RexNode visitCall(RexCall call) {
-        if (CalciteUtil.isRowTime(call.getType())) {
+        if (CalciteUtil.isTimeIndicator(call.getType())) {
           var update = new boolean[] {false};
           var clonedOperands = this.visitList(call.operands, update);
           return call.clone(getNormalTimestampType(call.getType()), clonedOperands);

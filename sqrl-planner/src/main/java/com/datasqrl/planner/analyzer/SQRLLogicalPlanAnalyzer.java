@@ -164,6 +164,16 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   public ViewAnalysis analyze(HintsAndDoc hintsAndDoc) {
     originalRelnode.accept(this);
     var analysis = this.intermediateAnalysis;
+    var rowTimeColumns =
+        analysis.getRowType().getFieldList().stream()
+            .filter(field -> CalciteUtil.isRowTime(field.getType()))
+            .map(RelDataTypeField::getName)
+            .toList();
+    errors.checkFatal(
+        rowTimeColumns.size() <= 1,
+        ErrorCode.MULTIPLE_ROWTIME_COLUMNS,
+        "Table has multiple ROWTIME columns: %s",
+        String.join(", ", rowTimeColumns));
 
     if (analysis.type.isStream() && analysis.getRowTime().isEmpty()) {
       // If we don't have a rowtime, let's check if we lost it when all inputs had a rowtime
@@ -472,7 +482,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   private static final SqrlRexUtil.RexFinder FIND_NOW =
       SqrlRexUtil.findFunction(SqrlRexUtil::isNOW);
   private static final SqrlRexUtil.RexFinder FIND_ROWTIME_REF =
-      SqrlRexUtil.findInputRef(ref -> CalciteUtil.isRowTime(ref.getType()));
+      SqrlRexUtil.findInputRef(ref -> CalciteUtil.isTimeIndicator(ref.getType()));
 
   @Override
   public RelNode visit(LogicalFilter logicalFilter) {
@@ -523,7 +533,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           } else {
             var collation = window.orderKeys.get(0);
             if (!collation.getDirection().isDescending()
-                || !CalciteUtil.isRowTime(collation.getKey().getType())) {
+                || !CalciteUtil.isTimeIndicator(collation.getKey().getType())) {
               isMostRecentDistinct = false;
             }
           }
@@ -969,7 +979,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     if (input.type.isStream()) {
       var firstOrder = logicalMatch.getOrderKeys().getFieldCollations().stream().findFirst();
       if (firstOrder.isPresent()
-          && CalciteUtil.isRowTime(input.getField(firstOrder.get().getFieldIndex()).getType())) {
+          && CalciteUtil.isTimeIndicator(
+              input.getField(firstOrder.get().getFieldIndex()).getType())) {
         return setProcessResult(
             RelNodeAnalysis.builder().type(STREAM).relNode(logicalMatch).build());
       } else {
