@@ -38,11 +38,13 @@
     },
     "kafka": {
       "retention": null,
+      "use-source-watermark": false,
+      "use-transaction-source-watermark": false,
       "watermark": "0 ms",
       "transaction-watermark": "0 ms",
       "num-partitions": 1,
       "replication-factor": 3
-  }
+    }
   },
   "connectors": {
     "kafka-mutation": {

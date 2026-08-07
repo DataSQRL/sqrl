@@ -36,12 +36,14 @@ import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
 import org.apache.calcite.sql.SqlLiteral;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
@@ -130,6 +132,35 @@ public class FlinkSqlNodes {
         isSystem,
         SqlNodeList.EMPTY,
         SqlNodeList.EMPTY);
+  }
+
+  public static SqlWatermark createSourceWatermark(String tsCol) {
+    var eventTimeColumn = identifier(tsCol);
+
+    return createSourceWatermark(eventTimeColumn);
+  }
+
+  public static SqlWatermark createSourceWatermark(SqlIdentifier eventTimeColumn) {
+    var sourceWatermarkStrategy =
+        new SqlBasicCall(
+            new SqlUnresolvedFunction(
+                identifier("SOURCE_WATERMARK"),
+                null,
+                null,
+                null,
+                List.of(),
+                SqlFunctionCategory.SYSTEM),
+            List.of(),
+            SqlParserPos.ZERO);
+
+    return createWatermark(eventTimeColumn, sourceWatermarkStrategy);
+  }
+
+  public static SqlWatermark createWatermark(String tsCol, long watermarkMillis) {
+    var eventTimeColumn = identifier(tsCol);
+    return createWatermark(
+        eventTimeColumn,
+        boundedStrategy(eventTimeColumn, Double.toString(watermarkMillis / 1000d)));
   }
 
   public static SqlWatermark createWatermark(
@@ -401,13 +432,6 @@ public class FlinkSqlNodes {
         likeClause,
         original.isTemporary(),
         original.ifNotExists);
-  }
-
-  public static SqlWatermark createWatermark(String ts, long watermarkMillis) {
-    var eventTimeColumn = identifier(ts);
-    return createWatermark(
-        eventTimeColumn,
-        boundedStrategy(eventTimeColumn, Double.toString(watermarkMillis / 1000d)));
   }
 
   @Nullable
