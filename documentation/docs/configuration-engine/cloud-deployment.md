@@ -117,6 +117,7 @@ PostgreSQL deployments consist of one primary instance and a configurable number
         "disk-size-gb": 256,            // Disk size in GB (1 or larger)
         "auto-expand-percentage": 0.2,  // Auto-expand threshold (0 to disable, must be < 1)
         "create-indexes": true,         // Whether to create table indexes (see "Create Indexes" below)
+        "data-checksums": true,         // Whether data-page checksums are enabled (see "Data Checksums" below)
         "parameters": {}                // Extra postgresql.parameters (see "Parameters" below)
       }
     }
@@ -272,6 +273,28 @@ Set it to `false` to bootstrap the database **tables-only**, skipping all index 
     "postgres": {
       "deployment": {
         "create-indexes": false   // tables-only bootstrap for fast backlog draining; build indexes on the steady-state upgrade
+      }
+    }
+  }
+}
+```
+
+## Data Checksums (`data-checksums`)
+
+Controls whether PostgreSQL data-page checksums are enabled for the database. Defaults to `true` (the PostgreSQL 18 default). PostgreSQL only.
+
+| Engine | Field | Default |
+| :--- | :--- | :--- |
+| PostgreSQL | `data-checksums` | `true` |
+
+This is an initdb-time setting applied when the database is first created — it is **immutable** and cannot be changed on later deployments or upgrades. Set it to `false` only when the write-throughput cost of checksums matters more than corruption detection, and only for a database that will keep that setting for its lifetime.
+
+```json5
+{
+  "engines": {
+    "postgres": {
+      "deployment": {
+        "data-checksums": false   // disable data-page checksums; applied at initial bootstrap only, immutable afterwards
       }
     }
   }
