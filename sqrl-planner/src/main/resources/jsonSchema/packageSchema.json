@@ -326,9 +326,21 @@
             },
             "transaction-watermark": {
               "type": "string"
+            },
+            "use-source-watermark": {
+              "type": "boolean"
+            },
+            "use-transaction-source-watermark": {
+              "type": "boolean"
+            },
+            "num-partitions": {
+              "type": "integer"
+            },
+            "replication-factor": {
+              "type": "integer"
             }
           },
-          "additionalProperties": true
+          "additionalProperties": false
         }
       }
     },

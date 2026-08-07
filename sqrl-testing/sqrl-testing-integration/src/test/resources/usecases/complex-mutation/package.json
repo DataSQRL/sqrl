@@ -10,6 +10,10 @@
       "config": {
         "table.exec.source.idle-timeout": "1 ms"
       }
+    },
+    "kafka": {
+      "use-source-watermark": true,
+      "use-transaction-source-watermark": true
     }
   },
   "connectors" : {
