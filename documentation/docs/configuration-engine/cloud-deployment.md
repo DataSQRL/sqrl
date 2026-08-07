@@ -37,7 +37,7 @@ Configures the cloud resources for each engine when deploying pipelines to DataS
 
 Apache Flink deployments consist of 1 job manager and a configurable number of identically sized task managers.
 
-```json5
+```json
 {
   "engines": {
     "flink": {
@@ -107,7 +107,7 @@ Choose the job manager size based on the number of subtasks in your Flink job.
 
 PostgreSQL deployments consist of one primary instance and a configurable number of read replicas, all using the same instance size.
 
-```json5
+```json
 {
   "engines": {
     "postgres": {
@@ -142,7 +142,7 @@ The `dev` size is intended for development and testing with small amounts of dat
 
 Vert.x API server deployments consist of a configurable number of identically sized server instances.
 
-```json5
+```json
 {
   "engines": {
     "vertx": {
@@ -178,7 +178,7 @@ Pins a component's pods onto dedicated nodes. Each engine's `deployment` accepts
 | PostgreSQL | `dedicated-nodes` |
 | Vert.x | `dedicated-nodes` |
 
-```json5
+```json
 {
   "engines": {
     "flink": {
@@ -242,7 +242,7 @@ Protects a component's pods from **voluntary** autoscaler disruption (node conso
 | PostgreSQL | `do-not-disrupt` | `true` |
 | Vert.x | `do-not-disrupt` | `false` |
 
-```json5
+```json
 {
   "engines": {
     "flink": {
@@ -266,7 +266,7 @@ Controls whether the PostgreSQL table indexes are created for the deployment. De
 
 Set it to `false` to bootstrap the database **tables-only**, skipping all index creation. This is intended for a catch-up profile that reprocesses a large backlog: writing to un-indexed tables drains the backlog faster. The indexes are then built when the deployment is upgraded back to a steady-state profile (where `create-indexes` returns to its `true` default), so a catch-up deployment must be followed by such an upgrade before it serves production query traffic.
 
-```json5
+```json
 {
   "engines": {
     "postgres": {
@@ -288,7 +288,7 @@ Extra PostgreSQL server parameters, merged into the database's `postgresql.param
 
 Typically used in a catch-up profile that trades durability for ingest throughput while reprocessing a large backlog — for example a larger `shared_buffers`/`max_wal_size` together with `synchronous_commit: off`. Set these only in the catch-up profile: on the steady-state upgrade any parameter not listed here reverts to its default.
 
-```json5
+```json
 {
   "engines": {
     "postgres": {
