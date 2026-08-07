@@ -77,6 +77,10 @@ public class CalciteUtil {
   }
 
   public static boolean isRowTime(RelDataType type) {
+    return type instanceof TimeIndicatorRelDataType indicator && indicator.isEventTime();
+  }
+
+  public static boolean isTimeIndicator(RelDataType type) {
     return type instanceof TimeIndicatorRelDataType;
   }
 
@@ -105,7 +109,7 @@ public class CalciteUtil {
 
   public static Optional<Integer> findBestRowTimeIndex(RelDataType type) {
     return type.getFieldList().stream()
-        .filter(field -> isRowTime(field.getType()))
+        .filter(field -> isTimeIndicator(field.getType()))
         // Prioritize not null fields, then sort by index increasing
         .sorted(
             Comparator.comparing((RelDataTypeField field) -> field.getType().isNullable())

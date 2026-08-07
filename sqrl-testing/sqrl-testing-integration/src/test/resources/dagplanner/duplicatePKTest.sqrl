@@ -11,4 +11,4 @@ _Input := SELECT *, _uuid AS unique_id FROM SimpleInput;
 InputDistinct := DISTINCT _Input ON userid ORDER BY event_time DESC;
 
 /*+engine(database) */
-JoinTable := SELECT * FROM InputDistinct i2 JOIN _Input i1 ON i1.userid = i2.userid;
+JoinTable := SELECT i2.*, i1._uuid AS _uuid0, i1.unique_id AS unique_id0 FROM InputDistinct i2 JOIN _Input i1 ON i1.userid = i2.userid;

@@ -373,19 +373,18 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - customerid0: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Inputs:
  - default_catalog.default_database.ExplicitDistinct
  - default_catalog.default_database.ExternalOrders
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], customerid0=[$4], timestamp=[$5], name=[$6])
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], timestamp=[CAST($5):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL], name=[$6])
   LogicalJoin(condition=[=($1, $4)], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders]])
     LogicalTableScan(table=[[default_catalog, default_database, ExplicitDistinct]])
 SQL:
-CREATE VIEW `MissedTemporalJoin` AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
+CREATE VIEW `MissedTemporalJoin` AS  SELECT o.*, CAST(`timestamp` AS TIMESTAMP_LTZ(3)) AS `timestamp`, name FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -477,8 +476,7 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - customerid0: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Inputs:
  - default_catalog.default_database.ExplicitDistinct
@@ -486,14 +484,14 @@ Inputs:
 Annotations:
  - stream-root: ExternalOrders
 Plan:
-LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], customerid0=[$4], timestamp=[$5], name=[$6])
+LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], timestamp=[CAST($5):TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL], name=[$6])
   LogicalCorrelate(correlation=[$cor1], joinType=[inner], requiredColumns=[{1, 2}])
     LogicalTableScan(table=[[default_catalog, default_database, ExternalOrders]])
     LogicalFilter(condition=[=($cor1.customerid, $0)])
       LogicalSnapshot(period=[$cor1.time])
         LogicalTableScan(table=[[default_catalog, default_database, ExplicitDistinct]])
 SQL:
-CREATE VIEW `TemporalJoin` AS  SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
+CREATE VIEW `TemporalJoin` AS  SELECT o.*, CAST(`timestamp` AS TIMESTAMP_LTZ(3))  AS `timestamp`, name FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
 
 === UnnestOrders
 ID:          default_catalog.default_database.UnnestOrders
@@ -698,12 +696,12 @@ FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp
 WHERE `_rownum` = 1;
 CREATE VIEW `MissedTemporalJoin`
 AS
-SELECT *
+SELECT `o`.*, CAST(`timestamp` AS TIMESTAMP_LTZ(3)) AS `timestamp`, `name`
 FROM `ExternalOrders` AS `o`
  INNER JOIN `ExplicitDistinct` AS `c` ON `o`.`customerid` = `c`.`customerid`;
 CREATE VIEW `TemporalJoin`
 AS
-SELECT *
+SELECT `o`.*, CAST(`timestamp` AS TIMESTAMP_LTZ(3)) AS `timestamp`, `name`
 FROM `ExternalOrders` AS `o`
  INNER JOIN `ExplicitDistinct` FOR SYSTEM_TIME AS OF `time` AS `c` ON `o`.`customerid` = `c`.`customerid`;
 CREATE VIEW `SelectCustomers`
@@ -756,7 +754,6 @@ CREATE TEMPORARY TABLE `MyPrintSink_ex1__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
-  `customerid0` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
 )
@@ -994,7 +991,6 @@ CREATE TABLE `TemporalJoin_15` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
-  `customerid0` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
@@ -1090,7 +1086,7 @@ SELECT *
 FROM `default_catalog`.`default_database`.`TemporalJoin`
 ;
 INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_15`
-SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
+SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `timestamp`, `name`
 FROM `default_catalog`.`default_database`.`TemporalJoin`
 ;
 INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`
@@ -1530,7 +1526,7 @@ END
     {
       "name" : "TemporalJoin_15",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"TemporalJoin_15\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, \"customerid0\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"name\" TEXT NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"TemporalJoin_15\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"name\" TEXT NOT NULL, PRIMARY KEY (\"id\",\"time\"))",
       "fields" : [
         {
           "name" : "id",
@@ -1551,11 +1547,6 @@ END
           "name" : "entries",
           "type" : "JSONB",
           "nullable" : true
-        },
-        {
-          "name" : "customerid0",
-          "type" : "BIGINT",
-          "nullable" : false
         },
         {
           "name" : "timestamp",
@@ -1880,7 +1871,7 @@ END
     {
       "name" : "MissedTemporalJoin",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"MissedTemporalJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"customerid0\", \"timestamp\", \"name\") AS SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_110\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_100\" ON \"ExternalOrders_110\".\"customerid\" = \"ExplicitDistinct_100\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"MissedTemporalJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"timestamp\", \"name\") AS SELECT \"ExternalOrders_110\".\"id\", \"ExternalOrders_110\".\"customerid\", \"ExternalOrders_110\".\"time\", \"ExternalOrders_110\".\"entries\", CAST(\"ExplicitDistinct_100\".\"timestamp\" AS TIMESTAMP WITH TIME ZONE) AS \"timestamp\", \"ExplicitDistinct_100\".\"name\"\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_110\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_100\" ON \"ExternalOrders_110\".\"customerid\" = \"ExplicitDistinct_100\".\"customerid\"",
       "fields" : [
         {
           "name" : "id",
@@ -1901,11 +1892,6 @@ END
           "name" : "entries",
           "type" : "JSONB",
           "nullable" : true
-        },
-        {
-          "name" : "customerid0",
-          "type" : "BIGINT",
-          "nullable" : false
         },
         {
           "name" : "timestamp",
@@ -1975,7 +1961,7 @@ END
     {
       "name" : "TemporalJoin",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"TemporalJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"customerid0\", \"timestamp\", \"name\") AS SELECT *\nFROM \"TemporalJoin_15\"",
+      "sql" : "CREATE OR REPLACE VIEW \"TemporalJoin\"(\"id\", \"customerid\", \"time\", \"entries\", \"timestamp\", \"name\") AS SELECT *\nFROM \"TemporalJoin_15\"",
       "fields" : [
         {
           "name" : "id",
@@ -1996,11 +1982,6 @@ END
           "name" : "entries",
           "type" : "JSONB",
           "nullable" : true
-        },
-        {
-          "name" : "customerid0",
-          "type" : "BIGINT",
-          "nullable" : false
         },
         {
           "name" : "timestamp",
@@ -2380,7 +2361,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_110\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_100\" ON \"ExternalOrders_110\".\"customerid\" = \"ExplicitDistinct_100\".\"customerid\"",
+              "sql" : "SELECT \"ExternalOrders_110\".\"id\", \"ExternalOrders_110\".\"customerid\", \"ExternalOrders_110\".\"time\", \"ExternalOrders_110\".\"entries\", CAST(\"ExplicitDistinct_100\".\"timestamp\" AS TIMESTAMP WITH TIME ZONE) AS \"timestamp\", \"ExplicitDistinct_100\".\"name\"\nFROM \"ExternalOrders_11\" AS \"ExternalOrders_110\"\n INNER JOIN \"ExplicitDistinct_10\" AS \"ExplicitDistinct_100\" ON \"ExternalOrders_110\".\"customerid\" = \"ExplicitDistinct_100\".\"customerid\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -2893,7 +2874,7 @@ END
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query MissedTemporalJoin($limit: Int = 10, $offset: Int = 0) {\nMissedTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomerid0\ntimestamp\nname\n}\n\n}",
+            "query" : "query MissedTemporalJoin($limit: Int = 10, $offset: Int = 0) {\nMissedTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ntimestamp\nname\n}\n\n}",
             "queryName" : "MissedTemporalJoin",
             "operationType" : "QUERY"
           },
@@ -2973,7 +2954,7 @@ END
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query TemporalJoin($limit: Int = 10, $offset: Int = 0) {\nTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomerid0\ntimestamp\nname\n}\n\n}",
+            "query" : "query TemporalJoin($limit: Int = 10, $offset: Int = 0) {\nTemporalJoin(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ntimestamp\nname\n}\n\n}",
             "queryName" : "TemporalJoin",
             "operationType" : "QUERY"
           },
@@ -3140,7 +3121,7 @@ END
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type AnotherCustomer {\n  customerid: Long!\n  email: String!\n  lastUpdated: Long!\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n  related(limit: Int = 10, offset: Int = 0): [Customer!]\n  \"Customers that are related and have an email of at least given length\"\n  relatedByLength(\n    \"minimum email length of returned customers\"\n    length: Int!,\n    limit: Int = 10,\n    offset: Int = 0\n  ): [Customer!]\n}\n\ntype CustomerByMultipleTime {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime2 {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerFilteredDistinct {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"Counts unique emails per minute\"\ntype CustomerTimeWindow {\n  \"Start of the aggregation window\"\n  window_start: DateTime!\n  window_end: DateTime!\n  \"Number of unique emails for all customers per minute\"\n  unique_email_count: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype ExplicitDistinct {\n  customerid: Long!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype ExternalOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [ExternalOrders_entriesOutput]!\n}\n\ntype ExternalOrders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype InvalidDistinct {\n  customerid: Long!\n  timestamp: DateTime!\n  namee: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MissedTemporalJoin {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [MissedTemporalJoin_entriesOutput]!\n  customerid0: Long!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype MissedTemporalJoin_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Mutation {\n  \"Newly placed orders\"\n  Orders(event: OrdersInput!): OrdersResultOutput!\n}\n\n\"Newly placed orders\"\ntype Orders {\n  \"The id of the order\"\n  orderid: Int!\n  \"The amount ordered\"\n  amount: Float\n}\n\ninput OrdersInput {\n  \"The id of the order\"\n  orderid: Int!\n  \"The amount ordered\"\n  amount: Float\n}\n\ntype OrdersResultOutput {\n  \"The id of the order\"\n  orderid: Int!\n  \"The amount ordered\"\n  amount: Float\n}\n\ntype Query {\n  AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByMultipleTime(limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]\n  CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n  CustomerFilteredDistinct(limit: Int = 10, offset: Int = 0): [CustomerFilteredDistinct!]\n  \"Counts unique emails per minute\"\n  CustomerTimeWindow(limit: Int = 10, offset: Int = 0): [CustomerTimeWindow!]\n  ExplicitDistinct(limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]\n  ExternalOrders(limit: Int = 10, offset: Int = 0): [ExternalOrders!]\n  InvalidDistinct(limit: Int = 10, offset: Int = 0): [InvalidDistinct!]\n  MissedTemporalJoin(limit: Int = 10, offset: Int = 0): [MissedTemporalJoin!]\n  \"Newly placed orders\"\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"\"\"\n  This is for selected customers\n      and their orders\n  \"\"\"\n  SelectCustomers(limit: Int = 10, offset: Int = 0): [Customer!]\n  TemporalJoin(limit: Int = 10, offset: Int = 0): [TemporalJoin!]\n  UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n  CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n  \"Returns the customer with given id\"\n  CustomerQuery(\n    \"Id of the customer to search for\"\n    id: Long!,\n    limit: Int = 10,\n    offset: Int = 0\n  ): [AnotherCustomer!]\n  TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerSubscription: Customer\n  CustomerSubscriptionById(minId: Int!): Customer\n}\n\ntype TemporalJoin {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [TemporalJoin_entriesOutput]!\n  customerid0: Long!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype TemporalJoin_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype UnnestOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  productid: Long!\n  quantity: Long!\n  discount: Float\n  newId: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type AnotherCustomer {\n  customerid: Long!\n  email: String!\n  lastUpdated: Long!\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n  related(limit: Int = 10, offset: Int = 0): [Customer!]\n  \"Customers that are related and have an email of at least given length\"\n  relatedByLength(\n    \"minimum email length of returned customers\"\n    length: Int!,\n    limit: Int = 10,\n    offset: Int = 0\n  ): [Customer!]\n}\n\ntype CustomerByMultipleTime {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerByTime2 {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerFilteredDistinct {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"Counts unique emails per minute\"\ntype CustomerTimeWindow {\n  \"Start of the aggregation window\"\n  window_start: DateTime!\n  window_end: DateTime!\n  \"Number of unique emails for all customers per minute\"\n  unique_email_count: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype ExplicitDistinct {\n  customerid: Long!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype ExternalOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [ExternalOrders_entriesOutput]!\n}\n\ntype ExternalOrders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype InvalidDistinct {\n  customerid: Long!\n  timestamp: DateTime!\n  namee: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MissedTemporalJoin {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [MissedTemporalJoin_entriesOutput]!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype MissedTemporalJoin_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Mutation {\n  \"Newly placed orders\"\n  Orders(event: OrdersInput!): OrdersResultOutput!\n}\n\n\"Newly placed orders\"\ntype Orders {\n  \"The id of the order\"\n  orderid: Int!\n  \"The amount ordered\"\n  amount: Float\n}\n\ninput OrdersInput {\n  \"The id of the order\"\n  orderid: Int!\n  \"The amount ordered\"\n  amount: Float\n}\n\ntype OrdersResultOutput {\n  \"The id of the order\"\n  orderid: Int!\n  \"The amount ordered\"\n  amount: Float\n}\n\ntype Query {\n  AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerByMultipleTime(limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]\n  CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]\n  CustomerFilteredDistinct(limit: Int = 10, offset: Int = 0): [CustomerFilteredDistinct!]\n  \"Counts unique emails per minute\"\n  CustomerTimeWindow(limit: Int = 10, offset: Int = 0): [CustomerTimeWindow!]\n  ExplicitDistinct(limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]\n  ExternalOrders(limit: Int = 10, offset: Int = 0): [ExternalOrders!]\n  InvalidDistinct(limit: Int = 10, offset: Int = 0): [InvalidDistinct!]\n  MissedTemporalJoin(limit: Int = 10, offset: Int = 0): [MissedTemporalJoin!]\n  \"Newly placed orders\"\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"\"\"\n  This is for selected customers\n      and their orders\n  \"\"\"\n  SelectCustomers(limit: Int = 10, offset: Int = 0): [Customer!]\n  TemporalJoin(limit: Int = 10, offset: Int = 0): [TemporalJoin!]\n  UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]\n  CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n  \"Returns the customer with given id\"\n  CustomerQuery(\n    \"Id of the customer to search for\"\n    id: Long!,\n    limit: Int = 10,\n    offset: Int = 0\n  ): [AnotherCustomer!]\n  TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Subscription {\n  CustomerSubscription: Customer\n  CustomerSubscriptionById(minId: Int!): Customer\n}\n\ntype TemporalJoin {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [TemporalJoin_entriesOutput]!\n  timestamp: DateTime!\n  name: String!\n}\n\ntype TemporalJoin_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype UnnestOrders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  productid: Long!\n  quantity: Long!\n  discount: Float\n  newId: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

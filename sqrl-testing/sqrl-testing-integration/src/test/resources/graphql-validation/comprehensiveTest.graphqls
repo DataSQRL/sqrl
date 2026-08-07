@@ -81,7 +81,6 @@ type MissedTemporalJoin {
     customerid: Long!
     time: DateTime!
     entries: [MissedTemporalJoin_entriesOutput]!
-    customerid0: Long!
     timestamp: DateTime
     name: String!
 }
@@ -146,7 +145,6 @@ type TemporalJoin {
     customerid: Long!
     time: DateTime!
     entries: [TemporalJoin_entriesOutput]!
-    customerid0: Long!
     timestamp: DateTime
     name: String!
 }
