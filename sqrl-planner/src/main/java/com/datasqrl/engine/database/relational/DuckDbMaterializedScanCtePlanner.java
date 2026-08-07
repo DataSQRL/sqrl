@@ -15,6 +15,8 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.plan.table.TableStatistic;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -23,6 +25,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +48,8 @@ class DuckDbMaterializedScanCtePlanner {
 
   private final int cardinalityDivisor;
 
-  List<MaterializedScanCte> getMaterializedScanCtes(RelNode relNode) {
+  List<MaterializedScanCte> getMaterializedScanCtes(
+      RelNode relNode, Map<String, JdbcEngineCreateTable> tableIdMap) {
     var collector = new TableScanCollector();
     var scansByTableId = collector.collect(relNode);
 
@@ -57,7 +61,18 @@ class DuckDbMaterializedScanCtePlanner {
     for (var entry : scansByTableId.entrySet()) {
       var tableId = entry.getKey();
       var scans = entry.getValue();
-      if (!shouldMaterialize(scans)) {
+
+      var tableStat =
+          Optional.ofNullable(tableIdMap.get(tableId))
+              .map(JdbcEngineCreateTable::tableAnalysis)
+              .map(TableAnalysis::getTableStatistic)
+              .orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          "Scan CTE planning failed, invalid table found in the rel node: "
+                              + tableId));
+
+      if (!shouldMaterialize(tableStat, scans)) {
         continue;
       }
 
@@ -74,14 +89,13 @@ class DuckDbMaterializedScanCtePlanner {
     return ctes;
   }
 
-  boolean shouldMaterialize(Deque<TableScan> scans) {
+  boolean shouldMaterialize(TableStatistic tableStatistic, Deque<TableScan> scans) {
     if (scans.size() < 2) {
       return false;
     }
 
-    var scan = scans.getFirst();
-    var cardinality = scan.getCluster().getMetadataQuery().getRowCount(scan);
-    if (cardinality == null || !Double.isFinite(cardinality) || cardinality <= 0) {
+    var cardinality = tableStatistic.getRowCount();
+    if (tableStatistic.isUnknown() || !Double.isFinite(cardinality) || cardinality <= 0) {
       return false;
     }
 

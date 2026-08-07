@@ -91,7 +91,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
   public QueryResult createQuery(
       Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap) {
 
-    var ctes = materializedScanCtePlanner.getMaterializedScanCtes(query.relNode());
+    var ctes = materializedScanCtePlanner.getMaterializedScanCtes(query.relNode(), tableIdMap);
     if (ctes.isEmpty()) {
       var replaced = query.relNode().accept(new IcebergTableScanRewriter(tableIdMap, Set.of()));
       return createQueryInternal(

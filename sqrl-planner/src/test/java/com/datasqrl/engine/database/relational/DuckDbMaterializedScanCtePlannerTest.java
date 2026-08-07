@@ -17,13 +17,11 @@ package com.datasqrl.engine.database.relational;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
+import com.datasqrl.plan.table.TableStatistic;
 import java.util.ArrayDeque;
-import java.util.List;
-import org.apache.calcite.plan.RelOptCluster;
+import java.util.Collections;
 import org.apache.calcite.rel.core.TableScan;
-import org.apache.calcite.rel.metadata.RelMetadataQuery;
 import org.junit.jupiter.api.Test;
 
 class DuckDbMaterializedScanCtePlannerTest {
@@ -31,45 +29,41 @@ class DuckDbMaterializedScanCtePlannerTest {
   @Test
   void givenRepeatedSmallTableScan_whenDeterminingCteMaterialization_thenMaterializes() {
     var planner = new DuckDbMaterializedScanCtePlanner(1);
-    var scan = scanWithCardinality(1_000.0);
 
-    assertThat(planner.shouldMaterialize(new ArrayDeque<>(List.of(scan, scan)))).isTrue();
+    assertThat(planner.shouldMaterialize(TableStatistic.fromEstimate(1_000), repeatedScans(2)))
+        .isTrue();
   }
 
   @Test
   void
       givenScanCountAtLargeTableThreshold_whenDeterminingCteMaterialization_thenDoesNotMaterialize() {
     var planner = new DuckDbMaterializedScanCtePlanner(1);
-    var scan = scanWithCardinality(Math.pow(2, 23));
 
-    assertThat(planner.shouldMaterialize(new ArrayDeque<>(List.of(scan, scan, scan)))).isFalse();
+    assertThat(
+            planner.shouldMaterialize(
+                TableStatistic.fromEstimate(Math.pow(2, 23)), repeatedScans(3)))
+        .isFalse();
   }
 
   @Test
   void givenScanCountAboveLargeTableThreshold_whenDeterminingCteMaterialization_thenMaterializes() {
     var planner = new DuckDbMaterializedScanCtePlanner(1);
-    var scan = scanWithCardinality(Math.pow(2, 23));
 
-    assertThat(planner.shouldMaterialize(new ArrayDeque<>(List.of(scan, scan, scan, scan))))
+    assertThat(
+            planner.shouldMaterialize(
+                TableStatistic.fromEstimate(Math.pow(2, 23)), repeatedScans(4)))
         .isTrue();
   }
 
   @Test
   void givenUnknownCardinality_whenDeterminingCteMaterialization_thenDoesNotMaterialize() {
     var planner = new DuckDbMaterializedScanCtePlanner(1);
-    var scan = scanWithCardinality(null);
 
-    assertThat(planner.shouldMaterialize(new ArrayDeque<>(List.of(scan, scan, scan, scan))))
-        .isFalse();
+    assertThat(planner.shouldMaterialize(TableStatistic.UNKNOWN, repeatedScans(4))).isFalse();
   }
 
-  private TableScan scanWithCardinality(Double cardinality) {
+  private ArrayDeque<TableScan> repeatedScans(int count) {
     var scan = mock(TableScan.class);
-    var cluster = mock(RelOptCluster.class);
-    var metadataQuery = mock(RelMetadataQuery.class);
-    when(scan.getCluster()).thenReturn(cluster);
-    when(cluster.getMetadataQuery()).thenReturn(metadataQuery);
-    when(metadataQuery.getRowCount(scan)).thenReturn(cardinality);
-    return scan;
+    return new ArrayDeque<>(Collections.nCopies(count, scan));
   }
 }
