@@ -1,0 +1,520 @@
+>>>pipeline_explain.txt
+=== ScanReuseBenchmark
+ID:          default_catalog.default_database.ScanReuseBenchmark
+Type:        state
+Stage:       iceberg
+Primary key: -
+Timestamp:   -
+Row count:   ~1
+---
+Schema:
+ - a_00: BIGINT
+ - a_01: BIGINT
+ - a_02: BIGINT
+ - a_03: BIGINT
+ - a_04: BIGINT
+ - a_05: BIGINT
+ - a_06: BIGINT
+ - a_07: BIGINT
+ - a_08: BIGINT
+ - a_09: BIGINT
+ - a_10: BIGINT
+ - a_11: BIGINT
+ - a_12: BIGINT
+ - a_13: BIGINT
+ - a_14: BIGINT
+ - a_15: BIGINT
+ - a_16: BIGINT
+ - a_17: BIGINT
+ - a_18: BIGINT
+ - a_19: BIGINT
+ - a_20: BIGINT
+ - a_21: BIGINT
+ - a_22: BIGINT
+ - a_23: BIGINT
+ - a_24: BIGINT
+ - a_25: BIGINT
+ - a_26: BIGINT
+ - a_27: BIGINT
+ - a_28: BIGINT
+ - a_29: BIGINT
+ - a_30: BIGINT
+ - a_31: BIGINT
+ - a_32: BIGINT
+ - a_33: BIGINT
+ - a_34: BIGINT
+ - a_35: BIGINT
+ - a_36: BIGINT
+ - a_37: BIGINT
+ - a_38: BIGINT
+ - a_39: BIGINT
+ - a_40: BIGINT
+ - a_41: BIGINT
+ - a_42: BIGINT
+ - a_43: BIGINT
+ - a_44: BIGINT
+ - a_45: BIGINT
+ - a_46: BIGINT
+ - a_47: BIGINT
+ - a_48: BIGINT
+ - a_49: BIGINT
+ - b_00: BIGINT
+ - b_01: BIGINT
+ - b_02: BIGINT
+ - b_03: BIGINT
+ - b_04: BIGINT
+ - b_05: BIGINT
+ - b_06: BIGINT
+ - b_07: BIGINT
+ - b_08: BIGINT
+ - b_09: BIGINT
+ - b_10: BIGINT
+ - b_11: BIGINT
+ - b_12: BIGINT
+ - b_13: BIGINT
+ - b_14: BIGINT
+ - b_15: BIGINT
+ - b_16: BIGINT
+ - b_17: BIGINT
+ - b_18: BIGINT
+ - b_19: BIGINT
+ - b_20: BIGINT
+ - b_21: BIGINT
+ - b_22: BIGINT
+ - b_23: BIGINT
+ - b_24: BIGINT
+Inputs:
+ - default_catalog.default_database.TableA
+ - default_catalog.default_database.TableB
+
+=== TableA
+ID:          default_catalog.default_database.TableA
+Type:        stream
+Stage:       flink
+Primary key: tenant_id, shard, id
+Timestamp:   -
+Row count:   1e9
+---
+Schema:
+ - tenant_id: BIGINT NOT NULL
+ - shard: INTEGER NOT NULL
+ - id: BIGINT NOT NULL
+ - payload: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.TableA__base
+Annotations:
+ - stream-root: TableA
+
+=== TableB
+ID:          default_catalog.default_database.TableB
+Type:        stream
+Stage:       flink
+Primary key: tenant_id, shard, id
+Timestamp:   -
+Row count:   5e8
+---
+Schema:
+ - tenant_id: BIGINT NOT NULL
+ - shard: INTEGER NOT NULL
+ - id: BIGINT NOT NULL
+ - payload: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.TableB__base
+Annotations:
+ - stream-root: TableB
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `TableA` (
+  `tenant_id` BIGINT NOT NULL,
+  `shard` INTEGER NOT NULL,
+  `id` BIGINT NOT NULL,
+  `payload` STRING,
+  PRIMARY KEY (`tenant_id`, `shard`, `id`) NOT ENFORCED
+)
+WITH (
+  'catalog-name' = 'dummy_catalog',
+  'catalog-type' = 'hadoop',
+  'connector' = 'iceberg',
+  'format-version' = '2',
+  'warehouse' = 'sqrl_iceberg_data'
+);
+CREATE TABLE `TableB` (
+  `tenant_id` BIGINT NOT NULL,
+  `shard` INTEGER NOT NULL,
+  `id` BIGINT NOT NULL,
+  `payload` STRING,
+  PRIMARY KEY (`tenant_id`, `shard`, `id`) NOT ENFORCED
+)
+WITH (
+  'catalog-name' = 'dummy_catalog',
+  'catalog-type' = 'hadoop',
+  'connector' = 'iceberg',
+  'format-version' = '2',
+  'warehouse' = 'sqrl_iceberg_data'
+);
+CREATE VIEW `ScanReuseBenchmark`
+AS
+SELECT (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 0) AS `a_00`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 1) AS `a_01`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 2) AS `a_02`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 3) AS `a_03`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 4) AS `a_04`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 5) AS `a_05`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 6) AS `a_06`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 7) AS `a_07`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 8) AS `a_08`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 9) AS `a_09`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 10) AS `a_10`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 11) AS `a_11`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 12) AS `a_12`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 13) AS `a_13`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 14) AS `a_14`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 15) AS `a_15`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 16) AS `a_16`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 17) AS `a_17`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 18) AS `a_18`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 19) AS `a_19`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 20) AS `a_20`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 21) AS `a_21`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 22) AS `a_22`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 23) AS `a_23`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 24) AS `a_24`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 25) AS `a_25`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 26) AS `a_26`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 27) AS `a_27`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 28) AS `a_28`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 29) AS `a_29`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 30) AS `a_30`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 31) AS `a_31`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 32) AS `a_32`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 33) AS `a_33`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 34) AS `a_34`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 35) AS `a_35`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 36) AS `a_36`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 37) AS `a_37`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 38) AS `a_38`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 39) AS `a_39`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 40) AS `a_40`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 41) AS `a_41`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 42) AS `a_42`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 43) AS `a_43`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 44) AS `a_44`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 45) AS `a_45`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 46) AS `a_46`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 47) AS `a_47`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 48) AS `a_48`, (SELECT COUNT(*)
+  FROM `TableA`
+  WHERE `tenant_id` = 42 AND `shard` = 49) AS `a_49`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 0) AS `b_00`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 1) AS `b_01`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 2) AS `b_02`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 3) AS `b_03`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 4) AS `b_04`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 5) AS `b_05`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 6) AS `b_06`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 7) AS `b_07`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 8) AS `b_08`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 9) AS `b_09`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 10) AS `b_10`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 11) AS `b_11`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 12) AS `b_12`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 13) AS `b_13`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 14) AS `b_14`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 15) AS `b_15`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 16) AS `b_16`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 17) AS `b_17`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 18) AS `b_18`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 19) AS `b_19`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 20) AS `b_20`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 21) AS `b_21`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 22) AS `b_22`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 23) AS `b_23`, (SELECT COUNT(*)
+  FROM `TableB`
+  WHERE `tenant_id` = 42 AND `shard` = 24) AS `b_24`;
+CREATE TABLE `TableA_1` (
+  `tenant_id` BIGINT NOT NULL,
+  `shard` INTEGER NOT NULL,
+  `id` BIGINT NOT NULL,
+  `payload` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`tenant_id`, `shard`, `id`) NOT ENFORCED
+)
+WITH (
+  'catalog-name' = 'default_catalog',
+  'catalog-table' = 'TableA',
+  'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
+  'connector' = 'iceberg',
+  'format-version' = '2',
+  'warehouse' = 'sqrl_iceberg_data',
+  'write.distribution-mode' = 'hash'
+);
+CREATE TABLE `TableB_2` (
+  `tenant_id` BIGINT NOT NULL,
+  `shard` INTEGER NOT NULL,
+  `id` BIGINT NOT NULL,
+  `payload` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`tenant_id`, `shard`, `id`) NOT ENFORCED
+)
+WITH (
+  'catalog-name' = 'default_catalog',
+  'catalog-table' = 'TableB',
+  'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
+  'connector' = 'iceberg',
+  'format-version' = '2',
+  'warehouse' = 'sqrl_iceberg_data',
+  'write.distribution-mode' = 'hash'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`TableA_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`TableA`
+;
+INSERT INTO `default_catalog`.`default_database`.`TableB_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`TableB`
+;
+END
+>>>iceberg-duckdb-schema.sql
+CREATE TABLE IF NOT EXISTS "TableA" ("tenant_id" BIGINT NOT NULL, "shard" INTEGER NOT NULL, "id" BIGINT NOT NULL, "payload" VARCHAR(65536), PRIMARY KEY ("tenant_id","shard","id"));
+CREATE TABLE IF NOT EXISTS "TableB" ("tenant_id" BIGINT NOT NULL, "shard" INTEGER NOT NULL, "id" BIGINT NOT NULL, "payload" VARCHAR(65536), PRIMARY KEY ("tenant_id","shard","id"))
+>>>iceberg-duckdb-views.sql
+CREATE OR REPLACE VIEW "ScanReuseBenchmark" ("a_00", "a_01", "a_02", "a_03", "a_04", "a_05", "a_06", "a_07", "a_08", "a_09", "a_10", "a_11", "a_12", "a_13", "a_14", "a_15", "a_16", "a_17", "a_18", "a_19", "a_20", "a_21", "a_22", "a_23", "a_24", "a_25", "a_26", "a_27", "a_28", "a_29", "a_30", "a_31", "a_32", "a_33", "a_34", "a_35", "a_36", "a_37", "a_38", "a_39", "a_40", "a_41", "a_42", "a_43", "a_44", "a_45", "a_46", "a_47", "a_48", "a_49", "b_00", "b_01", "b_02", "b_03", "b_04", "b_05", "b_06", "b_07", "b_08", "b_09", "b_10", "b_11", "b_12", "b_13", "b_14", "b_15", "b_16", "b_17", "b_18", "b_19", "b_20", "b_21", "b_22", "b_23", "b_24") AS WITH __sqrl_iceberg_scan_0 AS MATERIALIZED (SELECT *
+FROM (SELECT *
+  FROM "iceberg_scan"('sqrl_iceberg_data/default_database/TableA', ALLOW_MOVED_PATHS = TRUE)) AS "t"
+WHERE "tenant_id" = 42), __sqrl_iceberg_scan_1 AS MATERIALIZED (SELECT *
+FROM (SELECT *
+  FROM "iceberg_scan"('sqrl_iceberg_data/default_database/TableB', ALLOW_MOVED_PATHS = TRUE)) AS "t"
+WHERE "tenant_id" = 42) SELECT (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 0))) AS "a_00", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 1))) AS "a_01", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 2))) AS "a_02", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 3))) AS "a_03", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 4))) AS "a_04", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 5))) AS "a_05", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 6))) AS "a_06", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 7))) AS "a_07", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 8))) AS "a_08", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 9))) AS "a_09", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 10))) AS "a_10", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 11))) AS "a_11", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 12))) AS "a_12", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 13))) AS "a_13", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 14))) AS "a_14", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 15))) AS "a_15", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 16))) AS "a_16", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 17))) AS "a_17", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 18))) AS "a_18", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 19))) AS "a_19", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 20))) AS "a_20", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 21))) AS "a_21", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 22))) AS "a_22", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 23))) AS "a_23", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 24))) AS "a_24", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 25))) AS "a_25", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 26))) AS "a_26", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 27))) AS "a_27", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 28))) AS "a_28", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 29))) AS "a_29", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 30))) AS "a_30", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 31))) AS "a_31", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 32))) AS "a_32", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 33))) AS "a_33", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 34))) AS "a_34", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 35))) AS "a_35", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 36))) AS "a_36", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 37))) AS "a_37", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 38))) AS "a_38", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 39))) AS "a_39", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 40))) AS "a_40", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 41))) AS "a_41", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 42))) AS "a_42", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 43))) AS "a_43", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 44))) AS "a_44", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 45))) AS "a_45", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 46))) AS "a_46", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 47))) AS "a_47", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 48))) AS "a_48", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_0"
+    WHERE "tenant_id" = 42 AND "shard" = 49))) AS "a_49", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 0))) AS "b_00", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 1))) AS "b_01", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 2))) AS "b_02", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 3))) AS "b_03", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 4))) AS "b_04", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 5))) AS "b_05", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 6))) AS "b_06", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 7))) AS "b_07", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 8))) AS "b_08", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 9))) AS "b_09", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 10))) AS "b_10", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 11))) AS "b_11", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 12))) AS "b_12", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 13))) AS "b_13", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 14))) AS "b_14", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 15))) AS "b_15", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 16))) AS "b_16", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 17))) AS "b_17", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 18))) AS "b_18", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 19))) AS "b_19", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 20))) AS "b_20", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 21))) AS "b_21", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 22))) AS "b_22", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 23))) AS "b_23", (((SELECT COUNT(*)
+    FROM "__sqrl_iceberg_scan_1"
+    WHERE "tenant_id" = 42 AND "shard" = 24))) AS "b_24"
+FROM (VALUES (0)) AS "t" ("ZERO")
+>>>iceberg-schema.sql
+CREATE TABLE IF NOT EXISTS "TableA" ("tenant_id" BIGINT NOT NULL, "shard" INTEGER NOT NULL, "id" BIGINT NOT NULL, "payload" TEXT, PRIMARY KEY ("tenant_id","shard","id"));
+CREATE TABLE IF NOT EXISTS "TableB" ("tenant_id" BIGINT NOT NULL, "shard" INTEGER NOT NULL, "id" BIGINT NOT NULL, "payload" TEXT, PRIMARY KEY ("tenant_id","shard","id"))

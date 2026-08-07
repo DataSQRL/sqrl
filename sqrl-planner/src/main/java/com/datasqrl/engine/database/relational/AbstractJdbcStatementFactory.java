@@ -155,6 +155,32 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
   }
 
+  /**
+   * Creates a query from database-specific SQL constructed by a child statement factory.
+   *
+   * <p>Use this when a database feature cannot be represented through the shared Calcite SQL node
+   * interface.
+   */
+  protected QueryResult createQueryInternal(
+      String viewName,
+      RelDataType rowType,
+      boolean withView,
+      String sql,
+      Documented.Documentation documentation) {
+    var qBuilder = ExecutableJdbcReadQuery.builder();
+    qBuilder.sql(sql);
+
+    JdbcStatement view = null;
+    if (withView) {
+      var viewSql =
+          new GenericCreateViewDdlFactory(sqlConverters.getCalciteSqlDialect())
+              .createView(viewName, rowType.getFieldNames(), sql);
+
+      view = createViewStatement(viewName, rowType, viewSql, documentation);
+    }
+    return new JdbcStatementFactory.QueryResult(qBuilder, view);
+  }
+
   @Override
   public JdbcStatement createTable(JdbcEngineCreateTable createTable) {
     var tableName = createTable.tableName();
@@ -311,6 +337,15 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
                 .collect(Collectors.toList()),
             SqlParserPos.ZERO);
     var viewSql = createView(viewNameIdentifier, columnList, sqlNode);
+
+    return createViewStatement(viewName, rowType, viewSql, documentation);
+  }
+
+  private JdbcStatement createViewStatement(
+      String viewName,
+      RelDataType rowType,
+      String viewSql,
+      Documented.Documentation documentation) {
 
     return new GenericJdbcStatement(
         viewName,
