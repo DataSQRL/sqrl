@@ -22,7 +22,7 @@ public enum ErrorPrefix implements ErrorLocation {
   SCRIPT,
   SCHEMA,
   CONFIG,
-  SHARED,
+  INCLUDE,
   INPUT_DATA;
 
   @Override

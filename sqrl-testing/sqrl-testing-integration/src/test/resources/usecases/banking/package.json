@@ -15,9 +15,9 @@
   },
   "script": {
     "main": "loan.sqrl",
-    "shared": {
-      "banking-catalog": {
-        "path": "../banking-shared"
+    "include": {
+      "banking_catalog": {
+        "package": "../banking-shared/package-shared.json"
       }
     },
     "api": {

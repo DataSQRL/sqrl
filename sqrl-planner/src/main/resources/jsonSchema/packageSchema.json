@@ -147,7 +147,7 @@
           "minProperties": 1,
           "additionalProperties": true
         },
-        "shared": {
+        "include": {
           "type": "object",
           "minProperties": 1,
           "patternProperties": {
@@ -155,7 +155,7 @@
               "type": "object",
               "minProperties": 1,
               "properties": {
-                "path": {
+                "package": {
                   "type": "string"
                 },
                 "config": {
@@ -165,7 +165,7 @@
                 }
               },
               "additionalProperties": false,
-              "required": ["path"]
+              "required": ["package"]
             }
           },
           "additionalProperties": false

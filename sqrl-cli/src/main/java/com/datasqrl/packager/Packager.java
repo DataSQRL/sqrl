@@ -66,11 +66,12 @@ public class Packager {
       createBuildDir(workspacePaths.buildDir());
 
       var basePath = workspacePaths.projectRoot().orElse(workspacePaths.buildDir().getParent());
-      // Preprocess shared scripts first if there are any
-      var sharedScripts = config.getScriptConfig().getSharedScriptConfigs();
-      for (var sharedScript : sharedScripts) {
-        var sourcePath = basePath.resolve(sharedScript.getPath());
-        preprocessingPipeline.run(sourcePath, NamePath.of(sharedScript.getName()), errors);
+      // Preprocess included project(s) first if there are any
+      var includes = config.getScriptConfig().getIncludeConfigs();
+      for (var include : includes) {
+        var includePackage = basePath.resolve(include.getPackage());
+        var includePath = includePackage.getParent();
+        preprocessingPipeline.run(includePath, NamePath.of(include.getNamespace()), errors);
       }
 
       preprocessingPipeline.run(basePath, errors);

@@ -3,9 +3,9 @@
   "enabled-engines": ["flink", "kafka"],
   "script": {
     "main": "flink-kafka.sqrl",
-    "shared": {
-      "banking-catalog": {
-        "path": "../banking-shared",
+    "include": {
+      "banking_catalog": {
+        "package": "../banking-shared/package-shared.json",
         "config": {
           "monitorInterval": "5s"
         }

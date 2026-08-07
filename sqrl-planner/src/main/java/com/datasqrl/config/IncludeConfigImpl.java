@@ -17,23 +17,23 @@ package com.datasqrl.config;
 
 import static com.datasqrl.config.PackageJsonImpl.CONFIG_KEY;
 
-import com.datasqrl.config.PackageJson.SharedScriptConfig;
+import com.datasqrl.config.PackageJson.IncludeConfig;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class SharedScriptConfigImpl implements SharedScriptConfig {
+public class IncludeConfigImpl implements IncludeConfig {
 
   private final SqrlConfig sqrlConfig;
 
   @Override
-  public String getName() {
+  public String getNamespace() {
     return sqrlConfig.getSelfKey();
   }
 
   @Override
-  public String getPath() {
-    return sqrlConfig.asString("path").get();
+  public String getPackage() {
+    return sqrlConfig.asString("package").get();
   }
 
   @Override

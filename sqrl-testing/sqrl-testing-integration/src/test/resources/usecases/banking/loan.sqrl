@@ -1,4 +1,4 @@
-IMPORT `banking-catalog`.`sources`;
+IMPORT `banking_catalog`.`sources`;
 
 /*+engine(kafka), insert(transaction) */
 CREATE TABLE ApplicationUpdates (

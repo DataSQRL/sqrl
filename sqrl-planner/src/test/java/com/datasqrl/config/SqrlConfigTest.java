@@ -67,6 +67,15 @@ public class SqrlConfigTest {
   }
 
   @Test
+  void givenUnderscoreIncludeName_whenSetProperty_thenAcceptsKey() {
+    var includeConfig = config.getSubConfig("script").getSubConfig("include");
+
+    includeConfig.setProperty("orders_api", "value");
+
+    assertThat(includeConfig.asString("orders_api").get()).isEqualTo("value");
+  }
+
+  @Test
   void givenMissingKey_whenGetValue_thenThrowsException() {
     SqrlConfig.Value<?> value = config.asString("nonexistent");
 
