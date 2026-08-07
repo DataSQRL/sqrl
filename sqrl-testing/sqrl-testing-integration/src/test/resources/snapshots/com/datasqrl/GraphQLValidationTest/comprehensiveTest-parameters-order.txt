@@ -521,7 +521,6 @@ type MissedTemporalJoin {
     customerid: Long!
     time: DateTime!
     entries: [MissedTemporalJoin_entriesOutput]!
-    customerid0: Long!
     timestamp: DateTime
     name: String!
 }
@@ -586,7 +585,6 @@ type TemporalJoin {
     customerid: Long!
     time: DateTime!
     entries: [TemporalJoin_entriesOutput]!
-    customerid0: Long!
     timestamp: DateTime
     name: String!
 }
@@ -842,8 +840,7 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - customerid0: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Inputs:
  - default_catalog.default_database.ExplicitDistinct
@@ -909,8 +906,7 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - customerid0: BIGINT NOT NULL
- - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Inputs:
  - default_catalog.default_database.ExplicitDistinct
@@ -1091,12 +1087,12 @@ FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp
 WHERE `_rownum` = 1;
 CREATE VIEW `MissedTemporalJoin`
 AS
-SELECT *
+SELECT `o`.*, CAST(`timestamp` AS TIMESTAMP_LTZ(3)) AS `timestamp`, `name`
 FROM `ExternalOrders` AS `o`
  INNER JOIN `ExplicitDistinct` AS `c` ON `o`.`customerid` = `c`.`customerid`;
 CREATE VIEW `TemporalJoin`
 AS
-SELECT *
+SELECT `o`.*, CAST(`timestamp` AS TIMESTAMP_LTZ(3)) AS `timestamp`, `name`
 FROM `ExternalOrders` AS `o`
  INNER JOIN `ExplicitDistinct` FOR SYSTEM_TIME AS OF `time` AS `c` ON `o`.`customerid` = `c`.`customerid`;
 CREATE VIEW `SelectCustomers`
@@ -1145,7 +1141,6 @@ CREATE TEMPORARY TABLE `MyPrintSink_ex1__schema` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
-  `customerid0` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
 )
@@ -1383,7 +1378,6 @@ CREATE TABLE `TemporalJoin_15` (
   `customerid` BIGINT NOT NULL,
   `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
-  `customerid0` BIGINT NOT NULL,
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   PRIMARY KEY (`id`, `time`) NOT ENFORCED
@@ -1479,7 +1473,7 @@ SELECT *
 FROM `default_catalog`.`default_database`.`TemporalJoin`
 ;
 INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_15`
-SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
+SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `timestamp`, `name`
 FROM `default_catalog`.`default_database`.`TemporalJoin`
 ;
 INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`
@@ -1543,12 +1537,12 @@ CREATE TABLE IF NOT EXISTS "ExternalOrders" ("id" BIGINT NOT NULL, "customerid" 
 CREATE TABLE IF NOT EXISTS "InvalidDistinct" ("customerid" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "namee" TEXT NOT NULL, PRIMARY KEY ("customerid"));
 CREATE TABLE IF NOT EXISTS "Orders" ("orderid" INTEGER NOT NULL, "amount" FLOAT, PRIMARY KEY ("orderid"));
 CREATE TABLE IF NOT EXISTS "SelectCustomers" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid","name"));
-CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB, "customerid0" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL, PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL, PRIMARY KEY ("id","time"));
 CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION, "newId" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
 CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name")
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
+CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "timestamp", "name") AS SELECT "ExternalOrders"."id", "ExternalOrders"."customerid", "ExternalOrders"."time", "ExternalOrders"."entries", CAST("ExplicitDistinct"."timestamp" AS TIMESTAMP WITH TIME ZONE) AS "timestamp", "ExplicitDistinct"."name"
 FROM "ExternalOrders"
  INNER JOIN "ExplicitDistinct" ON "ExternalOrders"."customerid" = "ExplicitDistinct"."customerid"
 >>>vertx-v1-openapi.json

@@ -78,7 +78,7 @@ public class DAGPlannerTest {
   @Disabled
   @Test
   void specificScript() {
-    var script = SCRIPT_DIR.resolve("multipleRowtimeColumns-fail.sqrl");
+    var script = SCRIPT_DIR.resolve("tableValuedFunctionsTest.sqrl");
     scripts(script);
   }
 
