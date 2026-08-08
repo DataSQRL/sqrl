@@ -1,0 +1,40 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type OffsetPageInfo {
+    pageSize: Int!
+    currentPage: Int!
+    totalRecords: Long!
+    totalPages: Int!
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    nextOffset: Int
+    prevOffset: Int
+    firstEventTime: DateTime
+    lastEventTime: DateTime
+}
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+    related(limit: Int = 10, offset: Int = 0): CustomerRelatedPage
+}
+
+type CustomerRelatedPage {
+    items: [Customer!]
+    meta: OffsetPageInfo
+}
+
+type CustomerPage {
+    items: [Customer!]
+    meta: OffsetPageInfo
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): CustomerPage!
+}

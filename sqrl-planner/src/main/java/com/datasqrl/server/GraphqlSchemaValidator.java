@@ -374,8 +374,23 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
       ObjectTypeDefinition parentType,
       FieldDefinition atField,
       SqrlTableFunction tableFunction,
-      TypeDefinitionRegistry registry) {
+      TypeDefinitionRegistry registry,
+      boolean paged) {
     checkValidArrayNonNullType(atField.getType());
+    if (paged) {
+      OffsetPageInfoUtil.validatePaginationType(registry, atField.getSourceLocation());
+      var argNames =
+          atField.getInputValueDefinitions().stream()
+              .map(InputValueDefinition::getName)
+              .collect(Collectors.toSet());
+      checkState(
+          argNames.contains(LIMIT) && argNames.contains(OFFSET),
+          atField.getSourceLocation(),
+          "Paginated query [%s] must declare both '%s' and '%s' arguments",
+          atField.getName(),
+          LIMIT,
+          OFFSET);
+    }
     checkArgumentsMatchParameters(atField, tableFunction, registry);
   }
 

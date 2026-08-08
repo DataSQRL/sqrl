@@ -22,6 +22,7 @@ import com.datasqrl.engine.database.relational.ExecutableJdbcReadQuery;
 import com.datasqrl.engine.log.kafka.KafkaLogEngine;
 import com.datasqrl.engine.log.kafka.KafkaQuery;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
@@ -50,6 +51,7 @@ import graphql.language.InputValueDefinition;
 import graphql.language.ObjectTypeDefinition;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,6 +70,10 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
   List<QueryCoords> queryCoords = new ArrayList<>();
   List<MutationCoords> mutations = new ArrayList<>();
   List<SubscriptionCoords> subscriptions = new ArrayList<>();
+
+  /** Base tables of paginated queries, so a row-time index can be generated for them. */
+  Set<TableAnalysis> pagedRowTimeTables = new LinkedHashSet<>();
+
   private final ErrorCollector errorCollector;
 
   public GraphqlModelGenerator(
@@ -148,7 +154,8 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
       ObjectTypeDefinition parentType,
       FieldDefinition atField,
       SqrlTableFunction tableFunction,
-      TypeDefinitionRegistry registry) {
+      TypeDefinitionRegistry registry,
+      boolean paged) {
     // As we no more merge user provided graphQL schema with the inferred schema, we no more need to
     // generate as many queries as the permutations of its arguments.
     // We now have a single executable query linked to the table function and already fully defined
@@ -168,13 +175,24 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
             .map(InputValueDefinition::getName)
             .anyMatch(
                 name -> name.equals(SchemaConstants.LIMIT) || name.equals(SchemaConstants.OFFSET));
+    var pagination =
+        paged
+            ? PaginationType.OFFSET_PAGE_INFO
+            : hasLimitOrOffset ? PaginationType.LIMIT_AND_OFFSET : PaginationType.NONE;
+    var eventTimesSql =
+        paged ? buildEventTimesSql(tableFunction, executableJdbcReadQuery.getSql()) : null;
+    if (eventTimesSql != null) {
+      pagedRowTimeTables.add(tableFunction.getBaseTable());
+    }
     queryBase =
         new SqlQuery(
             executableJdbcReadQuery.getSql(),
             parameters,
-            hasLimitOrOffset ? PaginationType.LIMIT_AND_OFFSET : PaginationType.NONE,
+            pagination,
             executableJdbcReadQuery.getCacheDuration().toMillis(),
-            executableJdbcReadQuery.getDatabase());
+            executableJdbcReadQuery.getDatabase(),
+            eventTimesSql,
+            paged ? buildCountSql(executableJdbcReadQuery.getSql()) : null);
     var coordsBuilder =
         ArgumentLookupQueryCoords.builder()
             .parentType(parentType.getName())
@@ -184,6 +202,37 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
 
     coordsBuilder.exec(set);
     queryCoords.add(coordsBuilder.build());
+  }
+
+  /**
+   * Builds the companion {@code COUNT(*)} query behind {@code totalRecords}/{@code totalPages}. It
+   * counts the whole result set, so it cannot use limit/offset and may scan the full table - which
+   * is why it only runs when one of those fields is selected.
+   */
+  private static String buildCountSql(String baseSql) {
+    return "SELECT COUNT(*) AS \"total_records\" FROM (" + baseSql + ") x";
+  }
+
+  /**
+   * Builds the companion aggregate query computing MIN/MAX over the designated rowtime column for
+   * {@code firstEventTime}/{@code lastEventTime}. Returns null when the result has no rowtime. The
+   * rowtime column name is the same identifier as in the base query's output.
+   */
+  private static String buildEventTimesSql(SqrlTableFunction tableFunction, String baseSql) {
+    return tableFunction
+        .getRowTime()
+        .map(tableFunction::getField)
+        .map(RelDataTypeField::getName)
+        .map(
+            col ->
+                "SELECT MIN(\""
+                    + col
+                    + "\") AS \"first_event_time\", MAX(\""
+                    + col
+                    + "\") AS \"last_event_time\" FROM ("
+                    + baseSql
+                    + ") x")
+        .orElse(null);
   }
 
   private static QueryParameterHandler convert(FunctionParameter fnParam) {

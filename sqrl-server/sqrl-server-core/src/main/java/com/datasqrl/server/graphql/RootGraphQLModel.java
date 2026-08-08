@@ -20,6 +20,7 @@ import com.datasqrl.server.ResolvedMetadata;
 import com.datasqrl.server.jdbc.DatabaseType;
 import com.datasqrl.server.operation.ApiOperation;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
@@ -298,13 +299,31 @@ public class RootGraphQLModel {
     /** The database the query is executed against */
     DatabaseType database;
 
+    /**
+     * Companion aggregate query computing MIN/MAX over the rowtime column for {@code
+     * firstEventTime}/{@code lastEventTime}. Only relevant when {@link #pagination} is {@link
+     * PaginationType#OFFSET_PAGE_INFO}, and only executed when the request selects an event-time
+     * field. Null when the result has no rowtime column.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    String eventTimesSql;
+
+    /**
+     * Companion {@code COUNT(*)} query for {@code totalRecords}/{@code totalPages}. Only relevant
+     * when {@link #pagination} is {@link PaginationType#OFFSET_PAGE_INFO}, and only executed when
+     * the request selects one of those fields - it scans the entire result set.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    String countSql;
+
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
       return visitor.visitSqlQuery(this, context);
     }
 
     public SqlQuery updateSql(String newSql) {
-      return new SqlQuery(newSql, parameters, pagination, cacheDurationMs, database);
+      return new SqlQuery(
+          newSql, parameters, pagination, cacheDurationMs, database, eventTimesSql, countSql);
     }
   }
 

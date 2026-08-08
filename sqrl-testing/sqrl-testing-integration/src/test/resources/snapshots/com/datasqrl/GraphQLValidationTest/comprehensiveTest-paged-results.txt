@@ -1775,7 +1775,8 @@ CREATE TABLE IF NOT EXISTS "SelectCustomers" ("customerid" BIGINT NOT NULL, "ema
 CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB, "customerid0" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL, PRIMARY KEY ("id","time"));
 CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION, "newId" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
-CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name")
+CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name");
+CREATE INDEX IF NOT EXISTS "CustomerByTime2_btree_c4" ON "CustomerByTime2" USING btree ("timestamp")
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
 FROM "ExternalOrders"
@@ -1802,175 +1803,19 @@ FROM "ExternalOrders"
     "description" : "DataSQRL API Server"
   } ],
   "paths" : {
-    "/v1/rest/queries/TableFunctionCallsTblFct" : {
-      "get" : {
-        "summary" : "GetTableFunctionCallsTblFct",
-        "operationId" : "GetTableFunctionCallsTblFct",
-        "parameters" : [ {
-          "name" : "arg2",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "offset",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "arg1",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "limit",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object",
-                  "properties" : {
-                    "data" : {
-                      "type" : "object",
-                      "description" : "Response data"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Error response",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object",
-                  "properties" : {
-                    "errors" : {
-                      "type" : "array",
-                      "items" : {
-                        "type" : "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/rest/queries/CustomerByTime2" : {
       "get" : {
         "summary" : "GetCustomerByTime2",
         "operationId" : "GetCustomerByTime2",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object",
-                  "properties" : {
-                    "data" : {
-                      "type" : "object",
-                      "description" : "Response data"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Error response",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object",
-                  "properties" : {
-                    "errors" : {
-                      "type" : "array",
-                      "items" : {
-                        "type" : "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/rest/queries/CustomerByMultipleTime" : {
-      "get" : {
-        "summary" : "GetCustomerByMultipleTime",
-        "operationId" : "GetCustomerByMultipleTime",
         "parameters" : [ {
-          "name" : "limit",
+          "name" : "offset",
           "in" : "query",
           "required" : false,
           "schema" : {
             "type" : "string"
           }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object",
-                  "properties" : {
-                    "data" : {
-                      "type" : "object",
-                      "description" : "Response data"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Error response",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object",
-                  "properties" : {
-                    "errors" : {
-                      "type" : "array",
-                      "items" : {
-                        "type" : "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/rest/queries/SelectCustomers" : {
-      "get" : {
-        "summary" : "GetSelectCustomers",
-        "operationId" : "GetSelectCustomers",
-        "parameters" : [ {
-          "name" : "offset",
+        }, {
+          "name" : "limit",
           "in" : "query",
           "required" : false,
           "schema" : {
@@ -2025,171 +1870,27 @@ FROM "ExternalOrders"
         {
           "type" : "args",
           "parentType" : "Query",
-          "fieldName" : "TableFunctionCallsTblFct",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "path" : "arg2"
-              },
-              {
-                "type" : "variable",
-                "path" : "arg1"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"Customer\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "path" : "arg1",
-                  "sqlType" : "INTEGER"
-                },
-                {
-                  "type" : "arg",
-                  "path" : "arg2",
-                  "sqlType" : "INTEGER"
-                }
-              ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Customer",
-          "fieldName" : "related",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Customer\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST",
-              "parameters" : [
-                {
-                  "type" : "source",
-                  "key" : "customerid"
-                }
-              ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Customer",
-          "fieldName" : "relatedByLength",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "path" : "length"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Customer\"\nWHERE $2 = \"customerid\" AND CHAR_LENGTH(\"email\") >= $1\nORDER BY \"timestamp\" NULLS FIRST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "path" : "length",
-                  "sqlType" : "INTEGER"
-                },
-                {
-                  "type" : "source",
-                  "key" : "customerid"
-                }
-              ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Query",
           "fieldName" : "CustomerByTime2",
           "exec" : {
-            "arguments" : [ ],
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
             "query" : {
               "type" : "SqlQuery",
               "sql" : "SELECT *\nFROM \"CustomerByTime2\"",
               "parameters" : [ ],
-              "pagination" : "NONE",
+              "pagination" : "OFFSET_PAGE_INFO",
               "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Query",
-          "fieldName" : "CustomerByMultipleTime",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "limit"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"CustomerByMultipleTime\"",
-              "parameters" : [ ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Query",
-          "fieldName" : "SelectCustomers",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "offset"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\"\n  FROM \"SelectCustomers\"\n  ORDER BY \"timestamp\" DESC NULLS LAST\n  FETCH NEXT 10 ROWS ONLY) AS \"t\"",
-              "parameters" : [ ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
+              "database" : "POSTGRES",
+              "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"CustomerByTime2\") x",
+              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM \"CustomerByTime2\") x"
             }
           }
         }
@@ -2199,108 +1900,34 @@ FROM "ExternalOrders"
       "operations" : [
         {
           "function" : {
-            "name" : "GetTableFunctionCallsTblFct",
+            "name" : "GetCustomerByTime2",
             "parameters" : {
               "type" : "object",
               "properties" : {
-                "arg2" : {
-                  "type" : "integer"
-                },
                 "offset" : {
-                  "type" : "integer"
-                },
-                "arg1" : {
                   "type" : "integer"
                 },
                 "limit" : {
                   "type" : "integer"
                 }
               },
-              "required" : [
-                "arg1",
-                "arg2"
-              ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query TableFunctionCallsTblFct($arg1: Int!, $arg2: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg1: $arg1, arg2: $arg2, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "TableFunctionCallsTblFct",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}"
-        },
-        {
-          "function" : {
-            "name" : "GetCustomerByTime2",
-            "parameters" : {
-              "type" : "object",
-              "properties" : { },
               "required" : [ ]
             }
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query CustomerByTime2() {\nCustomerByTime2 {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "query" : "query CustomerByTime2($limit: Int = 10, $offset: Int = 0) {\nCustomerByTime2(limit: $limit, offset: $offset) {\nresults {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "CustomerByTime2",
             "operationType" : "QUERY"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerByTime2"
-        },
-        {
-          "function" : {
-            "name" : "GetCustomerByMultipleTime",
-            "parameters" : {
-              "type" : "object",
-              "properties" : {
-                "limit" : {
-                  "type" : "integer"
-                }
-              },
-              "required" : [ ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerByMultipleTime($limit: Int = 10) {\nCustomerByMultipleTime(limit: $limit) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "CustomerByMultipleTime",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerByMultipleTime{?limit}"
-        },
-        {
-          "function" : {
-            "name" : "GetSelectCustomers",
-            "parameters" : {
-              "type" : "object",
-              "properties" : {
-                "offset" : {
-                  "type" : "integer"
-                }
-              },
-              "required" : [ ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query SelectCustomers($offset: Int = 0) {\nSelectCustomers(offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "SelectCustomers",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SelectCustomers{?offset}"
+          "uriTemplate" : "queries/CustomerByTime2{?offset,limit}"
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n    related(limit: Int = 10, offset: Int = 0): [Customer!]\n    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Query {\n    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n    CustomerByTime2: [Customer!]\n    CustomerByMultipleTime(limit: Int = 10): [Customer!]\n    SelectCustomers(offset: Int = 0): [Customer!]\n}\n"
+        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n}\n\ntype CustomerPage {\n    results: [Customer!]\n    pagination: OffsetPageInfo\n}\n\ntype OffsetPageInfo {\n    pageSize: Int!\n    currentPage: Int!\n    totalRecords: Long!\n    totalPages: Int!\n    hasNextPage: Boolean!\n    hasPreviousPage: Boolean!\n    nextOffset: Int\n    prevOffset: Int\n    firstEventTime: DateTime\n    lastEventTime: DateTime\n}\n\ntype Query {\n    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!\n}\n"
       }
     }
   }

@@ -1,0 +1,26 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type OffsetPageInfo {
+    totalRecords: Long!
+    pageSize: Int!
+}
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+}
+
+type CustomerPage {
+    results: [Customer!]
+    pagination: OffsetPageInfo
+}
+
+type Query {
+    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!
+}

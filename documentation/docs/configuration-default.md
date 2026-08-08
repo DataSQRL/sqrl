@@ -10,7 +10,7 @@ The following is the [default configuration file](https://raw.githubusercontent.
     "logger": "print",
     "compile-flink-plan": true,
     "extended-scalar-types": true,
-    "predicate-pushdown-rules": "LIMITED_TABLE_SOURCE_RULES",
+    "predicate-pushdown-rules": "LIMITED_RULES_NO_SOURCE",
     "cost-model": "DEFAULT",
     "explain": {
       "sql": false,
@@ -23,7 +23,8 @@ The following is the [default configuration file](https://raw.githubusercontent.
       "endpoints": "FULL",
       "add-prefix": true,
       "max-result-depth": 3,
-      "default-limit": 10
+      "default-limit": 10,
+      "paginated-results": false
     }
   },
   "engines": {
@@ -31,7 +32,8 @@ The following is the [default configuration file](https://raw.githubusercontent.
       "config": {
         "execution.runtime-mode": "STREAMING",
         "security.delegation.tokens.enabled": false,
-        "state.backend.type": "rocksdb"
+        "state.backend.type": "rocksdb",
+        "table.exec.sink.require-on-conflict": false
       }
     },
     "duckdb": {

@@ -67,6 +67,60 @@ You can customize the GraphQL schema by:
 The compiler raises errors when the provided GraphQL schema is not compatible with the object-relationship model.
 :::
 
+#### Pagination
+
+Every generated query endpoint takes `limit` and `offset` arguments to page through the result (`limit` defaults to the configured `default-limit`). By default the endpoint returns the rows directly and the client tracks the offsets itself.
+
+Set `paginated-results` to `true` in the [`api` compiler configuration](configuration.md#compiler-compiler) to get pagination metadata alongside the rows. The generated schema then wraps every multi-row query result in a page type:
+
+```graphql
+type PersonPage {
+  results: [Person!]
+  pagination: OffsetPageInfo
+}
+
+type OffsetPageInfo {
+  pageSize: Int!
+  currentPage: Int!
+  totalRecords: Long!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  nextOffset: Int
+  prevOffset: Int
+  firstEventTime: DateTime
+  lastEventTime: DateTime
+}
+```
+
+A query then selects the rows and the metadata it needs:
+
+```graphql
+query GetPeople {
+  Person(limit: 10, offset: 20) {
+    results { name email }
+    pagination { currentPage hasNextPage nextOffset }
+  }
+}
+```
+
+`firstEventTime` and `lastEventTime` are the earliest and latest event time of the *entire* result set, not of the returned page. They are `null` when the query result has no event time (rowtime) column.
+
+If you provide your own GraphQL schema, pagination is opt-in per query: give the query a result type with exactly two fields — a list of the result type, and a field of type `OffsetPageInfo` — and declare `OffsetPageInfo` exactly as shown above. The field names of the wrapper type are up to you. The compiler validates that:
+* the `OffsetPageInfo` type is declared and matches the definition above
+* the paginated query declares both a `limit` and an `offset` argument
+* the query returns multiple rows (i.e. it is not restricted to a single row) and is a query, not a subscription
+
+The server computes only the metadata a request actually selects, so paginated queries cost no more than unpaginated ones unless you ask for more:
+* `pageSize`, `currentPage`, `hasPreviousPage`, and `prevOffset` are derived from the request arguments and cost nothing.
+* `hasNextPage` and `nextOffset` make the query fetch one extra row, which is discarded before the results are returned. Without a `limit` argument the page holds every remaining row and `hasNextPage` is `false`.
+* `firstEventTime` and `lastEventTime` run a second `MIN`/`MAX` query over the event time column. The compiler adds an index on that column for paginated queries.
+* `totalRecords` and `totalPages` run a `COUNT(*)` over the entire result set, ignoring `limit`/`offset`.
+
+:::warning
+`totalRecords` and `totalPages` are expensive: the `COUNT(*)` behind them cannot be answered from the page the request asked for and generally requires a full table scan, which gets slower as the table grows. Select them only when the client really needs an exact total, and prefer `hasNextPage`/`nextOffset` for plain "is there more?" paging.
+:::
+
 #### Authoritative Model
 
 DataSQRL uses the GraphQL schemas the authoritative model for all API protocols. It serves as the foundational model on which operations, endpoints, and access patterns are defined. This simplifies the conceptual model and server execution since any API operation maps to a GraphQL query which is executed by a centralized and optimized GraphQL engine.

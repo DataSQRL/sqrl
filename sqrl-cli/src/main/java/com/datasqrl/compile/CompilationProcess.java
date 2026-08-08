@@ -75,8 +75,6 @@ public class CompilationProcess {
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);
-    var rewriters = ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
-    physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
     var mutationDatabase = physicalPlan.getMutationDatabase();
     writeDeploymentArtifactsHook.run(dag, planner.getCompleteScript().toString(), mutationDatabase);
 
@@ -137,6 +135,9 @@ public class CompilationProcess {
         testPlan = testPlanner.generateTestPlan(apiVersions, testsPath);
       }
     }
+
+    var rewriters = ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
+    physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
 
     // Read database file if configured and check compatibility
     mainScript
