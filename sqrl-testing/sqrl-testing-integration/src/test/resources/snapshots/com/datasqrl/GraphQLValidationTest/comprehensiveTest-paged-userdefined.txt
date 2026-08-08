@@ -291,6 +291,8 @@ type CustomerPage {
 type OffsetPageInfo {
     pageSize: Int!
     currentPage: Int!
+    totalRecords: Long!
+    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int
@@ -376,6 +378,8 @@ type CustomerPage {
 type OffsetPageInfo {
     pageSize: Int!
     currentPage: Int!
+    totalRecords: Long!
+    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int
@@ -586,6 +590,8 @@ type CustomerPage {
 type OffsetPageInfo {
     pageSize: Int!
     currentPage: Int!
+    totalRecords: Long!
+    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int
@@ -607,6 +613,8 @@ scalar Long
 type OffsetPageInfo {
     pageSize: Int!
     currentPage: Int!
+    totalRecords: Long!
+    totalPages: Int!
     hasNextPage: Boolean!
     hasPreviousPage: Boolean!
     nextOffset: Int
@@ -1820,7 +1828,8 @@ FROM "ExternalOrders"
               "pagination" : "OFFSET_PAGE_INFO",
               "cacheDurationMs" : 0,
               "database" : "POSTGRES",
-              "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM (SELECT *\n  FROM \"Customer\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1) x"
+              "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM (SELECT *\n  FROM \"Customer\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1) x",
+              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM (SELECT *\n  FROM \"Customer\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1) x"
             }
           }
         },
@@ -1851,7 +1860,8 @@ FROM "ExternalOrders"
               "pagination" : "OFFSET_PAGE_INFO",
               "cacheDurationMs" : 0,
               "database" : "POSTGRES",
-              "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"Customer\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST) x"
+              "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"Customer\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST) x",
+              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM \"Customer\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST) x"
             }
           }
         }
@@ -1861,7 +1871,7 @@ FROM "ExternalOrders"
       "operations" : [ ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OffsetPageInfo {\n    pageSize: Int!\n    currentPage: Int!\n    hasNextPage: Boolean!\n    hasPreviousPage: Boolean!\n    nextOffset: Int\n    prevOffset: Int\n    firstEventTime: DateTime\n    lastEventTime: DateTime\n}\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n    related(limit: Int = 10, offset: Int = 0): CustomerRelatedPage\n}\n\ntype CustomerRelatedPage {\n    items: [Customer!]\n    meta: OffsetPageInfo\n}\n\ntype CustomerPage {\n    items: [Customer!]\n    meta: OffsetPageInfo\n}\n\ntype Query {\n    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): CustomerPage!\n}\n"
+        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OffsetPageInfo {\n    pageSize: Int!\n    currentPage: Int!\n    totalRecords: Long!\n    totalPages: Int!\n    hasNextPage: Boolean!\n    hasPreviousPage: Boolean!\n    nextOffset: Int\n    prevOffset: Int\n    firstEventTime: DateTime\n    lastEventTime: DateTime\n}\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n    related(limit: Int = 10, offset: Int = 0): CustomerRelatedPage\n}\n\ntype CustomerRelatedPage {\n    items: [Customer!]\n    meta: OffsetPageInfo\n}\n\ntype CustomerPage {\n    items: [Customer!]\n    meta: OffsetPageInfo\n}\n\ntype Query {\n    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): CustomerPage!\n}\n"
       }
     }
   }

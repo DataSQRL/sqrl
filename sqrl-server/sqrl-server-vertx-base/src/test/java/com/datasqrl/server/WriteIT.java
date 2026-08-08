@@ -172,6 +172,7 @@ class WriteIT {
                                 PaginationType.NONE,
                                 0,
                                 DatabaseType.POSTGRES,
+                                null,
                                 null))
                         .build())
                 .build())

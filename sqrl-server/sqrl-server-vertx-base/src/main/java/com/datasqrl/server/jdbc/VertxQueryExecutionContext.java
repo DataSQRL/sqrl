@@ -93,9 +93,11 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
   }
 
   /**
-   * Completes with a page: the page query always runs, the rowtime aggregate behind {@code
-   * firstEventTime}/{@code lastEventTime} only when the request selected them and the query has a
-   * rowtime column. {@link OffsetPageInfoQuery} decides both and assembles the response.
+   * Completes with a page: the page query always runs, the companion aggregates only when the
+   * request selected fields needing them - the rowtime MIN/MAX behind {@code firstEventTime}/{@code
+   * lastEventTime} (and only if the query has a rowtime column), and the COUNT behind {@code
+   * totalRecords}/{@code totalPages}. {@link OffsetPageInfoQuery} decides all of it and assembles
+   * the response.
    */
   private void runOffsetPageInfoQuery(ResolvedSqlQuery resolvedQuery, List<Object> params) {
     var query = resolvedQuery.getQuery();
@@ -104,14 +106,20 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
     var pageFuture = execute(resolvedQuery, pageInfoQuery.pageQuery(query, params));
     var eventTimesFuture =
         pageInfoQuery.needsEventTimes() && query.getEventTimesSql() != null
-            ? executeEventTimes(query, params)
+            ? executeAggregate(query, query.getEventTimesSql(), params)
+            : Future.<RowSet<Row>>succeededFuture(null);
+    var totalsFuture =
+        pageInfoQuery.needsTotals() && query.getCountSql() != null
+            ? executeAggregate(query, query.getCountSql(), params)
             : Future.<RowSet<Row>>succeededFuture(null);
 
-    Future.all(pageFuture, eventTimesFuture)
+    Future.all(pageFuture, eventTimesFuture, totalsFuture)
         .map(
             ignored ->
                 pageInfoQuery.toPage(
-                    toJson(pageFuture.result()), firstRowAsJson(eventTimesFuture.result())))
+                    toJson(pageFuture.result()),
+                    firstRowAsJson(eventTimesFuture.result()),
+                    firstRowAsJson(totalsFuture.result())))
         .onSuccess(cf::complete)
         .onFailure(this::failQuery);
   }
@@ -127,11 +135,9 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
     return serverContext.getSqlClient().execute(container.preparedQuery(), params);
   }
 
-  /** The rowtime aggregate is never prepared and binds the base parameters only. */
-  private Future<RowSet<Row>> executeEventTimes(SqlQuery query, List<Object> params) {
-    return serverContext
-        .getSqlClient()
-        .execute(query.getDatabase(), query.getEventTimesSql(), Tuple.from(params));
+  /** Companion aggregates are never prepared and bind the base parameters only. */
+  private Future<RowSet<Row>> executeAggregate(SqlQuery query, String sql, List<Object> params) {
+    return serverContext.getSqlClient().execute(query.getDatabase(), sql, Tuple.from(params));
   }
 
   private void failQuery(Throwable throwable) {

@@ -23,6 +23,8 @@ CustomerTimeWindow := SELECT
 type OffsetPageInfo {
   pageSize: Int!
   currentPage: Int!
+  totalRecords: Long!
+  totalPages: Int!
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   nextOffset: Int

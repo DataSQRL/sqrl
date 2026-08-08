@@ -82,6 +82,8 @@ type PersonPage {
 type OffsetPageInfo {
   pageSize: Int!
   currentPage: Int!
+  totalRecords: Long!
+  totalPages: Int!
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
   nextOffset: Int
@@ -113,6 +115,11 @@ The server computes only the metadata a request actually selects, so paginated q
 * `pageSize`, `currentPage`, `hasPreviousPage`, and `prevOffset` are derived from the request arguments and cost nothing.
 * `hasNextPage` and `nextOffset` make the query fetch one extra row, which is discarded before the results are returned. Without a `limit` argument the page holds every remaining row and `hasNextPage` is `false`.
 * `firstEventTime` and `lastEventTime` run a second `MIN`/`MAX` query over the event time column. The compiler adds an index on that column for paginated queries.
+* `totalRecords` and `totalPages` run a `COUNT(*)` over the entire result set, ignoring `limit`/`offset`.
+
+:::warning
+`totalRecords` and `totalPages` are expensive: the `COUNT(*)` behind them cannot be answered from the page the request asked for and generally requires a full table scan, which gets slower as the table grows. Select them only when the client really needs an exact total, and prefer `hasNextPage`/`nextOffset` for plain "is there more?" paging.
+:::
 
 #### Authoritative Model
 

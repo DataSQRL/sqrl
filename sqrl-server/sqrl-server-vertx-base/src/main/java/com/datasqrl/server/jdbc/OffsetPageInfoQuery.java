@@ -41,23 +41,33 @@ import java.util.List;
  *       that extra row is how they are answered without a COUNT.
  *   <li>{@link #toPage} trims that extra row back off and assembles {@code {results, pagination}}.
  * </ol>
+ *
+ * <p>The one exception is {@code totalRecords}/{@code totalPages}: they need a COUNT over the whole
+ * result set, which the caller runs when {@link #needsTotals} asks for it.
  */
 final class OffsetPageInfoQuery {
 
   private static final String FIRST_EVENT_TIME_COLUMN = "first_event_time";
   private static final String LAST_EVENT_TIME_COLUMN = "last_event_time";
+  private static final String TOTAL_RECORDS_COLUMN = "total_records";
 
   private final PageRequest page;
   private final PageFields fields;
   private final boolean needsNextPage;
   private final boolean needsEventTimes;
+  private final boolean needsTotals;
 
   private OffsetPageInfoQuery(
-      PageRequest page, PageFields fields, boolean needsNextPage, boolean needsEventTimes) {
+      PageRequest page,
+      PageFields fields,
+      boolean needsNextPage,
+      boolean needsEventTimes,
+      boolean needsTotals) {
     this.page = page;
     this.fields = fields;
     this.needsNextPage = needsNextPage;
     this.needsEventTimes = needsEventTimes;
+    this.needsTotals = needsTotals;
   }
 
   static OffsetPageInfoQuery from(DataFetchingEnvironment environment) {
@@ -68,7 +78,8 @@ final class OffsetPageInfoQuery {
         PageRequest.from(environment),
         fields,
         selection.containsAnyOf(pagination + "/hasNextPage", pagination + "/nextOffset"),
-        selection.containsAnyOf(pagination + "/firstEventTime", pagination + "/lastEventTime"));
+        selection.containsAnyOf(pagination + "/firstEventTime", pagination + "/lastEventTime"),
+        selection.containsAnyOf(pagination + "/totalRecords", pagination + "/totalPages"));
   }
 
   /**
@@ -83,11 +94,16 @@ final class OffsetPageInfoQuery {
     return needsEventTimes;
   }
 
+  /** Whether the caller has to run the COUNT over the whole result to answer this request. */
+  boolean needsTotals() {
+    return needsTotals;
+  }
+
   /**
-   * Assembles the page from the rows the caller fetched. {@code eventTimes} is the single row of
-   * the rowtime aggregate, or an empty object when it did not run.
+   * Assembles the page from the rows the caller fetched. {@code eventTimes} and {@code totals} are
+   * the single rows of the companion aggregates, or empty objects when they did not run.
    */
-  JsonObject toPage(List<JsonObject> rows, JsonObject eventTimes) {
+  JsonObject toPage(List<JsonObject> rows, JsonObject eventTimes, JsonObject totals) {
     Boolean hasNextPage = null;
     if (needsNextPage) {
       hasNextPage = fetchesExtraRow() && rows.size() > page.limit();
@@ -102,7 +118,8 @@ final class OffsetPageInfoQuery {
             page.offset(),
             hasNextPage,
             eventTimes.getValue(FIRST_EVENT_TIME_COLUMN),
-            eventTimes.getValue(LAST_EVENT_TIME_COLUMN));
+            eventTimes.getValue(LAST_EVENT_TIME_COLUMN),
+            totals.getLong(TOTAL_RECORDS_COLUMN));
 
     return new JsonObject().put(fields.results(), rows).put(fields.pagination(), pagination);
   }
@@ -116,11 +133,17 @@ final class OffsetPageInfoQuery {
   }
 
   /**
-   * Builds the {@code OffsetPageInfo} object. A null {@code hasNextPage} means the request did not
-   * select the next-page fields, so they are left out entirely - GraphQL never reads them.
+   * Builds the {@code OffsetPageInfo} object. A null {@code hasNextPage} or {@code totalRecords}
+   * means the request did not select the fields deriving from it, so they are left out entirely -
+   * GraphQL never reads them.
    */
   static JsonObject paginationMetadata(
-      int pageSize, int offset, Boolean hasNextPage, Object firstEventTime, Object lastEventTime) {
+      int pageSize,
+      int offset,
+      Boolean hasNextPage,
+      Object firstEventTime,
+      Object lastEventTime,
+      Long totalRecords) {
     var hasPreviousPage = offset > 0;
     var pagination =
         new JsonObject()
@@ -137,6 +160,11 @@ final class OffsetPageInfoQuery {
       pagination
           .put("hasNextPage", hasNextPage)
           .put("nextOffset", hasNextPage ? Integer.valueOf(offset + pageSize) : null);
+    }
+    if (totalRecords != null) {
+      pagination
+          .put("totalRecords", totalRecords)
+          .put("totalPages", pageSize == 0 ? 0 : (int) Math.ceil((double) totalRecords / pageSize));
     }
     return pagination;
   }

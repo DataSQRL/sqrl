@@ -52,6 +52,8 @@ public final class OffsetPageInfoUtil {
   static {
     PAGINATION_FIELDS.put("pageSize", "Int!");
     PAGINATION_FIELDS.put("currentPage", "Int!");
+    PAGINATION_FIELDS.put("totalRecords", "Long!");
+    PAGINATION_FIELDS.put("totalPages", "Int!");
     PAGINATION_FIELDS.put("hasNextPage", "Boolean!");
     PAGINATION_FIELDS.put("hasPreviousPage", "Boolean!");
     PAGINATION_FIELDS.put("nextOffset", "Int");
@@ -67,6 +69,8 @@ public final class OffsetPageInfoUtil {
       Map.of(
           "Int!",
           GraphQLNonNull.nonNull(Scalars.GraphQLInt),
+          "Long!",
+          GraphQLNonNull.nonNull(CustomScalars.LONG),
           "Boolean!",
           GraphQLNonNull.nonNull(Scalars.GraphQLBoolean),
           "Int",

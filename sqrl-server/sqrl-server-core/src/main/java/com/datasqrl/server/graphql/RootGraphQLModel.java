@@ -308,13 +308,22 @@ public class RootGraphQLModel {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     String eventTimesSql;
 
+    /**
+     * Companion {@code COUNT(*)} query for {@code totalRecords}/{@code totalPages}. Only relevant
+     * when {@link #pagination} is {@link PaginationType#OFFSET_PAGE_INFO}, and only executed when
+     * the request selects one of those fields - it scans the entire result set.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    String countSql;
+
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
       return visitor.visitSqlQuery(this, context);
     }
 
     public SqlQuery updateSql(String newSql) {
-      return new SqlQuery(newSql, parameters, pagination, cacheDurationMs, database, eventTimesSql);
+      return new SqlQuery(
+          newSql, parameters, pagination, cacheDurationMs, database, eventTimesSql, countSql);
     }
   }
 

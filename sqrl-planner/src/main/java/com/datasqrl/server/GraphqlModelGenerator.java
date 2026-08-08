@@ -191,7 +191,8 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
             pagination,
             executableJdbcReadQuery.getCacheDuration().toMillis(),
             executableJdbcReadQuery.getDatabase(),
-            eventTimesSql);
+            eventTimesSql,
+            paged ? buildCountSql(executableJdbcReadQuery.getSql()) : null);
     var coordsBuilder =
         ArgumentLookupQueryCoords.builder()
             .parentType(parentType.getName())
@@ -201,6 +202,15 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
 
     coordsBuilder.exec(set);
     queryCoords.add(coordsBuilder.build());
+  }
+
+  /**
+   * Builds the companion {@code COUNT(*)} query behind {@code totalRecords}/{@code totalPages}. It
+   * counts the whole result set, so it cannot use limit/offset and may scan the full table - which
+   * is why it only runs when one of those fields is selected.
+   */
+  private static String buildCountSql(String baseSql) {
+    return "SELECT COUNT(*) AS \"total_records\" FROM (" + baseSql + ") x";
   }
 
   /**

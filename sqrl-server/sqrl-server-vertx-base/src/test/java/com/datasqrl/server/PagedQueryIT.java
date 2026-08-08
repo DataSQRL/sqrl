@@ -60,8 +60,8 @@ import org.testcontainers.utility.DockerImageName;
 
 /**
  * Proves that pagination metadata is computed lazily from the selection set: the MIN/MAX aggregate
- * query only runs when event times are selected, and {@code hasNextPage} alone is answered by
- * fetching LIMIT+1 rows instead of any aggregate.
+ * query only runs when event times are selected, the COUNT only when totals are selected, and
+ * {@code hasNextPage} alone is answered by fetching LIMIT+1 rows instead of any aggregate.
  */
 @ExtendWith(VertxExtension.class)
 @Testcontainers
@@ -72,6 +72,8 @@ class PagedQueryIT {
       "SELECT MIN(\"ts\") AS \"first_event_time\", MAX(\"ts\") AS \"last_event_time\" FROM ("
           + BASE_SQL
           + ") x";
+  private static final String COUNT_SQL =
+      "SELECT COUNT(*) AS \"total_records\" FROM (" + BASE_SQL + ") x";
 
   @Container
   private static final PostgreSQLContainer postgresContainer =
@@ -199,6 +201,20 @@ class PagedQueryIT {
   }
 
   @Test
+  void givenTotalsSelected_whenQuery_thenCountAggregateRuns() {
+    var customers =
+        execute(
+            "{ customers(limit: 2, offset: 0) { results { customerid }"
+                + " pagination { totalRecords totalPages } } }");
+
+    assertThat(recordingClient.executed).hasSize(2);
+    assertThat(sqlOf(recordingClient.executed)).contains(COUNT_SQL);
+    assertThat(pagination(customers))
+        .containsEntry("totalRecords", 5L)
+        .containsEntry("totalPages", 3);
+  }
+
+  @Test
   void givenNoLimitArgument_whenQuery_thenPageSizeReportsRowCountNotSentinel() {
     var customers =
         execute(
@@ -256,6 +272,7 @@ class PagedQueryIT {
                 .schema(
                     """
                 scalar DateTime
+                scalar Long
                 type Query {
                   customers(limit: Int = 10, offset: Int = 0): CustomerPage!
                   customersUnbounded(limit: Int, offset: Int = 0): CustomerPage!
@@ -271,6 +288,8 @@ class PagedQueryIT {
                 type OffsetPageInfo {
                   pageSize: Int!
                   currentPage: Int!
+                  totalRecords: Long!
+                  totalPages: Int!
                   hasNextPage: Boolean!
                   hasPreviousPage: Boolean!
                   nextOffset: Int
@@ -293,7 +312,8 @@ class PagedQueryIT {
                                 PaginationType.OFFSET_PAGE_INFO,
                                 0,
                                 DatabaseType.POSTGRES,
-                                EVENT_TIMES_SQL))
+                                EVENT_TIMES_SQL,
+                                COUNT_SQL))
                         .build())
                 .build())
         .query(
@@ -309,7 +329,8 @@ class PagedQueryIT {
                                 PaginationType.OFFSET_PAGE_INFO,
                                 0,
                                 DatabaseType.POSTGRES,
-                                EVENT_TIMES_SQL))
+                                EVENT_TIMES_SQL,
+                                COUNT_SQL))
                         .build())
                 .build())
         .query(
@@ -325,7 +346,8 @@ class PagedQueryIT {
                                 PaginationType.OFFSET_PAGE_INFO,
                                 0,
                                 DatabaseType.POSTGRES,
-                                null))
+                                null,
+                                COUNT_SQL))
                         .build())
                 .build())
         .build();
