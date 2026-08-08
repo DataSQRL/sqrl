@@ -19,24 +19,32 @@ import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
 import com.datasqrl.planner.parser.StatementParserException;
+import com.datasqrl.util.TimeUtils;
 import com.google.auto.service.AutoService;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
-import org.apache.flink.util.TimeUtils;
 
 public class TtlHint extends PlannerHint {
 
   public static final String HINT_NAME = "ttl";
 
   private final Duration ttl;
+  private final ChronoUnit ttlUnit;
 
-  protected TtlHint(ParsedObject<SqrlHint> source, Duration ttlDuration) {
+  protected TtlHint(ParsedObject<SqrlHint> source, Duration ttl, ChronoUnit ttlUnit) {
     super(source, Type.DAG);
-    this.ttl = ttlDuration;
+    this.ttl = ttl;
+    this.ttlUnit = ttlUnit;
   }
 
   public Optional<Duration> getTtl() {
     return Optional.ofNullable(ttl);
+  }
+
+  /** The unit the TTL was declared with - determines the smallest allowed partition width */
+  public Optional<ChronoUnit> getTtlUnit() {
+    return Optional.ofNullable(ttlUnit);
   }
 
   @AutoService(Factory.class)
@@ -44,7 +52,18 @@ public class TtlHint extends PlannerHint {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      return new TtlHint(source, parseDuration(source));
+      var arguments = source.get().options();
+      if (arguments == null || arguments.isEmpty()) {
+        return new TtlHint(source, null, null);
+      }
+      if (arguments.size() != 1 || arguments.get(0) == null) {
+        throw new StatementParserException(
+            ErrorLabel.GENERIC,
+            source.getFileLocation(),
+            "%s hint only supports one duration argument (e.g. `2 days`).",
+            source.get().name());
+      }
+      return parseTtlArgument(source, arguments.get(0).trim());
     }
 
     @Override
@@ -53,28 +72,26 @@ public class TtlHint extends PlannerHint {
     }
   }
 
-  public static Duration parseDuration(ParsedObject<SqrlHint> source) {
-    var arguments = source.get().options();
-    if (arguments == null || arguments.isEmpty()) {
-      return null;
-    }
-    if (arguments.size() != 1 || arguments.get(0) == null) {
-      throw new StatementParserException(
-          ErrorLabel.GENERIC,
-          source.getFileLocation(),
-          "%s hint only supports one duration argument (e.g. `2 days`).",
-          source.get().name());
-    }
+  private static TtlHint parseTtlArgument(ParsedObject<SqrlHint> source, String argument) {
+    Duration ttl = null;
+    ChronoUnit unit = null;
     try {
-      return TimeUtils.parseDuration(arguments.get(0));
+      ttl = TimeUtils.parseDuration(argument);
+      unit = TimeUtils.parseDurationUnit(argument);
     } catch (Exception e) {
+      // fall through to the shared error below
+    }
+    if (unit == null
+        || unit.compareTo(ChronoUnit.MINUTES) < 0
+        || unit.compareTo(ChronoUnit.DAYS) > 0) {
       throw new StatementParserException(
           ErrorLabel.GENERIC,
           source.getFileLocation(),
-          "%s hint does not have a valid duration argument: %s. Expected `2 days` or `10 s`. "
-              + e.getMessage(),
+          "%s hint does not have a valid duration argument: %s. Expected a positive number with a"
+              + " unit between minute and day, e.g. `30 min`, `36 hours`, or `14 days`.",
           source.get().name(),
-          arguments.get(0));
+          argument);
     }
+    return new TtlHint(source, ttl, unit);
   }
 }

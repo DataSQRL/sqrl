@@ -1,6 +1,0 @@
-{
-  "version": "1",
-  "script": {
-    "main": "stdlib-to-append-stream.sqrl"
-  }
-}

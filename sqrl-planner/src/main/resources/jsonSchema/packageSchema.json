@@ -150,7 +150,7 @@
           "minProperties": 1,
           "additionalProperties": true
         },
-        "shared": {
+        "include": {
           "type": "object",
           "minProperties": 1,
           "patternProperties": {
@@ -158,7 +158,7 @@
               "type": "object",
               "minProperties": 1,
               "properties": {
-                "path": {
+                "package": {
                   "type": "string"
                 },
                 "config": {
@@ -168,7 +168,7 @@
                 }
               },
               "additionalProperties": false,
-              "required": ["path"]
+              "required": ["package"]
             }
           },
           "additionalProperties": false
@@ -192,6 +192,21 @@
       "type": "object",
       "minProperties": 1,
       "properties": {
+        "flink": {
+          "type": "object",
+          "minProperties": 1,
+          "properties": {
+            "config": {
+              "type": "object",
+              "minProperties": 1
+            },
+            "deployment": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
+        },
         "duckdb": {
           "type": "object",
           "properties": {
@@ -206,22 +221,35 @@
             },
             "use-version-guessing": {
               "type": "boolean"
+            },
+            "scan-cte-cardinality-divisor": {
+              "type": "integer",
+              "exclusiveMinimum": 0
             }
           },
           "additionalProperties": false,
           "required": ["url"]
         },
-        "flink": {
+        "redshift": {
           "type": "object",
-          "minProperties": 1,
           "properties": {
-            "config": {
-              "type": "object",
-              "minProperties": 1
+            "view-database": {
+              "type": "string"
             },
-            "deployment": {
-              "type": "object",
-              "additionalProperties": true
+            "view-schema": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "sparksql": {
+          "type": "object",
+          "properties": {
+            "view-catalog": {
+              "type": "string"
+            },
+            "view-database": {
+              "type": "string"
             }
           },
           "additionalProperties": false
@@ -268,6 +296,10 @@
         "postgres": {
           "type": "object",
           "properties": {
+            "partition-ttl-divisor": {
+              "description": "Divisor applied to a table's TTL to cap the number of pg_partman partitions.",
+              "type": "integer"
+            },
             "config": {
               "type": "object",
               "minProperties": 1

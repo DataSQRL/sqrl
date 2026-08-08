@@ -98,7 +98,7 @@ public interface PackageJson {
 
     String getMainScript();
 
-    List<SharedScriptConfig> getSharedScriptConfigs();
+    List<IncludeConfig> getIncludeConfigs();
 
     List<ScriptApiConfig> getScriptApiConfigs();
 
@@ -115,11 +115,11 @@ public interface PackageJson {
     void setGraphql(String graphql);
   }
 
-  interface SharedScriptConfig {
+  interface IncludeConfig {
 
-    String getName();
+    String getNamespace();
 
-    String getPath();
+    String getPackage();
 
     Map<String, Object> getConfig();
   }

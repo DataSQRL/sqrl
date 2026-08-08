@@ -101,6 +101,7 @@ public class DAGPlannerTest {
           || path.getFileName().toString().contains("schema")
           || path.getFileName().toString().contains("views")
           || path.getFileName().toString().contains("partman")
+          || path.getFileName().toString().contains("openapi")
           || path.getFileName().toString().endsWith("ser")
           || path.getFileName().toString().startsWith("vertx-config.json")) {
         return false;

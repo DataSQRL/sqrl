@@ -18,7 +18,6 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
-import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.engine.database.relational.ddl.IcebergCreateTableDdlFactory;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;
@@ -39,11 +38,6 @@ public class IcebergStatementFactory extends AbstractJdbcStatementFactory {
   protected SqlDataTypeSpec getSqlType(RelDataType type, Optional<DataTypeHint> hint) {
     // TODO: Need to create Iceberg cast spec
     return ExtendedPostgresSqlDialect.DEFAULT.getCastSpec(type);
-  }
-
-  @Override
-  public JdbcDialect getDialect() {
-    return JdbcDialect.Postgres;
   }
 
   @Override

@@ -81,15 +81,29 @@ commands:
             EOF
 
   install-jdk:
-    description: "Install OpenJDK 17"
+    description: "Provision Eclipse Temurin 17"
     steps:
       - run:
-          name: Install OpenJDK 17
+          name: Provision Eclipse Temurin 17
           command: |
-                   sudo apt-get update && sudo apt-get install -y openjdk-17-jdk
-                   sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
-                   sudo update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
-                   java -version
+            JDK_IMAGE=eclipse-temurin:17-jdk-noble@sha256:30df3b90dc99b30e663c44e74c42f0a942360718b189558e1fe6692504c69a17
+            JAVA_HOME="$HOME/.jdk/temurin-17"
+            JDK_CONTAINER="temurin-jdk-$$"
+
+            trap 'docker rm -f "$JDK_CONTAINER" >/dev/null 2>&1 || true' EXIT
+            docker create --name "$JDK_CONTAINER" "$JDK_IMAGE" >/dev/null
+            rm -rf "$JAVA_HOME"
+            mkdir -p "$JAVA_HOME"
+            docker cp "$JDK_CONTAINER:/opt/java/openjdk/." "$JAVA_HOME"
+            docker rm "$JDK_CONTAINER" >/dev/null
+            trap - EXIT
+
+            echo "export JAVA_HOME=$JAVA_HOME" >> "$BASH_ENV"
+            echo 'export PATH="$JAVA_HOME/bin:$PATH"' >> "$BASH_ENV"
+            export JAVA_HOME
+            export PATH="$JAVA_HOME/bin:$PATH"
+            java -version
+            javac -version
 
   determine-version:
     description: "Derive TAG_SUFFIX and REGISTRY"
@@ -339,6 +353,7 @@ jobs:
 
   container-e2e-test:
     executor: default-machine
+    parallelism: 2
     steps:
       - checkout-and-version
       - skip-if-docs-only
@@ -363,10 +378,27 @@ jobs:
       - run:
           name: Run container tests using TestContainers
           command: |
+            SHARD_TESTS=$(circleci tests glob "sqrl-testing/sqrl-testing-container/src/test/java/**/*IT.java" \
+              | sed 's|.*/src/test/java/||; s|/|.|g; s|\.java$||' \
+              | circleci tests split --split-by=timings --timings-type=classname \
+              | sed 's|.*\.||' \
+              | paste -sd,)
+            echo "Running shard ${CIRCLE_NODE_INDEX}: $SHARD_TESTS"
             mvn -B install -DonlyContainerE2E \
               -pl :sqrl-testing-container \
+              -Dit.test="$SHARD_TESTS" \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
+      - run:
+          name: Collect test results
+          command: |
+            mkdir -p ~/test-results/container-${CIRCLE_NODE_INDEX}/
+            find sqrl-testing/sqrl-testing-container/target/failsafe-reports -name "TEST-*.xml" \
+              -exec cp {} ~/test-results/container-${CIRCLE_NODE_INDEX}/ \;
+          when: always
+      - store_test_results:
+          path: ~/test-results
+          when: always
 
   deploy:
     docker:

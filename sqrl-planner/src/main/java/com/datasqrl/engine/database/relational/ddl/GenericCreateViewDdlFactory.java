@@ -15,21 +15,24 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
-import static com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory.quoteIdentifier;
-
-import com.datasqrl.engine.database.relational.AbstractJdbcStatementFactory;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.apache.calcite.sql.SqlDialect;
 
+@RequiredArgsConstructor
 public class GenericCreateViewDdlFactory {
 
+  private final DdlIdentifierQuoter identifierQuoter;
+
+  public GenericCreateViewDdlFactory(SqlDialect dialect) {
+    this(new DdlIdentifierQuoter(dialect));
+  }
+
   public String createView(String viewName, List<String> columns, String select) {
-    var colStr =
-        columns.stream()
-            .map(AbstractJdbcStatementFactory::quoteIdentifier)
-            .collect(Collectors.joining(", "));
+    var colStr = columns.stream().map(identifierQuoter::quote).collect(Collectors.joining(", "));
 
     return "CREATE OR REPLACE VIEW %s (%s) AS %s"
-        .formatted(quoteIdentifier(viewName), colStr, select);
+        .formatted(identifierQuoter.quote(viewName), colStr, select);
   }
 }

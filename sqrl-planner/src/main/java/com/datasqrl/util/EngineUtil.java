@@ -17,10 +17,8 @@ package com.datasqrl.util;
 
 import com.datasqrl.config.EngineFactory;
 import com.datasqrl.engine.IExecutionEngine;
-import com.datasqrl.engine.database.DatabaseEngine;
-import com.datasqrl.engine.database.QueryEngine;
-import java.util.List;
-import java.util.Set;
+import com.datasqrl.engine.database.relational.AbstractJDBCQueryEngine;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -28,17 +26,15 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class EngineUtil {
 
-  public static List<String> getAvailableDatabaseEngineNames(String... exclusions) {
-    var exclusionSet = Set.of(exclusions);
-
-    return getChildEngineFactories(DatabaseEngine.class)
-        .map(EngineFactory::getEngineName)
-        .filter(name -> !exclusionSet.contains(name))
-        .toList();
+  public static Stream<EngineFactory> getAvailableQueryEngines() {
+    return getChildEngineFactories(AbstractJDBCQueryEngine.class);
   }
 
-  public static List<String> getAvailableQueryEngineNames() {
-    return getChildEngineFactories(QueryEngine.class).map(EngineFactory::getEngineName).toList();
+  public static String formatEngineNames(Stream<EngineFactory> engines) {
+    return engines
+        .map(EngineFactory::getEngineName)
+        .map(name -> '\'' + name + '\'')
+        .collect(Collectors.joining(", "));
   }
 
   public static Stream<EngineFactory> getChildEngineFactories(

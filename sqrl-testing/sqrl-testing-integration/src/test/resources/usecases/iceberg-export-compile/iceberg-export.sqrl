@@ -1,3 +1,3 @@
-IMPORT banking-catalog.sources;
+IMPORT banking_catalog.sources;
 
 EXPORT sources.ApplicationsStream TO iceberg.iceberg-sink;

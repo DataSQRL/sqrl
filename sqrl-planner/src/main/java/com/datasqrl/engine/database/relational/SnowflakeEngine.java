@@ -18,11 +18,10 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.server.jdbc.DatabaseType;
 import jakarta.inject.Inject;
 import lombok.NonNull;
 
-public class SnowflakeEngine extends AbstractJDBCQueryEngine {
+public class SnowflakeEngine extends AbstractJDBCShallowQueryEngine {
 
   @Inject
   public SnowflakeEngine(@NonNull PackageJson json, ConnectorFactoryFactory connectorFactory) {
@@ -33,18 +32,8 @@ public class SnowflakeEngine extends AbstractJDBCQueryEngine {
   }
 
   @Override
-  public String serverConfigName() {
-    return "snowflakeConfig";
-  }
-
-  @Override
   protected JdbcDialect getDialect() {
-    return JdbcDialect.Snowflake;
-  }
-
-  @Override
-  protected DatabaseType getDatabaseType() {
-    return DatabaseType.SNOWFLAKE;
+    return JdbcDialect.Iceberg;
   }
 
   @Override

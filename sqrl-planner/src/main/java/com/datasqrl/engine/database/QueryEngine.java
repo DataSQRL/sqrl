@@ -18,6 +18,7 @@ package com.datasqrl.engine.database;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
+import java.util.Optional;
 
 /**
  * A {@link QueryEngine} executes queries against a {@link DatabaseEngine} that supports the query
@@ -28,5 +29,5 @@ public interface QueryEngine extends ExecutionEngine {
 
   EnginePhysicalPlan plan(MaterializationStagePlan stagePlan);
 
-  String serverConfigName();
+  Optional<String> serverConfigName();
 }

@@ -49,7 +49,7 @@ public class GraphQLValidationTest {
         snapshotExtension.getTempPackage(),
         getDisplayName(graphQLSchema),
         getBuildDirFilter(),
-        UseCaseTestHelper.defaultPlanDirFilter());
+        getPlanDirFilter());
   }
 
   @Test
@@ -62,8 +62,16 @@ public class GraphQLValidationTest {
   private Predicate<Path> getBuildDirFilter() {
     return file -> {
       var fileName = file.getFileName().toString();
-      return fileName.equals(DagWriter.EXPLAIN_TEXT_FILENAME) || fileName.endsWith(".graphqls");
+      return fileName.equals(DagWriter.EXPLAIN_TEXT_FILENAME)
+          || fileName.endsWith(".graphqls")
+          || fileName.endsWith("openapi.json");
     };
+  }
+
+  private Predicate<Path> getPlanDirFilter() {
+    return file ->
+        UseCaseTestHelper.defaultPlanDirFilter().test(file)
+            || file.getFileName().toString().endsWith("openapi.json");
   }
 
   static class GraphQLSchemas extends ArgumentsProviders.GraphQLSchemaProvider {

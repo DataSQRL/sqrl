@@ -32,7 +32,11 @@
       }
     },
     "duckdb": {
-      "url": "jdbc:duckdb:"
+      "url": "jdbc:duckdb:",
+      "scan-cte-cardinality-divisor": 1
+    },
+    "postgres": {
+      "partition-ttl-divisor": 100
     },
     "kafka": {
       "retention": null,

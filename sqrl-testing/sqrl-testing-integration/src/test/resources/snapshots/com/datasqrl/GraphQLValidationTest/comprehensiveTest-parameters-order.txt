@@ -1780,6 +1780,101 @@ CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING 
 CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
 FROM "ExternalOrders"
  INNER JOIN "ExplicitDistinct" ON "ExternalOrders"."customerid" = "ExplicitDistinct"."customerid"
+>>>vertx-v1-openapi.json
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "DataSQRL REST API",
+    "description" : "Auto-generated REST API documentation for DataSQRL endpoints",
+    "contact" : {
+      "name" : "DataSQRL",
+      "url" : "https://datasqrl.com",
+      "email" : "contact@datasqrl.com"
+    },
+    "license" : {
+      "name" : "Apache License 2.0",
+      "url" : "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "version" : "unknown"
+  },
+  "servers" : [ {
+    "url" : "http://localhost:8888",
+    "description" : "DataSQRL API Server"
+  } ],
+  "paths" : {
+    "/v1/rest/queries/TableFunctionCallsTblFct" : {
+      "get" : {
+        "summary" : "GetTableFunctionCallsTblFct",
+        "operationId" : "GetTableFunctionCallsTblFct",
+        "parameters" : [ {
+          "name" : "arg2",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "arg1",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "object",
+                      "description" : "Response data"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
 >>>vertx.json
 {
   "models" : {

@@ -25,7 +25,7 @@ Eclipse Vert.x is a reactive server framework that serves as the GraphQL API ser
 
 For secure APIs with JWT authentication:
 
-```json5
+```json
 {
   "engines": {
     "vertx": {

@@ -19,7 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
-import com.datasqrl.config.JdbcDialect;
+import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.database.relational.ddl.CreateIndexDDL;
@@ -34,6 +34,8 @@ import com.datasqrl.sql.DatabaseTableExtension;
 import com.datasqrl.sql.DatabaseTypeExtension;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -46,13 +48,19 @@ import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
 
-  public PostgresStatementFactory() {
-    super(Dialect.POSTGRES, new PostgresCreateTableDdlFactory(true));
+  public static final String PARTITION_TTL_DIVISOR_KEY = "partition-ttl-divisor";
+
+  private final int partitionTtlDivisor;
+
+  public PostgresStatementFactory(EngineConfig engineConfig) {
+    this(Integer.parseInt(engineConfig.getSetting(PARTITION_TTL_DIVISOR_KEY)));
   }
 
-  @Override
-  public JdbcDialect getDialect() {
-    return JdbcDialect.Postgres;
+  public PostgresStatementFactory(int partitionTtlDivisor) {
+    super(Dialect.POSTGRES, new PostgresCreateTableDdlFactory(true));
+    checkArgument(
+        partitionTtlDivisor > 0, "%s must be a positive number", PARTITION_TTL_DIVISOR_KEY);
+    this.partitionTtlDivisor = partitionTtlDivisor;
   }
 
   @Override
@@ -93,6 +101,15 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
   }
 
   @Override
+  protected Optional<String> derivePartitionInterval(
+      PartitionType partitionType, Duration ttl, ChronoUnit ttlUnit) {
+    if (partitionType != PartitionType.RANGE || ttl == null || ttl.isZero() || ttlUnit == null) {
+      return Optional.empty();
+    }
+    return Optional.of(PostgresPartitionInterval.asString(ttl, ttlUnit, partitionTtlDivisor));
+  }
+
+  @Override
   public List<JdbcStatement> applyTableExtensions(Collection<CreateTableJdbcStatement> tables) {
     var res = new ArrayList<JdbcStatement>();
 
@@ -124,7 +141,11 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
   public JdbcStatement addIndex(IndexDefinition index) {
     var ddl =
         new CreateIndexDDL(
-            index.getName(), index.getTableName(), index.getColumnNames(), index.getType());
+            index.getName(),
+            index.getTableName(),
+            index.getColumnNames(),
+            index.getType(),
+            ExtendedPostgresSqlDialect.DEFAULT);
     return new GenericJdbcStatement(ddl.getIndexName(), Type.INDEX, ddl.getSql());
   }
 

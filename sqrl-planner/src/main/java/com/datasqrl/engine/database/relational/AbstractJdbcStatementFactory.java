@@ -39,6 +39,7 @@ import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.sql.DatabaseTypeExtension;
 import com.datasqrl.util.CalciteUtil;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -57,7 +58,6 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
-import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
@@ -82,6 +82,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         SqlConvertersFactory.get(dialect),
         createTableDdlFactory);
   }
+
+  protected abstract SqlNode getSqlType(RelDataType type, Optional<DataTypeHint> hint);
 
   @Override
   public QueryResult createQuery(
@@ -120,7 +122,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     var viewName = query.function().getSimpleName();
     var rowType = query.relNode().getRowType();
     var viewSql =
-        new GenericCreateViewDdlFactory()
+        new GenericCreateViewDdlFactory(sqlConverters.getCalciteSqlDialect())
             .createView(viewName, rowType.getFieldNames(), passthroughSql);
     var view =
         new GenericJdbcStatement(
@@ -153,6 +155,32 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
   }
 
+  /**
+   * Creates a query from database-specific SQL constructed by a child statement factory.
+   *
+   * <p>Use this when a database feature cannot be represented through the shared Calcite SQL node
+   * interface.
+   */
+  protected QueryResult createQueryInternal(
+      String viewName,
+      RelDataType rowType,
+      boolean withView,
+      String sql,
+      Documented.Documentation documentation) {
+    var qBuilder = ExecutableJdbcReadQuery.builder();
+    qBuilder.sql(sql);
+
+    JdbcStatement view = null;
+    if (withView) {
+      var viewSql =
+          new GenericCreateViewDdlFactory(sqlConverters.getCalciteSqlDialect())
+              .createView(viewName, rowType.getFieldNames(), sql);
+
+      view = createViewStatement(viewName, rowType, viewSql, documentation);
+    }
+    return new JdbcStatementFactory.QueryResult(qBuilder, view);
+  }
+
   @Override
   public JdbcStatement createTable(JdbcEngineCreateTable createTable) {
     var tableName = createTable.tableName();
@@ -167,13 +195,10 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     // DagPlanner validates that partition keys are part of primary key
 
     PartitionType partitionType = getPartitionType(createTable, partitionKeys);
-    Duration ttl =
-        createTable
-            .tableAnalysis()
-            .getHints()
-            .getHint(TtlHint.class)
-            .flatMap(TtlHint::getTtl)
-            .orElse(Duration.ZERO);
+    var ttlHint = createTable.tableAnalysis().getHints().getHint(TtlHint.class);
+    Duration ttl = ttlHint.flatMap(TtlHint::getTtl).orElse(Duration.ZERO);
+    ChronoUnit ttlUnit = ttlHint.flatMap(TtlHint::getTtlUnit).orElse(null);
+    String partitionInterval = derivePartitionInterval(partitionType, ttl, ttlUnit).orElse(null);
 
     return new CreateTableJdbcStatement(
         tableName,
@@ -187,6 +212,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         partitionType,
         partitionType == PartitionType.NONE ? 0 : 1,
         ttl,
+        partitionInterval,
         createTable,
         createTableDdlFactory);
   }
@@ -194,6 +220,15 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   protected PartitionType getPartitionType(
       JdbcEngineCreateTable createTable, List<String> partitionKey) {
     return partitionKey.isEmpty() ? PartitionType.NONE : PartitionType.LIST;
+  }
+
+  /**
+   * The width of the partitions for range-partitioned tables with a TTL - empty when the dialect
+   * does not support time-based partitioning.
+   */
+  protected Optional<String> derivePartitionInterval(
+      PartitionType partitionType, Duration ttl, ChronoUnit ttlUnit) {
+    return Optional.empty();
   }
 
   protected List<Field> getColumns(
@@ -224,8 +259,6 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         documentation.getColumn(field.getName(), null));
   }
 
-  protected abstract SqlDataTypeSpec getSqlType(RelDataType type, Optional<DataTypeHint> hint);
-
   protected String createView(
       SqlIdentifier viewNameIdentifier, SqlNodeList columnList, SqlNode viewSqlNode) {
     var createView =
@@ -235,20 +268,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     return sqlConverters.convert(createView);
   }
 
-  public static List<String> quoteIdentifier(List<String> columns) {
-    return columns.stream()
-        .map(AbstractJdbcStatementFactory::quoteIdentifier)
-        .collect(Collectors.toList());
-  }
-
-  public static String quoteIdentifier(String column) {
-    return "\"" + column + "\"";
-  }
-
-  public static List<String> quoteIdentifiers(List<String> values) {
-    return values.stream()
-        .map(AbstractJdbcStatementFactory::quoteIdentifier)
-        .collect(Collectors.toList());
+  protected SqlIdentifier getViewStatementIdentifier(String viewName) {
+    return new SqlIdentifier(viewName, SqlParserPos.ZERO);
   }
 
   protected Set<DatabaseTypeExtension> extractTypeExtensions(
@@ -308,7 +329,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       RelDataType rowType,
       SqlNode sqlNode,
       Documented.Documentation documentation) {
-    var viewNameIdentifier = new SqlIdentifier(viewName, SqlParserPos.ZERO);
+    var viewNameIdentifier = getViewStatementIdentifier(viewName);
     var columnList =
         new SqlNodeList(
             rowType.getFieldList().stream()
@@ -316,6 +337,15 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
                 .collect(Collectors.toList()),
             SqlParserPos.ZERO);
     var viewSql = createView(viewNameIdentifier, columnList, sqlNode);
+
+    return createViewStatement(viewName, rowType, viewSql, documentation);
+  }
+
+  private JdbcStatement createViewStatement(
+      String viewName,
+      RelDataType rowType,
+      String viewSql,
+      Documented.Documentation documentation) {
 
     return new GenericJdbcStatement(
         viewName,

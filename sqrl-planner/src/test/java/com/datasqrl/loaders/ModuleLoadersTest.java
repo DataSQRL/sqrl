@@ -72,7 +72,7 @@ class ModuleLoadersTest {
 
   @Test
   void
-      givenMissingSharedScriptImportWithoutRoot_whenLoadImportModule_thenReportsRootPrefixRequirement() {
+      givenMissingIncludedScriptImportWithoutRoot_whenLoadImportModule_thenReportsRootPrefixRequirement() {
     var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
     when(mainLoader.loadModule(NamePath.of("shared"))).thenReturn(Optional.empty());
 
@@ -81,14 +81,14 @@ class ModuleLoadersTest {
                 moduleLoaders.loadImportModule(NamePath.of("shared", "Table"), FileLocation.START))
         .isInstanceOf(StatementParserException.class)
         .hasMessage(
-            "Invalid import, to access a shared script in a submodule make sure to use the 'root' prefix");
+            "Invalid import, to access an included script in a submodule make sure to use the 'root' prefix");
     verify(mainLoader).loadModule(NamePath.of("shared"));
     verifyNoInteractions(rootLoader);
   }
 
   @Test
   void
-      givenMissingSharedScriptExportWithoutRoot_whenLoadExportModule_thenReportsRootPrefixRequirement() {
+      givenMissingIncludedScriptExportWithoutRoot_whenLoadExportModule_thenReportsRootPrefixRequirement() {
     var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
     when(mainLoader.loadModule(NamePath.of("shared"))).thenReturn(Optional.empty());
 
@@ -97,7 +97,7 @@ class ModuleLoadersTest {
                 moduleLoaders.loadExportModule(NamePath.of("shared", "Table"), FileLocation.START))
         .isInstanceOf(StatementParserException.class)
         .hasMessage(
-            "Invalid export, to access a shared script in a submodule make sure to use the 'root' prefix");
+            "Invalid export, to access an included script in a submodule make sure to use the 'root' prefix");
     verify(mainLoader).loadModule(NamePath.of("shared"));
     verifyNoInteractions(rootLoader);
   }

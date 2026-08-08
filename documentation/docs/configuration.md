@@ -21,8 +21,7 @@ DataSQRL supports the following engines:
 * **[postgres](configuration-engine/postgres)**: PostgreSQL is a realtime database
 * **[kafka](configuration-engine/kafka)**: Apache Kafka is a streaming data platform (i.e. log engine)
 * **[iceberg](configuration-engine/iceberg)**: Apache Iceberg is an analytic database format. Iceberg must be paired with a query engine for data access
-* **[duckdb](configuration-engine/duckdb)**: DuckDB is a vectorized database query engine that can read Iceberg tables.
-* **[snowflake](configuration-engine/snowflake)**: Snowflake is an analytic database query engine that can read Iceberg tables.
+* **[Iceberg query engines](configuration-engine/iceberg-query)**: DuckDB, Snowflake, Spark SQL, and Redshift provide query access to Iceberg tables.
 * **[vertx](configuration-engine/vertx)**: Eclipse Vert.x is a reactive server framework
 
 Guidelines for choosing the enabled engines in a pipeline:
@@ -55,16 +54,12 @@ Refer to the engine configuration documentation for more information on how to c
 
 Configures the main SQRL script to compile, the (optional) GraphQL schema for the exposed API, and (optional) list of operations defined as GraphQL queries.
 
-Shared SQRL scripts can be configured under `shared` to define reusable packages, such as common data catalogs, that are imported by multiple SQRL projects.
-Each shared script package is structured like a regular SQRL project, but its root directory must contain a `package.json` configuration file, which may be minimal and can provide metadata or default `script.config` values for template variables used by the shared SQRL files.
-Each `shared` entry uses its key as the import namespace, points `path` to the shared package root, and can define per-project `config` overrides for the shared package defaults.
-
-Optionally it can also take a mutation database JSON that is generated during every compilation, and if it's kept and included in the config,
+Optionally, it can also take a mutation database JSON generated during every compilation, and if it's kept and included in the config,
 SQRL will check backward compatibility during compile making sure that mutation schemas will not get overwritten by mistake.
 
-The `config` JSON object is passed to the Mustache templating engine to substitute template variable occurrences (e.g. `{{table}}`) before the script is compiled.
+The `config` JSON object is passed to the Mustache templating engine to substitute template variable occurrences (e.g. `{{excludedTenant}}`) before the script is compiled.
 
-```json5
+```json
 {
   "script": {
     "main": "my-project.sqrl",                         // Main SQRL script for pipeline
@@ -77,12 +72,6 @@ The `config` JSON object is passed to the Mustache templating engine to substitu
         { "field": "total_amount", "isNull": false },
         { "field": "coupon_code", "isNull": true }
       ]
-    },
-    "shared": {                                        // Shared SQRL script(s) that can be imported in the main SQRL script
-      "data-catalog": {
-        "path": "../shared-project",                   // Relative path to the shared project root
-        "config": { ... }                              // Optional mustache template overrides
-      }
     }
   }
 }
@@ -90,25 +79,97 @@ The `config` JSON object is passed to the Mustache templating engine to substitu
 
 The example `script.config` above could be used to instantiate the following table definition in SQRL:
 ```sql
-IMPORT data-catalog.sources;
-
-MyTable := SELECT
-             o.*
-           FROM sources.Orders AS o
-           WHERE o.tenant_id <> {{excludedTenant}}
-            {{#filters}}
-             AND o.{{field}} IS {{^quoted}}NOT{{/quoted}} NULL
-            {{/filters}}
-            ORDER BY o.tenant_id DESC;
+MyTable :=
+    SELECT o.*
+      FROM Orders AS o
+      WHERE o.tenant_id <> {{excludedTenant}}
+        {{#filters}}
+        AND o.{{field}} IS {{^isNull}}NOT{{/isNull}} NULL
+        {{/filters}}
+      ORDER BY o.tenant_id DESC;
 ```
 
-:::warning
-When a project has SQRL scripts in subfolders, e.g. `./my-module/module-script.sqrl`, it can access shared imports with applying the `root` prefix.
+The final SQRL statement after the template variables got resolved will look like:
+```sql
+MyTable := 
+    SELECT o.*
+      FROM Orders AS o
+      WHERE o.tenant_id <> 123
+        AND o.total_amount IS NOT NULL
+        AND o.coupon_code IS NULL
+      ORDER BY o.tenant_id DESC;
+```
+
+### Include Other Sources
+
+When multiple SQRL projects rely on the same logic or data catalog definitions, duplicating them would create unnecessary maintenance work.
+Instead, include and reuse other SQRL projects with the `include` config. Each `include` key is the namespace used to import the included project's modules.
+The required `package` value is the path to the included project's package JSON file, relative to the current project root.
+DataSQRL uses the package file's parent directory as the include root and loads the SQRL files in that directory and its subdirectories.
+Each `include` entry can define `config` overrides for the included project's `script.config` template values.
+
+```json
+{
+  "script": {
+    "main": "main.sqrl",                            // Main SQRL script for pipeline
+    "include": {                                    // Include SQRL scripts from other projects
+      "data_catalog": {                             // Namespace used in SQRL IMPORT statements
+        "package": "../other-project/package.json", // Included project's package file
+        "config": { ... }                           // Optional Mustache template overrides for the included script(s)
+      }
+    }
+  }
+}
+```
+
+:::note
+Include namespaces support underscores. Prefer `_` as a separator, such as `data_catalog` instead of `data-catalog`, because dashes can have a different meaning in SQL.
+:::
+
+#### Include Example
+
+Let's modify the `MyTable` example above to include the `Orders` table from a data catalog defined in another project.
+First, define the package JSON accordingly:
+```json
+{
+  "script": {
+    "main": "my-project.sqrl",
+    "config": {
+      "excludedTenant": 123,
+      "filters": [
+        { "field": "total_amount", "isNull": false },
+        { "field": "coupon_code", "isNull": true }
+      ]
+    },
+    "include": {
+      "data_catalog": {
+        "package": "../other-project/other-project-shared-package.json"
+      }
+    }
+  }
+}
+```
+
+Then `my-project.sqrl` can import the data catalog sources:
+```sql
+IMPORT data_catalog.sources AS ctl;
+
+MyTable :=
+    SELECT o.*
+      FROM ctl.Orders AS o
+      WHERE o.tenant_id <> {{excludedTenant}}
+        {{#filters}}
+        AND o.{{field}} IS {{^isNull}}NOT{{/isNull}} NULL
+        {{/filters}}
+      ORDER BY o.tenant_id DESC;
+```
+
+:::important
+When a SQRL script is in a subdirectory, e.g. `./my-module/module-script.sqrl`, use the `root` prefix to import an included namespace.
 With the example above that would mean:
 ```sql
-IMPORT root.data-catalog.sources;
+IMPORT root.data_catalog.sources;
 ```
-
 :::
 
 ## Test-Runner (`test-runner`)
@@ -116,7 +177,7 @@ IMPORT root.data-catalog.sources;
 Configures how the DataSQRL test runner executes tests.
 For streaming pipelines, use `required-checkpoints` to set a reliable time-interval for creating snapshots. Otherwise, configure a wall-clock delay via `delay-sec`.
 
-```json5
+```json
 {
   "test-runner": {
     "snapshot-folder": "snapshots/myproject/", // Snapshots output directory (default: "./snapshots")
@@ -195,7 +256,7 @@ DataSQRL resolves environment variables at two different times:
 
 - During `sqrl compile`, DataSQRL resolves available, non-secret environment variables in user-provided `package.json` [connector configuration](configuration-default) and in Flink `CREATE TABLE ... WITH (...)` options in SQRL scripts.
 - If a `${VAR_NAME}` placeholder is not available during `sqrl compile`, it is left unchanged in the generated build artifacts so it can still be supplied later.
-- During `sqrl run` or `sqrl test`, DataSQRL first compiles the project with the same compile-time rules, then launches the generated artifacts and resolves remaining `${VAR_NAME}` placeholders defined anywhere in the SQRL scripts from the runtime environment.
+- During `sqrl run` or `sqrl test`, DataSQRL first compiles the project with the same compile-time rules, then launches the generated artifacts, and resolves remaining `${VAR_NAME}` placeholders defined anywhere in the SQRL scripts from the runtime environment.
 - If a required runtime placeholder is still unresolved when the generated artifact is launched, the run fails with an error identifying the missing variable.
 
 Compile-time values are written into the generated artifacts under `build/` and `build/deploy/`. Use the secret placeholder syntax for values that must not be resolved or written during compile.

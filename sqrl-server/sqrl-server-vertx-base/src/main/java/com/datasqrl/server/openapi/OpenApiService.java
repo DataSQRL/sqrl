@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.server.swagger;
+package com.datasqrl.server.openapi;
 
-import com.datasqrl.server.config.SwaggerConfig;
+import com.datasqrl.server.config.OpenApiConfig;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.server.operation.FunctionDefinition;
@@ -46,59 +46,64 @@ import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 
 @RequiredArgsConstructor
 @Slf4j
-public class SwaggerService {
+public class OpenApiService {
 
   private static final Pattern QUERY_PARAMS_PATTERN = Pattern.compile("\\{\\?([^}]+)\\}");
   private static final Pattern PATH_PARAMS_PATTERN = Pattern.compile("\\{([^}?]+)\\}");
   private static final ObjectMapper objectMapper = Json.mapper();
 
-  private final SwaggerConfig swaggerConfig;
+  private final OpenApiConfig openApiConfig;
   private final RootGraphQLModel model;
   private final String modelVersion;
   private final String restEndpoint;
 
-  public String generateSwaggerJson(String requestHost) {
+  public String generateOpenApiJson() {
+    return generateOpenApiJson(null);
+  }
+
+  public String generateOpenApiJson(String requestHost) {
     try {
-      var openAPI = createOpenAPI(requestHost);
+      var openAPI = createOpenAPI(Optional.ofNullable(requestHost));
       return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(openAPI);
     } catch (JsonProcessingException e) {
-      log.error("Failed to generate Swagger JSON", e);
+      log.error("Failed to generate OpenAPI JSON", e);
       return "{}";
     }
   }
 
-  private OpenAPI createOpenAPI(String requestHost) {
+  private OpenAPI createOpenAPI(Optional<String> requestHost) {
     var openAPI = new OpenAPI();
 
     // Set API info
     var info =
         new Info()
-            .title(swaggerConfig.getTitle())
-            .description(swaggerConfig.getDescription())
-            .version(swaggerConfig.getVersion());
+            .title(openApiConfig.getTitle())
+            .description(openApiConfig.getDescription())
+            .version(openApiConfig.getVersion());
 
-    if (swaggerConfig.getContact() != null) {
+    if (openApiConfig.getContact() != null) {
       var contact =
           new Contact()
-              .name(swaggerConfig.getContact())
-              .url(swaggerConfig.getContactUrl())
-              .email(swaggerConfig.getContactEmail());
+              .name(openApiConfig.getContact())
+              .url(openApiConfig.getContactUrl())
+              .email(openApiConfig.getContactEmail());
       info.contact(contact);
     }
 
-    if (swaggerConfig.getLicense() != null) {
+    if (openApiConfig.getLicense() != null) {
       var license =
-          new License().name(swaggerConfig.getLicense()).url(swaggerConfig.getLicenseUrl());
+          new License().name(openApiConfig.getLicense()).url(openApiConfig.getLicenseUrl());
       info.license(license);
     }
 
     openAPI.info(info);
 
     // Add server based on request host
-    var serverUrl = requestHost != null ? requestHost : "http://localhost:8888";
+    var serverUrl = requestHost.orElse("http://localhost:8888");
     var server = new Server().url(serverUrl).description("DataSQRL API Server");
     openAPI.addServersItem(server);
 
@@ -124,18 +129,13 @@ public class SwaggerService {
 
     // Convert URI template to OpenAPI path
     var pathPattern = convertUriTemplateToOpenApiPath(uriTemplate);
+    var pathItem = paths.computeIfAbsent(pathPattern, k -> new PathItem());
 
-    var pathItem = paths.get(pathPattern);
-    if (pathItem == null) {
-      pathItem = new PathItem();
-      paths.put(pathPattern, pathItem);
-    }
-
-    var swaggerOperation = createSwaggerOperation(operation, uriTemplate);
+    var openApiOperation = createOpenApiOperation(operation, uriTemplate);
 
     switch (httpMethod) {
-      case GET -> pathItem.get(swaggerOperation);
-      case POST -> pathItem.post(swaggerOperation);
+      case GET -> pathItem.get(openApiOperation);
+      case POST -> pathItem.post(openApiOperation);
       case NONE -> throw new UnsupportedOperationException("Should not be called");
     }
   }
@@ -158,25 +158,31 @@ public class SwaggerService {
     return path;
   }
 
-  private Operation createSwaggerOperation(ApiOperation operation, String uriTemplate) {
-    var swaggerOperation =
+  private Operation createOpenApiOperation(ApiOperation operation, String uriTemplate) {
+    var description = operation.getFunction().getDescription();
+
+    var openApiOperation =
         new Operation()
             .operationId(operation.getName())
             .summary(operation.getName())
-            .description(operation.getFunction().getDescription());
+            .description(description);
+
+    if (StringUtils.isNotBlank(description)) {
+      openApiOperation.summary(getSummary(description));
+    }
 
     // Add parameters
     if (operation.getRestMethod() == RestMethodType.GET) {
       var parameters = extractParameters(uriTemplate);
       if (!parameters.isEmpty()) {
-        swaggerOperation.parameters(parameters);
+        openApiOperation.parameters(parameters);
       }
     }
 
     // Add request body
     if (operation.getRestMethod() == RestMethodType.POST) {
       var requestBody = buildRequestBody(operation);
-      requestBody.ifPresent(swaggerOperation::setRequestBody);
+      requestBody.ifPresent(openApiOperation::setRequestBody);
     }
 
     // Add responses
@@ -220,9 +226,15 @@ public class SwaggerService {
                                             .items(new Schema<>().type("object"))))));
     responses.addApiResponse("400", errorResponse);
 
-    swaggerOperation.responses(responses);
+    openApiOperation.responses(responses);
 
-    return swaggerOperation;
+    return openApiOperation;
+  }
+
+  private String getSummary(String description) {
+    var firstLine = description.lines().findFirst().orElse("").trim();
+
+    return firstLine.substring(0, Math.min(firstLine.length(), 120));
   }
 
   private List<Parameter> extractParameters(String uriTemplate) {
@@ -323,8 +335,8 @@ public class SwaggerService {
     }
   }
 
-  public String generateSwaggerUI() {
-    var swaggerUIHtml =
+  public String generateSwaggerUi() {
+    var openApiUiHtml =
         """
         <!DOCTYPE html>
         <html>
@@ -372,6 +384,6 @@ public class SwaggerService {
         """;
 
     return String.format(
-        swaggerUIHtml, swaggerConfig.getTitle(), swaggerConfig.getEndpoint(modelVersion));
+        openApiUiHtml, openApiConfig.getTitle(), openApiConfig.getEndpoint(modelVersion));
   }
 }

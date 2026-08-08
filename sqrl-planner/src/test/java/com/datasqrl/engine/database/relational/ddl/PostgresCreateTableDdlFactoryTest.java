@@ -37,7 +37,8 @@ class PostgresCreateTableDdlFactoryTest {
         partitionKey,
         partitionType,
         1,
-        ttl);
+        ttl,
+        null);
   }
 
   @Test

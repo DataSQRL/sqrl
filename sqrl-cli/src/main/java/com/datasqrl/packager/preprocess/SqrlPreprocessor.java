@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +41,7 @@ public class SqrlPreprocessor implements Preprocessor {
       FilenameAnalyzer.of(SqrlConstants.SQRL_EXTENSION);
   private static final MustacheFactory MUSTACHE_FACTORY = new DefaultMustacheFactory();
 
-  private final Map<String, PackageJson> sharedConfigs = new HashMap<>();
+  private final Map<String, PackageJson> includePackages = new HashMap<>();
 
   private final PackageJson config;
   private final ErrorCollector errors;
@@ -76,46 +77,53 @@ public class SqrlPreprocessor implements Preprocessor {
   }
 
   private Map<String, Object> createTemplateValues(Path scriptDir) {
-    var sharedScripts = config.getScriptConfig().getSharedScriptConfigs();
+    var includes = config.getScriptConfig().getIncludeConfigs();
 
-    for (var sharedScript : sharedScripts) {
-      if (containsSubpath(scriptDir, sharedScript.getPath())) {
-        var sharedPackageConfig =
-            sharedConfigs.computeIfAbsent(
-                sharedScript.getName(), k -> loadSharedPackage(scriptDir, k));
+    for (var include : includes) {
+      var includePackagePathStr = include.getPackage();
+      var includePackagePath = Path.of(includePackagePathStr);
+      var includeDir = getMatchingSubpath(scriptDir, includePackagePath.getParent().toString());
 
-        var templateValues = new HashMap<>(sharedPackageConfig.getScriptConfig().getConfig());
+      if (includeDir.isPresent()) {
+        var resolvedIncludePackagePath = includeDir.get().resolve(includePackagePath.getFileName());
+
+        var includePackage =
+            includePackages.computeIfAbsent(
+                include.getNamespace(), k -> loadIncludePackage(k, resolvedIncludePackagePath));
+
+        var templateValues = new HashMap<>(includePackage.getScriptConfig().getConfig());
         // Apply any overrides
-        templateValues.putAll(sharedScript.getConfig());
+        templateValues.putAll(include.getConfig());
 
         return templateValues;
       }
     }
 
-    // Not a shared script, use the project script config
+    // Not an include script, use the project script config
     return config.getScriptConfig().getConfig();
   }
 
-  private PackageJson loadSharedPackage(Path sharedDir, String sharedName) {
-    var localErrors = errors.withShared(sharedName);
-    var packageFile = sharedDir.resolve(SqrlConstants.PACKAGE_JSON);
-    if (!Files.exists(packageFile)) {
-      localErrors.fatal("Shared script directory must contain a %s", SqrlConstants.PACKAGE_JSON);
+  private PackageJson loadIncludePackage(String namespace, Path includePackagePath) {
+    var localErrors = errors.withInclude(namespace);
+    if (!Files.exists(includePackagePath)) {
+      localErrors.fatal("Given include package does not exist: %s", includePackagePath);
     }
 
-    return ConfigLoaderUtils.loadResolvedConfig(localErrors, sharedDir);
+    return ConfigLoaderUtils.loadResolvedConfigFromFile(localErrors, includePackagePath);
   }
 
-  private static boolean containsSubpath(Path path, String subpathStr) {
+  private static Optional<Path> getMatchingSubpath(Path path, String subpathStr) {
     var subpath = Path.of(subpathStr);
     int subpathLen = subpath.getNameCount();
 
     for (int i = 0; i <= path.getNameCount() - subpathLen; i++) {
       if (path.subpath(i, i + subpathLen).equals(subpath)) {
-        return true;
+        var matchingSubpath = path.subpath(0, i + subpathLen);
+        return Optional.of(
+            path.isAbsolute() ? path.getRoot().resolve(matchingSubpath) : matchingSubpath);
       }
     }
 
-    return false;
+    return Optional.empty();
   }
 }

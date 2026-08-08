@@ -3,9 +3,9 @@
   "enabled-engines": ["flink", "iceberg", "snowflake"],
   "script": {
     "main": "analytics-only.sqrl",
-    "shared": {
-      "banking-catalog": {
-        "path": "../banking-shared"
+    "include": {
+      "banking_catalog": {
+        "package": "../banking-shared/package-shared.json"
       }
     }
   },

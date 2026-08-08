@@ -13,31 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.config;
+package com.datasqrl.engine.database.relational;
 
-import static com.datasqrl.config.PackageJsonImpl.CONFIG_KEY;
+import com.datasqrl.config.EngineFactory;
+import com.datasqrl.engine.database.DatabaseEngineFactory;
+import com.google.auto.service.AutoService;
 
-import com.datasqrl.config.PackageJson.SharedScriptConfig;
-import java.util.Map;
-import lombok.RequiredArgsConstructor;
+@AutoService(EngineFactory.class)
+public class RedshiftEngineFactory implements DatabaseEngineFactory {
 
-@RequiredArgsConstructor
-public class SharedScriptConfigImpl implements SharedScriptConfig {
-
-  private final SqrlConfig sqrlConfig;
+  public static final String ENGINE_NAME = "redshift";
 
   @Override
-  public String getName() {
-    return sqrlConfig.getSelfKey();
+  public String getEngineName() {
+    return ENGINE_NAME;
   }
 
   @Override
-  public String getPath() {
-    return sqrlConfig.asString("path").get();
-  }
-
-  @Override
-  public Map<String, Object> getConfig() {
-    return sqrlConfig.getSubConfig(CONFIG_KEY).toMap();
+  public Class getFactoryClass() {
+    return RedshiftEngine.class;
   }
 }

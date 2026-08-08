@@ -96,13 +96,8 @@ const sidebars = {
             },
             {
               type: 'doc',
-              id: 'configuration-engine/duckdb',
-              label: 'DuckDB Engine',
-            },
-            {
-              type: 'doc',
-              id: 'configuration-engine/snowflake',
-              label: 'Snowflake Engine',
+              id: 'configuration-engine/iceberg-query',
+              label: 'Iceberg Query Engines',
             },
             {
               type: 'doc',

@@ -1,0 +1,17 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "iceberg", "redshift"],
+  "script": {
+    "main": "redshift-dialect.sqrl"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "1 ms"
+      }
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

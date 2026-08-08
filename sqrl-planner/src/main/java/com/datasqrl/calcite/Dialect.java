@@ -21,5 +21,7 @@ public enum Dialect {
   FLINK,
   POSTGRES,
   SNOWFLAKE,
-  DUCKDB
+  DUCKDB,
+  SPARK_SQL,
+  REDSHIFT
 }

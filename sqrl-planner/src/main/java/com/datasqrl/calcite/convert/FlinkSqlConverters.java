@@ -17,9 +17,11 @@ package com.datasqrl.calcite.convert;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
+import com.datasqrl.engine.stream.flink.sql.calcite.FlinkDialect;
 import com.google.auto.service.AutoService;
 import java.util.Map;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlNode;
 
 @AutoService(SqlConverters.class)
@@ -34,6 +36,11 @@ public class FlinkSqlConverters implements SqlConverters {
   public String convert(SqlNode sqlNode) {
     // TODO: Migrate remaining FlinkRelToSqlConverter to this paradigm
     return RelToFlinkSql.convertToString(sqlNode);
+  }
+
+  @Override
+  public SqlDialect getCalciteSqlDialect() {
+    return FlinkDialect.DEFAULT;
   }
 
   @Override

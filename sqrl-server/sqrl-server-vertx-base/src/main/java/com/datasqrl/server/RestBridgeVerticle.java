@@ -18,9 +18,9 @@ package com.datasqrl.server;
 import com.datasqrl.server.auth.JwtFailureHandler;
 import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.graphql.RootGraphQLModel;
+import com.datasqrl.server.openapi.OpenApiService;
 import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.server.operation.RestMethodType;
-import com.datasqrl.server.swagger.SwaggerService;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
@@ -53,7 +53,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
   // Pattern for RFC 6570 URI template path parameters: {param}
   private static final Pattern PATH_PARAMS_PATTERN = Pattern.compile("\\{([^}?]+)\\}");
 
-  private SwaggerService swaggerService;
+  private OpenApiService openApiService;
 
   public RestBridgeVerticle(
       Router router,
@@ -69,7 +69,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
   public void start(Promise<Void> startPromise) {
     try {
       setupRestEndpoints();
-      setupSwaggerEndpoints();
+      setupOpenApiEndpoints();
       startPromise.complete();
     } catch (Exception e) {
       log.error("Could not setup REST endpoints", e);
@@ -86,49 +86,46 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
     }
   }
 
-  private void setupSwaggerEndpoints() {
-    if (config.getSwaggerConfig() == null || !config.getSwaggerConfig().isEnabled()) {
-      log.info("Swagger is disabled, skipping Swagger endpoints setup");
+  private void setupOpenApiEndpoints() {
+    if (config.getOpenApiConfig() == null || !config.getOpenApiConfig().isEnabled()) {
+      log.info("OpenAPI is disabled, skipping OpenAPI endpoints setup");
       return;
     }
 
-    // Initialize Swagger service
-    swaggerService =
-        new SwaggerService(
-            config.getSwaggerConfig(),
+    openApiService =
+        new OpenApiService(
+            config.getOpenApiConfig(),
             model,
             modelVersion,
             config.getServletConfig().getRestEndpoint(modelVersion));
 
-    // Setup Swagger JSON endpoint
-    var swaggerJsonEndpoint = config.getSwaggerConfig().getEndpoint(modelVersion);
+    var openApiJsonEndpoint = config.getOpenApiConfig().getEndpoint(modelVersion);
     router
-        .get(swaggerJsonEndpoint)
+        .get(openApiJsonEndpoint)
         .handler(
             ctx -> {
               try {
                 // Extract request host and port for dynamic server URL
                 var requestHost = getRequestBaseUrl(ctx);
-                var swaggerJson = swaggerService.generateSwaggerJson(requestHost);
-                ctx.response().putHeader("content-type", "application/json").end(swaggerJson);
+                var openApiJson = openApiService.generateOpenApiJson(requestHost);
+                ctx.response().putHeader("content-type", "application/json").end(openApiJson);
               } catch (Exception e) {
-                log.error("Failed to generate Swagger JSON", e);
+                log.error("Failed to generate OpenAPI JSON", e);
                 ctx.response()
                     .setStatusCode(500)
                     .putHeader("content-type", "application/json")
-                    .end("{\"error\": \"Failed to generate Swagger documentation\"}");
+                    .end("{\"error\": \"Failed to generate OpenAPI documentation\"}");
               }
             });
 
-    // Setup Swagger UI endpoint
-    var swaggerUIEndpoint = config.getSwaggerConfig().getUiEndpoint(modelVersion);
+    var swaggerUiEndpoint = config.getOpenApiConfig().getUiEndpoint(modelVersion);
     router
-        .get(swaggerUIEndpoint)
+        .get(swaggerUiEndpoint)
         .handler(
             ctx -> {
               try {
-                var swaggerUIHtml = swaggerService.generateSwaggerUI();
-                ctx.response().putHeader("content-type", "text/html").end(swaggerUIHtml);
+                var swaggerUiHtml = openApiService.generateSwaggerUi();
+                ctx.response().putHeader("content-type", "text/html").end(swaggerUiHtml);
               } catch (Exception e) {
                 log.error("Failed to generate Swagger UI", e);
                 ctx.response()
@@ -138,9 +135,9 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
               }
             });
 
-    log.info("Swagger endpoints setup completed:");
-    log.info("  Swagger JSON: {}", swaggerJsonEndpoint);
-    log.info("  Swagger UI: {}", swaggerUIEndpoint);
+    log.info("OpenAPI endpoints setup completed:");
+    log.info("  OpenAPI JSON: {}", openApiJsonEndpoint);
+    log.info("  Swagger UI: {}", swaggerUiEndpoint);
   }
 
   private void createRestEndpoint(ApiOperation operation) {

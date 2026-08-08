@@ -15,10 +15,11 @@
  */
 package com.datasqrl.planner.hint;
 
-import static com.datasqrl.planner.hint.TtlHint.parseDuration;
-
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
+import com.datasqrl.planner.parser.StatementParserException;
+import com.datasqrl.util.TimeUtils;
 import com.google.auto.service.AutoService;
 import java.time.Duration;
 import lombok.Getter;
@@ -46,6 +47,31 @@ public class CacheHint extends PlannerHint {
     @Override
     public String getName() {
       return HINT_NAME;
+    }
+  }
+
+  private static Duration parseDuration(ParsedObject<SqrlHint> source) {
+    var arguments = source.get().options();
+    if (arguments == null || arguments.isEmpty()) {
+      return null;
+    }
+    if (arguments.size() != 1 || arguments.get(0) == null) {
+      throw new StatementParserException(
+          ErrorLabel.GENERIC,
+          source.getFileLocation(),
+          "%s hint only supports one duration argument (e.g. `2 days`).",
+          source.get().name());
+    }
+    try {
+      return TimeUtils.parseDuration(arguments.get(0));
+    } catch (Exception e) {
+      throw new StatementParserException(
+          ErrorLabel.GENERIC,
+          source.getFileLocation(),
+          "%s hint does not have a valid duration argument: %s. Expected `2 days` or `10 s`. "
+              + e.getMessage(),
+          source.get().name(),
+          arguments.get(0));
     }
   }
 }

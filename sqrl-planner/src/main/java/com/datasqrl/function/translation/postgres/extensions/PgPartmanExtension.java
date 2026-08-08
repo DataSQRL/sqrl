@@ -19,6 +19,7 @@ import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.sql.DatabaseTableExtension;
 import com.google.auto.service.AutoService;
+import com.google.common.base.Preconditions;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Comparator;
@@ -60,6 +61,11 @@ public class PgPartmanExtension implements DatabaseTableExtension {
     // 'public."Readings"' never matches relname 'Readings' and create_parent fails.
     var parentTable = "public." + createTable.getName();
     var ttl = createTable.getTtl();
+    var interval =
+        Preconditions.checkNotNull(
+            createTable.getPartitionInterval(),
+            "Missing partition interval for partitioned table %s with TTL",
+            createTable.getName());
 
     // p_type was removed in pg_partman 5.x; the default (range) is what we need
     sb.append(
@@ -72,7 +78,7 @@ public class PgPartmanExtension implements DatabaseTableExtension {
         );
 
         """
-            .formatted(parentTable, createTable.getPartitionKey().get(0), deriveInterval(ttl)));
+            .formatted(parentTable, createTable.getPartitionKey().get(0), interval));
 
     sb.append(
         """
@@ -90,18 +96,6 @@ public class PgPartmanExtension implements DatabaseTableExtension {
         || createTable.getTtl() == null
         || createTable.getTtl().isZero()
         || createTable.getPartitionKey().isEmpty();
-  }
-
-  /** Picks a partition interval that keeps the partition count reasonable for the given TTL. */
-  static String deriveInterval(Duration ttl) {
-    long seconds = ttl.getSeconds();
-    if (seconds < 7 * 24 * 3600) {
-      return "1 day";
-    } else if (seconds < 90L * 24 * 3600) {
-      return "1 week";
-    } else {
-      return "1 month";
-    }
   }
 
   static String formatRetention(Duration ttl) {

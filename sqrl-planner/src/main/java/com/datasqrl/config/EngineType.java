@@ -21,6 +21,7 @@ public enum EngineType {
   SERVER,
   LOG,
   QUERY,
+  SHALLOW_QUERY,
   EXPORT;
 
   public boolean isWrite() {

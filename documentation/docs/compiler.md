@@ -207,21 +207,23 @@ exposing the Flink UI on port 8081, the Vert.x server on port 8888, and Redpanda
 ### Engines
 
 The run command uses the following engines:
-* Flink as the stream engine: The Flink cluster is accessible through the WebUI at [http://localhost:8081/](http://localhost:8081/).
-* Postgres as the transactional database engine
-* Iceberg+DuckDB as the analytic database engine
-* Redpanda as the log engine: The Redpanda cluster is accessible on port 9092 (via Kafka command line tooling).
-* Vertx as the server engine: 
-  * The GraphQL API is accessible at [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/).
-  * The Swagger UI for the REST API is accessible at [http://localhost:8888/v1/swagger-ui](http://localhost:8888/v1/swagger-ui)
-  * The MCP API is accessible at `http://localhost:8888/v1/mcp/`
+* Flink as the stream engine
+  * The Flink cluster is accessible through the WebUI at http://localhost:8081/
+* PostgreSQL as the transactional database engine
+* Iceberg + DuckDB as the analytic database engine
+* Redpanda as the log engine
+  * The Redpanda cluster is accessible on port 9092 (via Kafka command line tooling)
+* Vertx as the server engine 
+  * The GraphQL API is accessible at http://localhost:8888/v1/graphiql/
+  * The Swagger UI for the REST API is accessible at http://localhost:8888/v1/swagger-ui
+  * The MCP API is accessible at http://localhost:8888/v1/mcp/
 
 ### Data Access
 
 DataSQRL runs up the data systems listed above and maps your local directories for data access.
 To access this data in your DataSQRL jobs during local execution use:
 * `${KAFKA_BOOTSTRAP_SERVERS}` to connect to the Redpanda Kafka cluster
-* `${DATA_PATH}/` to reference `.jsonl` or `.csv` data in your project.
+* `${DATA_PATH}/` to reference `.jsonl` or `.csv` data in your project
 
 This allows DataSQRL to map connectors correctly and also applies to [testing](#test-command).
 

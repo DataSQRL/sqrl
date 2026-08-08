@@ -63,6 +63,9 @@ public class CreateTableJdbcStatement implements JdbcStatement {
   /** The time-to-live of records in this table - ZERO to disable */
   Duration ttl;
 
+  /** Partition width for range-partitioned tables, derived from the ttl - null when not ranged */
+  String partitionInterval;
+
   /** The engine table - nullable and not set when deserialized */
   @JsonIgnore JdbcEngineCreateTable engineTable;
 
@@ -78,7 +81,8 @@ public class CreateTableJdbcStatement implements JdbcStatement {
       @JsonProperty("partitionKey") List<String> partitionKey,
       @JsonProperty("partitionType") PartitionType partitionType,
       @JsonProperty("numPartitions") int numPartitions,
-      @JsonProperty("ttl") Duration ttl) {
+      @JsonProperty("ttl") Duration ttl,
+      @JsonProperty("partitionInterval") String partitionInterval) {
     this.name = name;
     this.description = description;
     this.fields = fields;
@@ -87,6 +91,7 @@ public class CreateTableJdbcStatement implements JdbcStatement {
     this.partitionType = partitionType;
     this.numPartitions = numPartitions;
     this.ttl = ttl;
+    this.partitionInterval = partitionInterval;
     this.engineTable = null;
     this.ddlFactory = null;
   }

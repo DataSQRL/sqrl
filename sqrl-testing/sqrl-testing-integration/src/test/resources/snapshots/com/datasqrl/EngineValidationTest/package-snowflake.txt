@@ -1,0 +1,234 @@
+>>>iceberg-duckdb-schema.sql
+CREATE TABLE IF NOT EXISTS "Numbers" ("id" INTEGER NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL, PRIMARY KEY ("id"))
+>>>iceberg-schema.sql
+CREATE TABLE IF NOT EXISTS "Numbers" ("id" INTEGER NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL, PRIMARY KEY ("id"))
+>>>iceberg-snowflake-schema.sql
+CREATE OR REPLACE ICEBERG TABLE Numbers EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers';
+CREATE OR REPLACE ICEBERG TABLE Numbers2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers2'
+>>>iceberg.json
+{
+  "plans" : {
+    "" : {
+      "statements" : [
+        {
+          "name" : "Numbers",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers\" (\"id\" INTEGER NOT NULL, PRIMARY KEY (\"id\"))",
+          "fields" : [
+            {
+              "name" : "id",
+              "type" : "INTEGER",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [
+            "id"
+          ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0
+        },
+        {
+          "name" : "Numbers2",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers2\" (\"id\" INTEGER NOT NULL, PRIMARY KEY (\"id\"))",
+          "fields" : [
+            {
+              "name" : "id",
+              "type" : "INTEGER",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [
+            "id"
+          ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0
+        }
+      ],
+      "standaloneExtensionStatements" : [ ]
+    },
+    "duckdb" : {
+      "statements" : [
+        {
+          "name" : "Numbers",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers\" (\"id\" INTEGER NOT NULL, PRIMARY KEY (\"id\"))",
+          "fields" : [
+            {
+              "name" : "id",
+              "type" : "INTEGER",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [
+            "id"
+          ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0
+        },
+        {
+          "name" : "Numbers2",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"Numbers2\" (\"id\" INTEGER NOT NULL, PRIMARY KEY (\"id\"))",
+          "fields" : [
+            {
+              "name" : "id",
+              "type" : "INTEGER",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [
+            "id"
+          ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0
+        }
+      ],
+      "standaloneExtensionStatements" : [ ]
+    },
+    "snowflake" : {
+      "statements" : [
+        {
+          "name" : "Numbers",
+          "type" : "TABLE",
+          "sql" : "CREATE OR REPLACE ICEBERG TABLE Numbers EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers'"
+        },
+        {
+          "name" : "Numbers2",
+          "type" : "TABLE",
+          "sql" : "CREATE OR REPLACE ICEBERG TABLE Numbers2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers2'"
+        }
+      ],
+      "standaloneExtensionStatements" : [ ]
+    }
+  }
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Numbers",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"iceberg_scan\"('sqrl_iceberg_data/default_database/Numbers', ALLOW_MOVED_PATHS = TRUE)",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "DUCKDB"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Numbers2",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"iceberg_scan\"('sqrl_iceberg_data/default_database/Numbers2', ALLOW_MOVED_PATHS = TRUE)",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "DUCKDB"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetNumbers",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Numbers($limit: Int = 10, $offset: Int = 0) {\nNumbers(limit: $limit, offset: $offset) {\nid\n}\n\n}",
+            "queryName" : "Numbers",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Numbers{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "GetNumbers2",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query Numbers2($limit: Int = 10, $offset: Int = 0) {\nNumbers2(limit: $limit, offset: $offset) {\nid\n}\n\n}",
+            "queryName" : "Numbers2",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Numbers2{?offset,limit}"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Numbers {\n  id: Int!\n}\n\ntype Numbers2 {\n  id: Int!\n}\n\ntype Query {\n  Numbers(limit: Int = 10, offset: Int = 0): [Numbers!]\n  Numbers2(limit: Int = 10, offset: Int = 0): [Numbers2!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
