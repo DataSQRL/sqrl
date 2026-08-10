@@ -117,6 +117,8 @@ The server computes only the metadata a request actually selects, so paginated q
 * `firstEventTime` and `lastEventTime` run a second `MIN`/`MAX` query over the event time column. The compiler adds an index on that column for paginated queries.
 * `totalRecords` and `totalPages` run a `COUNT(*)` over the entire result set, ignoring `limit`/`offset`.
 
+Selecting event times and totals together costs a single combined aggregate query, not two, so a request never makes more than one extra round trip.
+
 :::warning
 `totalRecords` and `totalPages` are expensive: the `COUNT(*)` behind them cannot be answered from the page the request asked for and generally requires a full table scan, which gets slower as the table grows. Select them only when the client really needs an exact total, and prefer `hasNextPage`/`nextOffset` for plain "is there more?" paging.
 :::

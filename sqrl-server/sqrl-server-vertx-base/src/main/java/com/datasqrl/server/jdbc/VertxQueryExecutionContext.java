@@ -93,33 +93,26 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
   }
 
   /**
-   * Completes with a page: the page query always runs, the companion aggregates only when the
-   * request selected fields needing them - the rowtime MIN/MAX behind {@code firstEventTime}/{@code
-   * lastEventTime} (and only if the query has a rowtime column), and the COUNT behind {@code
-   * totalRecords}/{@code totalPages}. {@link OffsetPageInfoQuery} decides all of it and assembles
-   * the response.
+   * Completes with a page: the page query always runs, plus at most one companion aggregate - the
+   * rowtime MIN/MAX, the COUNT, or the query computing both - depending on which metadata fields
+   * the request selected. {@link OffsetPageInfoQuery} decides that and assembles the response.
    */
   private void runOffsetPageInfoQuery(ResolvedSqlQuery resolvedQuery, List<Object> params) {
     var query = resolvedQuery.getQuery();
     var pageInfoQuery = OffsetPageInfoQuery.from(environment);
+    var aggregateSql = pageInfoQuery.aggregateSql(query);
 
     var pageFuture = execute(resolvedQuery, pageInfoQuery.pageQuery(query, params));
-    var eventTimesFuture =
-        pageInfoQuery.needsEventTimes() && query.getEventTimesSql() != null
-            ? executeAggregate(query, query.getEventTimesSql(), params)
-            : Future.<RowSet<Row>>succeededFuture(null);
-    var totalsFuture =
-        pageInfoQuery.needsTotals() && query.getCountSql() != null
-            ? executeAggregate(query, query.getCountSql(), params)
-            : Future.<RowSet<Row>>succeededFuture(null);
+    var aggregateFuture =
+        aggregateSql == null
+            ? Future.<RowSet<Row>>succeededFuture(null)
+            : executeAggregate(query, aggregateSql, params);
 
-    Future.all(pageFuture, eventTimesFuture, totalsFuture)
+    Future.all(pageFuture, aggregateFuture)
         .map(
             ignored ->
                 pageInfoQuery.toPage(
-                    toJson(pageFuture.result()),
-                    firstRowAsJson(eventTimesFuture.result()),
-                    firstRowAsJson(totalsFuture.result())))
+                    toJson(pageFuture.result()), firstRowAsJson(aggregateFuture.result())))
         .onSuccess(cf::complete)
         .onFailure(this::failQuery);
   }

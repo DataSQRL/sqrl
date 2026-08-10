@@ -179,20 +179,23 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
         paged
             ? PaginationType.OFFSET_PAGE_INFO
             : hasLimitOrOffset ? PaginationType.LIMIT_AND_OFFSET : PaginationType.NONE;
-    var eventTimesSql =
-        paged ? buildEventTimesSql(tableFunction, executableJdbcReadQuery.getSql()) : null;
-    if (eventTimesSql != null) {
+    var baseSql = executableJdbcReadQuery.getSql();
+    var eventTimes = paged ? eventTimeAggregates(tableFunction) : Optional.<String>empty();
+    if (eventTimes.isPresent()) {
       pagedRowTimeTables.add(tableFunction.getBaseTable());
     }
     queryBase =
         new SqlQuery(
-            executableJdbcReadQuery.getSql(),
+            baseSql,
             parameters,
             pagination,
             executableJdbcReadQuery.getCacheDuration().toMillis(),
             executableJdbcReadQuery.getDatabase(),
-            eventTimesSql,
-            paged ? buildCountSql(executableJdbcReadQuery.getSql()) : null);
+            eventTimes.map(aggregates -> aggregateSql(aggregates, baseSql)).orElse(null),
+            paged ? aggregateSql(COUNT_AGGREGATE, baseSql) : null,
+            eventTimes
+                .map(aggregates -> aggregateSql(COUNT_AGGREGATE + ", " + aggregates, baseSql))
+                .orElse(null));
     var coordsBuilder =
         ArgumentLookupQueryCoords.builder()
             .parentType(parentType.getName())
@@ -204,35 +207,35 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     queryCoords.add(coordsBuilder.build());
   }
 
-  /**
-   * Builds the companion {@code COUNT(*)} query behind {@code totalRecords}/{@code totalPages}. It
-   * counts the whole result set, so it cannot use limit/offset and may scan the full table - which
-   * is why it only runs when one of those fields is selected.
-   */
-  private static String buildCountSql(String baseSql) {
-    return "SELECT COUNT(*) AS \"total_records\" FROM (" + baseSql + ") x";
-  }
+  /** Select expression behind {@code totalRecords}/{@code totalPages}. */
+  private static final String COUNT_AGGREGATE = "COUNT(*) AS \"total_records\"";
 
   /**
-   * Builds the companion aggregate query computing MIN/MAX over the designated rowtime column for
-   * {@code firstEventTime}/{@code lastEventTime}. Returns null when the result has no rowtime. The
-   * rowtime column name is the same identifier as in the base query's output.
+   * Select expressions computing MIN/MAX over the designated rowtime column for {@code
+   * firstEventTime}/{@code lastEventTime}. Empty when the result has no rowtime. The rowtime column
+   * name is the same identifier as in the base query's output.
    */
-  private static String buildEventTimesSql(SqrlTableFunction tableFunction, String baseSql) {
+  private static Optional<String> eventTimeAggregates(SqrlTableFunction tableFunction) {
     return tableFunction
         .getRowTime()
         .map(tableFunction::getField)
         .map(RelDataTypeField::getName)
         .map(
             col ->
-                "SELECT MIN(\""
+                "MIN(\""
                     + col
                     + "\") AS \"first_event_time\", MAX(\""
                     + col
-                    + "\") AS \"last_event_time\" FROM ("
-                    + baseSql
-                    + ") x")
-        .orElse(null);
+                    + "\") AS \"last_event_time\"");
+  }
+
+  /**
+   * Wraps aggregate expressions around the paginated query. These aggregates cover the whole result
+   * set, so they cannot use limit/offset and may scan the full table - which is why the server runs
+   * one only when a field needing it is selected.
+   */
+  private static String aggregateSql(String aggregates, String baseSql) {
+    return "SELECT " + aggregates + " FROM (" + baseSql + ") x";
   }
 
   private static QueryParameterHandler convert(FunctionParameter fnParam) {

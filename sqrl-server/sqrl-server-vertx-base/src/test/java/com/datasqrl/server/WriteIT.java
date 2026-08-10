@@ -173,6 +173,7 @@ class WriteIT {
                                 0,
                                 DatabaseType.POSTGRES,
                                 null,
+                                null,
                                 null))
                         .build())
                 .build())

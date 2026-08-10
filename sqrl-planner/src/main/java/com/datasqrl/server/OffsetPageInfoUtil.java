@@ -18,6 +18,7 @@ package com.datasqrl.server;
 import static com.datasqrl.server.util.GraphqlCheckUtil.checkState;
 
 import com.datasqrl.server.graphql.CustomScalars;
+import com.google.common.collect.ImmutableMap;
 import graphql.Scalars;
 import graphql.language.FieldDefinition;
 import graphql.language.ListType;
@@ -47,20 +48,19 @@ public final class OffsetPageInfoUtil {
   public static final String PAGINATION_TYPE_NAME = "OffsetPageInfo";
 
   /** Canonical field -> printed type, kept in declaration order for the injected SDL. */
-  private static final Map<String, String> PAGINATION_FIELDS = new LinkedHashMap<>();
-
-  static {
-    PAGINATION_FIELDS.put("pageSize", "Int!");
-    PAGINATION_FIELDS.put("currentPage", "Int!");
-    PAGINATION_FIELDS.put("totalRecords", "Long!");
-    PAGINATION_FIELDS.put("totalPages", "Int!");
-    PAGINATION_FIELDS.put("hasNextPage", "Boolean!");
-    PAGINATION_FIELDS.put("hasPreviousPage", "Boolean!");
-    PAGINATION_FIELDS.put("nextOffset", "Int");
-    PAGINATION_FIELDS.put("prevOffset", "Int");
-    PAGINATION_FIELDS.put("firstEventTime", "DateTime");
-    PAGINATION_FIELDS.put("lastEventTime", "DateTime");
-  }
+  private static final Map<String, String> PAGINATION_FIELDS =
+      ImmutableMap.<String, String>builder()
+          .put("pageSize", "Int!")
+          .put("currentPage", "Int!")
+          .put("totalRecords", "Long!")
+          .put("totalPages", "Int!")
+          .put("hasNextPage", "Boolean!")
+          .put("hasPreviousPage", "Boolean!")
+          .put("nextOffset", "Int")
+          .put("prevOffset", "Int")
+          .put("firstEventTime", "DateTime")
+          .put("lastEventTime", "DateTime")
+          .build();
 
   private static final String CANONICAL_SDL = buildCanonicalSdl();
 

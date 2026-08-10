@@ -31,7 +31,7 @@ import java.util.List;
  *
  * <p>Everything here is decided up front from the GraphQL request and computed in memory - it runs
  * no queries. {@link VertxQueryExecutionContext} executes what {@link #pageQuery} and {@link
- * #needsEventTimes} ask for and hands the rows back to {@link #toPage}:
+ * #aggregateSql} ask for and hands the rows back to {@link #toPage}:
  *
  * <ol>
  *   <li>{@link #from} reads the selection set once. Which metadata fields were selected is the only
@@ -39,11 +39,10 @@ import java.util.List;
  *   <li>{@link #pageQuery} is the same limit/offset query {@link PaginationType#LIMIT_AND_OFFSET}
  *       runs, fetching one extra row when {@code hasNextPage}/{@code nextOffset} were selected -
  *       that extra row is how they are answered without a COUNT.
+ *   <li>{@link #aggregateSql} picks the one companion query, if any, that covers the remaining
+ *       selected fields - never more than a single extra round trip.
  *   <li>{@link #toPage} trims that extra row back off and assembles {@code {results, pagination}}.
  * </ol>
- *
- * <p>The one exception is {@code totalRecords}/{@code totalPages}: they need a COUNT over the whole
- * result set, which the caller runs when {@link #needsTotals} asks for it.
  */
 final class OffsetPageInfoQuery {
 
@@ -89,21 +88,25 @@ final class OffsetPageInfoQuery {
     return (fetchesExtraRow() ? page.plusOneRow() : page).applyTo(query, baseParams);
   }
 
-  /** Whether the caller has to run the MIN/MAX rowtime aggregate to answer this request. */
-  boolean needsEventTimes() {
-    return needsEventTimes;
-  }
-
-  /** Whether the caller has to run the COUNT over the whole result to answer this request. */
-  boolean needsTotals() {
-    return needsTotals;
+  /**
+   * The single companion aggregate to run for this request, or null when the selected fields need
+   * none. Selecting event times and totals together picks the query computing both, so the request
+   * never costs more than one extra round trip - and never computes an aggregate nobody asked for.
+   * Event times are only available when the query has a rowtime column.
+   */
+  String aggregateSql(SqlQuery query) {
+    var eventTimes = needsEventTimes && query.getEventTimesSql() != null;
+    if (needsTotals) {
+      return eventTimes ? query.getCountWithEventTimesSql() : query.getCountSql();
+    }
+    return eventTimes ? query.getEventTimesSql() : null;
   }
 
   /**
-   * Assembles the page from the rows the caller fetched. {@code eventTimes} and {@code totals} are
-   * the single rows of the companion aggregates, or empty objects when they did not run.
+   * Assembles the page from the rows the caller fetched. {@code aggregate} is the single row of the
+   * companion aggregate, or an empty object when none ran.
    */
-  JsonObject toPage(List<JsonObject> rows, JsonObject eventTimes, JsonObject totals) {
+  JsonObject toPage(List<JsonObject> rows, JsonObject aggregate) {
     Boolean hasNextPage = null;
     if (needsNextPage) {
       hasNextPage = fetchesExtraRow() && rows.size() > page.limit();
@@ -117,9 +120,9 @@ final class OffsetPageInfoQuery {
             page.pageSize(rows.size()),
             page.offset(),
             hasNextPage,
-            eventTimes.getValue(FIRST_EVENT_TIME_COLUMN),
-            eventTimes.getValue(LAST_EVENT_TIME_COLUMN),
-            totals.getLong(TOTAL_RECORDS_COLUMN));
+            aggregate.getValue(FIRST_EVENT_TIME_COLUMN),
+            aggregate.getValue(LAST_EVENT_TIME_COLUMN),
+            aggregate.getLong(TOTAL_RECORDS_COLUMN));
 
     return new JsonObject().put(fields.results(), rows).put(fields.pagination(), pagination);
   }

@@ -316,6 +316,14 @@ public class RootGraphQLModel {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     String countSql;
 
+    /**
+     * Variant of {@link #countSql} that also computes the {@link #eventTimesSql} aggregates, so a
+     * request selecting totals and event times together costs one query rather than two. Null
+     * whenever {@link #eventTimesSql} is.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    String countWithEventTimesSql;
+
     @Override
     public <R, C> R accept(QueryBaseVisitor<R, C> visitor, C context) {
       return visitor.visitSqlQuery(this, context);
@@ -323,7 +331,14 @@ public class RootGraphQLModel {
 
     public SqlQuery updateSql(String newSql) {
       return new SqlQuery(
-          newSql, parameters, pagination, cacheDurationMs, database, eventTimesSql, countSql);
+          newSql,
+          parameters,
+          pagination,
+          cacheDurationMs,
+          database,
+          eventTimesSql,
+          countSql,
+          countWithEventTimesSql);
     }
   }
 

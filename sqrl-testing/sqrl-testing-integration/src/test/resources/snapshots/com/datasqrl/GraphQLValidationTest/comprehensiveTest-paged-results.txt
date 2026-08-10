@@ -1890,7 +1890,8 @@ FROM "ExternalOrders"
               "cacheDurationMs" : 0,
               "database" : "POSTGRES",
               "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"CustomerByTime2\") x",
-              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM \"CustomerByTime2\") x"
+              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM \"CustomerByTime2\") x",
+              "countWithEventTimesSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"CustomerByTime2\") x"
             }
           }
         }

@@ -60,8 +60,9 @@ import org.testcontainers.utility.DockerImageName;
 
 /**
  * Proves that pagination metadata is computed lazily from the selection set: the MIN/MAX aggregate
- * query only runs when event times are selected, the COUNT only when totals are selected, and
- * {@code hasNextPage} alone is answered by fetching LIMIT+1 rows instead of any aggregate.
+ * query only runs when event times are selected, the COUNT only when totals are selected, both
+ * together cost a single combined aggregate, and {@code hasNextPage} alone is answered by fetching
+ * LIMIT+1 rows instead of any aggregate.
  */
 @ExtendWith(VertxExtension.class)
 @Testcontainers
@@ -74,6 +75,11 @@ class PagedQueryIT {
           + ") x";
   private static final String COUNT_SQL =
       "SELECT COUNT(*) AS \"total_records\" FROM (" + BASE_SQL + ") x";
+  private static final String COUNT_WITH_EVENT_TIMES_SQL =
+      "SELECT COUNT(*) AS \"total_records\", MIN(\"ts\") AS \"first_event_time\","
+          + " MAX(\"ts\") AS \"last_event_time\" FROM ("
+          + BASE_SQL
+          + ") x";
 
   @Container
   private static final PostgreSQLContainer postgresContainer =
@@ -215,6 +221,22 @@ class PagedQueryIT {
   }
 
   @Test
+  void givenTotalsAndEventTimesSelected_whenQuery_thenSingleCombinedAggregateRuns() {
+    var customers =
+        execute(
+            "{ customers(limit: 2, offset: 0) { results { customerid }"
+                + " pagination { totalRecords totalPages firstEventTime lastEventTime } } }");
+
+    // both are answered by one aggregate rather than a COUNT and a MIN/MAX round trip
+    assertThat(recordingClient.executed).hasSize(2);
+    assertThat(sqlOf(recordingClient.executed)).contains(COUNT_WITH_EVENT_TIMES_SQL);
+    var pagination = pagination(customers);
+    assertThat(pagination).containsEntry("totalRecords", 5L).containsEntry("totalPages", 3);
+    assertThat(String.valueOf(pagination.get("firstEventTime"))).startsWith("2024-01-01");
+    assertThat(String.valueOf(pagination.get("lastEventTime"))).startsWith("2024-01-05");
+  }
+
+  @Test
   void givenNoLimitArgument_whenQuery_thenPageSizeReportsRowCountNotSentinel() {
     var customers =
         execute(
@@ -313,7 +335,8 @@ class PagedQueryIT {
                                 0,
                                 DatabaseType.POSTGRES,
                                 EVENT_TIMES_SQL,
-                                COUNT_SQL))
+                                COUNT_SQL,
+                                COUNT_WITH_EVENT_TIMES_SQL))
                         .build())
                 .build())
         .query(
@@ -330,7 +353,8 @@ class PagedQueryIT {
                                 0,
                                 DatabaseType.POSTGRES,
                                 EVENT_TIMES_SQL,
-                                COUNT_SQL))
+                                COUNT_SQL,
+                                COUNT_WITH_EVENT_TIMES_SQL))
                         .build())
                 .build())
         .query(
@@ -347,7 +371,8 @@ class PagedQueryIT {
                                 0,
                                 DatabaseType.POSTGRES,
                                 null,
-                                COUNT_SQL))
+                                COUNT_SQL,
+                                null))
                         .build())
                 .build())
         .build();

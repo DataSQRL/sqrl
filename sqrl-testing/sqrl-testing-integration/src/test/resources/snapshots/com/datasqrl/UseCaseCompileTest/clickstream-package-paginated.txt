@@ -313,7 +313,8 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               "cacheDurationMs" : 0,
               "database" : "POSTGRES",
               "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"Click\") x",
-              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM \"Click\") x"
+              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM \"Click\") x",
+              "countWithEventTimesSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"Click\") x"
             }
           }
         },
@@ -402,7 +403,8 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               "cacheDurationMs" : 0,
               "database" : "POSTGRES",
               "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter\") x",
-              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter\") x"
+              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter\") x",
+              "countWithEventTimesSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT \"beforeURL\", \"afterURL\", \"timestamp\"\nFROM \"VisitAfter\") x"
             }
           }
         }
