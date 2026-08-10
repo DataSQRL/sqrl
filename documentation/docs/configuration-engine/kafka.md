@@ -4,13 +4,15 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 
 ## Configuration Options
 
-| Key                     | Type        | Default  | Description                                                              |
-|-------------------------|-------------|----------|--------------------------------------------------------------------------|
-| `retention`             | **string**  | `null`   | Topic retention time (e.g., "7d", "24h") or indefinite when `null`       |
-| `watermark`             | **string**  | `"0 ms"` | Watermark delay for event time processing                                |
-| `transaction-watermark` | **string**  | `"0 ms"` | Watermark delay for event time processing when transactions are enabled  |
-| `num-partitions`        | **integer** | `1`      | Number of partitions for generated Kafka topics                          |
-| `replication-factor`    | **integer** | `3`      | Replication factor for generated Kafka topics                            |
+| Key                                | Type        | Default  | Description                                                             |
+|------------------------------------|-------------|----------|-------------------------------------------------------------------------|
+| `retention`                        | **string**  | `null`   | Topic retention time (e.g., "7d", "24h") or indefinite when `null`      |
+| `watermark`                        | **string**  | `"0 ms"` | Watermark delay for event time processing                               |
+| `transaction-watermark`            | **string**  | `"0 ms"` | Watermark delay for event time processing when transactions are enabled |
+| `use-source-watermark`             | **boolean** | `false`  | Use Flink's `SOURCE_WATERMARK()` for non-transactional Kafka tables     |
+| `use-transaction-source-watermark` | **boolean** | `false`  | Use Flink's `SOURCE_WATERMARK()` for transactional Kafka tables         |
+| `num-partitions`                   | **integer** | `1`      | Number of partitions for generated Kafka topics                         |
+| `replication-factor`               | **integer** | `3`      | Replication factor for generated Kafka topics                           |
 
 Additional custom Kafka settings can be added under the `config` section.
 
@@ -23,6 +25,8 @@ Additional custom Kafka settings can be added under the `config` section.
       "retention": "14d",
       "watermark": "2 sec",
       "transaction-watermark": "10 sec",
+      "use-source-watermark": true,
+      "use-transaction-source-watermark": true,
       "num-partitions": 4,
       "replication-factor": 3,
       "config": {
@@ -40,6 +44,9 @@ Additional custom Kafka settings can be added under the `config` section.
 - Retention settings control how long data is stored in Kafka topics
 - Ensure `replication-factor` does not exceed the number of brokers in the target Kafka cluster
 - Watermarks are used for handling late-arriving events in stream processing
+- Source watermarks apply only to mutation tables with a `timestamp` metadata column. When enabled,
+  they generate `WATERMARK FOR <timestamp-column> AS SOURCE_WATERMARK()` instead of using the
+  corresponding watermark delay.
 - Kafka serves as the messaging backbone between different engines in the pipeline
 
 <!--EXTENDED-->
