@@ -120,7 +120,7 @@
     <avro.version>1.12.1</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
     <!-- Keep AWS SDK version in sync with the Flink SQL Runner -->
-    <awssdk.version>2.44.4</awssdk.version>
+    <awssdk.version>2.51.2</awssdk.version>
     <aws-msk-iam-auth.version>2.3.7</aws-msk-iam-auth.version>
     <commons-collections4.version>4.5.0</commons-collections4.version>
     <commons-csv.version>1.14.1</commons-csv.version>
