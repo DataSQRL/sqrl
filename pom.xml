@@ -98,8 +98,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
     <!-- Flink runner props -->
-    <flinkrunner.version>1.0-SNAPSHOT</flinkrunner.version>
-    <flinkrunner.image.repo>ghcr.io</flinkrunner.image.repo>
+    <flinkrunner.version>0.11.0</flinkrunner.version>
+    <flinkrunner.image.repo>docker.io</flinkrunner.image.repo>
 
     <!-- Params -->
     <docker.image.repo>datasqrl</docker.image.repo>
