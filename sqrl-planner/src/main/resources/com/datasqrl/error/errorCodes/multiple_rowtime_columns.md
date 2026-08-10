@@ -1,9 +1,14 @@
-DataSQRL can propagate only one Flink event-time attribute as the table's ROWTIME column.
-Directly projecting ROWTIME columns from multiple input tables makes the selected ROWTIME ambiguous.
+This table has multiple ROWTIME columns, which makes the authoritative timestamp for its records ambiguous.
+This can cause confusion for downstream users and unexpected data processing results.
 
-To overcome this ambiguity, keep the intended ROWTIME column unchanged and add a `CAST` to its own timestamp type for every other ROWTIME column.
-This materializes those columns as regular timestamps. For example, to retain `col_b` as ROWTIME while keeping `col_a` as a regular timestamp:
+Keep the authoritative ROWTIME column unchanged and `CAST` all other ROWTIME columns to regular timestamps.
+For example, to retain `col_b` as ROWTIME while keeping `col_a` as a regular timestamp:
 ```
 CAST(col_a AS TIMESTAMP_LTZ(3)) AS regular_timestamp,
 col_b AS event_time
+```
+
+For non-temporal joins, the authoritative timestamp is usually the latest event time from all joined tables:
+```
+GREATEST(t1.eventTime, t2.eventTime) AS eventTime
 ```

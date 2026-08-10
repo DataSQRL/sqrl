@@ -2,4 +2,4 @@ IMPORT ecommerceTs.customer;
 IMPORT ecommerceTs.orders;
 DistinctCustomer := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;
 
-TemporalJoin := SELECT o.*, c.email, c.name, c.lastUpdated, CAST(c.`timestamp` AS TIMESTAMP_LTZ(3)) AS `timestamp` FROM Orders o JOIN DistinctCustomer FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
+TemporalJoin := SELECT * FROM Orders o JOIN DistinctCustomer FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;

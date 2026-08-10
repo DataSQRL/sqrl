@@ -78,7 +78,7 @@ public class DAGPlannerTest {
   @Disabled
   @Test
   void specificScript() {
-    var script = SCRIPT_DIR.resolve("tableValuedFunctionsTest.sqrl");
+    var script = SCRIPT_DIR.resolve("comprehensiveTest.sqrl");
     scripts(script);
   }
 
