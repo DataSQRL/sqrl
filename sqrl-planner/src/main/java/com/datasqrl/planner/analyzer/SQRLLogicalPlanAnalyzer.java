@@ -114,6 +114,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   final RelNode originalRelnode;
   final SqrlRexUtil rexUtil;
   final TableAnalysisLookup tableLookup;
+  final String viewName;
   final FlinkRelBuilder relBuilder;
   final CalciteCatalogReader catalog;
   final ErrorCollector errors;
@@ -144,15 +145,17 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   public SQRLLogicalPlanAnalyzer(
       @NonNull RelNode relNode,
       @NonNull TableAnalysisLookup tableLookup,
-      CalciteCatalogReader catalog,
-      FlinkRelBuilder relBuilder,
+      @NonNull String viewName,
+      @NonNull FlinkRelBuilder relBuilder,
+      @NonNull CalciteCatalogReader catalog,
       @NonNull ErrorCollector errors) {
     this.originalRelnode = relNode;
     this.rexUtil = new SqrlRexUtil(relNode.getCluster().getRexBuilder());
     this.tableLookup = tableLookup;
-    this.errors = errors;
+    this.viewName = viewName;
     this.relBuilder = relBuilder;
     this.catalog = catalog;
+    this.errors = errors;
   }
 
   public record ViewAnalysis(
@@ -164,6 +167,21 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   public ViewAnalysis analyze(HintsAndDoc hintsAndDoc) {
     originalRelnode.accept(this);
     var analysis = this.intermediateAnalysis;
+
+    if (!isTemporalJoinResult(originalRelnode)) {
+      var rowTimeColumns =
+          analysis.getRowType().getFieldList().stream()
+              .filter(field -> CalciteUtil.isRowTime(field.getType()))
+              .map(RelDataTypeField::getName)
+              .toList();
+
+      errors.checkFatal(
+          rowTimeColumns.size() <= 1,
+          ErrorCode.MULTIPLE_ROWTIME_COLUMNS,
+          "Multiple ROWTIME columns in table [%s]: %s",
+          viewName,
+          String.join(", ", rowTimeColumns));
+    }
 
     if (analysis.type.isStream() && analysis.getRowTime().isEmpty()) {
       // If we don't have a rowtime, let's check if we lost it when all inputs had a rowtime
@@ -414,7 +432,6 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       }
     } else if (call.getOperator() instanceof SqlWindowTableFunction) {
       // It's a flink time window function
-      var windowFunction = (SqlWindowTableFunction) call.getOperator();
       capabilityAnalysis.add(EngineFeature.STREAM_WINDOW_AGGREGATION);
       if (functionScan.getInputs().size() == 1) {
         var input = getInputAnalyses(functionScan).get(0);
@@ -472,7 +489,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   private static final SqrlRexUtil.RexFinder FIND_NOW =
       SqrlRexUtil.findFunction(SqrlRexUtil::isNOW);
   private static final SqrlRexUtil.RexFinder FIND_ROWTIME_REF =
-      SqrlRexUtil.findInputRef(ref -> CalciteUtil.isRowTime(ref.getType()));
+      SqrlRexUtil.findInputRef(ref -> CalciteUtil.isTimeIndicator(ref.getType()));
 
   @Override
   public RelNode visit(LogicalFilter logicalFilter) {
@@ -513,7 +530,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
                           CalciteUtil.getInputRefThroughTransform(
                               n, List.of(CAST_TRANSFORM, COALESCE_TRANSFORM)))
                   .map(opt -> opt.orElse(-1))
-                  .collect(Collectors.toUnmodifiableList());
+                  .toList();
           if (newPk.stream().anyMatch(idx -> idx < 0)) {
             newPk = null; // Not all partition RexNodes are input refs
             isMostRecentDistinct = false;
@@ -523,7 +540,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           } else {
             var collation = window.orderKeys.get(0);
             if (!collation.getDirection().isDescending()
-                || !CalciteUtil.isRowTime(collation.getKey().getType())) {
+                || !CalciteUtil.isTimeIndicator(collation.getKey().getType())) {
               isMostRecentDistinct = false;
             }
           }
@@ -697,8 +714,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       // This could be a temporal join, check for snapshot
       var temporalSide = leftIn.type.isStream() ? rightIn : leftIn;
       var streamSide = leftIn.type.isStream() ? leftIn : rightIn;
-      if (temporalSide.getRelNode() instanceof LogicalSnapshot) {
-        // TODO: do we need to check that the right rowtime was chosen?
+      if (containsSnapshot(temporalSide.getRelNode())) {
         isTemporalJoin = true;
         rootTable = streamSide.streamRoot;
       } else {
@@ -735,7 +751,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
           List<PrimaryKeyMap.ColumnSet> rightRootPks =
               rightIn.primaryKey.asSubList(numRootPks).stream()
                   .map(col -> col.remap(idx -> idx + leftSideMaxIdx))
-                  .collect(Collectors.toUnmodifiableList());
+                  .toList();
           sharesRootWithPkConstraint = true;
           for (var i = 0; i < numRootPks; i++) {
             PrimaryKeyMap.ColumnSet left = leftRootPks.get(i), right = rightRootPks.get(i);
@@ -834,6 +850,30 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             pk,
             leftIn.getStreamRoot(),
             leftIn.hasNowFilter || rightIn.hasNowFilter));
+  }
+
+  /**
+   * Returns whether the final query result is a temporal join. Single-input operators preserve the
+   * result semantics, but a subsequent join does not.
+   */
+  private boolean isTemporalJoinResult(RelNode relNode) {
+    if (relNode instanceof LogicalCorrelate correlate) {
+      return containsSnapshot(correlate.getRight());
+    }
+
+    if (relNode instanceof SingleRel singleRel) {
+      return isTemporalJoinResult(singleRel.getInput());
+    }
+
+    return false;
+  }
+
+  private boolean containsSnapshot(RelNode relNode) {
+    if (relNode instanceof LogicalSnapshot) {
+      return true;
+    }
+
+    return relNode.getInputs().stream().anyMatch(this::containsSnapshot);
   }
 
   private PrimaryKeyMap intersectPrimaryKeys(List<RelNodeAnalysis> inputs) {
@@ -969,7 +1009,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     if (input.type.isStream()) {
       var firstOrder = logicalMatch.getOrderKeys().getFieldCollations().stream().findFirst();
       if (firstOrder.isPresent()
-          && CalciteUtil.isRowTime(input.getField(firstOrder.get().getFieldIndex()).getType())) {
+          && CalciteUtil.isTimeIndicator(
+              input.getField(firstOrder.get().getFieldIndex()).getType())) {
         return setProcessResult(
             RelNodeAnalysis.builder().type(STREAM).relNode(logicalMatch).build());
       } else {

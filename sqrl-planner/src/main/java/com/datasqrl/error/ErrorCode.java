@@ -55,7 +55,8 @@ public enum ErrorCode implements ErrorLabel {
   NOT_YET_IMPLEMENTED,
   NO_API_ENDPOINTS,
   MISSING_SORT_COLUMN,
-  ROWTIME_IS_NULLABLE;
+  ROWTIME_IS_NULLABLE,
+  MULTIPLE_ROWTIME_COLUMNS;
 
   @Override
   public String getLabel() {

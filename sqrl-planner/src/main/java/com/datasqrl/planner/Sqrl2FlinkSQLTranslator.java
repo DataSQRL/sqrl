@@ -301,10 +301,13 @@ public class Sqrl2FlinkSQLTranslator {
     var validated = flinkPlanner.validate(viewDef);
     RowLevelModificationContextUtils.clearContext();
     final SqlNode query;
+    final String viewName;
     if (validated instanceof SqlCreateView view) {
       query = view.getQuery();
+      viewName = view.getName().toString();
     } else if (validated instanceof SqlAlterViewAs as) {
       query = as.getNewQuery();
+      viewName = as.getOperator().getNameAsId().toString();
     } else {
       throw new UnsupportedOperationException("Unexpected SQLnode: " + validated);
     }
@@ -338,14 +341,17 @@ public class Sqrl2FlinkSQLTranslator {
         new SQRLLogicalPlanAnalyzer(
             relNode,
             tableLookup,
+            viewName,
+            relBuilder,
             flinkPlanner
                 .getOrCreateSqlValidator()
                 .getCatalogReader()
                 .unwrap(CalciteCatalogReader.class),
-            relBuilder,
             errors);
+
     var viewAnalysis = analyzer.analyze(hintsAndDoc);
     viewAnalysis.tableAnalysis().topLevelSort(topLevelSort);
+
     return viewAnalysis;
   }
 

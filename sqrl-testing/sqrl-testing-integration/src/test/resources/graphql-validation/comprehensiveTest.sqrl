@@ -15,7 +15,7 @@ ExplicitDistinct := SELECT customerid, `timestamp`, name FROM (SELECT *, (ROW_NU
 --maps to explicit distinct (check rowtype)
 InvalidDistinct := SELECT customerid, `timestamp`, name AS namee FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
 
-MissedTemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
+MissedTemporalJoin := SELECT o.*, CAST(`timestamp` AS TIMESTAMP_LTZ(3)) AS `timestamp`, name FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
 TemporalJoin := SELECT * FROM ExternalOrders o JOIN ExplicitDistinct FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
 
 Customer.related := SELECT * FROM Customer other WHERE this.customerid = other.customerid ORDER BY other.`timestamp`;

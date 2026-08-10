@@ -43,19 +43,17 @@ Schema:
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
  - unique_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - _uuid0: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - userid0: INTEGER
- - event_time0: TIMESTAMP_LTZ(3) *ROWTIME*
  - unique_id0: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Inputs:
  - default_catalog.default_database.InputDistinct
  - default_catalog.default_database._Input
 Plan:
-LogicalProject(_uuid=[$0], userid=[$1], event_time=[$2], unique_id=[$3], _uuid0=[$4], userid0=[$5], event_time0=[$6], unique_id0=[$7])
+LogicalProject(_uuid=[$0], userid=[$1], event_time=[$2], unique_id=[$3], _uuid0=[$4], unique_id0=[$7])
   LogicalJoin(condition=[=($5, $1)], joinType=[inner])
     LogicalTableScan(table=[[default_catalog, default_database, InputDistinct]])
     LogicalTableScan(table=[[default_catalog, default_database, _Input]])
 SQL:
-CREATE VIEW `JoinTable` AS  SELECT * FROM InputDistinct i2 JOIN _Input i1 ON i1.userid = i2.userid;
+CREATE VIEW `JoinTable` AS  SELECT i2.*, i1._uuid AS _uuid0, i1.unique_id AS unique_id0 FROM InputDistinct i2 JOIN _Input i1 ON i1.userid = i2.userid;
 
 === SimpleInput
 ID:          default_catalog.default_database.SimpleInput
@@ -144,7 +142,7 @@ FROM (SELECT `_uuid`, `userid`, `event_time`, `unique_id`, ROW_NUMBER() OVER (PA
 WHERE `__sqrlinternal_rownum` = 1;
 CREATE VIEW `JoinTable`
 AS
-SELECT *
+SELECT `i2`.*, `i1`.`_uuid` AS `_uuid0`, `i1`.`unique_id` AS `unique_id0`
 FROM `InputDistinct` AS `i2`
  INNER JOIN `_Input` AS `i1` ON `i1`.`userid` = `i2`.`userid`;
 CREATE TABLE `InputDistinct_1` (
@@ -287,7 +285,7 @@ END
     {
       "name" : "JoinTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"JoinTable\"(\"_uuid\", \"userid\", \"event_time\", \"unique_id\", \"_uuid0\", \"userid0\", \"event_time0\", \"unique_id0\") AS SELECT *\nFROM (SELECT \"_uuid\", \"userid\", \"event_time\", \"unique_id\"\n  FROM \"InputDistinct_1\") AS \"t\"\n INNER JOIN \"_Input_2\" AS \"_Input_20\" ON \"t\".\"userid\" = \"_Input_20\".\"userid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"JoinTable\"(\"_uuid\", \"userid\", \"event_time\", \"unique_id\", \"_uuid0\", \"unique_id0\") AS SELECT \"t\".\"_uuid\", \"t\".\"userid\", \"t\".\"event_time\", \"t\".\"unique_id\", \"_Input_20\".\"_uuid\" AS \"_uuid0\", \"_Input_20\".\"unique_id\" AS \"unique_id0\"\nFROM (SELECT \"_uuid\", \"userid\", \"event_time\", \"unique_id\"\n  FROM \"InputDistinct_1\") AS \"t\"\n INNER JOIN \"_Input_2\" AS \"_Input_20\" ON \"t\".\"userid\" = \"_Input_20\".\"userid\"",
       "fields" : [
         {
           "name" : "_uuid",
@@ -313,16 +311,6 @@ END
           "name" : "_uuid0",
           "type" : "TEXT",
           "nullable" : false
-        },
-        {
-          "name" : "userid0",
-          "type" : "INTEGER",
-          "nullable" : true
-        },
-        {
-          "name" : "event_time0",
-          "type" : "TIMESTAMP WITH TIME ZONE",
-          "nullable" : true
         },
         {
           "name" : "unique_id0",
@@ -361,7 +349,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM (SELECT \"_uuid\", \"userid\", \"event_time\", \"unique_id\"\n  FROM \"InputDistinct_1\") AS \"t\"\n INNER JOIN \"_Input_2\" AS \"_Input_20\" ON \"t\".\"userid\" = \"_Input_20\".\"userid\"",
+              "sql" : "SELECT \"t\".\"_uuid\", \"t\".\"userid\", \"t\".\"event_time\", \"t\".\"unique_id\", \"_Input_20\".\"_uuid\" AS \"_uuid0\", \"_Input_20\".\"unique_id\" AS \"unique_id0\"\nFROM (SELECT \"_uuid\", \"userid\", \"event_time\", \"unique_id\"\n  FROM \"InputDistinct_1\") AS \"t\"\n INNER JOIN \"_Input_2\" AS \"_Input_20\" ON \"t\".\"userid\" = \"_Input_20\".\"userid\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -413,7 +401,7 @@ END
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query JoinTable($limit: Int = 10, $offset: Int = 0) {\nJoinTable(limit: $limit, offset: $offset) {\nuserid\nevent_time\nunique_id\nuserid0\nevent_time0\nunique_id0\n}\n\n}",
+            "query" : "query JoinTable($limit: Int = 10, $offset: Int = 0) {\nJoinTable(limit: $limit, offset: $offset) {\nuserid\nevent_time\nunique_id\nunique_id0\n}\n\n}",
             "queryName" : "JoinTable",
             "operationType" : "QUERY"
           },
@@ -447,7 +435,7 @@ END
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\ntype JoinTable {\n  userid: Int\n  event_time: DateTime\n  unique_id: String!\n  userid0: Int\n  event_time0: DateTime\n  unique_id0: String!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SimpleInput(event: SimpleInputInput!): SimpleInputResultOutput!\n}\n\ntype Query {\n  JoinTable(limit: Int = 10, offset: Int = 0): [JoinTable!]\n}\n\ninput SimpleInputInput {\n  userid: Int\n}\n\ntype SimpleInputResultOutput {\n  userid: Int\n  event_time: DateTime\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\ntype JoinTable {\n  userid: Int\n  event_time: DateTime\n  unique_id: String!\n  unique_id0: String!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  SimpleInput(event: SimpleInputInput!): SimpleInputResultOutput!\n}\n\ntype Query {\n  JoinTable(limit: Int = 10, offset: Int = 0): [JoinTable!]\n}\n\ninput SimpleInputInput {\n  userid: Int\n}\n\ntype SimpleInputResultOutput {\n  userid: Int\n  event_time: DateTime\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
