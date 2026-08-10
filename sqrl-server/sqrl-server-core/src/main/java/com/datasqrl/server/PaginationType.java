@@ -17,5 +17,9 @@ package com.datasqrl.server;
 
 public enum PaginationType {
   NONE,
-  LIMIT_AND_OFFSET;
+  LIMIT_AND_OFFSET,
+  /**
+   * Like {@link #LIMIT_AND_OFFSET}, but the result is wrapped in an {@code OffsetPageInfo} page.
+   */
+  OFFSET_PAGE_INFO;
 }

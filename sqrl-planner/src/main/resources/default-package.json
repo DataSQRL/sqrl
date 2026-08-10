@@ -18,7 +18,8 @@
       "endpoints": "FULL",
       "add-prefix": true,
       "max-result-depth": 3,
-      "default-limit": 10
+      "default-limit": 10,
+      "paginated-results": false
     }
   },
   "engines": {

@@ -56,8 +56,8 @@ public class PhysicalPlan {
     for (PhysicalStagePlan stagePlan : stagePlans) {
       var enginePlan = stagePlan.plan;
       for (PhysicalPlanRewriter rewriter : rewriters) {
-        if (rewriter.appliesTo(enginePlan)) {
-          enginePlan = rewriter.rewrite(enginePlan, sqrlEnv);
+        if (rewriter.satisfied(this) && rewriter.appliesTo(enginePlan)) {
+          enginePlan = rewriter.rewrite(this, enginePlan, sqrlEnv);
         }
       }
       builder.stagePlan(new PhysicalStagePlan(stagePlan.stage, enginePlan));

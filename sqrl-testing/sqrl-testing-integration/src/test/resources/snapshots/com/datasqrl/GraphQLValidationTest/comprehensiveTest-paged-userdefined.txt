@@ -750,6 +750,7 @@ type MissedTemporalJoin {
     customerid: Long!
     time: DateTime!
     entries: [MissedTemporalJoin_entriesOutput]!
+    customerid0: Long!
     timestamp: DateTime
     name: String!
 }
@@ -814,6 +815,7 @@ type TemporalJoin {
     customerid: Long!
     time: DateTime!
     entries: [TemporalJoin_entriesOutput]!
+    customerid0: Long!
     timestamp: DateTime
     name: String!
 }
@@ -1069,7 +1071,8 @@ Schema:
  - customerid: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - customerid0: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Inputs:
  - default_catalog.default_database.ExplicitDistinct
@@ -1317,7 +1320,7 @@ FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp
 WHERE `_rownum` = 1;
 CREATE VIEW `MissedTemporalJoin`
 AS
-SELECT `o`.*, CAST(`timestamp` AS TIMESTAMP_LTZ(3)) AS `timestamp`, `name`
+SELECT *
 FROM `ExternalOrders` AS `o`
  INNER JOIN `ExplicitDistinct` AS `c` ON `o`.`customerid` = `c`.`customerid`;
 CREATE VIEW `TemporalJoin`
@@ -1772,9 +1775,11 @@ CREATE TABLE IF NOT EXISTS "SelectCustomers" ("customerid" BIGINT NOT NULL, "ema
 CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB, "customerid0" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL, PRIMARY KEY ("id","time"));
 CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION, "newId" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
-CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name")
+CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name");
+CREATE INDEX IF NOT EXISTS "Customer_btree_c4" ON "Customer" USING btree ("timestamp");
+CREATE INDEX IF NOT EXISTS "SelectCustomers_btree_c4" ON "SelectCustomers" USING btree ("timestamp")
 >>>postgres-views.sql
-CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "timestamp", "name") AS SELECT "ExternalOrders"."id", "ExternalOrders"."customerid", "ExternalOrders"."time", "ExternalOrders"."entries", CAST("ExplicitDistinct"."timestamp" AS TIMESTAMP WITH TIME ZONE) AS "timestamp", "ExplicitDistinct"."name"
+CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "customerid0", "timestamp", "name") AS SELECT *
 FROM "ExternalOrders"
  INNER JOIN "ExplicitDistinct" ON "ExternalOrders"."customerid" = "ExplicitDistinct"."customerid"
 >>>vertx-v1-openapi.json
@@ -1798,79 +1803,7 @@ FROM "ExternalOrders"
     "url" : "http://localhost:8888",
     "description" : "DataSQRL API Server"
   } ],
-  "paths" : {
-    "/v1/rest/queries/TableFunctionCallsTblFct" : {
-      "get" : {
-        "summary" : "GetTableFunctionCallsTblFct",
-        "operationId" : "GetTableFunctionCallsTblFct",
-        "parameters" : [ {
-          "name" : "arg2",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "offset",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "arg1",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        }, {
-          "name" : "limit",
-          "in" : "query",
-          "required" : false,
-          "schema" : {
-            "type" : "string"
-          }
-        } ],
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object",
-                  "properties" : {
-                    "data" : {
-                      "type" : "object",
-                      "description" : "Response data"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Error response",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object",
-                  "properties" : {
-                    "errors" : {
-                      "type" : "array",
-                      "items" : {
-                        "type" : "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+  "paths" : { }
 }
 >>>vertx.json
 {
@@ -1915,9 +1848,12 @@ FROM "ExternalOrders"
                   "sqlType" : "INTEGER"
                 }
               ],
-              "pagination" : "LIMIT_AND_OFFSET",
+              "pagination" : "OFFSET_PAGE_INFO",
               "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
+              "database" : "POSTGRES",
+              "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM (SELECT *\n  FROM \"Customer\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1) x",
+              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM (SELECT *\n  FROM \"Customer\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1) x",
+              "countWithEventTimesSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM (SELECT *\n  FROM \"Customer\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1) x"
             }
           }
         },
@@ -1945,94 +1881,22 @@ FROM "ExternalOrders"
                   "key" : "customerid"
                 }
               ],
-              "pagination" : "LIMIT_AND_OFFSET",
+              "pagination" : "OFFSET_PAGE_INFO",
               "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
-            }
-          }
-        },
-        {
-          "type" : "args",
-          "parentType" : "Customer",
-          "fieldName" : "relatedByLength",
-          "exec" : {
-            "arguments" : [
-              {
-                "type" : "variable",
-                "path" : "limit"
-              },
-              {
-                "type" : "variable",
-                "path" : "offset"
-              },
-              {
-                "type" : "variable",
-                "path" : "length"
-              }
-            ],
-            "query" : {
-              "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Customer\"\nWHERE $2 = \"customerid\" AND CHAR_LENGTH(\"email\") >= $1\nORDER BY \"timestamp\" NULLS FIRST",
-              "parameters" : [
-                {
-                  "type" : "arg",
-                  "path" : "length",
-                  "sqlType" : "INTEGER"
-                },
-                {
-                  "type" : "source",
-                  "key" : "customerid"
-                }
-              ],
-              "pagination" : "LIMIT_AND_OFFSET",
-              "cacheDurationMs" : 0,
-              "database" : "POSTGRES"
+              "database" : "POSTGRES",
+              "eventTimesSql" : "SELECT MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"Customer\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST) x",
+              "countSql" : "SELECT COUNT(*) AS \"total_records\" FROM (SELECT *\nFROM \"Customer\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST) x",
+              "countWithEventTimesSql" : "SELECT COUNT(*) AS \"total_records\", MIN(\"timestamp\") AS \"first_event_time\", MAX(\"timestamp\") AS \"last_event_time\" FROM (SELECT *\nFROM \"Customer\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST) x"
             }
           }
         }
       ],
       "mutations" : [ ],
       "subscriptions" : [ ],
-      "operations" : [
-        {
-          "function" : {
-            "name" : "GetTableFunctionCallsTblFct",
-            "parameters" : {
-              "type" : "object",
-              "properties" : {
-                "arg2" : {
-                  "type" : "integer"
-                },
-                "offset" : {
-                  "type" : "integer"
-                },
-                "arg1" : {
-                  "type" : "integer"
-                },
-                "limit" : {
-                  "type" : "integer"
-                }
-              },
-              "required" : [
-                "arg2",
-                "arg1"
-              ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query TableFunctionCallsTblFct($arg2: Int!, $arg1: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg2: $arg2, arg1: $arg1, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "TableFunctionCallsTblFct",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}"
-        }
-      ],
+      "operations" : [ ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n    related(limit: Int = 10, offset: Int = 0): [Customer!]\n    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n\ntype Query {\n    TableFunctionCallsTblFct(arg2: Int!, arg1: Int!, limit: Int = 10, offset: Int = 0): [Customer!]\n}\n"
+        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OffsetPageInfo {\n    pageSize: Int!\n    currentPage: Int!\n    totalRecords: Long!\n    totalPages: Int!\n    hasNextPage: Boolean!\n    hasPreviousPage: Boolean!\n    nextOffset: Int\n    prevOffset: Int\n    firstEventTime: DateTime\n    lastEventTime: DateTime\n}\n\ntype Customer {\n    customerid: Long!\n    email: String!\n    name: String!\n    lastUpdated: Long!\n    timestamp: DateTime!\n    related(limit: Int = 10, offset: Int = 0): CustomerRelatedPage\n}\n\ntype CustomerRelatedPage {\n    items: [Customer!]\n    meta: OffsetPageInfo\n}\n\ntype CustomerPage {\n    items: [Customer!]\n    meta: OffsetPageInfo\n}\n\ntype Query {\n    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): CustomerPage!\n}\n"
       }
     }
   }

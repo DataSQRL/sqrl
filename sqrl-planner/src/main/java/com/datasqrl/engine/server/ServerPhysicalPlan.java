@@ -16,13 +16,16 @@
 package com.datasqrl.engine.server;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -44,4 +47,10 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
    * plan later.
    */
   final Map<String, RootGraphQLModel> models = new LinkedHashMap<>();
+
+  /**
+   * Base tables of paginated queries, collected during model generation so a rowtime index can be
+   * added to their physical tables afterwards.
+   */
+  @JsonIgnore final Set<TableAnalysis> pagedRowTimeTables = new LinkedHashSet<>();
 }

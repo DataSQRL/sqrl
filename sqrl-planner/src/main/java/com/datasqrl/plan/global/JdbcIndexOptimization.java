@@ -16,6 +16,7 @@
 package com.datasqrl.plan.global;
 
 import com.datasqrl.engine.EnginePhysicalPlan;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
@@ -32,14 +33,16 @@ import lombok.Value;
 public class JdbcIndexOptimization implements PhysicalPlanRewriter {
 
   @Override
-  public boolean appliesTo(EnginePhysicalPlan plan) {
-    return plan instanceof JdbcPhysicalPlan jpp
+  public boolean appliesTo(EnginePhysicalPlan enginePlan) {
+    return enginePlan instanceof JdbcPhysicalPlan jpp
         && jpp.stage().engine() instanceof AbstractJDBCDatabaseEngine;
   }
 
   @Override
-  public JdbcPhysicalPlan rewrite(EnginePhysicalPlan plan, Sqrl2FlinkSQLTranslator sqrlEnv) {
-    var jdbcPlan = (JdbcPhysicalPlan) plan;
+  public JdbcPhysicalPlan rewrite(
+      PhysicalPlan fullPlan, EnginePhysicalPlan enginePlan, Sqrl2FlinkSQLTranslator sqrlEnv) {
+
+    var jdbcPlan = (JdbcPhysicalPlan) enginePlan;
     var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.stage().engine();
     /*TODO: optimize the order of primary key columns (unless primary key is explicitly defined by hint)
        - partition keys come first

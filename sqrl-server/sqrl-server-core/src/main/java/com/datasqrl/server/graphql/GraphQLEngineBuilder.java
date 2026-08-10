@@ -203,6 +203,9 @@ public class GraphQLEngineBuilder
       case NONE:
         break;
       case LIMIT_AND_OFFSET:
+      case OFFSET_PAGE_INFO:
+        // OFFSET_PAGE_INFO shares the limit/offset mechanics; it only adds a page wrapper computed
+        // at execution time.
         // special case where database doesn't support binding for limit/offset => need to create
         // query dynamically and not prepare
         if (!query.getDatabase().supportsLimitOffsetBinding) {

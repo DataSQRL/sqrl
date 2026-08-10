@@ -22,6 +22,8 @@ import com.datasqrl.compile.DagWriter;
 import com.datasqrl.util.ArgumentsProviders;
 import java.nio.file.Path;
 import java.util.function.Predicate;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
@@ -48,6 +50,13 @@ public class GraphQLValidationTest {
         getDisplayName(graphQLSchema),
         getBuildDirFilter(),
         getPlanDirFilter());
+  }
+
+  @Test
+  @Disabled
+  void specificSchema() {
+    var schema = USECASE_DIR.resolve("comprehensiveTest-paged-results.graphqls");
+    testUseCase(schema);
   }
 
   private Predicate<Path> getBuildDirFilter() {
