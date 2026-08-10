@@ -67,6 +67,9 @@ import org.apache.calcite.schema.FunctionParameter;
 @Getter
 public class GraphqlModelGenerator extends GraphqlSchemaWalker {
 
+  /** Select expression behind {@code totalRecords}/{@code totalPages}. */
+  private static final String COUNT_AGGREGATE = "COUNT(*) AS \"total_records\"";
+
   List<QueryCoords> queryCoords = new ArrayList<>();
   List<MutationCoords> mutations = new ArrayList<>();
   List<SubscriptionCoords> subscriptions = new ArrayList<>();
@@ -206,9 +209,6 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     coordsBuilder.exec(set);
     queryCoords.add(coordsBuilder.build());
   }
-
-  /** Select expression behind {@code totalRecords}/{@code totalPages}. */
-  private static final String COUNT_AGGREGATE = "COUNT(*) AS \"total_records\"";
 
   /**
    * Select expressions computing MIN/MAX over the designated rowtime column for {@code

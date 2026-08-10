@@ -24,6 +24,8 @@ import graphql.schema.GraphQLObjectType;
 import graphql.schema.GraphQLOutputType;
 import io.vertx.core.json.JsonObject;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 
 /**
  * A {@link PaginationType#OFFSET_PAGE_INFO} request: the rows of a page plus the {@code
@@ -44,6 +46,7 @@ import java.util.List;
  *   <li>{@link #toPage} trims that extra row back off and assembles {@code {results, pagination}}.
  * </ol>
  */
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 final class OffsetPageInfoQuery {
 
   private static final String FIRST_EVENT_TIME_COLUMN = "first_event_time";
@@ -55,19 +58,6 @@ final class OffsetPageInfoQuery {
   private final boolean needsNextPage;
   private final boolean needsEventTimes;
   private final boolean needsTotals;
-
-  private OffsetPageInfoQuery(
-      PageRequest page,
-      PageFields fields,
-      boolean needsNextPage,
-      boolean needsEventTimes,
-      boolean needsTotals) {
-    this.page = page;
-    this.fields = fields;
-    this.needsNextPage = needsNextPage;
-    this.needsEventTimes = needsEventTimes;
-    this.needsTotals = needsTotals;
-  }
 
   static OffsetPageInfoQuery from(DataFetchingEnvironment environment) {
     var fields = pageFields(environment.getFieldType());
