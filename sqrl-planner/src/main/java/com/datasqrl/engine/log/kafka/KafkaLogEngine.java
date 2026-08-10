@@ -39,6 +39,7 @@ import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
+import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.server.MutationInsertType;
@@ -370,10 +371,11 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     var watermarkDelay = isTransactional ? transactionWatermark : defaultWatermark;
     if (sourceWatermark) {
       var connector = connectorConfig.get(FlinkConnectorConfigWrapper.CONNECTOR_KEY);
-      checkArgument(
-          connector != null && connector.endsWith("-safe"),
-          "SOURCE_WATERMARK is only supported in 'kafka-safe' and 'upsert-kafka-safe' connectors, but found: %s",
-          connector);
+      if (connector == null || !connector.endsWith("-safe")) {
+        throw new NoLocationStatementParserException(
+            "SOURCE_WATERMARK is only supported in 'kafka-safe' and 'upsert-kafka-safe' connectors, but found: "
+                + connector);
+      }
       tableBuilder.setSourceWatermark(tsColName);
     } else {
       tableBuilder.setWatermarkMillis(tsColName, watermarkDelay.toMillis());

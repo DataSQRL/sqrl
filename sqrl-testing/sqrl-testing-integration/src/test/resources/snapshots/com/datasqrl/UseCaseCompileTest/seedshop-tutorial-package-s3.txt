@@ -556,7 +556,7 @@ CREATE TABLE `CustomerPromotion_1` (
   `saved` DOUBLE NOT NULL
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',

@@ -130,7 +130,7 @@ CREATE TABLE `_InputData` (
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -162,7 +162,7 @@ CREATE TABLE `_InputData` (
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -199,7 +199,7 @@ CREATE TABLE `CustomerMessage_2` (
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',

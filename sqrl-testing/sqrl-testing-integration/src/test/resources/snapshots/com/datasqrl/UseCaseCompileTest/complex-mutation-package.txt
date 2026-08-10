@@ -123,7 +123,7 @@ CREATE TABLE `InputTable` (
   WATERMARK FOR `event_time` AS `SOURCE_WATERMARK`()
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
