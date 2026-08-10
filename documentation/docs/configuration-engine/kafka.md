@@ -46,7 +46,7 @@ Additional custom Kafka settings can be added under the `config` section.
 - Watermarks are used for handling late-arriving events in stream processing
 - Source watermarks apply only to mutation tables with a `timestamp` metadata column. When enabled,
   they generate `WATERMARK FOR <timestamp-column> AS SOURCE_WATERMARK()` instead of using the
-  corresponding watermark delay.
+  corresponding watermark delay. It is only supported by our `kafka-safe` and `upsert-kafka-safe` conenctors.
 - Kafka serves as the messaging backbone between different engines in the pipeline
 
 <!--EXTENDED-->

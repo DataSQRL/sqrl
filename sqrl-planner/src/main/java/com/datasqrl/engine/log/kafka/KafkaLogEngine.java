@@ -15,6 +15,8 @@
  */
 package com.datasqrl.engine.log.kafka;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorConf.Context;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -42,7 +44,6 @@ import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Streams;
 import jakarta.inject.Inject;
 import java.time.Duration;
@@ -190,19 +191,20 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       }
     }
 
+    var connectorConfig = conf.toMapWithSubstitution(ctxBuilder.build());
+
     if (isMutation) {
       // Set watermark column for mutations based on 'timestamp' metadata
       for (SqlNode node : tableBuilder.getColumnList().getList()) {
         if (node instanceof SqlMetadataColumn metadataColumn) {
-          setWatermark(tableBuilder, metadataColumn, isTransactional);
+          setWatermark(tableBuilder, metadataColumn, connectorConfig, isTransactional);
         }
       }
     }
 
-    var connectorConfig = conf.toMapWithSubstitution(ctxBuilder.build());
     // Configure format depending on type
     String format = connectorConfig.get(FlinkConnectorConfigWrapper.FORMAT_KEY);
-    Preconditions.checkArgument(
+    checkArgument(
         format != null && !format.isBlank(),
         "Need to configure a 'format' for connector {}",
         KafkaLogEngineFactory.ENGINE_NAME);
@@ -243,8 +245,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     }
 
     if (isTransactional) {
-      Preconditions.checkArgument(
-          isMutation, "Only mutations can be used for transactions: %s", tableBuilder);
+      checkArgument(isMutation, "Only mutations can be used for transactions: %s", tableBuilder);
       connectorConfig.put("properties.isolation.level", "read_committed");
     }
     ttl.ifPresent(duration -> topicConfig.put("retention.ms", String.valueOf(duration.toMillis())));
@@ -326,7 +327,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       RelOptTable table = relNode.getTable();
       var tableName = table.getQualifiedName().get(2);
       var topicName = table2TopicMap.get(tableName);
-      Preconditions.checkArgument(
+      checkArgument(
           topicName != null, "Could not find topic for table: %s [%s]", tableName, table2TopicMap);
       query
           .function()
@@ -352,7 +353,11 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   }
 
   private void setWatermark(
-      FlinkTableBuilder tableBuilder, SqlMetadataColumn metadataCol, boolean isTransactional) {
+      FlinkTableBuilder tableBuilder,
+      SqlMetadataColumn metadataCol,
+      Map<String, String> connectorConfig,
+      boolean isTransactional) {
+
     var timestampMetadata =
         metadataCol.getMetadataAlias().filter(s -> s.equalsIgnoreCase("timestamp")).isPresent();
 
@@ -364,6 +369,11 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     var sourceWatermark = isTransactional ? useTransactionSourceWatermark : useSourceWatermark;
     var watermarkDelay = isTransactional ? transactionWatermark : defaultWatermark;
     if (sourceWatermark) {
+      var connector = connectorConfig.get(FlinkConnectorConfigWrapper.CONNECTOR_KEY);
+      checkArgument(
+          connector != null && connector.endsWith("-safe"),
+          "SOURCE_WATERMARK is only supported in 'kafka-safe' and 'upsert-kafka-safe' connectors, but found: %s",
+          connector);
       tableBuilder.setSourceWatermark(tsColName);
     } else {
       tableBuilder.setWatermarkMillis(tsColName, watermarkDelay.toMillis());
