@@ -45,10 +45,10 @@ public class GraphQLParserConfig {
   /**
    * Applies these limits to the JVM-wide graphql-java parser defaults. Both the generic and the
    * operation defaults are updated because query parsing resolves its options from {@link
-   * ParserOptions#getDefaultOperationParserOptions()}. SDL parsing keeps its own, much higher,
+   * ParserOptions#getDefaultOperationParserOptions()}. SDL parsing keeps its own, much higher
    * defaults and is deliberately left untouched.
    */
-  public void applyToParserDefaults() {
+  public void applyParserConfig() {
     if (isDefault()) {
       return;
     }
@@ -60,9 +60,12 @@ public class GraphQLParserConfig {
         maxWhitespaceTokens,
         maxRuleDepth);
 
-    ParserOptions.setDefaultParserOptions(withLimits(ParserOptions.getDefaultParserOptions()));
-    ParserOptions.setDefaultOperationParserOptions(
-        withLimits(ParserOptions.getDefaultOperationParserOptions()));
+    var updatedParserOptions = withCustomConfig(ParserOptions.getDefaultParserOptions());
+    ParserOptions.setDefaultParserOptions(updatedParserOptions);
+
+    var updatedOperationParserOptions =
+        withCustomConfig(ParserOptions.getDefaultOperationParserOptions());
+    ParserOptions.setDefaultOperationParserOptions(updatedOperationParserOptions);
   }
 
   private boolean isDefault() {
@@ -72,7 +75,7 @@ public class GraphQLParserConfig {
         && maxRuleDepth == ParserOptions.MAX_RULE_DEPTH;
   }
 
-  private ParserOptions withLimits(ParserOptions options) {
+  private ParserOptions withCustomConfig(ParserOptions options) {
     return options.transform(
         builder ->
             builder

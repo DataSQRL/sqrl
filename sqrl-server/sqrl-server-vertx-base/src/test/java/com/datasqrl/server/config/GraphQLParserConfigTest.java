@@ -57,7 +57,7 @@ class GraphQLParserConfigTest {
     config.setMaxWhitespaceTokens(400_000);
     config.setMaxRuleDepth(700);
 
-    config.applyToParserDefaults();
+    config.applyParserConfig();
 
     for (var options :
         new ParserOptions[] {
@@ -76,7 +76,7 @@ class GraphQLParserConfigTest {
     var config = new GraphQLParserConfig();
     config.setMaxTokens(45_000);
 
-    config.applyToParserDefaults();
+    config.applyParserConfig();
 
     assertThat(ParserOptions.getDefaultSdlParserOptions().getMaxTokens())
         .isEqualTo(sdlOptions.getMaxTokens());
@@ -88,7 +88,7 @@ class GraphQLParserConfigTest {
     var config = new GraphQLParserConfig();
     config.setMaxTokens(45_000);
 
-    config.applyToParserDefaults();
+    config.applyParserConfig();
 
     var applied = ParserOptions.getDefaultOperationParserOptions();
     assertThat(applied.isCaptureIgnoredChars())
@@ -105,7 +105,7 @@ class GraphQLParserConfigTest {
   void given_defaultLimits_when_appliedToParserDefaults_then_parserDefaultsAreUnchanged() {
     var operationDefaults = ParserOptions.getDefaultOperationParserOptions();
 
-    new GraphQLParserConfig().applyToParserDefaults();
+    new GraphQLParserConfig().applyParserConfig();
 
     assertThat(ParserOptions.getDefaultOperationParserOptions()).isSameAs(operationDefaults);
   }
