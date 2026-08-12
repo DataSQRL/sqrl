@@ -271,7 +271,7 @@ CREATE TABLE `DistinctStream_3` (
   PRIMARY KEY (`customerid`) NOT ENFORCED
 )
 WITH (
-  'connector' = 'upsert-kafka',
+  'connector' = 'upsert-kafka-safe',
   'key.format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',
@@ -303,7 +303,7 @@ CREATE TABLE `JoinStream_5` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',

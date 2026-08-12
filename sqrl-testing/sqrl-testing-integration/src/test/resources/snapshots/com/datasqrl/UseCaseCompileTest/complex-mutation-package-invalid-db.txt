@@ -1,0 +1,8 @@
+[WARN] Table 'InputTable' field 'userid' type is not backwards compatible: 'VARCHAR(2147483647)' -> 'INTEGER'
+
+[WARN] Table 'InputTable' field 'event_time' metadata changed from 'null' to 'timestamp'
+
+[WARN] Table 'SinkTable' field 'total_tokens' type is not backwards compatible: 'VARCHAR(2147483647)' -> 'BIGINT'
+
+[FATAL] The mutation tables defined by the script are not backwards compatible with the provided database. See warnings above for incompatibilities.
+

@@ -197,7 +197,7 @@ CREATE TABLE `SimpleOrders` (
   WATERMARK FOR `orderTime` AS `orderTime` - INTERVAL '0.0' SECOND
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -290,7 +290,7 @@ CREATE TABLE `SimpleOrders` (
   WATERMARK FOR `orderTime` AS `orderTime` - INTERVAL '0.0' SECOND
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -391,7 +391,7 @@ CREATE TABLE `LargeOrders_4` (
   `orderTime` TIMESTAMP(3) WITH LOCAL TIME ZONE
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',

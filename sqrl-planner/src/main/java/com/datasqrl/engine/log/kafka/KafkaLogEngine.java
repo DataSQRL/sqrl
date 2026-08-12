@@ -15,6 +15,8 @@
  */
 package com.datasqrl.engine.log.kafka;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorConf.Context;
 import com.datasqrl.config.ConnectorFactoryFactory;
@@ -37,12 +39,12 @@ import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
+import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Streams;
 import jakarta.inject.Inject;
 import java.time.Duration;
@@ -66,7 +68,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlMetadataColumn;
 import org.apache.flink.util.TimeUtils;
 
 @Slf4j
@@ -86,6 +88,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   // === SETTINGS ===
   private final Optional<Duration> defaultTTL;
+  private final boolean useSourceWatermark;
+  private final boolean useTransactionSourceWatermark;
   private final Duration defaultWatermark;
   private final Duration transactionWatermark;
   private final int numPartitions;
@@ -106,6 +110,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .map(
                 value ->
                     value.equals("-1") ? Duration.ofMillis(-1) : TimeUtils.parseDuration(value));
+    useSourceWatermark = Boolean.parseBoolean(engineConfig.getSetting("use-source-watermark"));
+    useTransactionSourceWatermark =
+        Boolean.parseBoolean(engineConfig.getSetting("use-transaction-source-watermark"));
     defaultWatermark = TimeUtils.parseDuration(engineConfig.getSetting("watermark"));
     transactionWatermark =
         TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
@@ -185,27 +192,20 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       }
     }
 
+    var connectorConfig = conf.toMapWithSubstitution(ctxBuilder.build());
+
     if (isMutation) {
       // Set watermark column for mutations based on 'timestamp' metadata
       for (SqlNode node : tableBuilder.getColumnList().getList()) {
-        if (node instanceof SqlTableColumn.SqlMetadataColumn metadataColumn) {
-          if (metadataColumn
-                  .getMetadataAlias()
-                  .filter(s -> s.equalsIgnoreCase("timestamp"))
-                  .isPresent()
-              && !tableBuilder.hasWatermark()) {
-            long watermarkMillis =
-                isTransactional ? transactionWatermark.toMillis() : defaultWatermark.toMillis();
-            tableBuilder.setWatermarkMillis(metadataColumn.getName().getSimple(), watermarkMillis);
-          }
+        if (node instanceof SqlMetadataColumn metadataColumn) {
+          setWatermark(tableBuilder, metadataColumn, connectorConfig, isTransactional);
         }
       }
     }
 
-    var connectorConfig = conf.toMapWithSubstitution(ctxBuilder.build());
     // Configure format depending on type
     String format = connectorConfig.get(FlinkConnectorConfigWrapper.FORMAT_KEY);
-    Preconditions.checkArgument(
+    checkArgument(
         format != null && !format.isBlank(),
         "Need to configure a 'format' for connector {}",
         KafkaLogEngineFactory.ENGINE_NAME);
@@ -246,8 +246,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     }
 
     if (isTransactional) {
-      Preconditions.checkArgument(
-          isMutation, "Only mutations can be used for transactions: %s", tableBuilder);
+      checkArgument(isMutation, "Only mutations can be used for transactions: %s", tableBuilder);
       connectorConfig.put("properties.isolation.level", "read_committed");
     }
     ttl.ifPresent(duration -> topicConfig.put("retention.ms", String.valueOf(duration.toMillis())));
@@ -329,7 +328,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       RelOptTable table = relNode.getTable();
       var tableName = table.getQualifiedName().get(2);
       var topicName = table2TopicMap.get(tableName);
-      Preconditions.checkArgument(
+      checkArgument(
           topicName != null, "Could not find topic for table: %s [%s]", tableName, table2TopicMap);
       query
           .function()
@@ -352,6 +351,35 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .toList();
 
     return new KafkaPhysicalPlan(topics, testRunnerTopics);
+  }
+
+  private void setWatermark(
+      FlinkTableBuilder tableBuilder,
+      SqlMetadataColumn metadataCol,
+      Map<String, String> connectorConfig,
+      boolean isTransactional) {
+
+    var timestampMetadata =
+        metadataCol.getMetadataAlias().filter(s -> s.equalsIgnoreCase("timestamp")).isPresent();
+
+    if (!timestampMetadata || tableBuilder.hasWatermark()) {
+      return;
+    }
+
+    var tsColName = metadataCol.getName().getSimple();
+    var sourceWatermark = isTransactional ? useTransactionSourceWatermark : useSourceWatermark;
+    var watermarkDelay = isTransactional ? transactionWatermark : defaultWatermark;
+    if (sourceWatermark) {
+      var connector = connectorConfig.get(FlinkConnectorConfigWrapper.CONNECTOR_KEY);
+      if (connector == null || !connector.endsWith("-safe")) {
+        throw new NoLocationStatementParserException(
+            "SOURCE_WATERMARK is only supported in 'kafka-safe' and 'upsert-kafka-safe' connectors, but found: "
+                + connector);
+      }
+      tableBuilder.setSourceWatermark(tsColName);
+    } else {
+      tableBuilder.setWatermarkMillis(tsColName, watermarkDelay.toMillis());
+    }
   }
 
   private KafkaNewTopic createNewTopic(Table table, KafkaNewTopicModel.Type type) {

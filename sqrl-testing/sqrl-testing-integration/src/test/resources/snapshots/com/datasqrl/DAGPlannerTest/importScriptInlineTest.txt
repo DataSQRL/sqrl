@@ -105,7 +105,7 @@ CREATE TABLE `_SensorReading` (
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '5' SECOND
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -140,7 +140,7 @@ CREATE TABLE `_Sensors` (
   WATERMARK FOR `updatedTime` AS `updatedTime` - INTERVAL '0.0' SECOND
 )
 WITH (
-  'connector' = 'upsert-kafka',
+  'connector' = 'upsert-kafka-safe',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -159,7 +159,7 @@ CREATE TABLE `_Sensors` (
   WATERMARK FOR `updatedTime` AS `updatedTime` - INTERVAL '0.0' SECOND
 )
 WITH (
-  'connector' = 'upsert-kafka',
+  'connector' = 'upsert-kafka-safe',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -177,7 +177,7 @@ CREATE TABLE `_SensorReading` (
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '5' SECOND
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',

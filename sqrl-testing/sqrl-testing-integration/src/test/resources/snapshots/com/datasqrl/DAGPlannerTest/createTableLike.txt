@@ -89,7 +89,7 @@ CREATE TABLE `SensorReadingMutation` (
   WATERMARK FOR `recordedTime` AS `recordedTime` - INTERVAL '0.0' SECOND
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -128,7 +128,7 @@ CREATE TABLE `SensorReadingMutation` (
   WATERMARK FOR `recordedTime` AS `recordedTime` - INTERVAL '0.0' SECOND
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',

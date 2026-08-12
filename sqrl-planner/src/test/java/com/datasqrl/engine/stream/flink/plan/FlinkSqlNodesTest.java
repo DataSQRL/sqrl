@@ -135,6 +135,15 @@ class FlinkSqlNodesTest {
   }
 
   @Test
+  void createSourceWatermark() {
+    var watermark = FlinkSqlNodes.createSourceWatermark(FlinkSqlNodes.identifier("event_time_col"));
+
+    var sql = unparse(watermark);
+
+    assertThat(sql.trim()).isEqualTo("WATERMARK FOR `event_time_col` AS `SOURCE_WATERMARK`()");
+  }
+
+  @Test
   void boundedStrategy() {
     var watermark = FlinkSqlNodes.identifier("timestamp_col");
     var delay = "5";
