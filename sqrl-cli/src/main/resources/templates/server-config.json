@@ -183,7 +183,12 @@
     "maxCharacters" : 1048576,
     "maxTokens" : 15000,
     "maxWhitespaceTokens" : 200000,
-    "maxRuleDepth" : 500
+    "maxRuleDepth" : 500,
+    "captureIgnoredChars" : null,
+    "captureSourceLocation" : null,
+    "captureLineComments" : null,
+    "readerTrackData" : null,
+    "redactTokenParserErrorMessages" : null
   },
   "jwtAuth" : null,
   "oauthConfig" : null,

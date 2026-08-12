@@ -77,7 +77,12 @@ class ServerConfigTest {
             .put("maxCharacters", 2_000_000)
             .put("maxTokens", 45_000)
             .put("maxWhitespaceTokens", 400_000)
-            .put("maxRuleDepth", 700));
+            .put("maxRuleDepth", 700)
+            .put("captureIgnoredChars", true)
+            .put("captureSourceLocation", false)
+            .put("captureLineComments", true)
+            .put("readerTrackData", false)
+            .put("redactTokenParserErrorMessages", true));
 
     var kafkaMutationConfig = MAPPER.createObjectNode();
     kafkaMutationConfig.put("bootstrap.servers", "localhost:9092");
@@ -111,6 +116,11 @@ class ServerConfigTest {
     assertThat(serverConfig.getGraphQLParserConfig().getMaxTokens()).isEqualTo(45_000);
     assertThat(serverConfig.getGraphQLParserConfig().getMaxWhitespaceTokens()).isEqualTo(400_000);
     assertThat(serverConfig.getGraphQLParserConfig().getMaxRuleDepth()).isEqualTo(700);
+    assertThat(serverConfig.getGraphQLParserConfig().getCaptureIgnoredChars()).isTrue();
+    assertThat(serverConfig.getGraphQLParserConfig().getCaptureSourceLocation()).isFalse();
+    assertThat(serverConfig.getGraphQLParserConfig().getCaptureLineComments()).isTrue();
+    assertThat(serverConfig.getGraphQLParserConfig().getReaderTrackData()).isFalse();
+    assertThat(serverConfig.getGraphQLParserConfig().getRedactTokenParserErrorMessages()).isTrue();
     assertThat(serverConfig.getKafkaMutationConfig()).isNotNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNotNull();
   }
