@@ -1,4 +1,42 @@
 >>>pipeline_explain.txt
+=== Customer
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   lastUpdated
+Row count:   ~1e8
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+
+=== customer_id_count
+ID:          default_catalog.default_database.customer_id_count
+Type:        export
+Stage:       flink
+Connector:   print
+---
+Inputs:
+ - default_catalog.default_database.customer_id_count_in1
+
+=== customer_id_count_in1
+ID:          default_catalog.default_database.customer_id_count_in1
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   -
+Row count:   ~1e7
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - numEntries: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (
@@ -36,8 +74,8 @@ WITH (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `customer_id_count`
-SELECT `customerid`, COUNT(*) AS `numEntries`
-FROM `Customer`
-GROUP BY `customerid`
+SELECT `Customer`.`customerid`, COUNT(*) AS `numEntries`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
+GROUP BY `Customer`.`customerid`
 ;
 END

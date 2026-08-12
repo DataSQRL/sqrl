@@ -23,6 +23,7 @@ import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
+import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
 /** Represents an EXPORT statement in the DAG */
@@ -35,6 +36,7 @@ public class ExportNode extends PipelineNode {
   private final Optional<ExecutionStage> sinkTo;
   private final Optional<ObjectIdentifier> createdSinkTable;
   private final Optional<SourceSinkTableAnalysis> sinkTableAnalysis;
+  private final Optional<RichSqlInsert> originalInsert;
 
   public ExportNode(
       Map<ExecutionStage, StageAnalysis> stageAnalysis,
@@ -43,12 +45,31 @@ public class ExportNode extends PipelineNode {
       Optional<ExecutionStage> sinkTo,
       Optional<ObjectIdentifier> createdSinkTable,
       Optional<SourceSinkTableAnalysis> sinkTableAnalysis) {
+    this(
+        stageAnalysis,
+        sinkPath,
+        batchIndex,
+        sinkTo,
+        createdSinkTable,
+        sinkTableAnalysis,
+        Optional.empty());
+  }
+
+  public ExportNode(
+      Map<ExecutionStage, StageAnalysis> stageAnalysis,
+      NamePath sinkPath,
+      int batchIndex,
+      Optional<ExecutionStage> sinkTo,
+      Optional<ObjectIdentifier> createdSinkTable,
+      Optional<SourceSinkTableAnalysis> sinkTableAnalysis,
+      Optional<RichSqlInsert> originalInsert) {
     super("export", stageAnalysis);
     this.sinkPath = sinkPath;
     this.batchIndex = batchIndex;
     this.sinkTo = sinkTo;
     this.createdSinkTable = createdSinkTable;
     this.sinkTableAnalysis = sinkTableAnalysis;
+    this.originalInsert = originalInsert;
   }
 
   public Optional<Map<String, String>> getConnectorConfig() {

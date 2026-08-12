@@ -28,6 +28,78 @@
     "fields.val.min" : "1"
   }
 }, {
+  "id" : "default_catalog.default_database.TableA",
+  "name" : "TableA",
+  "type" : "export",
+  "stage" : "flink",
+  "inputs" : [ "default_catalog.default_database.TableA_in1" ],
+  "connector" : {
+    "connector" : "print"
+  }
+}, {
+  "id" : "default_catalog.default_database.TableA_in1",
+  "name" : "TableA_in1",
+  "type" : "stream",
+  "stage" : "flink",
+  "inputs" : [ "default_catalog.default_database.Src" ],
+  "annotations" : [ ],
+  "plan" : "LogicalProject(val=[$0])\n  LogicalTableScan(table=[[default_catalog, default_database, Src]])\n",
+  "sql" : "SELECT `Src`.`val`\nFROM `default_catalog`.`default_database`.`Src` AS `Src`",
+  "timestamp" : "-",
+  "schema" : [ {
+    "name" : "val",
+    "type" : "INTEGER NOT NULL"
+  } ],
+  "row_count" : "~1e8"
+}, {
+  "id" : "default_catalog.default_database.TableB",
+  "name" : "TableB",
+  "type" : "export",
+  "stage" : "flink",
+  "inputs" : [ "default_catalog.default_database.TableB_in2" ],
+  "connector" : {
+    "connector" : "print"
+  }
+}, {
+  "id" : "default_catalog.default_database.TableB_in2",
+  "name" : "TableB_in2",
+  "type" : "stream",
+  "stage" : "flink",
+  "inputs" : [ "default_catalog.default_database.Src" ],
+  "annotations" : [ ],
+  "plan" : "LogicalProject(val=[$0])\n  LogicalTableScan(table=[[default_catalog, default_database, Src]])\n",
+  "sql" : "SELECT `Src`.`val`\nFROM `default_catalog`.`default_database`.`Src` AS `Src`",
+  "timestamp" : "-",
+  "schema" : [ {
+    "name" : "val",
+    "type" : "INTEGER NOT NULL"
+  } ],
+  "row_count" : "~1e8"
+}, {
+  "id" : "default_catalog.default_database.TableC",
+  "name" : "TableC",
+  "type" : "export",
+  "stage" : "flink",
+  "inputs" : [ "default_catalog.default_database.TableC_in3" ],
+  "connector" : {
+    "connector" : "print"
+  }
+}, {
+  "id" : "default_catalog.default_database.TableC_in3",
+  "name" : "TableC_in3",
+  "type" : "stream",
+  "stage" : "flink",
+  "inputs" : [ "default_catalog.default_database.Src" ],
+  "annotations" : [ ],
+  "plan" : "LogicalProject(val=[$0])\n  LogicalTableScan(table=[[default_catalog, default_database, Src]])\n",
+  "sql" : "SELECT `Src`.`val`\nFROM `default_catalog`.`default_database`.`Src` AS `Src`",
+  "timestamp" : "-",
+  "schema" : [ {
+    "name" : "val",
+    "type" : "INTEGER NOT NULL"
+  } ],
+  "row_count" : "~1e8"
+}, {
   "id" : "tables.sinks.SinkA",
   "name" : "SinkA",
   "type" : "export",

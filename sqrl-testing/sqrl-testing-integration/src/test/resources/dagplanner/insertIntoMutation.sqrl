@@ -1,0 +1,15 @@
+IMPORT ecommerceTs.customer;
+
+CustomerForApi := SELECT * FROM Customer;
+
+/*+engine(kafka) */
+CREATE TABLE CustomerCount (
+    customerid BIGINT,
+    numEntries BIGINT,
+    PRIMARY KEY (customerid) NOT ENFORCED
+);
+
+INSERT INTO CustomerCount
+    SELECT customerid, COUNT(*) AS numEntries
+    FROM Customer
+    GROUP BY customerid;

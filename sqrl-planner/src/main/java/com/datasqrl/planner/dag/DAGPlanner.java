@@ -17,7 +17,6 @@ package com.datasqrl.planner.dag;
 
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
-import com.datasqrl.config.PackageJson;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.DataTypeMapping.Direction;
 import com.datasqrl.engine.EngineFeature;
@@ -103,7 +102,6 @@ public class DAGPlanner {
 
   private final ExecutionPipeline pipeline;
   private final ErrorCollector errors;
-  private final PackageJson packageJson;
 
   /**
    * Eliminates unreachable nodes from the DAG and determines all viable execution stages for each
@@ -239,10 +237,17 @@ public class DAGPlanner {
                     } else {
                       // Special case, we sink directly to table
                       targetTable = exportNode.getCreatedSinkTable().get();
-                      sqrlEnv.insertInto(
-                          sqrlEnv.getTableScan(node.getIdentifier().objectIdentifier()).build(),
-                          targetTable,
-                          exportNode.getBatchIndex());
+                      exportNode
+                          .getOriginalInsert()
+                          .ifPresentOrElse(
+                              insert -> sqrlEnv.insertInto(insert, exportNode.getBatchIndex()),
+                              () ->
+                                  sqrlEnv.insertInto(
+                                      sqrlEnv
+                                          .getTableScan(node.getIdentifier().objectIdentifier())
+                                          .build(),
+                                      targetTable,
+                                      exportNode.getBatchIndex()));
                       continue;
                     }
                   } else { // We are sinking into another engine
