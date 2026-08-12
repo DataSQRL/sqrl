@@ -130,6 +130,10 @@ public class HttpServerVerticle extends AbstractVerticle {
   // ---------------------------------------------------------------------------
 
   private void bootstrap(Promise<Void> startPromise) {
+    // graphql-java parser limits are JVM-wide statics, so they are applied once here rather than
+    // per GraphQLServerVerticle, which is deployed once per model version
+    config.getGraphQLParserConfig().applyToParserDefaults();
+
     var router = Router.router(vertx);
     var moduleContext =
         new VertxServerModuleContext(vertx, router, config, models, planDir, closeables);

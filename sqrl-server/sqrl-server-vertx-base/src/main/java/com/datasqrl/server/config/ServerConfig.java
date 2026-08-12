@@ -63,6 +63,7 @@ public class ServerConfig {
   private OpenApiConfig openApiConfig = new OpenApiConfig();
   private GraphQLTailSampleTracingConfig graphQLTailSampleTracingConfig =
       new GraphQLTailSampleTracingConfig();
+  private GraphQLParserConfig graphQLParserConfig = new GraphQLParserConfig();
   private Map<String, Object> jwtAuth;
   private OAuthConfig oauthConfig;
 
@@ -182,6 +183,14 @@ public class ServerConfig {
         options == null
             ? new GraphQLTailSampleTracingConfig()
             : MAPPER.convertValue(options, GraphQLTailSampleTracingConfig.class);
+  }
+
+  @JsonSetter("graphQLParserConfig")
+  public void setGraphQLParserConfigFromJson(Map<String, Object> options) {
+    this.graphQLParserConfig =
+        options == null
+            ? new GraphQLParserConfig()
+            : MAPPER.convertValue(options, GraphQLParserConfig.class);
   }
 
   private JsonObject getJsonObjectOrEmpty(Map<String, Object> options) {
