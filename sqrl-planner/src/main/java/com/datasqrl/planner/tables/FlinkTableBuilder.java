@@ -138,6 +138,11 @@ public class FlinkTableBuilder {
     return this;
   }
 
+  public FlinkTableBuilder setSourceWatermark(String timestampColumnName) {
+    setWatermark(FlinkSqlNodes.createSourceWatermark(timestampColumnName));
+    return this;
+  }
+
   public boolean hasWatermark() {
     return watermark != null;
   }

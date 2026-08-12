@@ -1,0 +1,6 @@
+[FATAL] SOURCE_WATERMARK is only supported in 'kafka-safe' and 'upsert-kafka-safe' connectors, but found: kafka
+in script:kafka.sqrl [2:1]:
+/*+engine(kafka), no_query */
+CREATE TABLE InputTable (
+^
+

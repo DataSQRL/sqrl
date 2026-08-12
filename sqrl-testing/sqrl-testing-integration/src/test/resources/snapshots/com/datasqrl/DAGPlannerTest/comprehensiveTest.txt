@@ -408,7 +408,7 @@ CREATE TABLE `Orders` (
   PRIMARY KEY (`orderid`) NOT ENFORCED
 )
 WITH (
-  'connector' = 'upsert-kafka',
+  'connector' = 'upsert-kafka-safe',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -731,7 +731,7 @@ CREATE TABLE `Orders` (
   PRIMARY KEY (`orderid`) NOT ENFORCED
 )
 WITH (
-  'connector' = 'upsert-kafka',
+  'connector' = 'upsert-kafka-safe',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -809,7 +809,7 @@ CREATE TABLE `Customer_3` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',
@@ -878,7 +878,7 @@ CREATE TABLE `CustomerSubscription_7` (
   `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',

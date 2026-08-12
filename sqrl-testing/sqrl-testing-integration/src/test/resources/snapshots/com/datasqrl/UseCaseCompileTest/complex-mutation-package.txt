@@ -120,10 +120,10 @@ CREATE TABLE `InputTable` (
   `userid` INTEGER NOT NULL,
   `tokens` BIGINT NOT NULL,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
-  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+  WATERMARK FOR `event_time` AS `SOURCE_WATERMARK`()
 )
 WITH (
-  'connector' = 'kafka',
+  'connector' = 'kafka-safe',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',

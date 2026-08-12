@@ -17,6 +17,9 @@
     }
   },
   "connectors" : {
+    "kafka-mutation" : {
+      "connector": "kafka"
+    },
     "iceberg" : {
       "warehouse":"/tmp/duckdb",
       "catalog-type":"hadoop",
