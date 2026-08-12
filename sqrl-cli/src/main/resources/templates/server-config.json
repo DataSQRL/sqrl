@@ -179,6 +179,12 @@
     "maxFieldTraces" : 50,
     "thresholds" : { }
   },
+  "graphQLParserConfig" : {
+    "maxCharacters" : 1048576,
+    "maxTokens" : 15000,
+    "maxWhitespaceTokens" : 200000,
+    "maxRuleDepth" : 500
+  },
   "jwtAuth" : null,
   "oauthConfig" : null,
   "kafkaMutationConfig" : {

@@ -18,6 +18,7 @@ package com.datasqrl.server.config;
 import static com.datasqrl.util.JsonUtils.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import graphql.parser.ParserOptions;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -40,6 +41,9 @@ class ServerConfigTest {
     assertThat(serverConfig.getOpenApiConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig().isEnabled()).isFalse();
+    assertThat(serverConfig.getGraphQLParserConfig()).isNotNull();
+    assertThat(serverConfig.getGraphQLParserConfig().getMaxTokens())
+        .isEqualTo(ParserOptions.MAX_QUERY_TOKENS);
     assertThat(serverConfig.getKafkaMutationConfig()).isNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNull();
   }
@@ -66,6 +70,14 @@ class ServerConfigTest {
             .put("defaultThresholdMs", 750)
             .put("maxLoggedTracesPerMinute", 10)
             .set("thresholds", MAPPER.createObjectNode().put("Query.HighTempAlert", 250)));
+    json.set(
+        "graphQLParserConfig",
+        MAPPER
+            .createObjectNode()
+            .put("maxCharacters", 2_000_000)
+            .put("maxTokens", 45_000)
+            .put("maxWhitespaceTokens", 400_000)
+            .put("maxRuleDepth", 700));
 
     var kafkaMutationConfig = MAPPER.createObjectNode();
     kafkaMutationConfig.put("bootstrap.servers", "localhost:9092");
@@ -95,6 +107,10 @@ class ServerConfigTest {
         .isEqualTo(10);
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig().getThresholds())
         .containsEntry("Query.HighTempAlert", 250L);
+    assertThat(serverConfig.getGraphQLParserConfig().getMaxCharacters()).isEqualTo(2_000_000);
+    assertThat(serverConfig.getGraphQLParserConfig().getMaxTokens()).isEqualTo(45_000);
+    assertThat(serverConfig.getGraphQLParserConfig().getMaxWhitespaceTokens()).isEqualTo(400_000);
+    assertThat(serverConfig.getGraphQLParserConfig().getMaxRuleDepth()).isEqualTo(700);
     assertThat(serverConfig.getKafkaMutationConfig()).isNotNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNotNull();
   }
@@ -111,6 +127,7 @@ class ServerConfigTest {
     json.putNull("jwtAuth");
     json.putNull("openApiConfig");
     json.putNull("graphQLTailSampleTracingConfig");
+    json.putNull("graphQLParserConfig");
     json.putNull("kafkaMutationConfig");
     json.putNull("kafkaSubscriptionConfig");
 
@@ -124,6 +141,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getCorsHandlerOptions()).isNotNull();
     assertThat(serverConfig.getOpenApiConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig()).isNotNull();
+    assertThat(serverConfig.getGraphQLParserConfig()).isNotNull();
 
     // PgConnectOptions uses empty default when null
     assertThat(serverConfig.getPgConnectOptions()).isNotNull();
