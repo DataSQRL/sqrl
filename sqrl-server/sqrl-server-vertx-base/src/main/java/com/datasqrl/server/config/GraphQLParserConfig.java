@@ -25,19 +25,10 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Overrides for everything graphql-java exposes on {@link ParserOptions} when parsing incoming
- * GraphQL documents. The four limits guard against Denial Of Service attacks; exceeding any of them
- * aborts parsing with a "To prevent Denial Of Service attacks, parsing has been cancelled" error.
+ * Config overrides for graphql-java {@link ParserOptions}. The four limits protect against
+ * denial-of-service attacks. Boxed values preserve each parser's default when unset.
  *
- * <p>Every setting is a boxed type rather than a primitive so that "not specified" is
- * representable. graphql-java does not use the same value for every kind of parsing — {@code
- * captureLineComments}, for instance, defaults to {@code true} for generic parsing but {@code
- * false} for operations — so this class holds only what the user actually set and leaves the rest
- * to graphql-java's own default for the parser being configured. Behaviour is therefore unchanged
- * when the {@code graphQLParserConfig} section is absent from {@code vertx-config.json}.
- *
- * <p>{@code parsingListener} is deliberately not exposed: it takes a callback implementation, which
- * cannot be expressed in a config file.
+ * <p>{@code parsingListener} is excluded because a callback cannot be represented in configuration.
  */
 @Getter
 @Setter
@@ -58,12 +49,7 @@ public class GraphQLParserConfig {
   private Boolean readerTrackData;
   private Boolean redactTokenParserErrorMessages;
 
-  /**
-   * Applies this configuration to the JVM-wide graphql-java parser defaults. Both the generic and
-   * the operation defaults are updated because query parsing resolves its options from {@link
-   * ParserOptions#getDefaultOperationParserOptions()}. SDL parsing keeps its own, much higher
-   * defaults and is deliberately left untouched.
-   */
+  /** Applies overrides to the JVM-wide generic and operation parser defaults, not SDL defaults. */
   public void applyParserConfig() {
     if (!hasOverrides()) {
       return;
