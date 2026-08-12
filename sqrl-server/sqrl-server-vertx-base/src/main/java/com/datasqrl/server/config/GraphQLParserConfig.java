@@ -17,6 +17,7 @@ package com.datasqrl.server.config;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import graphql.parser.ParserOptions;
+import java.util.function.Consumer;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,18 +25,16 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Everything graphql-java exposes on {@link ParserOptions} for parsing incoming GraphQL documents.
+ * Overrides for everything graphql-java exposes on {@link ParserOptions} when parsing incoming
+ * GraphQL documents. The four limits guard against Denial Of Service attacks; exceeding any of them
+ * aborts parsing with a "To prevent Denial Of Service attacks, parsing has been cancelled" error.
  *
- * <p>The four limits guard against Denial Of Service attacks; exceeding any of them aborts parsing
- * with a "To prevent Denial Of Service attacks, parsing has been cancelled" error. Their defaults
- * mirror graphql-java's own constants.
- *
- * <p>The remaining flags are {@link Boolean} rather than {@code boolean} because graphql-java does
- * not use the same value for every kind of parsing — {@code captureLineComments}, for instance,
- * defaults to {@code true} for generic parsing but {@code false} for operations. Leaving one unset
- * (null) keeps whatever graphql-java itself defaults to for the parser being configured, so
- * behaviour is unchanged when the {@code graphQLParserConfig} section is absent from {@code
- * vertx-config.json}.
+ * <p>Every setting is a boxed type rather than a primitive so that "not specified" is
+ * representable. graphql-java does not use the same value for every kind of parsing — {@code
+ * captureLineComments}, for instance, defaults to {@code true} for generic parsing but {@code
+ * false} for operations — so this class holds only what the user actually set and leaves the rest
+ * to graphql-java's own default for the parser being configured. Behaviour is therefore unchanged
+ * when the {@code graphQLParserConfig} section is absent from {@code vertx-config.json}.
  *
  * <p>{@code parsingListener} is deliberately not exposed: it takes a callback implementation, which
  * cannot be expressed in a config file.
@@ -48,10 +47,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GraphQLParserConfig {
 
-  private int maxCharacters = ParserOptions.MAX_QUERY_CHARACTERS;
-  private int maxTokens = ParserOptions.MAX_QUERY_TOKENS;
-  private int maxWhitespaceTokens = ParserOptions.MAX_WHITESPACE_TOKENS;
-  private int maxRuleDepth = ParserOptions.MAX_RULE_DEPTH;
+  private Integer maxCharacters;
+  private Integer maxTokens;
+  private Integer maxWhitespaceTokens;
+  private Integer maxRuleDepth;
 
   private Boolean captureIgnoredChars;
   private Boolean captureSourceLocation;
@@ -66,7 +65,7 @@ public class GraphQLParserConfig {
    * defaults and is deliberately left untouched.
    */
   public void applyParserConfig() {
-    if (isDefault()) {
+    if (!hasOverrides()) {
       return;
     }
 
@@ -80,42 +79,36 @@ public class GraphQLParserConfig {
     ParserOptions.setDefaultOperationParserOptions(updatedOperationParserOptions);
   }
 
-  private boolean isDefault() {
-    return maxCharacters == ParserOptions.MAX_QUERY_CHARACTERS
-        && maxTokens == ParserOptions.MAX_QUERY_TOKENS
-        && maxWhitespaceTokens == ParserOptions.MAX_WHITESPACE_TOKENS
-        && maxRuleDepth == ParserOptions.MAX_RULE_DEPTH
-        && captureIgnoredChars == null
-        && captureSourceLocation == null
-        && captureLineComments == null
-        && readerTrackData == null
-        && redactTokenParserErrorMessages == null;
+  private boolean hasOverrides() {
+    return maxCharacters != null
+        || maxTokens != null
+        || maxWhitespaceTokens != null
+        || maxRuleDepth != null
+        || captureIgnoredChars != null
+        || captureSourceLocation != null
+        || captureLineComments != null
+        || readerTrackData != null
+        || redactTokenParserErrorMessages != null;
   }
 
   private ParserOptions withCustomConfig(ParserOptions options) {
     return options.transform(
         builder -> {
-          builder
-              .maxCharacters(maxCharacters)
-              .maxTokens(maxTokens)
-              .maxWhitespaceTokens(maxWhitespaceTokens)
-              .maxRuleDepth(maxRuleDepth);
-
-          if (captureIgnoredChars != null) {
-            builder.captureIgnoredChars(captureIgnoredChars);
-          }
-          if (captureSourceLocation != null) {
-            builder.captureSourceLocation(captureSourceLocation);
-          }
-          if (captureLineComments != null) {
-            builder.captureLineComments(captureLineComments);
-          }
-          if (readerTrackData != null) {
-            builder.readerTrackData(readerTrackData);
-          }
-          if (redactTokenParserErrorMessages != null) {
-            builder.redactTokenParserErrorMessages(redactTokenParserErrorMessages);
-          }
+          applyIfSet(maxCharacters, builder::maxCharacters);
+          applyIfSet(maxTokens, builder::maxTokens);
+          applyIfSet(maxWhitespaceTokens, builder::maxWhitespaceTokens);
+          applyIfSet(maxRuleDepth, builder::maxRuleDepth);
+          applyIfSet(captureIgnoredChars, builder::captureIgnoredChars);
+          applyIfSet(captureSourceLocation, builder::captureSourceLocation);
+          applyIfSet(captureLineComments, builder::captureLineComments);
+          applyIfSet(readerTrackData, builder::readerTrackData);
+          applyIfSet(redactTokenParserErrorMessages, builder::redactTokenParserErrorMessages);
         });
+  }
+
+  private static <T> void applyIfSet(T value, Consumer<T> setter) {
+    if (value != null) {
+      setter.accept(value);
+    }
   }
 }

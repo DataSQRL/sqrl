@@ -18,7 +18,6 @@ package com.datasqrl.server.config;
 import static com.datasqrl.util.JsonUtils.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import graphql.parser.ParserOptions;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -42,8 +41,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig().isEnabled()).isFalse();
     assertThat(serverConfig.getGraphQLParserConfig()).isNotNull();
-    assertThat(serverConfig.getGraphQLParserConfig().getMaxTokens())
-        .isEqualTo(ParserOptions.MAX_QUERY_TOKENS);
+    assertThat(serverConfig.getGraphQLParserConfig().getMaxTokens()).isNull();
     assertThat(serverConfig.getKafkaMutationConfig()).isNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNull();
   }

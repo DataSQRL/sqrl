@@ -40,13 +40,13 @@ class GraphQLParserConfigTest {
   }
 
   @Test
-  void given_newConfig_when_created_then_limitsMatchGraphQlJavaDefaults() {
+  void given_newConfig_when_created_then_nothingIsOverridden() {
     var config = new GraphQLParserConfig();
 
-    assertThat(config.getMaxCharacters()).isEqualTo(ParserOptions.MAX_QUERY_CHARACTERS);
-    assertThat(config.getMaxTokens()).isEqualTo(ParserOptions.MAX_QUERY_TOKENS);
-    assertThat(config.getMaxWhitespaceTokens()).isEqualTo(ParserOptions.MAX_WHITESPACE_TOKENS);
-    assertThat(config.getMaxRuleDepth()).isEqualTo(ParserOptions.MAX_RULE_DEPTH);
+    assertThat(config.getMaxCharacters()).isNull();
+    assertThat(config.getMaxTokens()).isNull();
+    assertThat(config.getMaxWhitespaceTokens()).isNull();
+    assertThat(config.getMaxRuleDepth()).isNull();
     assertThat(config.getCaptureIgnoredChars()).isNull();
     assertThat(config.getCaptureSourceLocation()).isNull();
     assertThat(config.getCaptureLineComments()).isNull();
@@ -90,6 +90,20 @@ class GraphQLParserConfigTest {
 
     assertThat(ParserOptions.getDefaultParserOptions().isCaptureLineComments()).isTrue();
     assertThat(ParserOptions.getDefaultOperationParserOptions().isCaptureLineComments()).isFalse();
+  }
+
+  @Test
+  void given_unsetLimits_when_flagIsApplied_then_graphQlJavaLimitDefaultsAreKept() {
+    var config = new GraphQLParserConfig();
+    config.setCaptureIgnoredChars(true);
+
+    config.applyParserConfig();
+
+    var applied = ParserOptions.getDefaultOperationParserOptions();
+    assertThat(applied.getMaxCharacters()).isEqualTo(ParserOptions.MAX_QUERY_CHARACTERS);
+    assertThat(applied.getMaxTokens()).isEqualTo(ParserOptions.MAX_QUERY_TOKENS);
+    assertThat(applied.getMaxWhitespaceTokens()).isEqualTo(ParserOptions.MAX_WHITESPACE_TOKENS);
+    assertThat(applied.getMaxRuleDepth()).isEqualTo(ParserOptions.MAX_RULE_DEPTH);
   }
 
   @Test
@@ -145,7 +159,7 @@ class GraphQLParserConfigTest {
   }
 
   @Test
-  void given_defaultLimits_when_appliedToParserDefaults_then_parserDefaultsAreUnchanged() {
+  void given_noOverrides_when_appliedToParserDefaults_then_parserDefaultsAreUnchanged() {
     var operationDefaults = ParserOptions.getDefaultOperationParserOptions();
 
     new GraphQLParserConfig().applyParserConfig();
