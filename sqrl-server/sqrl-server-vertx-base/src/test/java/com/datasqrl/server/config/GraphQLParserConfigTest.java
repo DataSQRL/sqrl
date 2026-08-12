@@ -40,13 +40,70 @@ class GraphQLParserConfigTest {
   }
 
   @Test
-  void given_newConfig_when_created_then_limitsMatchGraphQlJavaDefaults() {
+  void given_newConfig_when_created_then_nothingIsOverridden() {
     var config = new GraphQLParserConfig();
 
-    assertThat(config.getMaxCharacters()).isEqualTo(ParserOptions.MAX_QUERY_CHARACTERS);
-    assertThat(config.getMaxTokens()).isEqualTo(ParserOptions.MAX_QUERY_TOKENS);
-    assertThat(config.getMaxWhitespaceTokens()).isEqualTo(ParserOptions.MAX_WHITESPACE_TOKENS);
-    assertThat(config.getMaxRuleDepth()).isEqualTo(ParserOptions.MAX_RULE_DEPTH);
+    assertThat(config.getMaxCharacters()).isNull();
+    assertThat(config.getMaxTokens()).isNull();
+    assertThat(config.getMaxWhitespaceTokens()).isNull();
+    assertThat(config.getMaxRuleDepth()).isNull();
+    assertThat(config.getCaptureIgnoredChars()).isNull();
+    assertThat(config.getCaptureSourceLocation()).isNull();
+    assertThat(config.getCaptureLineComments()).isNull();
+    assertThat(config.getReaderTrackData()).isNull();
+    assertThat(config.getRedactTokenParserErrorMessages()).isNull();
+  }
+
+  @Test
+  void given_customFlags_when_appliedToParserDefaults_then_bothParserDefaultsAreUpdated() {
+    var config = new GraphQLParserConfig();
+    config.setCaptureIgnoredChars(true);
+    config.setCaptureSourceLocation(false);
+    config.setCaptureLineComments(true);
+    config.setReaderTrackData(false);
+    config.setRedactTokenParserErrorMessages(true);
+
+    config.applyParserConfig();
+
+    for (var options :
+        new ParserOptions[] {
+          ParserOptions.getDefaultParserOptions(), ParserOptions.getDefaultOperationParserOptions()
+        }) {
+      assertThat(options.isCaptureIgnoredChars()).isTrue();
+      assertThat(options.isCaptureSourceLocation()).isFalse();
+      assertThat(options.isCaptureLineComments()).isTrue();
+      assertThat(options.isReaderTrackData()).isFalse();
+      assertThat(options.isRedactTokenParserErrorMessages()).isTrue();
+    }
+  }
+
+  /**
+   * graphql-java defaults {@code captureLineComments} to true for generic parsing but false for
+   * operations, so an unset flag must not flatten that difference.
+   */
+  @Test
+  void given_unsetFlags_when_limitsAreApplied_then_graphQlJavaFlagDefaultsAreKeptPerParser() {
+    var config = new GraphQLParserConfig();
+    config.setMaxTokens(45_000);
+
+    config.applyParserConfig();
+
+    assertThat(ParserOptions.getDefaultParserOptions().isCaptureLineComments()).isTrue();
+    assertThat(ParserOptions.getDefaultOperationParserOptions().isCaptureLineComments()).isFalse();
+  }
+
+  @Test
+  void given_unsetLimits_when_flagIsApplied_then_graphQlJavaLimitDefaultsAreKept() {
+    var config = new GraphQLParserConfig();
+    config.setCaptureIgnoredChars(true);
+
+    config.applyParserConfig();
+
+    var applied = ParserOptions.getDefaultOperationParserOptions();
+    assertThat(applied.getMaxCharacters()).isEqualTo(ParserOptions.MAX_QUERY_CHARACTERS);
+    assertThat(applied.getMaxTokens()).isEqualTo(ParserOptions.MAX_QUERY_TOKENS);
+    assertThat(applied.getMaxWhitespaceTokens()).isEqualTo(ParserOptions.MAX_WHITESPACE_TOKENS);
+    assertThat(applied.getMaxRuleDepth()).isEqualTo(ParserOptions.MAX_RULE_DEPTH);
   }
 
   @Test
@@ -102,7 +159,7 @@ class GraphQLParserConfigTest {
   }
 
   @Test
-  void given_defaultLimits_when_appliedToParserDefaults_then_parserDefaultsAreUnchanged() {
+  void given_noOverrides_when_appliedToParserDefaults_then_parserDefaultsAreUnchanged() {
     var operationDefaults = ParserOptions.getDefaultOperationParserOptions();
 
     new GraphQLParserConfig().applyParserConfig();
