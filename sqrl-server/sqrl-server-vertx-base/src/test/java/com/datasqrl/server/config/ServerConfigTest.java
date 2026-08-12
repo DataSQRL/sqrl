@@ -18,7 +18,6 @@ package com.datasqrl.server.config;
 import static com.datasqrl.util.JsonUtils.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import graphql.parser.ParserOptions;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -42,8 +41,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig().isEnabled()).isFalse();
     assertThat(serverConfig.getGraphQLParserConfig()).isNotNull();
-    assertThat(serverConfig.getGraphQLParserConfig().getMaxTokens())
-        .isEqualTo(ParserOptions.MAX_QUERY_TOKENS);
+    assertThat(serverConfig.getGraphQLParserConfig().getMaxTokens()).isNull();
     assertThat(serverConfig.getKafkaMutationConfig()).isNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNull();
   }
@@ -77,7 +75,12 @@ class ServerConfigTest {
             .put("maxCharacters", 2_000_000)
             .put("maxTokens", 45_000)
             .put("maxWhitespaceTokens", 400_000)
-            .put("maxRuleDepth", 700));
+            .put("maxRuleDepth", 700)
+            .put("captureIgnoredChars", true)
+            .put("captureSourceLocation", false)
+            .put("captureLineComments", true)
+            .put("readerTrackData", false)
+            .put("redactTokenParserErrorMessages", true));
 
     var kafkaMutationConfig = MAPPER.createObjectNode();
     kafkaMutationConfig.put("bootstrap.servers", "localhost:9092");
@@ -111,6 +114,11 @@ class ServerConfigTest {
     assertThat(serverConfig.getGraphQLParserConfig().getMaxTokens()).isEqualTo(45_000);
     assertThat(serverConfig.getGraphQLParserConfig().getMaxWhitespaceTokens()).isEqualTo(400_000);
     assertThat(serverConfig.getGraphQLParserConfig().getMaxRuleDepth()).isEqualTo(700);
+    assertThat(serverConfig.getGraphQLParserConfig().getCaptureIgnoredChars()).isTrue();
+    assertThat(serverConfig.getGraphQLParserConfig().getCaptureSourceLocation()).isFalse();
+    assertThat(serverConfig.getGraphQLParserConfig().getCaptureLineComments()).isTrue();
+    assertThat(serverConfig.getGraphQLParserConfig().getReaderTrackData()).isFalse();
+    assertThat(serverConfig.getGraphQLParserConfig().getRedactTokenParserErrorMessages()).isTrue();
     assertThat(serverConfig.getKafkaMutationConfig()).isNotNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNotNull();
   }
