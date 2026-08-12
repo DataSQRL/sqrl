@@ -17,6 +17,9 @@ package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.env.EnvVariableNames;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.sql.SQLException;
 import java.sql.Statement;
 import lombok.SneakyThrows;
@@ -60,5 +63,41 @@ public class ServerFunctionContainerIT {
       var responseBody = EntityUtils.toString(response.getEntity());
       assertThat(responseBody).contains("Bob Jones");
     }
+  }
+
+  @Test
+  @SneakyThrows
+  void givenLoweredMaxTokens_whenQueryExceedsIt_thenParsingIsCancelled() {
+    postgres.startPostgreSQLContainer();
+    sqrl.compileSqrlProject();
+    applyMaxTokens(5);
+
+    sqrl.startGraphQLServer(
+        container ->
+            container
+                .withEnv(EnvVariableNames.POSTGRES_HOST, "postgresql")
+                .withEnv(EnvVariableNames.POSTGRES_USERNAME, postgres.getPostgresql().getUsername())
+                .withEnv(EnvVariableNames.POSTGRES_PASSWORD, postgres.getPostgresql().getPassword())
+                .withEnv(
+                    EnvVariableNames.POSTGRES_DATABASE, postgres.getPostgresql().getDatabaseName())
+                .withEnv(EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS, "localhost:9092"));
+
+    try (var response =
+        sqrl.executeGraphQLQuery(
+            "{\"query\":\"query { CustomersByName(inputName: \\\"Bobasd\\\") { customerid, name } }\"}")) {
+      assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
+
+      var responseBody = EntityUtils.toString(response.getEntity());
+      assertThat(responseBody).contains("More than 5 'grammar' tokens have been presented");
+    }
+  }
+
+  @SneakyThrows
+  private void applyMaxTokens(int maxTokens) {
+    var configPath = sqrl.getTestDir().resolve("build/deploy/plan/vertx-config.json");
+    var mapper = new ObjectMapper();
+    var config = (ObjectNode) mapper.readTree(configPath.toFile());
+    config.set("graphQLParserConfig", mapper.createObjectNode().put("maxTokens", maxTokens));
+    mapper.writerWithDefaultPrettyPrinter().writeValue(configPath.toFile(), config);
   }
 }
