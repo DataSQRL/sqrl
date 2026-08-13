@@ -53,13 +53,13 @@ Apache Flink deployments consist of 1 job manager and a configurable number of i
 
 ### Task Manager Sizes
 
-| Name | CPU | Task Slots | Memory (GiB) | NVMe Space | Max CPU Burst |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| dev | 0.5 | 1 | 2 | 20GB | 2 |
-| small | 1 | 1 | 4 | 55GB | 1 |
-| medium | 2 | 2 | 8 | 110GB | 1 |
-| large | 4 | 4 | 16 | 220GB | 1 |
-| xlarge | 8 | 8 | 32 | 440GB | 1 |
+| Name   | CPU | Task Slots | Memory (GiB) | NVMe Space | Max CPU Burst |
+|:-------|:----|:-----------|:-------------|:-----------|:--------------|
+| dev    | 0.5 | 1          | 2            | 20GB       | 2             |
+| small  | 1   | 1          | 4            | 55GB       | 1             |
+| medium | 2   | 2          | 8            | 110GB      | 1             |
+| large  | 4   | 4          | 16           | 220GB      | 1             |
+| xlarge | 8   | 8          | 32           | 440GB      | 1             |
 
 The `dev` size is intended for development and testing with small amounts of data.
 
@@ -71,15 +71,15 @@ Task manager sizes support qualifiers for specialized workloads. Qualifiers are 
 * **`.mem-headroom-Nx`** scales the pod memory by `N` but keeps Flink's allocation at the **baseline** memory; the extra memory is reserved for sidecar / native consumers (e.g., DuckDB, JNI libs, page cache).
 * **`.cpu`** doubles CPU with the same memory.
 
-| Qualifier | Pod memory | Flink heap+managed | Typical use |
-| :--- | :--- | :--- | :--- |
-| `.cpu` | base | base × 0.80 | CPU-intensive jobs |
-| `.mem` / `.mem-2x` | base × 2 | base × 1.6 | State-heavy jobs |
-| `.mem-4x` | base × 4 | base × 3.2 | Large state |
-| `.mem-8x` | base × 8 | base × 6.4 | Very large state |
-| `.mem-headroom-2x` | base × 2 | base × 1 | Sidecars / native memory consumers |
-| `.mem-headroom-4x` | base × 4 | base × 1 | Larger sidecar headroom |
-| `.mem-headroom-8x` | base × 8 | base × 1 | Maximum sidecar headroom (e.g. DuckDB) |
+| Qualifier          | Pod memory | Flink heap+managed | Typical use                            |
+|:-------------------|:-----------|:-------------------|:---------------------------------------|
+| `.cpu`             | base       | base × 0.80        | CPU-intensive jobs                     |
+| `.mem` / `.mem-2x` | base × 2   | base × 1.6         | State-heavy jobs                       |
+| `.mem-4x`          | base × 4   | base × 3.2         | Large state                            |
+| `.mem-8x`          | base × 8   | base × 6.4         | Very large state                       |
+| `.mem-headroom-2x` | base × 2   | base × 1           | Sidecars / native memory consumers     |
+| `.mem-headroom-4x` | base × 4   | base × 1           | Larger sidecar headroom                |
+| `.mem-headroom-8x` | base × 8   | base × 1           | Maximum sidecar headroom (e.g. DuckDB) |
 
 Examples:
 
@@ -92,12 +92,12 @@ Size qualifiers do not apply to the `dev` instance.
 
 ### Job Manager Sizes
 
-| Name | SubTasks | CPU | Memory (GiB) |
-| :--- | :--- | :--- | :--- |
-| dev | &lt;100 | 0.5 | 1 |
-| small | 100-800 | 0.5 | 2 |
-| medium | 800-2000 | 1 | 4 |
-| large | &gt;2000 | 2 | 8 |
+| Name   | SubTasks | CPU | Memory (GiB) |
+|:-------|:---------|:----|:-------------|
+| dev    | &lt;100  | 0.5 | 1            |
+| small  | 100-800  | 0.5 | 2            |
+| medium | 800-2000 | 1   | 4            |
+| large  | &gt;2000 | 2   | 8            |
 
 Choose the job manager size based on the number of subtasks in your Flink job.
 
@@ -127,13 +127,13 @@ PostgreSQL deployments consist of one primary instance and a configurable number
 
 ### Instance Sizes
 
-| Name | CPU | Memory (GiB) | Default Disk | Max CPU Burst | Max Connections |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| dev | 0.5 | 4 | 10GB | 1.5 | 100 |
-| small | 1 | 8 | 128GB | 1 | 100 |
-| medium | 2 | 16 | 256GB | 1 | 200 |
-| large | 4 | 16 | 512GB | 1 | 300 |
-| xlarge | 8 | 32 | 1TB | 1 | 600 |
+| Name   | CPU | Memory (GiB) | Default Disk | Max CPU Burst | Max Connections |
+|:-------|:----|:-------------|:-------------|:--------------|:----------------|
+| dev    | 0.5 | 4            | 10GB         | 1.5           | 100             |
+| small  | 1   | 8            | 128GB        | 1             | 100             |
+| medium | 2   | 16           | 256GB        | 1             | 200             |
+| large  | 4   | 16           | 512GB        | 1             | 300             |
+| xlarge | 8   | 32           | 1TB          | 1             | 600             |
 
 The `dev` size is intended for development and testing with small amounts of data.
 
@@ -158,12 +158,12 @@ Vert.x API server deployments consist of a configurable number of identically si
 
 ### Instance Sizes
 
-| Name | CPU | Memory (GiB) | NVMe Space | Max CPU Burst | Pg Pool Size |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| dev | 0.5 | 2 | - | 1.25 | 5 |
-| small | 1 | 4 | 55GB | 1 | 5 |
-| medium | 2 | 8 | 110GB | 1 | 10 |
-| large | 4 | 16 | 220GB | 1 | 15 |
+| Name   | CPU | Memory (GiB) | NVMe Space | Max CPU Burst | Pg Pool Size |
+|:-------|:----|:-------------|:-----------|:--------------|:-------------|
+| dev    | 0.5 | 2            | -          | 1.25          | 5            |
+| small  | 1   | 4            | 55GB       | 1             | 5            |
+| medium | 2   | 8            | 110GB      | 1             | 10           |
+| large  | 4   | 16           | 220GB      | 1             | 15           |
 
 The `dev` size is intended for development and testing with small amounts of data. The `.disk` qualifier enables NVMe storage for instances that require local disk access.
 
@@ -173,11 +173,11 @@ The `dev` size is intended for development and testing with small amounts of dat
 
 Pins a component's pods onto dedicated nodes. Each engine's `deployment` accepts a list of dedicated-node names. Each name is a **hard requirement**: if no matching node is available, the pod stays `Pending` — it never falls back to a shared node.
 
-| Engine | Field(s) |
-| :--- | :--- |
-| Flink | `taskmanager-dedicated-nodes`, `jobmanager-dedicated-nodes` |
-| PostgreSQL | `dedicated-nodes` |
-| Vert.x | `dedicated-nodes` |
+| Engine     | Field(s)                                                    |
+|:-----------|:------------------------------------------------------------|
+| Flink      | `taskmanager-dedicated-nodes`, `jobmanager-dedicated-nodes` |
+| PostgreSQL | `dedicated-nodes`                                           |
+| Vert.x     | `dedicated-nodes`                                           |
 
 ```json
 {
@@ -237,11 +237,11 @@ The label name and taint key must both equal the dedicated-nodes name. These nod
 
 Protects a component's pods from **voluntary** autoscaler disruption (node consolidation / scale-down). When `true`, the pods are annotated so the cluster autoscaler will not evict or consolidate them. Use it for long-running, stateful, or hard-to-reschedule workloads — for example a Flink catch-up that reprocesses the whole backlog, or the PostgreSQL primary during bootstrap.
 
-| Engine | Field | Default |
-| :--- | :--- | :--- |
-| Flink | `do-not-disrupt` | `false` |
-| PostgreSQL | `do-not-disrupt` | `true` |
-| Vert.x | `do-not-disrupt` | `false` |
+| Engine     | Field            | Default |
+|:-----------|:-----------------|:--------|
+| Flink      | `do-not-disrupt` | `false` |
+| PostgreSQL | `do-not-disrupt` | `true`  |
+| Vert.x     | `do-not-disrupt` | `false` |
 
 ```json
 {
@@ -261,9 +261,9 @@ Protects a component's pods from **voluntary** autoscaler disruption (node conso
 
 Controls whether the PostgreSQL table indexes are created for the deployment. Defaults to `true`. PostgreSQL only.
 
-| Engine | Field | Default |
-| :--- | :--- | :--- |
-| PostgreSQL | `create-indexes` | `true` |
+| Engine     | Field            | Default |
+|:-----------|:-----------------|:--------|
+| PostgreSQL | `create-indexes` | `true`  |
 
 Set it to `false` to bootstrap the database **tables-only**, skipping all index creation. This is intended for a catch-up profile that reprocesses a large backlog: writing to un-indexed tables drains the backlog faster. The indexes are then built when the deployment is upgraded back to a steady-state profile (where `create-indexes` returns to its `true` default), so a catch-up deployment must be followed by such an upgrade before it serves production query traffic.
 
@@ -283,13 +283,13 @@ Set it to `false` to bootstrap the database **tables-only**, skipping all index 
 
 Controls whether PostgreSQL data-page checksums are enabled for the database. Defaults to `true` (the PostgreSQL 18 default). PostgreSQL only.
 
-| Engine | Field | Default |
-| :--- | :--- | :--- |
-| PostgreSQL | `data-checksums` | `true` |
+| Engine     | Field            | Default |
+|:-----------|:-----------------|:--------|
+| PostgreSQL | `data-checksums` | `true`  |
 
 This is an initdb-time setting applied when the database is first created — it is **immutable** and cannot be changed on later deployments or upgrades. Set it to `false` only when the write-throughput cost of checksums matters more than corruption detection, and only for a database that will keep that setting for its lifetime.
 
-```json5
+```json
 {
   "engines": {
     "postgres": {
@@ -305,9 +305,9 @@ This is an initdb-time setting applied when the database is first created — it
 
 Extra PostgreSQL server parameters, merged into the database's `postgresql.parameters`. Any key here overrides the built-in default for that parameter. PostgreSQL only; empty by default.
 
-| Engine | Field | Default |
-| :--- | :--- | :--- |
-| PostgreSQL | `parameters` | `{}` |
+| Engine     | Field        | Default |
+|:-----------|:-------------|:--------|
+| PostgreSQL | `parameters` | `{}`    |
 
 Typically used in a catch-up profile that trades durability for ingest throughput while reprocessing a large backlog — for example a larger `shared_buffers`/`max_wal_size` together with `synchronous_commit: off`. Set these only in the catch-up profile: on the steady-state upgrade any parameter not listed here reverts to its default.
 
