@@ -37,6 +37,36 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+=== customer_id_count
+ID:          default_catalog.default_database.customer_id_count
+Type:        export
+Stage:       flink
+Connector:   blackhole
+---
+Inputs:
+ - default_catalog.default_database.customer_id_count_in1
+
+=== customer_id_count_in1
+ID:          default_catalog.default_database.customer_id_count_in1
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   -
+Row count:   ~1e7
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - numEntries: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Plan:
+LogicalAggregate(group=[{0}], numEntries=[COUNT()])
+  LogicalProject(customerid=[$0])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+SELECT `Customer`.`customerid`, COUNT(*) AS `numEntries`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
+GROUP BY `Customer`.`customerid`
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (
   `customerid` BIGINT NOT NULL,
@@ -79,14 +109,14 @@ WITH (
   'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `customer_id_count`
-SELECT `customerid`, COUNT(*) AS `numEntries`
-FROM `Customer`
-GROUP BY `customerid`
-;
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
+;
+INSERT INTO `customer_id_count`
+SELECT `Customer`.`customerid`, COUNT(*) AS `numEntries`
+FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
+GROUP BY `Customer`.`customerid`
 ;
 END
 >>>kafka.json

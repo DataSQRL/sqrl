@@ -12,6 +12,72 @@ Schema:
 Inputs:
  - default_catalog.default_database.Src__base
 
+=== TableA
+ID:          default_catalog.default_database.TableA
+Type:        export
+Stage:       flink
+Connector:   print
+---
+Inputs:
+ - default_catalog.default_database.TableA_in1
+
+=== TableA_in1
+ID:          default_catalog.default_database.TableA_in1
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - val: INTEGER NOT NULL
+Inputs:
+ - default_catalog.default_database.Src
+
+=== TableB
+ID:          default_catalog.default_database.TableB
+Type:        export
+Stage:       flink
+Connector:   print
+---
+Inputs:
+ - default_catalog.default_database.TableB_in2
+
+=== TableB_in2
+ID:          default_catalog.default_database.TableB_in2
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - val: INTEGER NOT NULL
+Inputs:
+ - default_catalog.default_database.Src
+
+=== TableC
+ID:          default_catalog.default_database.TableC
+Type:        export
+Stage:       flink
+Connector:   print
+---
+Inputs:
+ - default_catalog.default_database.TableC_in3
+
+=== TableC_in3
+ID:          default_catalog.default_database.TableC_in3
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - val: INTEGER NOT NULL
+Inputs:
+ - default_catalog.default_database.Src
+
 === SinkA
 ID:          tables.sinks.SinkA
 Type:        export
@@ -61,13 +127,13 @@ WITH (
   'connector' = 'print'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `TableA`
-SELECT *
-FROM `Src`
-;
 INSERT INTO `default_catalog`.`default_database`.`SinkA_ex1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Src`
+;
+INSERT INTO `TableA`
+SELECT `Src`.`val`
+FROM `default_catalog`.`default_database`.`Src` AS `Src`
 ;
 END
 >>>flink-sql-no-functions-1.sql
@@ -107,13 +173,13 @@ WITH (
   'connector' = 'print'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `TableB`
-SELECT *
-FROM `Src`
-;
 INSERT INTO `default_catalog`.`default_database`.`SinkB_ex2`
 SELECT *
 FROM `default_catalog`.`default_database`.`Src`
+;
+INSERT INTO `TableB`
+SELECT `Src`.`val`
+FROM `default_catalog`.`default_database`.`Src` AS `Src`
 ;
 END
 >>>flink-sql-no-functions-2.sql
@@ -160,8 +226,8 @@ WITH (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `TableC`
-SELECT *
-FROM `Src`
+SELECT `Src`.`val`
+FROM `default_catalog`.`default_database`.`Src` AS `Src`
 ;
 END
 >>>flink-sql-no-functions.sql
@@ -207,28 +273,28 @@ WITH (
   'connector' = 'print'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `TableA`
-SELECT *
-FROM `Src`
-;
 INSERT INTO `default_catalog`.`default_database`.`SinkA_ex1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
+INSERT INTO `TableA`
+SELECT `Src`.`val`
+FROM `default_catalog`.`default_database`.`Src` AS `Src`
+;
 END;
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `TableB`
-SELECT *
-FROM `Src`
-;
 INSERT INTO `default_catalog`.`default_database`.`SinkB_ex2`
 SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
+INSERT INTO `TableB`
+SELECT `Src`.`val`
+FROM `default_catalog`.`default_database`.`Src` AS `Src`
+;
 END;
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `TableC`
-SELECT *
-FROM `Src`
+SELECT `Src`.`val`
+FROM `default_catalog`.`default_database`.`Src` AS `Src`
 ;
 END

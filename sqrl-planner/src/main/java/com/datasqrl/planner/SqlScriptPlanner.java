@@ -146,10 +146,12 @@ import org.springframework.stereotype.Component;
 @Lazy
 public class SqlScriptPlanner {
 
+  private static final String INSERT_SUFFIX = "_in";
   private static final String EXPORT_SUFFIX = "_ex";
   private static final String ACCESS_FUNCTION_SUFFIX = "__access";
 
   private final AtomicInteger exportTableCounter = new AtomicInteger(0);
+  private final AtomicInteger insertTableCounter = new AtomicInteger(0);
 
   private final ErrorCollector errorCollector;
 
@@ -572,10 +574,7 @@ public class SqlScriptPlanner {
                 hintsAndDocs)
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
-        /*TODO: We are not currently adding these to the DAG (and hence no analysis/visualization based on the DAG)
-        We would need to analyze the query and pull out the sources to make that happen. However, for now
-        we are only doing this for FlinkSQL compatibility, so this may be fine. */
-        sqrlEnv.insertInto(insert);
+        addInsert(insert, hintsAndDocs, sqrlEnv, errors);
       } else if (node instanceof SqlAlterTable || node instanceof SqlAlterView) {
         errors.fatal(
             "Renaming or altering tables is not supported. Rename them directly in the script or IMPORT AS.");
@@ -1151,6 +1150,40 @@ public class SqlScriptPlanner {
       }
     }
     dagBuilder.addExport(exportNode, inputNode);
+  }
+
+  private void addInsert(
+      RichSqlInsert insert,
+      HintsAndDoc hintsAndDocs,
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorCollector errors) {
+
+    var sinkTableId = sqrlEnv.getInsertTarget(insert);
+    var sinkTable = sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId);
+    errors.checkFatal(sinkTable != null, "Could not find INSERT target table: %s", sinkTableId);
+
+    var inputTable =
+        sqrlEnv.analyzeInsertQuery(
+            insert.getSource(),
+            scriptContext.toIdentifier(
+                sinkTableId.getObjectName() + INSERT_SUFFIX + insertTableCounter.incrementAndGet()),
+            hintsAndDocs,
+            errors);
+    var inputNode =
+        new TableNode(
+            inputTable,
+            getStageAnalysis(inputTable, determineStages(tableStages, hintsAndDocs.hints())));
+    dagBuilder.add(inputNode);
+    dagBuilder.addExport(
+        new ExportNode(
+            getSourceSinkStageAnalysis(),
+            NamePath.of(sinkTableId.toList().toArray(String[]::new)),
+            sqrlEnv.currentBatch(),
+            Optional.empty(),
+            Optional.of(sinkTableId),
+            sinkTable.getSourceSinkTable(),
+            Optional.of(insert)),
+        inputNode);
   }
 
   /**
