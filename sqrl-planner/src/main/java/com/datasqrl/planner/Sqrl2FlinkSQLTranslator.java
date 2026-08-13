@@ -125,7 +125,6 @@ import org.apache.flink.table.catalog.Column.ComputedColumn;
 import org.apache.flink.table.catalog.Column.MetadataColumn;
 import org.apache.flink.table.catalog.Column.PhysicalColumn;
 import org.apache.flink.table.catalog.ObjectIdentifier;
-import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.operations.Operation;
@@ -167,6 +166,7 @@ import org.apache.flink.table.types.DataType;
 public class Sqrl2FlinkSQLTranslator {
 
   private static final String SCHEMA_SUFFIX = "__schema";
+  private static final String TEMP_VIEW_SUFFIX = "__view";
   private static final String DATATYPE_PARSING_PREFIX =
       "CREATE TEMPORARY TABLE __sqrlinternal_types( ";
 
@@ -503,6 +503,34 @@ public class Sqrl2FlinkSQLTranslator {
     return tableAnalysis;
   }
 
+  /** Analyzes a query executed directly by an INSERT statement. */
+  public TableAnalysis analyzeInsertQuery(
+      SqlNode query, ObjectIdentifier identifier, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
+    var flinkPlanner = validatorSupplier.get();
+    var relRoot = toRelRoot(query, flinkPlanner);
+    var analyzer =
+        new SQRLLogicalPlanAnalyzer(
+            relRoot.project(),
+            tableLookup,
+            identifier.getObjectName(),
+            getRelBuilder(flinkPlanner),
+            flinkPlanner
+                .getOrCreateSqlValidator()
+                .getCatalogReader()
+                .unwrap(CalciteCatalogReader.class),
+            errors);
+    return analyzer
+        .analyze(hintsAndDoc)
+        .tableAnalysis()
+        .objectIdentifier(identifier)
+        .originalSql(RelToFlinkSql.convertToString(query))
+        .build();
+  }
+
+  public ObjectIdentifier getInsertTarget(RichSqlInsert insert) {
+    return qualifyIdentifier((SqlIdentifier) insert.getTargetTableID());
+  }
+
   private SqlNode removeSort(SqlNode sqlNode) {
     if (sqlNode instanceof SqlOrderBy by) {
       return by.query;
@@ -759,8 +787,6 @@ public class Sqrl2FlinkSQLTranslator {
         viewName, FlinkSqlNodes.selectAllFromTable(FlinkSqlNodes.identifier(id)));
   }
 
-  private static final String TEMP_VIEW_SUFFIX = "__view";
-
   private ObjectIdentifier qualifyIdentifier(SqlIdentifier identifier) {
     var names = identifier.names;
     var size = names.size();
@@ -888,7 +914,7 @@ public class Sqrl2FlinkSQLTranslator {
     validateMutationHints(tableOp, mutationBuilder);
 
     // Create table analysis
-    var flinkSchema = ((ResolvedCatalogTable) tableOp.getCatalogTable()).getResolvedSchema();
+    var flinkSchema = tableOp.getCatalogTable().getResolvedSchema();
     // Map primary key
     var pk =
         flinkSchema
@@ -973,8 +999,8 @@ public class Sqrl2FlinkSQLTranslator {
     planBuilder.addInsert(FlinkSqlNodes.createInsert(selectQuery, sinkTableId), batchIdx);
   }
 
-  public void insertInto(RichSqlInsert insert) {
-    planBuilder.addInsert(insert, null);
+  public void insertInto(RichSqlInsert insert, int batchIdx) {
+    planBuilder.addInsert(insert, batchIdx);
   }
 
   public void nextBatch() {
