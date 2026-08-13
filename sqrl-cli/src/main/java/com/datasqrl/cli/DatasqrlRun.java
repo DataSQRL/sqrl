@@ -313,6 +313,26 @@ public class DatasqrlRun {
           assert false : e.getMessage();
         }
       }
+      // Extension statements manage the lifecycle of extension-backed tables (e.g. pg_partman
+      // creates the partitions of ttl() tables); without them partitioned parents have no
+      // partitions and every insert fails. Failures are non-fatal so plans still run against
+      // a Postgres that lacks the extension.
+      for (var jdbcStmt : postgresPlanOpt.get().standaloneExtensionStatements()) {
+        log.info(
+            "Executing standalone extension statement {} of type {}",
+            jdbcStmt.name(),
+            jdbcStmt.type());
+        try (Statement stmt = connection.createStatement()) {
+          stmt.execute(jdbcStmt.sql());
+        } catch (Exception e) {
+          log.warn(
+              "Failed to execute standalone extension statement '{}'. The required Postgres"
+                  + " extension may not be installed; extension-managed features will be"
+                  + " unavailable.",
+              jdbcStmt.name(),
+              e);
+        }
+      }
     }
   }
 
