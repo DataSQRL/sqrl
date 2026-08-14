@@ -28,7 +28,6 @@ import lombok.Value;
  * passed to the LLM as a tool and the {@link GraphQLQuery} that is executed.
  */
 @Value
-@Builder
 public class ApiOperation {
 
   @NonNull FunctionDefinition function;
@@ -40,6 +39,7 @@ public class ApiOperation {
   String uriTemplate;
 
   ResultFormat format;
+  @JsonIgnore ResultDefinition result;
 
   public static ApiOperationBuilder getBuilder(FunctionDefinition function, GraphQLQuery apiQuery) {
     return builder()
@@ -52,15 +52,18 @@ public class ApiOperation {
   }
 
   @JsonCreator
+  @Builder
   public ApiOperation(
       @JsonProperty("function") FunctionDefinition function,
       @JsonProperty("query") GraphQLQuery apiQuery,
+      @JsonProperty("result") ResultDefinition result,
       @JsonProperty("mcp") McpMethodType mcpMethod,
       @JsonProperty("rest") RestMethodType restMethod,
       @JsonProperty("uri") String uriTemplate,
       @JsonProperty("format") ResultFormat format) {
     this.function = function;
     this.apiQuery = apiQuery;
+    this.result = result;
     this.mcpMethod = mcpMethod;
     this.restMethod = restMethod;
     this.uriTemplate = uriTemplate;
