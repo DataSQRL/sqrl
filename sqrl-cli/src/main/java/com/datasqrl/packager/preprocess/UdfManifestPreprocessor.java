@@ -47,16 +47,19 @@ abstract class UdfManifestPreprocessor implements Preprocessor {
   private static final ObjectMapper MAPPER = SqrlObjectMapper.INSTANCE;
   private static final String SERVICES_PATH = "META-INF/services/";
 
-  void createUdfManifests(Path jarPath, FilePreprocessingPipeline.Context ctx) {
+  int createUdfManifests(Path jarPath, FilePreprocessingPipeline.Context ctx) {
     try (var file = new JarFile(jarPath.toFile())) {
 
-      file.stream()
-          .filter(UdfManifestPreprocessor::isFlinkUdf)
-          .forEach(entry -> extractManifestData(entry, file, jarPath, ctx));
+      var udfs = file.stream().filter(UdfManifestPreprocessor::isFlinkUdf).toList();
+      udfs.forEach(entry -> extractManifestData(entry, file, jarPath, ctx));
+
+      return udfs.size();
 
     } catch (Exception e) {
       log.warn("Could not read JAR file:" + jarPath, e);
     }
+
+    return 0;
   }
 
   void createUdfManifests(
