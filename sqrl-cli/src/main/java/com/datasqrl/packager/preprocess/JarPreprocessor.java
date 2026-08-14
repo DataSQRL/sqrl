@@ -33,7 +33,10 @@ public class JarPreprocessor extends UdfManifestPreprocessor {
       return;
     }
 
-    createUdfManifests(path, ctx);
+    var udfCount = createUdfManifests(path, ctx);
+    if (udfCount < 1) {
+      log.warn("No UDFs found in JAR file: {}", path.getFileName());
+    }
 
     ctx.copyToLib(path);
   }
