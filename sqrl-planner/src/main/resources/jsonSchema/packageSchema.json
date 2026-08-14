@@ -137,6 +137,9 @@
                 "operations": {
                   "type": "array",
                   "items": { "type": "string" }
+                },
+                "openapi": {
+                  "type": "string"
                 }
               },
               "additionalProperties": false,

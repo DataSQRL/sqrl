@@ -21,6 +21,24 @@
       "type" : "object"
     }
   },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "event_time" : {
+          "format" : "date-time",
+          "type" : "string"
+        },
+        "sensorid" : {
+          "type" : "integer"
+        },
+        "temperature" : {
+          "type" : "number"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "apiQuery" : {
     "operationType" : "QUERY",
     "query" : "query SensorReading($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReading(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
@@ -46,6 +64,24 @@
       "required" : [ "temp" ],
       "type" : "object"
     }
+  },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "event_time" : {
+          "format" : "date-time",
+          "type" : "string"
+        },
+        "sensorid" : {
+          "type" : "integer"
+        },
+        "temperature" : {
+          "type" : "number"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
   },
   "apiQuery" : {
     "operationType" : "QUERY",
@@ -78,6 +114,24 @@
       "type" : "object"
     }
   },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "last_updated" : {
+          "format" : "date-time",
+          "type" : "string"
+        },
+        "maxTemp" : {
+          "type" : "number"
+        },
+        "sensorid" : {
+          "type" : "integer"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "apiQuery" : {
     "operationType" : "QUERY",
     "query" : "query SensorMaxTempLastMinute($sensorid: Int, $limit: Int = 10, $offset: Int = 0) {\nSensorMaxTempLastMinute(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\nlast_updated\n}\n\n}",
@@ -109,6 +163,24 @@
       "type" : "object"
     }
   },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "last_updated" : {
+          "format" : "date-time",
+          "type" : "string"
+        },
+        "maxTemp" : {
+          "type" : "number"
+        },
+        "sensorid" : {
+          "type" : "integer"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "apiQuery" : {
     "operationType" : "QUERY",
     "query" : "query SensorMaxTemp($sensorid: Int, $limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\nlast_updated\n}\n\n}",
@@ -134,6 +206,21 @@
       "type" : "object"
     }
   },
+  "result" : {
+    "properties" : {
+      "event_time" : {
+        "format" : "date-time",
+        "type" : "string"
+      },
+      "sensorid" : {
+        "type" : "integer"
+      },
+      "temperature" : {
+        "type" : "number"
+      }
+    },
+    "type" : "object"
+  },
   "apiQuery" : {
     "operationType" : "MUTATION",
     "query" : "mutation AddReading($sensorid: Int!, $temperature: Float!) {\nAddReading(metric: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
@@ -158,6 +245,20 @@
       "type" : "object"
     }
   },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "sensorid" : {
+          "type" : "integer"
+        },
+        "temperature" : {
+          "type" : "number"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "apiQuery" : {
     "operationType" : "QUERY",
     "query" : "query HighTemps(\n    $temperature: Float!\n) @api(rest: \"none\") {\n    ReadingsAboveTemp(temp: $temperature) {\n        sensorid\n        temperature\n    }\n}\n",
@@ -181,6 +282,20 @@
       "required" : [ "temp" ],
       "type" : "object"
     }
+  },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "sensorid" : {
+          "type" : "integer"
+        },
+        "temperature" : {
+          "type" : "number"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
   },
   "apiQuery" : {
     "operationType" : "QUERY",
