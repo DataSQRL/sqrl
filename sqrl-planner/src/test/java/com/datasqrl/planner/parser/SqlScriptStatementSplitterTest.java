@@ -17,6 +17,7 @@ package com.datasqrl.planner.parser;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.error.ErrorLocation.FileLocation;
 import org.junit.jupiter.api.Test;
 
 class SqlScriptStatementSplitterTest {
@@ -169,7 +170,7 @@ class SqlScriptStatementSplitterTest {
   }
 
   @Test
-  void givenBlockCommentOutsideStringLiteral_whenSplitStatements_thenRemovesComment() {
+  void givenBlockCommentOutsideStringLiteral_whenSplitStatements_thenPreservesComment() {
     var script =
         """
         SELECT 1 /* regular block comment */ AS `val`
@@ -181,12 +182,12 @@ class SqlScriptStatementSplitterTest {
         .extracting(ParsedObject::get)
         .containsExactly(
             """
-            SELECT 1  AS `val`;
+            SELECT 1 /* regular block comment */ AS `val`;
             """);
   }
 
   @Test
-  void givenMultilineBlockCommentOutsideStringLiteral_whenSplitStatements_thenRemovesComment() {
+  void givenMultilineBlockCommentOutsideStringLiteral_whenSplitStatements_thenPreservesComment() {
     var script =
         """
         SELECT 1 AS `before`
@@ -203,6 +204,9 @@ class SqlScriptStatementSplitterTest {
         .containsExactly(
             """
             SELECT 1 AS `before`
+            /* block comment with ' quote, -- line comment, and ; delimiter
+               still inside the block comment
+            */
             , 2 AS `after`;
             """);
   }
@@ -225,7 +229,7 @@ class SqlScriptStatementSplitterTest {
   }
 
   @Test
-  void givenWhitespaceBeforeHintPlus_whenSplitStatements_thenRemovesBlockComment() {
+  void givenWhitespaceBeforeHintPlus_whenSplitStatements_thenPreservesBlockComment() {
     var script =
         """
         SELECT /* + not a hint */ 1 AS `val`
@@ -237,7 +241,24 @@ class SqlScriptStatementSplitterTest {
         .extracting(ParsedObject::get)
         .containsExactly(
             """
-            SELECT  1 AS `val`;
+            SELECT /* + not a hint */ 1 AS `val`;
             """);
+  }
+
+  @Test
+  void givenTrailingBlockComment_whenSplitStatements_thenRetainsStatementLocations() {
+    var script =
+        """
+        SELECT 1; /* explains the first query
+
+                   and its multiline form */
+        SELECT 2;
+        """;
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(4, 1));
   }
 }

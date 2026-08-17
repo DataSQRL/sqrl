@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 
 /**
  * Takes a script and splits it into individual statements delimited by `;`. Also filters out line
- * comments and block comments while preserving SQL hints and docs.
+ * comments while preserving block comments.
  *
  * <p>Contains some additional utility methods for statement delimiter handling.
  *
@@ -62,16 +62,19 @@ public final class SqlScriptStatementSplitter {
     var lineNo = 0;
     var inStringLiteral = false;
     var inPreservedBlockComment = false;
-    var inBlockComment = false;
+    var statementTerminated = false;
     for (var line : formatted.split(LINE_DELIMITER)) {
       lineNo++;
 
-      var parsedLine = parseLine(line, inStringLiteral, inPreservedBlockComment, inBlockComment);
+      var parsedLine = parseLine(line, inStringLiteral, inPreservedBlockComment);
       var rawLine = parsedLine.line();
       inStringLiteral = parsedLine.inStringLiteral();
       inPreservedBlockComment = parsedLine.inPreservedBlockComment();
-      inBlockComment = parsedLine.inBlockComment();
+      statementTerminated |= parsedLine.endsWithStatementDelimiter();
       if (rawLine.isBlank()) {
+        if (current != null) {
+          current.append(LINE_DELIMITER);
+        }
         continue;
       }
 
@@ -83,14 +86,12 @@ public final class SqlScriptStatementSplitter {
       current.append(rawLine);
       current.append(LINE_DELIMITER);
 
-      if (!inStringLiteral
-          && !inPreservedBlockComment
-          && !inBlockComment
-          && rawLine.trim().endsWith(STATEMENT_DELIMITER)) {
+      if (!inStringLiteral && !inPreservedBlockComment && statementTerminated) {
         var fileLoc = new FileLocation(statementLineNo, 1);
         var parsedObj = new ParsedObject<>(current.toString(), fileLoc);
         statements.add(parsedObj);
         current = null;
+        statementTerminated = false;
       }
     }
 
@@ -143,8 +144,8 @@ public final class SqlScriptStatementSplitter {
   }
 
   /**
-   * Parses a single line, removing SQL line comments and regular block comments while preserving
-   * comment markers in string literals, SQL hints, and doc comments.
+   * Parses a single line, removing SQL line comments while preserving block comments and comment
+   * markers in string literals.
    *
    * <p>The state arguments carry parser state from the previous line so multiline string literals
    * and block comments are handled correctly. Only single-quoted SQL string literals are
@@ -152,26 +153,15 @@ public final class SqlScriptStatementSplitter {
    *
    * @param line the line to parse
    * @param inStringLiteral whether the previous line ended inside a single-quoted string literal
-   * @param inPreservedBlockComment whether the previous line ended inside a doc comment or SQL hint
-   * @param inBlockComment whether the previous line ended inside a regular block comment
+   * @param inPreservedBlockComment whether the previous line ended inside a block comment
    * @return the parsed line and updated parser state
    */
   private static ParsedLine parseLine(
-      String line,
-      boolean inStringLiteral,
-      boolean inPreservedBlockComment,
-      boolean inBlockComment) {
+      String line, boolean inStringLiteral, boolean inPreservedBlockComment) {
     var parsed = new StringBuilder();
+    var lastSignificantCharacter = '\0';
 
     for (var i = 0; i < line.length(); i++) {
-      if (inBlockComment) {
-        if (endsBlockComment(line, i)) {
-          inBlockComment = false;
-          i++;
-        }
-        continue;
-      }
-
       if (inPreservedBlockComment) {
         parsed.append(line.charAt(i));
         if (endsBlockComment(line, i)) {
@@ -199,6 +189,7 @@ public final class SqlScriptStatementSplitter {
         }
 
         inStringLiteral = !inStringLiteral;
+        lastSignificantCharacter = ch;
         continue;
       }
 
@@ -207,10 +198,16 @@ public final class SqlScriptStatementSplitter {
       }
 
       parsed.append(ch);
+      if (!Character.isWhitespace(ch)) {
+        lastSignificantCharacter = ch;
+      }
     }
 
     return new ParsedLine(
-        parsed.toString(), inStringLiteral, inPreservedBlockComment, inBlockComment);
+        parsed.toString(),
+        inStringLiteral,
+        inPreservedBlockComment,
+        lastSignificantCharacter == STATEMENT_DELIMITER.charAt(0));
   }
 
   private static boolean isEscapedSingleQuote(String line, int pos, boolean inStringLiteral) {
@@ -225,20 +222,6 @@ public final class SqlScriptStatementSplitter {
     return text.charAt(pos) == '/' && pos + 1 < text.length() && text.charAt(pos + 1) == '*';
   }
 
-  private static boolean startsDocComment(String line, int pos) {
-    return line.charAt(pos) == '/'
-        && pos + 2 < line.length()
-        && line.charAt(pos + 1) == '*'
-        && line.charAt(pos + 2) == '*';
-  }
-
-  private static boolean startsHintComment(String text, int pos) {
-    return text.charAt(pos) == '/'
-        && pos + 2 < text.length()
-        && text.charAt(pos + 1) == '*'
-        && text.charAt(pos + 2) == '+';
-  }
-
   private static boolean endsBlockComment(String line, int pos) {
     return line.charAt(pos) == '*' && pos + 1 < line.length() && line.charAt(pos + 1) == '/';
   }
@@ -247,5 +230,5 @@ public final class SqlScriptStatementSplitter {
       String line,
       boolean inStringLiteral,
       boolean inPreservedBlockComment,
-      boolean inBlockComment) {}
+      boolean endsWithStatementDelimiter) {}
 }
