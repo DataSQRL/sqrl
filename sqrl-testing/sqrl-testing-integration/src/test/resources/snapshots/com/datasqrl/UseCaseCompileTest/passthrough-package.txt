@@ -284,7 +284,7 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "WITH RECURSIVE employee_hierarchy AS (\n    SELECT r.employeeid, r.managerid, 1 as level\n    FROM \"Reporting\" r\n    WHERE r.managerid = $1\n    UNION ALL\n    SELECT r.employeeid, r.managerid, eh.level + 1 as level\n    FROM \"Reporting\" r\n    INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid\n  )\n  SELECT e.employeeid, e.name, eh.level\n  FROM employee_hierarchy eh\n  JOIN \"Employees\" e ON eh.employeeid = e.employeeid\n  ORDER BY eh.level, e.employeeid",
+              "sql" : "WITH RECURSIVE employee_hierarchy AS (\n\n    SELECT r.employeeid, r.managerid, 1 as level\n    FROM \"Reporting\" r\n    WHERE r.managerid = $1\n\n    UNION ALL\n\n\n    SELECT r.employeeid, r.managerid, eh.level + 1 as level\n    FROM \"Reporting\" r\n    INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid\n  )\n  SELECT e.employeeid, e.name, eh.level\n  FROM employee_hierarchy eh\n  JOIN \"Employees\" e ON eh.employeeid = e.employeeid\n  ORDER BY eh.level, e.employeeid",
               "parameters" : [
                 {
                   "type" : "source",
