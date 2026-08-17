@@ -43,9 +43,6 @@ mvn test
 # Integration tests
 mvn verify
 
-# Coverage report
-mvn jacoco:report
-
 # Test specific module
 mvn test -pl sqrl-planner
 
