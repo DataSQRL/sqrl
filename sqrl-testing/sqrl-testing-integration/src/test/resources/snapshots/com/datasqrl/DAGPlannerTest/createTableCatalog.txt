@@ -196,6 +196,20 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "key_col" : {
+                  "type" : "string"
+                },
+                "int_col" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Output($limit: Int = 10, $offset: Int = 0) {\nOutput(limit: $limit, offset: $offset) {\nkey_col\nint_col\n}\n\n}",

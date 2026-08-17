@@ -606,6 +606,30 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "uuid" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "epoch_timestamp" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nuuid\nsensorid\nepoch_timestamp\ntemperature\ntimestamp\n}\n\n}",
@@ -632,6 +656,33 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "uuid" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "epoch_timestamp" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "testField" : {
+                  "type" : "number"
+                },
+                "recordedTime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorReadingInput($limit: Int = 10, $offset: Int = 0) {\nSensorReadingInput(limit: $limit, offset: $offset) {\nuuid\nsensorid\nepoch_timestamp\ntemperature\ntestField\nrecordedTime\n}\n\n}",
@@ -656,6 +707,33 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "uuid" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "epoch_timestamp" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "testField" : {
+                  "type" : "number"
+                },
+                "recordedTime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -696,6 +774,30 @@ END
                 "epoch_timestamp",
                 "temperature"
               ]
+            }
+          },
+          "result" : {
+            "type" : "object",
+            "properties" : {
+              "uuid" : {
+                "type" : "string"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "epoch_timestamp" : {
+                "type" : "integer"
+              },
+              "temperature" : {
+                "type" : "number"
+              },
+              "testField" : {
+                "type" : "number"
+              },
+              "recordedTime" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
             }
           },
           "format" : "JSON",

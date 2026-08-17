@@ -1854,8 +1854,28 @@ FROM "ExternalOrders"
                   "type" : "object",
                   "properties" : {
                     "data" : {
-                      "type" : "object",
-                      "description" : "Response data"
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object",
+                        "properties" : {
+                          "customerid" : {
+                            "type" : "integer"
+                          },
+                          "email" : {
+                            "type" : "string"
+                          },
+                          "name" : {
+                            "type" : "string"
+                          },
+                          "lastUpdated" : {
+                            "type" : "integer"
+                          },
+                          "timestamp" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -2030,6 +2050,30 @@ FROM "ExternalOrders"
                 "arg2",
                 "arg1"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",

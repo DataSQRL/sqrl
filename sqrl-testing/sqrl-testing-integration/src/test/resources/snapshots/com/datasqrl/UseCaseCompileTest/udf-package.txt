@@ -351,6 +351,20 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "string"
+                },
+                "myFnc" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyAsyncTable($limit: Int = 10, $offset: Int = 0) {\nMyAsyncTable(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
@@ -375,6 +389,20 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                },
+                "myFnc" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -403,6 +431,20 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                },
+                "myFnc" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTableAnother($limit: Int = 10, $offset: Int = 0) {\nMyTableAnother(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
@@ -427,6 +469,20 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                },
+                "fn" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",

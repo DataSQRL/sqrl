@@ -479,6 +479,27 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "loan_application_id" : {
+                  "type" : "integer"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "message" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query ApplicationUpdates($limit: Int = 10, $offset: Int = 0) {\nApplicationUpdates(limit: $limit, offset: $offset) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n\n}",
@@ -503,6 +524,37 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "loan_type_id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "duration" : {
+                  "type" : "integer"
+                },
+                "application_date" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -531,6 +583,20 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "num_updates" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerUpdates($limit: Int = 10, $offset: Int = 0) {\nCustomerUpdates(limit: $limit, offset: $offset) {\ncustomer_id\nnum_updates\n}\n\n}",
@@ -555,6 +621,39 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "first_name" : {
+                  "type" : "string"
+                },
+                "last_name" : {
+                  "type" : "string"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "phone" : {
+                  "type" : "string"
+                },
+                "address" : {
+                  "type" : "string"
+                },
+                "date_of_birth" : {
+                  "type" : "string"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",

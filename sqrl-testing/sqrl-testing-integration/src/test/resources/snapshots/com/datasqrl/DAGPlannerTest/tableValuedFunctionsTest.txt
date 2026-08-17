@@ -956,6 +956,30 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
@@ -980,6 +1004,25 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "window_start" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_end" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "total" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1008,6 +1051,29 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "window_start" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_end" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "total" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerHop($limit: Int = 10, $offset: Int = 0) {\nCustomerHop(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
@@ -1032,6 +1098,32 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "window_start" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_end" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "total" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1060,6 +1152,25 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "window_start" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_end" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "total" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerTumble($limit: Int = 10, $offset: Int = 0) {\nCustomerTumble(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
@@ -1084,6 +1195,43 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "window_start" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_end" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "total" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "window_start0" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_end0" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "total0" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",

@@ -1854,50 +1854,28 @@ FROM "ExternalOrders"
                   "type" : "object",
                   "properties" : {
                     "data" : {
-                      "type" : "object",
-                      "description" : "Response data"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400" : {
-            "description" : "Error response",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object",
-                  "properties" : {
-                    "errors" : {
                       "type" : "array",
                       "items" : {
-                        "type" : "object"
+                        "type" : "object",
+                        "properties" : {
+                          "customerid" : {
+                            "type" : "integer"
+                          },
+                          "email" : {
+                            "type" : "string"
+                          },
+                          "name" : {
+                            "type" : "string"
+                          },
+                          "lastUpdated" : {
+                            "type" : "integer"
+                          },
+                          "timestamp" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                          }
+                        }
                       }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v1/rest/queries/CustomerByTime2" : {
-      "get" : {
-        "summary" : "GetCustomerByTime2",
-        "operationId" : "GetCustomerByTime2",
-        "responses" : {
-          "200" : {
-            "description" : "Successful operation",
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "type" : "object",
-                  "properties" : {
-                    "data" : {
-                      "type" : "object",
-                      "description" : "Response data"
                     }
                   }
                 }
@@ -1946,8 +1924,28 @@ FROM "ExternalOrders"
                   "type" : "object",
                   "properties" : {
                     "data" : {
-                      "type" : "object",
-                      "description" : "Response data"
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object",
+                        "properties" : {
+                          "customerid" : {
+                            "type" : "integer"
+                          },
+                          "email" : {
+                            "type" : "string"
+                          },
+                          "name" : {
+                            "type" : "string"
+                          },
+                          "lastUpdated" : {
+                            "type" : "integer"
+                          },
+                          "timestamp" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -1996,8 +1994,28 @@ FROM "ExternalOrders"
                   "type" : "object",
                   "properties" : {
                     "data" : {
-                      "type" : "object",
-                      "description" : "Response data"
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object",
+                        "properties" : {
+                          "customerid" : {
+                            "type" : "integer"
+                          },
+                          "email" : {
+                            "type" : "string"
+                          },
+                          "name" : {
+                            "type" : "string"
+                          },
+                          "lastUpdated" : {
+                            "type" : "integer"
+                          },
+                          "timestamp" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -2232,6 +2250,30 @@ FROM "ExternalOrders"
               ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query TableFunctionCallsTblFct($arg1: Int!, $arg2: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg1: $arg1, arg2: $arg2, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
@@ -2244,25 +2286,6 @@ FROM "ExternalOrders"
         },
         {
           "function" : {
-            "name" : "GetCustomerByTime2",
-            "parameters" : {
-              "type" : "object",
-              "properties" : { },
-              "required" : [ ]
-            }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerByTime2() {\nCustomerByTime2 {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "CustomerByTime2",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerByTime2"
-        },
-        {
-          "function" : {
             "name" : "GetCustomerByMultipleTime",
             "parameters" : {
               "type" : "object",
@@ -2272,6 +2295,30 @@ FROM "ExternalOrders"
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -2295,6 +2342,30 @@ FROM "ExternalOrders"
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",

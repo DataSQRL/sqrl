@@ -543,6 +543,20 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "user_id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query iceberg_parquet_table($limit: Int = 10, $offset: Int = 0) {\niceberg_parquet_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
@@ -567,6 +581,20 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "user_id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -595,6 +623,20 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "user_id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query kafka_debezium_table($limit: Int = 10, $offset: Int = 0) {\nkafka_debezium_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
@@ -619,6 +661,20 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "user_id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -647,6 +703,20 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "user_id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query kafka_safe_json_table($limit: Int = 10, $offset: Int = 0) {\nkafka_safe_json_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
@@ -671,6 +741,20 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "user_id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "format" : "JSON",

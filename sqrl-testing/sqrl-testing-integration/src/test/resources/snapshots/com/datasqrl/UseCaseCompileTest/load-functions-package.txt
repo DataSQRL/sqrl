@@ -133,6 +133,20 @@ CREATE TABLE IF NOT EXISTS "FunctionApplied" ("id" INTEGER NOT NULL, "fct_result
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "fct_result" : {
+                  "type" : "boolean"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query FunctionApplied($limit: Int = 10, $offset: Int = 0) {\nFunctionApplied(limit: $limit, offset: $offset) {\nid\nfct_result\n}\n\n}",

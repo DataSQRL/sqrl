@@ -264,6 +264,23 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "maxTemp" : {
+                  "type" : "number"
+                },
+                "avgTemp" : {
+                  "type" : "number"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorAggregate($limit: Int = 10, $offset: Int = 0) {\nSensorAggregate(limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\navgTemp\n}\n\n}",
@@ -288,6 +305,23 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -319,6 +353,23 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
               "required" : [
                 "sensorid"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",

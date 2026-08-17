@@ -419,6 +419,24 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query HighTempAlert($limit: Int = 10, $offset: Int = 0) {\nHighTempAlert(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
@@ -445,6 +463,20 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "maxTemp" : {
+                  "type" : "number"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorMaxTemp($limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\n}\n\n}",
@@ -469,6 +501,24 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -509,6 +559,24 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
               "required" : [
                 "event"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",

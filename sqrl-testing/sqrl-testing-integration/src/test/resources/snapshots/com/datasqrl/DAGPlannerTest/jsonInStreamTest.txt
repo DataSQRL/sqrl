@@ -1456,6 +1456,30 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
@@ -1480,6 +1504,30 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1508,6 +1556,18 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "obj" : { }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query ObjComplex($limit: Int = 10, $offset: Int = 0) {\nObjComplex(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
@@ -1532,6 +1592,18 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "name" : {
+                  "type" : "string"
+                },
+                "agg" : { }
+              }
             }
           },
           "format" : "JSON",
@@ -1560,6 +1632,18 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "obj" : { }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query jsonArrayTable($limit: Int = 10, $offset: Int = 0) {\njsonArrayTable(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
@@ -1584,6 +1668,18 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "obj" : { }
+              }
             }
           },
           "format" : "JSON",
@@ -1612,6 +1708,20 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "obj" : {
+                  "type" : "boolean"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query jsonExistsTable($limit: Int = 10, $offset: Int = 0) {\njsonExistsTable(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
@@ -1636,6 +1746,20 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "obj" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1664,6 +1788,18 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "name" : {
+                  "type" : "string"
+                },
+                "agg" : { }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query jsonObjectAggTable($limit: Int = 10, $offset: Int = 0) {\njsonObjectAggTable(limit: $limit, offset: $offset) {\nname\nagg\n}\n\n}",
@@ -1688,6 +1824,20 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "obj" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1716,6 +1866,20 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "obj" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query jsonToStringTable($limit: Int = 10, $offset: Int = 0) {\njsonToStringTable(limit: $limit, offset: $offset) {\ncustomerid\nobj\n}\n\n}",
@@ -1740,6 +1904,18 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "obj" : { }
+              }
             }
           },
           "format" : "JSON",

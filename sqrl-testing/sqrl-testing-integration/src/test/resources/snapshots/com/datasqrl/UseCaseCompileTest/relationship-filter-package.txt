@@ -526,6 +526,20 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "string"
+                },
+                "info" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Detail($limit: Int = 10, $offset: Int = 0) {\nDetail(limit: $limit, offset: $offset) {\nid\ninfo\n}\n\n}",
@@ -550,6 +564,31 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "string"
+                },
+                "label" : {
+                  "type" : "string"
+                },
+                "detail" : {
+                  "type" : "object",
+                  "properties" : {
+                    "id" : {
+                      "type" : "string"
+                    },
+                    "info" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -578,6 +617,17 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Tombstone($limit: Int = 10, $offset: Int = 0) {\nTombstone(limit: $limit, offset: $offset) {\nid\n}\n\n}",
@@ -602,6 +652,31 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "string"
+                },
+                "label" : {
+                  "type" : "string"
+                },
+                "detail" : {
+                  "type" : "object",
+                  "properties" : {
+                    "id" : {
+                      "type" : "string"
+                    },
+                    "info" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -630,6 +705,31 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "string"
+                },
+                "label" : {
+                  "type" : "string"
+                },
+                "detail" : {
+                  "type" : "object",
+                  "properties" : {
+                    "id" : {
+                      "type" : "string"
+                    },
+                    "info" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query joinQuery($limit: Int = 10, $offset: Int = 0) {\njoinQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
@@ -654,6 +754,31 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "string"
+                },
+                "label" : {
+                  "type" : "string"
+                },
+                "detail" : {
+                  "type" : "object",
+                  "properties" : {
+                    "id" : {
+                      "type" : "string"
+                    },
+                    "info" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -685,6 +810,31 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [
                 "minId"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "string"
+                },
+                "label" : {
+                  "type" : "string"
+                },
+                "detail" : {
+                  "type" : "object",
+                  "properties" : {
+                    "id" : {
+                      "type" : "string"
+                    },
+                    "info" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
             }
           },
           "format" : "JSON",

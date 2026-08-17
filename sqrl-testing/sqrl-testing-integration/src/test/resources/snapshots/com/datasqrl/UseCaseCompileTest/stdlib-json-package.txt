@@ -240,6 +240,24 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "val" : {
+                  "type" : "string"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Json($limit: Int = 10, $offset: Int = 0) {\nJson(limit: $limit, offset: $offset) {\nid\nval\ntimestamp\n}\n\n}",
@@ -264,6 +282,24 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "val" : {
+                  "type" : "string"
+                },
+                "json_col" : { },
+                "json_col_2" : { },
+                "json_col_3" : { },
+                "json_col_4" : { }
+              }
             }
           },
           "format" : "JSON",

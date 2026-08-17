@@ -596,6 +596,27 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "machineid" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query MachineReading($limit: Int = 10, $offset: Int = 0) {\nMachineReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nmachineid\n}\n\n}",
@@ -622,6 +643,24 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "machineid" : {
+                  "type" : "integer"
+                },
+                "time_hour" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "avg_temperature" : {
+                  "type" : "number"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query MachineTempByHour($limit: Int = 10, $offset: Int = 0) {\nMachineTempByHour(limit: $limit, offset: $offset) {\nmachineid\ntime_hour\navg_temperature\n}\n\n}",
@@ -646,6 +685,24 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "machineid" : {
+                  "type" : "integer"
+                },
+                "updatedTime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -685,6 +742,24 @@ END
               "required" : [
                 "event"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "machineid" : {
+                  "type" : "integer"
+                },
+                "updatedTime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",

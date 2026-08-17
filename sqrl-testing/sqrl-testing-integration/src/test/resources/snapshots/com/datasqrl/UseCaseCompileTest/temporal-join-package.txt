@@ -474,6 +474,30 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "placement" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "sensor_name" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query EnrichedSensorReading($limit: Int = 10, $offset: Int = 0) {\nEnrichedSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nplacement\nevent_time\nsensor_name\n}\n\n}",
@@ -500,6 +524,31 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "placement" : {
+                  "type" : "string",
+                  "enum" : [
+                    "DOWNSTAIRS",
+                    "UPSTAIRS"
+                  ]
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nplacement\nevent_time\n}\n\n}",
@@ -524,6 +573,24 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "sensor_name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -559,6 +626,30 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
               "required" : [
                 "placement"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "placement" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "sensor_name" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -598,6 +689,28 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
               ]
             }
           },
+          "result" : {
+            "type" : "object",
+            "properties" : {
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "temperature" : {
+                "type" : "number"
+              },
+              "placement" : {
+                "type" : "string",
+                "enum" : [
+                  "DOWNSTAIRS",
+                  "UPSTAIRS"
+                ]
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!, $placement: Placements!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature, placement: $placement }) {\nsensorid\ntemperature\nplacement\nevent_time\n}\n\n}",
@@ -625,6 +738,21 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
                 "sensorid",
                 "sensor_name"
               ]
+            }
+          },
+          "result" : {
+            "type" : "object",
+            "properties" : {
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "sensor_name" : {
+                "type" : "string"
+              },
+              "lastUpdated" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
             }
           },
           "format" : "JSON",

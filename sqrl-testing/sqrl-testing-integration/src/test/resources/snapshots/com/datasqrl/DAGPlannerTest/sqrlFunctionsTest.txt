@@ -252,6 +252,21 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                },
+                "myTimestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\nmyTimestamp\n}\n\n}",
@@ -276,6 +291,21 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                },
+                "myTimestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",

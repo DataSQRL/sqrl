@@ -1275,6 +1275,38 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "status" : {
+                  "type" : "string"
+                },
+                "message" : {
+                  "type" : "string"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "loan_type_id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "duration" : {
+                  "type" : "integer"
+                },
+                "max_amount" : {
+                  "type" : "number"
+                },
+                "min_amount" : {
+                  "type" : "number"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query ApplicationStatusSpecialMcp @api(rest: NONE, mcp: TOOL) {\n    ApplicationStatus(limit: 10, offset: 0) {\n        status\n        message\n        customer_id\n        loan_type_id\n        amount\n        duration\n        max_amount\n        min_amount\n    }\n}\n",
@@ -1299,6 +1331,35 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "role" : {
+                  "type" : "string"
+                },
+                "content" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "context" : {
+                  "type" : "object",
+                  "properties" : {
+                    "customerid" : {
+                      "type" : "integer"
+                    }
+                  }
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1327,6 +1388,32 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "loan_type_id" : {
+                  "type" : "integer"
+                },
+                "max_amount" : {
+                  "type" : "number"
+                },
+                "min_amount" : {
+                  "type" : "number"
+                },
+                "amount" : {
+                  "type" : "number"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query ApplicationAlert($limit: Int = 10, $offset: Int = 0) {\nApplicationAlert(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\nmax_amount\nmin_amount\namount\n}\n\n}",
@@ -1351,6 +1438,45 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "status" : {
+                  "type" : "string"
+                },
+                "message" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "loan_type_id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "duration" : {
+                  "type" : "integer"
+                },
+                "max_amount" : {
+                  "type" : "number"
+                },
+                "min_amount" : {
+                  "type" : "number"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1391,6 +1517,94 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "loan_application_id" : {
+                  "type" : "integer"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "message" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "application" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "id" : {
+                        "type" : "integer"
+                      },
+                      "customer_id" : {
+                        "type" : "integer"
+                      },
+                      "loan_type_id" : {
+                        "type" : "integer"
+                      },
+                      "amount" : {
+                        "type" : "number"
+                      },
+                      "duration" : {
+                        "type" : "integer"
+                      },
+                      "application_date" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      },
+                      "updated_at" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      },
+                      "loanType" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "object",
+                          "properties" : {
+                            "id" : {
+                              "type" : "integer"
+                            },
+                            "name" : {
+                              "type" : "string"
+                            },
+                            "description" : {
+                              "type" : "string"
+                            },
+                            "interest_rate" : {
+                              "type" : "number"
+                            },
+                            "max_amount" : {
+                              "type" : "number"
+                            },
+                            "min_amount" : {
+                              "type" : "number"
+                            },
+                            "max_duration" : {
+                              "type" : "integer"
+                            },
+                            "min_duration" : {
+                              "type" : "integer"
+                            },
+                            "updated_at" : {
+                              "type" : "string",
+                              "format" : "date-time"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query ApplicationUpdates($limit: Int = 10, $offset: Int = 0$application_limit: Int = 10, $application_offset: Int = 0$application_loanType_limit: Int = 10, $application_loanType_offset: Int = 0) {\nApplicationUpdates(limit: $limit, offset: $offset) {\nloan_application_id\nstatus\nmessage\nevent_time\napplication(limit: $application_limit, offset: $application_offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $application_loanType_limit, offset: $application_loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\n}\n}\n\n}",
@@ -1429,6 +1643,94 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "loan_type_id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "duration" : {
+                  "type" : "integer"
+                },
+                "application_date" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "loanType" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "id" : {
+                        "type" : "integer"
+                      },
+                      "name" : {
+                        "type" : "string"
+                      },
+                      "description" : {
+                        "type" : "string"
+                      },
+                      "interest_rate" : {
+                        "type" : "number"
+                      },
+                      "max_amount" : {
+                        "type" : "number"
+                      },
+                      "min_amount" : {
+                        "type" : "number"
+                      },
+                      "max_duration" : {
+                        "type" : "integer"
+                      },
+                      "min_duration" : {
+                        "type" : "integer"
+                      },
+                      "updated_at" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      }
+                    }
+                  }
+                },
+                "updates" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "loan_application_id" : {
+                        "type" : "integer"
+                      },
+                      "status" : {
+                        "type" : "string"
+                      },
+                      "message" : {
+                        "type" : "string"
+                      },
+                      "event_time" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Applications($limit: Int = 10, $offset: Int = 0$loanType_limit: Int = 10, $loanType_offset: Int = 0$updates_limit: Int = 10, $updates_offset: Int = 0) {\nApplications(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $loanType_limit, offset: $loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\nupdates(limit: $updates_limit, offset: $updates_offset) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n}\n\n}",
@@ -1455,6 +1757,37 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "loan_type_id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "duration" : {
+                  "type" : "integer"
+                },
+                "application_date" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query ApplicationsStream($limit: Int = 10, $offset: Int = 0) {\nApplicationsStream(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\n}\n\n}",
@@ -1479,6 +1812,33 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "role" : {
+                  "type" : "string"
+                },
+                "content" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "uuid" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1531,6 +1891,144 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "first_name" : {
+                  "type" : "string"
+                },
+                "last_name" : {
+                  "type" : "string"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "phone" : {
+                  "type" : "string"
+                },
+                "address" : {
+                  "type" : "string"
+                },
+                "date_of_birth" : {
+                  "type" : "string"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "applications" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "id" : {
+                        "type" : "integer"
+                      },
+                      "customer_id" : {
+                        "type" : "integer"
+                      },
+                      "loan_type_id" : {
+                        "type" : "integer"
+                      },
+                      "amount" : {
+                        "type" : "number"
+                      },
+                      "duration" : {
+                        "type" : "integer"
+                      },
+                      "application_date" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      },
+                      "updated_at" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      },
+                      "loanType" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "object",
+                          "properties" : {
+                            "id" : {
+                              "type" : "integer"
+                            },
+                            "name" : {
+                              "type" : "string"
+                            },
+                            "description" : {
+                              "type" : "string"
+                            },
+                            "interest_rate" : {
+                              "type" : "number"
+                            },
+                            "max_amount" : {
+                              "type" : "number"
+                            },
+                            "min_amount" : {
+                              "type" : "number"
+                            },
+                            "max_duration" : {
+                              "type" : "integer"
+                            },
+                            "min_duration" : {
+                              "type" : "integer"
+                            },
+                            "updated_at" : {
+                              "type" : "string",
+                              "format" : "date-time"
+                            }
+                          }
+                        }
+                      },
+                      "updates" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "object",
+                          "properties" : {
+                            "loan_application_id" : {
+                              "type" : "integer"
+                            },
+                            "status" : {
+                              "type" : "string"
+                            },
+                            "message" : {
+                              "type" : "string"
+                            },
+                            "event_time" : {
+                              "type" : "string",
+                              "format" : "date-time"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "overview" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "loan_type_id" : {
+                        "type" : "integer"
+                      },
+                      "total_amount" : {
+                        "type" : "number"
+                      },
+                      "total_loans" : {
+                        "type" : "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Customers($limit: Int = 10, $offset: Int = 0$applications_limit: Int = 10, $applications_offset: Int = 0$applications_loanType_limit: Int = 10, $applications_loanType_offset: Int = 0$applications_updates_limit: Int = 10, $applications_updates_offset: Int = 0$overview_limit: Int = 10, $overview_offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nphone\naddress\ndate_of_birth\nupdated_at\napplications(limit: $applications_limit, offset: $applications_offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $applications_loanType_limit, offset: $applications_loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\nupdates(limit: $applications_updates_limit, offset: $applications_updates_offset) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n}\noverview(limit: $overview_limit, offset: $overview_offset) {\nloan_type_id\ntotal_amount\ntotal_loans\n}\n}\n\n}",
@@ -1555,6 +2053,39 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "first_name" : {
+                  "type" : "string"
+                },
+                "last_name" : {
+                  "type" : "string"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "phone" : {
+                  "type" : "string"
+                },
+                "address" : {
+                  "type" : "string"
+                },
+                "date_of_birth" : {
+                  "type" : "string"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1583,6 +2114,42 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "description" : {
+                  "type" : "string"
+                },
+                "interest_rate" : {
+                  "type" : "number"
+                },
+                "max_amount" : {
+                  "type" : "number"
+                },
+                "min_amount" : {
+                  "type" : "number"
+                },
+                "max_duration" : {
+                  "type" : "integer"
+                },
+                "min_duration" : {
+                  "type" : "integer"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query LoanTypes($limit: Int = 10, $offset: Int = 0) {\nLoanTypes(limit: $limit, offset: $offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\n\n}",
@@ -1607,6 +2174,42 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "description" : {
+                  "type" : "string"
+                },
+                "interest_rate" : {
+                  "type" : "number"
+                },
+                "max_amount" : {
+                  "type" : "number"
+                },
+                "min_amount" : {
+                  "type" : "number"
+                },
+                "max_duration" : {
+                  "type" : "integer"
+                },
+                "min_duration" : {
+                  "type" : "integer"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1651,6 +2254,32 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               ]
             }
           },
+          "result" : {
+            "type" : "object",
+            "properties" : {
+              "role" : {
+                "type" : "string"
+              },
+              "content" : {
+                "type" : "string"
+              },
+              "name" : {
+                "type" : "string"
+              },
+              "context" : {
+                "type" : "object",
+                "properties" : {
+                  "customerid" : {
+                    "type" : "integer"
+                  }
+                }
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "mutation AddChatMessage($role: String!, $content: String!, $name: String, $context: AddChatMessage_contextInput!) {\nAddChatMessage(event: { role: $role, content: $content, name: $name, context: $context }) {\nrole\ncontent\nname\ncontext {\ncustomerid\n}\nevent_time\n}\n\n}",
@@ -1692,6 +2321,27 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [
                 "event"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "loan_application_id" : {
+                  "type" : "integer"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "message" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",

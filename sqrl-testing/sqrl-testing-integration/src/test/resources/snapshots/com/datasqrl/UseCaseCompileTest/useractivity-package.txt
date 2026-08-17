@@ -418,6 +418,23 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orgid" : {
+                  "type" : "integer"
+                },
+                "total_tokens" : {
+                  "type" : "integer"
+                },
+                "total_requests" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query TotalOrgTokens($limit: Int = 10, $offset: Int = 0) {\nTotalOrgTokens(limit: $limit, offset: $offset) {\norgid\ntotal_tokens\ntotal_requests\n}\n\n}",
@@ -447,6 +464,23 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
               "required" : [
                 "userid"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "userid" : {
+                  "type" : "integer"
+                },
+                "total_tokens" : {
+                  "type" : "integer"
+                },
+                "total_requests" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -484,6 +518,23 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
               ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orgid" : {
+                  "type" : "integer"
+                },
+                "total_tokens" : {
+                  "type" : "integer"
+                },
+                "total_requests" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query TotalOrgTokensByRange($minTokens: Long!, $maxTokens: Long!, $limit: Int = 10, $offset: Int = 0) {\nTotalOrgTokensByRange(minTokens: $minTokens, maxTokens: $maxTokens, limit: $limit, offset: $offset) {\norgid\ntotal_tokens\ntotal_requests\n}\n\n}",
@@ -511,6 +562,21 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
                 "userid",
                 "tokens"
               ]
+            }
+          },
+          "result" : {
+            "type" : "object",
+            "properties" : {
+              "userid" : {
+                "type" : "integer"
+              },
+              "tokens" : {
+                "type" : "integer"
+              },
+              "request_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
             }
           },
           "format" : "JSON",
