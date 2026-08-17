@@ -51,7 +51,9 @@ import java.util.zip.GZIPInputStream;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.apache.flink.api.common.JobStatus;
+import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.ExecutionOptions;
 import org.apache.flink.core.execution.JobClient;
 import org.apache.flink.types.Either;
 import org.apache.logging.log4j.Level;
@@ -165,35 +167,7 @@ public class DatasqrlTest {
       }
 
       // 4. Wait for the Flink job to finish or the configured delay
-      if (delaySec == -1) {
-        var flinkOperatorStatusChecker =
-            new FlinkOperatorStatusChecker(
-                result.getJobClient().get().getJobID().toString(), requiredCheckpoints);
-        flinkOperatorStatusChecker.run();
-      } else {
-        try {
-          await()
-              .atMost(delaySec, TimeUnit.SECONDS)
-              .pollInterval(1, TimeUnit.SECONDS)
-              .until(
-                  () -> {
-                    try {
-                      var jobStatusCompletableFuture =
-                          result.getJobClient().map(JobClient::getJobStatus).get();
-                      var status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
-                      // The real failure cause is fetched from getJobExecutionResult() below,
-                      // so a terminal state is enough to stop polling here.
-                      return status == JobStatus.FAILED
-                          || status == JobStatus.FINISHED
-                          || status == JobStatus.CANCELED;
-
-                    } catch (Exception e) {
-                      return true;
-                    }
-                  });
-        } catch (Exception ignored) {
-        }
-      }
+      awaitJobTermination(result.getJobClient(), delaySec, requiredCheckpoints);
 
       try {
         result
@@ -233,6 +207,44 @@ public class DatasqrlTest {
     // 6. Print the test results on the command line
     printTestResults(testResults, snapshotDir, testDir);
     return testResults.stream().mapToInt(TestResult::exitCode).sum();
+  }
+
+  void awaitJobTermination(Optional<JobClient> jobClient, int delaySec, int requiredCheckpoints) {
+    if (delaySec == -1) {
+      if (flinkConfig.get(ExecutionOptions.RUNTIME_MODE) == RuntimeExecutionMode.BATCH) {
+        try {
+          jobClient.get().getJobExecutionResult().get();
+        } catch (Exception ignored) {
+        }
+        return;
+      }
+      var flinkOperatorStatusChecker =
+          new FlinkOperatorStatusChecker(
+              jobClient.get().getJobID().toString(), requiredCheckpoints);
+      flinkOperatorStatusChecker.run();
+    } else {
+      try {
+        await()
+            .atMost(delaySec, TimeUnit.SECONDS)
+            .pollInterval(1, TimeUnit.SECONDS)
+            .until(
+                () -> {
+                  try {
+                    var jobStatusCompletableFuture = jobClient.map(JobClient::getJobStatus).get();
+                    var status = jobStatusCompletableFuture.get(1, TimeUnit.SECONDS);
+                    // The real failure cause is fetched from getJobExecutionResult() below,
+                    // so a terminal state is enough to stop polling here.
+                    return status == JobStatus.FAILED
+                        || status == JobStatus.FINISHED
+                        || status == JobStatus.CANCELED;
+
+                  } catch (Exception e) {
+                    return true;
+                  }
+                });
+      } catch (Exception ignored) {
+      }
+    }
   }
 
   @SneakyThrows
