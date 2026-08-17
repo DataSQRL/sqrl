@@ -29,7 +29,7 @@
     "description" : "Employees.allReports"
   } ],
   "plan" : "LogicalValues(tuples=[[]])\n",
-  "sql" : "WITH RECURSIVE employee_hierarchy AS (\n    SELECT r.employeeid, r.managerid, 1 as level\n    FROM \"Reporting\" r\n    WHERE r.managerid = $?$0\n    UNION ALL\n    SELECT r.employeeid, r.managerid, eh.level + 1 as level\n    FROM \"Reporting\" r\n    INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid\n  )\n  SELECT e.employeeid, e.name, eh.level\n  FROM employee_hierarchy eh\n  JOIN \"Employees\" e ON eh.employeeid = e.employeeid\n  ORDER BY eh.level, e.employeeid"
+  "sql" : "WITH RECURSIVE employee_hierarchy AS (\n\n    SELECT r.employeeid, r.managerid, 1 as level\n    FROM \"Reporting\" r\n    WHERE r.managerid = $?$0\n\n    UNION ALL\n\n\n    SELECT r.employeeid, r.managerid, eh.level + 1 as level\n    FROM \"Reporting\" r\n    INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid\n  )\n  SELECT e.employeeid, e.name, eh.level\n  FROM employee_hierarchy eh\n  JOIN \"Employees\" e ON eh.employeeid = e.employeeid\n  ORDER BY eh.level, e.employeeid"
 }, {
   "id" : "access:Employees.directReports",
   "name" : "Employees.directReports",
@@ -204,10 +204,14 @@ Employees.directReports := SELECT e.* FROM Reporting r JOIN Employees e ON r.emp
  */
 Employees.allReports RETURNS (employeeid BIGINT NOT NULL, name STRING NOT NULL, level INT NOT NULL) :=
   WITH RECURSIVE employee_hierarchy AS (
+
     SELECT r.employeeid, r.managerid, 1 as level
     FROM "Reporting" r
     WHERE r.managerid = this.employeeid
+
     UNION ALL
+
+
     SELECT r.employeeid, r.managerid, eh.level + 1 as level
     FROM "Reporting" r
     INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid

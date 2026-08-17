@@ -182,6 +182,7 @@ CREATE TABLE `Click` (
 )
 LIKE `Click__schema`;
 /** Most visited pages
+
     Columns:
        - url: URL of the top visited page
        - total: Total number of visitors
@@ -189,17 +190,21 @@ LIKE `Click__schema`;
 Trending := SELECT url, count(1) AS total
     FROM Click
     GROUP BY url ORDER BY total DESC, url ASC;
+/* Find next page visits within 10 minutes */
 VisitAfter := SELECT b.url AS beforeURL, a.url AS afterURL,
     a.`timestamp` AS `timestamp`
     FROM Click b JOIN Click a ON b.userid=a.userid AND
         b.`timestamp` < a.`timestamp` AND
         b.`timestamp` >= a.`timestamp` - INTERVAL 10 MINUTE;
 /** Recommend pages that are visited shortly after
+
   Argument:
   * url: the URL to get recommendations for
+
   Columns:
   * rec: the recommended page URL
   * frequency: the number of visitors that co-visited that page
+
 */
 /*+query_by_all(url) */
 Recommendation := SELECT beforeURL AS url, afterURL AS rec,
