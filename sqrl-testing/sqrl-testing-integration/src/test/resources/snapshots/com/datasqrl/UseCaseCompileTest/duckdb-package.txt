@@ -406,6 +406,20 @@ FROM "_MyApplications2"
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "hello" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTable1($limit: Int = 10, $offset: Int = 0) {\nMyTable1(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
@@ -432,6 +446,20 @@ FROM "_MyApplications2"
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "hello" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTable2($limit: Int = 10, $offset: Int = 0) {\nMyTable2(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
@@ -456,6 +484,20 @@ FROM "_MyApplications2"
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "hello" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "format" : "JSON",

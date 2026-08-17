@@ -413,6 +413,24 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "endOfMin" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "avg_temperature" : {
+                  "type" : "number"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorMaxTempLastMin($limit: Int = 10, $offset: Int = 0) {\nSensorMaxTempLastMin(limit: $limit, offset: $offset) {\nsensorid\nendOfMin\navg_temperature\n}\n\n}",
@@ -443,6 +461,23 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
               "required" : [
                 "sensorid"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "avg_temperatures" : {
+                  "type" : "number"
+                },
+                "max_temperature" : {
+                  "type" : "number"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -477,6 +512,27 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
               ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "uuid" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorReadingById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReadingById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nuuid\nsensorid\ntemperature\nevent_time\n}\n\n}",
@@ -504,6 +560,24 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
                 "sensorid",
                 "temperature"
               ]
+            }
+          },
+          "result" : {
+            "type" : "object",
+            "properties" : {
+              "uuid" : {
+                "type" : "string"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "temperature" : {
+                "type" : "number"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
             }
           },
           "format" : "JSON",

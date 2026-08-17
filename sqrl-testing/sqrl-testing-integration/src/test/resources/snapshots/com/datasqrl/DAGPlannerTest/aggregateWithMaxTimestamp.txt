@@ -798,6 +798,20 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "cnt" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderAgg1($limit: Int = 10, $offset: Int = 0) {\nOrderAgg1(limit: $limit, offset: $offset) {\ncustomerid\ncnt\n}\n\n}",
@@ -822,6 +836,24 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "cnt" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -850,6 +882,20 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "cnt" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderAgg3($limit: Int = 10, $offset: Int = 0) {\nOrderAgg3(limit: $limit, offset: $offset) {\ncustomerid\ncnt\n}\n\n}",
@@ -874,6 +920,24 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "cnt" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -902,6 +966,44 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "entries" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
@@ -926,6 +1028,44 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "entries" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
           "format" : "JSON",

@@ -278,6 +278,30 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Customers($limit: Int = 10, $offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
@@ -313,6 +337,30 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
               ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomersById($a: Long!, $b: Long!, $limit: Int = 10, $offset: Int = 0) {\nCustomersById(a: $a, b: $b, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
@@ -342,6 +390,30 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
               "required" : [
                 "inputName"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",

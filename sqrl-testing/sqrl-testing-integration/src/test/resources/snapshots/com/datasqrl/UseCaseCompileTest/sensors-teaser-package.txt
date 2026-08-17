@@ -554,6 +554,35 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "groupId" : {
+                  "type" : "integer"
+                },
+                "groupName" : {
+                  "type" : "string"
+                },
+                "created" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "machines" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "machineId" : {
+                        "type" : "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query MachineGroup($limit: Int = 10, $offset: Int = 0) {\nMachineGroup(limit: $limit, offset: $offset) {\ngroupId\ngroupName\ncreated\nmachines {\nmachineId\n}\n}\n\n}",
@@ -586,6 +615,32 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
               ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "timeSec" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "timeStart" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "timeEnd" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "temp" : {
+                  "type" : "number"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SecReading($sensorid: Long!, $limit: Int = 10, $offset: Int = 0) {\nSecReading(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntimeStart\ntimeEnd\ntemp\n}\n\n}",
@@ -616,6 +671,24 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "window_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "maxTemp" : {
+                  "type" : "number"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorMaxTemp($sensorid: Long, $limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nwindow_time\nmaxTemp\n}\n\n}",
@@ -642,6 +715,30 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "humidity" : {
+                  "type" : "number"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntime\ntemperature\nhumidity\ntimestamp\n}\n\n}",
@@ -666,6 +763,27 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "machineId" : {
+                  "type" : "integer"
+                },
+                "placed" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",

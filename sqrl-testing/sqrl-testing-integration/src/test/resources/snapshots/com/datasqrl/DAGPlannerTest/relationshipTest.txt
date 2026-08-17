@@ -443,6 +443,80 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "orders" : {
+                  "type" : "array",
+                  "description" : "These are the orders for a customer",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "id" : {
+                        "type" : "integer"
+                      },
+                      "customerid" : {
+                        "type" : "integer"
+                      },
+                      "time" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      },
+                      "entries" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "object",
+                          "properties" : {
+                            "productid" : {
+                              "type" : "integer"
+                            },
+                            "quantity" : {
+                              "type" : "integer"
+                            },
+                            "unit_price" : {
+                              "type" : "number"
+                            },
+                            "discount" : {
+                              "type" : "number"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "orders2" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "id" : {
+                        "type" : "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Customer($limit: Int = 10, $offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0$orders2_limit: Int = 10, $orders2_offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\norders(limit: $orders_limit, offset: $orders_offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\norders2(limit: $orders2_limit, offset: $orders2_offset) {\nid\n}\n}\n\n}",
@@ -467,6 +541,44 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "entries" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
           "format" : "JSON",

@@ -399,6 +399,27 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "userid" : {
+                  "type" : "integer"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "unique_id" : {
+                  "type" : "string"
+                },
+                "unique_id0" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query JoinTable($limit: Int = 10, $offset: Int = 0) {\nJoinTable(limit: $limit, offset: $offset) {\nuserid\nevent_time\nunique_id\nunique_id0\n}\n\n}",
@@ -420,6 +441,18 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "object",
+            "properties" : {
+              "userid" : {
+                "type" : "integer"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
             }
           },
           "format" : "JSON",

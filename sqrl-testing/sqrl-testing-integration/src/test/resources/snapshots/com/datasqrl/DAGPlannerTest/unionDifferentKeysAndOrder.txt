@@ -394,6 +394,20 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id_a" : {
+                  "type" : "string"
+                },
+                "val" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query CombinedStream($limit: Int = 10, $offset: Int = 0) {\nCombinedStream(limit: $limit, offset: $offset) {\nid_a\nval\n}\n\n}",
@@ -420,6 +434,20 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id_a" : {
+                  "type" : "string"
+                },
+                "val" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query source_a($limit: Int = 10, $offset: Int = 0) {\nsource_a(limit: $limit, offset: $offset) {\nid_a\nval\n}\n\n}",
@@ -444,6 +472,20 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id_b" : {
+                  "type" : "string"
+                },
+                "val" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "format" : "JSON",

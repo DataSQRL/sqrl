@@ -534,6 +534,138 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "name" : {
+                  "type" : "string"
+                },
+                "latest" : {
+                  "type" : "object",
+                  "properties" : {
+                    "name" : {
+                      "type" : "string"
+                    },
+                    "version" : {
+                      "type" : "string"
+                    },
+                    "variant" : {
+                      "type" : "string"
+                    },
+                    "latest" : {
+                      "type" : "boolean"
+                    },
+                    "type" : {
+                      "type" : "string"
+                    },
+                    "license" : {
+                      "type" : "string"
+                    },
+                    "repository" : {
+                      "type" : "string"
+                    },
+                    "homepage" : {
+                      "type" : "string"
+                    },
+                    "documentation" : {
+                      "type" : "string"
+                    },
+                    "readme" : {
+                      "type" : "string"
+                    },
+                    "description" : {
+                      "type" : "string"
+                    },
+                    "uniqueId" : {
+                      "type" : "string"
+                    },
+                    "keywords" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "string"
+                      }
+                    },
+                    "repoURL" : {
+                      "type" : "string"
+                    },
+                    "file" : {
+                      "type" : "string"
+                    },
+                    "hash" : {
+                      "type" : "string"
+                    },
+                    "submissionTime" : {
+                      "type" : "string"
+                    }
+                  }
+                },
+                "versions" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "name" : {
+                        "type" : "string"
+                      },
+                      "version" : {
+                        "type" : "string"
+                      },
+                      "variant" : {
+                        "type" : "string"
+                      },
+                      "latest" : {
+                        "type" : "boolean"
+                      },
+                      "type" : {
+                        "type" : "string"
+                      },
+                      "license" : {
+                        "type" : "string"
+                      },
+                      "repository" : {
+                        "type" : "string"
+                      },
+                      "homepage" : {
+                        "type" : "string"
+                      },
+                      "documentation" : {
+                        "type" : "string"
+                      },
+                      "readme" : {
+                        "type" : "string"
+                      },
+                      "description" : {
+                        "type" : "string"
+                      },
+                      "uniqueId" : {
+                        "type" : "string"
+                      },
+                      "keywords" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "string"
+                        }
+                      },
+                      "repoURL" : {
+                        "type" : "string"
+                      },
+                      "file" : {
+                        "type" : "string"
+                      },
+                      "hash" : {
+                        "type" : "string"
+                      },
+                      "submissionTime" : {
+                        "type" : "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Package($name: String!, $limit: Int = 10, $offset: Int = 0$versions_version: String!, $versions_variant: String!, $versions_limit: Int = 10, $versions_offset: Int = 0) {\nPackage(name: $name, limit: $limit, offset: $offset) {\nname\nlatest {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\nversions(version: $versions_version, variant: $versions_variant, limit: $versions_limit, offset: $versions_offset) {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\n}\n\n}",
@@ -561,6 +693,20 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "topicName" : {
+                  "type" : "string"
+                },
+                "numPackages" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -592,6 +738,85 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               "required" : [
                 "topicName"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "topicName" : {
+                  "type" : "string"
+                },
+                "pkgName" : {
+                  "type" : "string"
+                },
+                "lastSubmission" : {
+                  "type" : "string"
+                },
+                "numSubmissions" : {
+                  "type" : "integer"
+                },
+                "latest" : {
+                  "type" : "object",
+                  "properties" : {
+                    "name" : {
+                      "type" : "string"
+                    },
+                    "version" : {
+                      "type" : "string"
+                    },
+                    "variant" : {
+                      "type" : "string"
+                    },
+                    "latest" : {
+                      "type" : "boolean"
+                    },
+                    "type" : {
+                      "type" : "string"
+                    },
+                    "license" : {
+                      "type" : "string"
+                    },
+                    "repository" : {
+                      "type" : "string"
+                    },
+                    "homepage" : {
+                      "type" : "string"
+                    },
+                    "documentation" : {
+                      "type" : "string"
+                    },
+                    "readme" : {
+                      "type" : "string"
+                    },
+                    "description" : {
+                      "type" : "string"
+                    },
+                    "uniqueId" : {
+                      "type" : "string"
+                    },
+                    "keywords" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "string"
+                      }
+                    },
+                    "repoURL" : {
+                      "type" : "string"
+                    },
+                    "file" : {
+                      "type" : "string"
+                    },
+                    "hash" : {
+                      "type" : "string"
+                    },
+                    "submissionTime" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
             }
           },
           "format" : "JSON",

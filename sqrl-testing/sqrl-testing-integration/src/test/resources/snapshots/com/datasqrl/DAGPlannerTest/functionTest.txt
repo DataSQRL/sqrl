@@ -327,6 +327,20 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "searchResult" : {
+                  "type" : "number"
+                },
+                "format" : {
+                  "type" : "string"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query FunctionCalls($limit: Int = 10, $offset: Int = 0) {\nFunctionCalls(limit: $limit, offset: $offset) {\nsearchResult\nformat\n}\n\n}",
@@ -351,6 +365,26 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "productid" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "description" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                }
+              }
             }
           },
           "format" : "JSON",

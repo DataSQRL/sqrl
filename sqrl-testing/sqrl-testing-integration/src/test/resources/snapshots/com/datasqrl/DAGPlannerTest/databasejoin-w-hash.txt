@@ -274,6 +274,23 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id1" : {
+                  "type" : "integer"
+                },
+                "id2" : {
+                  "type" : "integer"
+                },
+                "multi" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderEntryJoin($limit: Int = 10, $offset: Int = 0) {\nOrderEntryJoin(limit: $limit, offset: $offset) {\nid1\nid2\nmulti\n}\n\n}",

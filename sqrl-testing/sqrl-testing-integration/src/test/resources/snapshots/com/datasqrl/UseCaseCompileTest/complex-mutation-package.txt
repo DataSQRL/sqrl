@@ -289,6 +289,28 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "userid" : {
+                  "type" : "integer"
+                },
+                "total_tokens" : {
+                  "type" : "integer"
+                },
+                "window_end" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query LatestTokens($limit: Int = 10, $offset: Int = 0) {\nLatestTokens(limit: $limit, offset: $offset) {\nuserid\ntotal_tokens\nwindow_end\nwindow_time\n}\n\n}",
@@ -316,6 +338,21 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
                 "userid",
                 "tokens"
               ]
+            }
+          },
+          "result" : {
+            "type" : "object",
+            "properties" : {
+              "userid" : {
+                "type" : "integer"
+              },
+              "tokens" : {
+                "type" : "integer"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
             }
           },
           "format" : "JSON",

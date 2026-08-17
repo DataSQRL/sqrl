@@ -359,6 +359,45 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "employeeid" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "updatedDate" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "allReports" : {
+                  "type" : "array",
+                  "description" : "Returns all employees reporting to the given employee following down the reporting chain",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "employeeid" : {
+                        "type" : "integer"
+                      },
+                      "name" : {
+                        "type" : "string"
+                      },
+                      "level" : {
+                        "type" : "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Employees($employeeid: Long, $name: String, $limit: Int = 10, $offset: Int = 0$allReports_limit: Int = 10, $allReports_offset: Int = 0) {\nEmployees(employeeid: $employeeid, name: $name, limit: $limit, offset: $offset) {\nemployeeid\nname\nemail\nupdatedDate\nallReports(limit: $allReports_limit, offset: $allReports_offset) {\nemployeeid\nname\nlevel\n}\n}\n\n}",

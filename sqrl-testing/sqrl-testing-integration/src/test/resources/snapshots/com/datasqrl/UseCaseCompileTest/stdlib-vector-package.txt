@@ -322,6 +322,23 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "category_id" : {
+                  "type" : "integer"
+                },
+                "center_vector" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "number"
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query CategoryCentroids($category_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nCategoryCentroids(category_id: $category_id, limit: $limit, offset: $offset) {\ncategory_id\ncenter_vector\n}\n\n}",
@@ -346,6 +363,20 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "doc_id" : {
+                  "type" : "integer"
+                },
+                "category_id" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -379,6 +410,20 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "doc_id" : {
+                  "type" : "integer"
+                },
+                "score" : {
+                  "type" : "number"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query DocumentSimilarity($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarity(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\nscore\n}\n\n}",
@@ -408,6 +453,20 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               "required" : [
                 "doc_id"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "doc_id" : {
+                  "type" : "integer"
+                },
+                "category_id" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",

@@ -166,6 +166,33 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "customer" : {
+                  "type" : "object",
+                  "properties" : {
+                    "name" : {
+                      "type" : "string"
+                    },
+                    "profile" : {
+                      "type" : "object",
+                      "properties" : {
+                        "email" : {
+                          "type" : "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query NestedCustomers($limit: Int = 10, $offset: Int = 0) {\nNestedCustomers(limit: $limit, offset: $offset) {\ncustomer_id\ncustomer {\nname\nprofile {\nemail\n}\n}\n}\n\n}",
