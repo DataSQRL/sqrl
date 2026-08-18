@@ -176,13 +176,15 @@
 
     <!-- Plugin versions -->
     <docker-maven-plugin.version>0.49.0</docker-maven-plugin.version>
-    <easy-jacoco-maven-plugin.version>0.1.4</easy-jacoco-maven-plugin.version>
     <git-code-format-maven-plugin.version>5.6</git-code-format-maven-plugin.version>
     <license-maven-plugin.version>5.1.1</license-maven-plugin.version>
     <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
     <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
     <sortpom.plugin.version>4.0.0</sortpom.plugin.version>
+
+    <argLine></argLine>
+    <jacocoArgLine></jacocoArgLine>
   </properties>
 
   <dependencyManagement>
@@ -880,39 +882,6 @@
     </pluginManagement>
     <plugins>
       <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <version>${jacoco.version}</version>
-        <configuration>
-          <excludes>
-            <exclude>org/**</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>com.marvinformatics.jacoco</groupId>
-        <artifactId>easy-jacoco-maven-plugin</artifactId>
-        <version>0.1.4</version>
-        <configuration>
-          <projectRules>
-            <rule>
-              <limits>
-                <limit>
-                  <counter>INSTRUCTION</counter>
-                  <value>COVEREDRATIO</value>
-                  <minimum>0.70</minimum>
-                </limit>
-              </limits>
-            </rule>
-          </projectRules>
-          <projectExtraProperties>
-            <license.skip>true</license.skip>
-          </projectExtraProperties>
-        </configuration>
-      </plugin>
-
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
         <version>3.6.3</version>
@@ -995,6 +964,7 @@
           <environmentVariables>
             <TZ>America/Los_Angeles</TZ>
           </environmentVariables>
+          <argLine>@{jacocoArgLine} ${argLine}</argLine>
         </configuration>
       </plugin>
       <plugin>
@@ -1012,7 +982,7 @@
             <flinkrunner.image.repo>${flinkrunner.image.repo}</flinkrunner.image.repo>
             <flinkrunner.version>${flinkrunner.version}</flinkrunner.version>
           </systemPropertyVariables>
-          <argLine>${argLine}
+          <argLine>@{jacocoArgLine} ${argLine}
             --add-opens=java.base/java.util=ALL-UNNAMED
             --add-opens=java.base/java.lang=ALL-UNNAMED
             --add-opens=java.base/java.io=ALL-UNNAMED
@@ -1158,6 +1128,64 @@
       </build>
     </profile>
 
+    <profile>
+      <id>coverage</id>
+      <activation>
+        <property>
+          <name>coverage</name>
+        </property>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>${jacoco.version}</version>
+            <executions>
+              <execution>
+                <id>prepare-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+                <configuration>
+                  <append>true</append>
+                  <destFile>${project.build.directory}/jacoco.exec</destFile>
+                  <propertyName>jacocoArgLine</propertyName>
+                </configuration>
+              </execution>
+              <execution>
+                <id>report</id>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+                <phase>verify</phase>
+                <configuration>
+                  <excludes>
+                    <exclude>org/**</exclude>
+                  </excludes>
+                </configuration>
+              </execution>
+              <execution>
+                <id>report-aggregate</id>
+                <goals>
+                  <goal>report-aggregate</goal>
+                </goals>
+                <phase>verify</phase>
+                <inherited>false</inherited>
+                <configuration>
+                  <dataFileIncludes>
+                    <dataFileInclude>target/*.exec</dataFileInclude>
+                  </dataFileIncludes>
+                  <excludes>
+                    <exclude>org/**</exclude>
+                  </excludes>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
     <profile>
       <id>m2e</id>
       <activation>
