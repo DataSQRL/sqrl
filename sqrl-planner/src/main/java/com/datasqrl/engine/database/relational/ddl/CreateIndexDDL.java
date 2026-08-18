@@ -20,29 +20,28 @@ import com.datasqrl.sql.SqlDDLStatement;
 import com.google.common.base.Preconditions;
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.Value;
+import java.util.stream.IntStream;
+import org.apache.calcite.rel.RelFieldCollation.Direction;
 import org.apache.calcite.sql.SqlDialect;
 
-@Value
-public class CreateIndexDDL implements SqlDDLStatement {
-
-  String indexName;
-  String tableName;
-  List<String> columns;
-  IndexType type;
-  DdlIdentifierQuoter identifierQuoter;
+public record CreateIndexDDL(
+    String indexName,
+    String tableName,
+    List<String> columns,
+    List<Direction> directions,
+    IndexType type,
+    DdlIdentifierQuoter identifierQuoter)
+    implements SqlDDLStatement {
 
   public CreateIndexDDL(
       String indexName,
       String tableName,
       List<String> columns,
+      List<Direction> directions,
       IndexType type,
-      SqlDialect dialect) {
-    this.indexName = indexName;
-    this.tableName = tableName;
-    this.columns = columns;
-    this.type = type;
-    this.identifierQuoter = new DdlIdentifierQuoter(dialect);
+      SqlDialect identifierQuoter) {
+    this(
+        indexName, tableName, columns, directions, type, new DdlIdentifierQuoter(identifierQuoter));
   }
 
   @Override
@@ -72,7 +71,10 @@ public class CreateIndexDDL implements SqlDDLStatement {
         indexType = "HNSW";
         break;
       default:
-        columnExpression = String.join(",", identifierQuoter.quoteAll(columns));
+        columnExpression =
+            IntStream.range(0, columns.size())
+                .mapToObj(this::formatIndexColumn)
+                .collect(Collectors.joining(","));
         indexType = type.name().toLowerCase();
     }
 
@@ -85,5 +87,10 @@ public class CreateIndexDDL implements SqlDDLStatement {
             columnExpression);
 
     return sql;
+  }
+
+  private String formatIndexColumn(int index) {
+    var sortOrder = directions.get(index).isDescending() ? " DESC" : "";
+    return identifierQuoter.quote(columns.get(index)) + sortOrder;
   }
 }
