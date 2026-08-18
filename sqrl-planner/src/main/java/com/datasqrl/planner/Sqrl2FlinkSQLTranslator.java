@@ -752,9 +752,10 @@ public class Sqrl2FlinkSQLTranslator {
   public AddTableResult addExternalExport(
       Function<String, String> tableNameModifier,
       String tableDefinition,
-      SchemaLoader schemaLoader) {
+      SchemaLoader schemaLoader,
+      Optional<MutationBuilder> mutationBuilder) {
 
-    return addTable(tableNameModifier, tableDefinition, schemaLoader, Optional.empty());
+    return addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder);
   }
 
   public Optional<TableAnalysis> createTable(

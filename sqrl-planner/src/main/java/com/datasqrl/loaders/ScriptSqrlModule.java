@@ -18,7 +18,7 @@ package com.datasqrl.loaders;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
-import com.datasqrl.error.ErrorCode;
+import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.plan.MainScript;
@@ -96,22 +96,22 @@ public class ScriptSqrlModule implements SqrlModule {
       // Wrap to a supplier so validation is only triggerred when the table is referenced
       Supplier<NamespaceObject> nsObjectSupplier =
           () -> {
-            var finalLocation =
+            var sourceLocation =
                 createTableStmt.mapSqlLocation(parsedCreateTable.statement().getFileLocation());
 
             var isExternalTable =
-                !createTable.getProperties().isEmpty() || createTable instanceof SqlCreateTableLike;
-
-            scriptErrors
-                .atFile(finalLocation)
-                .checkFatal(
-                    isExternalTable,
-                    ErrorCode.INVALID_INDIVIDUAL_SCRIPT_TABLE,
-                    "Referenced table '%s' is not an external table",
-                    tableName);
+                FlinkSqlNodes.resolveProperties(createTable.getProperties())
+                        .containsKey("connector")
+                    || createTable instanceof SqlCreateTableLike;
 
             return new FlinkTableNamespaceObject(
-                new FlinkTable(Name.system(tableName), sql, scriptPath),
+                new FlinkTable(
+                    Name.system(tableName),
+                    createTableStmt,
+                    scriptPath,
+                    isExternalTable,
+                    scriptContent,
+                    sourceLocation),
                 moduleLoader.getSchemaLoader());
           };
 
