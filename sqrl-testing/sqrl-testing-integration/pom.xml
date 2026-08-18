@@ -29,17 +29,6 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.datasqrl</groupId>
-      <artifactId>sqrl-cli</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-reload4j</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
       <groupId>org.apache.flink</groupId>
       <artifactId>flink-runtime-web</artifactId>
       <scope>test</scope>
@@ -145,4 +134,80 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <profile>
+      <id>default-test-classpath</id>
+      <activation>
+        <property>
+          <name>!jacoco.aggregate</name>
+        </property>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-cli</artifactId>
+          <scope>test</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-reload4j</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+      </dependencies>
+    </profile>
+    <profile>
+      <id>jacoco-aggregate</id>
+      <activation>
+        <property>
+          <name>jacoco.aggregate</name>
+        </property>
+      </activation>
+      <dependencies>
+        <!-- JaCoCo aggregates coverage against direct application dependencies. -->
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-cli</artifactId>
+          <scope>provided</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-reload4j</artifactId>
+            </exclusion>
+          </exclusions>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-deployment-model</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-server-core</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-server-vertx-base</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-planner</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-discovery</artifactId>
+          <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>com.datasqrl</groupId>
+          <artifactId>sqrl-server-vertx</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
 </project>

@@ -105,6 +105,19 @@ commands:
             java -version
             javac -version
 
+  configure-jacoco:
+    description: "Set the JaCoCo runtime agent path for CI coverage runs"
+    steps:
+      - run:
+          name: Configure JaCoCo
+          command: |
+            JACOCO_VERSION=$(sed -n 's:.*<jacoco.version>\([^<]*\)</jacoco.version>.*:\1:p' pom.xml | head -n 1)
+            if [ -z "$JACOCO_VERSION" ]; then
+              echo "Failed to determine jacoco.version from pom.xml" >&2
+              exit 1
+            fi
+            echo "export JACOCO_AGENT_PATH=$HOME/.m2/repository/org/jacoco/org.jacoco.agent/$JACOCO_VERSION/org.jacoco.agent-$JACOCO_VERSION-runtime.jar" >> "$BASH_ENV"
+
   determine-version:
     description: "Derive TAG_SUFFIX and REGISTRY"
     steps:
@@ -179,7 +192,10 @@ commands:
           name: Save package results
           command: |
             mkdir -p ~/test-results/junit/
-            find . -type f -regex ".*/target/surefire-reports/.*xml" \
+            find . -type f \( \
+                -regex ".*/target/surefire-reports/.*xml" \
+                -o -regex ".*/target/failsafe-reports/.*xml" \
+              \) \
               -exec cp {} ~/test-results/junit/ \;
           when: always
       - store_test_results:
@@ -204,11 +220,42 @@ commands:
 
             ./codecov --version
 
-            # Upload the coverage report.
-            ./codecov upload-coverage $COMMON_ARGS
+            INTEGRATION_COVERAGE=sqrl-testing/sqrl-testing-integration/target/site/jacoco-aggregate/jacoco.xml
+            if [ -f "$INTEGRATION_COVERAGE" ]; then
+              ./codecov upload-coverage \
+                --file "$INTEGRATION_COVERAGE" \
+                --flag integration \
+                --name "integration-${TEST_SHARDING_INDEX:-0}" \
+                $COMMON_ARGS
+            else
+              # Unit-test jobs have per-module JaCoCo reports instead of an aggregate report.
+              ./codecov upload-coverage $COMMON_ARGS
+            fi
 
             # Upload the test reports.
             ./codecov do-upload --report-type test_results $COMMON_ARGS
+
+  upload-container-coverage:
+    description: "Upload container E2E JaCoCo coverage to Codecov"
+    steps:
+      - run:
+          name: Codecov container coverage
+          command: |
+            curl -Os https://cli.codecov.io/latest/linux/codecov
+            chmod +x codecov
+
+            EXTRA=""
+            if [ -n "$CIRCLE_PR_NUMBER" ]; then
+              EXTRA="--pull-request-number $CIRCLE_PR_NUMBER"
+            fi
+
+            COMMON_ARGS="--token $CODECOV_TOKEN --branch $CIRCLE_BRANCH --commit-sha $CIRCLE_SHA1 $EXTRA --recurse-submodules --git-service github"
+            ./codecov upload-coverage \
+              --file sqrl-testing/sqrl-testing-container/target/site/jacoco-aggregate/jacoco.xml \
+              --flag container-e2e \
+              --name "container-e2e-${CIRCLE_NODE_INDEX}" \
+              $COMMON_ARGS
+          when: always
 
   compute-sha1-tags:
     description: "Compute deterministic tags from Dockerfiles"
@@ -319,12 +366,13 @@ jobs:
           keys:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
+      - configure-jacoco
       - run:
           name: Run Unit Tests
           command: |
             export MAVEN_OPTS="-Xmx3g -XX:MaxMetaspaceSize=768m -Djava.awt.headless=true"
             mvn -U -T1 -B install \
-            -DonlyUTs \
+            -DonlyUTs -Dcoverage -Djacoco.agent.path="$JACOCO_AGENT_PATH" \
             -DargLine="@{argLine} -Xmx2g -XX:MaxMetaspaceSize=512m"
       - save-test-results
 
@@ -346,9 +394,12 @@ jobs:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
       - install-jdk
+      - configure-jacoco
       - run:
           name: Run Integration Tests
-          command: mvn -U -T2 -B install -DonlyITs
+          command: |
+            mvn -U -T2 -B install -DonlyITs -Dcoverage -Djacoco.agent.path="$JACOCO_AGENT_PATH"
+            mvn -B -DonlyITs -Dcoverage -Djacoco.aggregate jacoco:report-aggregate
       - save-test-results
 
   container-e2e-test:
@@ -362,6 +413,7 @@ jobs:
             - m2-{{ checksum "pom.xml" }}
       - generate-settings
       - install-jdk
+      - configure-jacoco
       - compute-mcp-tag
       - compute-sha1-tags
       - run:
@@ -384,11 +436,12 @@ jobs:
               | sed 's|.*\.||' \
               | paste -sd,)
             echo "Running shard ${CIRCLE_NODE_INDEX}: $SHARD_TESTS"
-            mvn -B install -DonlyContainerE2E \
+            mvn -B install -DonlyContainerE2E -Dcoverage -Djacoco.agent.path="$JACOCO_AGENT_PATH" \
               -pl :sqrl-testing-container \
               -Dit.test="$SHARD_TESTS" \
               -Ddocker.image.tag=local-${CIRCLE_SHA1} \
               -Dmcp.inspector.version=$MCP_TAG
+            mvn -B -DonlyContainerE2E -Dcoverage -Djacoco.aggregate jacoco:report-aggregate
       - run:
           name: Collect test results
           command: |
@@ -399,6 +452,7 @@ jobs:
       - store_test_results:
           path: ~/test-results
           when: always
+      - upload-container-coverage
 
   deploy:
     docker:
@@ -418,7 +472,7 @@ jobs:
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
           name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease} -Deasyjacoco.skip=true
+          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease}
 
   build-images:
     # use a full VM so we can run Docker / Buildx

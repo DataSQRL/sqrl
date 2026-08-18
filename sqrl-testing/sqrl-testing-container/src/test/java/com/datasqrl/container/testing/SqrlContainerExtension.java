@@ -29,6 +29,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import lombok.Getter;
@@ -71,6 +72,10 @@ public class SqrlContainerExtension
       REDPANDA_NETWORK_ALIAS + ":" + REDPANDA_INTERNAL_PORT;
   private static final String REDPANDA_IMAGE = "redpandadata/redpanda:v23.1.2";
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final String JACOCO_AGENT_PATH_PROPERTY = "jacoco.agent.path";
+  private static final String JACOCO_AGENT_CONTAINER_PATH = "/opt/sqrl/jacocoagent.jar";
+  private static final String JACOCO_OUTPUT_CONTAINER_DIR = "/jacoco";
+  private static final Path JACOCO_OUTPUT_HOST_DIR = Path.of("target");
 
   private final String testCaseName;
 
@@ -81,6 +86,7 @@ public class SqrlContainerExtension
   @Getter private RedpandaContainer redpandaContainer;
 
   private List<GenericContainer<?>> commandContainers = new ArrayList<>();
+  private Path serverJacocoExecFile;
   private long testStartTime;
   private String currentTestName;
 
@@ -150,6 +156,7 @@ public class SqrlContainerExtension
     if (debug) {
       cmd = cmd.withEnv("SQRL_DEBUG", "1");
     }
+    cmd = configureJacoco(cmd, "sqrl-cli.exec");
 
     commandContainers.add(cmd);
     return cmd;
@@ -189,8 +196,50 @@ public class SqrlContainerExtension
       serverContainer =
           serverContainer.withEnv(KAFKA_BOOTSTRAP_SERVERS, REDPANDA_INTERNAL_BOOTSTRAP);
     }
+    var serverJacocoExecFileName = "sqrl-server-" + UUID.randomUUID() + ".exec";
+    serverContainer = configureJacoco(serverContainer, serverJacocoExecFileName);
+    if (isJacocoAgentAvailable()) {
+      serverJacocoExecFile =
+          JACOCO_OUTPUT_HOST_DIR.resolve(serverJacocoExecFileName).toAbsolutePath();
+    }
 
     return serverContainer;
+  }
+
+  private boolean isJacocoAgentAvailable() {
+    var agentPathProperty = System.getProperty(JACOCO_AGENT_PATH_PROPERTY);
+    return !StringUtils.isBlank(agentPathProperty)
+        && Files.isRegularFile(Path.of(agentPathProperty));
+  }
+
+  @SneakyThrows
+  private GenericContainer<?> configureJacoco(GenericContainer<?> container, String destFileName) {
+    var agentPathProperty = System.getProperty(JACOCO_AGENT_PATH_PROPERTY);
+    if (StringUtils.isBlank(agentPathProperty)) {
+      return container;
+    }
+
+    var agentPath = Path.of(agentPathProperty);
+    if (!Files.isRegularFile(agentPath)) {
+      log.warn("JaCoCo agent not found at {}, Docker coverage disabled", agentPath);
+      return container;
+    }
+
+    var outputDir = JACOCO_OUTPUT_HOST_DIR.toAbsolutePath();
+    Files.createDirectories(outputDir);
+
+    var jacocoArg =
+        String.format(
+            "-javaagent:%s=destfile=%s/%s,append=true,includes=com.datasqrl.*",
+            JACOCO_AGENT_CONTAINER_PATH, JACOCO_OUTPUT_CONTAINER_DIR, destFileName);
+    var existingJvmArgs = container.getEnvMap().get("SQRL_JVM_ARGS");
+    var jvmArgs =
+        StringUtils.isBlank(existingJvmArgs) ? jacocoArg : existingJvmArgs + " " + jacocoArg;
+
+    return container
+        .withFileSystemBind(agentPath.toString(), JACOCO_AGENT_CONTAINER_PATH, BindMode.READ_ONLY)
+        .withFileSystemBind(outputDir.toString(), JACOCO_OUTPUT_CONTAINER_DIR, BindMode.READ_WRITE)
+        .withEnv("SQRL_JVM_ARGS", jvmArgs);
   }
 
   public void compileSqrlProject() {
@@ -579,8 +628,7 @@ public class SqrlContainerExtension
 
   public void cleanupContainers() {
     if (serverContainer != null) {
-      serverContainer.close();
-      serverContainer = null;
+      stopServerContainer();
     }
     if (redpandaContainer != null) {
       redpandaContainer.close();
@@ -588,5 +636,35 @@ public class SqrlContainerExtension
     }
     commandContainers.forEach(Startable::close);
     commandContainers = new ArrayList<>();
+  }
+
+  @SneakyThrows
+  private void stopServerContainer() {
+    var wasRunning = serverContainer.isRunning();
+    var jacocoExecFile = serverJacocoExecFile;
+    try {
+      if (wasRunning) {
+        // Testcontainers closes running containers with SIGKILL, which skips JaCoCo's shutdown
+        // hook.
+        serverContainer
+            .getDockerClient()
+            .stopContainerCmd(serverContainer.getContainerId())
+            .withTimeout(10)
+            .exec();
+        await().atMost(Duration.ofSeconds(15)).until(() -> !serverContainer.isRunning());
+      }
+    } finally {
+      serverContainer.close();
+      serverContainer = null;
+      serverJacocoExecFile = null;
+    }
+
+    if (wasRunning && jacocoExecFile != null) {
+      assertThat(jacocoExecFile)
+          .as("JaCoCo server coverage should be written during graceful shutdown")
+          .exists()
+          .isRegularFile();
+      assertThat(Files.size(jacocoExecFile)).isGreaterThan(0);
+    }
   }
 }
