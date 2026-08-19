@@ -300,6 +300,10 @@
               "description": "Divisor applied to a table's TTL to cap the number of pg_partman partitions.",
               "type": "integer"
             },
+            "partition-premake": {
+              "description": "Number of future partitions pg_partman pre-creates ahead of the current one (p_premake).",
+              "type": "integer"
+            },
             "config": {
               "type": "object",
               "minProperties": 1

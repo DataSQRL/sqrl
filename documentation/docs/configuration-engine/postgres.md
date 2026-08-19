@@ -9,6 +9,7 @@ No mandatory configuration keys are required. Physical DDL (tables, indexes, vie
 | Key                     | Type        | Default | Description                                                                                                    |
 |-------------------------|-------------|---------|----------------------------------------------------------------------------------------------------------------|
 | `partition-ttl-divisor` | **integer** | `100`   | Controls the number of partitions for range-partitioned tables with a TTL (see [Partitioning](#partitioning)). |
+| `partition-premake`     | **integer** | `4`     | Number of future partitions pg_partman pre-creates ahead of the current one (`p_premake`).                     |
 
 ## Basic Configuration
 
@@ -34,6 +35,8 @@ Tables annotated with `partition_key` on a timestamp column and a `ttl` hint are
 - The result is snapped down to the closest calendar-aligned width from: 15 min, 30 min, 1, 2, 4, 6, 8, 12 hours, 1, 2, 4 days, 1, 2, 4, 8, 12 weeks.
 
 For example, `ttl(14 days)` with the default divisor produces 1-day partitions.
+
+At setup time, pg_partman pre-creates the historical partitions covering the full TTL window (via `p_start_partition`), so replayed or late-arriving data within the retention period lands in a dated partition rather than the DEFAULT partition. The `partition-premake` key controls how many future partitions are created ahead of the current one.
 
 ## Cloud Deployment
 

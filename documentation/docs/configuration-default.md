@@ -41,7 +41,8 @@ The following is the [default configuration file](https://raw.githubusercontent.
       "scan-cte-cardinality-divisor": 1
     },
     "postgres": {
-      "partition-ttl-divisor": 100
+      "partition-ttl-divisor": 100,
+      "partition-premake": 4
     },
     "kafka": {
       "retention": null,
