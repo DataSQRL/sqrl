@@ -67,6 +67,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -170,7 +171,7 @@ public class Sqrl2FlinkSQLTranslator {
   private static final String DATATYPE_PARSING_PREFIX =
       "CREATE TEMPORARY TABLE __sqrlinternal_types( ";
 
-  private final Set<String> createdDatabases = new HashSet<>();
+  private final Set<String> createdDatabases = new LinkedHashSet<>();
 
   private final RuntimeExecutionMode executionMode;
   private final boolean compileFlinkPlan;
@@ -1143,9 +1144,43 @@ public class Sqrl2FlinkSQLTranslator {
   }
 
   public List<ParsedRelDataTypeResult> parse2RelDataType(String createTableStatement) {
-    var op = (CreateTableOperation) getOperation(parseSQL(createTableStatement));
+    var op = (CreateTableOperation) getOperation(resolveLikeSource(parseSQL(createTableStatement)));
     var schema = op.getCatalogTable().getResolvedSchema();
     return parseSchema(schema, true);
+  }
+
+  /**
+   * CREATE TABLE statements are serialized with the source table of their LIKE clause unqualified,
+   * but a script imported under an alias is planned in its own database. Re-parsing such a
+   * statement (e.g. for the mutation database compatibility check) resolves the LIKE source against
+   * the current database where it does not exist, so we look the source table up in the databases
+   * created during planning and qualify the reference.
+   */
+  private SqlNode resolveLikeSource(SqlNode sqlNode) {
+    if (!(sqlNode instanceof SqlCreateTableLike likeTable)) {
+      return sqlNode;
+    }
+    var likeClause = likeTable.getTableLike();
+    var sourceTable = likeClause.getSourceTable();
+    if (catalogManager.getTable(qualifyIdentifier(sourceTable)).isPresent()) {
+      return sqlNode;
+    }
+
+    var sourceName = sourceTable.names.get(sourceTable.names.size() - 1);
+    return createdDatabases.stream()
+        .map(database -> ObjectIdentifier.of(FLINK_DEFAULT_CATALOG, database, sourceName))
+        .filter(identifier -> catalogManager.getTable(identifier).isPresent())
+        .findFirst()
+        .<SqlNode>map(
+            identifier ->
+                FlinkSqlNodes.createTableLike(
+                    likeTable.getName().getSimple(),
+                    likeTable,
+                    new SqlTableLike(
+                        likeClause.getParserPosition(),
+                        FlinkSqlNodes.identifier(identifier),
+                        likeClause.getOptions())))
+        .orElse(sqlNode);
   }
 
   @SneakyThrows

@@ -1,0 +1,3 @@
+IMPORT sources AS src;
+
+FooOut := SELECT id, label FROM src.Foo_raw;

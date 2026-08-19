@@ -1,0 +1,4 @@
+[WARN] Table 'Foo_raw' field 'label' type is not backwards compatible: 'INTEGER' -> 'VARCHAR(2147483647)'
+
+[FATAL] The mutation tables defined by the script are not backwards compatible with the provided database. See warnings above for incompatibilities.
+
