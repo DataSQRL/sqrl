@@ -74,28 +74,44 @@ Examples:
 * `IMPORT connectors.sources.Click`: Imports the `Click` table declared in `./connectors/sources.sqrl` and makes it available as `Click`.
 * `IMPORT connectors.sources.Click AS ClickEvents`: Imports the same table and makes it available as `ClickEvents`.
 
-:::warning
-Individual table imports will select a `CREATE TABLE` statement from a SQRL script. They only support [external tables](#create-table-internal-vs-external), which defines all necessary table properties in the `WITH (...)` clause.
-Import the script inline or as a namespace when it contains internal tables or other SQRL definitions.
-:::
+Individual table imports select a `CREATE TABLE` statement from a SQRL script. The referenced
+table can be either a [connector-backed external table](#create-table-internal-vs-external) or an
+engine-managed internal table with an `engine(...)` hint. Other SQRL definitions in the referenced
+script are not imported; import the complete script inline or as a namespace when they are needed.
 
-## CREATE TABLE (internal vs external)
+For example, an individual import can use an engine-managed Kafka source:
+
+```sql title="connectors/sources.sqrl"
+/*+ engine(kafka) */
+CREATE TABLE CustomerEvents (
+  customer_id BIGINT NOT NULL,
+  full_name STRING,
+  `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+```
+
+```sql title="pipeline.sqrl"
+IMPORT connectors.sources.CustomerEvents;
+```
+
+## CREATE TABLE (Internal vs External)
 
 SQRL understands the complete Flink SQL `CREATE TABLE` syntax, but distinguishes between **internal** and **external** source tables.
-External source tables are standard Flink SQL tables that connect to an external data source (e.g. database or Kafka cluster).
-Internal tables connect to a data source that is managed by SQRL and exposed for data ingestion in the interface.
+External source tables are standard Flink SQL tables with a `connector` table option that connect to an external data source (e.g. database or Kafka cluster).
+Internal tables are managed by an SQRL engine selected through an `engine(...)` hint. They may include engine-specific options in `WITH (...)`, but do not specify a `connector` option.
 
 :::important
 Internal tables support `kafka` and `iceberg` engines.
 :::
 
-| Feature                       | Internal source (managed by SQRL)                               | External Source (connector) |
-|-------------------------------|-----------------------------------------------------------------|-----------------------------|
-| Connector clause `WITH (...)` | **omitted**                                                     | **required**                |
-| Engine hint                   | **required**                                                    | **omitted**                 |
-| Metadata columns              | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner | Passed through              |
-| Watermark spec                | **generated**                                                   | **required**                |
-| Primary key                   | *Unenforced* upsert semantics                                   | Same as Flink               |
+| Feature                    | Internal source (managed by SQRL)                               | External Source (connector)  |
+|----------------------------|-----------------------------------------------------------------|------------------------------|
+| Connector option           | **omitted**                                                     | **required**                 |
+| Other `WITH (...)` options | Optional engine-specific options                                | Connector configuration      |
+| Engine hint                | **required**                                                    | Not used to select connector |
+| Metadata columns           | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner | Passed through               |
+| Watermark spec             | **generated**                                                   | **required**                 |
+| Primary key                | *Unenforced* upsert semantics                                   | Same as Flink                |
 
 ### Internal Example
 
@@ -110,7 +126,7 @@ CREATE TABLE Customer (
 );
 ```
 
-### External example
+### External Example
 
 ```sql
 CREATE TABLE kafka_json_table (
@@ -123,9 +139,9 @@ CREATE TABLE kafka_json_table (
 );
 ```
 
-## Definition statements
+## Definition Statements
 
-### Table definition
+### Table Definition
 
 ```
 TableName := SELECT ... ;
@@ -137,7 +153,7 @@ Equivalent to a `CREATE VIEW` in SQL.
 ValidCustomer := SELECT * FROM Customer WHERE customerid > 0 AND email IS NOT NULL;
 ```
 
-### DISTINCT operator
+### DISTINCT Operator
 
 ```
 DistinctTbl := DISTINCT SourceTbl
@@ -152,7 +168,7 @@ DistinctTbl := DISTINCT SourceTbl
 DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
 ```
 
-### Function definition
+### Function Definition
 
 ```
 FuncName(arg1 TYPE [NOT NULL] [, ...]) :=
@@ -165,7 +181,7 @@ Arguments are referenced with `:name` in the `SELECT` query. Argument definition
 CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
 ```
 
-#### Accessing JWT payload
+#### Accessing JWT Payload
 
 To access the JWT payload included in the Authorization HTTP header, you can use the `METADATA` expression within the
 function definition. The JWT payload is available via the auth object, and nested fields can be accessed directly.
@@ -178,7 +194,7 @@ AuthFilter(mySecretId BIGINT NOT NULL METADATA FROM 'auth.val') :=
   WHERE c.customerId = :mySecretId;
 ```
 
-### Relationship definition
+### Relationship Definition
 
 ```
 ParentTable.RelName(arg TYPE, ...) :=
@@ -194,7 +210,7 @@ ParentTable.RelName(arg TYPE, ...) :=
 Customer.highValueOrders(minAmount BIGINT) := SELECT * FROM Orders o WHERE o.customerid = this.id AND o.amount > :minAmount;
 ```
 
-### Column-addition statement
+### Column-addition Statement
 
 ```
 TableName.new_col := expression;
@@ -215,12 +231,13 @@ TableName RETURNS (column TYPE [NOT NULL], ...) :=
   SELECT raw_sql_query;
 ```
 
-**⚠️ Important considerations:**
+:::important
 - SQL must be written in the exact syntax of the target database engine
 - SQRL will not validate, parse, or optimize the query
 - Only use when SQRL lacks native support for the required functionality
 - Return type must be explicitly declared using the `RETURNS` clause
 - Passthrough queries must be assigned to a database engine for execution
+:::
 
 The following defines a relationship definition with a recursive CTE that is passed through to the
 database engine for execution.
@@ -290,7 +307,7 @@ Defines an internal table that is not exposed in the interface.
 CREATE TABLE statements that define an [internal data source](#create-table-internal-vs-external) are exposed as topics in the log, or GraphQL mutations in the server.
 The input type is defined by mapping all column types to native data types of the interface schema. Computed and metadata columns are not included in the input type since those are computed on insert.
 
-## EXPORT statement
+## EXPORT Statement
 
 ```
 EXPORT source_identifier TO sinkPath.QualifiedName ;
@@ -306,37 +323,56 @@ EXPORT CustomerTimeWindow TO print.TimeWindow;
 EXPORT MyAlerts           TO log.AlertStream;
 ```
 
-An export can also target an individual external table declared in another SQRL script. The final path segment names the table and the preceding segments identify the script:
+An export can also target an individual table declared in another SQRL script. The final path segment names the table and the preceding segments identify the script:
 
 ```sql
 EXPORT CustomerSubset TO connectors.sinks.CustomerExport;
 ```
 
-This resolves `CustomerExport` from `./connectors/sinks.sqrl`. As with individual imports, the referenced table must be an [external table](#create-table-internal-vs-external) with a connector `WITH (...)` clause. Internal tables cannot be used as individual export sinks.
+This resolves `CustomerExport` from `./connectors/sinks.sqrl`. The target must either be an [external table](#create-table-internal-vs-external) with a `connector` option or an engine-managed internal table with an `engine(...)` hint.
+
+For example, an individual export can use an Iceberg table managed by the configured Iceberg engine. Engine-specific table options are preserved when SQRL generates the connector configuration:
+
+```sql title="tables/iceberg.sqrl"
+/*+ engine(iceberg), maintenance(regular) */
+CREATE TABLE CustomerExport (
+  customer_id BIGINT NOT NULL,
+  total_orders BIGINT NOT NULL,
+  `timestamp` TIMESTAMP_LTZ(3)
+) WITH (
+  'write.distribution-mode' = 'none'
+);
+```
+
+```sql title="pipeline.sqrl"
+EXPORT CustomerTotals TO tables.iceberg.CustomerExport;
+```
+
+The generated table is used only as the export target. Unlike a regular internal `CREATE TABLE` source, it is not exposed as a GraphQL mutation.
 
 
 ## Hints
 
 Hints live in a `/*+ ... */` comment placed **immediately before** the definition they apply to.
 
-| Hint                        | Form                                                                       | Applies to     | Effect                                                                                                                                                                             |
-|-----------------------------|----------------------------------------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare PK when optimiser cannot infer                                                                                                                                             |
-| **index**                   | `index(type, col, ...)` <br/> Multiple `index(...)` can be comma-separated | table          | override automatic index selection. `type` ∈ `HASH`, `BTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`. <br />`index` *alone* disables all automatic indexes                       |
-| **partition_key**           | `partition_key(col, ...)`                                                  | table          | define partition columns for sinks that support partitioning                                                                                                                       |
-| **vector_dim**              | `vector_dim(col, 1536)`                                                    | table          | declare fixed vector length. This is required when using vector indexes.                                                                                                           |
-| **query_by_all**            | `query_by_all(col, ...)`                                                   | table          | generate interface with *required* filter arguments for all listed columns                                                                                                         |
-| **query_by_any**            | `query_by_any(col, ...)`                                                   | table          | generate interface with *optional* filter arguments for all listed columns                                                                                                         |
-| **no_query**                | `no_query`                                                                 | table          | hide from interface                                                                                                                                                                |
-| **insert**                  | `insert(type)`                                                             | table          | controls the way how mutations will be written to their target sink. `type` ∈ `SINGLE` (default), `BATCH`, `TRANSACTION`                                                           |
+| Hint                        | Form                                                                       | Applies to     | Effect                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+|-----------------------------|----------------------------------------------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare PK when optimiser cannot infer                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **index**                   | `index(type, col, ...)` <br/> Multiple `index(...)` can be comma-separated | table          | override automatic index selection. `type` ∈ `HASH`, `BTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`. <br />`index` *alone* disables all automatic indexes                                                                                                                                                                                                                                                                                                |
+| **partition_key**           | `partition_key(col, ...)`                                                  | table          | define partition columns for sinks that support partitioning                                                                                                                                                                                                                                                                                                                                                                                                |
+| **vector_dim**              | `vector_dim(col, 1536)`                                                    | table          | declare fixed vector length. This is required when using vector indexes.                                                                                                                                                                                                                                                                                                                                                                                    |
+| **query_by_all**            | `query_by_all(col, ...)`                                                   | table          | generate interface with *required* filter arguments for all listed columns                                                                                                                                                                                                                                                                                                                                                                                  |
+| **query_by_any**            | `query_by_any(col, ...)`                                                   | table          | generate interface with *optional* filter arguments for all listed columns                                                                                                                                                                                                                                                                                                                                                                                  |
+| **no_query**                | `no_query`                                                                 | table          | hide from interface                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **insert**                  | `insert(type)`                                                             | table          | controls the way how mutations will be written to their target sink. `type` ∈ `SINGLE` (default), `BATCH`, `TRANSACTION`                                                                                                                                                                                                                                                                                                                                    |
 | **ttl**                     | `ttl(duration)`                                                            | table          | specifies how long the records for this table are retained in the underlying data system before it can be discarded. Expects a duration string like `5 week` with a unit between minute and week (e.g. `30 min`, `36 hours`, `14 days`, `2 weeks`). For range-partitioned tables, the partition width is derived from the duration and its unit (see the [postgres engine configuration](configuration-engine/postgres#partitioning)). Disabled by default. |
-| **cache**                   | `cache(duration)`                                                          | table          | how long the results retrieved from this table can be cached on the server before they are refreshed. Expects a duration string like `10 seconds`. Disabled by default.            |
-| **filtered_distinct_order** | flag                                                                       | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                |
-| **engine**                  | `enigne(engine_id)`                                                        | table          | pin execution engine (`process`, `database`, `flink`, ...)                                                                                                                         |
-| **maintenance**             | `maintenance(type)`                                                        | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                 |
-| **test**                    | `test` or `test(no_rows)`                                                  | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                       |
-| **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                    |
-| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                  | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                   |
+| **cache**                   | `cache(duration)`                                                          | table          | how long the results retrieved from this table can be cached on the server before they are refreshed. Expects a duration string like `10 seconds`. Disabled by default.                                                                                                                                                                                                                                                                                     |
+| **filtered_distinct_order** | flag                                                                       | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **engine**                  | `enigne(engine_id)`                                                        | table          | pin execution engine (`process`, `database`, `flink`, ...)                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **maintenance**             | `maintenance(type)`                                                        | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                                                                                                                                                                                                                                                                                          |
+| **test**                    | `test` or `test(no_rows)`                                                  | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                                                                                                                                                                                                                                                                                                |
+| **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                                                                                                                                                                                                                                                                                             |
+| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                  | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                                                                                                                                                                                                                                                                                            |
 
 This example configures a primary key and vector index for the `SensorTempByHour` table:
 
@@ -400,7 +436,7 @@ If you wish to start with those, you need to explicitly write them out and read 
 
 ---
 
-## Validation rules
+## Validation Rules
 
 The following produce compile time errors:
 
