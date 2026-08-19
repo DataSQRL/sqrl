@@ -55,8 +55,8 @@ enum _RestMethodType {
 directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
-=== InputTable
-ID:          default_catalog.default_database.InputTable
+=== KafkaInput
+ID:          default_catalog.default_database.KafkaInput
 Type:        stream
 Stage:       flink
 Primary key: -
@@ -68,7 +68,7 @@ Schema:
  - tokens: BIGINT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
 Inputs:
- - default_catalog.default_database.InputTable__base
+ - default_catalog.default_database.KafkaInput__base
 
 === LatestTokens
 ID:          default_catalog.default_database.LatestTokens
@@ -102,12 +102,12 @@ Schema:
  - window_end: TIMESTAMP(3) NOT NULL
  - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
- - default_catalog.default_database.InputTable
+ - default_catalog.default_database.KafkaInput
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
 
 === SinkTable
-ID:          iceberg.SinkTable
+ID:          tables.iceberg.SinkTable
 Type:        export
 Stage:       flink
 Connector:   iceberg
@@ -116,7 +116,7 @@ Inputs:
  - default_catalog.default_database._UserTokens
 
 >>>flink-sql-no-functions.sql
-CREATE TABLE `InputTable` (
+CREATE TABLE `KafkaInput` (
   `userid` INTEGER NOT NULL,
   `tokens` BIGINT NOT NULL,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
@@ -131,9 +131,18 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}-group',
   'topic' = 'InputTable'
 );
-CREATE DATABASE IF NOT EXISTS `iceberg`;
-USE `iceberg`;
-CREATE TABLE `SinkTable` (
+CREATE VIEW `_UserTokens`
+AS
+SELECT `userid`, SUM(`tokens`) AS `total_tokens`, `window_end`, `window_time`
+FROM TABLE(TUMBLE(TABLE `KafkaInput`, DESCRIPTOR(`event_time`), INTERVAL '1' SECOND))
+GROUP BY `userid`, `window_start`, `window_end`, `window_time`;
+CREATE VIEW `LatestTokens`
+AS
+SELECT `userid`, `total_tokens`, `window_end`, `window_time`
+FROM (SELECT `userid`, `total_tokens`, `window_end`, `window_time`, ROW_NUMBER() OVER (PARTITION BY `userid` ORDER BY `window_time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`_UserTokens`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE TABLE `SinkTable_ex1` (
   `userid` INTEGER NOT NULL,
   `total_tokens` BIGINT NOT NULL,
   `window_end` TIMESTAMP_LTZ(3),
@@ -151,20 +160,6 @@ WITH (
   'warehouse' = '/tmp/duckdb',
   'write.distribution-mode' = 'none'
 );
-USE CATALOG `default_catalog`;
-CREATE DATABASE IF NOT EXISTS `default_database`;
-USE `default_database`;
-CREATE VIEW `_UserTokens`
-AS
-SELECT `userid`, SUM(`tokens`) AS `total_tokens`, `window_end`, `window_time`
-FROM TABLE(TUMBLE(TABLE `InputTable`, DESCRIPTOR(`event_time`), INTERVAL '1' SECOND))
-GROUP BY `userid`, `window_start`, `window_end`, `window_time`;
-CREATE VIEW `LatestTokens`
-AS
-SELECT `userid`, `total_tokens`, `window_end`, `window_time`
-FROM (SELECT `userid`, `total_tokens`, `window_end`, `window_time`, ROW_NUMBER() OVER (PARTITION BY `userid` ORDER BY `window_time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
-  FROM `default_catalog`.`default_database`.`_UserTokens`) AS `t`
-WHERE `__sqrlinternal_rownum` = 1;
 CREATE TABLE `LatestTokens_1` (
   `userid` INTEGER NOT NULL,
   `total_tokens` BIGINT NOT NULL,
@@ -194,7 +189,7 @@ INSERT INTO `default_catalog`.`default_database`.`LatestTokens_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`LatestTokens`
 ;
-INSERT INTO `default_catalog`.`iceberg`.`SinkTable`
+INSERT INTO `default_catalog`.`default_database`.`SinkTable_ex1`
 SELECT *
 FROM `default_catalog`.`default_database`.`_UserTokens`
 ;
@@ -210,7 +205,7 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
   "topics" : [
     {
       "topicName" : "InputTable",
-      "tableName" : "InputTable",
+      "tableName" : "KafkaInput",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,

@@ -1,0 +1,286 @@
+>>>pipeline_explain.txt
+=== CustomerInternal
+ID:          default_catalog.default_database.CustomerInternal
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - customer_id: BIGINT NOT NULL
+ - full_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.CustomerInternal__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($2, 0:INTERVAL SECOND)])
+  LogicalProject(customer_id=[$0], full_name=[$1], timestamp=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerInternal, metadata=[timestamp]]])
+SQL:
+CREATE TABLE `CustomerInternal` (
+  `customer_id` BIGINT NOT NULL,
+  `full_name` STRING,
+  `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-CustomerInternal'
+)
+=== customer
+ID:          print.customer
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.CustomerInternal
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `CustomerInternal` (
+  `customer_id` BIGINT NOT NULL,
+  `full_name` STRING,
+  `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-CustomerInternal'
+);
+CREATE TABLE `customer_1` (
+  `customer_id` BIGINT NOT NULL,
+  `full_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE
+)
+WITH (
+  'connector' = 'print',
+  'print-identifier' = 'customer'
+);
+CREATE TABLE `CustomerInternal_2` (
+  `customer_id` BIGINT NOT NULL,
+  `full_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerInternal_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`customer_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerInternal`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerInternal_2`
+SELECT `customer_id`, `full_name`, `timestamp`, `hash_columns`(`customer_id`, `full_name`, `timestamp`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomerInternal`
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "kafka-mutation-CustomerInternal",
+      "tableName" : "CustomerInternal",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "CustomerInternal_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerInternal_2\" (\"customer_id\" BIGINT NOT NULL, \"full_name\" TEXT, \"timestamp\" TIMESTAMP WITH TIME ZONE, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "full_name",
+          "type" : "TEXT",
+          "nullable" : true
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "CustomerInternal",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerInternal\"(\"customer_id\", \"full_name\", \"timestamp\") AS SELECT \"customer_id\", \"full_name\", \"timestamp\"\nFROM \"CustomerInternal_2\"",
+      "fields" : [
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "full_name",
+          "type" : "TEXT",
+          "nullable" : true
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ]
+    }
+  ],
+  "standaloneExtensionStatements" : [ ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerInternal",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customer_id\", \"full_name\", \"timestamp\"\nFROM \"CustomerInternal_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerInternal",
+          "returnList" : false,
+          "topic" : "kafka-mutation-CustomerInternal",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "timestamp" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : false
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomerInternal",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "query CustomerInternal($limit: Int = 10, $offset: Int = 0) {\nCustomerInternal(limit: $limit, offset: $offset) {\ncustomer_id\nfull_name\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerInternal",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerInternal{?offset,limit}"
+        },
+        {
+          "function" : {
+            "name" : "AddCustomerInternal",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "full_name" : {
+                  "type" : "string"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "customer_id"
+              ]
+            }
+          },
+          "format" : "JSON",
+          "apiQuery" : {
+            "query" : "mutation CustomerInternal($customer_id: Long!, $full_name: String) {\nCustomerInternal(event: { customer_id: $customer_id, full_name: $full_name }) {\ncustomer_id\nfull_name\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerInternal",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/CustomerInternal"
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type CustomerInternal {\n  customer_id: Long!\n  full_name: String\n  timestamp: DateTime\n}\n\ninput CustomerInternalInput {\n  customer_id: Long!\n  full_name: String\n}\n\ntype CustomerInternalResultOutput {\n  customer_id: Long!\n  full_name: String\n  timestamp: DateTime\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  CustomerInternal(event: CustomerInternalInput!): CustomerInternalResultOutput!\n}\n\ntype Query {\n  CustomerInternal(limit: Int = 10, offset: Int = 0): [CustomerInternal!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

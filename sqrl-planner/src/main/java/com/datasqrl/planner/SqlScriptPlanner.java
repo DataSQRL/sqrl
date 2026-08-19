@@ -313,22 +313,11 @@ public class SqlScriptPlanner {
       Optional<PlannerHints> inheritedHints,
       Sqrl2FlinkSQLTranslator sqrlEnv,
       ErrorCollector errors) {
-    // Process hints & doc
-    var hints = PlannerHints.EMPTY;
-    Optional<String> documentation = Optional.empty();
-    if (stmt instanceof SqrlStatement statement) {
-      var comments = statement.getComments();
-      hints = PlannerHints.from(comments, inheritedHints, errors);
-      if (!comments.documentation().isEmpty()) {
-        documentation =
-            Optional.of(
-                comments.documentation().stream()
-                    .map(ParsedObject::get)
-                    .map(String::trim)
-                    .collect(Collectors.joining("\n")));
-      }
-    }
-    var hintsAndDocs = new HintsAndDoc(hints, documentation);
+    var hintsAndDocs =
+        stmt instanceof SqrlStatement statement
+            ? getHintsAndDoc(statement, inheritedHints, errors)
+            : HintsAndDoc.EMPTY;
+    var hints = hintsAndDocs.hints();
     if (stmt instanceof SqrlImportStatement statement) {
       addImport(statement, hintsAndDocs, sqrlEnv, errors);
     } else if (stmt instanceof SqrlExportStatement statement) {
@@ -589,6 +578,21 @@ public class SqlScriptPlanner {
         sqrlEnv.executeSQL(flinkStmt.sql().get());
       }
     }
+  }
+
+  private HintsAndDoc getHintsAndDoc(
+      SqrlStatement statement, Optional<PlannerHints> inheritedHints, ErrorCollector errors) {
+    var comments = statement.getComments();
+    var hints = PlannerHints.from(comments, inheritedHints, errors);
+    var documentation =
+        comments.documentation().isEmpty()
+            ? Optional.<String>empty()
+            : Optional.of(
+                comments.documentation().stream()
+                    .map(ParsedObject::get)
+                    .map(String::trim)
+                    .collect(Collectors.joining("\n")));
+    return new HintsAndDoc(hints, documentation);
   }
 
   private boolean shouldExcludeTestTable(PlannerHints hints) {
@@ -906,20 +910,26 @@ public class SqlScriptPlanner {
       HintsAndDoc hintsAndDoc,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
     if (nsObject instanceof FlinkTableNamespaceObject object) { // import a table
-      // TODO: for a create table statement without options (connector), we manage it internally
-      // add pass it to Log engine for augmentation after validating/adding event-id and event-time
-      // metadata columns & checking no watermark/partition/constraint is present
       var flinkTable = ExternalFlinkTable.fromNamespaceObject(object, errorCollector);
+      var importedHintsAndDoc =
+          object
+              .table()
+              .sqrlStatement()
+              .map(
+                  statement ->
+                      getHintsAndDoc(
+                          statement, Optional.of(hintsAndDoc.hints()), flinkTable.errorCollector()))
+              .orElse(hintsAndDoc);
       try {
         var tableAnalysis =
             sqrlEnv.createTableWithSchema(
                 importNameModifier,
                 flinkTable.sqlCreateTable,
                 flinkTable.schemaLoader(),
-                getMutationBuilder(hintsAndDoc),
-                hintsAndDoc);
-        hintsAndDoc.hints().updateColumnNamesHints(tableAnalysis::getField);
-        addSourceToDag(tableAnalysis, hintsAndDoc, sqrlEnv);
+                getMutationBuilder(importedHintsAndDoc),
+                importedHintsAndDoc);
+        importedHintsAndDoc.hints().updateColumnNamesHints(tableAnalysis::getField);
+        addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());
       } catch (Throwable e) {
         throw flinkTable.errorCollector.handle(e);
@@ -963,11 +973,13 @@ public class SqlScriptPlanner {
     }
   }
 
-  /**
-   * For CREATE TABLE statements without connectors which are mutations, we provide this
-   * MutationBuilder to fill in the connector settings based on the configured log engine.
-   */
+  /** Provides connector settings for CREATE TABLE statements managed by a configured engine. */
   private Optional<MutationBuilder> getMutationBuilder(HintsAndDoc hintsAndDoc) {
+    return getMutationBuilder(hintsAndDoc, scriptContext.isRootContext());
+  }
+
+  private Optional<MutationBuilder> getMutationBuilder(
+      HintsAndDoc hintsAndDoc, boolean generateAccess) {
     var mutationStage =
         hintsAndDoc
             .hints()
@@ -987,7 +999,7 @@ public class SqlScriptPlanner {
     return Optional.of(
         (origTableName, tableBuilder, dataType) -> {
           var mutationBuilder = MutationTable.builder();
-          mutationBuilder.generateAccess(scriptContext.isRootContext());
+          mutationBuilder.generateAccess(generateAccess);
           mutationBuilder.stage(mutationStage.get());
           MutationInsertType insertType =
               hintsAndDoc
@@ -1115,6 +1127,25 @@ public class SqlScriptPlanner {
       var sinkTable = (FlinkTableNamespaceObject) sinkObj.get();
 
       var flinkTable = ExternalFlinkTable.fromNamespaceObject(sinkTable, errorCollector);
+      var sinkHintsAndDoc =
+          sinkTable
+              .table()
+              .sqrlStatement()
+              .map(
+                  statement ->
+                      getHintsAndDoc(statement, Optional.empty(), flinkTable.errorCollector()))
+              .orElse(HintsAndDoc.EMPTY);
+      var mutationBuilder =
+          sinkTable.table().external()
+              ? Optional.<MutationBuilder>empty()
+              : getMutationBuilder(sinkHintsAndDoc, false);
+      flinkTable
+          .errorCollector()
+          .checkFatal(
+              sinkTable.table().external() || mutationBuilder.isPresent(),
+              ErrorCode.INVALID_INDIVIDUAL_SCRIPT_TABLE,
+              "Referenced table '%s' must specify a connector or an engine hint",
+              sinkName);
       AtomicReference<RelDataType> exportSchemaRef = new AtomicReference<>(null);
       SchemaLoader schemaLoader =
           (tableName, schemaReference, tableProps) -> {
@@ -1130,7 +1161,8 @@ public class SqlScriptPlanner {
       AddTableResult addTableResult;
       try {
         addTableResult =
-            sqrlEnv.addExternalExport(tableNameModifier, flinkTable.sqlCreateTable, schemaLoader);
+            sqrlEnv.addExternalExport(
+                tableNameModifier, flinkTable.sqlCreateTable, schemaLoader, mutationBuilder);
         var tableId = addTableResult.baseTableIdentifier();
         exportNode =
             new ExportNode(
@@ -1203,9 +1235,22 @@ public class SqlScriptPlanner {
       var flinkTable = nsObject.table();
 
       // Parse SQL
-      var tableSql = flinkTable.sql();
-      var tableError = errorCollector.withScript(flinkTable.scriptPath(), tableSql);
-      tableSql = SqlScriptStatementSplitter.formatEndOfSqlFile(tableSql);
+      var originalTableSql = flinkTable.sql();
+      var tableError =
+          flinkTable
+              .scriptContent()
+              .flatMap(
+                  scriptContent ->
+                      flinkTable
+                          .sourceLocation()
+                          .map(
+                              sourceLocation ->
+                                  errorCollector
+                                      .withScript(flinkTable.scriptPath(), scriptContent)
+                                      .atFile(sourceLocation)))
+              .orElseGet(
+                  () -> errorCollector.withScript(flinkTable.scriptPath(), originalTableSql));
+      var tableSql = SqlScriptStatementSplitter.formatEndOfSqlFile(originalTableSql);
 
       return new ExternalFlinkTable(
           tableSql, nsObject.schemaLoader(), flinkTable.scriptPath(), tableError);

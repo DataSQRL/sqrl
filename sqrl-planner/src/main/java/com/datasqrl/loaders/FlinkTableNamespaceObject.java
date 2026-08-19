@@ -16,9 +16,12 @@
 package com.datasqrl.loaders;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.loaders.schema.SchemaLoader;
+import com.datasqrl.planner.parser.SqrlCreateTableStatement;
 import java.nio.file.Path;
+import java.util.Optional;
 
 public record FlinkTableNamespaceObject(FlinkTable table, SchemaLoader schemaLoader)
     implements TableNamespaceObject<FlinkTable> {
@@ -28,5 +31,34 @@ public record FlinkTableNamespaceObject(FlinkTable table, SchemaLoader schemaLoa
     return table.name();
   }
 
-  public record FlinkTable(Name name, String sql, Path scriptPath) {}
+  public record FlinkTable(
+      Name name,
+      String sql,
+      Path scriptPath,
+      Optional<SqrlCreateTableStatement> sqrlStatement,
+      boolean external,
+      Optional<String> scriptContent,
+      Optional<FileLocation> sourceLocation) {
+
+    public FlinkTable(Name name, String sql, Path scriptPath) {
+      this(name, sql, scriptPath, Optional.empty(), true, Optional.empty(), Optional.empty());
+    }
+
+    public FlinkTable(
+        Name name,
+        SqrlCreateTableStatement sqrlStatement,
+        Path scriptPath,
+        boolean external,
+        String scriptContent,
+        FileLocation sourceLocation) {
+      this(
+          name,
+          sqrlStatement.toSql(),
+          scriptPath,
+          Optional.of(sqrlStatement),
+          external,
+          Optional.of(scriptContent),
+          Optional.of(sourceLocation));
+    }
+  }
 }
