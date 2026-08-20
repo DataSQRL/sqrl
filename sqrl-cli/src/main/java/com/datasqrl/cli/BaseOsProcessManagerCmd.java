@@ -35,9 +35,16 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
   protected Optional<Path> projectRoot = Optional.empty();
 
   @Option(
+      names = {"-b", "--build"},
+      description =
+          "Build folder for any output generated during build. Must be a relative path within the project root."
+              + " Resolved relative to the specified or inferred project root. Default: \"<project-root>/build\".\n")
+  protected Optional<Path> buildFolder = Optional.empty();
+
+  @Option(
       names = {"-t", "--target"},
       description =
-          "Target folder for deployment artifacts and plans. Must be a relative path."
+          "Target folder for deployment artifacts and plans. Must be a relative path within the project root."
               + " Resolved relative to the specified or inferred project root. Default: \"<project-root>/build/deploy\".\n")
   protected Optional<Path> targetFolder = Optional.empty();
 
@@ -67,20 +74,15 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
   }
 
   protected Path getBuildDir() {
-    return getProjectRoot().resolve(SqrlConstants.BUILD_DIR_NAME);
+    return buildFolder
+        .map(path -> resolveGivenCliDir(path, "Build"))
+        .orElseGet(() -> getProjectRoot().resolve(SqrlConstants.BUILD_DIR_NAME));
   }
 
   protected Path getTargetDir() {
-    if (targetFolder.isEmpty()) {
-      return getBuildDir().resolve(SqrlConstants.DEPLOY_DIR_NAME);
-    }
-
-    var target = targetFolder.get();
-    if (!cli.internalTestExec && target.isAbsolute()) {
-      throw new IllegalArgumentException("Target folder must be a relative path");
-    }
-
-    return getProjectRoot().resolve(target);
+    return targetFolder
+        .map(path -> resolveGivenCliDir(path, "Target"))
+        .orElseGet(() -> getBuildDir().resolve(SqrlConstants.DEPLOY_DIR_NAME));
   }
 
   protected OsProcessManager getOsProcessManager() {
@@ -119,5 +121,27 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
     }
 
     return fullProjectRoot;
+  }
+
+  private Path resolveGivenCliDir(Path dir, String dirType) {
+    if (!cli.internalTestExec && dir.isAbsolute()) {
+      throw new IllegalArgumentException(dirType + " folder must be a relative path, got: " + dir);
+    }
+
+    var root = getProjectRoot();
+    var directory = root.resolve(dir);
+    if (!cli.internalTestExec && !directory.normalize().startsWith(root.normalize())) {
+      throw new IllegalArgumentException(
+          dirType
+              + " folder '"
+              + dir
+              + "' resolves to '"
+              + directory.normalize()
+              + "', which is outside project root '"
+              + root.normalize()
+              + "'");
+    }
+
+    return directory;
   }
 }
