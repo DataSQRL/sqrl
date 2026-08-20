@@ -15,6 +15,9 @@
  */
 package com.datasqrl.function.translation.postgres.extensions;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
+import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.sql.DatabaseTableExtension;
@@ -23,10 +26,13 @@ import com.google.common.base.Preconditions;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Optional;
 
 /** Generates the pg_partman setup SQL for RANGE-partitioned tables with a TTL. */
 @AutoService(DatabaseTableExtension.class)
 public class PgPartmanExtension implements DatabaseTableExtension {
+
+  static final String PARTITION_PREMAKE_KEY = "partition-premake";
 
   @Override
   public String getName() {
@@ -34,7 +40,18 @@ public class PgPartmanExtension implements DatabaseTableExtension {
   }
 
   @Override
-  public String getDdl(Collection<CreateTableJdbcStatement> createTables) {
+  public String getDdl(
+      Collection<CreateTableJdbcStatement> createTables, Optional<EngineConfig> engineConfig) {
+
+    int premake =
+        engineConfig
+            .map(ec -> ec.getPropertyAs(PARTITION_PREMAKE_KEY, Integer.class))
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "Config option '%s' has to be set for pg_partman"));
+    checkArgument(premake >= 1, "%s must be a positive number", PARTITION_PREMAKE_KEY);
+
     var partmanTables =
         createTables.stream()
             .filter(createTable -> !isNotPartmanTable(createTable))
@@ -49,12 +66,12 @@ public class PgPartmanExtension implements DatabaseTableExtension {
     sb.append("CREATE SCHEMA IF NOT EXISTS partman;\n");
     sb.append("CREATE EXTENSION IF NOT EXISTS pg_partman SCHEMA partman;\n\n");
 
-    partmanTables.forEach(createTable -> appendTableDdl(sb, createTable));
+    partmanTables.forEach(createTable -> appendTableDdl(sb, createTable, premake));
 
     return sb.toString().trim();
   }
 
-  private void appendTableDdl(StringBuilder sb, CreateTableJdbcStatement createTable) {
+  private void appendTableDdl(StringBuilder sb, CreateTableJdbcStatement createTable, int premake) {
 
     // pg_partman resolves p_parent_table by matching split_part(name, '.', 2) against
     // pg_class.relname, so the name must be schema-qualified but NOT identifier-quoted:
@@ -67,18 +84,23 @@ public class PgPartmanExtension implements DatabaseTableExtension {
             "Missing partition interval for partitioned table %s with TTL",
             createTable.getName());
 
-    // p_type was removed in pg_partman 5.x; the default (range) is what we need
+    var retention = formatRetention(ttl);
+
+    // p_start_partition pre-creates the historical partitions covering the retention window so
+    // that catch-up replay does not land in the DEFAULT partition.
     sb.append(
         """
         SELECT partman.create_parent(
             p_parent_table => '%s',
             p_control => '%s',
             p_interval => '%s',
-            p_premake => 4
+            p_premake => %d,
+            p_start_partition => (now() - interval '%s')::text
         );
 
         """
-            .formatted(parentTable, createTable.getPartitionKey().get(0), interval));
+            .formatted(
+                parentTable, createTable.getPartitionKey().get(0), interval, premake, retention));
 
     sb.append(
         """
@@ -88,7 +110,7 @@ public class PgPartmanExtension implements DatabaseTableExtension {
          WHERE parent_table = '%s';
 
         """
-            .formatted(formatRetention(ttl), parentTable));
+            .formatted(retention, parentTable));
   }
 
   private boolean isNotPartmanTable(CreateTableJdbcStatement createTable) {

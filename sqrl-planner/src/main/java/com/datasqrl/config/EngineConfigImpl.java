@@ -36,17 +36,29 @@ public class EngineConfigImpl implements PackageJson.EngineConfig {
   }
 
   @Override
-  public String getSetting(String key, Optional<String> defaultValue) {
-    var result = sqrlConfig.asString(key);
+  public String getProperty(String key, Optional<String> defaultValue) {
+    return getPropertyAs(key, String.class, defaultValue);
+  }
+
+  @Override
+  public <T> T getPropertyAs(String key, Class<T> valueClass, Optional<T> defaultValue) {
+    var result = sqrlConfig.as(key, valueClass);
     if (defaultValue.isPresent()) {
       result = result.withDefault(defaultValue.get());
     }
+
     return result.get();
   }
 
   @Override
-  public Optional<String> getSettingOptional(String key) {
-    var result = sqrlConfig.asString(key);
+  public Optional<String> getPropertyOptional(String key) {
+    return getPropertyAsOptional(key, String.class);
+  }
+
+  @Override
+  public <T> Optional<T> getPropertyAsOptional(String key, Class<T> valueClass) {
+    var result = sqrlConfig.as(key, valueClass);
+
     return result.getOptional();
   }
 

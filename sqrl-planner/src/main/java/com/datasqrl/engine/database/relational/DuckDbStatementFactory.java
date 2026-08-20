@@ -65,7 +65,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
             DuckDbSqlDialect.DEFAULT)); // Iceberg creates the tables, DuckDB only queries
 
     var scanCteCardinalityDivisor =
-        Integer.parseInt(engineConfig.getSetting(SCAN_CTE_CARDINALITY_DIVISOR));
+        Integer.parseInt(engineConfig.getProperty(SCAN_CTE_CARDINALITY_DIVISOR));
     checkArgument(
         Double.isFinite(scanCteCardinalityDivisor) && scanCteCardinalityDivisor > 0,
         "'%s' must be a positive finite number",

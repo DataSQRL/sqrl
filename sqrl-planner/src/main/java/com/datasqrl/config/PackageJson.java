@@ -146,13 +146,21 @@ public interface PackageJson {
 
     String getEngineName();
 
-    default String getSetting(String key) {
-      return getSetting(key, Optional.empty());
+    default String getProperty(String key) {
+      return getProperty(key, Optional.empty());
     }
 
-    String getSetting(String key, Optional<String> defaultValue);
+    default <T> T getPropertyAs(String key, Class<T> valueClass) {
+      return getPropertyAs(key, valueClass, Optional.empty());
+    }
 
-    Optional<String> getSettingOptional(String key);
+    String getProperty(String key, Optional<String> defaultValue);
+
+    <T> T getPropertyAs(String key, Class<T> valueClass, Optional<T> defaultValue);
+
+    Optional<String> getPropertyOptional(String key);
+
+    <T> Optional<T> getPropertyAsOptional(String key, Class<T> valueClass);
 
     Map<String, Object> getConfig();
 
@@ -165,7 +173,12 @@ public interface PackageJson {
     String engineName;
 
     @Override
-    public String getSetting(String key, Optional<String> defaultValue) {
+    public String getProperty(String key, Optional<String> defaultValue) {
+      return getPropertyAs(key, String.class);
+    }
+
+    @Override
+    public <T> T getPropertyAs(String key, Class<T> valueClass, Optional<T> defaultValue) {
       return defaultValue.orElseThrow(
           () ->
               new IllegalArgumentException(
@@ -173,7 +186,12 @@ public interface PackageJson {
     }
 
     @Override
-    public Optional<String> getSettingOptional(String key) {
+    public Optional<String> getPropertyOptional(String key) {
+      return Optional.empty();
+    }
+
+    @Override
+    public <T> Optional<T> getPropertyAsOptional(String key, Class<T> valueClass) {
       return Optional.empty();
     }
 

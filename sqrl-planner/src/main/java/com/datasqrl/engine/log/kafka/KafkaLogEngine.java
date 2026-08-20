@@ -106,18 +106,18 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-mutation");
     defaultTTL =
         engineConfig
-            .getSettingOptional(DEFAULT_TTL_KEY)
+            .getPropertyOptional(DEFAULT_TTL_KEY)
             .map(
                 value ->
                     value.equals("-1") ? Duration.ofMillis(-1) : TimeUtils.parseDuration(value));
-    useSourceWatermark = Boolean.parseBoolean(engineConfig.getSetting("use-source-watermark"));
+    useSourceWatermark = Boolean.parseBoolean(engineConfig.getProperty("use-source-watermark"));
     useTransactionSourceWatermark =
-        Boolean.parseBoolean(engineConfig.getSetting("use-transaction-source-watermark"));
-    defaultWatermark = TimeUtils.parseDuration(engineConfig.getSetting("watermark"));
+        Boolean.parseBoolean(engineConfig.getProperty("use-transaction-source-watermark"));
+    defaultWatermark = TimeUtils.parseDuration(engineConfig.getProperty("watermark"));
     transactionWatermark =
-        TimeUtils.parseDuration(engineConfig.getSetting("transaction-watermark"));
-    numPartitions = Integer.parseInt(engineConfig.getSetting("num-partitions"));
-    replicationFactor = Short.parseShort(engineConfig.getSetting("replication-factor"));
+        TimeUtils.parseDuration(engineConfig.getProperty("transaction-watermark"));
+    numPartitions = Integer.parseInt(engineConfig.getProperty("num-partitions"));
+    replicationFactor = Short.parseShort(engineConfig.getProperty("replication-factor"));
     format =
         String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfigWrapper.FORMAT_KEY))
             .trim()

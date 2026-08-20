@@ -51,16 +51,14 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
   public static final String PARTITION_TTL_DIVISOR_KEY = "partition-ttl-divisor";
 
   private final int partitionTtlDivisor;
+  private final EngineConfig engineConfig;
 
   public PostgresStatementFactory(EngineConfig engineConfig) {
-    this(Integer.parseInt(engineConfig.getSetting(PARTITION_TTL_DIVISOR_KEY)));
-  }
-
-  public PostgresStatementFactory(int partitionTtlDivisor) {
     super(Dialect.POSTGRES, new PostgresCreateTableDdlFactory(true));
+    this.engineConfig = engineConfig;
+    partitionTtlDivisor = engineConfig.getPropertyAs(PARTITION_TTL_DIVISOR_KEY, Integer.class);
     checkArgument(
         partitionTtlDivisor > 0, "%s must be a positive number", PARTITION_TTL_DIVISOR_KEY);
-    this.partitionTtlDivisor = partitionTtlDivisor;
   }
 
   @Override
@@ -115,7 +113,7 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
 
     var tableExtensions = ServiceLoaderDiscovery.getAll(DatabaseTableExtension.class);
     for (var ext : tableExtensions) {
-      var ddl = ext.getDdl(tables);
+      var ddl = ext.getDdl(tables, Optional.of(engineConfig));
 
       if (ddl != null && !ddl.isBlank()) {
         res.add(new GenericJdbcStatement(ext.getName(), Type.EXTENSION, ddl));
