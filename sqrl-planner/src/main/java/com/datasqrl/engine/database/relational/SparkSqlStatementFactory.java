@@ -45,12 +45,12 @@ public class SparkSqlStatementFactory extends AbstractJdbcStatementFactory {
   @Override
   protected SqlIdentifier getViewStatementIdentifier(String viewName) {
     var names = new ArrayList<String>();
-    var catalog = engineConfig.getSettingOptional("view-catalog");
+    var catalog = engineConfig.getPropertyOptional("view-catalog");
     if (catalog.isPresent()) {
       names.add(catalog.get());
-      names.add(engineConfig.getSettingOptional("view-database").orElse("default"));
+      names.add(engineConfig.getPropertyOptional("view-database").orElse("default"));
     } else {
-      engineConfig.getSettingOptional("view-database").ifPresent(names::add);
+      engineConfig.getPropertyOptional("view-database").ifPresent(names::add);
     }
     names.add(viewName);
     return new SqlIdentifier(names, SqlParserPos.ZERO);

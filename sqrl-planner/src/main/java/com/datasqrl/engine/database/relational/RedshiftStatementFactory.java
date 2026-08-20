@@ -45,12 +45,12 @@ public class RedshiftStatementFactory extends AbstractJdbcStatementFactory {
   @Override
   protected SqlIdentifier getViewStatementIdentifier(String viewName) {
     var names = new ArrayList<String>();
-    var database = engineConfig.getSettingOptional("view-database");
+    var database = engineConfig.getPropertyOptional("view-database");
     if (database.isPresent()) {
       names.add(database.get());
-      names.add(engineConfig.getSettingOptional("view-schema").orElse("public"));
+      names.add(engineConfig.getPropertyOptional("view-schema").orElse("public"));
     } else {
-      engineConfig.getSettingOptional("view-schema").ifPresent(names::add);
+      engineConfig.getPropertyOptional("view-schema").ifPresent(names::add);
     }
     names.add(viewName);
 

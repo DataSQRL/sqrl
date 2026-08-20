@@ -27,7 +27,11 @@ class ViewStatementIdentifierTest {
 
   @Test
   void givenDefaultStatementFactory_whenGettingViewIdentifier_thenReturnsViewNameOnly() {
-    var factory = new PostgresStatementFactory(1);
+    var engineConfig = mock(EngineConfig.class);
+    when(engineConfig.getPropertyAs(
+            PostgresStatementFactory.PARTITION_TTL_DIVISOR_KEY, Integer.class))
+        .thenReturn(1);
+    var factory = new PostgresStatementFactory(engineConfig);
 
     assertThat(factory.getViewStatementIdentifier("Orders").names).containsExactly("Orders");
   }
@@ -35,8 +39,8 @@ class ViewStatementIdentifierTest {
   @Test
   void givenSparkViewLocation_whenGettingViewIdentifier_thenPrependsCatalogAndDatabase() {
     var engineConfig = mock(EngineConfig.class);
-    when(engineConfig.getSettingOptional("view-catalog")).thenReturn(Optional.of("spark_catalog"));
-    when(engineConfig.getSettingOptional("view-database")).thenReturn(Optional.of("analytics"));
+    when(engineConfig.getPropertyOptional("view-catalog")).thenReturn(Optional.of("spark_catalog"));
+    when(engineConfig.getPropertyOptional("view-database")).thenReturn(Optional.of("analytics"));
     var factory = new SparkSqlStatementFactory(engineConfig);
 
     assertThat(factory.getViewStatementIdentifier("Orders").names)
@@ -46,8 +50,8 @@ class ViewStatementIdentifierTest {
   @Test
   void givenSparkViewCatalogWithoutDatabase_whenGettingViewIdentifier_thenUsesDefaultDatabase() {
     var engineConfig = mock(EngineConfig.class);
-    when(engineConfig.getSettingOptional("view-catalog")).thenReturn(Optional.of("spark_catalog"));
-    when(engineConfig.getSettingOptional("view-database")).thenReturn(Optional.empty());
+    when(engineConfig.getPropertyOptional("view-catalog")).thenReturn(Optional.of("spark_catalog"));
+    when(engineConfig.getPropertyOptional("view-database")).thenReturn(Optional.empty());
     var factory = new SparkSqlStatementFactory(engineConfig);
 
     assertThat(factory.getViewStatementIdentifier("Orders").names)
@@ -57,8 +61,8 @@ class ViewStatementIdentifierTest {
   @Test
   void givenRedshiftViewLocation_whenGettingViewIdentifier_thenPrependsDatabaseAndSchema() {
     var engineConfig = mock(EngineConfig.class);
-    when(engineConfig.getSettingOptional("view-database")).thenReturn(Optional.of("analytics"));
-    when(engineConfig.getSettingOptional("view-schema")).thenReturn(Optional.of("reporting"));
+    when(engineConfig.getPropertyOptional("view-database")).thenReturn(Optional.of("analytics"));
+    when(engineConfig.getPropertyOptional("view-schema")).thenReturn(Optional.of("reporting"));
     var factory = new RedshiftStatementFactory(engineConfig);
 
     assertThat(factory.getViewStatementIdentifier("Orders").names)
@@ -68,8 +72,8 @@ class ViewStatementIdentifierTest {
   @Test
   void givenRedshiftViewDatabaseWithoutSchema_whenGettingViewIdentifier_thenUsesPublicSchema() {
     var engineConfig = mock(EngineConfig.class);
-    when(engineConfig.getSettingOptional("view-database")).thenReturn(Optional.of("analytics"));
-    when(engineConfig.getSettingOptional("view-schema")).thenReturn(Optional.empty());
+    when(engineConfig.getPropertyOptional("view-database")).thenReturn(Optional.of("analytics"));
+    when(engineConfig.getPropertyOptional("view-schema")).thenReturn(Optional.empty());
     var factory = new RedshiftStatementFactory(engineConfig);
 
     assertThat(factory.getViewStatementIdentifier("Orders").names)

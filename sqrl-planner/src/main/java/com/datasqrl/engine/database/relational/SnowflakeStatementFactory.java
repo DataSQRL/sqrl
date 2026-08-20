@@ -49,7 +49,7 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
   public String getSnowflakeCreateTable(String tableName) {
     SqlLiteral externalVolume =
         SqlLiteral.createCharString(
-            engineConfig.getSetting("external-volume", Optional.empty()), SqlParserPos.ZERO);
+            engineConfig.getProperty("external-volume", Optional.empty()), SqlParserPos.ZERO);
 
     var icebergTable =
         new SqlCreateIcebergTableFromObjectStorage(
@@ -59,7 +59,7 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
             new SqlIdentifier(tableName, SqlParserPos.ZERO),
             externalVolume,
             SqlLiteral.createCharString(
-                engineConfig.getSetting("catalog-name", Optional.empty()), SqlParserPos.ZERO),
+                engineConfig.getProperty("catalog-name", Optional.empty()), SqlParserPos.ZERO),
             SqlLiteral.createCharString(tableName, SqlParserPos.ZERO),
             null,
             null,

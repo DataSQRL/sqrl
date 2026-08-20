@@ -15,16 +15,23 @@
  */
 package com.datasqrl.sql;
 
+import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * Service-loader extension point for database-specific DDL that depends on the full set of created
- * tables.
+ * tables. Extensions may read their own settings from the engine configuration.
  */
 public interface DatabaseTableExtension {
 
   String getName();
 
-  String getDdl(Collection<CreateTableJdbcStatement> createTables);
+  String getDdl(
+      Collection<CreateTableJdbcStatement> createTables, Optional<EngineConfig> engineConfig);
+
+  default String getDdl(Collection<CreateTableJdbcStatement> createTables) {
+    return getDdl(createTables, Optional.empty());
+  }
 }

@@ -36,7 +36,8 @@
       "scan-cte-cardinality-divisor": 1
     },
     "postgres": {
-      "partition-ttl-divisor": 100
+      "partition-ttl-divisor": 100,
+      "partition-premake": 4
     },
     "kafka": {
       "retention": null,

@@ -37,19 +37,26 @@ The following is the [default configuration file](https://raw.githubusercontent.
       }
     },
     "duckdb": {
-      "url": "jdbc:duckdb:"
+      "url": "jdbc:duckdb:",
+      "scan-cte-cardinality-divisor": 1
+    },
+    "postgres": {
+      "partition-ttl-divisor": 100,
+      "partition-premake": 4
     },
     "kafka": {
       "retention": null,
+      "use-source-watermark": false,
+      "use-transaction-source-watermark": false,
       "watermark": "0 ms",
       "transaction-watermark": "0 ms",
       "num-partitions": 1,
       "replication-factor": 3
-  }
+    }
   },
   "connectors": {
     "kafka-mutation": {
-      "connector": "kafka",
+      "connector": "kafka-safe",
       "format": "flexible-json",
       "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
       "properties.group.id": "${KAFKA_GROUP_ID}",
@@ -58,7 +65,7 @@ The following is the [default configuration file](https://raw.githubusercontent.
       "topic": "${sqrl:table-name}"
     },
     "kafka": {
-      "connector": "kafka",
+      "connector": "kafka-safe",
       "format": "flexible-json",
       "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
       "properties.group.id": "${KAFKA_GROUP_ID}",
