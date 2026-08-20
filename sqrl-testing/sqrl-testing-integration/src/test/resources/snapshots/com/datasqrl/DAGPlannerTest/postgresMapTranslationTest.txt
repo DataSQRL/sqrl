@@ -62,6 +62,7 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyTable_1`
 SELECT `num`, 1 AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`MyTable`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json

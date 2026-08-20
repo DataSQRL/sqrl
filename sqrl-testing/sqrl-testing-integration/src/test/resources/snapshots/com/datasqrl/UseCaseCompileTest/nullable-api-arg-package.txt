@@ -122,6 +122,7 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Product_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Product`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json

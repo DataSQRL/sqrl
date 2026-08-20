@@ -170,10 +170,12 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`DistinctOrders_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`DistinctOrders`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`Orders`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json

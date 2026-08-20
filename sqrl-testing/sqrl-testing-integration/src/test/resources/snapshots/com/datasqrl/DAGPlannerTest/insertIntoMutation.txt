@@ -210,10 +210,12 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerCount_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomerCount`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `CustomerCount`
 SELECT `Customer`.`customerid`, COUNT(*) AS `numEntries`
@@ -223,6 +225,7 @@ GROUP BY `Customer`.`customerid`
 INSERT INTO `default_catalog`.`default_database`.`CustomerForApi_3`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomerForApi`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json

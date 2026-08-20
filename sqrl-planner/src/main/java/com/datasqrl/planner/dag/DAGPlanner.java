@@ -46,6 +46,7 @@ import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.FlinkConflictBehaviorUtil;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.FlinkCompileException;
 import com.google.common.base.Preconditions;
@@ -97,6 +98,7 @@ import org.springframework.stereotype.Component;
 public class DAGPlanner {
 
   public static final String UNIQUE_TABLE_APPENDIX = "_"; // TODO: add $ to ensure uniqueness?
+  public static final String HASHED_PK_NAME = "__pk_hash";
 
   private static final FunctionDefinition HASH_COLUMNS = new hash_columns();
 
@@ -326,7 +328,10 @@ public class DAGPlanner {
                       new InputTableKey(exportStage, originalNodeTable.getObjectIdentifier()),
                       targetTable);
                   // Finally: add insert statement to sink into table
-                  sqrlEnv.insertInto(relBuilder.build(), targetTable);
+                  var conflictBehavior =
+                      FlinkConflictBehaviorUtil.resolveInsertConflictBehavior(
+                          originalNodeTable, exportEngine.isUpsertSink(tblBuilder));
+                  sqrlEnv.insertInto(relBuilder.build(), targetTable, conflictBehavior);
                 }
               }
             });
@@ -422,8 +427,6 @@ public class DAGPlanner {
 
     return planBuilder.build();
   }
-
-  public static final String HASHED_PK_NAME = "__pk_hash";
 
   /**
    * Determines the primary key for a table that is written to a data system. The primary key is

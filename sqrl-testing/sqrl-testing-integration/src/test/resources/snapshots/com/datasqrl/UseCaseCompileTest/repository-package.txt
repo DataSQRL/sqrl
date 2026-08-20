@@ -267,22 +267,27 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Package_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Package`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`Submission_2`
 SELECT `name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `to_jsonb`(`keywords`) AS `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`, `hash_columns`(`name`, `version`, `variant`, `latest`, `type`, `license`, `repository`, `homepage`, `documentation`, `readme`, `description`, `keywords`, `uniqueId`, `file`, `hash`, `authorId`, `submissionTime`, `event_time`, `variant0`, `repoURL`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`Submission`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`SubmissionTopics_3`
 SELECT `pkgName`, `topicName`, `submissionTime`, `hash_columns`(`pkgName`, `topicName`, `submissionTime`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`SubmissionTopics`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`TopicPackages_4`
 SELECT *
 FROM `default_catalog`.`default_database`.`TopicPackages`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`TopicSearch_5`
 SELECT *
 FROM `default_catalog`.`default_database`.`TopicSearch`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>postgres-schema.sql

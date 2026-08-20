@@ -281,10 +281,12 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`_ArrayData_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`_ArrayData`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`_InputData_2`
 SELECT `dummy`, 1 AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`_InputData`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>postgres-schema.sql

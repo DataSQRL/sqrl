@@ -328,26 +328,32 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`iceberg_parquet_table_1`
 SELECT `user_id`, `name`, `hash_columns`(`user_id`, `name`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`iceberg_parquet_table`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`kafka_avro_table_2`
 SELECT `user_id`, `name`, `hash_columns`(`user_id`, `name`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`kafka_avro_table`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`kafka_debezium_table_3`
 SELECT `user_id`, `name`, `hash_columns`(`user_id`, `name`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`kafka_debezium_table`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`kafka_safe_csv_table_4`
 SELECT `user_id`, `name`, `hash_columns`(`user_id`, `name`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`kafka_safe_csv_table`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`kafka_safe_json_table_5`
 SELECT `user_id`, `name`, `hash_columns`(`user_id`, `name`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`kafka_safe_json_table`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`upsert_kafka_confluent_avro_6`
 SELECT *
 FROM `default_catalog`.`default_database`.`upsert_kafka_confluent_avro`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json
