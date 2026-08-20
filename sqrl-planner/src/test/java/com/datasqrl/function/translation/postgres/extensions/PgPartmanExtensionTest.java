@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
@@ -32,13 +31,13 @@ import org.junit.jupiter.api.Test;
 class PgPartmanExtensionTest {
 
   private final PgPartmanExtension extension = new PgPartmanExtension();
-  private final EngineConfig engineConfig = new PackageJson.EmptyEngineConfig("postgres");
+  private final Optional<EngineConfig> engineConfig = premakeConfig(4);
 
-  private static EngineConfig premakeConfig(String premake) {
+  private static Optional<EngineConfig> premakeConfig(int premake) {
     var config = mock(EngineConfig.class);
-    when(config.getSetting(PgPartmanExtension.PARTITION_PREMAKE_KEY, Optional.of("4")))
+    when(config.getPropertyAs(PgPartmanExtension.PARTITION_PREMAKE_KEY, Integer.class))
         .thenReturn(premake);
-    return config;
+    return Optional.of(config);
   }
 
   private static CreateTableJdbcStatement table(
@@ -138,7 +137,7 @@ class PgPartmanExtensionTest {
     assertThat(
             extension.getDdl(
                 List.of(table("Orders", PartitionType.RANGE, List.of("time"), Duration.ofDays(30))),
-                premakeConfig("1")))
+                premakeConfig(1)))
         .contains("p_premake => 1");
   }
 
@@ -147,11 +146,9 @@ class PgPartmanExtensionTest {
     var tables =
         List.of(table("Orders", PartitionType.RANGE, List.of("time"), Duration.ofDays(30)));
 
-    assertThatThrownBy(() -> extension.getDdl(tables, premakeConfig("0")))
+    assertThatThrownBy(() -> extension.getDdl(tables, premakeConfig(0)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("partition-premake");
-    assertThatThrownBy(() -> extension.getDdl(tables, premakeConfig("abc")))
-        .isInstanceOf(NumberFormatException.class);
   }
 
   @Test

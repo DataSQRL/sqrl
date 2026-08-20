@@ -19,7 +19,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
-import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
@@ -55,19 +54,11 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
   private final EngineConfig engineConfig;
 
   public PostgresStatementFactory(EngineConfig engineConfig) {
-    this(Integer.parseInt(engineConfig.getSetting(PARTITION_TTL_DIVISOR_KEY)), engineConfig);
-  }
-
-  public PostgresStatementFactory(int partitionTtlDivisor) {
-    this(partitionTtlDivisor, new PackageJson.EmptyEngineConfig("postgres"));
-  }
-
-  public PostgresStatementFactory(int partitionTtlDivisor, EngineConfig engineConfig) {
     super(Dialect.POSTGRES, new PostgresCreateTableDdlFactory(true));
+    this.engineConfig = engineConfig;
+    partitionTtlDivisor = engineConfig.getPropertyAs(PARTITION_TTL_DIVISOR_KEY, Integer.class);
     checkArgument(
         partitionTtlDivisor > 0, "%s must be a positive number", PARTITION_TTL_DIVISOR_KEY);
-    this.partitionTtlDivisor = partitionTtlDivisor;
-    this.engineConfig = engineConfig;
   }
 
   @Override
@@ -122,7 +113,7 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
 
     var tableExtensions = ServiceLoaderDiscovery.getAll(DatabaseTableExtension.class);
     for (var ext : tableExtensions) {
-      var ddl = ext.getDdl(tables, engineConfig);
+      var ddl = ext.getDdl(tables, Optional.of(engineConfig));
 
       if (ddl != null && !ddl.isBlank()) {
         res.add(new GenericJdbcStatement(ext.getName(), Type.EXTENSION, ddl));

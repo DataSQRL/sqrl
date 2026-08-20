@@ -15,6 +15,8 @@
  */
 package com.datasqrl.function.translation.postgres.extensions;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
@@ -30,8 +32,7 @@ import java.util.Optional;
 @AutoService(DatabaseTableExtension.class)
 public class PgPartmanExtension implements DatabaseTableExtension {
 
-  public static final String PARTITION_PREMAKE_KEY = "partition-premake";
-  private static final String DEFAULT_PREMAKE = "4";
+  static final String PARTITION_PREMAKE_KEY = "partition-premake";
 
   @Override
   public String getName() {
@@ -40,12 +41,16 @@ public class PgPartmanExtension implements DatabaseTableExtension {
 
   @Override
   public String getDdl(
-      Collection<CreateTableJdbcStatement> createTables, EngineConfig engineConfig) {
-    var premake =
-        Integer.parseInt(
-            engineConfig.getSetting(PARTITION_PREMAKE_KEY, Optional.of(DEFAULT_PREMAKE)));
-    Preconditions.checkArgument(
-        premake >= 1, "%s must be a positive number", PARTITION_PREMAKE_KEY);
+      Collection<CreateTableJdbcStatement> createTables, Optional<EngineConfig> engineConfig) {
+
+    int premake =
+        engineConfig
+            .map(ec -> ec.getPropertyAs(PARTITION_PREMAKE_KEY, Integer.class))
+            .orElseThrow(
+                () ->
+                    new IllegalArgumentException(
+                        "Config option '%s' has to be set for pg_partman"));
+    checkArgument(premake >= 1, "%s must be a positive number", PARTITION_PREMAKE_KEY);
 
     var partmanTables =
         createTables.stream()
@@ -81,7 +86,6 @@ public class PgPartmanExtension implements DatabaseTableExtension {
 
     var retention = formatRetention(ttl);
 
-    // p_type was removed in pg_partman 5.x; the default (range) is what we need.
     // p_start_partition pre-creates the historical partitions covering the retention window so
     // that catch-up replay does not land in the DEFAULT partition.
     sb.append(

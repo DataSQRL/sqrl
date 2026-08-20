@@ -28,9 +28,17 @@ import org.junit.jupiter.api.Test;
 
 class PostgresStatementFactoryTest {
 
+  private static EngineConfig config(int partitionTtlDivisor) {
+    var engineConfig = mock(EngineConfig.class);
+    when(engineConfig.getPropertyAs(
+            PostgresStatementFactory.PARTITION_TTL_DIVISOR_KEY, Integer.class))
+        .thenReturn(partitionTtlDivisor);
+    return engineConfig;
+  }
+
   @Test
   void givenNonRangeOrNoTtl_whenDeriveInterval_thenEmpty() {
-    var factory = new PostgresStatementFactory(100);
+    var factory = new PostgresStatementFactory(config(100));
 
     assertThat(
             factory.derivePartitionInterval(
@@ -45,7 +53,7 @@ class PostgresStatementFactoryTest {
 
   @Test
   void givenRangeAndTtl_whenDeriveInterval_thenWidthReturned() {
-    var factory = new PostgresStatementFactory(100);
+    var factory = new PostgresStatementFactory(config(100));
 
     assertThat(
             factory.derivePartitionInterval(
@@ -55,10 +63,7 @@ class PostgresStatementFactoryTest {
 
   @Test
   void givenConfiguredDivisor_whenCreate_thenDivisorApplied() {
-    var engineConfig = mock(EngineConfig.class);
-    when(engineConfig.getSetting(PostgresStatementFactory.PARTITION_TTL_DIVISOR_KEY))
-        .thenReturn("4");
-    var factory = new PostgresStatementFactory(engineConfig);
+    var factory = new PostgresStatementFactory(config(4));
 
     assertThat(
             factory.derivePartitionInterval(
@@ -68,14 +73,7 @@ class PostgresStatementFactoryTest {
 
   @Test
   void givenInvalidDivisor_whenCreate_thenThrows() {
-    var engineConfig = mock(EngineConfig.class);
-    when(engineConfig.getSetting(PostgresStatementFactory.PARTITION_TTL_DIVISOR_KEY))
-        .thenReturn("not-a-number");
-
-    assertThatThrownBy(() -> new PostgresStatementFactory(engineConfig))
-        .isInstanceOf(NumberFormatException.class);
-
-    assertThatThrownBy(() -> new PostgresStatementFactory(0))
+    assertThatThrownBy(() -> new PostgresStatementFactory(config(0)))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("partition-ttl-divisor");
   }
