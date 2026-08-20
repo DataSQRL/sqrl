@@ -447,7 +447,13 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       }
     }
     // Generic table function call
-    return setProcessResult(RelNodeAnalysis.builder().relNode(functionScan).build());
+    var inputs = getInputAnalyses(functionScan);
+    return setProcessResult(
+        RelNodeAnalysis.builder()
+            .relNode(
+                updateRelnode(
+                    functionScan, inputs.stream().map(RelNodeAnalysis::getRelNode).toList()))
+            .build());
   }
 
   @Override
