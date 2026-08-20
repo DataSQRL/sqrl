@@ -61,6 +61,7 @@ import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
 import org.apache.flink.sql.parser.ddl.view.SqlCreateView;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
+import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.types.logical.RawType;
@@ -94,18 +95,14 @@ public class FlinkSqlNodes {
         null);
   }
 
-  public static RichSqlInsert createInsert(SqlNode source, String target) {
-    return new RichSqlInsert(
-        SqlParserPos.ZERO,
-        SqlNodeList.EMPTY,
-        SqlNodeList.EMPTY,
-        identifier(target),
-        source,
-        null,
-        null);
+  public static RichSqlInsert createInsert(SqlNode source, ObjectIdentifier targetTable) {
+    return createInsert(source, targetTable, Optional.empty());
   }
 
-  public static RichSqlInsert createInsert(SqlNode source, ObjectIdentifier targetTable) {
+  public static RichSqlInsert createInsert(
+      SqlNode source,
+      ObjectIdentifier targetTable,
+      Optional<SqlInsertConflictBehavior> conflictBehavior) {
     return new RichSqlInsert(
         SqlParserPos.ZERO,
         SqlNodeList.EMPTY,
@@ -113,7 +110,8 @@ public class FlinkSqlNodes {
         identifier(targetTable),
         source,
         null,
-        null);
+        null,
+        conflictBehavior.map(cb -> cb.symbol(SqlParserPos.ZERO)).orElse(null));
   }
 
   public static SqlCreateFunction createFunction(String name, String clazz, boolean isSystem) {
