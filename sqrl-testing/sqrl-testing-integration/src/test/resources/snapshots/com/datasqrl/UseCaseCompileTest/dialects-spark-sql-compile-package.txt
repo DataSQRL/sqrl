@@ -189,6 +189,7 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SparkAggregates_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`SparkAggregates`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`SparkTypeMappings_2`
 SELECT *

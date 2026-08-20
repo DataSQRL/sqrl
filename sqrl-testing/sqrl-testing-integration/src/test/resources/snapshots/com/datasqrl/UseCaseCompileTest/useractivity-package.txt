@@ -219,10 +219,12 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`TotalOrgTokens_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`TotalOrgTokens`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`TotalUserTokens_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`TotalUserTokens`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`UsageAlert_3`
 SELECT *
