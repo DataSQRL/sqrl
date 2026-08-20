@@ -19,6 +19,7 @@ import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.server.operation.FunctionDefinition;
+import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,7 +36,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,8 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 @Slf4j
 public abstract class AbstractBridgeVerticle extends AbstractVerticle {
-
-  protected static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   // Reusable JSON field names
   protected static final String JSON_ERROR = "error";
@@ -80,8 +78,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
   }
 
   protected Future<ExecutionResult> bridgeRequestToGraphQL(
-      RoutingContext ctx, ApiOperation operation, Map<String, Object> variables)
-      throws ValidationException {
+      RoutingContext ctx, ApiOperation operation, Map<String, Object> variables) {
     // Validate parameters
     validateParameters(variables, operation);
 
@@ -89,8 +86,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     return executeGraphQLAsync(ctx, operation, variables);
   }
 
-  protected void validateParameters(Map<String, Object> variables, ApiOperation operation)
-      throws ValidationException {
+  protected void validateParameters(Map<String, Object> variables, ApiOperation operation) {
     var parameters = operation.getFunction().getParameters();
     if (parameters == null) {
       return; // No validation required
@@ -105,9 +101,9 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
 
       // Convert the collected variables to a JsonNode
       if (variables == null || variables.isEmpty()) {
-        arguments = OBJECT_MAPPER.readTree("{}");
+        arguments = JsonUtils.MAPPER.readTree("{}");
       } else {
-        arguments = OBJECT_MAPPER.valueToTree(variables);
+        arguments = JsonUtils.MAPPER.valueToTree(variables);
       }
     } catch (JsonProcessingException e) {
       throw new ValidationException("Could not parse parameter JSON:" + e.getMessage());
@@ -124,7 +120,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
   }
 
   protected ObjectMapper getSchemaMapper() {
-    return OBJECT_MAPPER.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    return JsonUtils.MAPPER.copy().setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
   }
 
   protected Future<ExecutionResult> executeGraphQLAsync(
@@ -156,7 +152,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
     return result;
   }
 
-  protected static void extractGetParameters(
+  protected static void extractUriParameters(
       RoutingContext ctx, ApiOperation operation, Map<String, Object> variables) {
     var request = ctx.request();
     var functionParams = operation.getFunction().getParameters();
@@ -167,29 +163,48 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
 
     var properties = functionParams.getProperties();
     var queryParams = request.params();
-    var pathParams = ctx.pathParams();
+
+    for (String key : queryParams.names()) {
+      var argument = properties.get(key);
+      if (argument != null) {
+        variables.put(key, convertParameterValue(queryParams.get(key), argument));
+      }
+    }
 
     // Merge query and path parameters, giving precedence to path params
-    Map<String, String> combinedParams = new HashMap<>();
-    for (String key : queryParams.names()) {
-      combinedParams.put(key, queryParams.get(key));
-    }
-    combinedParams.putAll(pathParams); // path params take precedence
+    extractPathParameters(ctx, operation, variables);
+  }
 
-    for (Map.Entry<String, FunctionDefinition.Argument> entry : properties.entrySet()) {
-      var paramName = entry.getKey();
-      if (combinedParams.containsKey(paramName)) {
-        var value = combinedParams.get(paramName);
-        var convertedValue = convertParameterValue(value, entry.getValue());
-        variables.put(paramName, convertedValue);
+  protected static void extractPathParameters(
+      RoutingContext ctx, ApiOperation operation, Map<String, Object> variables) {
+    var functionParams = operation.getFunction().getParameters();
+    if (functionParams == null || functionParams.getProperties() == null) {
+      return;
+    }
+
+    var properties = functionParams.getProperties();
+    for (var pathParameter : ctx.pathParams().entrySet()) {
+      var argument = properties.get(pathParameter.getKey());
+      if (argument != null) {
+        variables.put(
+            pathParameter.getKey(), convertParameterValue(pathParameter.getValue(), argument));
       }
     }
   }
 
-  protected static void extractPostParameters(RoutingContext ctx, Map<String, Object> variables) {
+  protected static void extractBodyParameters(RoutingContext ctx, Map<String, Object> variables) {
     JsonObject body = ctx.body().asJsonObject();
     if (body != null) {
-      variables.putAll(body.getMap());
+      for (var parameter : body.getMap().entrySet()) {
+        var name = parameter.getKey();
+        var bodyValue = parameter.getValue();
+        if (variables.containsKey(name)
+            && !String.valueOf(variables.get(name)).equals(String.valueOf(bodyValue))) {
+          throw new ValidationException(
+              "Path parameter '%s' does not match the request body".formatted(name));
+        }
+        variables.put(name, bodyValue);
+      }
     }
   }
 
@@ -220,7 +235,7 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
   }
 
   /** Custom exception for parameter validation errors */
-  public static class ValidationException extends Exception {
+  public static class ValidationException extends RuntimeException {
     public ValidationException(String message) {
       super(message);
     }

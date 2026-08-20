@@ -338,6 +338,27 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "categoryid" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "description" : {
+                  "type" : "string"
+                },
+                "updateTime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Category($limit: Int = 10, $offset: Int = 0) {\nCategory(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
@@ -362,6 +383,27 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "categoryid" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "description" : {
+                  "type" : "string"
+                },
+                "updateTime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",

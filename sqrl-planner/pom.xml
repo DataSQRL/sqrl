@@ -37,6 +37,11 @@
       <groupId>com.datasqrl</groupId>
       <artifactId>sqrl-server-vertx-base</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.openapitools.openapidiff</groupId>
+      <artifactId>openapi-diff-core</artifactId>
+      <version>${openapi-diff.version}</version>
+    </dependency>
 
     <dependency>
       <groupId>org.apache.avro</groupId>

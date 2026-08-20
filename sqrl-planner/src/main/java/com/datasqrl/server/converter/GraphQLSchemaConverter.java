@@ -25,6 +25,7 @@ import com.datasqrl.server.operation.FunctionDefinition.Parameters;
 import com.datasqrl.server.operation.GraphQLQuery;
 import com.datasqrl.server.operation.McpMethodType;
 import com.datasqrl.server.operation.RestMethodType;
+import com.datasqrl.server.operation.ResultDefinition;
 import com.datasqrl.server.operation.ResultFormat;
 import com.google.common.base.Preconditions;
 import graphql.language.BooleanValue;
@@ -33,10 +34,12 @@ import graphql.language.Definition;
 import graphql.language.Directive;
 import graphql.language.Document;
 import graphql.language.EnumValue;
+import graphql.language.Field;
 import graphql.language.ListType;
 import graphql.language.NonNullType;
 import graphql.language.OperationDefinition;
 import graphql.language.OperationDefinition.Operation;
+import graphql.language.SelectionSet;
 import graphql.language.SourceLocation;
 import graphql.language.StringValue;
 import graphql.language.Type;
@@ -49,6 +52,7 @@ import graphql.schema.GraphQLDirective;
 import graphql.schema.GraphQLEnumType;
 import graphql.schema.GraphQLEnumValueDefinition;
 import graphql.schema.GraphQLFieldDefinition;
+import graphql.schema.GraphQLFieldsContainer;
 import graphql.schema.GraphQLInputObjectField;
 import graphql.schema.GraphQLInputObjectType;
 import graphql.schema.GraphQLInputType;
@@ -67,6 +71,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -135,6 +140,7 @@ public class GraphQLSchemaConverter {
               endLocation.getColumn());
       GraphQLQuery query = new GraphQLQuery(queryString, fctDef.getName(), opDef.getOperation());
       ApiOperation.ApiOperationBuilder builder = ApiOperation.getBuilder(fctDef, query);
+      builder.result(toResultDefinition(schema, opDef));
       config.setProtocolSupport(builder);
       applyApiArgs(toArgMap(opDef.getDirectives()), builder);
       functions.add(builder.build());
@@ -246,7 +252,7 @@ public class GraphQLSchemaConverter {
             input -> {
               if (config.getOperationFilter().test(input.op(), input.fieldDefinition().getName())) {
                 try {
-                  ApiOperation op = convert(input.op(), input.fieldDefinition(), config);
+                  ApiOperation op = convert(input.op(), input.fieldDefinition(), config, schema);
                   return Stream.of(op);
                 } catch (Exception e) {
                   log.info(
@@ -318,7 +324,8 @@ public class GraphQLSchemaConverter {
   private ApiOperation convert(
       Operation operationType,
       GraphQLFieldDefinition fieldDef,
-      GraphQLSchemaConverterConfig config) {
+      GraphQLSchemaConverterConfig config,
+      GraphQLSchema schema) {
     FunctionDefinition funcDef =
         initializeFunctionDefinition(
             config.getFunctionName(fieldDef.getName(), operationType), fieldDef.getDescription());
@@ -337,6 +344,7 @@ public class GraphQLSchemaConverter {
     GraphQLQuery apiQuery =
         new GraphQLQuery(queryHeader.toString(), fieldDef.getName(), operationType);
     ApiOperation.ApiOperationBuilder builder = ApiOperation.getBuilder(funcDef, apiQuery);
+    builder.result(toResultDefinition(schema, apiQuery));
     config.setProtocolSupport(builder);
     applyApiArgs(toArgMap(fieldDef.getDirective("api")), builder);
     return builder.build();
@@ -403,6 +411,83 @@ public class GraphQLSchemaConverter {
       case "Boolean" -> "boolean";
       case "ID" -> "string"; // Typically treated as a string in JSON Schema
       default -> "string"; // We assume that type can be cast from string.
+    };
+  }
+
+  private ResultDefinition toResultDefinition(GraphQLSchema schema, OperationDefinition operation) {
+    var rootType =
+        switch (operation.getOperation()) {
+          case QUERY -> schema.getQueryType();
+          case MUTATION -> schema.getMutationType();
+          case SUBSCRIPTION -> schema.getSubscriptionType();
+        };
+    var rootField =
+        operation.getSelectionSet().getSelectionsOfType(Field.class).stream()
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("Operation must select a root field"));
+    var fieldDefinition = rootType.getFieldDefinition(rootField.getName());
+    if (fieldDefinition == null) {
+      throw new IllegalArgumentException("Unknown root field: " + rootField.getName());
+    }
+    return toResultDefinition(fieldDefinition.getType(), rootField.getSelectionSet());
+  }
+
+  private ResultDefinition toResultDefinition(GraphQLSchema schema, GraphQLQuery query) {
+    var operation =
+        new Parser()
+            .parseDocument(query.query())
+            .getDefinitionsOfType(OperationDefinition.class)
+            .get(0);
+    return toResultDefinition(schema, operation);
+  }
+
+  private ResultDefinition toResultDefinition(GraphQLOutputType type, SelectionSet selectionSet) {
+    if (type instanceof GraphQLNonNull nonNullType) {
+      return toResultDefinition((GraphQLOutputType) nonNullType.getWrappedType(), selectionSet);
+    }
+    if (type instanceof GraphQLList listType) {
+      return ResultDefinition.builder()
+          .type("array")
+          .items(toResultDefinition((GraphQLOutputType) listType.getWrappedType(), selectionSet))
+          .build();
+    }
+    if (type instanceof GraphQLScalarType scalarType) {
+      return ResultDefinition.builder()
+          .type(convertScalarTypeToJsonType(scalarType))
+          .format(convertScalarTypeToFormat(scalarType))
+          .build();
+    }
+    if (type instanceof GraphQLEnumType enumType) {
+      return ResultDefinition.builder()
+          .type("string")
+          .enumValues(
+              enumType.getValues().stream()
+                  .map(GraphQLEnumValueDefinition::getName)
+                  .collect(Collectors.toSet()))
+          .build();
+    }
+    if (type instanceof GraphQLFieldsContainer fieldsContainer) {
+      var properties = new LinkedHashMap<String, ResultDefinition>();
+      if (selectionSet != null) {
+        for (var field : selectionSet.getSelectionsOfType(Field.class)) {
+          var fieldDefinition = fieldsContainer.getFieldDefinition(field.getName());
+          if (fieldDefinition != null) {
+            var result = toResultDefinition(fieldDefinition.getType(), field.getSelectionSet());
+            result.setDescription(fieldDefinition.getDescription());
+            properties.put(field.getAlias() == null ? field.getName() : field.getAlias(), result);
+          }
+        }
+      }
+      return ResultDefinition.builder().type("object").properties(properties).build();
+    }
+    return ResultDefinition.builder().type("object").build();
+  }
+
+  private String convertScalarTypeToFormat(GraphQLScalarType scalarType) {
+    return switch (scalarType.getName()) {
+      case "Date" -> "date";
+      case "DateTime", "DateTimeISO", "Timestamp" -> "date-time";
+      default -> null;
     };
   }
 

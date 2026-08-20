@@ -718,6 +718,27 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "machineId" : {
+                  "type" : "integer"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temp" : {
+                  "type" : "number"
+                },
+                "timeSec" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query HighTemp($limit: Int = 10, $offset: Int = 0) {\nHighTemp(limit: $limit, offset: $offset) {\nmachineId\nsensorid\ntemp\ntimeSec\n}\n\n}",
@@ -762,6 +783,83 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "machineId" : {
+                  "type" : "integer"
+                },
+                "maxTemp" : {
+                  "type" : "number"
+                },
+                "avgTemp" : {
+                  "type" : "number"
+                },
+                "sensors" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "id" : {
+                        "type" : "integer"
+                      },
+                      "machineId" : {
+                        "type" : "integer"
+                      },
+                      "placed" : {
+                        "type" : "integer"
+                      },
+                      "timestamp" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      },
+                      "lastHour" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "object",
+                          "properties" : {
+                            "sensorid" : {
+                              "type" : "integer"
+                            },
+                            "window_time" : {
+                              "type" : "string",
+                              "format" : "date-time"
+                            },
+                            "avgTemp" : {
+                              "type" : "number"
+                            },
+                            "maxTemp" : {
+                              "type" : "number"
+                            }
+                          }
+                        }
+                      },
+                      "readings" : {
+                        "type" : "array",
+                        "items" : {
+                          "type" : "object",
+                          "properties" : {
+                            "sensorid" : {
+                              "type" : "integer"
+                            },
+                            "timeSec" : {
+                              "type" : "string",
+                              "format" : "date-time"
+                            },
+                            "temp" : {
+                              "type" : "number"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Machine($limit: Int = 10, $offset: Int = 0$sensors_limit: Int = 10, $sensors_offset: Int = 0$sensors_lastHour_limit: Int = 10, $sensors_lastHour_offset: Int = 0$sensors_readings_limit: Int = 10, $sensors_readings_offset: Int = 0) {\nMachine(limit: $limit, offset: $offset) {\nmachineId\nmaxTemp\navgTemp\nsensors(limit: $sensors_limit, offset: $sensors_offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $sensors_lastHour_limit, offset: $sensors_lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $sensors_readings_limit, offset: $sensors_readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n}\n\n}",
@@ -788,6 +886,24 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "timeSec" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "temp" : {
+                  "type" : "number"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SecReading($limit: Int = 10, $offset: Int = 0) {\nSecReading(limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntemp\n}\n\n}",
@@ -812,6 +928,27 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "window_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "avgTemp" : {
+                  "type" : "number"
+                },
+                "maxTemp" : {
+                  "type" : "number"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -852,6 +989,66 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "machineId" : {
+                  "type" : "integer"
+                },
+                "placed" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "lastHour" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "sensorid" : {
+                        "type" : "integer"
+                      },
+                      "window_time" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      },
+                      "avgTemp" : {
+                        "type" : "number"
+                      },
+                      "maxTemp" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                },
+                "readings" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "sensorid" : {
+                        "type" : "integer"
+                      },
+                      "timeSec" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      },
+                      "temp" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Sensors($limit: Int = 10, $offset: Int = 0$lastHour_limit: Int = 10, $lastHour_offset: Int = 0$readings_limit: Int = 10, $readings_offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $lastHour_limit, offset: $lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $readings_limit, offset: $readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n\n}",
@@ -881,6 +1078,24 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               "required" : [
                 "temp"
               ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "timeSec" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "temp" : {
+                  "type" : "number"
+                }
+              }
             }
           },
           "format" : "JSON",

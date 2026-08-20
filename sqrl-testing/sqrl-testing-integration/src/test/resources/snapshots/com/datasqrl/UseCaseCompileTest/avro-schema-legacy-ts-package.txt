@@ -176,6 +176,25 @@ CREATE TABLE IF NOT EXISTS "Res" ("uuidField" TEXT NOT NULL, "timestampMillisFie
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "uuidField" : {
+                  "type" : "string"
+                },
+                "timestampMillisField" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "nullableTimestampMillisField" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Res($limit: Int = 10, $offset: Int = 0) {\nRes(limit: $limit, offset: $offset) {\nuuidField\ntimestampMillisField\nnullableTimestampMillisField\n}\n\n}",

@@ -1304,6 +1304,72 @@ END
               ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "largeOrders" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "orderid" : {
+                        "type" : "integer"
+                      },
+                      "customerid" : {
+                        "type" : "integer"
+                      },
+                      "amount" : {
+                        "type" : "number"
+                      },
+                      "orderTime" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      }
+                    }
+                  }
+                },
+                "orders" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "orderid" : {
+                        "type" : "integer"
+                      },
+                      "customerid" : {
+                        "type" : "integer"
+                      },
+                      "amount" : {
+                        "type" : "number"
+                      },
+                      "orderTime" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Customer($limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
@@ -1328,6 +1394,30 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1356,6 +1446,27 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderid" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "orderTime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query LargeOrders($limit: Int = 10, $offset: Int = 0) {\nLargeOrders(limit: $limit, offset: $offset) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
@@ -1380,6 +1491,44 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "entries" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1408,6 +1557,27 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderid" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "orderTime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query SimpleOrders($limit: Int = 10, $offset: Int = 0) {\nSimpleOrders(limit: $limit, offset: $offset) {\norderid\ncustomerid\namount\norderTime\n}\n\n}",
@@ -1432,6 +1602,33 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "productid" : {
+                  "type" : "integer"
+                },
+                "quantity" : {
+                  "type" : "integer"
+                },
+                "discount" : {
+                  "type" : "number"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -1481,6 +1678,72 @@ END
               ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "largeOrders" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "orderid" : {
+                        "type" : "integer"
+                      },
+                      "customerid" : {
+                        "type" : "integer"
+                      },
+                      "amount" : {
+                        "type" : "number"
+                      },
+                      "orderTime" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      }
+                    }
+                  }
+                },
+                "orders" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "orderid" : {
+                        "type" : "integer"
+                      },
+                      "customerid" : {
+                        "type" : "integer"
+                      },
+                      "amount" : {
+                        "type" : "number"
+                      },
+                      "orderTime" : {
+                        "type" : "string",
+                        "format" : "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerById($customerid: Long!, $limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomerById(customerid: $customerid, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
@@ -1508,6 +1771,24 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "object",
+            "properties" : {
+              "orderid" : {
+                "type" : "integer"
+              },
+              "customerid" : {
+                "type" : "integer"
+              },
+              "amount" : {
+                "type" : "number"
+              },
+              "orderTime" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
             }
           },
           "format" : "JSON",

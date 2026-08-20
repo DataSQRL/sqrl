@@ -1,0 +1,13 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink"],
+  "script": {
+    "main": "example.sqrl",
+    "api": {
+      "v1": {
+        "schema": "schema.graphqls",
+        "openapi": "openapi.json"
+      }
+    }
+  }
+}

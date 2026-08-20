@@ -408,6 +408,44 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "entries" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query FilteredOrders($limit: Int = 10, $offset: Int = 0) {\nFilteredOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
@@ -432,6 +470,44 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "entries" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -465,6 +541,17 @@ END
               ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query PassThroughFunction($customerid: Long!, $limit: Int = 10, $offset: Int = 0) {\nPassThroughFunction(customerid: $customerid, limit: $limit, offset: $offset) {\nid\n}\n\n}",
@@ -489,6 +576,21 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "updateTime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
             }
           },
           "format" : "JSON",

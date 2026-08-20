@@ -26,6 +26,52 @@
       "type" : "object"
     }
   },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "bolo_id" : {
+          "type" : "string"
+        },
+        "driver_id" : {
+          "type" : "string"
+        },
+        "issue_date" : {
+          "format" : "date-time",
+          "type" : "string"
+        },
+        "last_updated" : {
+          "format" : "date-time",
+          "type" : "string"
+        },
+        "license_state" : {
+          "type" : "string"
+        },
+        "make" : {
+          "type" : "string"
+        },
+        "model" : {
+          "type" : "string"
+        },
+        "registration_number" : {
+          "type" : "string"
+        },
+        "registration_state" : {
+          "type" : "string"
+        },
+        "status" : {
+          "type" : "string"
+        },
+        "vehicle_id" : {
+          "type" : "string"
+        },
+        "year" : {
+          "type" : "number"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "apiQuery" : {
     "operationType" : "QUERY",
     "query" : "query BoloDetails($make: String!, $model: String, $limit: Int = 10, $offset: Int = 0) {\nBoloDetails(make: $make, model: $model, limit: $limit, offset: $offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\n\n}",
@@ -88,6 +134,221 @@
       "type" : "object"
     }
   },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "bolos" : {
+          "items" : {
+            "properties" : {
+              "bolo_id" : {
+                "type" : "string"
+              },
+              "driver_id" : {
+                "type" : "string"
+              },
+              "issue_date" : {
+                "format" : "date-time",
+                "type" : "string"
+              },
+              "last_updated" : {
+                "format" : "date-time",
+                "type" : "string"
+              },
+              "license_state" : {
+                "type" : "string"
+              },
+              "make" : {
+                "type" : "string"
+              },
+              "model" : {
+                "type" : "string"
+              },
+              "registration_number" : {
+                "type" : "string"
+              },
+              "registration_state" : {
+                "type" : "string"
+              },
+              "status" : {
+                "type" : "string"
+              },
+              "vehicle_id" : {
+                "type" : "string"
+              },
+              "year" : {
+                "type" : "number"
+              }
+            },
+            "type" : "object"
+          },
+          "type" : "array"
+        },
+        "date_of_birth" : {
+          "type" : "string"
+        },
+        "driver_id" : {
+          "type" : "string"
+        },
+        "first_name" : {
+          "type" : "string"
+        },
+        "last_name" : {
+          "type" : "string"
+        },
+        "last_updated" : {
+          "format" : "date-time",
+          "type" : "string"
+        },
+        "license_expiry_date" : {
+          "format" : "date-time",
+          "type" : "string"
+        },
+        "license_number" : {
+          "type" : "string"
+        },
+        "license_state" : {
+          "type" : "string"
+        },
+        "license_status" : {
+          "type" : "string"
+        },
+        "vehicles" : {
+          "items" : {
+            "properties" : {
+              "bolos" : {
+                "items" : {
+                  "properties" : {
+                    "bolo_id" : {
+                      "type" : "string"
+                    },
+                    "driver_id" : {
+                      "type" : "string"
+                    },
+                    "issue_date" : {
+                      "format" : "date-time",
+                      "type" : "string"
+                    },
+                    "last_updated" : {
+                      "format" : "date-time",
+                      "type" : "string"
+                    },
+                    "license_state" : {
+                      "type" : "string"
+                    },
+                    "make" : {
+                      "type" : "string"
+                    },
+                    "model" : {
+                      "type" : "string"
+                    },
+                    "registration_number" : {
+                      "type" : "string"
+                    },
+                    "registration_state" : {
+                      "type" : "string"
+                    },
+                    "status" : {
+                      "type" : "string"
+                    },
+                    "vehicle_id" : {
+                      "type" : "string"
+                    },
+                    "year" : {
+                      "type" : "number"
+                    }
+                  },
+                  "type" : "object"
+                },
+                "type" : "array"
+              },
+              "last_updated" : {
+                "format" : "date-time",
+                "type" : "string"
+              },
+              "make" : {
+                "type" : "string"
+              },
+              "model" : {
+                "type" : "string"
+              },
+              "owner_driver_id" : {
+                "type" : "string"
+              },
+              "registration_expiry" : {
+                "format" : "date-time",
+                "type" : "string"
+              },
+              "registration_number" : {
+                "type" : "string"
+              },
+              "registration_state" : {
+                "type" : "string"
+              },
+              "tracking" : {
+                "items" : {
+                  "properties" : {
+                    "event_time" : {
+                      "format" : "date-time",
+                      "type" : "string"
+                    },
+                    "latitude" : {
+                      "type" : "number"
+                    },
+                    "longitude" : {
+                      "type" : "number"
+                    }
+                  },
+                  "type" : "object"
+                },
+                "type" : "array"
+              },
+              "vehicle_id" : {
+                "type" : "string"
+              },
+              "year" : {
+                "type" : "number"
+              }
+            },
+            "type" : "object"
+          },
+          "type" : "array"
+        },
+        "warrants" : {
+          "items" : {
+            "properties" : {
+              "crime_description" : {
+                "type" : "string"
+              },
+              "issue_date" : {
+                "format" : "date-time",
+                "type" : "string"
+              },
+              "last_updated" : {
+                "format" : "date-time",
+                "type" : "string"
+              },
+              "person_id" : {
+                "type" : "string"
+              },
+              "state_of_issuance" : {
+                "type" : "string"
+              },
+              "warrant_id" : {
+                "type" : "string"
+              },
+              "warrant_status" : {
+                "type" : "string"
+              }
+            },
+            "type" : "object"
+          },
+          "type" : "array"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "apiQuery" : {
     "operationType" : "QUERY",
     "query" : "query Driver($license_number: String!, $limit: Int = 10, $offset: Int = 0$bolos_limit: Int = 10, $bolos_offset: Int = 0$vehicles_limit: Int = 10, $vehicles_offset: Int = 0$vehicles_bolos_limit: Int = 10, $vehicles_bolos_offset: Int = 0$vehicles_tracking_limit: Int = 10, $vehicles_tracking_offset: Int = 0$warrants_limit: Int = 10, $warrants_offset: Int = 0) {\nDriver(license_number: $license_number, limit: $limit, offset: $offset) {\ndriver_id\nfirst_name\nlast_name\nlicense_number\nlicense_state\ndate_of_birth\nlicense_status\nlicense_expiry_date\nlast_updated\nbolos(limit: $bolos_limit, offset: $bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\nvehicles(limit: $vehicles_limit, offset: $vehicles_offset) {\nvehicle_id\nregistration_number\nregistration_state\nregistration_expiry\nmake\nmodel\nyear\nowner_driver_id\nlast_updated\nbolos(limit: $vehicles_bolos_limit, offset: $vehicles_bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\ntracking(limit: $vehicles_tracking_limit, offset: $vehicles_tracking_offset) {\nlatitude\nlongitude\nevent_time\n}\n}\nwarrants(limit: $warrants_limit, offset: $warrants_offset) {\nwarrant_id\nperson_id\nwarrant_status\ncrime_description\nstate_of_issuance\nissue_date\nlast_updated\n}\n}\n\n}",
@@ -132,6 +393,107 @@
       "type" : "object"
     }
   },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "bolos" : {
+          "items" : {
+            "properties" : {
+              "bolo_id" : {
+                "type" : "string"
+              },
+              "driver_id" : {
+                "type" : "string"
+              },
+              "issue_date" : {
+                "format" : "date-time",
+                "type" : "string"
+              },
+              "last_updated" : {
+                "format" : "date-time",
+                "type" : "string"
+              },
+              "license_state" : {
+                "type" : "string"
+              },
+              "make" : {
+                "type" : "string"
+              },
+              "model" : {
+                "type" : "string"
+              },
+              "registration_number" : {
+                "type" : "string"
+              },
+              "registration_state" : {
+                "type" : "string"
+              },
+              "status" : {
+                "type" : "string"
+              },
+              "vehicle_id" : {
+                "type" : "string"
+              },
+              "year" : {
+                "type" : "number"
+              }
+            },
+            "type" : "object"
+          },
+          "type" : "array"
+        },
+        "last_updated" : {
+          "format" : "date-time",
+          "type" : "string"
+        },
+        "make" : {
+          "type" : "string"
+        },
+        "model" : {
+          "type" : "string"
+        },
+        "owner_driver_id" : {
+          "type" : "string"
+        },
+        "registration_expiry" : {
+          "format" : "date-time",
+          "type" : "string"
+        },
+        "registration_number" : {
+          "type" : "string"
+        },
+        "registration_state" : {
+          "type" : "string"
+        },
+        "tracking" : {
+          "items" : {
+            "properties" : {
+              "event_time" : {
+                "format" : "date-time",
+                "type" : "string"
+              },
+              "latitude" : {
+                "type" : "number"
+              },
+              "longitude" : {
+                "type" : "number"
+              }
+            },
+            "type" : "object"
+          },
+          "type" : "array"
+        },
+        "vehicle_id" : {
+          "type" : "string"
+        },
+        "year" : {
+          "type" : "number"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "apiQuery" : {
     "operationType" : "QUERY",
     "query" : "query Vehicle($registration_number: String!, $limit: Int = 10, $offset: Int = 0$bolos_limit: Int = 10, $bolos_offset: Int = 0$tracking_limit: Int = 10, $tracking_offset: Int = 0) {\nVehicle(registration_number: $registration_number, limit: $limit, offset: $offset) {\nvehicle_id\nregistration_number\nregistration_state\nregistration_expiry\nmake\nmodel\nyear\nowner_driver_id\nlast_updated\nbolos(limit: $bolos_limit, offset: $bolos_offset) {\nbolo_id\nvehicle_id\nissue_date\nstatus\nlast_updated\nmake\nmodel\nyear\nregistration_state\nregistration_number\nlicense_state\ndriver_id\n}\ntracking(limit: $tracking_limit, offset: $tracking_offset) {\nlatitude\nlongitude\nevent_time\n}\n}\n\n}",
@@ -162,6 +524,20 @@
       "type" : "object"
     }
   },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "crime" : {
+          "type" : "string"
+        },
+        "num_warrants" : {
+          "type" : "number"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "apiQuery" : {
     "operationType" : "QUERY",
     "query" : "query WarrantsByCrime($crime: String, $limit: Int = 100, $offset: Int = 0) {\nWarrantsByCrime(crime: $crime, limit: $limit, offset: $offset) {\ncrime\nnum_warrants\n}\n\n}",
@@ -191,6 +567,23 @@
       "required" : [ ],
       "type" : "object"
     }
+  },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "num_warrants" : {
+          "type" : "number"
+        },
+        "state" : {
+          "type" : "string"
+        },
+        "status" : {
+          "type" : "string"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
   },
   "apiQuery" : {
     "operationType" : "QUERY",
@@ -224,6 +617,24 @@
       "type" : "object"
     }
   },
+  "result" : {
+    "items" : {
+      "properties" : {
+        "num_bolos" : {
+          "type" : "number"
+        },
+        "state" : {
+          "type" : "string"
+        },
+        "week" : {
+          "format" : "date-time",
+          "type" : "string"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "apiQuery" : {
     "operationType" : "QUERY",
     "query" : "query BolosByWeekState($state: String, $limit: Int = 100, $offset: Int = 0) {\nBolosByWeekState(state: $state, limit: $limit, offset: $offset) {\nweek\nstate\nnum_bolos\n}\n\n}",
@@ -251,6 +662,17 @@
       "required" : [ "plate", "latitude", "longitude" ],
       "type" : "object"
     }
+  },
+  "result" : {
+    "properties" : {
+      "_uuid" : {
+        "type" : "string"
+      },
+      "plate" : {
+        "type" : "string"
+      }
+    },
+    "type" : "object"
   },
   "apiQuery" : {
     "operationType" : "MUTATION",

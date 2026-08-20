@@ -753,6 +753,30 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
@@ -777,6 +801,23 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                }
+              }
             }
           },
           "format" : "JSON",
@@ -805,6 +846,23 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderCustomer2($limit: Int = 10, $offset: Int = 0) {\nOrderCustomer2(limit: $limit, offset: $offset) {\nid\nname\ncustomerid\n}\n\n}",
@@ -831,6 +889,23 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderCustomer3($limit: Int = 10, $offset: Int = 0) {\nOrderCustomer3(limit: $limit, offset: $offset) {\nid\nname\ncustomerid\n}\n\n}",
@@ -855,6 +930,44 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "entries" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
           "format" : "JSON",

@@ -32,9 +32,12 @@ import io.vertx.ext.web.handler.AuthenticationHandler;
 import io.vertx.ext.web.handler.ChainAuthHandler;
 import io.vertx.ext.web.handler.JWTAuthHandler;
 import io.vertx.ext.web.handler.OAuth2AuthHandler;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,6 +56,8 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
   // Pattern for RFC 6570 URI template path parameters: {param}
   private static final Pattern PATH_PARAMS_PATTERN = Pattern.compile("\\{([^}?]+)\\}");
 
+  private final Path openApiArtifact;
+
   private OpenApiService openApiService;
 
   public RestBridgeVerticle(
@@ -61,8 +66,10 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
       String modelVersion,
       RootGraphQLModel model,
       List<AuthenticationProvider> authProviders,
-      GraphQLServerVerticle graphQLServerVerticle) {
+      GraphQLServerVerticle graphQLServerVerticle,
+      Path openApiArtifact) {
     super(router, config, modelVersion, model, authProviders, graphQLServerVerticle);
+    this.openApiArtifact = openApiArtifact;
   }
 
   @Override
@@ -99,6 +106,7 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
             modelVersion,
             config.getServletConfig().getRestEndpoint(modelVersion));
 
+    var openApiArtifactJson = loadOpenApiArtifact();
     var openApiJsonEndpoint = config.getOpenApiConfig().getEndpoint(modelVersion);
     router
         .get(openApiJsonEndpoint)
@@ -107,8 +115,14 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
               try {
                 // Extract request host and port for dynamic server URL
                 var requestHost = getRequestBaseUrl(ctx);
-                var openApiJson = openApiService.generateOpenApiJson(requestHost);
-                ctx.response().putHeader("content-type", "application/json").end(openApiJson);
+                var openApiWithRequestHost =
+                    openApiArtifactJson
+                        .map(
+                            openApiJson -> openApiService.withRequestHost(openApiJson, requestHost))
+                        .orElseGet(() -> openApiService.generateOpenApiJson(requestHost));
+                ctx.response()
+                    .putHeader("content-type", "application/json")
+                    .end(openApiWithRequestHost);
               } catch (Exception e) {
                 log.error("Failed to generate OpenAPI JSON", e);
                 ctx.response()
@@ -138,6 +152,23 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
     log.info("OpenAPI endpoints setup completed:");
     log.info("  OpenAPI JSON: {}", openApiJsonEndpoint);
     log.info("  Swagger UI: {}", swaggerUiEndpoint);
+  }
+
+  private Optional<String> loadOpenApiArtifact() {
+    try {
+      var openApiJson = Files.readString(openApiArtifact);
+      openApiService.validateOpenApiJson(openApiJson);
+
+      return Optional.of(openApiJson);
+
+    } catch (Exception e) {
+      log.warn(
+          "OpenAPI artifact {} is unavailable or invalid; generating it for OpenAPI requests: {}",
+          openApiArtifact,
+          e.getMessage());
+    }
+
+    return Optional.empty();
   }
 
   private void createRestEndpoint(ApiOperation operation) {
@@ -177,8 +208,8 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
     // Add the REST handler
     route.handler(
         ctx -> {
-          var variables = extractParameters(ctx, operation);
           try {
+            var variables = extractParameters(ctx, operation);
             var fut = bridgeRequestToGraphQL(ctx, operation, variables);
             fut.onSuccess(
                     executionResult -> {
@@ -245,12 +276,12 @@ public class RestBridgeVerticle extends AbstractBridgeVerticle {
       RoutingContext ctx, ApiOperation operation) {
     var variables = new HashMap<String, Object>();
 
-    if (operation.getRestMethod() == RestMethodType.GET) {
-      // For GET requests, extract parameters from URL query parameters and path parameters
-      extractGetParameters(ctx, operation, variables);
-    } else {
-      // For POST/PUT requests, use the JSON body as variables
-      extractPostParameters(ctx, variables);
+    if (operation.getRestMethod() == RestMethodType.POST) {
+      extractPathParameters(ctx, operation, variables);
+      extractBodyParameters(ctx, variables);
+
+    } else if (operation.getRestMethod() == RestMethodType.GET) {
+      extractUriParameters(ctx, operation, variables);
     }
 
     return variables;

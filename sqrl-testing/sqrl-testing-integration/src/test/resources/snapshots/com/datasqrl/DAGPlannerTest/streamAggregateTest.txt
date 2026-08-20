@@ -403,6 +403,20 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer" : {
+                  "type" : "integer"
+                },
+                "order_count" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderAgg1($limit: Int = 10, $offset: Int = 0) {\nOrderAgg1(limit: $limit, offset: $offset) {\ncustomer\norder_count\n}\n\n}",
@@ -429,6 +443,17 @@ END
               "required" : [ ]
             }
           },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_count" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          },
           "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderAgg2($limit: Int = 10, $offset: Int = 0) {\nOrderAgg2(limit: $limit, offset: $offset) {\norder_count\n}\n\n}",
@@ -453,6 +478,44 @@ END
                 }
               },
               "required" : [ ]
+            }
+          },
+          "result" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "entries" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
             }
           },
           "format" : "JSON",
