@@ -16,6 +16,7 @@
 package com.datasqrl.cli;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockConstruction;
@@ -129,5 +130,82 @@ class CompileCmdTest {
 
     assertThat(compileCmd.formatGivenPackageFiles())
         .containsExactly(projectDir.resolve("package.json"));
+  }
+
+  @Test
+  void givenNoBuildFolder_whenGettingBuildDir_thenUsesDefaultFolder() {
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+
+    assertThat(compileCmd.getBuildDir()).isEqualTo(tempDir.resolve("build"));
+  }
+
+  @Test
+  void
+      givenCustomBuildFolderAndProjectRoot_whenGettingBuildAndDefaultTargetDirs_thenResolvesBothFromProjectRoot()
+          throws IOException {
+    var projectRoot = tempDir.resolve("project");
+    Files.createDirectory(projectRoot);
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+    compileCmd.projectRoot = Optional.of(Path.of("project"));
+    compileCmd.buildFolder = Optional.of(Path.of("output"));
+
+    assertThat(compileCmd.getBuildDir()).isEqualTo(projectRoot.resolve("output"));
+    assertThat(compileCmd.getTargetDir())
+        .isEqualTo(projectRoot.resolve("output").resolve("deploy"));
+  }
+
+  @Test
+  void givenAbsoluteBuildFolderOutsideTestExecution_whenGettingBuildDir_thenThrows() {
+    var buildFolder = tempDir.resolve("output");
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
+    compileCmd.buildFolder = Optional.of(buildFolder);
+
+    assertThatThrownBy(compileCmd::getBuildDir)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Build folder must be a relative path, got: " + buildFolder);
+  }
+
+  @Test
+  void givenBuildFolderOutsideProjectRoot_whenGettingBuildDir_thenThrows() throws IOException {
+    var projectRoot = tempDir.resolve("banking");
+    Files.createDirectory(projectRoot);
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
+    compileCmd.projectRoot = Optional.of(Path.of("banking"));
+    compileCmd.buildFolder = Optional.of(Path.of("..", "build-banking"));
+
+    assertThatThrownBy(compileCmd::getBuildDir)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Build folder '../build-banking' resolves to '"
+                + tempDir.resolve("build-banking")
+                + "', which is outside project root '"
+                + projectRoot
+                + "'");
+  }
+
+  @Test
+  void givenTargetFolderOutsideProjectRoot_whenGettingTargetDir_thenThrows() throws IOException {
+    var projectRoot = tempDir.resolve("banking");
+    Files.createDirectory(projectRoot);
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
+    compileCmd.projectRoot = Optional.of(Path.of("banking"));
+    compileCmd.targetFolder = Optional.of(Path.of("..", "deploy-banking"));
+
+    assertThatThrownBy(compileCmd::getTargetDir)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "Target folder '../deploy-banking' resolves to '"
+                + tempDir.resolve("deploy-banking")
+                + "', which is outside project root '"
+                + projectRoot
+                + "'");
   }
 }
