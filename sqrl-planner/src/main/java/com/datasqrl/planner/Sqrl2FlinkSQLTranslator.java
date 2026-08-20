@@ -35,6 +35,7 @@ import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.schema.SchemaLoader;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.FlinkPhysicalPlan.Builder;
+import com.datasqrl.planner.RelDataTypeParser.ParsedRelDataTypeResult;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer;
 import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -42,10 +43,7 @@ import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable.MutationTableBuilder;
 import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.parser.NoLocationStatementParserException;
-import com.datasqrl.planner.parser.ParsePosUtil;
-import com.datasqrl.planner.parser.ParsePosUtil.MessageLocation;
 import com.datasqrl.planner.parser.ParsedObject;
-import com.datasqrl.planner.parser.SQLStatement;
 import com.datasqrl.planner.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
@@ -67,6 +65,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -167,21 +166,19 @@ public class Sqrl2FlinkSQLTranslator {
 
   private static final String SCHEMA_SUFFIX = "__schema";
   private static final String TEMP_VIEW_SUFFIX = "__view";
-  private static final String DATATYPE_PARSING_PREFIX =
-      "CREATE TEMPORARY TABLE __sqrlinternal_types( ";
-
-  private final Set<String> createdDatabases = new HashSet<>();
 
   private final RuntimeExecutionMode executionMode;
   private final boolean compileFlinkPlan;
   private final StreamTableEnvironmentImpl tEnv;
   private final Supplier<FlinkPlannerImpl> validatorSupplier;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
-  private final CatalogManager catalogManager;
   private final FlinkPhysicalPlan.Builder planBuilder;
+  @Getter private final CatalogManager catalogManager;
   @Getter private final FlinkTypeFactory typeFactory;
   @Getter private final FlinkExecFunctionFactory execFnFactory;
+  @Getter private final RelDataTypeParser relDataTypeParser;
 
+  @Getter private final Set<String> createdDatabases = new LinkedHashSet<>();
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
 
   public Sqrl2FlinkSQLTranslator(
@@ -231,6 +228,7 @@ public class Sqrl2FlinkSQLTranslator {
     this.catalogManager = tEnv.getCatalogManager();
 
     execFnFactory = new FlinkExecFunctionFactory(tEnv.getConfig(), typeFactory);
+    relDataTypeParser = new RelDataTypeParser(this);
 
     // Register SQRL standard library functions
     ServiceLoader<AutoRegisterSystemFunction> standardLibraryFunctions =
@@ -590,7 +588,7 @@ public class Sqrl2FlinkSQLTranslator {
 
     var parameters = getFunctionParameters(arguments);
 
-    var parsedReturnType = parse2RelDataType(returnType);
+    var parsedReturnType = relDataTypeParser.parseToRelDataType(returnType);
     var returnDataType =
         CalciteUtil.getRelTypeBuilder(typeFactory)
             .addAll(parsedReturnType.stream().map(ParsedRelDataTypeResult::field).toList())
@@ -788,7 +786,7 @@ public class Sqrl2FlinkSQLTranslator {
         viewName, FlinkSqlNodes.selectAllFromTable(FlinkSqlNodes.identifier(id)));
   }
 
-  private ObjectIdentifier qualifyIdentifier(SqlIdentifier identifier) {
+  ObjectIdentifier qualifyIdentifier(SqlIdentifier identifier) {
     var names = identifier.names;
     var size = names.size();
 
@@ -1051,8 +1049,7 @@ public class Sqrl2FlinkSQLTranslator {
     return parseSchema(schema, false).stream().map(ParsedRelDataTypeResult::field).toList();
   }
 
-  private List<ParsedRelDataTypeResult> parseSchema(
-      ResolvedSchema schema, boolean createFunctions) {
+  List<ParsedRelDataTypeResult> parseSchema(ResolvedSchema schema, boolean createFunctions) {
     var fields = new ArrayList<ParsedRelDataTypeResult>();
 
     var typeBuilder = CalciteUtil.getRelTypeBuilder(typeFactory);
@@ -1112,42 +1109,6 @@ public class Sqrl2FlinkSQLTranslator {
     return fields;
   }
 
-  /**
-   * Uses a CREATE TABLE statement to parse the data types from a string
-   *
-   * @param dataTypeDefinition
-   * @return
-   */
-  public List<ParsedRelDataTypeResult> parse2RelDataType(ParsedObject<String> dataTypeDefinition) {
-    if (dataTypeDefinition.isEmpty()) {
-      return List.of();
-    }
-    var createTableStatement =
-        DATATYPE_PARSING_PREFIX + dataTypeDefinition.get() + " ) WITH ('connector' = 'filesystem')";
-    try {
-      var op = (CreateTableOperation) getOperation(parseSQL(createTableStatement));
-      var schema = op.getCatalogTable().getResolvedSchema();
-      return parseSchema(schema, true);
-    } catch (Exception e) {
-      var location = dataTypeDefinition.getFileLocation();
-      var converted = ParsePosUtil.convertFlinkParserException(e);
-      if (converted.isPresent()) {
-        location =
-            location.add(
-                SQLStatement.removeFirstRowOffset(
-                    converted.get().location(), DATATYPE_PARSING_PREFIX.length()));
-      }
-      throw new StatementParserException(
-          location, e, converted.map(MessageLocation::message).orElse(e.getMessage()));
-    }
-  }
-
-  public List<ParsedRelDataTypeResult> parse2RelDataType(String createTableStatement) {
-    var op = (CreateTableOperation) getOperation(parseSQL(createTableStatement));
-    var schema = op.getCatalogTable().getResolvedSchema();
-    return parseSchema(schema, true);
-  }
-
   @SneakyThrows
   public Operation executeSQL(String sqlStatement) {
     return executeSqlNode(parseSQL(sqlStatement));
@@ -1160,7 +1121,7 @@ public class Sqrl2FlinkSQLTranslator {
     return operation;
   }
 
-  private Operation getOperation(SqlNode sqlNode) {
+  Operation getOperation(SqlNode sqlNode) {
     return SqlNodeToOperationConversion.convert(validatorSupplier.get(), catalogManager, sqlNode)
         .orElseThrow(() -> new TableException("Unsupported query: " + sqlNode));
   }
@@ -1194,7 +1155,4 @@ public class Sqrl2FlinkSQLTranslator {
               + " Supported engines: \"kafka\", \"iceberg\".");
     }
   }
-
-  public record ParsedRelDataTypeResult(
-      RelDataTypeField field, Optional<String> metadata, Optional<FlinkExecFunction> function) {}
 }

@@ -1,0 +1,15 @@
+{
+  "tables" : [ {
+    "canonicalName" : "Foo_raw",
+    "engine" : "kafka",
+    "createTableSql" : "CREATE TABLE `Foo_raw` (\n  PRIMARY KEY (`id`) NOT ENFORCED\n)\nWITH (\n  'connector' = 'upsert-kafka-safe',\n  'key.format' = 'flexible-json',\n  'properties.auto.offset.reset' = 'earliest',\n  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',\n  'properties.compression.type' = 'zstd',\n  'properties.group.id' = '${KAFKA_GROUP_ID}',\n  'topic' = 'Foo_raw',\n  'value.fields-include' = 'ALL',\n  'value.format' = 'flexible-json'\n)\nLIKE `Foo_schema`",
+    "definition" : {
+      "columns" : [ ],
+      "primaryKey" : [ "id" ],
+      "partitionKey" : [ ]
+    },
+    "configOptions" : {
+      "cleanup.policy" : "compact"
+    }
+  } ]
+}

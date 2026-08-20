@@ -1,0 +1,8 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "kafka", "postgres", "vertx"],
+  "script": {
+    "main": "mutation-like-import.sqrl",
+    "database": "database/mutation_database.json"
+  }
+}

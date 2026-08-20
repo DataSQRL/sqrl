@@ -1,0 +1,10 @@
+CREATE TABLE Foo_schema (
+    ts TIMESTAMP_LTZ(3) NOT NULL,
+    id INT NOT NULL,
+    label STRING
+);
+
+/*+engine(kafka) */
+CREATE TABLE Foo_raw (
+    PRIMARY KEY (id) NOT ENFORCED
+) LIKE Foo_schema;

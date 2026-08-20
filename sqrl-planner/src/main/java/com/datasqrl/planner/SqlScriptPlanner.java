@@ -367,11 +367,11 @@ public class SqlScriptPlanner {
       var originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
       // Relationships and Table functions require special handling
       if (sqrlDef instanceof SqrlTableFunctionStatement tblFnStmt) {
-        // TODO: should be resolved against the current catalog and database
         var identifier = scriptContext.toIdentifier(tblFnStmt.getPath().getFirst());
         final var arguments = new LinkedHashMap<Name, ParsedArgument>();
         if (!tblFnStmt.getSignature().isEmpty()) {
-          var parsedArgs = sqrlEnv.parse2RelDataType(tblFnStmt.getSignature());
+          var parsedArgs =
+              sqrlEnv.getRelDataTypeParser().parseToRelDataType(tblFnStmt.getSignature());
           parsedArgs.forEach(
               parsedField -> {
                 var field = parsedField.field();

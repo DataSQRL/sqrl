@@ -22,7 +22,6 @@ import com.datasqrl.deployment.model.MutationDatabaseModel.Table;
 import com.datasqrl.deployment.model.MutationDatabaseModel.TableDefinition;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
-import com.datasqrl.planner.Sqrl2FlinkSQLTranslator.ParsedRelDataTypeResult;
 import com.datasqrl.server.exec.FlinkExecFunction;
 import java.util.Collection;
 import java.util.List;
@@ -115,9 +114,9 @@ public final class MutationDatabase {
         compatible = false;
       }
 
-      List<ParsedRelDataTypeResult> newSchema = env.parse2RelDataType(table.createTableSql());
-      List<ParsedRelDataTypeResult> oldSchema =
-          env.parse2RelDataType(compareTable.createTableSql());
+      var parser = env.getRelDataTypeParser();
+      var newSchema = parser.parseToRelDataType(table.createTableSql());
+      var oldSchema = parser.parseToRelDataType(compareTable.createTableSql());
 
       var oldFieldsByName =
           oldSchema.stream()
