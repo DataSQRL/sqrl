@@ -135,10 +135,12 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AppendStream_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`AppendStream`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`InputAgg_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`InputAgg`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json
