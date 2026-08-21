@@ -565,7 +565,7 @@ FROM `default_catalog`.`default_database`.`EventLikeCount`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Events_2`
 SELECT `url`, `date`, `time`, `title`, `abstract`, `location`, `to_jsonb`(`speakers`) AS `speakers`, `last_updated`, `id`, `full_text`, `startTime`, `embedding`, `startTimestamp`
-FROM `default_catalog`.`default_database`.`_ProcessedEventStream`
+FROM `default_catalog`.`default_database`.`Events`
 ;
 INSERT INTO `default_catalog`.`default_database`.`_UserInterests_3`
 SELECT *
@@ -573,7 +573,7 @@ FROM `default_catalog`.`default_database`.`_UserInterests`
 ;
 INSERT INTO `default_catalog`.`default_database`.`_UserLikes_4`
 SELECT *
-FROM `default_catalog`.`default_database`.`_Likes`
+FROM `default_catalog`.`default_database`.`_UserLikes`
 ;
 END
 >>>kafka.json

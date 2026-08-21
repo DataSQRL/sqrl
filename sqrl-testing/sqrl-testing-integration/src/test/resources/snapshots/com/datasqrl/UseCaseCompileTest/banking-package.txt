@@ -715,7 +715,7 @@ FROM `default_catalog`.`default_database`.`ApplicationUpdates`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Applications_5`
 SELECT *
-FROM `default_catalog`.`default_database`.`ApplicationsStream`
+FROM `default_catalog`.`default_database`.`Applications`
 ;
 INSERT INTO `default_catalog`.`default_database`.`ApplicationsStream_6`
 SELECT *
@@ -735,7 +735,7 @@ FROM `default_catalog`.`default_database`.`CustomersStream`
 ;
 INSERT INTO `default_catalog`.`default_database`.`LoanTypes_10`
 SELECT *
-FROM `default_catalog`.`default_database`.`LoanTypesStream`
+FROM `default_catalog`.`default_database`.`LoanTypes`
 ;
 INSERT INTO `default_catalog`.`default_database`.`LoanTypesStream_11`
 SELECT *
