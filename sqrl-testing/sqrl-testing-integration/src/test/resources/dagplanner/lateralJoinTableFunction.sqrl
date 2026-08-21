@@ -1,0 +1,6 @@
+IMPORT ecommerceTs.customer;
+IMPORT functions.DuplicateStringFunction;
+
+CustomerEmailCopies := SELECT c.customerid, d.email
+                       FROM Customer c
+                       LEFT JOIN LATERAL TABLE(DuplicateStringFunction(c.email)) AS d(email) ON TRUE;
