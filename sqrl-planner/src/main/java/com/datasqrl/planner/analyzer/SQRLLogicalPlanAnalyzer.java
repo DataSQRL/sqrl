@@ -92,7 +92,9 @@ import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
+import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.functions.sql.SqlWindowTableFunction;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 
@@ -445,6 +447,16 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
                 .hasNowFilter(false)
                 .build());
       }
+    } else if (call.getOperator() instanceof BridgingSqlFunction function
+        && function.getDefinition().getKind() == FunctionKind.PROCESS_TABLE) {
+      // PTFs carry TABLE arguments as relational inputs that form DAG dependencies.
+      var inputs = getInputAnalyses(functionScan);
+      return setProcessResult(
+          RelNodeAnalysis.builder()
+              .relNode(
+                  updateRelnode(
+                      functionScan, inputs.stream().map(RelNodeAnalysis::getRelNode).toList()))
+              .build());
     }
     // Generic table function call
     return setProcessResult(RelNodeAnalysis.builder().relNode(functionScan).build());
