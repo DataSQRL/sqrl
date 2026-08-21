@@ -1,0 +1,25 @@
+/*+engine(kafka), no_query */
+CREATE TABLE UserTokens (
+   userid BIGINT NOT NULL,
+   tokens BIGINT NOT NULL,
+   request_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+TotalUserTokens := SELECT userid, sum(tokens) as total_tokens, count(tokens) as total_requests
+                   FROM UserTokens GROUP BY userid;
+
+-- A namespace with an external argument shared by all its queries and exposed on the `backend`
+-- field itself: backend(minTokens: Long!) { ... }.
+CREATE NAMESPACE backend (
+    minTokens BIGINT NOT NULL
+);
+
+-- flat root query
+UserTokensById(userid BIGINT NOT NULL) := SELECT * FROM TotalUserTokens WHERE userid = :userid;
+
+-- namespaced query using the namespace argument (bound from the `backend` field at runtime)
+backend.tokensAbove() :=
+    SELECT * FROM TotalUserTokens WHERE total_tokens >= :backend.minTokens ORDER BY userid ASC;
+
+-- subscriptions cannot be namespaced, so this stays a flat root field
+UsageAlert := SUBSCRIBE SELECT * FROM UserTokens WHERE tokens > 100;

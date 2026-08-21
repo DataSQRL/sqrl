@@ -86,13 +86,40 @@ public abstract class GraphqlSchemaWalker {
         "Empty root object type: %s",
         rootType.getName());
     for (FieldDefinition field : rootType.getFieldDefinitions()) {
-      var mutationQuery =
-          mutations.stream()
-              .filter(mutation -> mutation.getName().getDisplay().equalsIgnoreCase(field.getName()))
-              .findFirst()
-              .orElseThrow(() -> new RuntimeException("No mutation found for " + field.getName()));
-      visitMutation(field, registry, mutationQuery);
+      var mutationQuery = findMutation(field.getName());
+      if (mutationQuery.isPresent()) {
+        // null parentType denotes the root Mutation type (resolved at runtime from the schema)
+        visitMutation(null, field, registry, mutationQuery.get());
+      } else {
+        walkMutationNamespace(rootType, field, registry);
+      }
     }
+  }
+
+  /**
+   * A mutation namespace field groups mutations under an object type. Its sub-fields each map to a
+   * mutation by name. Only expressible via a user-supplied schema (there is no SQRL syntax to
+   * path-name a mutation table).
+   */
+  private void walkMutationNamespace(
+      ObjectTypeDefinition rootType, FieldDefinition nsField, TypeDefinitionRegistry registry) {
+    var nsType = resolveNamespaceType(nsField, registry);
+    visitQueryNamespace(rootType, nsField, registry);
+    for (FieldDefinition subField : nsType.getFieldDefinitions()) {
+      var mutationQuery =
+          findMutation(subField.getName())
+              .orElseThrow(
+                  () ->
+                      new RuntimeException(
+                          "No mutation found for " + nsField.getName() + "." + subField.getName()));
+      visitMutation(nsType, subField, registry, mutationQuery);
+    }
+  }
+
+  private Optional<MutationTable> findMutation(String name) {
+    return mutations.stream()
+        .filter(mutation -> mutation.getName().getDisplay().equalsIgnoreCase(name))
+        .findFirst();
   }
 
   private void walkRootType(ObjectTypeDefinition rootType, TypeDefinitionRegistry registry) {
@@ -102,18 +129,67 @@ public abstract class GraphqlSchemaWalker {
         "Empty root object type: %s",
         rootType.getName());
     for (FieldDefinition field :
-        rootType.getFieldDefinitions()) { // fields are root table functions
+        rootType.getFieldDefinitions()) { // fields are root table functions or namespaces
       final var fieldPath = NamePath.ROOT.concat(NamePath.of(field.getName()));
-      final var tableFunction =
-          getTableFunctionFromPath(
-              tableFunctions, fieldPath); // root table functions are always present
+      final var tableFunction = getTableFunctionFromPath(tableFunctions, fieldPath);
+      if (tableFunction.isPresent()) {
+        walkTableFunction(rootType, field, tableFunction.get(), registry);
+      } else if (isNamespace(field.getName())) {
+        walkQueryNamespace(rootType, field, registry);
+      } else {
+        checkState(
+            false,
+            field.getSourceLocation(),
+            "Could not find table or function for field: %s",
+            field.getName());
+      }
+    }
+  }
+
+  /**
+   * A namespace field (e.g. {@code backend: BackendQueries}) groups namespaced root functions under
+   * an object type. It carries no arguments; each of its sub-fields is a root table function whose
+   * path is {@code [namespace, subField]}.
+   */
+  private void walkQueryNamespace(
+      ObjectTypeDefinition rootType, FieldDefinition nsField, TypeDefinitionRegistry registry) {
+    var nsType = resolveNamespaceType(nsField, registry);
+    visitQueryNamespace(rootType, nsField, registry);
+    for (FieldDefinition subField : nsType.getFieldDefinitions()) {
+      var subPath = NamePath.of(nsField.getName()).concat(Name.system(subField.getName()));
+      var tableFunction = getTableFunctionFromPath(tableFunctions, subPath);
       checkState(
           tableFunction.isPresent(),
-          field.getSourceLocation(),
-          "Could not find table or function for field: %s",
-          field.getName());
-      walkTableFunction(rootType, field, tableFunction.get(), registry);
+          subField.getSourceLocation(),
+          "Could not find table or function for namespaced field: %s.%s",
+          nsField.getName(),
+          subField.getName());
+      walkTableFunction(nsType, subField, tableFunction.get(), registry);
     }
+  }
+
+  private ObjectTypeDefinition resolveNamespaceType(
+      FieldDefinition nsField, TypeDefinitionRegistry registry) {
+    // Namespace fields may carry arguments (the namespace's shared external parameters), which are
+    // propagated to sub-queries as parent parameters.
+    var typeDefOpt = registry.getType(nsField.getType());
+    checkState(
+        typeDefOpt.isPresent(),
+        nsField.getType().getSourceLocation(),
+        "Could not find namespace object type: %s",
+        nsField.getType());
+    var typeDefinition = typeDefOpt.get();
+    checkState(
+        typeDefinition instanceof ObjectTypeDefinition,
+        typeDefinition.getSourceLocation(),
+        "Namespace field [%s] must reference an object type",
+        nsField.getName());
+    return (ObjectTypeDefinition) typeDefinition;
+  }
+
+  private boolean isNamespace(String name) {
+    return tableFunctions.stream()
+        .anyMatch(fn -> fn.isNamespaced() && fn.getFullPath().getFirst().getDisplay().equals(name));
   }
 
   private void walkTableFunction(
@@ -285,7 +361,14 @@ public abstract class GraphqlSchemaWalker {
       FieldDefinition atField, SqrlTableFunction tableFunction, TypeDefinitionRegistry registry);
 
   protected abstract void visitMutation(
-      FieldDefinition atField, TypeDefinitionRegistry registry, MutationTable mutation);
+      ObjectTypeDefinition parentType,
+      FieldDefinition atField,
+      TypeDefinitionRegistry registry,
+      MutationTable mutation);
+
+  /** Visits a namespace field (e.g. {@code backend}) on a root Query or Mutation type. */
+  protected abstract void visitQueryNamespace(
+      ObjectTypeDefinition parentType, FieldDefinition atField, TypeDefinitionRegistry registry);
 
   protected abstract void visitUnknownObject(
       FieldDefinition atField, Optional<RelDataType> relDataType);

@@ -120,6 +120,8 @@ public class RootGraphQLModel {
     public abstract String getFieldName();
 
     public abstract boolean isReturnList();
+
+    public abstract String getParentType();
   }
 
   public interface MutationCoordsVisitor<R, C> {
@@ -140,6 +142,13 @@ public class RootGraphQLModel {
     protected Map<String, ResolvedMetadata> computedColumns;
     protected boolean transactional;
     protected Map<String, String> sinkConfig;
+
+    /**
+     * The GraphQL parent type this mutation is registered under. Null for a mutation on the root
+     * Mutation type; set to the namespace object type name for a namespaced mutation.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    protected String parentType;
 
     @Override
     public <R, C> R accept(MutationCoordsVisitor<R, C> visitor, C context) {
@@ -193,6 +202,8 @@ public class RootGraphQLModel {
     R visitArgumentLookup(ArgumentLookupQueryCoords coords, C context);
 
     R visitFieldLookup(FieldLookupQueryCoords coords, C context);
+
+    R visitStatic(StaticQueryCoords coords, C context);
   }
 
   /**
@@ -207,7 +218,8 @@ public class RootGraphQLModel {
   @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
   @JsonSubTypes({
     @Type(value = ArgumentLookupQueryCoords.class, name = "args"),
-    @Type(value = FieldLookupQueryCoords.class, name = "field")
+    @Type(value = FieldLookupQueryCoords.class, name = "field"),
+    @Type(value = StaticQueryCoords.class, name = "static")
   })
   public abstract static class QueryCoords {
 
@@ -232,6 +244,25 @@ public class RootGraphQLModel {
     @Override
     public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
       return visitor.visitFieldLookup(this, context);
+    }
+  }
+
+  /**
+   * A field that resolves to a constant empty object so that GraphQL descends into it. Used for
+   * namespace fields (e.g. {@code backend}) whose sub-fields carry the actual queries/mutations.
+   */
+  @Getter
+  @NoArgsConstructor
+  public static class StaticQueryCoords extends QueryCoords {
+
+    @Builder
+    public StaticQueryCoords(String parentType, String fieldName) {
+      super(parentType, fieldName);
+    }
+
+    @Override
+    public <R, C> R accept(QueryCoordVisitor<R, C> visitor, C context) {
+      return visitor.visitStatic(this, context);
     }
   }
 

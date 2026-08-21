@@ -80,6 +80,7 @@ import com.datasqrl.planner.parser.ParsedStatement;
 import com.datasqrl.planner.parser.SQLStatement;
 import com.datasqrl.planner.parser.SqlScriptStatementSplitter;
 import com.datasqrl.planner.parser.SqrlAddColumnStatement;
+import com.datasqrl.planner.parser.SqrlCreateNamespaceStatement;
 import com.datasqrl.planner.parser.SqrlCreateTableStatement;
 import com.datasqrl.planner.parser.SqrlDefinition;
 import com.datasqrl.planner.parser.SqrlExportStatement;
@@ -95,6 +96,7 @@ import com.datasqrl.planner.parser.StackableStatement;
 import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.SqlScriptWriter;
 import com.datasqrl.planner.util.SqlTableNameExtractor;
@@ -115,6 +117,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
@@ -144,6 +147,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @Lazy
+@Slf4j
 public class SqlScriptPlanner {
 
   private static final String INSERT_SUFFIX = "_in";
@@ -152,6 +156,9 @@ public class SqlScriptPlanner {
 
   private final AtomicInteger exportTableCounter = new AtomicInteger(0);
   private final AtomicInteger insertTableCounter = new AtomicInteger(0);
+
+  /** Declared namespaces (grouping + shared parameters), keyed by namespace name. */
+  private final Map<Name, NamespaceDefinition> namespaces = new HashMap<>();
 
   private final ErrorCollector errorCollector;
 
@@ -281,7 +288,8 @@ public class SqlScriptPlanner {
         throw lineErrors.handle(e);
       }
 
-      if (!(sqlStatement instanceof SqrlImportStatement)) {
+      if (!(sqlStatement instanceof SqrlImportStatement)
+          && !(sqlStatement instanceof SqrlCreateNamespaceStatement)) {
         completeScript.append(sourceStmt.source());
       }
 
@@ -330,6 +338,8 @@ public class SqlScriptPlanner {
               scriptContext.mainModuleLoader().getSchemaLoader(),
               hintsAndDocs)
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+    } else if (stmt instanceof SqrlCreateNamespaceStatement nsStmt) {
+      addNamespace(nsStmt, sqrlEnv, errors);
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
       var tablePath = sqrlDef.getPath();
@@ -402,30 +412,45 @@ public class SqlScriptPlanner {
               });
         }
         TableAnalysis parentTbl = null;
+        var namespaced = false;
+        final Name namespaceName =
+            tblFnStmt.isRelationship() ? tblFnStmt.getPath().getFirst() : null;
+        NamespaceDefinition namespaceDef = null;
         if (tblFnStmt.isRelationship()) {
-          /* To resolve the arguments and get their type, we first need to look up the parent table
+          /* A size-2 path is either a relationship on an existing table or a namespaced root
+          function grouped under a namespace (e.g. `backend.dormantDeployments`). If the head
+          resolves to a table it is a relationship; if it resolves to nothing it is a namespace.
            */
           var parentNode = dagBuilder.getNode(identifier);
-          checkFatal(
-              parentNode.isPresent(),
-              sqrlDef.getTableName().getFileLocation(),
-              ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
-              "Could not find parent table for relationship: %s",
-              tblFnStmt.getPath().getFirst());
-          checkFatal(
-              parentNode.get() instanceof TableNode,
-              sqrlDef.getTableName().getFileLocation(),
-              ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
-              "Relationships can only be added to tables (not functions): %s [%s]",
-              tblFnStmt.getPath().getFirst(),
-              parentNode.get().getClass());
           identifier = scriptContext.toIdentifier(tablePath.toString());
-          parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
-          checkFatal(
-              parentTbl.getOptionalBaseTable().isEmpty(),
-              ErrorCode.BASETABLE_ONLY_ERROR,
-              "Relationships can only be added to the base table [%s]",
-              parentTbl.getBaseTable().getIdentifier());
+          if (parentNode.isEmpty()) {
+            namespaced = true;
+            namespaceDef = namespaces.get(namespaceName);
+            checkFatal(
+                tblFnStmt.getArgumentsByIndex().stream().noneMatch(ParsedArgument::isParentField),
+                sqrlDef.getTableName().getFileLocation(),
+                ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
+                "Namespaced function [%s] cannot reference `this`. It has no parent table.",
+                tblFnStmt.getPath());
+            log.info(
+                "Exposing [{}] under GraphQL namespace [{}]",
+                tblFnStmt.getPath(),
+                tblFnStmt.getPath().getFirst());
+          } else {
+            checkFatal(
+                parentNode.get() instanceof TableNode,
+                sqrlDef.getTableName().getFileLocation(),
+                ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
+                "Relationships can only be added to tables (not functions): %s [%s]",
+                tblFnStmt.getPath().getFirst(),
+                parentNode.get().getClass());
+            parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
+            checkFatal(
+                parentTbl.getOptionalBaseTable().isEmpty(),
+                ErrorCode.BASETABLE_ONLY_ERROR,
+                "Relationships can only be added to the base table [%s]",
+                parentTbl.getBaseTable().getIdentifier());
+          }
         }
         // Resolve arguments, map indexes, and check for errors
         Map<Integer, Integer> argumentIndexMap = new HashMap<>();
@@ -446,7 +471,38 @@ public class SqlScriptPlanner {
                   fieldName, argIndex.withResolvedType(field.getType(), arguments.size()));
             }
           }
-          var signatureArg = arguments.get(Name.system(argIndex.getName().get()));
+          var argName = argIndex.getName().get();
+          // References to a namespace parameter use a `<namespace>.` prefix (e.g.
+          // `:admin.asTenantId`).
+          // External namespace params are bound as parent-fields from the namespace field; claims
+          // as
+          // metadata. Both are inherited automatically from the CREATE NAMESPACE declaration.
+          var namespaceParam = namespaceParamName(argName, namespaceName);
+          Name lookupKey;
+          if (namespaceParam.isPresent()) {
+            var paramName = namespaceParam.get();
+            checkFatal(
+                namespaceDef != null,
+                argIndex.getName().getFileLocation(),
+                ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
+                "Namespace [%s] is not declared. Declare it with CREATE NAMESPACE.",
+                namespaceName);
+            var param = namespaceDef.getParam(paramName);
+            checkFatal(
+                param.isPresent(),
+                argIndex.getName().getFileLocation(),
+                ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
+                "Namespace [%s] has no parameter [%s]",
+                namespaceName,
+                paramName);
+            lookupKey = Name.system(paramName);
+            if (!arguments.containsKey(lookupKey)) {
+              arguments.put(lookupKey, namespaceParamToArgument(param.get(), arguments.size()));
+            }
+          } else {
+            lookupKey = Name.system(argName);
+          }
+          var signatureArg = arguments.get(lookupKey);
           checkFatal(
               signatureArg != null,
               argIndex.getName().getFileLocation(),
@@ -504,6 +560,10 @@ public class SqlScriptPlanner {
                   errors);
         }
         fnBuilder.fullPath(tblFnStmt.getPath());
+        fnBuilder.namespaced(namespaced);
+        if (namespaceDef != null) {
+          fnBuilder.namespaceArguments(namespaceFieldArguments(namespaceDef));
+        }
         var visibility =
             new AccessVisibility(
                 access, hints.isTest(), tblFnStmt.isRelationship() || passthroughFn, isHidden);
@@ -597,6 +657,84 @@ public class SqlScriptPlanner {
 
   private boolean shouldExcludeTestTable(PlannerHints hints) {
     return hints.isTest() && executionGoal != ExecutionGoal.TEST;
+  }
+
+  /**
+   * Validates and registers a {@code CREATE NAMESPACE} declaration. Each parameter is either an
+   * external argument (exposed on the namespace field) or a hidden metadata claim (with {@code
+   * METADATA FROM}).
+   */
+  private void addNamespace(
+      SqrlCreateNamespaceStatement nsStmt, Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errors) {
+    var name = nsStmt.getName().get();
+    errors.checkFatal(
+        !namespaces.containsKey(name),
+        ErrorCode.INVALID_SQRL_DEFINITION,
+        "Namespace [%s] is already defined",
+        name);
+    List<NamespaceDefinition.Param> params = new ArrayList<>();
+    for (var parsedField : sqrlEnv.parse2RelDataType(nsStmt.getParams())) {
+      var field = parsedField.field();
+      var metadata =
+          parsedField
+              .metadata()
+              .map(
+                  metaStr -> {
+                    var resolved =
+                        SqrlTableFunctionStatement.parseMetadata(
+                            metaStr, !field.getType().isNullable());
+                    errors.checkFatal(
+                        resolved.isPresent(),
+                        ErrorCode.INVALID_TABLE_FUNCTION_ARGUMENTS,
+                        "Invalid metadata key provided: %s",
+                        metaStr);
+                    return resolved.get();
+                  });
+      params.add(new NamespaceDefinition.Param(field.getName(), field.getType(), metadata));
+    }
+    namespaces.put(name, new NamespaceDefinition(name, params));
+  }
+
+  /**
+   * If {@code argName} is a reference to a parameter of the given namespace (i.e. {@code
+   * <namespace>.<param>}), returns the bare parameter name.
+   */
+  private static Optional<String> namespaceParamName(String argName, Name namespaceName) {
+    if (namespaceName == null) {
+      return Optional.empty();
+    }
+    var prefix = namespaceName.getDisplay() + ".";
+    if (argName.regionMatches(true, 0, prefix, 0, prefix.length())) {
+      return Optional.of(argName.substring(prefix.length()));
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Builds the function parameter injected into a namespaced function for a namespace parameter: an
+   * external parameter is a parent-field (bound from the namespace field's argument), a claim is
+   * metadata (bound from the JWT).
+   */
+  private static ParsedArgument namespaceParamToArgument(
+      NamespaceDefinition.Param param, int index) {
+    return new ParsedArgument(
+        new ParsedObject<>(param.name(), FileLocation.START),
+        param.type(),
+        param.metadata(),
+        Optional.empty(),
+        param.isExternal(),
+        index);
+  }
+
+  /** The external namespace parameters exposed as arguments on the namespace field. */
+  private static List<FunctionParameter> namespaceFieldArguments(NamespaceDefinition namespaceDef) {
+    var external = namespaceDef.externalParams();
+    List<FunctionParameter> args = new ArrayList<>();
+    for (var i = 0; i < external.size(); i++) {
+      var param = external.get(i);
+      args.add(new SqrlFunctionParameter(param.name(), i, param.type()));
+    }
+    return args;
   }
 
   /**

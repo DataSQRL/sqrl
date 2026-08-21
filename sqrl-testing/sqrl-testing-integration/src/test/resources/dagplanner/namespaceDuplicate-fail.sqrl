@@ -1,0 +1,9 @@
+IMPORT ecommerceTs.customer;
+
+CREATE NAMESPACE dup (
+    a BIGINT NOT NULL METADATA FROM 'auth.userid'
+);
+
+CREATE NAMESPACE dup (
+    b BIGINT NOT NULL METADATA FROM 'auth.userid'
+);

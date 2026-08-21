@@ -74,7 +74,12 @@ class GqlGenerator extends GraphqlSchemaVisitor {
     List<Node> queries = new ArrayList<>();
     var defs = definition.getFieldDefinitions();
     for (FieldDefinition def : defs) {
-      final var tableFn = getTableFunctionFromPath(tableFunctions, def.getName()).get();
+      // Namespace fields (e.g. `backend`) have no table function at the root path; skip them.
+      final var tableFnOpt = getTableFunctionFromPath(tableFunctions, def.getName());
+      if (tableFnOpt.isEmpty()) {
+        continue;
+      }
+      final var tableFn = tableFnOpt.get();
       if (tableFn.getVisibility().isTest()) {
         var operation =
             processOperation(

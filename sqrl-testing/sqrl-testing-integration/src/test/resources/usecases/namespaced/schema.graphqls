@@ -1,0 +1,49 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Mutation {
+  backend: BackendMutation
+}
+
+type BackendMutation {
+  UserTokens(event: UserTokensInput!): UserTokensResultOutput!
+}
+
+type Query {
+  UserTokensById(userid: Long!, limit: Int = 10, offset: Int = 0): [TotalUserTokens!]
+  backend(minTokens: Long!): BackendQueries
+}
+
+type BackendQueries {
+  tokensAbove(limit: Int = 10, offset: Int = 0): [TotalUserTokens!]
+}
+
+type Subscription {
+  UsageAlert: UserTokens
+}
+
+type TotalUserTokens {
+  userid: Long!
+  total_tokens: Long!
+  total_requests: Long!
+}
+
+type UserTokens {
+  userid: Long!
+  tokens: Long!
+  request_time: DateTime!
+}
+
+input UserTokensInput {
+  userid: Long!
+  tokens: Long!
+}
+
+type UserTokensResultOutput {
+  userid: Long!
+  tokens: Long!
+  request_time: DateTime!
+}

@@ -1,0 +1,4 @@
+IMPORT ecommerceTs.customer;
+
+-- Referencing a namespace parameter without declaring the namespace with CREATE NAMESPACE.
+admin.customers() := SELECT * FROM Customer WHERE CAST(:admin.asTenantId AS STRING) IS NOT NULL;

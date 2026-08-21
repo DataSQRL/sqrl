@@ -1,0 +1,30 @@
+IMPORT ecommerceTs.customer;
+
+-- A namespace with JWT claims only: `backend` field takes no arguments.
+CREATE NAMESPACE backend (
+    authTenantId STRING NOT NULL METADATA FROM 'auth.https://datasqrl.com/tenant_id',
+    authInstallationId STRING NOT NULL METADATA FROM 'auth.https://datasqrl.com/installation_id'
+);
+
+-- A namespace mixing an external argument (asTenantId, exposed on the `admin` field) with a claim.
+CREATE NAMESPACE admin (
+    asTenantId STRING NOT NULL,
+    role STRING NOT NULL METADATA FROM 'auth.datasqrl_admin'
+);
+
+-- flat root query
+CustomerById(customerid BIGINT NOT NULL) := SELECT * FROM Customer WHERE customerid = :customerid;
+
+-- relationship on Customer (still nested one hop, unaffected by namespacing)
+Customer.self := SELECT * FROM Customer c WHERE this.customerid = c.customerid;
+
+-- namespaced queries under `backend`, inheriting the backend claims automatically
+backend.customerLookup(customerid BIGINT NOT NULL) :=
+    SELECT * FROM Customer WHERE customerid = :customerid AND CAST(:backend.authTenantId AS STRING) IS NOT NULL;
+backend.tenantCustomers() :=
+    SELECT * FROM Customer WHERE CAST(:backend.authInstallationId AS STRING) IS NOT NULL;
+
+-- namespaced query under `admin`, using the namespace argument and the claim
+admin.customersByTenant() :=
+    SELECT * FROM Customer
+    WHERE CAST(:admin.asTenantId AS STRING) IS NOT NULL AND CAST(:admin.role AS STRING) IS NOT NULL;

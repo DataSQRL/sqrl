@@ -764,7 +764,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query Machine($limit: Int = 10, $offset: Int = 0$sensors_limit: Int = 10, $sensors_offset: Int = 0$sensors_lastHour_limit: Int = 10, $sensors_lastHour_offset: Int = 0$sensors_readings_limit: Int = 10, $sensors_readings_offset: Int = 0) {\nMachine(limit: $limit, offset: $offset) {\nmachineId\nmaxTemp\navgTemp\nsensors(limit: $sensors_limit, offset: $sensors_offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $sensors_lastHour_limit, offset: $sensors_lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $sensors_readings_limit, offset: $sensors_readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n}\n\n}",
+            "query" : "query Machine($limit: Int = 10, $offset: Int = 0, $sensors_limit: Int = 10, $sensors_offset: Int = 0, $sensors_lastHour_limit: Int = 10, $sensors_lastHour_offset: Int = 0, $sensors_readings_limit: Int = 10, $sensors_readings_offset: Int = 0) {\nMachine(limit: $limit, offset: $offset) {\nmachineId\nmaxTemp\navgTemp\nsensors(limit: $sensors_limit, offset: $sensors_offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $sensors_lastHour_limit, offset: $sensors_lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $sensors_readings_limit, offset: $sensors_readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n}\n\n}",
             "queryName" : "Machine",
             "operationType" : "QUERY"
           },
@@ -854,7 +854,7 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query Sensors($limit: Int = 10, $offset: Int = 0$lastHour_limit: Int = 10, $lastHour_offset: Int = 0$readings_limit: Int = 10, $readings_offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $lastHour_limit, offset: $lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $readings_limit, offset: $readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n\n}",
+            "query" : "query Sensors($limit: Int = 10, $offset: Int = 0, $lastHour_limit: Int = 10, $lastHour_offset: Int = 0, $readings_limit: Int = 10, $readings_offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\nlastHour(limit: $lastHour_limit, offset: $lastHour_offset) {\nsensorid\nwindow_time\navgTemp\nmaxTemp\n}\nreadings(limit: $readings_limit, offset: $readings_offset) {\nsensorid\ntimeSec\ntemp\n}\n}\n\n}",
             "queryName" : "Sensors",
             "operationType" : "QUERY"
           },

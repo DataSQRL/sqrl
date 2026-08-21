@@ -1306,7 +1306,7 @@ END
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query Customer($limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0, $largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0, $orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
             "queryName" : "Customer",
             "operationType" : "QUERY"
           },
@@ -1483,7 +1483,7 @@ END
           },
           "format" : "JSON",
           "apiQuery" : {
-            "query" : "query CustomerById($customerid: Long!, $limit: Int = 10, $offset: Int = 0$largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0$orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomerById(customerid: $customerid, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
+            "query" : "query CustomerById($customerid: Long!, $limit: Int = 10, $offset: Int = 0, $largeOrders_minAmount: Float!, $largeOrders_limit: Int = 10, $largeOrders_offset: Int = 0, $orders_limit: Int = 10, $orders_offset: Int = 0) {\nCustomerById(customerid: $customerid, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\nlargeOrders(minAmount: $largeOrders_minAmount, limit: $largeOrders_limit, offset: $largeOrders_offset) {\norderid\ncustomerid\namount\norderTime\n}\norders(limit: $orders_limit, offset: $orders_offset) {\norderid\ncustomerid\namount\norderTime\n}\n}\n\n}",
             "queryName" : "CustomerById",
             "operationType" : "QUERY"
           },
