@@ -1,0 +1,27 @@
+/*+engine(kafka) */
+CREATE TABLE Deployments (
+  deploymentId BIGINT NOT NULL,
+  projectId BIGINT NOT NULL,
+  eventTime TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+/*+engine(kafka) */
+CREATE TABLE Projects (
+  projectId BIGINT NOT NULL,
+  dataGroupId BIGINT NOT NULL,
+  eventTime TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+DeploymentStateBase :=
+    SELECT d.deploymentId, p.dataGroupId, d.eventTime
+    FROM Deployments d JOIN Projects p ON d.projectId = p.projectId;
+
+/*+primary_key(deploymentId) */
+DeploymentState := DISTINCT DeploymentStateBase ON deploymentId ORDER BY eventTime DESC;
+
+-- Keeps the ranked state table in the Flink pipeline.
+EXPORT DeploymentState TO logger.DeploymentState;
+
+-- Forces the same state table to be materialized to Postgres.
+DeploymentStateById(deploymentId BIGINT NOT NULL) :=
+    SELECT * FROM DeploymentState WHERE deploymentId = :deploymentId;

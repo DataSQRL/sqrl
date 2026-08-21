@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "enabled-engines": ["postgres", "kafka", "flink"],
+  "script": {
+    "main": "distinct-materialization.sqrl"
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}

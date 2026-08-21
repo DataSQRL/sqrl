@@ -1,0 +1,254 @@
+>>>pipeline_explain.txt
+=== DeploymentState
+ID:          default_catalog.default_database.DeploymentState
+Type:        state
+Stage:       flink
+Primary key: deploymentId
+Timestamp:   eventTime
+Row count:   ~2e7
+---
+Schema:
+ - deploymentId: BIGINT NOT NULL
+ - dataGroupId: BIGINT NOT NULL
+ - eventTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.DeploymentStateBase
+Annotations:
+ - mostRecentDistinct: true
+
+=== DeploymentStateBase
+ID:          default_catalog.default_database.DeploymentStateBase
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   eventTime
+Row count:   ~1e8
+---
+Schema:
+ - deploymentId: BIGINT NOT NULL
+ - dataGroupId: BIGINT NOT NULL
+ - eventTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Deployments
+ - default_catalog.default_database.Projects
+
+=== DeploymentStateById
+ID:          default_catalog.default_database.DeploymentStateById
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.DeploymentState
+Annotations:
+ - parameters: deploymentId
+ - base-table: DeploymentState
+
+=== Deployments
+ID:          default_catalog.default_database.Deployments
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   eventTime
+Row count:   ~1e8
+---
+Schema:
+ - deploymentId: BIGINT NOT NULL
+ - projectId: BIGINT NOT NULL
+ - eventTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Deployments__base
+
+=== Projects
+ID:          default_catalog.default_database.Projects
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   eventTime
+Row count:   ~1e8
+---
+Schema:
+ - projectId: BIGINT NOT NULL
+ - dataGroupId: BIGINT NOT NULL
+ - eventTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Projects__base
+
+=== DeploymentState
+ID:          logger.DeploymentState
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.DeploymentState
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Deployments` (
+  `deploymentId` BIGINT NOT NULL,
+  `projectId` BIGINT NOT NULL,
+  `eventTime` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `eventTime` AS `eventTime` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'Deployments'
+);
+CREATE TABLE `Projects` (
+  `projectId` BIGINT NOT NULL,
+  `dataGroupId` BIGINT NOT NULL,
+  `eventTime` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `eventTime` AS `eventTime` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'Projects'
+);
+CREATE VIEW `DeploymentStateBase`
+AS
+SELECT `d`.`deploymentId`, `p`.`dataGroupId`, `d`.`eventTime`
+FROM `Deployments` AS `d`
+ INNER JOIN `Projects` AS `p` ON `d`.`projectId` = `p`.`projectId`;
+CREATE VIEW `DeploymentState`
+AS
+SELECT `deploymentId`, `dataGroupId`, `eventTime`
+FROM (SELECT `deploymentId`, `dataGroupId`, `eventTime`, ROW_NUMBER() OVER (PARTITION BY `deploymentId` ORDER BY `eventTime` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`DeploymentStateBase`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE TABLE `DeploymentState_1` (
+  `deploymentId` BIGINT NOT NULL,
+  `dataGroupId` BIGINT NOT NULL,
+  `eventTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`deploymentId`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'print',
+  'print-identifier' = 'DeploymentState'
+);
+CREATE TABLE `DeploymentState_2` (
+  `deploymentId` BIGINT NOT NULL,
+  `dataGroupId` BIGINT NOT NULL,
+  `eventTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`deploymentId`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'TIMESTAMP',
+  'sink.on-conflict.timestamp-column' = 'eventTime',
+  'table-name' = 'DeploymentState',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `DeploymentStateBase_3` (
+  `deploymentId` BIGINT NOT NULL,
+  `dataGroupId` BIGINT NOT NULL,
+  `eventTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'DeploymentStateBase',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Deployments_4` (
+  `deploymentId` BIGINT NOT NULL,
+  `projectId` BIGINT NOT NULL,
+  `eventTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Deployments',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Projects_5` (
+  `projectId` BIGINT NOT NULL,
+  `dataGroupId` BIGINT NOT NULL,
+  `eventTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Projects',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`DeploymentState_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`DeploymentState`
+;
+INSERT INTO `default_catalog`.`default_database`.`DeploymentState_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`DeploymentState`
+;
+INSERT INTO `default_catalog`.`default_database`.`DeploymentStateBase_3`
+SELECT `deploymentId`, `dataGroupId`, `eventTime`, `hash_columns`(`deploymentId`, `dataGroupId`, `eventTime`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`DeploymentStateBase`
+;
+INSERT INTO `default_catalog`.`default_database`.`Deployments_4`
+SELECT `deploymentId`, `projectId`, `eventTime`, `hash_columns`(`deploymentId`, `projectId`, `eventTime`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Deployments`
+;
+INSERT INTO `default_catalog`.`default_database`.`Projects_5`
+SELECT `projectId`, `dataGroupId`, `eventTime`, `hash_columns`(`projectId`, `dataGroupId`, `eventTime`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Projects`
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "Deployments",
+      "tableName" : "Deployments",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "Projects",
+      "tableName" : "Projects",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "DeploymentState" ("deploymentId" BIGINT NOT NULL, "dataGroupId" BIGINT NOT NULL, "eventTime" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("deploymentId"));
+CREATE TABLE IF NOT EXISTS "DeploymentStateBase" ("deploymentId" BIGINT NOT NULL, "dataGroupId" BIGINT NOT NULL, "eventTime" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Deployments" ("deploymentId" BIGINT NOT NULL, "projectId" BIGINT NOT NULL, "eventTime" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Projects" ("projectId" BIGINT NOT NULL, "dataGroupId" BIGINT NOT NULL, "eventTime" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
