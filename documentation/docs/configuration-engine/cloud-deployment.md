@@ -42,9 +42,10 @@ Apache Flink deployments consist of 1 job manager and a configurable number of i
   "engines": {
     "flink": {
       "deployment": {
-        "jobmanager-size": "small",   // Job manager instance size (see table below)
-        "taskmanager-size": "medium", // Task manager instance size (see table below)
-        "taskmanager-count": 2        // Number of task managers (positive integer)
+        "jobmanager-size": "small",    // Job manager instance size (see table below)
+        "taskmanager-size": "medium",  // Task manager instance size (see table below)
+        "taskmanager-count": 2,        // Number of task managers (positive integer)
+        "taskmanager-disk-size-gb": 400 // NVMe space per task manager (see "Task Manager Disk" below)
       }
     }
   }
@@ -62,6 +63,27 @@ Apache Flink deployments consist of 1 job manager and a configurable number of i
 | xlarge | 8   | 8          | 32           | 440GB      | 1             |
 
 The `dev` size is intended for development and testing with small amounts of data.
+
+#### Task Manager Disk
+
+Each task manager gets local NVMe space for RocksDB state, batch spill files and any other Flink-local data. It defaults to the "NVMe Space" column of the selected size, and `taskmanager-disk-size-gb` overrides that default independently of the size:
+
+```json
+{
+  "engines": {
+    "flink": {
+      "deployment": {
+        "taskmanager-size": "small",     // 55GB of NVMe by default
+        "taskmanager-disk-size-gb": 400  // ...raised to 400GB
+      }
+    }
+  }
+}
+```
+
+Raise it when a job needs more local disk than its CPU/memory size implies — batch jobs in particular spill shuffle and sort data to local disk far beyond their memory footprint, and a task manager that exceeds its allocation is evicted mid-job.
+
+The value is in GiB, must be positive, and is capped at 4000. It is a **hard scheduling requirement**: a task manager asking for more disk than any available node offers stays `Pending` instead of falling back to a smaller node.
 
 #### Size Qualifiers
 
