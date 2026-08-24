@@ -508,7 +508,7 @@ WITH (
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
-FROM `default_catalog`.`default_database`.`CustomerStream`
+FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerStream_2`
 SELECT *

@@ -717,7 +717,7 @@ FROM `default_catalog`.`default_database`.`CustomerPromotion`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customers_2`
 SELECT *
-FROM `default_catalog`.`default_database`.`_CustomersStream`
+FROM `default_catalog`.`default_database`.`Customers`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomersOrderStats_3`
 SELECT *
@@ -741,7 +741,7 @@ FROM `default_catalog`.`default_database`.`OrdersTotals`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Products_8`
 SELECT *
-FROM `default_catalog`.`default_database`.`_ProductsStream`
+FROM `default_catalog`.`default_database`.`Products`
 ;
 INSERT INTO `default_catalog`.`default_database`.`ProductsByCountry_9`
 SELECT `productid`, `country`, `quantity`, `spend`, `weight`, `hash_columns`(`productid`, `country`) AS `__pk_hash`
