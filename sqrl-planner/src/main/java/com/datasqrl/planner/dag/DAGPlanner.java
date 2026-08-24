@@ -267,10 +267,18 @@ public class DAGPlanner {
                   var exportEngine = (ExportEngine) exportStage.engine();
                   TableAnalysis originalNodeTable = node.getTableAnalysis(),
                       sinkNodeTable = originalNodeTable;
+                  var hasStreamConsumer =
+                      dag.getOutputs(node).stream()
+                          .anyMatch(
+                              output ->
+                                  output != downstream
+                                      && (output instanceof ExportNode
+                                          || output.getChosenStage().equals(streamStage)));
                   if (exportEngine.supports(EngineFeature.MATERIALIZE_ON_KEY)
-                      && node.getTableAnalysis().isMostRecentDistinct()) {
+                      && node.getTableAnalysis().isMostRecentDistinct()
+                      && !hasStreamConsumer) {
                     // If we are sinking to a datastore and the node is a most recent distinct, we
-                    // can remove that node
+                    // can remove that node when it has no other stream consumers
                     // since materializing into the table on primary key has the same effect and is
                     // more efficient
                     errors.checkFatal(

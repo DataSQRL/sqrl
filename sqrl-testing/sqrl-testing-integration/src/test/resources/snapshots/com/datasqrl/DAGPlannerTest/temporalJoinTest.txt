@@ -257,7 +257,7 @@ FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`DistinctCustomer_2`
 SELECT *
-FROM `default_catalog`.`default_database`.`Customer`
+FROM `default_catalog`.`default_database`.`DistinctCustomer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_3`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
