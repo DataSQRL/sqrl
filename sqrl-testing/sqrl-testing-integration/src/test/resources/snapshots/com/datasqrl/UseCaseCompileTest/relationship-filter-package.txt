@@ -526,8 +526,16 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Detail($limit: Int = 10, $offset: Int = 0) {\nDetail(limit: $limit, offset: $offset) {\nid\ninfo\n}\n\n}",
+            "queryName" : "Detail",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Detail{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -540,15 +548,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Detail($limit: Int = 10, $offset: Int = 0) {\nDetail(limit: $limit, offset: $offset) {\nid\ninfo\n}\n\n}",
-            "queryName" : "Detail",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Detail{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -566,8 +566,16 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Thing($limit: Int = 10, $offset: Int = 0) {\nThing(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
+            "queryName" : "Thing",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Thing{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -591,15 +599,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Thing($limit: Int = 10, $offset: Int = 0) {\nThing(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
-            "queryName" : "Thing",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Thing{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -617,8 +617,16 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Tombstone($limit: Int = 10, $offset: Int = 0) {\nTombstone(limit: $limit, offset: $offset) {\nid\n}\n\n}",
+            "queryName" : "Tombstone",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Tombstone{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -628,15 +636,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Tombstone($limit: Int = 10, $offset: Int = 0) {\nTombstone(limit: $limit, offset: $offset) {\nid\n}\n\n}",
-            "queryName" : "Tombstone",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Tombstone{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -654,8 +654,16 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query cleanQuery($limit: Int = 10, $offset: Int = 0) {\ncleanQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
+            "queryName" : "cleanQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/cleanQuery{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -679,15 +687,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query cleanQuery($limit: Int = 10, $offset: Int = 0) {\ncleanQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
-            "queryName" : "cleanQuery",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/cleanQuery{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -705,8 +705,16 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query joinQuery($limit: Int = 10, $offset: Int = 0) {\njoinQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
+            "queryName" : "joinQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/joinQuery{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -730,15 +738,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query joinQuery($limit: Int = 10, $offset: Int = 0) {\njoinQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
-            "queryName" : "joinQuery",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/joinQuery{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -756,8 +756,16 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query subqueryQuery($limit: Int = 10, $offset: Int = 0) {\nsubqueryQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
+            "queryName" : "subqueryQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/subqueryQuery{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -781,15 +789,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query subqueryQuery($limit: Int = 10, $offset: Int = 0) {\nsubqueryQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
-            "queryName" : "subqueryQuery",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/subqueryQuery{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -812,8 +812,16 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query sortedQuery($minId: String!, $limit: Int = 10, $offset: Int = 0) {\nsortedQuery(minId: $minId, limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
+            "queryName" : "sortedQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/sortedQuery{?offset,limit,minId}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -837,15 +845,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query sortedQuery($minId: String!, $limit: Int = 10, $offset: Int = 0) {\nsortedQuery(minId: $minId, limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
-            "queryName" : "sortedQuery",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/sortedQuery{?offset,limit,minId}"
+          }
         }
       ],
       "schema" : {

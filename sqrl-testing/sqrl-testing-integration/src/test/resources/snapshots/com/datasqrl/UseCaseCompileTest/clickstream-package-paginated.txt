@@ -432,8 +432,16 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Click($limit: Int = 10, $offset: Int = 0) {\nClick(limit: $limit, offset: $offset) {\nresults {\ntimestamp\nuserid\nurl\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
+            "queryName" : "Click",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Click{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "results" : {
@@ -492,15 +500,7 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Click($limit: Int = 10, $offset: Int = 0) {\nClick(limit: $limit, offset: $offset) {\nresults {\ntimestamp\nuserid\nurl\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
-            "queryName" : "Click",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Click{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -525,8 +525,16 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Recommendation($url: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendation(url: $url, limit: $limit, offset: $offset) {\nresults {\nurl\nrec\nfrequency\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
+            "queryName" : "Recommendation",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Recommendation{?offset,limit,url}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "results" : {
@@ -586,15 +594,7 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Recommendation($url: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendation(url: $url, limit: $limit, offset: $offset) {\nresults {\nurl\nrec\nfrequency\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
-            "queryName" : "Recommendation",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Recommendation{?offset,limit,url}"
+          }
         },
         {
           "function" : {
@@ -613,8 +613,16 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Trending($limit: Int = 10, $offset: Int = 0) {\nTrending(limit: $limit, offset: $offset) {\nresults {\nurl\ntotal\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
+            "queryName" : "Trending",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Trending{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "results" : {
@@ -671,15 +679,7 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Trending($limit: Int = 10, $offset: Int = 0) {\nTrending(limit: $limit, offset: $offset) {\nresults {\nurl\ntotal\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
-            "queryName" : "Trending",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Trending{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -697,8 +697,16 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query VisitAfter($limit: Int = 10, $offset: Int = 0) {\nVisitAfter(limit: $limit, offset: $offset) {\nresults {\nbeforeURL\nafterURL\ntimestamp\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
+            "queryName" : "VisitAfter",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/VisitAfter{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "results" : {
@@ -757,15 +765,7 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query VisitAfter($limit: Int = 10, $offset: Int = 0) {\nVisitAfter(limit: $limit, offset: $offset) {\nresults {\nbeforeURL\nafterURL\ntimestamp\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
-            "queryName" : "VisitAfter",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/VisitAfter{?offset,limit}"
+          }
         }
       ],
       "schema" : {

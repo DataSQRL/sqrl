@@ -543,8 +543,16 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query iceberg_parquet_table($limit: Int = 10, $offset: Int = 0) {\niceberg_parquet_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "iceberg_parquet_table",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/iceberg_parquet_table{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -557,15 +565,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query iceberg_parquet_table($limit: Int = 10, $offset: Int = 0) {\niceberg_parquet_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-            "queryName" : "iceberg_parquet_table",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/iceberg_parquet_table{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -583,8 +583,16 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query kafka_avro_table($limit: Int = 10, $offset: Int = 0) {\nkafka_avro_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "kafka_avro_table",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/kafka_avro_table{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -597,15 +605,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query kafka_avro_table($limit: Int = 10, $offset: Int = 0) {\nkafka_avro_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-            "queryName" : "kafka_avro_table",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/kafka_avro_table{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -623,8 +623,16 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query kafka_debezium_table($limit: Int = 10, $offset: Int = 0) {\nkafka_debezium_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "kafka_debezium_table",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/kafka_debezium_table{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -637,15 +645,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query kafka_debezium_table($limit: Int = 10, $offset: Int = 0) {\nkafka_debezium_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-            "queryName" : "kafka_debezium_table",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/kafka_debezium_table{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -663,8 +663,16 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query kafka_safe_csv_table($limit: Int = 10, $offset: Int = 0) {\nkafka_safe_csv_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "kafka_safe_csv_table",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/kafka_safe_csv_table{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -677,15 +685,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query kafka_safe_csv_table($limit: Int = 10, $offset: Int = 0) {\nkafka_safe_csv_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-            "queryName" : "kafka_safe_csv_table",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/kafka_safe_csv_table{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -703,8 +703,16 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query kafka_safe_json_table($limit: Int = 10, $offset: Int = 0) {\nkafka_safe_json_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "kafka_safe_json_table",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/kafka_safe_json_table{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -717,15 +725,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query kafka_safe_json_table($limit: Int = 10, $offset: Int = 0) {\nkafka_safe_json_table(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-            "queryName" : "kafka_safe_json_table",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/kafka_safe_json_table{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -743,8 +743,16 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query upsert_kafka_confluent_avro($limit: Int = 10, $offset: Int = 0) {\nupsert_kafka_confluent_avro(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
+            "queryName" : "upsert_kafka_confluent_avro",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/upsert_kafka_confluent_avro{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -757,15 +765,7 @@ CREATE TABLE IF NOT EXISTS "upsert_kafka_confluent_avro" ("user_id" INTEGER NOT 
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query upsert_kafka_confluent_avro($limit: Int = 10, $offset: Int = 0) {\nupsert_kafka_confluent_avro(limit: $limit, offset: $offset) {\nuser_id\nname\n}\n\n}",
-            "queryName" : "upsert_kafka_confluent_avro",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/upsert_kafka_confluent_avro{?offset,limit}"
+          }
         }
       ],
       "schema" : {

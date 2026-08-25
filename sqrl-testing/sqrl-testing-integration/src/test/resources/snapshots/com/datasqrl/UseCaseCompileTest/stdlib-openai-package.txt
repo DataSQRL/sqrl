@@ -202,8 +202,16 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query data($limit: Int = 10, $offset: Int = 0) {\ndata(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "data",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/data{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -213,15 +221,7 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query data($limit: Int = 10, $offset: Int = 0) {\ndata(limit: $limit, offset: $offset) {\nval\n}\n\n}",
-            "queryName" : "data",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/data{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -239,8 +239,16 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query results($limit: Int = 10, $offset: Int = 0) {\nresults(limit: $limit, offset: $offset) {\ncompletions_result\nextract_json_result_response\nextract_json_result_with_schema_response\n}\n\n}",
+            "queryName" : "results",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/results{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -256,15 +264,7 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query results($limit: Int = 10, $offset: Int = 0) {\nresults(limit: $limit, offset: $offset) {\ncompletions_result\nextract_json_result_response\nextract_json_result_with_schema_response\n}\n\n}",
-            "queryName" : "results",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/results{?offset,limit}"
+          }
         }
       ],
       "schema" : {

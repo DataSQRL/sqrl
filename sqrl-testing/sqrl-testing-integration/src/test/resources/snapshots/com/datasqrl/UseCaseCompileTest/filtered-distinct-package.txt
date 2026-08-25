@@ -261,8 +261,16 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query DistinctOrders($limit: Int = 10, $offset: Int = 0) {\nDistinctOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\n}\n\n}",
+            "queryName" : "DistinctOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/DistinctOrders{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -288,15 +296,7 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query DistinctOrders($limit: Int = 10, $offset: Int = 0) {\nDistinctOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\n}\n\n}",
-            "queryName" : "DistinctOrders",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/DistinctOrders{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -314,8 +314,16 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -341,15 +349,7 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\n}\n\n}",
-            "queryName" : "Orders",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Orders{?offset,limit}"
+          }
         }
       ],
       "schema" : {

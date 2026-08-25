@@ -479,8 +479,16 @@ CREATE TABLE IF NOT EXISTS "_InputData" ("dummy" INTEGER)
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query ArrayFunctions($limit: Int = 10, $offset: Int = 0) {\nArrayFunctions(limit: $limit, offset: $offset) {\nlistagg_example\narrayagg_example\n}\n\n}",
+            "queryName" : "ArrayFunctions",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ArrayFunctions{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -496,15 +504,7 @@ CREATE TABLE IF NOT EXISTS "_InputData" ("dummy" INTEGER)
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query ArrayFunctions($limit: Int = 10, $offset: Int = 0) {\nArrayFunctions(limit: $limit, offset: $offset) {\nlistagg_example\narrayagg_example\n}\n\n}",
-            "queryName" : "ArrayFunctions",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/ArrayFunctions{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -522,8 +522,16 @@ CREATE TABLE IF NOT EXISTS "_InputData" ("dummy" INTEGER)
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query FunctionCalls($limit: Int = 10, $offset: Int = 0) {\nFunctionCalls(limit: $limit, offset: $offset) {\nlog2_example\nlog_nat_example\nlog_base_example\ne_example\nrand_example\nrand_int_example\nuuid_example\nbin_example\nhex_numeric_example\nhex_string_example\ntruncate_scale_example\ntruncate_default_example\nprintf_example\nstartswith_example\nendswith_example\nsubstring_example\nsubstr_example\nregexp_extract_example\nregexp_extract_group_example\nregexp_extract_all_example\nregexp_replace_example\nregexp_count_example\nregexp_instr_example\ndecode_example\nencode_example\nfrom_base64_example\nto_base64_example\ninstr_example\nlocate_example\nregexp_example\nsplit_index_example\njson_quote_example\njson_object_kv_example\nelt_example\ntry_cast_to_int_example\ntry_cast_to_bigint_example\ntry_cast_to_bool_example\ntry_cast_to_text_example\ntry_cast_to_decimal_example\ntry_cast_to_timestamp_example\ntry_cast_to_timestamptz_example\ntry_cast_fail_example\ntry_cast_timestampdiff_decimal_example\ncast_timestampdiff_decimal_example\ncase_timestampdiff_nullif_example\nnow_example\nlocal_time_example\nlocal_timestamp_example\ncurrent_time_example\ncurrent_date_example\ncurrent_timestamp_example\nyear_example\nquarter_example\nmonth_example\nweek_example\ndayofyear_example\ndayofmonth_example\ndayofweek_example\nhour_example\nminute_example\nsecond_example\ndate_format_example\ndate_format_replace_t_space_pattern_example\ndate_format_empty_example\ndate_format_blank_example\ndate_format_invalid_example\ndate_format_null_example\ntimestampadd_example\ntimestampdiff_second_example\ntimestampdiff_minute_example\ntimestampdiff_hour_example\ntimestampdiff_day_example\ntimestampdiff_week_example\ntimestampdiff_month_example\ntimestampdiff_quarter_example\ntimestampdiff_year_example\nconvert_tz_example\nunix_timestamp_now_example\nto_timestamp_example\nto_timestamp_pattern_example\nto_timestamp_escaped_t_pattern_example\nto_timestamp_replace_t_space_pattern_example\nto_timestamp_replace_t_space_cast_example\nto_timestamp_invalid_example\nto_timestamp_invalid_pattern_example\nto_timestamp_empty_example\nto_timestamp_empty_pattern_example\nto_timestamp_blank_example\nto_timestamp_blank_pattern_example\nto_timestamp_null_example\nto_timestamp_null_pattern_example\nif_example\nifnull_example\nis_alpha_example\nis_decimal_example\nis_digit_example\nelement_example\ncardinality_example\nmap_index_example\narray_contains_example\narray_distinct_example\narray_prepend_example\narray_slice_example\narray_concat_example\narray_remove_example\narray_remove_null_example\narray_remove_null_cast_example\narray_join_example\nsplit_example\nsha1_example\nsha256_example\nthe_end\n}\n\n}",
+            "queryName" : "FunctionCalls",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/FunctionCalls{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -907,15 +915,7 @@ CREATE TABLE IF NOT EXISTS "_InputData" ("dummy" INTEGER)
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query FunctionCalls($limit: Int = 10, $offset: Int = 0) {\nFunctionCalls(limit: $limit, offset: $offset) {\nlog2_example\nlog_nat_example\nlog_base_example\ne_example\nrand_example\nrand_int_example\nuuid_example\nbin_example\nhex_numeric_example\nhex_string_example\ntruncate_scale_example\ntruncate_default_example\nprintf_example\nstartswith_example\nendswith_example\nsubstring_example\nsubstr_example\nregexp_extract_example\nregexp_extract_group_example\nregexp_extract_all_example\nregexp_replace_example\nregexp_count_example\nregexp_instr_example\ndecode_example\nencode_example\nfrom_base64_example\nto_base64_example\ninstr_example\nlocate_example\nregexp_example\nsplit_index_example\njson_quote_example\njson_object_kv_example\nelt_example\ntry_cast_to_int_example\ntry_cast_to_bigint_example\ntry_cast_to_bool_example\ntry_cast_to_text_example\ntry_cast_to_decimal_example\ntry_cast_to_timestamp_example\ntry_cast_to_timestamptz_example\ntry_cast_fail_example\ntry_cast_timestampdiff_decimal_example\ncast_timestampdiff_decimal_example\ncase_timestampdiff_nullif_example\nnow_example\nlocal_time_example\nlocal_timestamp_example\ncurrent_time_example\ncurrent_date_example\ncurrent_timestamp_example\nyear_example\nquarter_example\nmonth_example\nweek_example\ndayofyear_example\ndayofmonth_example\ndayofweek_example\nhour_example\nminute_example\nsecond_example\ndate_format_example\ndate_format_replace_t_space_pattern_example\ndate_format_empty_example\ndate_format_blank_example\ndate_format_invalid_example\ndate_format_null_example\ntimestampadd_example\ntimestampdiff_second_example\ntimestampdiff_minute_example\ntimestampdiff_hour_example\ntimestampdiff_day_example\ntimestampdiff_week_example\ntimestampdiff_month_example\ntimestampdiff_quarter_example\ntimestampdiff_year_example\nconvert_tz_example\nunix_timestamp_now_example\nto_timestamp_example\nto_timestamp_pattern_example\nto_timestamp_escaped_t_pattern_example\nto_timestamp_replace_t_space_pattern_example\nto_timestamp_replace_t_space_cast_example\nto_timestamp_invalid_example\nto_timestamp_invalid_pattern_example\nto_timestamp_empty_example\nto_timestamp_empty_pattern_example\nto_timestamp_blank_example\nto_timestamp_blank_pattern_example\nto_timestamp_null_example\nto_timestamp_null_pattern_example\nif_example\nifnull_example\nis_alpha_example\nis_decimal_example\nis_digit_example\nelement_example\ncardinality_example\nmap_index_example\narray_contains_example\narray_distinct_example\narray_prepend_example\narray_slice_example\narray_concat_example\narray_remove_example\narray_remove_null_example\narray_remove_null_cast_example\narray_join_example\nsplit_example\nsha1_example\nsha256_example\nthe_end\n}\n\n}",
-            "queryName" : "FunctionCalls",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/FunctionCalls{?offset,limit}"
+          }
         }
       ],
       "schema" : {

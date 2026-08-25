@@ -187,8 +187,16 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "MyTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -198,15 +206,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
-            "queryName" : "MyTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -229,8 +229,16 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MyTableQuery($maxResults: Int!, $limit: Int = 10, $offset: Int = 0) {\nMyTableQuery(maxResults: $maxResults, limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "MyTableQuery",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTableQuery{?offset,maxResults,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -240,15 +248,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MyTableQuery($maxResults: Int!, $limit: Int = 10, $offset: Int = 0) {\nMyTableQuery(maxResults: $maxResults, limit: $limit, offset: $offset) {\nval\n}\n\n}",
-            "queryName" : "MyTableQuery",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTableQuery{?offset,maxResults,limit}"
+          }
         }
       ],
       "schema" : {

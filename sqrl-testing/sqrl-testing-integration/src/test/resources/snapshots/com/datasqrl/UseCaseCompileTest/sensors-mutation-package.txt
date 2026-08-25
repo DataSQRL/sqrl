@@ -419,8 +419,16 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query HighTempAlert($limit: Int = 10, $offset: Int = 0) {\nHighTempAlert(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "HighTempAlert",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/HighTempAlert{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -437,15 +445,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query HighTempAlert($limit: Int = 10, $offset: Int = 0) {\nHighTempAlert(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
-            "queryName" : "HighTempAlert",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/HighTempAlert{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -463,8 +463,16 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query SensorMaxTemp($limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\n}\n\n}",
+            "queryName" : "SensorMaxTemp",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorMaxTemp{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -477,15 +485,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query SensorMaxTemp($limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\n}\n\n}",
-            "queryName" : "SensorMaxTemp",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorMaxTemp{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -503,8 +503,16 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "SensorReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorReading{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -521,15 +529,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
-            "queryName" : "SensorReading",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorReading{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -561,8 +561,16 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "mutation SensorReading($event: [SensorReadingInput!]!) {\nSensorReading(event: $event) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "SensorReading",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "NONE",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/SensorReading",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -579,15 +587,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "mutation SensorReading($event: [SensorReadingInput!]!) {\nSensorReading(event: $event) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
-            "queryName" : "SensorReading",
-            "operationType" : "MUTATION"
-          },
-          "mcpMethod" : "NONE",
-          "restMethod" : "POST",
-          "uriTemplate" : "mutations/SensorReading"
+          }
         }
       ],
       "schema" : {

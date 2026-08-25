@@ -416,8 +416,16 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query SensorMaxTempLastMin($limit: Int = 10, $offset: Int = 0) {\nSensorMaxTempLastMin(limit: $limit, offset: $offset) {\nsensorid\nendOfMin\navg_temperature\n}\n\n}",
+            "queryName" : "SensorMaxTempLastMin",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorMaxTempLastMin{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -434,15 +442,7 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query SensorMaxTempLastMin($limit: Int = 10, $offset: Int = 0) {\nSensorMaxTempLastMin(limit: $limit, offset: $offset) {\nsensorid\nendOfMin\navg_temperature\n}\n\n}",
-            "queryName" : "SensorMaxTempLastMin",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorMaxTempLastMin{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -466,8 +466,16 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query SensorAnalysisById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorAnalysisById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\navg_temperatures\nmax_temperature\n}\n\n}",
+            "queryName" : "SensorAnalysisById",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorAnalysisById{?offset,limit,sensorid}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -483,15 +491,7 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query SensorAnalysisById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorAnalysisById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\navg_temperatures\nmax_temperature\n}\n\n}",
-            "queryName" : "SensorAnalysisById",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorAnalysisById{?offset,limit,sensorid}"
+          }
         },
         {
           "function" : {
@@ -515,8 +515,16 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query SensorReadingById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReadingById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nuuid\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "SensorReadingById",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorReadingById{?offset,limit,sensorid}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -536,15 +544,7 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query SensorReadingById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReadingById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nuuid\nsensorid\ntemperature\nevent_time\n}\n\n}",
-            "queryName" : "SensorReadingById",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorReadingById{?offset,limit,sensorid}"
+          }
         },
         {
           "function" : {
@@ -565,8 +565,16 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nuuid\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "SensorReading",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/SensorReading",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "uuid" : {
@@ -583,15 +591,7 @@ CREATE INDEX IF NOT EXISTS "SensorReading_hash_c1" ON "SensorReading" USING hash
                 "format" : "date-time"
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nuuid\nsensorid\ntemperature\nevent_time\n}\n\n}",
-            "queryName" : "SensorReading",
-            "operationType" : "MUTATION"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "POST",
-          "uriTemplate" : "mutations/SensorReading"
+          }
         }
       ],
       "schema" : {

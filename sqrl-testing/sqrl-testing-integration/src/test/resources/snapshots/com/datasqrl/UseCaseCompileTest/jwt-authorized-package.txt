@@ -526,8 +526,16 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MyStringTable($limit: Int = 10, $offset: Int = 0) {\nMyStringTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "MyStringTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyStringTable{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -537,15 +545,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MyStringTable($limit: Int = 10, $offset: Int = 0) {\nMyStringTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
-            "queryName" : "MyStringTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyStringTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -563,8 +563,16 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "MyTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -574,15 +582,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
-            "queryName" : "MyTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -600,8 +600,16 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query AuthMyTable($limit: Int = 10, $offset: Int = 0) {\nAuthMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "AuthMyTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AuthMyTable{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -611,15 +619,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query AuthMyTable($limit: Int = 10, $offset: Int = 0) {\nAuthMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
-            "queryName" : "AuthMyTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/AuthMyTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -637,8 +637,16 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query AuthMyTableValues($limit: Int = 10, $offset: Int = 0) {\nAuthMyTableValues(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "AuthMyTableValues",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AuthMyTableValues{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -648,15 +656,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query AuthMyTableValues($limit: Int = 10, $offset: Int = 0) {\nAuthMyTableValues(limit: $limit, offset: $offset) {\nval\n}\n\n}",
-            "queryName" : "AuthMyTableValues",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/AuthMyTableValues{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -674,8 +674,16 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query AuthStringMyTableValues($limit: Int = 10, $offset: Int = 0) {\nAuthStringMyTableValues(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "AuthStringMyTableValues",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AuthStringMyTableValues{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -685,15 +693,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query AuthStringMyTableValues($limit: Int = 10, $offset: Int = 0) {\nAuthStringMyTableValues(limit: $limit, offset: $offset) {\nval\n}\n\n}",
-            "queryName" : "AuthStringMyTableValues",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/AuthStringMyTableValues{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -706,8 +706,16 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "mutation AuthInputData($payload: JSON) {\nAuthInputData(event: { payload: $payload }) {\nevent_id\nval\npayload\nevent_time\n}\n\n}",
+            "queryName" : "AuthInputData",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/AuthInputData",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "event_id" : {
@@ -722,15 +730,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
                 "format" : "date-time"
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "mutation AuthInputData($payload: JSON) {\nAuthInputData(event: { payload: $payload }) {\nevent_id\nval\npayload\nevent_time\n}\n\n}",
-            "queryName" : "AuthInputData",
-            "operationType" : "MUTATION"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "POST",
-          "uriTemplate" : "mutations/AuthInputData"
+          }
         }
       ],
       "schema" : {

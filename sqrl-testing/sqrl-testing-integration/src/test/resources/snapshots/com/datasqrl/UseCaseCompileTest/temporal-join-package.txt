@@ -474,8 +474,16 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query EnrichedSensorReading($limit: Int = 10, $offset: Int = 0) {\nEnrichedSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nplacement\nevent_time\nsensor_name\n}\n\n}",
+            "queryName" : "EnrichedSensorReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/EnrichedSensorReading{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -498,15 +506,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query EnrichedSensorReading($limit: Int = 10, $offset: Int = 0) {\nEnrichedSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nplacement\nevent_time\nsensor_name\n}\n\n}",
-            "queryName" : "EnrichedSensorReading",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/EnrichedSensorReading{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -524,8 +524,16 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nplacement\nevent_time\n}\n\n}",
+            "queryName" : "SensorReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorReading{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -549,15 +557,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nplacement\nevent_time\n}\n\n}",
-            "queryName" : "SensorReading",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorReading{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -575,8 +575,16 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query SensorUpdates($limit: Int = 10, $offset: Int = 0) {\nSensorUpdates(limit: $limit, offset: $offset) {\nsensorid\nsensor_name\nlastUpdated\n}\n\n}",
+            "queryName" : "SensorUpdates",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorUpdates{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -593,15 +601,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query SensorUpdates($limit: Int = 10, $offset: Int = 0) {\nSensorUpdates(limit: $limit, offset: $offset) {\nsensorid\nsensor_name\nlastUpdated\n}\n\n}",
-            "queryName" : "SensorUpdates",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorUpdates{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -628,8 +628,16 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query EnrichedSensorReadingByPlacement($placement: Placements!, $limit: Int = 10, $offset: Int = 0) {\nEnrichedSensorReadingByPlacement(placement: $placement, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nplacement\nevent_time\nsensor_name\n}\n\n}",
+            "queryName" : "EnrichedSensorReadingByPlacement",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/EnrichedSensorReadingByPlacement{?offset,limit,placement}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -652,15 +660,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query EnrichedSensorReadingByPlacement($placement: Placements!, $limit: Int = 10, $offset: Int = 0) {\nEnrichedSensorReadingByPlacement(placement: $placement, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nplacement\nevent_time\nsensor_name\n}\n\n}",
-            "queryName" : "EnrichedSensorReadingByPlacement",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/EnrichedSensorReadingByPlacement{?offset,limit,placement}"
+          }
         },
         {
           "function" : {
@@ -689,8 +689,16 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!, $placement: Placements!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature, placement: $placement }) {\nsensorid\ntemperature\nplacement\nevent_time\n}\n\n}",
+            "queryName" : "SensorReading",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/SensorReading",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "sensorid" : {
@@ -711,15 +719,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
                 "format" : "date-time"
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "mutation SensorReading($sensorid: Int!, $temperature: Float!, $placement: Placements!) {\nSensorReading(event: { sensorid: $sensorid, temperature: $temperature, placement: $placement }) {\nsensorid\ntemperature\nplacement\nevent_time\n}\n\n}",
-            "queryName" : "SensorReading",
-            "operationType" : "MUTATION"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "POST",
-          "uriTemplate" : "mutations/SensorReading"
+          }
         },
         {
           "function" : {
@@ -740,8 +740,16 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "mutation SensorUpdates($sensorid: Int!, $sensor_name: String!) {\nSensorUpdates(event: { sensorid: $sensorid, sensor_name: $sensor_name }) {\nsensorid\nsensor_name\nlastUpdated\n}\n\n}",
+            "queryName" : "SensorUpdates",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/SensorUpdates",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "sensorid" : {
@@ -755,15 +763,7 @@ CREATE TABLE IF NOT EXISTS "SensorUpdates" ("sensorid" INTEGER NOT NULL, "sensor
                 "format" : "date-time"
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "mutation SensorUpdates($sensorid: Int!, $sensor_name: String!) {\nSensorUpdates(event: { sensorid: $sensorid, sensor_name: $sensor_name }) {\nsensorid\nsensor_name\nlastUpdated\n}\n\n}",
-            "queryName" : "SensorUpdates",
-            "operationType" : "MUTATION"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "POST",
-          "uriTemplate" : "mutations/SensorUpdates"
+          }
         }
       ],
       "schema" : {

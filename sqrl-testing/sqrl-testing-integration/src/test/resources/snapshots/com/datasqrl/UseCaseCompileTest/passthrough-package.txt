@@ -361,8 +361,16 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Employees($employeeid: Long, $name: String, $limit: Int = 10, $offset: Int = 0$allReports_limit: Int = 10, $allReports_offset: Int = 0) {\nEmployees(employeeid: $employeeid, name: $name, limit: $limit, offset: $offset) {\nemployeeid\nname\nemail\nupdatedDate\nallReports(limit: $allReports_limit, offset: $allReports_offset) {\nemployeeid\nname\nlevel\n}\n}\n\n}",
+            "queryName" : "Employees",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Employees{?allReports_limit,offset,name,limit,employeeid,allReports_offset}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -400,15 +408,7 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Employees($employeeid: Long, $name: String, $limit: Int = 10, $offset: Int = 0$allReports_limit: Int = 10, $allReports_offset: Int = 0) {\nEmployees(employeeid: $employeeid, name: $name, limit: $limit, offset: $offset) {\nemployeeid\nname\nemail\nupdatedDate\nallReports(limit: $allReports_limit, offset: $allReports_offset) {\nemployeeid\nname\nlevel\n}\n}\n\n}",
-            "queryName" : "Employees",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Employees{?allReports_limit,offset,name,limit,employeeid,allReports_offset}"
+          }
         }
       ],
       "schema" : {

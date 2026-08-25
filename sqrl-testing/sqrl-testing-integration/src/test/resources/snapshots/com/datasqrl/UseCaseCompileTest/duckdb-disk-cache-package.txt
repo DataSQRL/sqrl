@@ -409,8 +409,16 @@ FROM "_MyApplications2"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MyTable1($limit: Int = 10, $offset: Int = 0) {\nMyTable1(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
+            "queryName" : "MyTable1",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable1{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -423,15 +431,7 @@ FROM "_MyApplications2"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MyTable1($limit: Int = 10, $offset: Int = 0) {\nMyTable1(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
-            "queryName" : "MyTable1",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTable1{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -449,8 +449,16 @@ FROM "_MyApplications2"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MyTable2($limit: Int = 10, $offset: Int = 0) {\nMyTable2(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
+            "queryName" : "MyTable2",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable2{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -463,15 +471,7 @@ FROM "_MyApplications2"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MyTable2($limit: Int = 10, $offset: Int = 0) {\nMyTable2(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
-            "queryName" : "MyTable2",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTable2{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -489,8 +489,16 @@ FROM "_MyApplications2"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MyTable3($limit: Int = 10, $offset: Int = 0) {\nMyTable3(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
+            "queryName" : "MyTable3",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable3{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -503,15 +511,7 @@ FROM "_MyApplications2"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MyTable3($limit: Int = 10, $offset: Int = 0) {\nMyTable3(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
-            "queryName" : "MyTable3",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTable3{?offset,limit}"
+          }
         }
       ],
       "schema" : {

@@ -351,8 +351,16 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MyAsyncTable($limit: Int = 10, $offset: Int = 0) {\nMyAsyncTable(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+            "queryName" : "MyAsyncTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyAsyncTable{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -365,15 +373,7 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MyAsyncTable($limit: Int = 10, $offset: Int = 0) {\nMyAsyncTable(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
-            "queryName" : "MyAsyncTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyAsyncTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -391,8 +391,16 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+            "queryName" : "MyTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -405,15 +413,7 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
-            "queryName" : "MyTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -431,8 +431,16 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MyTableAnother($limit: Int = 10, $offset: Int = 0) {\nMyTableAnother(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
+            "queryName" : "MyTableAnother",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTableAnother{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -445,15 +453,7 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MyTableAnother($limit: Int = 10, $offset: Int = 0) {\nMyTableAnother(limit: $limit, offset: $offset) {\nval\nmyFnc\n}\n\n}",
-            "queryName" : "MyTableAnother",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTableAnother{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -471,8 +471,16 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MyTableDifferentCase($limit: Int = 10, $offset: Int = 0) {\nMyTableDifferentCase(limit: $limit, offset: $offset) {\nval\nfn\n}\n\n}",
+            "queryName" : "MyTableDifferentCase",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTableDifferentCase{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -485,15 +493,7 @@ CREATE TABLE IF NOT EXISTS "MyTableDifferentCase" ("val" INTEGER NOT NULL, "fn" 
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MyTableDifferentCase($limit: Int = 10, $offset: Int = 0) {\nMyTableDifferentCase(limit: $limit, offset: $offset) {\nval\nfn\n}\n\n}",
-            "queryName" : "MyTableDifferentCase",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTableDifferentCase{?offset,limit}"
+          }
         }
       ],
       "schema" : {

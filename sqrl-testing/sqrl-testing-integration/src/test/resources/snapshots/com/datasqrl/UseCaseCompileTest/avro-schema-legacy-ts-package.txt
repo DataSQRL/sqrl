@@ -177,8 +177,16 @@ CREATE TABLE IF NOT EXISTS "Res" ("uuidField" TEXT NOT NULL, "timestampMillisFie
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Res($limit: Int = 10, $offset: Int = 0) {\nRes(limit: $limit, offset: $offset) {\nuuidField\ntimestampMillisField\nnullableTimestampMillisField\n}\n\n}",
+            "queryName" : "Res",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Res{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -196,15 +204,7 @@ CREATE TABLE IF NOT EXISTS "Res" ("uuidField" TEXT NOT NULL, "timestampMillisFie
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Res($limit: Int = 10, $offset: Int = 0) {\nRes(limit: $limit, offset: $offset) {\nuuidField\ntimestampMillisField\nnullableTimestampMillisField\n}\n\n}",
-            "queryName" : "Res",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Res{?offset,limit}"
+          }
         }
       ],
       "schema" : {

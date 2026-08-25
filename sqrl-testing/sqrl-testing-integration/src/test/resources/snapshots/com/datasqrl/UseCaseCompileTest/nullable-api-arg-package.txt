@@ -219,8 +219,16 @@ CREATE INDEX IF NOT EXISTS "Product_hash_c4" ON "Product" USING hash ("discount"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Product($limit: Int = 10, $offset: Int = 0) {\nProduct(limit: $limit, offset: $offset) {\nid\nname\ncategory\nprice\ndiscount\ntimestamp\n}\n\n}",
+            "queryName" : "Product",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Product{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -246,15 +254,7 @@ CREATE INDEX IF NOT EXISTS "Product_hash_c4" ON "Product" USING hash ("discount"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Product($limit: Int = 10, $offset: Int = 0) {\nProduct(limit: $limit, offset: $offset) {\nid\nname\ncategory\nprice\ndiscount\ntimestamp\n}\n\n}",
-            "queryName" : "Product",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Product{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -275,8 +275,16 @@ CREATE INDEX IF NOT EXISTS "Product_hash_c4" ON "Product" USING hash ("discount"
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Discount($discount: Int, $limit: Int = 10, $offset: Int = 0) {\nDiscount(discount: $discount, limit: $limit, offset: $offset) {\nid\nname\ncategory\nprice\ndiscount\ntimestamp\n}\n\n}",
+            "queryName" : "Discount",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Discount{?offset,limit,discount}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -302,15 +310,7 @@ CREATE INDEX IF NOT EXISTS "Product_hash_c4" ON "Product" USING hash ("discount"
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Discount($discount: Int, $limit: Int = 10, $offset: Int = 0) {\nDiscount(discount: $discount, limit: $limit, offset: $offset) {\nid\nname\ncategory\nprice\ndiscount\ntimestamp\n}\n\n}",
-            "queryName" : "Discount",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Discount{?offset,limit,discount}"
+          }
         }
       ],
       "schema" : {

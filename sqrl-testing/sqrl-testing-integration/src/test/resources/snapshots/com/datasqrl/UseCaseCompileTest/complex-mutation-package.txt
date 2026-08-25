@@ -285,8 +285,16 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query LatestTokens($limit: Int = 10, $offset: Int = 0) {\nLatestTokens(limit: $limit, offset: $offset) {\nuserid\ntotal_tokens\nwindow_end\nwindow_time\n}\n\n}",
+            "queryName" : "LatestTokens",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/LatestTokens{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -307,15 +315,7 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query LatestTokens($limit: Int = 10, $offset: Int = 0) {\nLatestTokens(limit: $limit, offset: $offset) {\nuserid\ntotal_tokens\nwindow_end\nwindow_time\n}\n\n}",
-            "queryName" : "LatestTokens",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/LatestTokens{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -336,8 +336,16 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "mutation InputTable($userid: Int!, $tokens: Long!) {\nInputTable(event: { userid: $userid, tokens: $tokens }) {\nuserid\ntokens\nevent_time\n}\n\n}",
+            "queryName" : "InputTable",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/InputTable",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "userid" : {
@@ -351,15 +359,7 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
                 "format" : "date-time"
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "mutation InputTable($userid: Int!, $tokens: Long!) {\nInputTable(event: { userid: $userid, tokens: $tokens }) {\nuserid\ntokens\nevent_time\n}\n\n}",
-            "queryName" : "InputTable",
-            "operationType" : "MUTATION"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "POST",
-          "uriTemplate" : "mutations/InputTable"
+          }
         }
       ],
       "schema" : {

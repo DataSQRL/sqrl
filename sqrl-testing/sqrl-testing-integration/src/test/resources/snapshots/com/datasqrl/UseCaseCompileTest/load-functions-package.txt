@@ -133,8 +133,16 @@ CREATE TABLE IF NOT EXISTS "FunctionApplied" ("id" INTEGER NOT NULL, "fct_result
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query FunctionApplied($limit: Int = 10, $offset: Int = 0) {\nFunctionApplied(limit: $limit, offset: $offset) {\nid\nfct_result\n}\n\n}",
+            "queryName" : "FunctionApplied",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/FunctionApplied{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -147,15 +155,7 @@ CREATE TABLE IF NOT EXISTS "FunctionApplied" ("id" INTEGER NOT NULL, "fct_result
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query FunctionApplied($limit: Int = 10, $offset: Int = 0) {\nFunctionApplied(limit: $limit, offset: $offset) {\nid\nfct_result\n}\n\n}",
-            "queryName" : "FunctionApplied",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/FunctionApplied{?offset,limit}"
+          }
         }
       ],
       "schema" : {

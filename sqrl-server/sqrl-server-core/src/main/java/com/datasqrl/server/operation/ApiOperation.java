@@ -28,6 +28,7 @@ import lombok.Value;
  * passed to the LLM as a tool and the {@link GraphQLQuery} that is executed.
  */
 @Value
+@Builder
 public class ApiOperation {
 
   @NonNull FunctionDefinition function;
@@ -52,7 +53,6 @@ public class ApiOperation {
   }
 
   @JsonCreator
-  @Builder
   public ApiOperation(
       @JsonProperty("function") FunctionDefinition function,
       @JsonProperty("apiQuery") GraphQLQuery apiQuery,

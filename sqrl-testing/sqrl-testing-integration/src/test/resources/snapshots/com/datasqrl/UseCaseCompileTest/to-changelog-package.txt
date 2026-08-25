@@ -223,8 +223,16 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query AppendStream($limit: Int = 10, $offset: Int = 0) {\nAppendStream(limit: $limit, offset: $offset) {\nk\nv_sum\n}\n\n}",
+            "queryName" : "AppendStream",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AppendStream{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -237,15 +245,7 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query AppendStream($limit: Int = 10, $offset: Int = 0) {\nAppendStream(limit: $limit, offset: $offset) {\nk\nv_sum\n}\n\n}",
-            "queryName" : "AppendStream",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/AppendStream{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -263,8 +263,16 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query InputAgg($limit: Int = 10, $offset: Int = 0) {\nInputAgg(limit: $limit, offset: $offset) {\nk\nv_sum\n}\n\n}",
+            "queryName" : "InputAgg",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/InputAgg{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -277,15 +285,7 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query InputAgg($limit: Int = 10, $offset: Int = 0) {\nInputAgg(limit: $limit, offset: $offset) {\nk\nv_sum\n}\n\n}",
-            "queryName" : "InputAgg",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/InputAgg{?offset,limit}"
+          }
         }
       ],
       "schema" : {

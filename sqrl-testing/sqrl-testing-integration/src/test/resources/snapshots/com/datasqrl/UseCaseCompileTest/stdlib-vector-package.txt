@@ -324,8 +324,16 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query CategoryCentroids($category_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nCategoryCentroids(category_id: $category_id, limit: $limit, offset: $offset) {\ncategory_id\ncenter_vector\n}\n\n}",
+            "queryName" : "CategoryCentroids",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CategoryCentroids{?category_id,offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -341,15 +349,7 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query CategoryCentroids($category_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nCategoryCentroids(category_id: $category_id, limit: $limit, offset: $offset) {\ncategory_id\ncenter_vector\n}\n\n}",
-            "queryName" : "CategoryCentroids",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CategoryCentroids{?category_id,offset,limit}"
+          }
         },
         {
           "function" : {
@@ -367,8 +367,16 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query VectorData($limit: Int = 10, $offset: Int = 0) {\nVectorData(limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
+            "queryName" : "VectorData",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/VectorData{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -381,15 +389,7 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query VectorData($limit: Int = 10, $offset: Int = 0) {\nVectorData(limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
-            "queryName" : "VectorData",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/VectorData{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -412,8 +412,16 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query DocumentSimilarity($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarity(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\nscore\n}\n\n}",
+            "queryName" : "DocumentSimilarity",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/DocumentSimilarity{?offset,limit,doc_id}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -426,15 +434,7 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query DocumentSimilarity($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarity(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\nscore\n}\n\n}",
-            "queryName" : "DocumentSimilarity",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/DocumentSimilarity{?offset,limit,doc_id}"
+          }
         },
         {
           "function" : {
@@ -457,8 +457,16 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query DocumentSimilarityIndex($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarityIndex(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
+            "queryName" : "DocumentSimilarityIndex",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/DocumentSimilarityIndex{?offset,limit,doc_id}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -471,15 +479,7 @@ CREATE INDEX IF NOT EXISTS "VectorData_vector_cosine_c2" ON "VectorData" USING H
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query DocumentSimilarityIndex($doc_id: Int!, $limit: Int = 10, $offset: Int = 0) {\nDocumentSimilarityIndex(doc_id: $doc_id, limit: $limit, offset: $offset) {\ndoc_id\ncategory_id\n}\n\n}",
-            "queryName" : "DocumentSimilarityIndex",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/DocumentSimilarityIndex{?offset,limit,doc_id}"
+          }
         }
       ],
       "schema" : {

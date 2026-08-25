@@ -279,8 +279,16 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Customers($limit: Int = 10, $offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customers",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customers{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -303,15 +311,7 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Customers($limit: Int = 10, $offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "Customers",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Customers{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -338,8 +338,16 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query CustomersById($a: Long!, $b: Long!, $limit: Int = 10, $offset: Int = 0) {\nCustomersById(a: $a, b: $b, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomersById",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersById{?a,b,offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -362,15 +370,7 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query CustomersById($a: Long!, $b: Long!, $limit: Int = 10, $offset: Int = 0) {\nCustomersById(a: $a, b: $b, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "CustomersById",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomersById{?a,b,offset,limit}"
+          }
         },
         {
           "function" : {
@@ -393,8 +393,16 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query CustomersByName($inputName: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomersByName(inputName: $inputName, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomersByName",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomersByName{?offset,limit,inputName}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -417,15 +425,7 @@ CREATE TABLE IF NOT EXISTS "Customers" ("customerid" BIGINT NOT NULL, "email" TE
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query CustomersByName($inputName: String!, $limit: Int = 10, $offset: Int = 0) {\nCustomersByName(inputName: $inputName, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "CustomersByName",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomersByName{?offset,limit,inputName}"
+          }
         }
       ],
       "schema" : {

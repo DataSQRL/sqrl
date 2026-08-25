@@ -559,8 +559,16 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query MachineGroup($limit: Int = 10, $offset: Int = 0) {\nMachineGroup(limit: $limit, offset: $offset) {\ngroupId\ngroupName\ncreated\nmachines {\nmachineId\n}\n}\n\n}",
+            "queryName" : "MachineGroup",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MachineGroup{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -588,15 +596,7 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query MachineGroup($limit: Int = 10, $offset: Int = 0) {\nMachineGroup(limit: $limit, offset: $offset) {\ngroupId\ngroupName\ncreated\nmachines {\nmachineId\n}\n}\n\n}",
-            "queryName" : "MachineGroup",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MachineGroup{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -620,8 +620,16 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
               ]
             }
           },
+          "apiQuery" : {
+            "query" : "query SecReading($sensorid: Long!, $limit: Int = 10, $offset: Int = 0) {\nSecReading(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntimeStart\ntimeEnd\ntemp\n}\n\n}",
+            "queryName" : "SecReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SecReading{?offset,limit,sensorid}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -646,15 +654,7 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query SecReading($sensorid: Long!, $limit: Int = 10, $offset: Int = 0) {\nSecReading(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntimeSec\ntimeStart\ntimeEnd\ntemp\n}\n\n}",
-            "queryName" : "SecReading",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SecReading{?offset,limit,sensorid}"
+          }
         },
         {
           "function" : {
@@ -676,8 +676,16 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query SensorMaxTemp($sensorid: Long, $limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nwindow_time\nmaxTemp\n}\n\n}",
+            "queryName" : "SensorMaxTemp",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorMaxTemp{?offset,limit,sensorid}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -694,15 +702,7 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query SensorMaxTemp($sensorid: Long, $limit: Int = 10, $offset: Int = 0) {\nSensorMaxTemp(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\nwindow_time\nmaxTemp\n}\n\n}",
-            "queryName" : "SensorMaxTemp",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorMaxTemp{?offset,limit,sensorid}"
+          }
         },
         {
           "function" : {
@@ -720,8 +720,16 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntime\ntemperature\nhumidity\ntimestamp\n}\n\n}",
+            "queryName" : "SensorReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorReading{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -744,15 +752,7 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntime\ntemperature\nhumidity\ntimestamp\n}\n\n}",
-            "queryName" : "SensorReading",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorReading{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -770,8 +770,16 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
               "required" : [ ]
             }
           },
+          "apiQuery" : {
+            "query" : "query Sensors($limit: Int = 10, $offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\n}\n\n}",
+            "queryName" : "Sensors",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Sensors{?offset,limit}",
           "format" : "JSON",
-          "result" : {
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -791,15 +799,7 @@ CREATE TABLE IF NOT EXISTS "Sensors" ("id" BIGINT NOT NULL, "machineId" BIGINT N
                 }
               }
             }
-          },
-          "apiQuery" : {
-            "query" : "query Sensors($limit: Int = 10, $offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nid\nmachineId\nplaced\ntimestamp\n}\n\n}",
-            "queryName" : "Sensors",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Sensors{?offset,limit}"
+          }
         }
       ],
       "schema" : {
