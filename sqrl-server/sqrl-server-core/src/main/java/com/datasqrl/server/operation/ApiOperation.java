@@ -17,6 +17,7 @@ package com.datasqrl.server.operation;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import lombok.Builder;
 import lombok.NonNull;
@@ -53,13 +54,13 @@ public class ApiOperation {
   @JsonCreator
   @Builder
   public ApiOperation(
-      FunctionDefinition function,
-      GraphQLQuery apiQuery,
-      McpMethodType mcpMethod,
-      RestMethodType restMethod,
-      String uriTemplate,
-      ResultFormat format,
-      ResultDefinition resultDefinition) {
+      @JsonProperty("function") FunctionDefinition function,
+      @JsonProperty("apiQuery") GraphQLQuery apiQuery,
+      @JsonProperty("mcpMethod") McpMethodType mcpMethod,
+      @JsonProperty("restMethod") RestMethodType restMethod,
+      @JsonProperty("uriTemplate") String uriTemplate,
+      @JsonProperty("format") ResultFormat format,
+      @JsonProperty("resultDefinition") ResultDefinition resultDefinition) {
     this.function = function;
     this.apiQuery = apiQuery;
     this.mcpMethod = mcpMethod;

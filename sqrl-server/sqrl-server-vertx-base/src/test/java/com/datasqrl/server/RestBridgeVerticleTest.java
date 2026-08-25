@@ -355,7 +355,7 @@ class RestBridgeVerticleTest {
         ApiOperation.builder()
             .function(operation.getFunction())
             .apiQuery(operation.getApiQuery())
-            .result(result)
+            .resultDefinition(result)
             .mcpMethod(operation.getMcpMethod())
             .restMethod(operation.getRestMethod())
             .uriTemplate(operation.getUriTemplate())
