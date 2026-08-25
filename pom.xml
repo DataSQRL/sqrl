@@ -155,7 +155,7 @@
     <log4j.version>2.26.1</log4j.version>
     <lombok.version>1.18.46</lombok.version>
     <mcp-sdk.version>2.0.1</mcp-sdk.version>
-    <micrometer.version>1.17.0</micrometer.version>
+    <micrometer.version>1.17.1</micrometer.version>
     <mockito.version>4.8.0</mockito.version>
     <mustache.version>0.9.14</mustache.version>
     <openai-gpt3-java.version>0.18.2</openai-gpt3-java.version>
