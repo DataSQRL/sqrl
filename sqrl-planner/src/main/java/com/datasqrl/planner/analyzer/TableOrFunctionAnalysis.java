@@ -56,9 +56,9 @@ public interface TableOrFunctionAnalysis extends AbstractAnalysis {
 
   UniqueIdentifier getIdentifier();
 
-  public TableType getType();
+  TableType getType();
 
-  public boolean isSourceOrSink();
+  boolean isSourceOrSink();
 
   /**
    * The base table on which this function is defined. This means, that this table or function

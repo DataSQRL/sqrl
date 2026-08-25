@@ -18,10 +18,13 @@ package com.datasqrl.planner.util;
 import com.datasqrl.planner.analyzer.RelNodeAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
+import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
+import com.datasqrl.planner.tables.SqrlTableFunction;
 import java.util.List;
 import java.util.Optional;
 import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.table.api.InsertConflictStrategy;
+import org.apache.flink.table.catalog.ResolvedSchema;
 
 /**
  * Propagates explicit Flink {@code ON CONFLICT} behaviors and resolves final behavior for generated
@@ -58,7 +61,7 @@ public class FlinkConflictBehaviorUtil {
       case VERSIONED_STATE, STATE, STATIC -> Optional.of(SqlInsertConflictBehavior.DEDUPLICATE);
       case STREAM ->
           Optional.of(
-              hasSourceWatermarks(table)
+              hasWatermarkOnSource(table)
                   ? SqlInsertConflictBehavior.NOTHING
                   : SqlInsertConflictBehavior.DEDUPLICATE);
       default -> Optional.empty();
@@ -107,15 +110,40 @@ public class FlinkConflictBehaviorUtil {
     };
   }
 
-  private static boolean hasSourceWatermarks(TableOrFunctionAnalysis table) {
+  /**
+   * Returns whether every source upstream of a table or function declares a Flink watermark.
+   *
+   * <p>Derived tables are traversed through their {@code FROM} inputs, and table functions through
+   * their function analysis.
+   *
+   * @param table table or function analysis to inspect
+   * @return true when every upstream source has at least one watermark specification
+   */
+  private static boolean hasWatermarkOnSource(TableOrFunctionAnalysis table) {
     if (table instanceof TableAnalysis tableAnalysis
         && !tableAnalysis.isSourceOrSink()
         && !tableAnalysis.getFromTables().isEmpty()) {
 
       return tableAnalysis.getFromTables().stream()
-          .allMatch(FlinkConflictBehaviorUtil::hasSourceWatermarks);
+          .allMatch(FlinkConflictBehaviorUtil::hasWatermarkOnSource);
     }
 
-    return table.getRowTime().isPresent();
+    if (table instanceof SqrlTableFunction tableFn) {
+      return hasWatermarkOnSource(tableFn.getFunctionAnalysis());
+    }
+
+    boolean hasWatermarkOnSource = false;
+    if (table instanceof TableAnalysis srcTable) {
+      var watermarkSpecs =
+          srcTable
+              .getSourceSinkTable()
+              .map(SourceSinkTableAnalysis::schema)
+              .map(ResolvedSchema::getWatermarkSpecs)
+              .orElse(List.of());
+
+      hasWatermarkOnSource = !watermarkSpecs.isEmpty();
+    }
+
+    return hasWatermarkOnSource;
   }
 }
