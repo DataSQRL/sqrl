@@ -37,6 +37,7 @@ import lombok.ToString.Exclude;
 import lombok.Value;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Sort;
+import org.apache.flink.table.api.InsertConflictStrategy.ConflictBehavior;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 
 /**
@@ -69,6 +70,9 @@ public class TableAnalysis implements TableOrFunctionAnalysis, Documented {
 
   /** The inferred primary key of the table */
   @NonNull @Builder.Default PrimaryKeyMap primaryKey = PrimaryKeyMap.UNDEFINED;
+
+  /** Whether inserts into upsert sinks must use a conflict policy. */
+  @NonNull @Builder.Default Optional<ConflictBehavior> insertConflictBehavior = Optional.empty();
 
   /**
    * If this table selects from and has the identical rowtype to one of it's input tables we
@@ -190,7 +194,8 @@ public class TableAnalysis implements TableOrFunctionAnalysis, Documented {
   }
 
   public RelNodeAnalysis toRelNode(RelNode relNode) {
-    return new RelNodeAnalysis(relNode, type, primaryKey, getStreamRoot(), false);
+    return new RelNodeAnalysis(
+        relNode, type, primaryKey, getStreamRoot(), false, insertConflictBehavior);
   }
 
   @Override

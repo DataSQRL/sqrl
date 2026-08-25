@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
@@ -36,7 +37,9 @@ import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlMetadataColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
+import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.junit.jupiter.api.Test;
 
 class FlinkSqlNodesTest {
@@ -100,13 +103,51 @@ class FlinkSqlNodesTest {
             null,
             null);
 
-    var insert = FlinkSqlNodes.createInsert(select, targetTable);
+    var insert =
+        FlinkSqlNodes.createInsert(
+            select, ObjectIdentifier.of("default_catalog", "default_database", targetTable));
     var sql = unparse(insert);
     var expectedSql =
         """
-        INSERT INTO `target_table`
+        INSERT INTO `default_catalog`.`default_database`.`target_table`
         SELECT `*`
          FROM `source_table`""";
+    assertThat(sql.trim()).isEqualTo(expectedSql);
+  }
+
+  @Test
+  void givenConflictBehavior_whenCreateInsert_thenIncludesOnConflictClause() {
+    var targetTable = ObjectIdentifier.of("default_catalog", "default_database", "target_table");
+    SqlNode fromTable = FlinkSqlNodes.identifier("source_table");
+    var selectList = new SqlNodeList(SqlParserPos.ZERO);
+    selectList.add(new SqlIdentifier("*", SqlParserPos.ZERO));
+    var select =
+        new SqlSelect(
+            SqlParserPos.ZERO,
+            null,
+            selectList,
+            fromTable,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null);
+
+    var insert =
+        FlinkSqlNodes.createInsert(
+            select, targetTable, Optional.of(SqlInsertConflictBehavior.DEDUPLICATE));
+    var sql = unparse(insert);
+    var expectedSql =
+        """
+        INSERT INTO `default_catalog`.`default_database`.`target_table`
+        SELECT `*`
+         FROM `source_table`
+        ON CONFLICT DO DEDUPLICATE""";
+
     assertThat(sql.trim()).isEqualTo(expectedSql);
   }
 

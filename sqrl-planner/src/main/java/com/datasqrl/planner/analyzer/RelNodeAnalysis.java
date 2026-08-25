@@ -24,6 +24,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.calcite.rel.RelNode;
+import org.apache.flink.table.api.InsertConflictStrategy.ConflictBehavior;
 
 /**
  * Intermediate analysis used by the {@link SQRLLogicalPlanAnalyzer} to keep track of information as
@@ -41,4 +42,5 @@ public class RelNodeAnalysis implements RelHolder, AbstractAnalysis {
   @NonNull @Builder.Default PrimaryKeyMap primaryKey = PrimaryKeyMap.UNDEFINED;
   @Builder.Default Optional<TableAnalysis> streamRoot = Optional.empty();
   @Builder.Default boolean hasNowFilter = false;
+  @NonNull @Builder.Default Optional<ConflictBehavior> insertConflictBehavior = Optional.empty();
 }
