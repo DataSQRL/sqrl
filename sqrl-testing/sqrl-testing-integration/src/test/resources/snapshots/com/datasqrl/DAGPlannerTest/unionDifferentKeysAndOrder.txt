@@ -397,7 +397,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CombinedStream($limit: Int = 10, $offset: Int = 0) {\nCombinedStream(limit: $limit, offset: $offset) {\nid_a\nval\n}\n\n}",
+            "queryName" : "CombinedStream",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CombinedStream{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -410,16 +419,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CombinedStream($limit: Int = 10, $offset: Int = 0) {\nCombinedStream(limit: $limit, offset: $offset) {\nid_a\nval\n}\n\n}",
-            "queryName" : "CombinedStream",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CombinedStream{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -437,7 +437,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query source_a($limit: Int = 10, $offset: Int = 0) {\nsource_a(limit: $limit, offset: $offset) {\nid_a\nval\n}\n\n}",
+            "queryName" : "source_a",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/source_a{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -450,16 +459,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query source_a($limit: Int = 10, $offset: Int = 0) {\nsource_a(limit: $limit, offset: $offset) {\nid_a\nval\n}\n\n}",
-            "queryName" : "source_a",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/source_a{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -477,7 +477,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query source_b($limit: Int = 10, $offset: Int = 0) {\nsource_b(limit: $limit, offset: $offset) {\nid_b\nval\n}\n\n}",
+            "queryName" : "source_b",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/source_b{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -490,16 +499,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query source_b($limit: Int = 10, $offset: Int = 0) {\nsource_b(limit: $limit, offset: $offset) {\nid_b\nval\n}\n\n}",
-            "queryName" : "source_b",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/source_b{?offset,limit}"
+          }
         }
       ],
       "schema" : {

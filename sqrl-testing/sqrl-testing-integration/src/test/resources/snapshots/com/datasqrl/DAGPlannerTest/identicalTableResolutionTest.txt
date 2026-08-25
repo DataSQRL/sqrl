@@ -572,7 +572,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -609,16 +618,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-            "queryName" : "Orders",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Orders{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -636,7 +636,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query SelectOrders1($limit: Int = 10, $offset: Int = 0) {\nSelectOrders1(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "SelectOrders1",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SelectOrders1{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -673,16 +682,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query SelectOrders1($limit: Int = 10, $offset: Int = 0) {\nSelectOrders1(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-            "queryName" : "SelectOrders1",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SelectOrders1{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -700,7 +700,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query SelectOrders2($limit: Int = 10, $offset: Int = 0) {\nSelectOrders2(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "SelectOrders2",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SelectOrders2{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -737,16 +746,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query SelectOrders2($limit: Int = 10, $offset: Int = 0) {\nSelectOrders2(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-            "queryName" : "SelectOrders2",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SelectOrders2{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -769,7 +769,16 @@ END
               ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query OrdersById1($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nOrdersById1(id: $id, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "OrdersById1",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersById1{?offset,limit,id}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -806,16 +815,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query OrdersById1($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nOrdersById1(id: $id, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-            "queryName" : "OrdersById1",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/OrdersById1{?offset,limit,id}"
+          }
         },
         {
           "function" : {
@@ -838,7 +838,16 @@ END
               ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query OrdersById2($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nOrdersById2(id: $id, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "OrdersById2",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersById2{?offset,limit,id}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -875,16 +884,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query OrdersById2($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nOrdersById2(id: $id, limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-            "queryName" : "OrdersById2",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/OrdersById2{?offset,limit,id}"
+          }
         }
       ],
       "schema" : {

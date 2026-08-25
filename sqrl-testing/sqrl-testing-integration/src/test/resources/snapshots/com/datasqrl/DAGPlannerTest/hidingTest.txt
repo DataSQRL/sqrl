@@ -597,7 +597,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query AnotherCustomer($limit: Int = 10, $offset: Int = 0) {\nAnotherCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "AnotherCustomer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AnotherCustomer{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -620,16 +629,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query AnotherCustomer($limit: Int = 10, $offset: Int = 0) {\nAnotherCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "AnotherCustomer",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/AnotherCustomer{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -647,7 +647,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -670,16 +679,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "Customer",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Customer{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -697,7 +697,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query FinalCustomer($limit: Int = 10, $offset: Int = 0) {\nFinalCustomer(limit: $limit, offset: $offset) {\ncustomerid\nlastUpdated\n}\n\n}",
+            "queryName" : "FinalCustomer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/FinalCustomer{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -710,16 +719,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query FinalCustomer($limit: Int = 10, $offset: Int = 0) {\nFinalCustomer(limit: $limit, offset: $offset) {\ncustomerid\nlastUpdated\n}\n\n}",
-            "queryName" : "FinalCustomer",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/FinalCustomer{?offset,limit}"
+          }
         }
       ],
       "schema" : {

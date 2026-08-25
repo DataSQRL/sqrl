@@ -340,7 +340,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Category($limit: Int = 10, $offset: Int = 0) {\nCategory(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
+            "queryName" : "Category",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Category{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -360,16 +369,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Category($limit: Int = 10, $offset: Int = 0) {\nCategory(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
-            "queryName" : "Category",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Category{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -387,7 +387,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CategoryDistinct($limit: Int = 10, $offset: Int = 0) {\nCategoryDistinct(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
+            "queryName" : "CategoryDistinct",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CategoryDistinct{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -407,16 +416,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CategoryDistinct($limit: Int = 10, $offset: Int = 0) {\nCategoryDistinct(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
-            "queryName" : "CategoryDistinct",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CategoryDistinct{?offset,limit}"
+          }
         }
       ],
       "schema" : {

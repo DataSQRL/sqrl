@@ -329,7 +329,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query FunctionCalls($limit: Int = 10, $offset: Int = 0) {\nFunctionCalls(limit: $limit, offset: $offset) {\nsearchResult\nformat\n}\n\n}",
+            "queryName" : "FunctionCalls",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/FunctionCalls{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -342,16 +351,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query FunctionCalls($limit: Int = 10, $offset: Int = 0) {\nFunctionCalls(limit: $limit, offset: $offset) {\nsearchResult\nformat\n}\n\n}",
-            "queryName" : "FunctionCalls",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/FunctionCalls{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -369,7 +369,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Product($limit: Int = 10, $offset: Int = 0) {\nProduct(limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
+            "queryName" : "Product",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Product{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -388,16 +397,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Product($limit: Int = 10, $offset: Int = 0) {\nProduct(limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
-            "queryName" : "Product",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Product{?offset,limit}"
+          }
         }
       ],
       "schema" : {

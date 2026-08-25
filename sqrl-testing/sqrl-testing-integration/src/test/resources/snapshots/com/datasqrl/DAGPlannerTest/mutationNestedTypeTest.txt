@@ -508,7 +508,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CustomerData($limit: Int = 10, $offset: Int = 0) {\nCustomerData(limit: $limit, offset: $offset) {\ncustomerid\npayload {\na\nb\nc\n}\n}\n\n}",
+            "queryName" : "CustomerData",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerData{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -532,16 +541,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerData($limit: Int = 10, $offset: Int = 0) {\nCustomerData(limit: $limit, offset: $offset) {\ncustomerid\npayload {\na\nb\nc\n}\n}\n\n}",
-            "queryName" : "CustomerData",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerData{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -559,7 +559,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query NestedCustomers($limit: Int = 10, $offset: Int = 0) {\nNestedCustomers(limit: $limit, offset: $offset) {\ncustomerid\npayload {\na\nb\nc\n}\nupdatedTime\n}\n\n}",
+            "queryName" : "NestedCustomers",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/NestedCustomers{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -587,16 +596,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query NestedCustomers($limit: Int = 10, $offset: Int = 0) {\nNestedCustomers(limit: $limit, offset: $offset) {\ncustomerid\npayload {\na\nb\nc\n}\nupdatedTime\n}\n\n}",
-            "queryName" : "NestedCustomers",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/NestedCustomers{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -614,7 +614,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -651,16 +660,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-            "queryName" : "Orders",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Orders{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -692,7 +692,16 @@ END
               ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "mutation NestedCustomers($customerid: Int!, $payload: NestedCustomers_payloadInput) {\nNestedCustomers(event: { customerid: $customerid, payload: $payload }) {\ncustomerid\npayload {\na\nb\nc\n}\nupdatedTime\n}\n\n}",
+            "queryName" : "NestedCustomers",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "NONE",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/NestedCustomers",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "customerid" : {
@@ -717,16 +726,7 @@ END
                 "format" : "date-time"
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "mutation NestedCustomers($customerid: Int!, $payload: NestedCustomers_payloadInput) {\nNestedCustomers(event: { customerid: $customerid, payload: $payload }) {\ncustomerid\npayload {\na\nb\nc\n}\nupdatedTime\n}\n\n}",
-            "queryName" : "NestedCustomers",
-            "operationType" : "MUTATION"
-          },
-          "mcpMethod" : "NONE",
-          "restMethod" : "POST",
-          "uriTemplate" : "mutations/NestedCustomers"
+          }
         }
       ],
       "schema" : {

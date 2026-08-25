@@ -168,6 +168,7 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -195,7 +196,6 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nproductid\nquantity\nunit_price\n}\n\n}",
             "queryName" : "Orders",

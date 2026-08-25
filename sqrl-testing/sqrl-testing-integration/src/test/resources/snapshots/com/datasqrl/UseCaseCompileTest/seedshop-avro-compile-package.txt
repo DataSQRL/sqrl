@@ -244,6 +244,7 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -261,7 +262,6 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderCount($limit: Int = 10, $offset: Int = 0) {\nOrderCount(limit: $limit, offset: $offset) {\nid\nnumber\nvolume\n}\n\n}",
             "queryName" : "OrderCount",
@@ -287,6 +287,7 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -324,7 +325,6 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
             "queryName" : "Orders",

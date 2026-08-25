@@ -242,7 +242,8 @@ public class OpenApiService {
                             .schema(
                                 new Schema<>()
                                     .type("object")
-                                    .addProperty("data", resultToSchema(operation.getResult())))));
+                                    .addProperty(
+                                        "data", resultToSchema(operation.getResultDefinition())))));
     responses.addApiResponse("200", successResponse);
 
     // Error response

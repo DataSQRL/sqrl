@@ -787,7 +787,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Category($limit: Int = 10, $offset: Int = 0) {\nCategory(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
+            "queryName" : "Category",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Category{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -807,16 +816,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Category($limit: Int = 10, $offset: Int = 0) {\nCategory(limit: $limit, offset: $offset) {\ncategoryid\nname\ndescription\nupdateTime\n}\n\n}",
-            "queryName" : "Category",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Category{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -834,7 +834,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -857,16 +866,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "Customer",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Customer{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -884,7 +884,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CustomerOther($limit: Int = 10, $offset: Int = 0) {\nCustomerOther(limit: $limit, offset: $offset) {\ncustomer_id\nfull_name\nlast_updated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerOther",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerOther{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -904,16 +913,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerOther($limit: Int = 10, $offset: Int = 0) {\nCustomerOther(limit: $limit, offset: $offset) {\ncustomer_id\nfull_name\nlast_updated\ntimestamp\n}\n\n}",
-            "queryName" : "CustomerOther",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerOther{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -936,7 +936,16 @@ END
               ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Product($productid: Long!, $limit: Int = 10, $offset: Int = 0) {\nProduct(productid: $productid, limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
+            "queryName" : "Product",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Product{?productid,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -955,16 +964,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Product($productid: Long!, $limit: Int = 10, $offset: Int = 0) {\nProduct(productid: $productid, limit: $limit, offset: $offset) {\nproductid\nname\ndescription\ncategory\n}\n\n}",
-            "queryName" : "Product",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Product{?productid,offset,limit}"
+          }
         },
         {
           "function" : {
@@ -979,7 +979,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "mutation MyEvents($payload: String) {\nMyEvents(event: { payload: $payload }) {\nid\npayload\ntimestamp\n}\n\n}",
+            "queryName" : "MyEvents",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/MyEvents",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "id" : {
@@ -993,16 +1002,7 @@ END
                 "format" : "date-time"
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "mutation MyEvents($payload: String) {\nMyEvents(event: { payload: $payload }) {\nid\npayload\ntimestamp\n}\n\n}",
-            "queryName" : "MyEvents",
-            "operationType" : "MUTATION"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "POST",
-          "uriTemplate" : "mutations/MyEvents"
+          }
         }
       ],
       "schema" : {

@@ -401,7 +401,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query JoinTable($limit: Int = 10, $offset: Int = 0) {\nJoinTable(limit: $limit, offset: $offset) {\nuserid\nevent_time\nunique_id\nunique_id0\n}\n\n}",
+            "queryName" : "JoinTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/JoinTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -421,16 +430,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query JoinTable($limit: Int = 10, $offset: Int = 0) {\nJoinTable(limit: $limit, offset: $offset) {\nuserid\nevent_time\nunique_id\nunique_id0\n}\n\n}",
-            "queryName" : "JoinTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/JoinTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -445,7 +445,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "mutation SimpleInput($userid: Int) {\nSimpleInput(event: { userid: $userid }) {\nuserid\nevent_time\n}\n\n}",
+            "queryName" : "SimpleInput",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/SimpleInput",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "object",
             "properties" : {
               "userid" : {
@@ -456,16 +465,7 @@ END
                 "format" : "date-time"
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "mutation SimpleInput($userid: Int) {\nSimpleInput(event: { userid: $userid }) {\nuserid\nevent_time\n}\n\n}",
-            "queryName" : "SimpleInput",
-            "operationType" : "MUTATION"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "POST",
-          "uriTemplate" : "mutations/SimpleInput"
+          }
         }
       ],
       "schema" : {

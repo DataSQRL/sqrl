@@ -539,6 +539,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -671,7 +672,6 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Package($name: String!, $limit: Int = 10, $offset: Int = 0$versions_version: String!, $versions_variant: String!, $versions_limit: Int = 10, $versions_offset: Int = 0) {\nPackage(name: $name, limit: $limit, offset: $offset) {\nname\nlatest {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\nversions(version: $versions_version, variant: $versions_variant, limit: $versions_limit, offset: $versions_offset) {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\n}\n\n}",
             "queryName" : "Package",
@@ -700,6 +700,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -714,7 +715,6 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query TopicSearch($topicName: String, $limit: Int = 10, $offset: Int = 0) {\nTopicSearch(topicName: $topicName, limit: $limit, offset: $offset) {\ntopicName\nnumPackages\n}\n\n}",
             "queryName" : "TopicSearch",
@@ -745,6 +745,7 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -824,7 +825,6 @@ CREATE INDEX IF NOT EXISTS "Submission_btree_c0c3" ON "Submission" USING btree (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query TopicPackages($topicName: String! = \"example\", $limit: Int = 10, $offset: Int = 0) {\nTopicPackages(topicName: $topicName, limit: $limit, offset: $offset) {\ntopicName\npkgName\nlastSubmission\nnumSubmissions\nlatest {\nname\nversion\nvariant\nlatest\ntype\nlicense\nrepository\nhomepage\ndocumentation\nreadme\ndescription\nuniqueId\nkeywords\nrepoURL\nfile\nhash\nsubmissionTime\n}\n}\n\n}",
             "queryName" : "TopicPackages",

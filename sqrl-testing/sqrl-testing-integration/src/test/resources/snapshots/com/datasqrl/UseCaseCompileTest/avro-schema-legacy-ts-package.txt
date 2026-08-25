@@ -177,6 +177,7 @@ CREATE TABLE IF NOT EXISTS "Res" ("uuidField" TEXT NOT NULL, "timestampMillisFie
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -196,7 +197,6 @@ CREATE TABLE IF NOT EXISTS "Res" ("uuidField" TEXT NOT NULL, "timestampMillisFie
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Res($limit: Int = 10, $offset: Int = 0) {\nRes(limit: $limit, offset: $offset) {\nuuidField\ntimestampMillisField\nnullableTimestampMillisField\n}\n\n}",
             "queryName" : "Res",

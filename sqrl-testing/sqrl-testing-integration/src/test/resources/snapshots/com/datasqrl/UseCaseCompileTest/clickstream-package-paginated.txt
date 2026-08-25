@@ -432,6 +432,7 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "object",
             "properties" : {
@@ -492,7 +493,6 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Click($limit: Int = 10, $offset: Int = 0) {\nClick(limit: $limit, offset: $offset) {\nresults {\ntimestamp\nuserid\nurl\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "Click",
@@ -525,6 +525,7 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "object",
             "properties" : {
@@ -586,7 +587,6 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Recommendation($url: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendation(url: $url, limit: $limit, offset: $offset) {\nresults {\nurl\nrec\nfrequency\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "Recommendation",
@@ -613,6 +613,7 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "object",
             "properties" : {
@@ -671,7 +672,6 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Trending($limit: Int = 10, $offset: Int = 0) {\nTrending(limit: $limit, offset: $offset) {\nresults {\nurl\ntotal\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "Trending",
@@ -697,6 +697,7 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "object",
             "properties" : {
@@ -757,7 +758,6 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query VisitAfter($limit: Int = 10, $offset: Int = 0) {\nVisitAfter(limit: $limit, offset: $offset) {\nresults {\nbeforeURL\nafterURL\ntimestamp\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "VisitAfter",

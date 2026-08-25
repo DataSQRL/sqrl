@@ -596,7 +596,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query MachineReading($limit: Int = 10, $offset: Int = 0) {\nMachineReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nmachineid\n}\n\n}",
+            "queryName" : "MachineReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MachineReading{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -616,16 +625,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query MachineReading($limit: Int = 10, $offset: Int = 0) {\nMachineReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nmachineid\n}\n\n}",
-            "queryName" : "MachineReading",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MachineReading{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -643,7 +643,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query MachineTempByHour($limit: Int = 10, $offset: Int = 0) {\nMachineTempByHour(limit: $limit, offset: $offset) {\nmachineid\ntime_hour\navg_temperature\n}\n\n}",
+            "queryName" : "MachineTempByHour",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MachineTempByHour{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -660,16 +669,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query MachineTempByHour($limit: Int = 10, $offset: Int = 0) {\nMachineTempByHour(limit: $limit, offset: $offset) {\nmachineid\ntime_hour\navg_temperature\n}\n\n}",
-            "queryName" : "MachineTempByHour",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MachineTempByHour{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -687,7 +687,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Sensors($limit: Int = 10, $offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
+            "queryName" : "Sensors",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Sensors{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -704,16 +713,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Sensors($limit: Int = 10, $offset: Int = 0) {\nSensors(limit: $limit, offset: $offset) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
-            "queryName" : "Sensors",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Sensors{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -744,7 +744,16 @@ END
               ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "mutation Sensors($event: [SensorsInput!]!) {\nSensors(event: $event) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
+            "queryName" : "Sensors",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "NONE",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/Sensors",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -761,16 +770,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "mutation Sensors($event: [SensorsInput!]!) {\nSensors(event: $event) {\nsensorid\nmachineid\nupdatedTime\n}\n\n}",
-            "queryName" : "Sensors",
-            "operationType" : "MUTATION"
-          },
-          "mcpMethod" : "NONE",
-          "restMethod" : "POST",
-          "uriTemplate" : "mutations/Sensors"
+          }
         }
       ],
       "schema" : {

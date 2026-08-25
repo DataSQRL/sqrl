@@ -285,6 +285,7 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -307,7 +308,6 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query LatestTokens($limit: Int = 10, $offset: Int = 0) {\nLatestTokens(limit: $limit, offset: $offset) {\nuserid\ntotal_tokens\nwindow_end\nwindow_time\n}\n\n}",
             "queryName" : "LatestTokens",
@@ -336,6 +336,7 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
               ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "object",
             "properties" : {
@@ -351,7 +352,6 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "mutation InputTable($userid: Int!, $tokens: Long!) {\nInputTable(event: { userid: $userid, tokens: $tokens }) {\nuserid\ntokens\nevent_time\n}\n\n}",
             "queryName" : "InputTable",

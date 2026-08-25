@@ -373,6 +373,7 @@ CREATE TABLE IF NOT EXISTS "Schema" ("uuidField" TEXT NOT NULL, "timestampMillis
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -549,7 +550,6 @@ CREATE TABLE IF NOT EXISTS "Schema" ("uuidField" TEXT NOT NULL, "timestampMillis
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Schema($limit: Int = 10, $offset: Int = 0) {\nSchema(limit: $limit, offset: $offset) {\nuuidField\ntimestampMillisField\nnullableTimestampMillisField\ntimestampMicrosField\nnullableTimestampMicrosField\ndateField\nnullableDateField\ntimeMillisField\nnullableTimeMillisField\ntimeMicrosField\nnullableTimeMicrosField\ncomplexArrayField {\nitemFieldOne\nitemFieldTwo\n}\nnullableComplexArrayField {\nnullableItemFieldOne\nnullableItemFieldTwo\n}\nmultiNestedRecord {\nnestedLevelOne {\nlevelOneField\n}\n}\nstringField\nnullableStringField\nintField\nnullableIntField\nlongField\nnullableLongField\nfloatField\nnullableFloatField\ndoubleField\nnullableDoubleField\nbooleanField\nnullableBooleanField\nenumField\nnullableEnumField\narrayField\nnullableArrayField\nnestedRecord {\nnestedStringField\nnestedIntField\nnestedArrayField\nnestedMapField\n}\nnullableNestedRecord {\nnullableNestedStringField\nnullableNestedLongField\n}\ndecimalField\nmapField\nnullableMapField\n}\n\n}",
             "queryName" : "Schema",

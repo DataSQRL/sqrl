@@ -192,7 +192,7 @@ public class GraphQLSchemaConverterTest {
             GraphQLSchemaConverterConfig.DEFAULT,
             schema);
 
-    var result = operations.get(0).getResult();
+    var result = operations.get(0).getResultDefinition();
     assertThat(result.getType()).isEqualTo("object");
     assertThat(result.getProperties().get("id").getType()).isEqualTo("integer");
     assertThat(result.getProperties().get("observedAt").getFormat()).isEqualTo("date-time");

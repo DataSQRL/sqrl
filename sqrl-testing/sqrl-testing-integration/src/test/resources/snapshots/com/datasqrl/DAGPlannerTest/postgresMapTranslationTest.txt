@@ -204,7 +204,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query DuckDbTable($limit: Int = 10, $offset: Int = 0) {\nDuckDbTable(limit: $limit, offset: $offset) {\nuser_id\nattrs\n}\n\n}",
+            "queryName" : "DuckDbTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/DuckDbTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -215,16 +224,7 @@ END
                 "attrs" : { }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query DuckDbTable($limit: Int = 10, $offset: Int = 0) {\nDuckDbTable(limit: $limit, offset: $offset) {\nuser_id\nattrs\n}\n\n}",
-            "queryName" : "DuckDbTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/DuckDbTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -242,7 +242,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nnum\n}\n\n}",
+            "queryName" : "MyTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/MyTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -252,16 +261,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nnum\n}\n\n}",
-            "queryName" : "MyTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTable{?offset,limit}"
+          }
         }
       ],
       "schema" : {

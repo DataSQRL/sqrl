@@ -275,7 +275,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query OrderEntryJoin($limit: Int = 10, $offset: Int = 0) {\nOrderEntryJoin(limit: $limit, offset: $offset) {\nid1\nid2\nmulti\n}\n\n}",
+            "queryName" : "OrderEntryJoin",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderEntryJoin{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -291,16 +300,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query OrderEntryJoin($limit: Int = 10, $offset: Int = 0) {\nOrderEntryJoin(limit: $limit, offset: $offset) {\nid1\nid2\nmulti\n}\n\n}",
-            "queryName" : "OrderEntryJoin",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/OrderEntryJoin{?offset,limit}"
+          }
         }
       ],
       "schema" : {

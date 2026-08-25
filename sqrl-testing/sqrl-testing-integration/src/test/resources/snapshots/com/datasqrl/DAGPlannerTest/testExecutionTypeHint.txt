@@ -495,7 +495,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CustomerAgg1($limit: Int = 10, $offset: Int = 0) {\nCustomerAgg1(limit: $limit, offset: $offset) {\ncustomerid\nnum\n}\n\n}",
+            "queryName" : "CustomerAgg1",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerAgg1{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -508,16 +517,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerAgg1($limit: Int = 10, $offset: Int = 0) {\nCustomerAgg1(limit: $limit, offset: $offset) {\ncustomerid\nnum\n}\n\n}",
-            "queryName" : "CustomerAgg1",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerAgg1{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -535,7 +535,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CustomerAgg2($limit: Int = 10, $offset: Int = 0) {\nCustomerAgg2(limit: $limit, offset: $offset) {\ncustomerid\nnum\n}\n\n}",
+            "queryName" : "CustomerAgg2",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerAgg2{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -548,16 +557,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerAgg2($limit: Int = 10, $offset: Int = 0) {\nCustomerAgg2(limit: $limit, offset: $offset) {\ncustomerid\nnum\n}\n\n}",
-            "queryName" : "CustomerAgg2",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerAgg2{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -575,7 +575,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CustomerAgg3($limit: Int = 10, $offset: Int = 0) {\nCustomerAgg3(limit: $limit, offset: $offset) {\ncustomerid\nnum\n}\n\n}",
+            "queryName" : "CustomerAgg3",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerAgg3{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -588,16 +597,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerAgg3($limit: Int = 10, $offset: Int = 0) {\nCustomerAgg3(limit: $limit, offset: $offset) {\ncustomerid\nnum\n}\n\n}",
-            "queryName" : "CustomerAgg3",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerAgg3{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -615,7 +615,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -652,16 +661,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-            "queryName" : "Orders",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Orders{?offset,limit}"
+          }
         }
       ],
       "schema" : {

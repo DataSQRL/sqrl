@@ -223,6 +223,7 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -237,7 +238,6 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query AppendStream($limit: Int = 10, $offset: Int = 0) {\nAppendStream(limit: $limit, offset: $offset) {\nk\nv_sum\n}\n\n}",
             "queryName" : "AppendStream",
@@ -263,6 +263,7 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -277,7 +278,6 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query InputAgg($limit: Int = 10, $offset: Int = 0) {\nInputAgg(limit: $limit, offset: $offset) {\nk\nv_sum\n}\n\n}",
             "queryName" : "InputAgg",

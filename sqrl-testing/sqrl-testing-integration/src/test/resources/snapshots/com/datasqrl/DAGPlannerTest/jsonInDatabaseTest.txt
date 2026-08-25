@@ -978,7 +978,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -1001,16 +1010,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "Customer",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Customer{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -1028,7 +1028,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CustomerStream($limit: Int = 10, $offset: Int = 0) {\nCustomerStream(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerStream",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerStream{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -1051,16 +1060,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerStream($limit: Int = 10, $offset: Int = 0) {\nCustomerStream(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "CustomerStream",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerStream{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -1078,16 +1078,6 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "type" : "object",
-              "properties" : {
-                "obj" : { }
-              }
-            }
-          },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ObjComplex($limit: Int = 10, $offset: Int = 0) {\nObjComplex(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
             "queryName" : "ObjComplex",
@@ -1095,7 +1085,17 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ObjComplex{?offset,limit}"
+          "uriTemplate" : "queries/ObjComplex{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "obj" : { }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1113,16 +1113,6 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "type" : "object",
-              "properties" : {
-                "agg" : { }
-              }
-            }
-          },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query jsonArrayAggTable($limit: Int = 10, $offset: Int = 0) {\njsonArrayAggTable(limit: $limit, offset: $offset) {\nagg\n}\n\n}",
             "queryName" : "jsonArrayAggTable",
@@ -1130,7 +1120,17 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/jsonArrayAggTable{?offset,limit}"
+          "uriTemplate" : "queries/jsonArrayAggTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "agg" : { }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1148,16 +1148,6 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "type" : "object",
-              "properties" : {
-                "obj" : { }
-              }
-            }
-          },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query jsonArrayTable($limit: Int = 10, $offset: Int = 0) {\njsonArrayTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
             "queryName" : "jsonArrayTable",
@@ -1165,7 +1155,17 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/jsonArrayTable{?offset,limit}"
+          "uriTemplate" : "queries/jsonArrayTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "obj" : { }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1183,16 +1183,6 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "type" : "object",
-              "properties" : {
-                "obj" : { }
-              }
-            }
-          },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query jsonConcatTable($limit: Int = 10, $offset: Int = 0) {\njsonConcatTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
             "queryName" : "jsonConcatTable",
@@ -1200,7 +1190,17 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/jsonConcatTable{?offset,limit}"
+          "uriTemplate" : "queries/jsonConcatTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "obj" : { }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1218,7 +1218,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query jsonExistsTable($limit: Int = 10, $offset: Int = 0) {\njsonExistsTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "jsonExistsTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonExistsTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -1228,16 +1237,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query jsonExistsTable($limit: Int = 10, $offset: Int = 0) {\njsonExistsTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-            "queryName" : "jsonExistsTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/jsonExistsTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -1255,7 +1255,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query jsonExtractTable($limit: Int = 10, $offset: Int = 0) {\njsonExtractTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "jsonExtractTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonExtractTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -1265,16 +1274,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query jsonExtractTable($limit: Int = 10, $offset: Int = 0) {\njsonExtractTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-            "queryName" : "jsonExtractTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/jsonExtractTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -1292,16 +1292,6 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "type" : "object",
-              "properties" : {
-                "agg" : { }
-              }
-            }
-          },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query jsonObjectAggTable($limit: Int = 10, $offset: Int = 0) {\njsonObjectAggTable(limit: $limit, offset: $offset) {\nagg\n}\n\n}",
             "queryName" : "jsonObjectAggTable",
@@ -1309,7 +1299,17 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/jsonObjectAggTable{?offset,limit}"
+          "uriTemplate" : "queries/jsonObjectAggTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "agg" : { }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1327,7 +1327,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query jsonQueryTable($limit: Int = 10, $offset: Int = 0) {\njsonQueryTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "jsonQueryTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonQueryTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -1337,16 +1346,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query jsonQueryTable($limit: Int = 10, $offset: Int = 0) {\njsonQueryTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-            "queryName" : "jsonQueryTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/jsonQueryTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -1364,7 +1364,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query jsonToStringTable($limit: Int = 10, $offset: Int = 0) {\njsonToStringTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
+            "queryName" : "jsonToStringTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/jsonToStringTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -1374,16 +1383,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query jsonToStringTable($limit: Int = 10, $offset: Int = 0) {\njsonToStringTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
-            "queryName" : "jsonToStringTable",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/jsonToStringTable{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -1401,16 +1401,6 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
-            "type" : "array",
-            "items" : {
-              "type" : "object",
-              "properties" : {
-                "obj" : { }
-              }
-            }
-          },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query toJsonTable($limit: Int = 10, $offset: Int = 0) {\ntoJsonTable(limit: $limit, offset: $offset) {\nobj\n}\n\n}",
             "queryName" : "toJsonTable",
@@ -1418,7 +1408,17 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/toJsonTable{?offset,limit}"
+          "uriTemplate" : "queries/toJsonTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "obj" : { }
+              }
+            }
+          }
         }
       ],
       "schema" : {

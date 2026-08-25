@@ -1255,6 +1255,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1415,7 +1416,6 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Customers($id: Long, $email: String, $limit: Int = 10, $offset: Int = 0$order_stats_limit: Int = 10, $order_stats_offset: Int = 0$past_purchases_limit: Int = 10, $past_purchases_offset: Int = 0$purchases_limit: Int = 10, $purchases_offset: Int = 0$purchases_totals_limit: Int = 10, $purchases_totals_offset: Int = 0$spending_limit: Int = 10, $spending_offset: Int = 0) {\nCustomers(id: $id, email: $email, limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nip_address\ncountry\nchanged_on\ntimestamp\norder_stats(limit: $order_stats_limit, offset: $order_stats_offset) {\ncustomerid\nfirst_order\ntotal_spend\ntotal_saved\nnum_orders\n}\npast_purchases(limit: $past_purchases_limit, offset: $past_purchases_offset) {\ncustomerid\nproductid\nnum_orders\ntotal_quantity\n}\npurchases(limit: $purchases_limit, offset: $purchases_offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\ntotals(limit: $purchases_totals_limit, offset: $purchases_totals_offset) {\nid\ntime\ncustomerid\nprice\nsaving\n}\n}\nspending(limit: $spending_limit, offset: $spending_offset) {\ncustomerid\nweek\nspend\nsaved\n}\n}\n\n}",
             "queryName" : "Customers",
@@ -1471,6 +1471,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1631,7 +1632,6 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Orders($limit: Int = 10, $offset: Int = 0$customer_limit: Int = 10, $customer_offset: Int = 0$customer_order_stats_limit: Int = 10, $customer_order_stats_offset: Int = 0$customer_past_purchases_limit: Int = 10, $customer_past_purchases_offset: Int = 0$customer_spending_limit: Int = 10, $customer_spending_offset: Int = 0$totals_limit: Int = 10, $totals_offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\ncustomer(limit: $customer_limit, offset: $customer_offset) {\nid\nfirst_name\nlast_name\nemail\nip_address\ncountry\nchanged_on\ntimestamp\norder_stats(limit: $customer_order_stats_limit, offset: $customer_order_stats_offset) {\ncustomerid\nfirst_order\ntotal_spend\ntotal_saved\nnum_orders\n}\npast_purchases(limit: $customer_past_purchases_limit, offset: $customer_past_purchases_offset) {\ncustomerid\nproductid\nnum_orders\ntotal_quantity\n}\nspending(limit: $customer_spending_limit, offset: $customer_spending_offset) {\ncustomerid\nweek\nspend\nsaved\n}\n}\ntotals(limit: $totals_limit, offset: $totals_offset) {\nid\ntime\ncustomerid\nprice\nsaving\n}\n}\n\n}",
             "queryName" : "Orders",
@@ -1662,6 +1662,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1695,7 +1696,6 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Products($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nProducts(id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n\n}",
             "queryName" : "Products",
@@ -1726,6 +1726,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1749,7 +1750,6 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ProductsByCountry($productid: Long!, $limit: Int = 10, $offset: Int = 0) {\nProductsByCountry(productid: $productid, limit: $limit, offset: $offset) {\nproductid\ncountry\nquantity\nspend\nweight\n}\n\n}",
             "queryName" : "ProductsByCountry",
@@ -1780,6 +1780,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1816,7 +1817,6 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ProductSearch($query: String!, $limit: Int = 10, $offset: Int = 0) {\nProductSearch(query: $query, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\nscore\n}\n\n}",
             "queryName" : "ProductSearch",
@@ -1851,6 +1851,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1884,7 +1885,6 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ProductSearchWithId($query: String!, $id: Int!, $limit: Int = 10, $offset: Int = 0) {\nProductSearchWithId(query: $query, id: $id, limit: $limit, offset: $offset) {\nid\nname\nsizing\nweight_in_gram\ntype\ncategory\nusda_id\nupdated\n}\n\n}",
             "queryName" : "ProductSearchWithId",

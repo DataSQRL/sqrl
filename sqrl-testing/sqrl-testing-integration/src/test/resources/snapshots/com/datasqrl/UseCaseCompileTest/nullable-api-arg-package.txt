@@ -219,6 +219,7 @@ CREATE INDEX IF NOT EXISTS "Product_hash_c4" ON "Product" USING hash ("discount"
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -246,7 +247,6 @@ CREATE INDEX IF NOT EXISTS "Product_hash_c4" ON "Product" USING hash ("discount"
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Product($limit: Int = 10, $offset: Int = 0) {\nProduct(limit: $limit, offset: $offset) {\nid\nname\ncategory\nprice\ndiscount\ntimestamp\n}\n\n}",
             "queryName" : "Product",
@@ -275,6 +275,7 @@ CREATE INDEX IF NOT EXISTS "Product_hash_c4" ON "Product" USING hash ("discount"
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -302,7 +303,6 @@ CREATE INDEX IF NOT EXISTS "Product_hash_c4" ON "Product" USING hash ("discount"
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Discount($discount: Int, $limit: Int = 10, $offset: Int = 0) {\nDiscount(discount: $discount, limit: $limit, offset: $offset) {\nid\nname\ncategory\nprice\ndiscount\ntimestamp\n}\n\n}",
             "queryName" : "Discount",

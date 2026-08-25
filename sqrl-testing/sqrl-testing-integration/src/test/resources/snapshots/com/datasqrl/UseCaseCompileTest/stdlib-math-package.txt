@@ -177,6 +177,7 @@ CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NO
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -227,7 +228,6 @@ CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NO
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MathFunctions($limit: Int = 10, $offset: Int = 0) {\nMathFunctions(limit: $limit, offset: $offset) {\nd\nb\ncbrt\ncopy_sign\nexpm1\nhypot\nlog1p\nnext_after\nscalb\nulp\nbinomial_distribution\nexponential_distribution\nnormal_distribution\npoisson_distribution\n}\n\n}",
             "queryName" : "MathFunctions",

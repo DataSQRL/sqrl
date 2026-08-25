@@ -956,7 +956,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -979,16 +988,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "Customer",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Customer{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -1006,7 +1006,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CustomerCumulate($limit: Int = 10, $offset: Int = 0) {\nCustomerCumulate(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
+            "queryName" : "CustomerCumulate",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerCumulate{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -1024,16 +1033,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerCumulate($limit: Int = 10, $offset: Int = 0) {\nCustomerCumulate(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
-            "queryName" : "CustomerCumulate",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerCumulate{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -1051,7 +1051,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CustomerHop($limit: Int = 10, $offset: Int = 0) {\nCustomerHop(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
+            "queryName" : "CustomerHop",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerHop{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -1073,16 +1082,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerHop($limit: Int = 10, $offset: Int = 0) {\nCustomerHop(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
-            "queryName" : "CustomerHop",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerHop{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -1100,7 +1100,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CustomerSession($limit: Int = 10, $offset: Int = 0) {\nCustomerSession(limit: $limit, offset: $offset) {\ncustomerid\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
+            "queryName" : "CustomerSession",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerSession{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -1125,16 +1134,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerSession($limit: Int = 10, $offset: Int = 0) {\nCustomerSession(limit: $limit, offset: $offset) {\ncustomerid\nwindow_start\nwindow_end\nwindow_time\ntotal\n}\n\n}",
-            "queryName" : "CustomerSession",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerSession{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -1152,7 +1152,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query CustomerTumble($limit: Int = 10, $offset: Int = 0) {\nCustomerTumble(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
+            "queryName" : "CustomerTumble",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerTumble{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -1170,16 +1179,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query CustomerTumble($limit: Int = 10, $offset: Int = 0) {\nCustomerTumble(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\ntotal\n}\n\n}",
-            "queryName" : "CustomerTumble",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerTumble{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -1197,7 +1197,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query StreamJoin($limit: Int = 10, $offset: Int = 0) {\nStreamJoin(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\ncustomerid\nwindow_start0\nwindow_end0\ntotal0\n}\n\n}",
+            "queryName" : "StreamJoin",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/StreamJoin{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -1233,16 +1242,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query StreamJoin($limit: Int = 10, $offset: Int = 0) {\nStreamJoin(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\nwindow_time\ntotal\ncustomerid\nwindow_start0\nwindow_end0\ntotal0\n}\n\n}",
-            "queryName" : "StreamJoin",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/StreamJoin{?offset,limit}"
+          }
         }
       ],
       "schema" : {

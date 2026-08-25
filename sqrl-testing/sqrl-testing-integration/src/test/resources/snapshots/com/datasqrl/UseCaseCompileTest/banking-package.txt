@@ -1275,6 +1275,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1307,7 +1308,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ApplicationStatusSpecialMcp @api(rest: NONE, mcp: TOOL) {\n    ApplicationStatus(limit: 10, offset: 0) {\n        status\n        message\n        customer_id\n        loan_type_id\n        amount\n        duration\n        max_amount\n        min_amount\n    }\n}\n",
             "queryName" : "ApplicationStatusSpecialMcp",
@@ -1333,6 +1333,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1362,7 +1363,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query AddChatMessage($limit: Int = 10, $offset: Int = 0) {\nAddChatMessage(limit: $limit, offset: $offset) {\nrole\ncontent\nname\ncontext {\ncustomerid\n}\nevent_time\n}\n\n}",
             "queryName" : "AddChatMessage",
@@ -1388,6 +1388,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1414,7 +1415,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ApplicationAlert($limit: Int = 10, $offset: Int = 0) {\nApplicationAlert(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\nmax_amount\nmin_amount\namount\n}\n\n}",
             "queryName" : "ApplicationAlert",
@@ -1440,6 +1440,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1479,7 +1480,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ApplicationStatus($limit: Int = 10, $offset: Int = 0) {\nApplicationStatus(limit: $limit, offset: $offset) {\nstatus\nmessage\nevent_time\nid\ncustomer_id\nloan_type_id\namount\nduration\nmax_amount\nmin_amount\n}\n\n}",
             "queryName" : "ApplicationStatus",
@@ -1517,6 +1517,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1605,7 +1606,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ApplicationUpdates($limit: Int = 10, $offset: Int = 0$application_limit: Int = 10, $application_offset: Int = 0$application_loanType_limit: Int = 10, $application_loanType_offset: Int = 0) {\nApplicationUpdates(limit: $limit, offset: $offset) {\nloan_application_id\nstatus\nmessage\nevent_time\napplication(limit: $application_limit, offset: $application_offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $application_loanType_limit, offset: $application_loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\n}\n}\n\n}",
             "queryName" : "ApplicationUpdates",
@@ -1643,6 +1643,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1731,7 +1732,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Applications($limit: Int = 10, $offset: Int = 0$loanType_limit: Int = 10, $loanType_offset: Int = 0$updates_limit: Int = 10, $updates_offset: Int = 0) {\nApplications(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $loanType_limit, offset: $loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\nupdates(limit: $updates_limit, offset: $updates_offset) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n}\n\n}",
             "queryName" : "Applications",
@@ -1757,6 +1757,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1788,7 +1789,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ApplicationsStream($limit: Int = 10, $offset: Int = 0) {\nApplicationsStream(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\n}\n\n}",
             "queryName" : "ApplicationsStream",
@@ -1814,6 +1814,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -1841,7 +1842,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerChatMessage($limit: Int = 10, $offset: Int = 0) {\nCustomerChatMessage(limit: $limit, offset: $offset) {\nrole\ncontent\nname\ncustomerid\ntimestamp\nuuid\n}\n\n}",
             "queryName" : "CustomerChatMessage",
@@ -1891,6 +1891,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -2029,7 +2030,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Customers($limit: Int = 10, $offset: Int = 0$applications_limit: Int = 10, $applications_offset: Int = 0$applications_loanType_limit: Int = 10, $applications_loanType_offset: Int = 0$applications_updates_limit: Int = 10, $applications_updates_offset: Int = 0$overview_limit: Int = 10, $overview_offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nphone\naddress\ndate_of_birth\nupdated_at\napplications(limit: $applications_limit, offset: $applications_offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\nloanType(limit: $applications_loanType_limit, offset: $applications_loanType_offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\nupdates(limit: $applications_updates_limit, offset: $applications_updates_offset) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n}\noverview(limit: $overview_limit, offset: $overview_offset) {\nloan_type_id\ntotal_amount\ntotal_loans\n}\n}\n\n}",
             "queryName" : "Customers",
@@ -2055,6 +2055,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -2088,7 +2089,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomersStream($limit: Int = 10, $offset: Int = 0) {\nCustomersStream(limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nphone\naddress\ndate_of_birth\nupdated_at\n}\n\n}",
             "queryName" : "CustomersStream",
@@ -2114,6 +2114,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -2150,7 +2151,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query LoanTypes($limit: Int = 10, $offset: Int = 0) {\nLoanTypes(limit: $limit, offset: $offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\n\n}",
             "queryName" : "LoanTypes",
@@ -2176,6 +2176,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -2212,7 +2213,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query LoanTypesStream($limit: Int = 10, $offset: Int = 0) {\nLoanTypesStream(limit: $limit, offset: $offset) {\nid\nname\ndescription\ninterest_rate\nmax_amount\nmin_amount\nmax_duration\nmin_duration\nupdated_at\n}\n\n}",
             "queryName" : "LoanTypesStream",
@@ -2254,6 +2254,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "object",
             "properties" : {
@@ -2280,7 +2281,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "mutation AddChatMessage($role: String!, $content: String!, $name: String, $context: AddChatMessage_contextInput!) {\nAddChatMessage(event: { role: $role, content: $content, name: $name, context: $context }) {\nrole\ncontent\nname\ncontext {\ncustomerid\n}\nevent_time\n}\n\n}",
             "queryName" : "AddChatMessage",
@@ -2323,6 +2323,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -2344,7 +2345,6 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "mutation ApplicationUpdates($event: [ApplicationUpdatesInput!]!) {\nApplicationUpdates(event: $event) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n\n}",
             "queryName" : "ApplicationUpdates",

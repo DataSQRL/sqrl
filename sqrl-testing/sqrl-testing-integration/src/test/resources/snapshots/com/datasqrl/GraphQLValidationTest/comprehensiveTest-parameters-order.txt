@@ -1805,7 +1805,7 @@ FROM "ExternalOrders"
       "name" : "Apache License 2.0",
       "url" : "https://www.apache.org/licenses/LICENSE-2.0"
     },
-    "version" : "unknown"
+    "version" : "0.11.0"
   },
   "servers" : [ {
     "url" : "http://localhost:8888",
@@ -2052,7 +2052,16 @@ FROM "ExternalOrders"
               ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query TableFunctionCallsTblFct($arg2: Int!, $arg1: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg2: $arg2, arg1: $arg1, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "TableFunctionCallsTblFct",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -2075,16 +2084,7 @@ FROM "ExternalOrders"
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query TableFunctionCallsTblFct($arg2: Int!, $arg1: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg2: $arg2, arg1: $arg1, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
-            "queryName" : "TableFunctionCallsTblFct",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}"
+          }
         }
       ],
       "schema" : {

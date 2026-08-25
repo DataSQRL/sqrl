@@ -526,6 +526,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -537,7 +538,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyStringTable($limit: Int = 10, $offset: Int = 0) {\nMyStringTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "MyStringTable",
@@ -563,6 +563,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -574,7 +575,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "MyTable",
@@ -600,6 +600,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -611,7 +612,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query AuthMyTable($limit: Int = 10, $offset: Int = 0) {\nAuthMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "AuthMyTable",
@@ -637,6 +637,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -648,7 +649,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query AuthMyTableValues($limit: Int = 10, $offset: Int = 0) {\nAuthMyTableValues(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "AuthMyTableValues",
@@ -674,6 +674,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -685,7 +686,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query AuthStringMyTableValues($limit: Int = 10, $offset: Int = 0) {\nAuthStringMyTableValues(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "AuthStringMyTableValues",
@@ -706,6 +706,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "object",
             "properties" : {
@@ -722,7 +723,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "mutation AuthInputData($payload: JSON) {\nAuthInputData(event: { payload: $payload }) {\nevent_id\nval\npayload\nevent_time\n}\n\n}",
             "queryName" : "AuthInputData",

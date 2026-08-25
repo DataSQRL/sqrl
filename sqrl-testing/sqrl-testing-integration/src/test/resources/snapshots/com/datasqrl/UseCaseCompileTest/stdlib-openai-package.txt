@@ -202,6 +202,7 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -213,7 +214,6 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query data($limit: Int = 10, $offset: Int = 0) {\ndata(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "data",
@@ -239,6 +239,7 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -256,7 +257,6 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query results($limit: Int = 10, $offset: Int = 0) {\nresults(limit: $limit, offset: $offset) {\ncompletions_result\nextract_json_result_response\nextract_json_result_with_schema_response\n}\n\n}",
             "queryName" : "results",

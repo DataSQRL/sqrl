@@ -390,7 +390,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -427,16 +436,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
-            "queryName" : "Orders",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/Orders{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -454,7 +454,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query SpecialOrderSummary($limit: Int = 10, $offset: Int = 0) {\nSpecialOrderSummary(limit: $limit, offset: $offset) {\ncustomerid\nnum_special_orders\n}\n\n}",
+            "queryName" : "SpecialOrderSummary",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SpecialOrderSummary{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -467,16 +476,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query SpecialOrderSummary($limit: Int = 10, $offset: Int = 0) {\nSpecialOrderSummary(limit: $limit, offset: $offset) {\ncustomerid\nnum_special_orders\n}\n\n}",
-            "queryName" : "SpecialOrderSummary",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SpecialOrderSummary{?offset,limit}"
+          }
         },
         {
           "function" : {
@@ -494,7 +494,16 @@ END
               "required" : [ ]
             }
           },
-          "result" : {
+          "apiQuery" : {
+            "query" : "query SpecialOrderSummaryDatabase($limit: Int = 10, $offset: Int = 0) {\nSpecialOrderSummaryDatabase(limit: $limit, offset: $offset) {\ncustomerid\nnum_special_orders\n}\n\n}",
+            "queryName" : "SpecialOrderSummaryDatabase",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SpecialOrderSummaryDatabase{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
             "type" : "array",
             "items" : {
               "type" : "object",
@@ -507,16 +516,7 @@ END
                 }
               }
             }
-          },
-          "format" : "JSON",
-          "apiQuery" : {
-            "query" : "query SpecialOrderSummaryDatabase($limit: Int = 10, $offset: Int = 0) {\nSpecialOrderSummaryDatabase(limit: $limit, offset: $offset) {\ncustomerid\nnum_special_orders\n}\n\n}",
-            "queryName" : "SpecialOrderSummaryDatabase",
-            "operationType" : "QUERY"
-          },
-          "mcpMethod" : "TOOL",
-          "restMethod" : "GET",
-          "uriTemplate" : "queries/SpecialOrderSummaryDatabase{?offset,limit}"
+          }
         }
       ],
       "schema" : {

@@ -140,7 +140,7 @@ public class GraphQLSchemaConverter {
               endLocation.getColumn());
       GraphQLQuery query = new GraphQLQuery(queryString, fctDef.getName(), opDef.getOperation());
       ApiOperation.ApiOperationBuilder builder = ApiOperation.getBuilder(fctDef, query);
-      builder.result(toResultDefinition(schema, opDef));
+      builder.resultDefinition(toResultDefinition(schema, opDef));
       config.setProtocolSupport(builder);
       applyApiArgs(toArgMap(opDef.getDirectives()), builder);
       functions.add(builder.build());
@@ -344,7 +344,7 @@ public class GraphQLSchemaConverter {
     GraphQLQuery apiQuery =
         new GraphQLQuery(queryHeader.toString(), fieldDef.getName(), operationType);
     ApiOperation.ApiOperationBuilder builder = ApiOperation.getBuilder(funcDef, apiQuery);
-    builder.result(toResultDefinition(schema, apiQuery));
+    builder.resultDefinition(toResultDefinition(schema, apiQuery));
     config.setProtocolSupport(builder);
     applyApiArgs(toArgMap(fieldDef.getDirective("api")), builder);
     return builder.build();

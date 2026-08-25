@@ -526,6 +526,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -540,7 +541,6 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Detail($limit: Int = 10, $offset: Int = 0) {\nDetail(limit: $limit, offset: $offset) {\nid\ninfo\n}\n\n}",
             "queryName" : "Detail",
@@ -566,6 +566,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -591,7 +592,6 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Thing($limit: Int = 10, $offset: Int = 0) {\nThing(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
             "queryName" : "Thing",
@@ -617,6 +617,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -628,7 +629,6 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Tombstone($limit: Int = 10, $offset: Int = 0) {\nTombstone(limit: $limit, offset: $offset) {\nid\n}\n\n}",
             "queryName" : "Tombstone",
@@ -654,6 +654,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -679,7 +680,6 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query cleanQuery($limit: Int = 10, $offset: Int = 0) {\ncleanQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
             "queryName" : "cleanQuery",
@@ -705,6 +705,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -730,7 +731,6 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query joinQuery($limit: Int = 10, $offset: Int = 0) {\njoinQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
             "queryName" : "joinQuery",
@@ -756,6 +756,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -781,7 +782,6 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query subqueryQuery($limit: Int = 10, $offset: Int = 0) {\nsubqueryQuery(limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
             "queryName" : "subqueryQuery",
@@ -812,6 +812,7 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -837,7 +838,6 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query sortedQuery($minId: String!, $limit: Int = 10, $offset: Int = 0) {\nsortedQuery(minId: $minId, limit: $limit, offset: $offset) {\nid\nlabel\ndetail {\nid\ninfo\n}\n}\n\n}",
             "queryName" : "sortedQuery",

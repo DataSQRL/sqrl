@@ -409,6 +409,7 @@ FROM "_MyApplications2"
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -423,7 +424,6 @@ FROM "_MyApplications2"
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTable1($limit: Int = 10, $offset: Int = 0) {\nMyTable1(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
             "queryName" : "MyTable1",
@@ -449,6 +449,7 @@ FROM "_MyApplications2"
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -463,7 +464,6 @@ FROM "_MyApplications2"
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTable2($limit: Int = 10, $offset: Int = 0) {\nMyTable2(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
             "queryName" : "MyTable2",
@@ -489,6 +489,7 @@ FROM "_MyApplications2"
               "required" : [ ]
             }
           },
+          "format" : "JSON",
           "result" : {
             "type" : "array",
             "items" : {
@@ -503,7 +504,6 @@ FROM "_MyApplications2"
               }
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTable3($limit: Int = 10, $offset: Int = 0) {\nMyTable3(limit: $limit, offset: $offset) {\nid\nhello\n}\n\n}",
             "queryName" : "MyTable3",
