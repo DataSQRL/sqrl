@@ -117,7 +117,7 @@
     <antlr.version>4.13.2</antlr.version>
     <assertj.version>3.27.7</assertj.version>
     <autoservice.version>1.1.1</autoservice.version>
-    <avro.version>1.12.1</avro.version>
+    <avro.version>1.12.2</avro.version>
     <awaitility.version>4.3.0</awaitility.version>
     <!-- Keep AWS SDK version in sync with the Flink SQL Runner -->
     <awssdk.version>2.44.4</awssdk.version>
