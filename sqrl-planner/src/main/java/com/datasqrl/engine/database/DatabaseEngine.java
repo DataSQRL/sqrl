@@ -19,6 +19,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.export.ExportEngine;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
+import com.datasqrl.planner.tables.FlinkTableBuilder;
 
 /**
  * A {@link DatabaseEngine} is a {@link ExecutionEngine} that persists data for retrieval and uses
@@ -26,6 +27,11 @@ import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
  * queries.
  */
 public interface DatabaseEngine extends ExecutionEngine, ExportEngine {
+
+  @Override
+  default boolean isUpsertSink(FlinkTableBuilder tableBuilder) {
+    return tableBuilder.hasPrimaryKey();
+  }
 
   EnginePhysicalPlan plan(MaterializationStagePlan stagePlan);
 

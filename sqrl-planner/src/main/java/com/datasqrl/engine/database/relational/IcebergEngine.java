@@ -85,6 +85,12 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
   }
 
   @Override
+  public boolean isUpsertSink(FlinkTableBuilder tableBuilder) {
+    return tableBuilder.hasPrimaryKey()
+        && Boolean.parseBoolean(tableBuilder.getConnectorOptions().get(ICEBERG_UPSERT_ENABLED_KEY));
+  }
+
+  @Override
   protected Map<String, String> getConnectorOptions(
       Context.ContextBuilder ctxBuilder, TableAnalysis tableAnalysis) {
     var connectorOptions = super.getConnectorOptions(ctxBuilder, tableAnalysis);

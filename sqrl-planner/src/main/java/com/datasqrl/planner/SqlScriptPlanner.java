@@ -96,6 +96,7 @@ import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.SqlScriptPlannerUtil;
 import com.datasqrl.planner.util.SqlScriptWriter;
 import com.datasqrl.planner.util.SqlTableNameExtractor;
 import com.datasqrl.server.MutationInsertType;

@@ -115,10 +115,12 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`FunctionCalls_1`
 SELECT `searchResult`, `format`, `hash_columns`(`searchResult`, `format`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`FunctionCalls`
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Product_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`Product`
+ON CONFLICT DO NOTHING
 ;
 END
 >>>kafka.json

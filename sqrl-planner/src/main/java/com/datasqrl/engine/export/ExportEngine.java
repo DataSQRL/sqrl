@@ -45,5 +45,9 @@ public interface ExportEngine extends ExecutionEngine {
       RelDataType relDataType,
       TableAnalysis tableAnalysis);
 
+  default boolean isUpsertSink(FlinkTableBuilder tableBuilder) {
+    return false;
+  }
+
   DataTypeMapping getTypeMapping();
 }

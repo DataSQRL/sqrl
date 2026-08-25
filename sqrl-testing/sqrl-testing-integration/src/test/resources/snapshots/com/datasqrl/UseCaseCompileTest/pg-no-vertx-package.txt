@@ -34,6 +34,7 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MyView_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`MyView`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>postgres-schema.sql
