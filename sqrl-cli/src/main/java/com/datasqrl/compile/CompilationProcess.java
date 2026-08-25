@@ -103,7 +103,8 @@ public class CompilationProcess {
       apiVersions.forEach(
           api -> {
             var model = serverModelManager.generateGraphQLModel(api, serverPlan);
-            var generatedOpenApi = serverModelManager.generateOpenApiJson(api, model);
+            var generatedOpenApi =
+                serverModelManager.generateOpenApiJson(api, model, serverPlan.getServerConfig());
 
             serverPlan.getModels().put(api.version(), model);
             serverPlan

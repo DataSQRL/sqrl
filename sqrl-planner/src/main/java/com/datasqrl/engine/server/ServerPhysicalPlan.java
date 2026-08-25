@@ -19,6 +19,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.LinkedHashMap;
@@ -41,6 +42,9 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
 
   /** Additional server configuration */
   @JsonIgnore final List<DeploymentArtifact> deploymentArtifacts;
+
+  /** Merged server configuration used to generate deployment artifacts. */
+  @JsonIgnore final ServerConfig serverConfig;
 
   /**
    * The generated API for the server. This gets generated after the planning and is added to the

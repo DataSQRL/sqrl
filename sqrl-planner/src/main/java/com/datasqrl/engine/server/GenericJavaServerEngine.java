@@ -55,15 +55,17 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
     validateFunctions(serverPlan.functions());
 
     var execFnPlan = serverPlan.execFnFactory().getPlan();
+    var serverConfig = serverConfig();
     var artifacts = new ArrayList<DeploymentArtifact>();
-    artifacts.add(new DeploymentArtifact("-config.json", serverConfig()));
+    artifacts.add(new DeploymentArtifact("-config.json", toJson(serverConfig)));
 
     if (!execFnPlan.functions().isEmpty()) {
       artifacts.add(new DeploymentArtifact("-exec-functions.ser", execFnPlan));
       artifacts.add(new DeploymentArtifact("-exec-functions.json", execFnPlan, ArtifactType.JSON));
     }
 
-    return new ServerPhysicalPlan(serverPlan.functions(), serverPlan.mutations(), artifacts);
+    return new ServerPhysicalPlan(
+        serverPlan.functions(), serverPlan.mutations(), artifacts, serverConfig);
   }
 
   private void validateFunctions(List<SqrlTableFunction> functions) {
@@ -77,9 +79,13 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   }
 
   @SneakyThrows
-  private String serverConfig() {
-    var mergedConfig = mergeConfigs(readDefaultConfig(), engineConfig.getConfig());
-    return JsonUtils.MAPPER.copy().writer(new PrettyPrinter()).writeValueAsString(mergedConfig);
+  private ServerConfig serverConfig() {
+    return mergeConfigs(readDefaultConfig(), engineConfig.getConfig());
+  }
+
+  @SneakyThrows
+  private String toJson(ServerConfig serverConfig) {
+    return JsonUtils.MAPPER.copy().writer(new PrettyPrinter()).writeValueAsString(serverConfig);
   }
 
   @SneakyThrows

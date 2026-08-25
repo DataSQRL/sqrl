@@ -19,19 +19,22 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.server.config.OpenApiConfig;
-import com.datasqrl.server.config.ServletConfig;
+import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.converter.GraphQLSchemaConverter;
 import com.datasqrl.server.converter.GraphQLSchemaConverterConfig;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.graphql.RootGraphQLModel.StringSchema;
 import com.datasqrl.server.openapi.OpenApiService;
 import com.datasqrl.server.operation.ApiOperation;
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import org.openapitools.openapidiff.core.OpenApiCompare;
 import org.openapitools.openapidiff.core.model.ChangedOpenApi;
+import org.openapitools.openapidiff.core.output.ConsoleRender;
 import org.springframework.stereotype.Component;
 
 /** Generates the model for the server */
@@ -98,13 +101,14 @@ public class ServerModelManager {
         .build();
   }
 
-  public String generateOpenApiJson(ApiSources api, RootGraphQLModel model) {
+  public String generateOpenApiJson(
+      ApiSources api, RootGraphQLModel model, ServerConfig serverConfig) {
     var openApiService =
         new OpenApiService(
-            new OpenApiConfig(),
+            serverConfig.getOpenApiConfig(),
             model,
             api.version(),
-            new ServletConfig().getRestEndpoint(api.version()));
+            serverConfig.getServletConfig().getRestEndpoint(api.version()));
 
     var generatedOpenApi = openApiService.generateOpenApiJson();
     validateOpenApiJsonIfNeeded(api.version(), generatedOpenApi);
@@ -113,20 +117,20 @@ public class ServerModelManager {
   }
 
   private void validateOpenApiJsonIfNeeded(String apiVersion, String generatedOpenApi) {
-    var configuredOpenApiOpt =
+    var configuredFilenameOpt =
         packageConfig.getScriptConfig().getScriptApiConfigs().stream()
             .filter(apiConfig -> apiConfig.getVersion().equals(apiVersion))
             .findFirst()
             .flatMap(PackageJson.ScriptApiConfig::getOpenApi);
 
-    if (configuredOpenApiOpt.isEmpty()) {
+    if (configuredFilenameOpt.isEmpty()) {
       return;
     }
 
-    var configuredOpenApi = configuredOpenApiOpt.get();
+    var configuredFilename = configuredFilenameOpt.get();
     final ChangedOpenApi diff;
     try {
-      var configuredOpenApiPath = workspacePaths.buildDir().resolve(configuredOpenApiOpt.get());
+      var configuredOpenApiPath = workspacePaths.buildDir().resolve(configuredFilenameOpt.get());
       var configuredOpenApiContent = Files.readString(configuredOpenApiPath);
 
       diff = OpenApiCompare.fromContents(configuredOpenApiContent, generatedOpenApi);
@@ -134,13 +138,21 @@ public class ServerModelManager {
     } catch (Exception e) {
       throw errors.exception(
           "Failed to compare generated OpenAPI specification with %s: %s",
-          configuredOpenApi, e.getMessage());
+          configuredFilename, e.getMessage());
     }
 
     errors.checkFatal(
         !diff.isIncompatible(),
         "The generated OpenAPI specification is not backwards compatible with %s: %s",
-        configuredOpenApi,
-        diff);
+        configuredFilename,
+        renderOpenApiDiff(diff));
+  }
+
+  private String renderOpenApiDiff(ChangedOpenApi diff) {
+    var output = new ByteArrayOutputStream();
+    // The renderer closes the writer
+    new ConsoleRender().render(diff, new OutputStreamWriter(output, StandardCharsets.UTF_8));
+
+    return output.toString(StandardCharsets.UTF_8);
   }
 }
