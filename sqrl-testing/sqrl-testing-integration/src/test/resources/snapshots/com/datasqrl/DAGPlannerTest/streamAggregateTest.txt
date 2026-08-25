@@ -153,7 +153,7 @@ ON CONFLICT DO DEDUPLICATE
 INSERT INTO `default_catalog`.`default_database`.`Orders_3`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`Orders`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 END
 >>>kafka.json

@@ -1031,12 +1031,12 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AnotherCustomer_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`AnotherCustomer`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customer_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customer_3`
 SELECT *
@@ -1068,7 +1068,7 @@ FROM `default_catalog`.`default_database`.`CustomerTimeWindow`
 INSERT INTO `default_catalog`.`default_database`.`CustomerTimeWindow_9`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomerTimeWindow`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`ExplicitDistinct_10`
 SELECT *
@@ -1078,7 +1078,7 @@ ON CONFLICT DO DEDUPLICATE
 INSERT INTO `default_catalog`.`default_database`.`ExternalOrders_11`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`ExternalOrders`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`InvalidDistinct_12`
 SELECT *
@@ -1093,7 +1093,7 @@ ON CONFLICT DO DEDUPLICATE
 INSERT INTO `default_catalog`.`default_database`.`SelectCustomers_14`
 SELECT *
 FROM `default_catalog`.`default_database`.`SelectCustomers`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
 SELECT *
@@ -1102,12 +1102,12 @@ FROM `default_catalog`.`default_database`.`TemporalJoin`
 INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_15`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
 FROM `default_catalog`.`default_database`.`TemporalJoin`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`
 SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`UnnestOrders`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 END
 >>>kafka.json

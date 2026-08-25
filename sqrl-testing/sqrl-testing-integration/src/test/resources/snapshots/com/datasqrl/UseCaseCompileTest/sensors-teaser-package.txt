@@ -355,7 +355,7 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`MachineGroup_1`
 SELECT `groupId`, `groupName`, `created`, `to_jsonb`(`machines`) AS `machines`
 FROM `default_catalog`.`default_database`.`MachineGroup`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`SecReading_2`
 SELECT *
@@ -370,12 +370,12 @@ ON CONFLICT DO DEDUPLICATE
 INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
 SELECT *
 FROM `default_catalog`.`default_database`.`SensorReading`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Sensors_5`
 SELECT *
 FROM `default_catalog`.`default_database`.`Sensors`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 END
 >>>kafka.json

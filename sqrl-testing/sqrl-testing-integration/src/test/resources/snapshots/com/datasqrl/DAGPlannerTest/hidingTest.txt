@@ -287,17 +287,17 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AnotherCustomer_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`AnotherCustomer`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customer_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`FinalCustomer_3`
 SELECT *
 FROM `default_catalog`.`default_database`.`FinalCustomer`
-ON CONFLICT DO DEDUPLICATE
+ON CONFLICT DO NOTHING
 ;
 END
 >>>kafka.json
