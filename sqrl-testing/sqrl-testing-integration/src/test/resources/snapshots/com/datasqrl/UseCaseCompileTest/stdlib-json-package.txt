@@ -240,7 +240,6 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Json($limit: Int = 10, $offset: Int = 0) {\nJson(limit: $limit, offset: $offset) {\nid\nval\ntimestamp\n}\n\n}",
             "queryName" : "Json",
@@ -248,7 +247,26 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Json{?offset,limit}"
+          "uriTemplate" : "queries/Json{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "val" : {
+                  "type" : "string"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -266,7 +284,6 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query UnmodifiedJsonData($limit: Int = 10, $offset: Int = 0) {\nUnmodifiedJsonData(limit: $limit, offset: $offset) {\nid\nval\njson_col\njson_col_2\njson_col_3\njson_col_4\n}\n\n}",
             "queryName" : "UnmodifiedJsonData",
@@ -274,7 +291,26 @@ CREATE TABLE IF NOT EXISTS "UnmodifiedJsonData" ("id" BIGINT NOT NULL, "val" TEX
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/UnmodifiedJsonData{?offset,limit}"
+          "uriTemplate" : "queries/UnmodifiedJsonData{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "val" : {
+                  "type" : "string"
+                },
+                "json_col" : { },
+                "json_col_2" : { },
+                "json_col_3" : { },
+                "json_col_4" : { }
+              }
+            }
+          }
         }
       ],
       "schema" : {

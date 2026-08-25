@@ -16,15 +16,20 @@
 package com.datasqrl.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.server.config.OpenApiConfig;
 import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.config.ServletConfig;
 import com.datasqrl.server.graphql.ModelContainer;
 import com.datasqrl.server.graphql.RootGraphQLModel;
+import com.datasqrl.server.openapi.OpenApiService;
 import com.datasqrl.server.operation.ApiOperation;
+import com.datasqrl.server.operation.RestMethodType;
+import com.datasqrl.server.operation.ResultDefinition;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Resources;
 import graphql.ExecutionInput;
@@ -40,6 +45,8 @@ import io.vertx.ext.web.RequestBody;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +54,7 @@ import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
@@ -71,6 +79,7 @@ class RestBridgeVerticleTest {
   private RootGraphQLModel model;
   private RestBridgeVerticle restBridgeVerticle;
   private Vertx vertx;
+  @TempDir Path tempDir;
 
   @BeforeEach
   @SneakyThrows
@@ -102,7 +111,14 @@ class RestBridgeVerticleTest {
     when(route.handler(any())).thenReturn(route);
 
     restBridgeVerticle =
-        new RestBridgeVerticle(router, serverConfig, "v1", model, List.of(), graphQLServerVerticle);
+        new RestBridgeVerticle(
+            router,
+            serverConfig,
+            "v1",
+            model,
+            List.of(),
+            graphQLServerVerticle,
+            Path.of("unused-openapi-artifact.json"));
   }
 
   @Test
@@ -247,6 +263,200 @@ class RestBridgeVerticleTest {
     // Then
     assertThat(parameters).containsKey("event");
     assertThat(parameters.get("event")).isInstanceOf(List.class);
+  }
+
+  @Test
+  void given_postRequestWithPathParams_when_extractParameters_then_extractsPathParameters() {
+    var operation = getSensorMaxOperation();
+    var postOperation =
+        ApiOperation.builder()
+            .function(operation.getFunction())
+            .apiQuery(operation.getApiQuery())
+            .mcpMethod(operation.getMcpMethod())
+            .restMethod(RestMethodType.POST)
+            .uriTemplate("mutations/{sensorid}")
+            .format(operation.getFormat())
+            .build();
+    when(requestBody.asJsonObject()).thenReturn(null);
+    when(routingContext.body()).thenReturn(requestBody);
+    when(routingContext.pathParams()).thenReturn(Map.of("sensorid", "123"));
+
+    var parameters = RestBridgeVerticle.extractParameters(routingContext, postOperation);
+
+    assertThat(parameters).containsEntry("sensorid", 123L);
+  }
+
+  @Test
+  void
+      givenPostRequestWithMismatchedPathAndBodyParameters_whenExtractParameters_thenRejectsRequest() {
+    var operation = getSensorMaxOperation();
+    var postOperation =
+        ApiOperation.builder()
+            .function(operation.getFunction())
+            .apiQuery(operation.getApiQuery())
+            .mcpMethod(operation.getMcpMethod())
+            .restMethod(RestMethodType.POST)
+            .uriTemplate("mutations/{sensorid}")
+            .format(operation.getFormat())
+            .build();
+    when(requestBody.asJsonObject()).thenReturn(new JsonObject().put("sensorid", 456));
+    when(routingContext.body()).thenReturn(requestBody);
+    when(routingContext.pathParams()).thenReturn(Map.of("sensorid", "123"));
+
+    assertThatThrownBy(() -> RestBridgeVerticle.extractParameters(routingContext, postOperation))
+        .isInstanceOf(AbstractBridgeVerticle.ValidationException.class)
+        .hasMessage("Path parameter 'sensorid' does not match the request body");
+  }
+
+  @Test
+  void givenPostRequestWithQueryParameters_whenExtractParameters_thenIgnoresQueryParameters() {
+    var operation = getSensorMaxOperation();
+    var postOperation =
+        ApiOperation.builder()
+            .function(operation.getFunction())
+            .apiQuery(operation.getApiQuery())
+            .mcpMethod(operation.getMcpMethod())
+            .restMethod(RestMethodType.POST)
+            .uriTemplate("mutations")
+            .format(operation.getFormat())
+            .build();
+    var queryParams = MultiMap.caseInsensitiveMultiMap();
+    queryParams.add("sensorid", "123");
+    when(request.params()).thenReturn(queryParams);
+    when(requestBody.asJsonObject()).thenReturn(null);
+    when(routingContext.body()).thenReturn(requestBody);
+
+    var parameters = RestBridgeVerticle.extractParameters(routingContext, postOperation);
+
+    assertThat(parameters).doesNotContainKey("sensorid");
+  }
+
+  @Test
+  @SneakyThrows
+  void given_modelWithRestOperations_when_generateOpenApi_then_includesResponseSchemas() {
+    var operation = addSensorReadingOperation();
+    var result =
+        ResultDefinition.builder()
+            .type("array")
+            .items(
+                ResultDefinition.builder()
+                    .type("object")
+                    .properties(
+                        Map.of(
+                            "sensorid", ResultDefinition.builder().type("integer").build(),
+                            "event_time",
+                                ResultDefinition.builder()
+                                    .type("string")
+                                    .format("date-time")
+                                    .build()))
+                    .build())
+            .build();
+    var operationWithResult =
+        ApiOperation.builder()
+            .function(operation.getFunction())
+            .apiQuery(operation.getApiQuery())
+            .resultDefinition(result)
+            .mcpMethod(operation.getMcpMethod())
+            .restMethod(operation.getRestMethod())
+            .uriTemplate(operation.getUriTemplate())
+            .format(operation.getFormat())
+            .build();
+    var modelWithResult =
+        RootGraphQLModel.builder()
+            .queries(model.getQueries())
+            .mutations(model.getMutations())
+            .subscriptions(model.getSubscriptions())
+            .operations(
+                model.getOperations().stream()
+                    .map(current -> current.equals(operation) ? operationWithResult : current)
+                    .toList())
+            .schema(model.getSchema())
+            .build();
+    var openApi =
+        new ObjectMapper()
+            .readTree(
+                new OpenApiService(new OpenApiConfig(), modelWithResult, "v1", "/v1/api/rest")
+                    .generateOpenApiJson());
+
+    var dataSchema =
+        openApi.at(
+            "/paths/~1v1~1api~1rest~1mutations~1SensorReading/post/responses/200/content/application~1json/schema/properties/data");
+
+    assertThat(dataSchema.path("type").asText()).isEqualTo("array");
+    assertThat(dataSchema.path("items").path("properties").path("sensorid").path("type").asText())
+        .isEqualTo("integer");
+    assertThat(
+            dataSchema.path("items").path("properties").path("event_time").path("format").asText())
+        .isEqualTo("date-time");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenCompiledOpenApiArtifact_whenRequestHostProvided_thenOnlyServerUrlChanges() {
+    var compiledOpenApi =
+        """
+        {
+          "openapi": "3.0.1",
+          "servers": [{"url": "http://localhost:8888", "description": "compiled"}],
+          "paths": {"/custom": {"get": {"operationId": "customOperation"}}}
+        }
+        """;
+
+    var openApiWithRequestHost =
+        new OpenApiService(new OpenApiConfig(), model, "v1", "/v1/api/rest")
+            .withRequestHost(compiledOpenApi, "https://api.example.com");
+    var openApi = new ObjectMapper().readTree(openApiWithRequestHost);
+
+    assertThat(openApi.at("/servers/0/url").asText()).isEqualTo("https://api.example.com");
+    assertThat(openApi.at("/servers/0/description").asText()).isEqualTo("compiled");
+    assertThat(openApi.at("/paths/~1custom/get/operationId").asText()).isEqualTo("customOperation");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenRequestHost_whenGenerateOpenApi_thenUsesItForTheServerUrl() {
+    var openApi =
+        new ObjectMapper()
+            .readTree(
+                new OpenApiService(new OpenApiConfig(), model, "v1", "/v1/api/rest")
+                    .generateOpenApiJson("https://api.example.com"));
+
+    assertThat(openApi.at("/servers/0/url").asText()).isEqualTo("https://api.example.com");
+  }
+
+  @Test
+  void givenMissingOpenApiArtifact_whenStartingRestBridge_thenRegeneratesIt() {
+    when(serverConfig.getOpenApiConfig()).thenReturn(new OpenApiConfig());
+    restBridgeVerticle =
+        new RestBridgeVerticle(
+            router,
+            serverConfig,
+            "v1",
+            model,
+            List.of(),
+            graphQLServerVerticle,
+            Path.of("missing-openapi-artifact.json"));
+    var promise = Promise.<Void>promise();
+
+    restBridgeVerticle.start(promise);
+
+    assertThat(promise.future().succeeded()).isTrue();
+  }
+
+  @Test
+  @SneakyThrows
+  void givenInvalidOpenApiArtifact_whenStartingRestBridge_thenRegeneratesIt() {
+    var openApiArtifact = tempDir.resolve("invalid-openapi-artifact.json");
+    Files.writeString(openApiArtifact, "not JSON");
+    when(serverConfig.getOpenApiConfig()).thenReturn(new OpenApiConfig());
+    restBridgeVerticle =
+        new RestBridgeVerticle(
+            router, serverConfig, "v1", model, List.of(), graphQLServerVerticle, openApiArtifact);
+    var promise = Promise.<Void>promise();
+
+    restBridgeVerticle.start(promise);
+
+    assertThat(promise.future().succeeded()).isTrue();
   }
 
   @Test

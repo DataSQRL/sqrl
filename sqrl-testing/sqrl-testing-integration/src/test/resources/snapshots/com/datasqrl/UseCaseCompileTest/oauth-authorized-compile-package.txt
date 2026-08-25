@@ -187,7 +187,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "MyTable",
@@ -195,7 +194,19 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTable{?offset,limit}"
+          "uriTemplate" : "queries/MyTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -218,7 +229,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTableQuery($maxResults: Int!, $limit: Int = 10, $offset: Int = 0) {\nMyTableQuery(maxResults: $maxResults, limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "MyTableQuery",
@@ -226,7 +236,19 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTableQuery{?offset,maxResults,limit}"
+          "uriTemplate" : "queries/MyTableQuery{?offset,maxResults,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

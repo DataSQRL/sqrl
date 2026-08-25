@@ -204,7 +204,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query DuckDbTable($limit: Int = 10, $offset: Int = 0) {\nDuckDbTable(limit: $limit, offset: $offset) {\nuser_id\nattrs\n}\n\n}",
             "queryName" : "DuckDbTable",
@@ -212,7 +211,20 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/DuckDbTable{?offset,limit}"
+          "uriTemplate" : "queries/DuckDbTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "user_id" : {
+                  "type" : "integer"
+                },
+                "attrs" : { }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -230,7 +242,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nnum\n}\n\n}",
             "queryName" : "MyTable",
@@ -238,7 +249,19 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTable{?offset,limit}"
+          "uriTemplate" : "queries/MyTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "num" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

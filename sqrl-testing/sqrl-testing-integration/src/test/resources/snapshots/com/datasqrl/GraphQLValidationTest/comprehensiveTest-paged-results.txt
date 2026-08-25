@@ -1806,7 +1806,7 @@ FROM "ExternalOrders"
       "name" : "Apache License 2.0",
       "url" : "https://www.apache.org/licenses/LICENSE-2.0"
     },
-    "version" : "unknown"
+    "version" : "0.11.0"
   },
   "servers" : [ {
     "url" : "http://localhost:8888",
@@ -1842,7 +1842,69 @@ FROM "ExternalOrders"
                   "properties" : {
                     "data" : {
                       "type" : "object",
-                      "description" : "Response data"
+                      "properties" : {
+                        "results" : {
+                          "type" : "array",
+                          "items" : {
+                            "type" : "object",
+                            "properties" : {
+                              "customerid" : {
+                                "type" : "integer"
+                              },
+                              "email" : {
+                                "type" : "string"
+                              },
+                              "name" : {
+                                "type" : "string"
+                              },
+                              "lastUpdated" : {
+                                "type" : "integer"
+                              },
+                              "timestamp" : {
+                                "type" : "string",
+                                "format" : "date-time"
+                              }
+                            }
+                          }
+                        },
+                        "pagination" : {
+                          "type" : "object",
+                          "properties" : {
+                            "pageSize" : {
+                              "type" : "integer"
+                            },
+                            "currentPage" : {
+                              "type" : "integer"
+                            },
+                            "totalRecords" : {
+                              "type" : "integer"
+                            },
+                            "totalPages" : {
+                              "type" : "integer"
+                            },
+                            "hasNextPage" : {
+                              "type" : "boolean"
+                            },
+                            "hasPreviousPage" : {
+                              "type" : "boolean"
+                            },
+                            "nextOffset" : {
+                              "type" : "integer"
+                            },
+                            "prevOffset" : {
+                              "type" : "integer"
+                            },
+                            "firstEventTime" : {
+                              "type" : "string",
+                              "format" : "date-time"
+                            },
+                            "lastEventTime" : {
+                              "type" : "string",
+                              "format" : "date-time"
+                            }
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -1925,7 +1987,6 @@ FROM "ExternalOrders"
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerByTime2($limit: Int = 10, $offset: Int = 0) {\nCustomerByTime2(limit: $limit, offset: $offset) {\nresults {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "CustomerByTime2",
@@ -1933,7 +1994,74 @@ FROM "ExternalOrders"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerByTime2{?offset,limit}"
+          "uriTemplate" : "queries/CustomerByTime2{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "results" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "customerid" : {
+                      "type" : "integer"
+                    },
+                    "email" : {
+                      "type" : "string"
+                    },
+                    "name" : {
+                      "type" : "string"
+                    },
+                    "lastUpdated" : {
+                      "type" : "integer"
+                    },
+                    "timestamp" : {
+                      "type" : "string",
+                      "format" : "date-time"
+                    }
+                  }
+                }
+              },
+              "pagination" : {
+                "type" : "object",
+                "properties" : {
+                  "pageSize" : {
+                    "type" : "integer"
+                  },
+                  "currentPage" : {
+                    "type" : "integer"
+                  },
+                  "totalRecords" : {
+                    "type" : "integer"
+                  },
+                  "totalPages" : {
+                    "type" : "integer"
+                  },
+                  "hasNextPage" : {
+                    "type" : "boolean"
+                  },
+                  "hasPreviousPage" : {
+                    "type" : "boolean"
+                  },
+                  "nextOffset" : {
+                    "type" : "integer"
+                  },
+                  "prevOffset" : {
+                    "type" : "integer"
+                  },
+                  "firstEventTime" : {
+                    "type" : "string",
+                    "format" : "date-time"
+                  },
+                  "lastEventTime" : {
+                    "type" : "string",
+                    "format" : "date-time"
+                  }
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

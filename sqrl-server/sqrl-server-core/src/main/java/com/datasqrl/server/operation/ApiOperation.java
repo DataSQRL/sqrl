@@ -40,6 +40,7 @@ public class ApiOperation {
   String uriTemplate;
 
   ResultFormat format;
+  ResultDefinition resultDefinition;
 
   public static ApiOperationBuilder getBuilder(FunctionDefinition function, GraphQLQuery apiQuery) {
     return builder()
@@ -54,17 +55,19 @@ public class ApiOperation {
   @JsonCreator
   public ApiOperation(
       @JsonProperty("function") FunctionDefinition function,
-      @JsonProperty("query") GraphQLQuery apiQuery,
-      @JsonProperty("mcp") McpMethodType mcpMethod,
-      @JsonProperty("rest") RestMethodType restMethod,
-      @JsonProperty("uri") String uriTemplate,
-      @JsonProperty("format") ResultFormat format) {
+      @JsonProperty("apiQuery") GraphQLQuery apiQuery,
+      @JsonProperty("mcpMethod") McpMethodType mcpMethod,
+      @JsonProperty("restMethod") RestMethodType restMethod,
+      @JsonProperty("uriTemplate") String uriTemplate,
+      @JsonProperty("format") ResultFormat format,
+      @JsonProperty("resultDefinition") ResultDefinition resultDefinition) {
     this.function = function;
     this.apiQuery = apiQuery;
     this.mcpMethod = mcpMethod;
     this.restMethod = restMethod;
     this.uriTemplate = uriTemplate;
     this.format = format;
+    this.resultDefinition = resultDefinition;
   }
 
   /**

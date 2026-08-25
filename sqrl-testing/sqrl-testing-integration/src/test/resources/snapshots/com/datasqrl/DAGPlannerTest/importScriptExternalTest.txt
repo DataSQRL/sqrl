@@ -417,7 +417,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerAggregate1($limit: Int = 10, $offset: Int = 0) {\nCustomerAggregate1(limit: $limit, offset: $offset) {\ncustomerid\nupdates\n}\n\n}",
             "queryName" : "CustomerAggregate1",
@@ -425,7 +424,22 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerAggregate1{?offset,limit}"
+          "uriTemplate" : "queries/CustomerAggregate1{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "updates" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -443,7 +457,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerAggregate2($limit: Int = 10, $offset: Int = 0) {\nCustomerAggregate2(limit: $limit, offset: $offset) {\ncustomerid\nupdates\n}\n\n}",
             "queryName" : "CustomerAggregate2",
@@ -451,7 +464,22 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerAggregate2{?offset,limit}"
+          "uriTemplate" : "queries/CustomerAggregate2{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "updates" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

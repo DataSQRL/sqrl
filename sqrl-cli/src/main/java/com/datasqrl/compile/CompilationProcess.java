@@ -15,6 +15,8 @@
  */
 package com.datasqrl.compile;
 
+import static com.datasqrl.server.openapi.OpenApiService.OPENAPI_JSON_ARTIFACT_NAME_SUFFIX_TEMPLATE;
+
 import com.datasqrl.config.GraphqlSourceLoader;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.WorkspacePaths;
@@ -33,10 +35,7 @@ import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
-import com.datasqrl.server.GenerateServerModel;
-import com.datasqrl.server.config.OpenApiConfig;
-import com.datasqrl.server.config.ServletConfig;
-import com.datasqrl.server.openapi.OpenApiService;
+import com.datasqrl.server.ServerModelManager;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -58,9 +57,9 @@ public class CompilationProcess {
   private final WorkspacePaths workspacePaths;
   private final MainScript mainScript;
   private final PackageJson config;
-  private final GenerateServerModel generateServerModel;
-  private final DagWriter writeDeploymentArtifactsHook;
+  private final DagWriter dagWriter;
   private final GraphqlSourceLoader graphqlSourceLoader;
+  private final ServerModelManager serverModelManager;
   private final ExecutionGoal executionGoal;
   private final ErrorCollector errors;
 
@@ -76,7 +75,7 @@ public class CompilationProcess {
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);
     var mutationDatabase = physicalPlan.getMutationDatabase();
-    writeDeploymentArtifactsHook.run(dag, planner.getCompleteScript().toString(), mutationDatabase);
+    dagWriter.run(dag, planner.getCompleteScript().toString(), mutationDatabase);
 
     TestPlan testPlan = null;
     // There can only be a single server plan
@@ -93,32 +92,27 @@ public class CompilationProcess {
       var loadResult = graphqlSourceLoader.load(serverPlan);
       var apiVersions = new ArrayList<>(loadResult.apiVersions());
 
-      loadResult.inferredSchema().ifPresent(writeDeploymentArtifactsHook::writeInferredSchema);
+      loadResult.inferredSchema().ifPresent(dagWriter::writeInferredSchema);
 
-      // Data model (GraphQL schema) Voyager page; latest API version when multi-version.
       if (!apiVersions.isEmpty()) {
         Collections.sort(apiVersions);
-        writeDeploymentArtifactsHook.writeDataModelVisual(
+        dagWriter.writeDataModelVisual(
             apiVersions.get(apiVersions.size() - 1).schema().getDefinition());
       }
 
       apiVersions.forEach(
           api -> {
-            var model = generateServerModel.generateGraphQLModel(api, serverPlan);
-            var openApiService =
-                new OpenApiService(
-                    new OpenApiConfig(),
-                    model,
-                    api.version(),
-                    new ServletConfig().getRestEndpoint(api.version()));
+            var model = serverModelManager.generateGraphQLModel(api, serverPlan);
+            var generatedOpenApi =
+                serverModelManager.generateOpenApiJson(api, model, serverPlan.getServerConfig());
 
             serverPlan.getModels().put(api.version(), model);
             serverPlan
                 .getDeploymentArtifacts()
                 .add(
                     new DeploymentArtifact(
-                        '-' + api.version() + "-openapi.json",
-                        openApiService.generateOpenApiJson()));
+                        String.format(OPENAPI_JSON_ARTIFACT_NAME_SUFFIX_TEMPLATE, api.version()),
+                        generatedOpenApi));
           });
 
       // create test artifact

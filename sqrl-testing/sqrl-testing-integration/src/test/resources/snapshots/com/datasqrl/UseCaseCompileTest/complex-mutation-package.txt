@@ -285,7 +285,6 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query LatestTokens($limit: Int = 10, $offset: Int = 0) {\nLatestTokens(limit: $limit, offset: $offset) {\nuserid\ntotal_tokens\nwindow_end\nwindow_time\n}\n\n}",
             "queryName" : "LatestTokens",
@@ -293,7 +292,30 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/LatestTokens{?offset,limit}"
+          "uriTemplate" : "queries/LatestTokens{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "userid" : {
+                  "type" : "integer"
+                },
+                "total_tokens" : {
+                  "type" : "integer"
+                },
+                "window_end" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -314,7 +336,6 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "mutation InputTable($userid: Int!, $tokens: Long!) {\nInputTable(event: { userid: $userid, tokens: $tokens }) {\nuserid\ntokens\nevent_time\n}\n\n}",
             "queryName" : "InputTable",
@@ -322,7 +343,23 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "POST",
-          "uriTemplate" : "mutations/InputTable"
+          "uriTemplate" : "mutations/InputTable",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "userid" : {
+                "type" : "integer"
+              },
+              "tokens" : {
+                "type" : "integer"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
         }
       ],
       "schema" : {

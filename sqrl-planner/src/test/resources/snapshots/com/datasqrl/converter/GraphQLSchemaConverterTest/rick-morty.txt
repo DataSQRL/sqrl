@@ -1,4 +1,9 @@
 [ {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query character($id: ID!) {\ncharacter(id: $id) {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "character"
+  },
   "format" : "JSON",
   "function" : {
     "description" : "Get a specific character by ID",
@@ -13,15 +18,133 @@
       "type" : "object"
     }
   },
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query character($id: ID!) {\ncharacter(id: $id) {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n\n}",
-    "queryName" : "character"
-  },
   "mcpMethod" : "TOOL",
   "restMethod" : "GET",
+  "resultDefinition" : {
+    "properties" : {
+      "created" : {
+        "description" : "Time at which the character was created in the database.",
+        "type" : "string"
+      },
+      "episode" : {
+        "description" : "Episodes in which this character appeared.",
+        "items" : {
+          "properties" : {
+            "air_date" : {
+              "description" : "The air date of the episode.",
+              "type" : "string"
+            },
+            "created" : {
+              "description" : "Time at which the episode was created in the database.",
+              "type" : "string"
+            },
+            "episode" : {
+              "description" : "The code of the episode.",
+              "type" : "string"
+            },
+            "id" : {
+              "description" : "The id of the episode.",
+              "type" : "string"
+            },
+            "name" : {
+              "description" : "The name of the episode.",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "type" : "array"
+      },
+      "gender" : {
+        "description" : "The gender of the character ('Female', 'Male', 'Genderless' or 'unknown').",
+        "type" : "string"
+      },
+      "id" : {
+        "description" : "The id of the character.",
+        "type" : "string"
+      },
+      "image" : {
+        "description" : "Link to the character's image.\nAll images are 300x300px and most are medium shots or portraits since they are intended to be used as avatars.",
+        "type" : "string"
+      },
+      "location" : {
+        "description" : "The character's last known location",
+        "properties" : {
+          "created" : {
+            "description" : "Time at which the location was created in the database.",
+            "type" : "string"
+          },
+          "dimension" : {
+            "description" : "The dimension in which the location is located.",
+            "type" : "string"
+          },
+          "id" : {
+            "description" : "The id of the location.",
+            "type" : "string"
+          },
+          "name" : {
+            "description" : "The name of the location.",
+            "type" : "string"
+          },
+          "type" : {
+            "description" : "The type of the location.",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "name" : {
+        "description" : "The name of the character.",
+        "type" : "string"
+      },
+      "origin" : {
+        "description" : "The character's origin location",
+        "properties" : {
+          "created" : {
+            "description" : "Time at which the location was created in the database.",
+            "type" : "string"
+          },
+          "dimension" : {
+            "description" : "The dimension in which the location is located.",
+            "type" : "string"
+          },
+          "id" : {
+            "description" : "The id of the location.",
+            "type" : "string"
+          },
+          "name" : {
+            "description" : "The name of the location.",
+            "type" : "string"
+          },
+          "type" : {
+            "description" : "The type of the location.",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "species" : {
+        "description" : "The species of the character.",
+        "type" : "string"
+      },
+      "status" : {
+        "description" : "The status of the character ('Alive', 'Dead' or 'unknown').",
+        "type" : "string"
+      },
+      "type" : {
+        "description" : "The type or subspecies of the character.",
+        "type" : "string"
+      }
+    },
+    "type" : "object"
+  },
   "uriTemplate" : "queries/character{?id}"
 }, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query characters($page: Int, $name: String, $status: String, $species: String, $type: String, $gender: String) {\ncharacters(page: $page, filter: { name: $name, status: $status, species: $species, type: $type, gender: $gender }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n}\n\n}",
+    "queryName" : "characters"
+  },
   "format" : "JSON",
   "function" : {
     "description" : "Get the list of all characters",
@@ -51,15 +174,162 @@
       "type" : "object"
     }
   },
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query characters($page: Int, $name: String, $status: String, $species: String, $type: String, $gender: String) {\ncharacters(page: $page, filter: { name: $name, status: $status, species: $species, type: $type, gender: $gender }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n}\n\n}",
-    "queryName" : "characters"
-  },
   "mcpMethod" : "TOOL",
   "restMethod" : "GET",
+  "resultDefinition" : {
+    "properties" : {
+      "info" : {
+        "properties" : {
+          "count" : {
+            "description" : "The length of the response.",
+            "type" : "integer"
+          },
+          "next" : {
+            "description" : "Number of the next page (if it exists)",
+            "type" : "integer"
+          },
+          "pages" : {
+            "description" : "The amount of pages.",
+            "type" : "integer"
+          },
+          "prev" : {
+            "description" : "Number of the previous page (if it exists)",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "results" : {
+        "items" : {
+          "properties" : {
+            "created" : {
+              "description" : "Time at which the character was created in the database.",
+              "type" : "string"
+            },
+            "episode" : {
+              "description" : "Episodes in which this character appeared.",
+              "items" : {
+                "properties" : {
+                  "air_date" : {
+                    "description" : "The air date of the episode.",
+                    "type" : "string"
+                  },
+                  "created" : {
+                    "description" : "Time at which the episode was created in the database.",
+                    "type" : "string"
+                  },
+                  "episode" : {
+                    "description" : "The code of the episode.",
+                    "type" : "string"
+                  },
+                  "id" : {
+                    "description" : "The id of the episode.",
+                    "type" : "string"
+                  },
+                  "name" : {
+                    "description" : "The name of the episode.",
+                    "type" : "string"
+                  }
+                },
+                "type" : "object"
+              },
+              "type" : "array"
+            },
+            "gender" : {
+              "description" : "The gender of the character ('Female', 'Male', 'Genderless' or 'unknown').",
+              "type" : "string"
+            },
+            "id" : {
+              "description" : "The id of the character.",
+              "type" : "string"
+            },
+            "image" : {
+              "description" : "Link to the character's image.\nAll images are 300x300px and most are medium shots or portraits since they are intended to be used as avatars.",
+              "type" : "string"
+            },
+            "location" : {
+              "description" : "The character's last known location",
+              "properties" : {
+                "created" : {
+                  "description" : "Time at which the location was created in the database.",
+                  "type" : "string"
+                },
+                "dimension" : {
+                  "description" : "The dimension in which the location is located.",
+                  "type" : "string"
+                },
+                "id" : {
+                  "description" : "The id of the location.",
+                  "type" : "string"
+                },
+                "name" : {
+                  "description" : "The name of the location.",
+                  "type" : "string"
+                },
+                "type" : {
+                  "description" : "The type of the location.",
+                  "type" : "string"
+                }
+              },
+              "type" : "object"
+            },
+            "name" : {
+              "description" : "The name of the character.",
+              "type" : "string"
+            },
+            "origin" : {
+              "description" : "The character's origin location",
+              "properties" : {
+                "created" : {
+                  "description" : "Time at which the location was created in the database.",
+                  "type" : "string"
+                },
+                "dimension" : {
+                  "description" : "The dimension in which the location is located.",
+                  "type" : "string"
+                },
+                "id" : {
+                  "description" : "The id of the location.",
+                  "type" : "string"
+                },
+                "name" : {
+                  "description" : "The name of the location.",
+                  "type" : "string"
+                },
+                "type" : {
+                  "description" : "The type of the location.",
+                  "type" : "string"
+                }
+              },
+              "type" : "object"
+            },
+            "species" : {
+              "description" : "The species of the character.",
+              "type" : "string"
+            },
+            "status" : {
+              "description" : "The status of the character ('Alive', 'Dead' or 'unknown').",
+              "type" : "string"
+            },
+            "type" : {
+              "description" : "The type or subspecies of the character.",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "type" : "array"
+      }
+    },
+    "type" : "object"
+  },
   "uriTemplate" : "queries/characters{?gender,species,name,page,type,status}"
 }, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query charactersByIds($ids: [ID!]!) {\ncharactersByIds(ids: $ids) {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "charactersByIds"
+  },
   "format" : "JSON",
   "function" : {
     "description" : "Get a list of characters selected by ids",
@@ -77,15 +347,136 @@
       "type" : "object"
     }
   },
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query charactersByIds($ids: [ID!]!) {\ncharactersByIds(ids: $ids) {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\n\n}",
-    "queryName" : "charactersByIds"
-  },
   "mcpMethod" : "TOOL",
   "restMethod" : "GET",
+  "resultDefinition" : {
+    "items" : {
+      "properties" : {
+        "created" : {
+          "description" : "Time at which the character was created in the database.",
+          "type" : "string"
+        },
+        "episode" : {
+          "description" : "Episodes in which this character appeared.",
+          "items" : {
+            "properties" : {
+              "air_date" : {
+                "description" : "The air date of the episode.",
+                "type" : "string"
+              },
+              "created" : {
+                "description" : "Time at which the episode was created in the database.",
+                "type" : "string"
+              },
+              "episode" : {
+                "description" : "The code of the episode.",
+                "type" : "string"
+              },
+              "id" : {
+                "description" : "The id of the episode.",
+                "type" : "string"
+              },
+              "name" : {
+                "description" : "The name of the episode.",
+                "type" : "string"
+              }
+            },
+            "type" : "object"
+          },
+          "type" : "array"
+        },
+        "gender" : {
+          "description" : "The gender of the character ('Female', 'Male', 'Genderless' or 'unknown').",
+          "type" : "string"
+        },
+        "id" : {
+          "description" : "The id of the character.",
+          "type" : "string"
+        },
+        "image" : {
+          "description" : "Link to the character's image.\nAll images are 300x300px and most are medium shots or portraits since they are intended to be used as avatars.",
+          "type" : "string"
+        },
+        "location" : {
+          "description" : "The character's last known location",
+          "properties" : {
+            "created" : {
+              "description" : "Time at which the location was created in the database.",
+              "type" : "string"
+            },
+            "dimension" : {
+              "description" : "The dimension in which the location is located.",
+              "type" : "string"
+            },
+            "id" : {
+              "description" : "The id of the location.",
+              "type" : "string"
+            },
+            "name" : {
+              "description" : "The name of the location.",
+              "type" : "string"
+            },
+            "type" : {
+              "description" : "The type of the location.",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "name" : {
+          "description" : "The name of the character.",
+          "type" : "string"
+        },
+        "origin" : {
+          "description" : "The character's origin location",
+          "properties" : {
+            "created" : {
+              "description" : "Time at which the location was created in the database.",
+              "type" : "string"
+            },
+            "dimension" : {
+              "description" : "The dimension in which the location is located.",
+              "type" : "string"
+            },
+            "id" : {
+              "description" : "The id of the location.",
+              "type" : "string"
+            },
+            "name" : {
+              "description" : "The name of the location.",
+              "type" : "string"
+            },
+            "type" : {
+              "description" : "The type of the location.",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "species" : {
+          "description" : "The species of the character.",
+          "type" : "string"
+        },
+        "status" : {
+          "description" : "The status of the character ('Alive', 'Dead' or 'unknown').",
+          "type" : "string"
+        },
+        "type" : {
+          "description" : "The type or subspecies of the character.",
+          "type" : "string"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "uriTemplate" : "queries/charactersByIds{?ids}"
 }, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query location($id: ID!) {\nlocation(id: $id) {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "location"
+  },
   "format" : "JSON",
   "function" : {
     "description" : "Get a specific locations by ID",
@@ -100,15 +491,110 @@
       "type" : "object"
     }
   },
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query location($id: ID!) {\nlocation(id: $id) {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\ncreated\n}\n\n}",
-    "queryName" : "location"
-  },
   "mcpMethod" : "NONE",
   "restMethod" : "NONE",
+  "resultDefinition" : {
+    "properties" : {
+      "created" : {
+        "description" : "Time at which the location was created in the database.",
+        "type" : "string"
+      },
+      "dimension" : {
+        "description" : "The dimension in which the location is located.",
+        "type" : "string"
+      },
+      "id" : {
+        "description" : "The id of the location.",
+        "type" : "string"
+      },
+      "name" : {
+        "description" : "The name of the location.",
+        "type" : "string"
+      },
+      "residents" : {
+        "description" : "List of characters who have been last seen in the location.",
+        "items" : {
+          "properties" : {
+            "created" : {
+              "description" : "Time at which the character was created in the database.",
+              "type" : "string"
+            },
+            "episode" : {
+              "description" : "Episodes in which this character appeared.",
+              "items" : {
+                "properties" : {
+                  "air_date" : {
+                    "description" : "The air date of the episode.",
+                    "type" : "string"
+                  },
+                  "created" : {
+                    "description" : "Time at which the episode was created in the database.",
+                    "type" : "string"
+                  },
+                  "episode" : {
+                    "description" : "The code of the episode.",
+                    "type" : "string"
+                  },
+                  "id" : {
+                    "description" : "The id of the episode.",
+                    "type" : "string"
+                  },
+                  "name" : {
+                    "description" : "The name of the episode.",
+                    "type" : "string"
+                  }
+                },
+                "type" : "object"
+              },
+              "type" : "array"
+            },
+            "gender" : {
+              "description" : "The gender of the character ('Female', 'Male', 'Genderless' or 'unknown').",
+              "type" : "string"
+            },
+            "id" : {
+              "description" : "The id of the character.",
+              "type" : "string"
+            },
+            "image" : {
+              "description" : "Link to the character's image.\nAll images are 300x300px and most are medium shots or portraits since they are intended to be used as avatars.",
+              "type" : "string"
+            },
+            "name" : {
+              "description" : "The name of the character.",
+              "type" : "string"
+            },
+            "species" : {
+              "description" : "The species of the character.",
+              "type" : "string"
+            },
+            "status" : {
+              "description" : "The status of the character ('Alive', 'Dead' or 'unknown').",
+              "type" : "string"
+            },
+            "type" : {
+              "description" : "The type or subspecies of the character.",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "type" : "array"
+      },
+      "type" : {
+        "description" : "The type of the location.",
+        "type" : "string"
+      }
+    },
+    "type" : "object"
+  },
   "uriTemplate" : "queries/location{?id}"
 }, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query locations($page: Int, $name: String, $type: String, $dimension: String) {\nlocations(page: $page, filter: { name: $name, type: $type, dimension: $dimension }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\ncreated\n}\ncreated\n}\n}\n\n}",
+    "queryName" : "locations"
+  },
   "format" : "JSON",
   "function" : {
     "description" : "Get the list of all locations",
@@ -132,15 +618,110 @@
       "type" : "object"
     }
   },
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query locations($page: Int, $name: String, $type: String, $dimension: String) {\nlocations(page: $page, filter: { name: $name, type: $type, dimension: $dimension }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\ncreated\n}\ncreated\n}\n}\n\n}",
-    "queryName" : "locations"
-  },
   "mcpMethod" : "TOOL",
   "restMethod" : "GET",
+  "resultDefinition" : {
+    "properties" : {
+      "info" : {
+        "properties" : {
+          "count" : {
+            "description" : "The length of the response.",
+            "type" : "integer"
+          },
+          "next" : {
+            "description" : "Number of the next page (if it exists)",
+            "type" : "integer"
+          },
+          "pages" : {
+            "description" : "The amount of pages.",
+            "type" : "integer"
+          },
+          "prev" : {
+            "description" : "Number of the previous page (if it exists)",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "results" : {
+        "items" : {
+          "properties" : {
+            "created" : {
+              "description" : "Time at which the location was created in the database.",
+              "type" : "string"
+            },
+            "dimension" : {
+              "description" : "The dimension in which the location is located.",
+              "type" : "string"
+            },
+            "id" : {
+              "description" : "The id of the location.",
+              "type" : "string"
+            },
+            "name" : {
+              "description" : "The name of the location.",
+              "type" : "string"
+            },
+            "residents" : {
+              "description" : "List of characters who have been last seen in the location.",
+              "items" : {
+                "properties" : {
+                  "created" : {
+                    "description" : "Time at which the character was created in the database.",
+                    "type" : "string"
+                  },
+                  "gender" : {
+                    "description" : "The gender of the character ('Female', 'Male', 'Genderless' or 'unknown').",
+                    "type" : "string"
+                  },
+                  "id" : {
+                    "description" : "The id of the character.",
+                    "type" : "string"
+                  },
+                  "image" : {
+                    "description" : "Link to the character's image.\nAll images are 300x300px and most are medium shots or portraits since they are intended to be used as avatars.",
+                    "type" : "string"
+                  },
+                  "name" : {
+                    "description" : "The name of the character.",
+                    "type" : "string"
+                  },
+                  "species" : {
+                    "description" : "The species of the character.",
+                    "type" : "string"
+                  },
+                  "status" : {
+                    "description" : "The status of the character ('Alive', 'Dead' or 'unknown').",
+                    "type" : "string"
+                  },
+                  "type" : {
+                    "description" : "The type or subspecies of the character.",
+                    "type" : "string"
+                  }
+                },
+                "type" : "object"
+              },
+              "type" : "array"
+            },
+            "type" : {
+              "description" : "The type of the location.",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "type" : "array"
+      }
+    },
+    "type" : "object"
+  },
   "uriTemplate" : "queries/locations{?name,page,type,dimension}"
 }, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query locationsByIds($ids: [ID!]!) {\nlocationsByIds(ids: $ids) {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "locationsByIds"
+  },
   "format" : "JSON",
   "function" : {
     "description" : "Get a list of locations selected by ids",
@@ -158,15 +739,113 @@
       "type" : "object"
     }
   },
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query locationsByIds($ids: [ID!]!) {\nlocationsByIds(ids: $ids) {\nid\nname\ntype\ndimension\nresidents {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\nepisode {\nid\nname\nair_date\nepisode\ncreated\n}\ncreated\n}\ncreated\n}\n\n}",
-    "queryName" : "locationsByIds"
-  },
   "mcpMethod" : "TOOL",
   "restMethod" : "POST",
+  "resultDefinition" : {
+    "items" : {
+      "properties" : {
+        "created" : {
+          "description" : "Time at which the location was created in the database.",
+          "type" : "string"
+        },
+        "dimension" : {
+          "description" : "The dimension in which the location is located.",
+          "type" : "string"
+        },
+        "id" : {
+          "description" : "The id of the location.",
+          "type" : "string"
+        },
+        "name" : {
+          "description" : "The name of the location.",
+          "type" : "string"
+        },
+        "residents" : {
+          "description" : "List of characters who have been last seen in the location.",
+          "items" : {
+            "properties" : {
+              "created" : {
+                "description" : "Time at which the character was created in the database.",
+                "type" : "string"
+              },
+              "episode" : {
+                "description" : "Episodes in which this character appeared.",
+                "items" : {
+                  "properties" : {
+                    "air_date" : {
+                      "description" : "The air date of the episode.",
+                      "type" : "string"
+                    },
+                    "created" : {
+                      "description" : "Time at which the episode was created in the database.",
+                      "type" : "string"
+                    },
+                    "episode" : {
+                      "description" : "The code of the episode.",
+                      "type" : "string"
+                    },
+                    "id" : {
+                      "description" : "The id of the episode.",
+                      "type" : "string"
+                    },
+                    "name" : {
+                      "description" : "The name of the episode.",
+                      "type" : "string"
+                    }
+                  },
+                  "type" : "object"
+                },
+                "type" : "array"
+              },
+              "gender" : {
+                "description" : "The gender of the character ('Female', 'Male', 'Genderless' or 'unknown').",
+                "type" : "string"
+              },
+              "id" : {
+                "description" : "The id of the character.",
+                "type" : "string"
+              },
+              "image" : {
+                "description" : "Link to the character's image.\nAll images are 300x300px and most are medium shots or portraits since they are intended to be used as avatars.",
+                "type" : "string"
+              },
+              "name" : {
+                "description" : "The name of the character.",
+                "type" : "string"
+              },
+              "species" : {
+                "description" : "The species of the character.",
+                "type" : "string"
+              },
+              "status" : {
+                "description" : "The status of the character ('Alive', 'Dead' or 'unknown').",
+                "type" : "string"
+              },
+              "type" : {
+                "description" : "The type or subspecies of the character.",
+                "type" : "string"
+              }
+            },
+            "type" : "object"
+          },
+          "type" : "array"
+        },
+        "type" : {
+          "description" : "The type of the location.",
+          "type" : "string"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "uriTemplate" : "queries/locationsByIds{?ids}"
 }, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query episode($id: ID!) {\nepisode(id: $id) {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "episode"
+  },
   "format" : "JSON",
   "function" : {
     "description" : "Get a specific episode by ID",
@@ -181,15 +860,133 @@
       "type" : "object"
     }
   },
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query episode($id: ID!) {\nepisode(id: $id) {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\ncreated\n}\ncreated\n}\n\n}",
-    "queryName" : "episode"
-  },
   "mcpMethod" : "TOOL",
   "restMethod" : "GET",
+  "resultDefinition" : {
+    "properties" : {
+      "air_date" : {
+        "description" : "The air date of the episode.",
+        "type" : "string"
+      },
+      "characters" : {
+        "description" : "List of characters who have been seen in the episode.",
+        "items" : {
+          "properties" : {
+            "created" : {
+              "description" : "Time at which the character was created in the database.",
+              "type" : "string"
+            },
+            "gender" : {
+              "description" : "The gender of the character ('Female', 'Male', 'Genderless' or 'unknown').",
+              "type" : "string"
+            },
+            "id" : {
+              "description" : "The id of the character.",
+              "type" : "string"
+            },
+            "image" : {
+              "description" : "Link to the character's image.\nAll images are 300x300px and most are medium shots or portraits since they are intended to be used as avatars.",
+              "type" : "string"
+            },
+            "location" : {
+              "description" : "The character's last known location",
+              "properties" : {
+                "created" : {
+                  "description" : "Time at which the location was created in the database.",
+                  "type" : "string"
+                },
+                "dimension" : {
+                  "description" : "The dimension in which the location is located.",
+                  "type" : "string"
+                },
+                "id" : {
+                  "description" : "The id of the location.",
+                  "type" : "string"
+                },
+                "name" : {
+                  "description" : "The name of the location.",
+                  "type" : "string"
+                },
+                "type" : {
+                  "description" : "The type of the location.",
+                  "type" : "string"
+                }
+              },
+              "type" : "object"
+            },
+            "name" : {
+              "description" : "The name of the character.",
+              "type" : "string"
+            },
+            "origin" : {
+              "description" : "The character's origin location",
+              "properties" : {
+                "created" : {
+                  "description" : "Time at which the location was created in the database.",
+                  "type" : "string"
+                },
+                "dimension" : {
+                  "description" : "The dimension in which the location is located.",
+                  "type" : "string"
+                },
+                "id" : {
+                  "description" : "The id of the location.",
+                  "type" : "string"
+                },
+                "name" : {
+                  "description" : "The name of the location.",
+                  "type" : "string"
+                },
+                "type" : {
+                  "description" : "The type of the location.",
+                  "type" : "string"
+                }
+              },
+              "type" : "object"
+            },
+            "species" : {
+              "description" : "The species of the character.",
+              "type" : "string"
+            },
+            "status" : {
+              "description" : "The status of the character ('Alive', 'Dead' or 'unknown').",
+              "type" : "string"
+            },
+            "type" : {
+              "description" : "The type or subspecies of the character.",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "type" : "array"
+      },
+      "created" : {
+        "description" : "Time at which the episode was created in the database.",
+        "type" : "string"
+      },
+      "episode" : {
+        "description" : "The code of the episode.",
+        "type" : "string"
+      },
+      "id" : {
+        "description" : "The id of the episode.",
+        "type" : "string"
+      },
+      "name" : {
+        "description" : "The name of the episode.",
+        "type" : "string"
+      }
+    },
+    "type" : "object"
+  },
   "uriTemplate" : "queries/episode{?id}"
 }, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query episodes($page: Int, $name: String, $episode: String) {\nepisodes(page: $page, filter: { name: $name, episode: $episode }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\ncreated\n}\ncreated\n}\n}\n\n}",
+    "queryName" : "episodes"
+  },
   "format" : "JSON",
   "function" : {
     "description" : "Get the list of all episodes",
@@ -210,15 +1007,110 @@
       "type" : "object"
     }
   },
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query episodes($page: Int, $name: String, $episode: String) {\nepisodes(page: $page, filter: { name: $name, episode: $episode }) {\ninfo {\ncount\npages\nnext\nprev\n}\nresults {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\nimage\ncreated\n}\ncreated\n}\n}\n\n}",
-    "queryName" : "episodes"
-  },
   "mcpMethod" : "TOOL",
   "restMethod" : "GET",
+  "resultDefinition" : {
+    "properties" : {
+      "info" : {
+        "properties" : {
+          "count" : {
+            "description" : "The length of the response.",
+            "type" : "integer"
+          },
+          "next" : {
+            "description" : "Number of the next page (if it exists)",
+            "type" : "integer"
+          },
+          "pages" : {
+            "description" : "The amount of pages.",
+            "type" : "integer"
+          },
+          "prev" : {
+            "description" : "Number of the previous page (if it exists)",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "results" : {
+        "items" : {
+          "properties" : {
+            "air_date" : {
+              "description" : "The air date of the episode.",
+              "type" : "string"
+            },
+            "characters" : {
+              "description" : "List of characters who have been seen in the episode.",
+              "items" : {
+                "properties" : {
+                  "created" : {
+                    "description" : "Time at which the character was created in the database.",
+                    "type" : "string"
+                  },
+                  "gender" : {
+                    "description" : "The gender of the character ('Female', 'Male', 'Genderless' or 'unknown').",
+                    "type" : "string"
+                  },
+                  "id" : {
+                    "description" : "The id of the character.",
+                    "type" : "string"
+                  },
+                  "image" : {
+                    "description" : "Link to the character's image.\nAll images are 300x300px and most are medium shots or portraits since they are intended to be used as avatars.",
+                    "type" : "string"
+                  },
+                  "name" : {
+                    "description" : "The name of the character.",
+                    "type" : "string"
+                  },
+                  "species" : {
+                    "description" : "The species of the character.",
+                    "type" : "string"
+                  },
+                  "status" : {
+                    "description" : "The status of the character ('Alive', 'Dead' or 'unknown').",
+                    "type" : "string"
+                  },
+                  "type" : {
+                    "description" : "The type or subspecies of the character.",
+                    "type" : "string"
+                  }
+                },
+                "type" : "object"
+              },
+              "type" : "array"
+            },
+            "created" : {
+              "description" : "Time at which the episode was created in the database.",
+              "type" : "string"
+            },
+            "episode" : {
+              "description" : "The code of the episode.",
+              "type" : "string"
+            },
+            "id" : {
+              "description" : "The id of the episode.",
+              "type" : "string"
+            },
+            "name" : {
+              "description" : "The name of the episode.",
+              "type" : "string"
+            }
+          },
+          "type" : "object"
+        },
+        "type" : "array"
+      }
+    },
+    "type" : "object"
+  },
   "uriTemplate" : "queries/episodes{?name,episode,page}"
 }, {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query episodesByIds($ids: [ID!]!) {\nepisodesByIds(ids: $ids) {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\ncreated\n}\ncreated\n}\n\n}",
+    "queryName" : "episodesByIds"
+  },
   "format" : "JSON",
   "function" : {
     "description" : "Get a list of episodes selected by ids",
@@ -236,12 +1128,128 @@
       "type" : "object"
     }
   },
-  "apiQuery" : {
-    "operationType" : "QUERY",
-    "query" : "query episodesByIds($ids: [ID!]!) {\nepisodesByIds(ids: $ids) {\nid\nname\nair_date\nepisode\ncharacters {\nid\nname\nstatus\nspecies\ntype\ngender\norigin {\nid\nname\ntype\ndimension\ncreated\n}\nlocation {\nid\nname\ntype\ndimension\ncreated\n}\nimage\ncreated\n}\ncreated\n}\n\n}",
-    "queryName" : "episodesByIds"
-  },
   "mcpMethod" : "TOOL",
   "restMethod" : "GET",
+  "resultDefinition" : {
+    "items" : {
+      "properties" : {
+        "air_date" : {
+          "description" : "The air date of the episode.",
+          "type" : "string"
+        },
+        "characters" : {
+          "description" : "List of characters who have been seen in the episode.",
+          "items" : {
+            "properties" : {
+              "created" : {
+                "description" : "Time at which the character was created in the database.",
+                "type" : "string"
+              },
+              "gender" : {
+                "description" : "The gender of the character ('Female', 'Male', 'Genderless' or 'unknown').",
+                "type" : "string"
+              },
+              "id" : {
+                "description" : "The id of the character.",
+                "type" : "string"
+              },
+              "image" : {
+                "description" : "Link to the character's image.\nAll images are 300x300px and most are medium shots or portraits since they are intended to be used as avatars.",
+                "type" : "string"
+              },
+              "location" : {
+                "description" : "The character's last known location",
+                "properties" : {
+                  "created" : {
+                    "description" : "Time at which the location was created in the database.",
+                    "type" : "string"
+                  },
+                  "dimension" : {
+                    "description" : "The dimension in which the location is located.",
+                    "type" : "string"
+                  },
+                  "id" : {
+                    "description" : "The id of the location.",
+                    "type" : "string"
+                  },
+                  "name" : {
+                    "description" : "The name of the location.",
+                    "type" : "string"
+                  },
+                  "type" : {
+                    "description" : "The type of the location.",
+                    "type" : "string"
+                  }
+                },
+                "type" : "object"
+              },
+              "name" : {
+                "description" : "The name of the character.",
+                "type" : "string"
+              },
+              "origin" : {
+                "description" : "The character's origin location",
+                "properties" : {
+                  "created" : {
+                    "description" : "Time at which the location was created in the database.",
+                    "type" : "string"
+                  },
+                  "dimension" : {
+                    "description" : "The dimension in which the location is located.",
+                    "type" : "string"
+                  },
+                  "id" : {
+                    "description" : "The id of the location.",
+                    "type" : "string"
+                  },
+                  "name" : {
+                    "description" : "The name of the location.",
+                    "type" : "string"
+                  },
+                  "type" : {
+                    "description" : "The type of the location.",
+                    "type" : "string"
+                  }
+                },
+                "type" : "object"
+              },
+              "species" : {
+                "description" : "The species of the character.",
+                "type" : "string"
+              },
+              "status" : {
+                "description" : "The status of the character ('Alive', 'Dead' or 'unknown').",
+                "type" : "string"
+              },
+              "type" : {
+                "description" : "The type or subspecies of the character.",
+                "type" : "string"
+              }
+            },
+            "type" : "object"
+          },
+          "type" : "array"
+        },
+        "created" : {
+          "description" : "Time at which the episode was created in the database.",
+          "type" : "string"
+        },
+        "episode" : {
+          "description" : "The code of the episode.",
+          "type" : "string"
+        },
+        "id" : {
+          "description" : "The id of the episode.",
+          "type" : "string"
+        },
+        "name" : {
+          "description" : "The name of the episode.",
+          "type" : "string"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
   "uriTemplate" : "queries/episodesByIds{?ids}"
 } ]

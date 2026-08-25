@@ -20,8 +20,11 @@ import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.server.operation.FunctionDefinition;
 import com.datasqrl.server.operation.RestMethodType;
+import com.datasqrl.server.operation.ResultDefinition;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.Operation;
@@ -52,6 +55,8 @@ import org.apache.commons.lang3.StringUtils;
 @Slf4j
 public class OpenApiService {
 
+  public static final String OPENAPI_JSON_ARTIFACT_NAME_SUFFIX_TEMPLATE = "-%s-openapi.json";
+
   private static final Pattern QUERY_PARAMS_PATTERN = Pattern.compile("\\{\\?([^}]+)\\}");
   private static final Pattern PATH_PARAMS_PATTERN = Pattern.compile("\\{([^}?]+)\\}");
   private static final ObjectMapper objectMapper = Json.mapper();
@@ -67,7 +72,7 @@ public class OpenApiService {
 
   public String generateOpenApiJson(String requestHost) {
     try {
-      var openAPI = createOpenAPI(Optional.ofNullable(requestHost));
+      var openAPI = createOpenAPI(requestHost);
       return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(openAPI);
     } catch (JsonProcessingException e) {
       log.error("Failed to generate OpenAPI JSON", e);
@@ -75,7 +80,47 @@ public class OpenApiService {
     }
   }
 
-  private OpenAPI createOpenAPI(Optional<String> requestHost) {
+  public void validateOpenApiJson(String openApiJson) {
+    try {
+      var openApi = objectMapper.readTree(openApiJson);
+      if (!(openApi instanceof ObjectNode openApiObject)
+          || !openApiObject.path("openapi").isTextual()
+          || !openApiObject.path("info").isObject()
+          || !openApiObject.path("paths").isObject()) {
+        throw new IllegalArgumentException("OpenAPI artifact is not a valid OpenAPI document");
+      }
+    } catch (JsonProcessingException e) {
+      throw new IllegalArgumentException("OpenAPI artifact is not valid JSON", e);
+    }
+  }
+
+  /**
+   * Replaces the deployment-specific server URL without regenerating the compiled specification.
+   */
+  public String withRequestHost(String openApiJson, String requestHost) {
+    if (StringUtils.isBlank(requestHost)) {
+      return openApiJson;
+    }
+    try {
+      var openApi = objectMapper.readTree(openApiJson);
+      if (!(openApi instanceof ObjectNode openApiObject)) {
+        throw new IllegalArgumentException("OpenAPI artifact must contain a JSON object");
+      }
+      ArrayNode servers = openApiObject.withArray("servers");
+      if (servers.isEmpty()) {
+        servers.addObject().put("url", requestHost).put("description", "DataSQRL API Server");
+      } else if (servers.get(0) instanceof ObjectNode server) {
+        server.put("url", requestHost);
+      } else {
+        throw new IllegalArgumentException("OpenAPI artifact server must be a JSON object");
+      }
+      return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(openApi);
+    } catch (JsonProcessingException e) {
+      throw new IllegalArgumentException("Failed to update OpenAPI artifact server URL", e);
+    }
+  }
+
+  private OpenAPI createOpenAPI(String requestHost) {
     var openAPI = new OpenAPI();
 
     // Set API info
@@ -102,8 +147,7 @@ public class OpenApiService {
 
     openAPI.info(info);
 
-    // Add server based on request host
-    var serverUrl = requestHost.orElse("http://localhost:8888");
+    var serverUrl = StringUtils.defaultIfBlank(requestHost, "http://localhost:8888");
     var server = new Server().url(serverUrl).description("DataSQRL API Server");
     openAPI.addServersItem(server);
 
@@ -172,11 +216,9 @@ public class OpenApiService {
     }
 
     // Add parameters
-    if (operation.getRestMethod() == RestMethodType.GET) {
-      var parameters = extractParameters(uriTemplate);
-      if (!parameters.isEmpty()) {
-        openApiOperation.parameters(parameters);
-      }
+    var parameters = extractParameters(uriTemplate);
+    if (!parameters.isEmpty()) {
+      openApiOperation.parameters(parameters);
     }
 
     // Add request body
@@ -201,10 +243,7 @@ public class OpenApiService {
                                 new Schema<>()
                                     .type("object")
                                     .addProperty(
-                                        "data",
-                                        new Schema<>()
-                                            .type("object")
-                                            .description("Response data")))));
+                                        "data", resultToSchema(operation.getResultDefinition())))));
     responses.addApiResponse("200", successResponse);
 
     // Error response
@@ -229,6 +268,28 @@ public class OpenApiService {
     openApiOperation.responses(responses);
 
     return openApiOperation;
+  }
+
+  private Schema<?> resultToSchema(ResultDefinition result) {
+    if (result == null) {
+      return new Schema<>().type("object").description("Response data");
+    }
+    var schema = new Schema<>();
+    schema.type(result.getType());
+    schema.format(result.getFormat());
+    schema.description(result.getDescription());
+    if (result.getEnumValues() != null) {
+      schema._enum(new ArrayList<>(result.getEnumValues()));
+    }
+    if (result.getItems() != null) {
+      schema.items(resultToSchema(result.getItems()));
+    }
+    if (ObjectUtils.isNotEmpty(result.getProperties())) {
+      for (var entry : result.getProperties().entrySet()) {
+        schema.addProperty(entry.getKey(), resultToSchema(entry.getValue()));
+      }
+    }
+    return schema;
   }
 
   private String getSummary(String description) {

@@ -131,6 +131,10 @@ public interface PackageJson {
     String getSchema();
 
     List<String> getOperations();
+
+    default Optional<String> getOpenApi() {
+      return Optional.empty();
+    }
   }
 
   interface EnginesConfig {

@@ -171,6 +171,33 @@ public class GraphQLSchemaConverterTest {
     assertThat(payloadSchema.has("type")).isFalse();
   }
 
+  @Test
+  void givenOperationWithNestedResult_whenConvertOperations_thenCreatesResultDefinition() {
+    var schema =
+        underTest.getSchema(
+            """
+            scalar DateTime
+            type Query {
+              reading: Reading!
+            }
+            type Reading {
+              id: Int!
+              observedAt: DateTime
+            }
+            """);
+
+    var operations =
+        underTest.convertOperations(
+            "query Reading { reading { id observedAt } }",
+            GraphQLSchemaConverterConfig.DEFAULT,
+            schema);
+
+    var result = operations.get(0).getResultDefinition();
+    assertThat(result.getType()).isEqualTo("object");
+    assertThat(result.getProperties().get("id").getType()).isEqualTo("integer");
+    assertThat(result.getProperties().get("observedAt").getFormat()).isEqualTo("date-time");
+  }
+
   @ParameterizedTest
   @MethodSource("scalarTypeToJsonTypeProvider")
   void givenScalarType_whenConvertToJsonType_thenReturnsExpectedJsonType(

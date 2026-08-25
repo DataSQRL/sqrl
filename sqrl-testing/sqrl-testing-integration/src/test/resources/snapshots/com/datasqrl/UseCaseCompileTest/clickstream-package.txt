@@ -388,7 +388,6 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Click($limit: Int = 10, $offset: Int = 0) {\nClick(limit: $limit, offset: $offset) {\ntimestamp\nuserid\nurl\n}\n\n}",
             "queryName" : "Click",
@@ -396,7 +395,26 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Click{?offset,limit}"
+          "uriTemplate" : "queries/Click{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "userid" : {
+                  "type" : "string"
+                },
+                "url" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -421,7 +439,6 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Recommendation($url: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendation(url: $url, limit: $limit, offset: $offset) {\nurl\nrec\nfrequency\n}\n\n}",
             "queryName" : "Recommendation",
@@ -429,7 +446,27 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Recommendation{?offset,limit,url}"
+          "uriTemplate" : "queries/Recommendation{?offset,limit,url}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "url" : {
+                  "type" : "string"
+                },
+                "rec" : {
+                  "type" : "string",
+                  "description" : "the recommended page URL"
+                },
+                "frequency" : {
+                  "type" : "integer",
+                  "description" : "the number of visitors that co-visited that page"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -448,7 +485,6 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Trending($limit: Int = 10, $offset: Int = 0) {\nTrending(limit: $limit, offset: $offset) {\nurl\ntotal\n}\n\n}",
             "queryName" : "Trending",
@@ -456,7 +492,24 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Trending{?offset,limit}"
+          "uriTemplate" : "queries/Trending{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "url" : {
+                  "type" : "string",
+                  "description" : "URL of the top visited page"
+                },
+                "total" : {
+                  "type" : "integer",
+                  "description" : "Total number of visitors"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -474,7 +527,6 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query VisitAfter($limit: Int = 10, $offset: Int = 0) {\nVisitAfter(limit: $limit, offset: $offset) {\nbeforeURL\nafterURL\ntimestamp\n}\n\n}",
             "queryName" : "VisitAfter",
@@ -482,7 +534,26 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/VisitAfter{?offset,limit}"
+          "uriTemplate" : "queries/VisitAfter{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "beforeURL" : {
+                  "type" : "string"
+                },
+                "afterURL" : {
+                  "type" : "string"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {
