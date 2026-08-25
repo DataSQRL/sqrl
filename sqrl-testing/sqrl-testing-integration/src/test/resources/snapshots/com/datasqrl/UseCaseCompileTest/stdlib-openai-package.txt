@@ -202,7 +202,6 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query data($limit: Int = 10, $offset: Int = 0) {\ndata(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "data",
@@ -210,7 +209,19 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/data{?offset,limit}"
+          "uriTemplate" : "queries/data{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -228,7 +239,6 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query results($limit: Int = 10, $offset: Int = 0) {\nresults(limit: $limit, offset: $offset) {\ncompletions_result\nextract_json_result_response\nextract_json_result_with_schema_response\n}\n\n}",
             "queryName" : "results",
@@ -236,7 +246,25 @@ CREATE TABLE IF NOT EXISTS "results" ("completions_result" TEXT, "extract_json_r
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/results{?offset,limit}"
+          "uriTemplate" : "queries/results{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "completions_result" : {
+                  "type" : "string"
+                },
+                "extract_json_result_response" : {
+                  "type" : "string"
+                },
+                "extract_json_result_with_schema_response" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

@@ -244,7 +244,6 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderCount($limit: Int = 10, $offset: Int = 0) {\nOrderCount(limit: $limit, offset: $offset) {\nid\nnumber\nvolume\n}\n\n}",
             "queryName" : "OrderCount",
@@ -252,7 +251,25 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/OrderCount{?offset,limit}"
+          "uriTemplate" : "queries/OrderCount{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "number" : {
+                  "type" : "integer"
+                },
+                "volume" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -270,7 +287,6 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nitems {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
             "queryName" : "Orders",
@@ -278,7 +294,45 @@ CREATE TABLE IF NOT EXISTS "Orders" ("id" BIGINT NOT NULL, "customerid" BIGINT N
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Orders{?offset,limit}"
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string"
+                },
+                "items" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

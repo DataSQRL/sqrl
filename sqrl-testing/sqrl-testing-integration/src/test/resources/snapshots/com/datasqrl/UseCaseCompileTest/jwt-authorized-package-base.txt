@@ -346,7 +346,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyStringTable($limit: Int = 10, $offset: Int = 0) {\nMyStringTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "MyStringTable",
@@ -354,7 +353,19 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/MyStringTable{?offset,limit}"
+          "uriTemplate" : "queries/MyStringTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -372,7 +383,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MyTable($limit: Int = 10, $offset: Int = 0) {\nMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "MyTable",
@@ -380,7 +390,19 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/MyTable{?offset,limit}"
+          "uriTemplate" : "queries/MyTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -398,7 +420,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query AuthMyTable($limit: Int = 10, $offset: Int = 0) {\nAuthMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "AuthMyTable",
@@ -406,7 +427,19 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/AuthMyTable{?offset,limit}"
+          "uriTemplate" : "queries/AuthMyTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -424,7 +457,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query AuthMyTableValues($limit: Int = 10, $offset: Int = 0) {\nAuthMyTableValues(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "AuthMyTableValues",
@@ -432,7 +464,19 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/AuthMyTableValues{?offset,limit}"
+          "uriTemplate" : "queries/AuthMyTableValues{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -450,7 +494,6 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query AuthStringMyTableValues($limit: Int = 10, $offset: Int = 0) {\nAuthStringMyTableValues(limit: $limit, offset: $offset) {\nval\n}\n\n}",
             "queryName" : "AuthStringMyTableValues",
@@ -458,7 +501,19 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/AuthStringMyTableValues{?offset,limit}"
+          "uriTemplate" : "queries/AuthStringMyTableValues{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

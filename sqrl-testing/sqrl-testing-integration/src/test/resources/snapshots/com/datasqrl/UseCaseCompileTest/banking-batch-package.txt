@@ -479,7 +479,6 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ApplicationUpdates($limit: Int = 10, $offset: Int = 0) {\nApplicationUpdates(limit: $limit, offset: $offset) {\nloan_application_id\nstatus\nmessage\nevent_time\n}\n\n}",
             "queryName" : "ApplicationUpdates",
@@ -487,7 +486,29 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ApplicationUpdates{?offset,limit}"
+          "uriTemplate" : "queries/ApplicationUpdates{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "loan_application_id" : {
+                  "type" : "integer"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "message" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -505,7 +526,6 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Applications($limit: Int = 10, $offset: Int = 0) {\nApplications(limit: $limit, offset: $offset) {\nid\ncustomer_id\nloan_type_id\namount\nduration\napplication_date\nupdated_at\n}\n\n}",
             "queryName" : "Applications",
@@ -513,7 +533,39 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Applications{?offset,limit}"
+          "uriTemplate" : "queries/Applications{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "loan_type_id" : {
+                  "type" : "integer"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "duration" : {
+                  "type" : "integer"
+                },
+                "application_date" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -531,7 +583,6 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerUpdates($limit: Int = 10, $offset: Int = 0) {\nCustomerUpdates(limit: $limit, offset: $offset) {\ncustomer_id\nnum_updates\n}\n\n}",
             "queryName" : "CustomerUpdates",
@@ -539,7 +590,22 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerUpdates{?offset,limit}"
+          "uriTemplate" : "queries/CustomerUpdates{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "num_updates" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -557,7 +623,6 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Customers($limit: Int = 10, $offset: Int = 0) {\nCustomers(limit: $limit, offset: $offset) {\nid\nfirst_name\nlast_name\nemail\nphone\naddress\ndate_of_birth\nupdated_at\n}\n\n}",
             "queryName" : "Customers",
@@ -565,7 +630,41 @@ CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT 
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Customers{?offset,limit}"
+          "uriTemplate" : "queries/Customers{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "first_name" : {
+                  "type" : "string"
+                },
+                "last_name" : {
+                  "type" : "string"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "phone" : {
+                  "type" : "string"
+                },
+                "address" : {
+                  "type" : "string"
+                },
+                "date_of_birth" : {
+                  "type" : "string"
+                },
+                "updated_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

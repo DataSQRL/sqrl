@@ -264,7 +264,6 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorAggregate($limit: Int = 10, $offset: Int = 0) {\nSensorAggregate(limit: $limit, offset: $offset) {\nsensorid\nmaxTemp\navgTemp\n}\n\n}",
             "queryName" : "SensorAggregate",
@@ -272,7 +271,25 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorAggregate{?offset,limit}"
+          "uriTemplate" : "queries/SensorAggregate{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "maxTemp" : {
+                  "type" : "number"
+                },
+                "avgTemp" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -290,7 +307,6 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
             "queryName" : "SensorReading",
@@ -298,7 +314,25 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorReading{?offset,limit}"
+          "uriTemplate" : "queries/SensorReading{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -321,7 +355,6 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorReadingById($sensorid: Int!, $limit: Int = 10, $offset: Int = 0) {\nSensorReadingById(sensorid: $sensorid, limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
             "queryName" : "SensorReadingById",
@@ -329,7 +362,25 @@ FROM (SELECT "sensorid", MAX("temperature") AS "maxTemp", AVG("temperature") AS 
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorReadingById{?offset,limit,sensorid}"
+          "uriTemplate" : "queries/SensorReadingById{?offset,limit,sensorid}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

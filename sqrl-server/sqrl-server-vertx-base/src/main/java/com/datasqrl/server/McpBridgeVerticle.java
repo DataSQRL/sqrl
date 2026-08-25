@@ -20,6 +20,7 @@ import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.server.operation.McpMethodType;
+import com.datasqrl.util.JsonUtils;
 import com.datasqrl.util.ProjectConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -177,7 +178,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
         ctx -> {
           log.debug("Received POST request to MCP endpoint: {}", mcpRoutePrefix);
           try {
-            var payload = OBJECT_MAPPER.readTree(ctx.body().buffer().getBytes());
+            var payload = JsonUtils.MAPPER.readTree(ctx.body().buffer().getBytes());
             log.debug("Parsed payload: {}", payload);
             processIncomingMessages(ctx, payload);
           } catch (IOException e) { // TODO: improve error handling
@@ -441,8 +442,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
     return Future.succeededFuture(new JsonObject().put("contents", contents));
   }
 
-  private Future<JsonObject> handleCallTool(RoutingContext ctx, JsonNode params)
-      throws ValidationException {
+  private Future<JsonObject> handleCallTool(RoutingContext ctx, JsonNode params) {
     var toolName = params.get("name").asText();
     var arguments = params.get("arguments");
 
@@ -451,7 +451,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
       return Future.failedFuture(new McpException(-32602, "Tool not found: " + toolName));
     }
     var variables =
-        OBJECT_MAPPER.<Map<String, Object>>convertValue(arguments, new TypeReference<>() {});
+        JsonUtils.MAPPER.<Map<String, Object>>convertValue(arguments, new TypeReference<>() {});
     return bridgeRequestToGraphQL(ctx, tool, variables)
         .map(
             executionResult -> {
@@ -477,7 +477,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
                       List.of(
                           new JsonObject()
                               .put("type", "text")
-                              .put("text", OBJECT_MAPPER.writeValueAsString(result))));
+                              .put("text", JsonUtils.MAPPER.writeValueAsString(result))));
                   json.put("isError", false);
                 } catch (JsonProcessingException e) {
                   throw new RuntimeException(e);

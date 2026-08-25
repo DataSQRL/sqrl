@@ -190,7 +190,6 @@ CREATE TABLE IF NOT EXISTS "FooOut" ("id" INTEGER NOT NULL, "label" TEXT, PRIMAR
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query FooOut($limit: Int = 10, $offset: Int = 0) {\nFooOut(limit: $limit, offset: $offset) {\nid\nlabel\n}\n\n}",
             "queryName" : "FooOut",
@@ -198,7 +197,22 @@ CREATE TABLE IF NOT EXISTS "FooOut" ("id" INTEGER NOT NULL, "label" TEXT, PRIMAR
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/FooOut{?offset,limit}"
+          "uriTemplate" : "queries/FooOut{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

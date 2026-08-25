@@ -1805,7 +1805,7 @@ FROM "ExternalOrders"
       "name" : "Apache License 2.0",
       "url" : "https://www.apache.org/licenses/LICENSE-2.0"
     },
-    "version" : "unknown"
+    "version" : "0.11.0"
   },
   "servers" : [ {
     "url" : "http://localhost:8888",
@@ -1854,8 +1854,28 @@ FROM "ExternalOrders"
                   "type" : "object",
                   "properties" : {
                     "data" : {
-                      "type" : "object",
-                      "description" : "Response data"
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object",
+                        "properties" : {
+                          "customerid" : {
+                            "type" : "integer"
+                          },
+                          "email" : {
+                            "type" : "string"
+                          },
+                          "name" : {
+                            "type" : "string"
+                          },
+                          "lastUpdated" : {
+                            "type" : "integer"
+                          },
+                          "timestamp" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                          }
+                        }
+                      }
                     }
                   }
                 }
@@ -2032,7 +2052,6 @@ FROM "ExternalOrders"
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query TableFunctionCallsTblFct($arg2: Int!, $arg1: Int!, $limit: Int = 10, $offset: Int = 0) {\nTableFunctionCallsTblFct(arg2: $arg2, arg1: $arg1, limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
             "queryName" : "TableFunctionCallsTblFct",
@@ -2040,7 +2059,32 @@ FROM "ExternalOrders"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}"
+          "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

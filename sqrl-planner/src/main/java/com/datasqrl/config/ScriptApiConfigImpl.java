@@ -17,6 +17,7 @@ package com.datasqrl.config;
 
 import com.datasqrl.config.PackageJson.ScriptApiConfig;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -37,5 +38,10 @@ public class ScriptApiConfigImpl implements ScriptApiConfig {
   @Override
   public List<String> getOperations() {
     return sqrlConfig.asList("operations", String.class).get();
+  }
+
+  @Override
+  public Optional<String> getOpenApi() {
+    return sqrlConfig.asString("openapi").getOptional();
   }
 }

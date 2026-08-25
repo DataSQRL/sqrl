@@ -497,7 +497,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MachineReading($limit: Int = 10, $offset: Int = 0) {\nMachineReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\nmachineid\n}\n\n}",
             "queryName" : "MachineReading",
@@ -505,7 +504,29 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/MachineReading{?offset,limit}"
+          "uriTemplate" : "queries/MachineReading{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "machineid" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -523,7 +544,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MachineTempByHour($limit: Int = 10, $offset: Int = 0) {\nMachineTempByHour(limit: $limit, offset: $offset) {\nmachineid\ntime_hour\navg_temperature\n}\n\n}",
             "queryName" : "MachineTempByHour",
@@ -531,7 +551,26 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/MachineTempByHour{?offset,limit}"
+          "uriTemplate" : "queries/MachineTempByHour{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "machineid" : {
+                  "type" : "integer"
+                },
+                "time_hour" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "avg_temperature" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

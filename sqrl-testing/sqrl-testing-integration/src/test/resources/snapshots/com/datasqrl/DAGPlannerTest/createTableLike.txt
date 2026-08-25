@@ -606,7 +606,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorReading($limit: Int = 10, $offset: Int = 0) {\nSensorReading(limit: $limit, offset: $offset) {\nuuid\nsensorid\nepoch_timestamp\ntemperature\ntimestamp\n}\n\n}",
             "queryName" : "SensorReading",
@@ -614,7 +613,32 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorReading{?offset,limit}"
+          "uriTemplate" : "queries/SensorReading{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "uuid" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "epoch_timestamp" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -632,7 +656,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorReadingInput($limit: Int = 10, $offset: Int = 0) {\nSensorReadingInput(limit: $limit, offset: $offset) {\nuuid\nsensorid\nepoch_timestamp\ntemperature\ntestField\nrecordedTime\n}\n\n}",
             "queryName" : "SensorReadingInput",
@@ -640,7 +663,35 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorReadingInput{?offset,limit}"
+          "uriTemplate" : "queries/SensorReadingInput{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "uuid" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "epoch_timestamp" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "testField" : {
+                  "type" : "number"
+                },
+                "recordedTime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -658,7 +709,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query SensorReadingMutation($limit: Int = 10, $offset: Int = 0) {\nSensorReadingMutation(limit: $limit, offset: $offset) {\nuuid\nsensorid\nepoch_timestamp\ntemperature\ntestField\nrecordedTime\n}\n\n}",
             "queryName" : "SensorReadingMutation",
@@ -666,7 +716,35 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/SensorReadingMutation{?offset,limit}"
+          "uriTemplate" : "queries/SensorReadingMutation{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "uuid" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "epoch_timestamp" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "testField" : {
+                  "type" : "number"
+                },
+                "recordedTime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -698,7 +776,6 @@ END
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "mutation SensorReadingMutation($uuid: String!, $sensorid: Long!, $epoch_timestamp: Long!, $temperature: Float!, $testField: Float) {\nSensorReadingMutation(event: { uuid: $uuid, sensorid: $sensorid, epoch_timestamp: $epoch_timestamp, temperature: $temperature, testField: $testField }) {\nuuid\nsensorid\nepoch_timestamp\ntemperature\ntestField\nrecordedTime\n}\n\n}",
             "queryName" : "SensorReadingMutation",
@@ -706,7 +783,32 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "POST",
-          "uriTemplate" : "mutations/SensorReadingMutation"
+          "uriTemplate" : "mutations/SensorReadingMutation",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "uuid" : {
+                "type" : "string"
+              },
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "epoch_timestamp" : {
+                "type" : "integer"
+              },
+              "temperature" : {
+                "type" : "number"
+              },
+              "testField" : {
+                "type" : "number"
+              },
+              "recordedTime" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
         }
       ],
       "schema" : {

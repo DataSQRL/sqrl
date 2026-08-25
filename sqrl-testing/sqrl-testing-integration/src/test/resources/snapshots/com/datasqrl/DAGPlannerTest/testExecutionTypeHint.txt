@@ -495,7 +495,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerAgg1($limit: Int = 10, $offset: Int = 0) {\nCustomerAgg1(limit: $limit, offset: $offset) {\ncustomerid\nnum\n}\n\n}",
             "queryName" : "CustomerAgg1",
@@ -503,7 +502,22 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerAgg1{?offset,limit}"
+          "uriTemplate" : "queries/CustomerAgg1{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "num" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -521,7 +535,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerAgg2($limit: Int = 10, $offset: Int = 0) {\nCustomerAgg2(limit: $limit, offset: $offset) {\ncustomerid\nnum\n}\n\n}",
             "queryName" : "CustomerAgg2",
@@ -529,7 +542,22 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerAgg2{?offset,limit}"
+          "uriTemplate" : "queries/CustomerAgg2{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "num" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -547,7 +575,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerAgg3($limit: Int = 10, $offset: Int = 0) {\nCustomerAgg3(limit: $limit, offset: $offset) {\ncustomerid\nnum\n}\n\n}",
             "queryName" : "CustomerAgg3",
@@ -555,7 +582,22 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerAgg3{?offset,limit}"
+          "uriTemplate" : "queries/CustomerAgg3{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "num" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -573,7 +615,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
             "queryName" : "Orders",
@@ -581,7 +622,46 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Orders{?offset,limit}"
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "entries" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

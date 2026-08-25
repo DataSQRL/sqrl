@@ -223,7 +223,6 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query AppendStream($limit: Int = 10, $offset: Int = 0) {\nAppendStream(limit: $limit, offset: $offset) {\nk\nv_sum\n}\n\n}",
             "queryName" : "AppendStream",
@@ -231,7 +230,22 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/AppendStream{?offset,limit}"
+          "uriTemplate" : "queries/AppendStream{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "k" : {
+                  "type" : "string"
+                },
+                "v_sum" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -249,7 +263,6 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query InputAgg($limit: Int = 10, $offset: Int = 0) {\nInputAgg(limit: $limit, offset: $offset) {\nk\nv_sum\n}\n\n}",
             "queryName" : "InputAgg",
@@ -257,7 +270,22 @@ CREATE TABLE IF NOT EXISTS "InputAgg" ("k" TEXT NOT NULL, "v_sum" INTEGER NOT NU
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/InputAgg{?offset,limit}"
+          "uriTemplate" : "queries/InputAgg{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "k" : {
+                  "type" : "string"
+                },
+                "v_sum" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

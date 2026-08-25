@@ -15,6 +15,8 @@
  */
 package com.datasqrl.server.modules;
 
+import static com.datasqrl.server.openapi.OpenApiService.OPENAPI_JSON_ARTIFACT_NAME_SUFFIX_TEMPLATE;
+
 import com.datasqrl.server.GraphQLServerVerticle;
 import com.datasqrl.server.McpBridgeVerticle;
 import com.datasqrl.server.RestBridgeVerticle;
@@ -129,6 +131,8 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
     }
 
     if (hasRest) {
+      var openApiArtifact =
+          ("vertx" + OPENAPI_JSON_ARTIFACT_NAME_SUFFIX_TEMPLATE).formatted(modelVersion);
       var restBridgeVerticle =
           new RestBridgeVerticle(
               context.router(),
@@ -136,7 +140,8 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
               modelVersion,
               model,
               authProviders,
-              graphQLVerticle);
+              graphQLVerticle,
+              context.planDir().resolve(openApiArtifact));
       bridgeDeploymentFutures.add(
           context
               .vertx()

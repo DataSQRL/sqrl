@@ -1807,7 +1807,7 @@ FROM "ExternalOrders"
       "name" : "Apache License 2.0",
       "url" : "https://www.apache.org/licenses/LICENSE-2.0"
     },
-    "version" : "unknown"
+    "version" : "0.11.0"
   },
   "servers" : [ {
     "url" : "http://localhost:8888",

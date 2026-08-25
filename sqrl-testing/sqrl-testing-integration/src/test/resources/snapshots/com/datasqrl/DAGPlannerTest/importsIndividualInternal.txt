@@ -239,7 +239,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query CustomerInternal($limit: Int = 10, $offset: Int = 0) {\nCustomerInternal(limit: $limit, offset: $offset) {\ncustomer_id\nfull_name\ntimestamp\n}\n\n}",
             "queryName" : "CustomerInternal",
@@ -247,7 +246,26 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/CustomerInternal{?offset,limit}"
+          "uriTemplate" : "queries/CustomerInternal{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "full_name" : {
+                  "type" : "string"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -267,7 +285,6 @@ END
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "mutation CustomerInternal($customer_id: Long!, $full_name: String) {\nCustomerInternal(event: { customer_id: $customer_id, full_name: $full_name }) {\ncustomer_id\nfull_name\ntimestamp\n}\n\n}",
             "queryName" : "CustomerInternal",
@@ -275,7 +292,23 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "POST",
-          "uriTemplate" : "mutations/CustomerInternal"
+          "uriTemplate" : "mutations/CustomerInternal",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "customer_id" : {
+                "type" : "integer"
+              },
+              "full_name" : {
+                "type" : "string"
+              },
+              "timestamp" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
         }
       ],
       "schema" : {

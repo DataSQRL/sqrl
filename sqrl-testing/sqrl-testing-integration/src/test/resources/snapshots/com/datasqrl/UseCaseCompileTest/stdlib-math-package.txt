@@ -177,7 +177,6 @@ CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NO
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query MathFunctions($limit: Int = 10, $offset: Int = 0) {\nMathFunctions(limit: $limit, offset: $offset) {\nd\nb\ncbrt\ncopy_sign\nexpm1\nhypot\nlog1p\nnext_after\nscalb\nulp\nbinomial_distribution\nexponential_distribution\nnormal_distribution\npoisson_distribution\n}\n\n}",
             "queryName" : "MathFunctions",
@@ -185,7 +184,58 @@ CREATE TABLE IF NOT EXISTS "MathFunctions" ("d" NUMERIC NOT NULL, "b" INTEGER NO
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/MathFunctions{?offset,limit}"
+          "uriTemplate" : "queries/MathFunctions{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "d" : {
+                  "type" : "number"
+                },
+                "b" : {
+                  "type" : "integer"
+                },
+                "cbrt" : {
+                  "type" : "number"
+                },
+                "copy_sign" : {
+                  "type" : "number"
+                },
+                "expm1" : {
+                  "type" : "number"
+                },
+                "hypot" : {
+                  "type" : "number"
+                },
+                "log1p" : {
+                  "type" : "number"
+                },
+                "next_after" : {
+                  "type" : "number"
+                },
+                "scalb" : {
+                  "type" : "number"
+                },
+                "ulp" : {
+                  "type" : "number"
+                },
+                "binomial_distribution" : {
+                  "type" : "number"
+                },
+                "exponential_distribution" : {
+                  "type" : "number"
+                },
+                "normal_distribution" : {
+                  "type" : "number"
+                },
+                "poisson_distribution" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

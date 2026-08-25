@@ -65,4 +65,15 @@ class ScriptApiConfigImplTest {
     assertThat(scriptApiConfig.getSchema()).isEqualTo("my-schema");
     assertThat(scriptApiConfig.getOperations()).containsExactly("op1", "op2");
   }
+
+  @Test
+  void givenOpenApiSpec_whenGetOpenApi_thenReturnsSpecPath() {
+    var v1 = config.getSubConfig("v1");
+    v1.setProperty("schema", "my-schema");
+    v1.setProperty("openapi", "openapi.json");
+
+    var scriptApiConfig = new ScriptApiConfigImpl(v1);
+
+    assertThat(scriptApiConfig.getOpenApi()).contains("openapi.json");
+  }
 }

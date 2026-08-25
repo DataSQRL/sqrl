@@ -196,7 +196,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Output($limit: Int = 10, $offset: Int = 0) {\nOutput(limit: $limit, offset: $offset) {\nkey_col\nint_col\n}\n\n}",
             "queryName" : "Output",
@@ -204,7 +203,22 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Output{?offset,limit}"
+          "uriTemplate" : "queries/Output{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "key_col" : {
+                  "type" : "string"
+                },
+                "int_col" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

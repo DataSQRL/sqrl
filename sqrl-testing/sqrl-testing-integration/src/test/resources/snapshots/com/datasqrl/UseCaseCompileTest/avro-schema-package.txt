@@ -373,7 +373,6 @@ CREATE TABLE IF NOT EXISTS "Schema" ("uuidField" TEXT NOT NULL, "timestampMillis
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Schema($limit: Int = 10, $offset: Int = 0) {\nSchema(limit: $limit, offset: $offset) {\nuuidField\ntimestampMillisField\nnullableTimestampMillisField\ntimestampMicrosField\nnullableTimestampMicrosField\ndateField\nnullableDateField\ntimeMillisField\nnullableTimeMillisField\ntimeMicrosField\nnullableTimeMicrosField\ncomplexArrayField {\nitemFieldOne\nitemFieldTwo\n}\nnullableComplexArrayField {\nnullableItemFieldOne\nnullableItemFieldTwo\n}\nmultiNestedRecord {\nnestedLevelOne {\nlevelOneField\n}\n}\nstringField\nnullableStringField\nintField\nnullableIntField\nlongField\nnullableLongField\nfloatField\nnullableFloatField\ndoubleField\nnullableDoubleField\nbooleanField\nnullableBooleanField\nenumField\nnullableEnumField\narrayField\nnullableArrayField\nnestedRecord {\nnestedStringField\nnestedIntField\nnestedArrayField\nnestedMapField\n}\nnullableNestedRecord {\nnullableNestedStringField\nnullableNestedLongField\n}\ndecimalField\nmapField\nnullableMapField\n}\n\n}",
             "queryName" : "Schema",
@@ -381,7 +380,184 @@ CREATE TABLE IF NOT EXISTS "Schema" ("uuidField" TEXT NOT NULL, "timestampMillis
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Schema{?offset,limit}"
+          "uriTemplate" : "queries/Schema{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "uuidField" : {
+                  "type" : "string"
+                },
+                "timestampMillisField" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "nullableTimestampMillisField" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "timestampMicrosField" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "nullableTimestampMicrosField" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "dateField" : {
+                  "type" : "string",
+                  "format" : "date"
+                },
+                "nullableDateField" : {
+                  "type" : "string",
+                  "format" : "date"
+                },
+                "timeMillisField" : {
+                  "type" : "string"
+                },
+                "nullableTimeMillisField" : {
+                  "type" : "string"
+                },
+                "timeMicrosField" : {
+                  "type" : "string"
+                },
+                "nullableTimeMicrosField" : {
+                  "type" : "string"
+                },
+                "complexArrayField" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "itemFieldOne" : {
+                        "type" : "integer"
+                      },
+                      "itemFieldTwo" : {
+                        "type" : "string"
+                      }
+                    }
+                  }
+                },
+                "nullableComplexArrayField" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "nullableItemFieldOne" : {
+                        "type" : "number"
+                      },
+                      "nullableItemFieldTwo" : {
+                        "type" : "boolean"
+                      }
+                    }
+                  }
+                },
+                "multiNestedRecord" : {
+                  "type" : "object",
+                  "properties" : {
+                    "nestedLevelOne" : {
+                      "type" : "object",
+                      "properties" : {
+                        "levelOneField" : {
+                          "type" : "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "stringField" : {
+                  "type" : "string"
+                },
+                "nullableStringField" : {
+                  "type" : "string"
+                },
+                "intField" : {
+                  "type" : "integer"
+                },
+                "nullableIntField" : {
+                  "type" : "integer"
+                },
+                "longField" : {
+                  "type" : "integer"
+                },
+                "nullableLongField" : {
+                  "type" : "integer"
+                },
+                "floatField" : {
+                  "type" : "number"
+                },
+                "nullableFloatField" : {
+                  "type" : "number"
+                },
+                "doubleField" : {
+                  "type" : "number"
+                },
+                "nullableDoubleField" : {
+                  "type" : "number"
+                },
+                "booleanField" : {
+                  "type" : "boolean"
+                },
+                "nullableBooleanField" : {
+                  "type" : "boolean"
+                },
+                "enumField" : {
+                  "type" : "string"
+                },
+                "nullableEnumField" : {
+                  "type" : "string"
+                },
+                "arrayField" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                },
+                "nullableArrayField" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "integer"
+                  }
+                },
+                "nestedRecord" : {
+                  "type" : "object",
+                  "properties" : {
+                    "nestedStringField" : {
+                      "type" : "string"
+                    },
+                    "nestedIntField" : {
+                      "type" : "integer"
+                    },
+                    "nestedArrayField" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "number"
+                      }
+                    },
+                    "nestedMapField" : { }
+                  }
+                },
+                "nullableNestedRecord" : {
+                  "type" : "object",
+                  "properties" : {
+                    "nullableNestedStringField" : {
+                      "type" : "string"
+                    },
+                    "nullableNestedLongField" : {
+                      "type" : "integer"
+                    }
+                  }
+                },
+                "decimalField" : {
+                  "type" : "number"
+                },
+                "mapField" : { },
+                "nullableMapField" : { }
+              }
+            }
+          }
         }
       ],
       "schema" : {

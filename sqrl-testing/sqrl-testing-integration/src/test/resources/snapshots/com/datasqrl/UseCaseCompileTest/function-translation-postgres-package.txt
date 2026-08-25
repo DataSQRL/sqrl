@@ -372,7 +372,6 @@ FROM "_InputData"
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ArrayFunctions($limit: Int = 10, $offset: Int = 0) {\nArrayFunctions(limit: $limit, offset: $offset) {\nlistagg_example\narrayagg_example\n}\n\n}",
             "queryName" : "ArrayFunctions",
@@ -380,7 +379,25 @@ FROM "_InputData"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ArrayFunctions{?offset,limit}"
+          "uriTemplate" : "queries/ArrayFunctions{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "listagg_example" : {
+                  "type" : "string"
+                },
+                "arrayagg_example" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -398,7 +415,6 @@ FROM "_InputData"
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query FunctionCalls($limit: Int = 10, $offset: Int = 0) {\nFunctionCalls(limit: $limit, offset: $offset) {\nlog2_example\nlog_nat_example\nlog_base_example\ne_example\nrand_example\nrand_int_example\nuuid_example\nbin_example\nhex_numeric_example\nhex_string_example\ntruncate_scale_example\ntruncate_default_example\nprintf_example\nstartswith_example\nendswith_example\nregexp_extract_example\nregexp_extract_group_example\nregexp_extract_all_example\nregexp_extract_all_group_example\ndecode_example\nencode_example\nfrom_base64_example\nto_base64_example\ninstr_example\nregexp_example\nsplit_index_example\nsplit_index_expr_example\nelt_example\ntry_cast_to_int_example\ntry_cast_to_bigint_example\ntry_cast_to_bool_example\ntry_cast_to_text_example\ntry_cast_to_decimal_example\ntry_cast_to_timestamp_example\ntry_cast_to_timestamptz_example\nnow_example\nlocal_time_example\nlocal_timestamp_example\ncurrent_time_example\ncurrent_date_example\ncurrent_timestamp_example\nyear_example\nquarter_example\nmonth_example\nweek_example\ndayofyear_example\ndayofmonth_example\ndayofweek_example\nhour_example\nminute_example\nsecond_example\nconvert_tz_example\nunix_timestamp_now_example\nif_example\nifnull_example\nis_alpha_example\nis_decimal_example\nis_digit_example\nelement_example\narray_contains_example\narray_prepend_example\narray_concat_example\narray_remove_example\narray_join_example\nsplit_example\nsha1_example\nsha224_example\nsha256_example\nsha384_example\nsha512_example\nthe_end\n}\n\n}",
             "queryName" : "FunctionCalls",
@@ -406,7 +422,247 @@ FROM "_InputData"
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/FunctionCalls{?offset,limit}"
+          "uriTemplate" : "queries/FunctionCalls{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "log2_example" : {
+                  "type" : "number"
+                },
+                "log_nat_example" : {
+                  "type" : "number"
+                },
+                "log_base_example" : {
+                  "type" : "number"
+                },
+                "e_example" : {
+                  "type" : "number"
+                },
+                "rand_example" : {
+                  "type" : "boolean"
+                },
+                "rand_int_example" : {
+                  "type" : "boolean"
+                },
+                "uuid_example" : {
+                  "type" : "boolean"
+                },
+                "bin_example" : {
+                  "type" : "string"
+                },
+                "hex_numeric_example" : {
+                  "type" : "string"
+                },
+                "hex_string_example" : {
+                  "type" : "string"
+                },
+                "truncate_scale_example" : {
+                  "type" : "number"
+                },
+                "truncate_default_example" : {
+                  "type" : "number"
+                },
+                "printf_example" : {
+                  "type" : "string"
+                },
+                "startswith_example" : {
+                  "type" : "boolean"
+                },
+                "endswith_example" : {
+                  "type" : "boolean"
+                },
+                "regexp_extract_example" : {
+                  "type" : "string"
+                },
+                "regexp_extract_group_example" : {
+                  "type" : "string"
+                },
+                "regexp_extract_all_example" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                },
+                "regexp_extract_all_group_example" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                },
+                "decode_example" : {
+                  "type" : "string"
+                },
+                "encode_example" : {
+                  "type" : "boolean"
+                },
+                "from_base64_example" : {
+                  "type" : "string"
+                },
+                "to_base64_example" : {
+                  "type" : "string"
+                },
+                "instr_example" : {
+                  "type" : "integer"
+                },
+                "regexp_example" : {
+                  "type" : "boolean"
+                },
+                "split_index_example" : {
+                  "type" : "string"
+                },
+                "split_index_expr_example" : {
+                  "type" : "string"
+                },
+                "elt_example" : {
+                  "type" : "string"
+                },
+                "try_cast_to_int_example" : {
+                  "type" : "integer"
+                },
+                "try_cast_to_bigint_example" : {
+                  "type" : "integer"
+                },
+                "try_cast_to_bool_example" : {
+                  "type" : "boolean"
+                },
+                "try_cast_to_text_example" : {
+                  "type" : "string"
+                },
+                "try_cast_to_decimal_example" : {
+                  "type" : "number"
+                },
+                "try_cast_to_timestamp_example" : {
+                  "type" : "boolean"
+                },
+                "try_cast_to_timestamptz_example" : {
+                  "type" : "boolean"
+                },
+                "now_example" : {
+                  "type" : "boolean"
+                },
+                "local_time_example" : {
+                  "type" : "boolean"
+                },
+                "local_timestamp_example" : {
+                  "type" : "boolean"
+                },
+                "current_time_example" : {
+                  "type" : "boolean"
+                },
+                "current_date_example" : {
+                  "type" : "boolean"
+                },
+                "current_timestamp_example" : {
+                  "type" : "boolean"
+                },
+                "year_example" : {
+                  "type" : "integer"
+                },
+                "quarter_example" : {
+                  "type" : "integer"
+                },
+                "month_example" : {
+                  "type" : "integer"
+                },
+                "week_example" : {
+                  "type" : "integer"
+                },
+                "dayofyear_example" : {
+                  "type" : "integer"
+                },
+                "dayofmonth_example" : {
+                  "type" : "integer"
+                },
+                "dayofweek_example" : {
+                  "type" : "integer"
+                },
+                "hour_example" : {
+                  "type" : "integer"
+                },
+                "minute_example" : {
+                  "type" : "integer"
+                },
+                "second_example" : {
+                  "type" : "integer"
+                },
+                "convert_tz_example" : {
+                  "type" : "string"
+                },
+                "unix_timestamp_now_example" : {
+                  "type" : "boolean"
+                },
+                "if_example" : {
+                  "type" : "string"
+                },
+                "ifnull_example" : {
+                  "type" : "string"
+                },
+                "is_alpha_example" : {
+                  "type" : "boolean"
+                },
+                "is_decimal_example" : {
+                  "type" : "boolean"
+                },
+                "is_digit_example" : {
+                  "type" : "boolean"
+                },
+                "element_example" : {
+                  "type" : "integer"
+                },
+                "array_contains_example" : {
+                  "type" : "boolean"
+                },
+                "array_prepend_example" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                },
+                "array_concat_example" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                },
+                "array_remove_example" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                },
+                "array_join_example" : {
+                  "type" : "string"
+                },
+                "split_example" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "string"
+                  }
+                },
+                "sha1_example" : {
+                  "type" : "string"
+                },
+                "sha224_example" : {
+                  "type" : "string"
+                },
+                "sha256_example" : {
+                  "type" : "string"
+                },
+                "sha384_example" : {
+                  "type" : "string"
+                },
+                "sha512_example" : {
+                  "type" : "string"
+                },
+                "the_end" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

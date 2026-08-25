@@ -809,7 +809,6 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Events($id: Long!, $limit: Int = 10, $offset: Int = 0$likeCount_limit: Int = 10, $likeCount_offset: Int = 0) {\nEvents(id: $id, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nlikeCount(limit: $likeCount_limit, offset: $likeCount_offset) {\neventid\nnum\ntest\n}\n}\n\n}",
             "queryName" : "Events",
@@ -817,7 +816,85 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Events{?offset,likeCount_offset,limit,id,likeCount_limit}"
+          "uriTemplate" : "queries/Events{?offset,likeCount_offset,limit,id,likeCount_limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "url" : {
+                  "type" : "string"
+                },
+                "date" : {
+                  "type" : "string"
+                },
+                "time" : {
+                  "type" : "string"
+                },
+                "title" : {
+                  "type" : "string"
+                },
+                "abstract" : {
+                  "type" : "string"
+                },
+                "location" : {
+                  "type" : "string"
+                },
+                "speakers" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "name" : {
+                        "type" : "string"
+                      },
+                      "title" : {
+                        "type" : "string"
+                      },
+                      "company" : {
+                        "type" : "string"
+                      }
+                    }
+                  }
+                },
+                "last_updated" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "id" : {
+                  "type" : "integer"
+                },
+                "full_text" : {
+                  "type" : "string"
+                },
+                "startTime" : {
+                  "type" : "string"
+                },
+                "startTimestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "likeCount" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "eventid" : {
+                        "type" : "integer"
+                      },
+                      "num" : {
+                        "type" : "integer"
+                      },
+                      "test" : {
+                        "type" : "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -846,7 +923,6 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query EventsLiked($userid: String!, $limit: Int = 10, $offset: Int = 0$likeCount_limit: Int = 10, $likeCount_offset: Int = 0) {\nEventsLiked(userid: $userid, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nlikeCount(limit: $likeCount_limit, offset: $likeCount_offset) {\neventid\nnum\ntest\n}\n}\n\n}",
             "queryName" : "EventsLiked",
@@ -854,7 +930,85 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/EventsLiked{?offset,likeCount_offset,limit,likeCount_limit,userid}"
+          "uriTemplate" : "queries/EventsLiked{?offset,likeCount_offset,limit,likeCount_limit,userid}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "url" : {
+                  "type" : "string"
+                },
+                "date" : {
+                  "type" : "string"
+                },
+                "time" : {
+                  "type" : "string"
+                },
+                "title" : {
+                  "type" : "string"
+                },
+                "abstract" : {
+                  "type" : "string"
+                },
+                "location" : {
+                  "type" : "string"
+                },
+                "speakers" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "name" : {
+                        "type" : "string"
+                      },
+                      "title" : {
+                        "type" : "string"
+                      },
+                      "company" : {
+                        "type" : "string"
+                      }
+                    }
+                  }
+                },
+                "last_updated" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "id" : {
+                  "type" : "integer"
+                },
+                "full_text" : {
+                  "type" : "string"
+                },
+                "startTime" : {
+                  "type" : "string"
+                },
+                "startTimestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "likeCount" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "eventid" : {
+                        "type" : "integer"
+                      },
+                      "num" : {
+                        "type" : "integer"
+                      },
+                      "test" : {
+                        "type" : "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -881,7 +1035,6 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query PersonalizedEventSearch($query: String!, $userid: String!, $limit: Int = 10, $offset: Int = 0) {\nPersonalizedEventSearch(query: $query, userid: $userid, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nscore\n}\n\n}",
             "queryName" : "PersonalizedEventSearch",
@@ -889,7 +1042,71 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/PersonalizedEventSearch{?offset,query,limit,userid}"
+          "uriTemplate" : "queries/PersonalizedEventSearch{?offset,query,limit,userid}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "url" : {
+                  "type" : "string"
+                },
+                "date" : {
+                  "type" : "string"
+                },
+                "time" : {
+                  "type" : "string"
+                },
+                "title" : {
+                  "type" : "string"
+                },
+                "abstract" : {
+                  "type" : "string"
+                },
+                "location" : {
+                  "type" : "string"
+                },
+                "speakers" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "name" : {
+                        "type" : "string"
+                      },
+                      "title" : {
+                        "type" : "string"
+                      },
+                      "company" : {
+                        "type" : "string"
+                      }
+                    }
+                  }
+                },
+                "last_updated" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "id" : {
+                  "type" : "integer"
+                },
+                "full_text" : {
+                  "type" : "string"
+                },
+                "startTime" : {
+                  "type" : "string"
+                },
+                "startTimestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "score" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -912,7 +1129,6 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query RecommendedEvents($userid: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendedEvents(userid: $userid, limit: $limit, offset: $offset) {\nurl\ndate\ntime\ntitle\nabstract\nlocation\nspeakers {\nname\ntitle\ncompany\n}\nlast_updated\nid\nfull_text\nstartTime\nstartTimestamp\nscore\n}\n\n}",
             "queryName" : "RecommendedEvents",
@@ -920,7 +1136,71 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/RecommendedEvents{?offset,limit,userid}"
+          "uriTemplate" : "queries/RecommendedEvents{?offset,limit,userid}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "url" : {
+                  "type" : "string"
+                },
+                "date" : {
+                  "type" : "string"
+                },
+                "time" : {
+                  "type" : "string"
+                },
+                "title" : {
+                  "type" : "string"
+                },
+                "abstract" : {
+                  "type" : "string"
+                },
+                "location" : {
+                  "type" : "string"
+                },
+                "speakers" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "name" : {
+                        "type" : "string"
+                      },
+                      "title" : {
+                        "type" : "string"
+                      },
+                      "company" : {
+                        "type" : "string"
+                      }
+                    }
+                  }
+                },
+                "last_updated" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "id" : {
+                  "type" : "integer"
+                },
+                "full_text" : {
+                  "type" : "string"
+                },
+                "startTime" : {
+                  "type" : "string"
+                },
+                "startTimestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "score" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

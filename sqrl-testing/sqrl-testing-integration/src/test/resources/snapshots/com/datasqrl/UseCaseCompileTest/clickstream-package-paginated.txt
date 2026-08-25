@@ -432,7 +432,6 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Click($limit: Int = 10, $offset: Int = 0) {\nClick(limit: $limit, offset: $offset) {\nresults {\ntimestamp\nuserid\nurl\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "Click",
@@ -440,7 +439,68 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Click{?offset,limit}"
+          "uriTemplate" : "queries/Click{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "results" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "timestamp" : {
+                      "type" : "string",
+                      "format" : "date-time"
+                    },
+                    "userid" : {
+                      "type" : "string"
+                    },
+                    "url" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              },
+              "pagination" : {
+                "type" : "object",
+                "properties" : {
+                  "pageSize" : {
+                    "type" : "integer"
+                  },
+                  "currentPage" : {
+                    "type" : "integer"
+                  },
+                  "totalRecords" : {
+                    "type" : "integer"
+                  },
+                  "totalPages" : {
+                    "type" : "integer"
+                  },
+                  "hasNextPage" : {
+                    "type" : "boolean"
+                  },
+                  "hasPreviousPage" : {
+                    "type" : "boolean"
+                  },
+                  "nextOffset" : {
+                    "type" : "integer"
+                  },
+                  "prevOffset" : {
+                    "type" : "integer"
+                  },
+                  "firstEventTime" : {
+                    "type" : "string",
+                    "format" : "date-time"
+                  },
+                  "lastEventTime" : {
+                    "type" : "string",
+                    "format" : "date-time"
+                  }
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -465,7 +525,6 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Recommendation($url: String!, $limit: Int = 10, $offset: Int = 0) {\nRecommendation(url: $url, limit: $limit, offset: $offset) {\nresults {\nurl\nrec\nfrequency\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "Recommendation",
@@ -473,7 +532,69 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Recommendation{?offset,limit,url}"
+          "uriTemplate" : "queries/Recommendation{?offset,limit,url}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "results" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "url" : {
+                      "type" : "string"
+                    },
+                    "rec" : {
+                      "type" : "string",
+                      "description" : "the recommended page URL"
+                    },
+                    "frequency" : {
+                      "type" : "integer",
+                      "description" : "the number of visitors that co-visited that page"
+                    }
+                  }
+                }
+              },
+              "pagination" : {
+                "type" : "object",
+                "properties" : {
+                  "pageSize" : {
+                    "type" : "integer"
+                  },
+                  "currentPage" : {
+                    "type" : "integer"
+                  },
+                  "totalRecords" : {
+                    "type" : "integer"
+                  },
+                  "totalPages" : {
+                    "type" : "integer"
+                  },
+                  "hasNextPage" : {
+                    "type" : "boolean"
+                  },
+                  "hasPreviousPage" : {
+                    "type" : "boolean"
+                  },
+                  "nextOffset" : {
+                    "type" : "integer"
+                  },
+                  "prevOffset" : {
+                    "type" : "integer"
+                  },
+                  "firstEventTime" : {
+                    "type" : "string",
+                    "format" : "date-time"
+                  },
+                  "lastEventTime" : {
+                    "type" : "string",
+                    "format" : "date-time"
+                  }
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -492,7 +613,6 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Trending($limit: Int = 10, $offset: Int = 0) {\nTrending(limit: $limit, offset: $offset) {\nresults {\nurl\ntotal\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "Trending",
@@ -500,7 +620,66 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Trending{?offset,limit}"
+          "uriTemplate" : "queries/Trending{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "results" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "url" : {
+                      "type" : "string",
+                      "description" : "URL of the top visited page"
+                    },
+                    "total" : {
+                      "type" : "integer",
+                      "description" : "Total number of visitors"
+                    }
+                  }
+                }
+              },
+              "pagination" : {
+                "type" : "object",
+                "properties" : {
+                  "pageSize" : {
+                    "type" : "integer"
+                  },
+                  "currentPage" : {
+                    "type" : "integer"
+                  },
+                  "totalRecords" : {
+                    "type" : "integer"
+                  },
+                  "totalPages" : {
+                    "type" : "integer"
+                  },
+                  "hasNextPage" : {
+                    "type" : "boolean"
+                  },
+                  "hasPreviousPage" : {
+                    "type" : "boolean"
+                  },
+                  "nextOffset" : {
+                    "type" : "integer"
+                  },
+                  "prevOffset" : {
+                    "type" : "integer"
+                  },
+                  "firstEventTime" : {
+                    "type" : "string",
+                    "format" : "date-time"
+                  },
+                  "lastEventTime" : {
+                    "type" : "string",
+                    "format" : "date-time"
+                  }
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -518,7 +697,6 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query VisitAfter($limit: Int = 10, $offset: Int = 0) {\nVisitAfter(limit: $limit, offset: $offset) {\nresults {\nbeforeURL\nafterURL\ntimestamp\n}\npagination {\npageSize\ncurrentPage\ntotalRecords\ntotalPages\nhasNextPage\nhasPreviousPage\nnextOffset\nprevOffset\nfirstEventTime\nlastEventTime\n}\n}\n\n}",
             "queryName" : "VisitAfter",
@@ -526,7 +704,68 @@ CREATE INDEX IF NOT EXISTS "VisitAfter_btree_c2" ON "VisitAfter" USING btree ("t
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/VisitAfter{?offset,limit}"
+          "uriTemplate" : "queries/VisitAfter{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "results" : {
+                "type" : "array",
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "beforeURL" : {
+                      "type" : "string"
+                    },
+                    "afterURL" : {
+                      "type" : "string"
+                    },
+                    "timestamp" : {
+                      "type" : "string",
+                      "format" : "date-time"
+                    }
+                  }
+                }
+              },
+              "pagination" : {
+                "type" : "object",
+                "properties" : {
+                  "pageSize" : {
+                    "type" : "integer"
+                  },
+                  "currentPage" : {
+                    "type" : "integer"
+                  },
+                  "totalRecords" : {
+                    "type" : "integer"
+                  },
+                  "totalPages" : {
+                    "type" : "integer"
+                  },
+                  "hasNextPage" : {
+                    "type" : "boolean"
+                  },
+                  "hasPreviousPage" : {
+                    "type" : "boolean"
+                  },
+                  "nextOffset" : {
+                    "type" : "integer"
+                  },
+                  "prevOffset" : {
+                    "type" : "integer"
+                  },
+                  "firstEventTime" : {
+                    "type" : "string",
+                    "format" : "date-time"
+                  },
+                  "lastEventTime" : {
+                    "type" : "string",
+                    "format" : "date-time"
+                  }
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {

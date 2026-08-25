@@ -418,7 +418,6 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query TotalOrgTokens($limit: Int = 10, $offset: Int = 0) {\nTotalOrgTokens(limit: $limit, offset: $offset) {\norgid\ntotal_tokens\ntotal_requests\n}\n\n}",
             "queryName" : "TotalOrgTokens",
@@ -426,7 +425,25 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/TotalOrgTokens{?offset,limit}"
+          "uriTemplate" : "queries/TotalOrgTokens{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orgid" : {
+                  "type" : "integer"
+                },
+                "total_tokens" : {
+                  "type" : "integer"
+                },
+                "total_requests" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -449,7 +466,6 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query TotalUserTokens($userid: Long!, $limit: Int = 10, $offset: Int = 0) {\nTotalUserTokens(userid: $userid, limit: $limit, offset: $offset) {\nuserid\ntotal_tokens\ntotal_requests\n}\n\n}",
             "queryName" : "TotalUserTokens",
@@ -457,7 +473,25 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/TotalUserTokens{?offset,limit,userid}"
+          "uriTemplate" : "queries/TotalUserTokens{?offset,limit,userid}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "userid" : {
+                  "type" : "integer"
+                },
+                "total_tokens" : {
+                  "type" : "integer"
+                },
+                "total_requests" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -484,7 +518,6 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query TotalOrgTokensByRange($minTokens: Long!, $maxTokens: Long!, $limit: Int = 10, $offset: Int = 0) {\nTotalOrgTokensByRange(minTokens: $minTokens, maxTokens: $maxTokens, limit: $limit, offset: $offset) {\norgid\ntotal_tokens\ntotal_requests\n}\n\n}",
             "queryName" : "TotalOrgTokensByRange",
@@ -492,7 +525,25 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/TotalOrgTokensByRange{?offset,maxTokens,limit,minTokens}"
+          "uriTemplate" : "queries/TotalOrgTokensByRange{?offset,maxTokens,limit,minTokens}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orgid" : {
+                  "type" : "integer"
+                },
+                "total_tokens" : {
+                  "type" : "integer"
+                },
+                "total_requests" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -513,7 +564,6 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "mutation UserTokens($userid: Long!, $tokens: Long!) {\nUserTokens(event: { userid: $userid, tokens: $tokens }) {\nuserid\ntokens\nrequest_time\n}\n\n}",
             "queryName" : "UserTokens",
@@ -521,7 +571,23 @@ CREATE INDEX IF NOT EXISTS "TotalOrgTokens_btree_c1" ON "TotalOrgTokens" USING b
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "POST",
-          "uriTemplate" : "mutations/UserTokens"
+          "uriTemplate" : "mutations/UserTokens",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "userid" : {
+                "type" : "integer"
+              },
+              "tokens" : {
+                "type" : "integer"
+              },
+              "request_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
         }
       ],
       "schema" : {

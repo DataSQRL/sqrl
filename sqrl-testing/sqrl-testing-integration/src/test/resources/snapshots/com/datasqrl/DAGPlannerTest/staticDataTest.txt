@@ -1792,7 +1792,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Numbers($limit: Int = 10, $offset: Int = 0) {\nNumbers(limit: $limit, offset: $offset) {\nid\n}\n\n}",
             "queryName" : "Numbers",
@@ -1800,7 +1799,19 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Numbers{?offset,limit}"
+          "uriTemplate" : "queries/Numbers{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1818,7 +1829,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Numbers2($limit: Int = 10, $offset: Int = 0) {\nNumbers2(limit: $limit, offset: $offset) {\nid\n}\n\n}",
             "queryName" : "Numbers2",
@@ -1826,7 +1836,19 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Numbers2{?offset,limit}"
+          "uriTemplate" : "queries/Numbers2{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1844,7 +1866,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NumbersLarge($limit: Int = 10, $offset: Int = 0) {\nNumbersLarge(limit: $limit, offset: $offset) {\nid\n}\n\n}",
             "queryName" : "NumbersLarge",
@@ -1852,7 +1873,19 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NumbersLarge{?offset,limit}"
+          "uriTemplate" : "queries/NumbersLarge{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1870,7 +1903,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderNumbers($limit: Int = 10, $offset: Int = 0) {\nOrderNumbers(limit: $limit, offset: $offset) {\nid\ntime\n}\n\n}",
             "queryName" : "OrderNumbers",
@@ -1878,7 +1910,23 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/OrderNumbers{?offset,limit}"
+          "uriTemplate" : "queries/OrderNumbers{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1896,7 +1944,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderNumbers2($limit: Int = 10, $offset: Int = 0) {\nOrderNumbers2(limit: $limit, offset: $offset) {\nid\ntime\n}\n\n}",
             "queryName" : "OrderNumbers2",
@@ -1904,7 +1951,23 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/OrderNumbers2{?offset,limit}"
+          "uriTemplate" : "queries/OrderNumbers2{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1922,7 +1985,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderPairs($limit: Int = 10, $offset: Int = 0) {\nOrderPairs(limit: $limit, offset: $offset) {\nid\ntime\notherid\n}\n\n}",
             "queryName" : "OrderPairs",
@@ -1930,7 +1992,26 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/OrderPairs{?offset,limit}"
+          "uriTemplate" : "queries/OrderPairs{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "otherid" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1948,7 +2029,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query OrderPairs2($limit: Int = 10, $offset: Int = 0) {\nOrderPairs2(limit: $limit, offset: $offset) {\nid\ntime\npk\n}\n\n}",
             "queryName" : "OrderPairs2",
@@ -1956,7 +2036,26 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/OrderPairs2{?offset,limit}"
+          "uriTemplate" : "queries/OrderPairs2{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "pk" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -1974,7 +2073,6 @@ END
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
             "queryName" : "Orders",
@@ -1982,7 +2080,46 @@ END
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Orders{?offset,limit}"
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "entries" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {
