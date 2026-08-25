@@ -37,15 +37,21 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
   @Option(
       names = {"-b", "--build"},
       description =
-          "Build folder for any output generated during build. Must be a relative path within the project root."
-              + " Resolved relative to the specified or inferred project root. Default: \"<project-root>/build\".\n")
+          "Subfolder of \"<project-root>/build\" for build output."
+              + " The value must be a relative path that remains within that build folder."
+              + " For example, \"--build development\" writes to \"<project-root>/build/development\"."
+              + " If omitted, output is written directly to \"<project-root>/build\"."
+              + " This setting determines the default target folder when \"--target\" is omitted.\n")
   protected Optional<Path> buildFolder = Optional.empty();
 
   @Option(
       names = {"-t", "--target"},
       description =
-          "Target folder for deployment artifacts and plans. Must be a relative path within the project root."
-              + " Resolved relative to the specified or inferred project root. Default: \"<project-root>/build/deploy\".\n")
+          "Folder for deployment artifacts and plans. The value must be a relative path that remains within \"<project-root>\"."
+              + " Unlike \"--build\", an explicit value is resolved directly from the project root:"
+              + " \"--target artifacts\" writes to \"<project-root>/artifacts\", independent of \"--build\"."
+              + " If omitted, the target is \"<build-folder>/deploy\"."
+              + " For example, \"--build development\" defaults the target to \"<project-root>/build/development/deploy\".\n")
   protected Optional<Path> targetFolder = Optional.empty();
 
   @Override
@@ -75,8 +81,12 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
 
   protected Path getBuildDir() {
     return buildFolder
-        .map(path -> resolveGivenCliDir(path, "Build"))
-        .orElseGet(() -> getProjectRoot().resolve(SqrlConstants.BUILD_DIR_NAME));
+        .map(path -> resolveGivenCliDir(path, "Build", getBuildBaseDir(), "build folder"))
+        .orElseGet(this::getBuildBaseDir);
+  }
+
+  protected Path getBuildBaseDir() {
+    return getProjectRoot().resolve(SqrlConstants.BUILD_DIR_NAME);
   }
 
   protected Path getTargetDir() {
@@ -124,11 +134,14 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
   }
 
   private Path resolveGivenCliDir(Path dir, String dirType) {
+    return resolveGivenCliDir(dir, dirType, getProjectRoot(), "project root");
+  }
+
+  private Path resolveGivenCliDir(Path dir, String dirType, Path root, String rootDescription) {
     if (!cli.internalTestExec && dir.isAbsolute()) {
       throw new IllegalArgumentException(dirType + " folder must be a relative path, got: " + dir);
     }
 
-    var root = getProjectRoot();
     var directory = root.resolve(dir);
     if (!cli.internalTestExec && !directory.normalize().startsWith(root.normalize())) {
       throw new IllegalArgumentException(
@@ -137,7 +150,9 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
               + dir
               + "' resolves to '"
               + directory.normalize()
-              + "', which is outside project root '"
+              + "', which is outside "
+              + rootDescription
+              + " '"
               + root.normalize()
               + "'");
     }

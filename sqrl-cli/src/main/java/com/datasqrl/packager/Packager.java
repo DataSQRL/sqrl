@@ -65,7 +65,7 @@ public class Packager {
       cleanDir(workspacePaths.workspaceDir().resolve(SqrlConstants.DEFAULT_ICEBERG_WAREHOUSE_DIR));
       createBuildDir(workspacePaths.buildDir());
 
-      var basePath = workspacePaths.projectRoot().orElse(workspacePaths.buildDir().getParent());
+      var basePath = workspacePaths.projectRoot();
       // Preprocess included project(s) first if there are any
       var includes = config.getScriptConfig().getIncludeConfigs();
       for (var include : includes) {

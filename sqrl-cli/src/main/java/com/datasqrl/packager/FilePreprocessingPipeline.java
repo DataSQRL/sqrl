@@ -40,6 +40,7 @@ import java.util.HashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 /**
@@ -48,11 +49,20 @@ import org.springframework.stereotype.Component;
  * preprocessing than just copying files.
  */
 @Component
-@RequiredArgsConstructor
 public class FilePreprocessingPipeline {
 
   private final WorkspacePaths workspacePaths;
+  private final Path buildBaseDir;
   private final Set<Preprocessor> preprocessors;
+
+  public FilePreprocessingPipeline(
+      WorkspacePaths workspacePaths,
+      @Qualifier("buildBaseDir") Path buildBaseDir,
+      Set<Preprocessor> preprocessors) {
+    this.workspacePaths = workspacePaths;
+    this.buildBaseDir = buildBaseDir;
+    this.preprocessors = preprocessors;
+  }
 
   public void run(Path sourceDir, ErrorCollector errors) throws IOException {
     run(sourceDir, NamePath.ROOT, errors);
@@ -65,7 +75,7 @@ public class FilePreprocessingPipeline {
         sourceDir,
         EnumSet.of(FileVisitOption.FOLLOW_LINKS),
         Integer.MAX_VALUE,
-        new PathVisitor(sourceDir, buildDir, errors));
+        new PathVisitor(sourceDir, buildBaseDir, buildDir, errors));
     preprocessors.forEach(Preprocessor::complete);
   }
 
@@ -87,12 +97,13 @@ public class FilePreprocessingPipeline {
     private final Deque<Context> ctxDeque = new ArrayDeque<>();
 
     private final Path sourceDir;
+    private final Path buildBaseDir;
     private final Path buildDir;
     private final ErrorCollector errors;
 
     @Override
     public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-      if (dir.startsWith(buildDir)) {
+      if (dir.startsWith(buildBaseDir)) {
         return FileVisitResult.SKIP_SUBTREE;
       }
 

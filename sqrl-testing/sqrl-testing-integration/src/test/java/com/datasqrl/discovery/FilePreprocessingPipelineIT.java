@@ -34,7 +34,6 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
@@ -58,7 +57,7 @@ class FilePreprocessingPipelineIT {
   void setup() {
     outputDir = snapshotExtension.getOutputDir();
     errorCollector = ErrorCollector.root();
-    workspacePaths = new WorkspacePaths(outputDir, outputDir, outputDir, Optional.of(outputDir));
+    workspacePaths = new WorkspacePaths(outputDir, outputDir, outputDir, outputDir);
   }
 
   @Test
@@ -66,7 +65,8 @@ class FilePreprocessingPipelineIT {
       throws Exception {
     // Arrange
     var preprocessingPipeline =
-        new FilePreprocessingPipeline(workspacePaths, Set.of(new CopyStaticDataPreprocessor()));
+        new FilePreprocessingPipeline(
+            workspacePaths, outputDir, Set.of(new CopyStaticDataPreprocessor()));
 
     // Act
     preprocessingPipeline.run(FILES_DIR, errorCollector);
@@ -102,7 +102,7 @@ class FilePreprocessingPipelineIT {
   void given_jarFile_when_jarPreprocessorRuns_then_processesJarCorrectly() throws Exception {
     // Arrange
     var preprocessingPipeline =
-        new FilePreprocessingPipeline(workspacePaths, Set.of(new JarPreprocessor()));
+        new FilePreprocessingPipeline(workspacePaths, outputDir, Set.of(new JarPreprocessor()));
 
     // Act
     preprocessingPipeline.run(FILES_DIR, errorCollector);
@@ -134,7 +134,8 @@ class FilePreprocessingPipelineIT {
                 new CopyStaticDataPreprocessor(),
                 new JarPreprocessor(),
                 new SqrlPreprocessor(new PackageJsonImpl(), ErrorCollector.root())));
-    var preprocessingPipeline = new FilePreprocessingPipeline(workspacePaths, preprocessors);
+    var preprocessingPipeline =
+        new FilePreprocessingPipeline(workspacePaths, outputDir, preprocessors);
 
     // Act
     preprocessingPipeline.run(FILES_DIR, errorCollector);

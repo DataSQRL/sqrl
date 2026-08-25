@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -103,6 +104,46 @@ class CompileCmdTest {
   }
 
   @Test
+  void givenInferredProjectRoot_whenCompiling_thenRegistersProjectRootForPreprocessing()
+      throws Exception {
+    var projectRoot = tempDir.resolve("project");
+    var packageJsonPath = projectRoot.resolve("package.json");
+    Files.createDirectory(projectRoot);
+    Files.writeString(packageJsonPath, "{}");
+
+    var compileCmd = new CompileCmd();
+    compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
+    compileCmd.packageFiles = List.of(Path.of("project", "package.json"));
+
+    when(sqrlConfig.getTestConfig()).thenReturn(testConfig);
+    when(testConfig.getTestDir(projectRoot)).thenReturn(Optional.empty());
+    when(compilationProcess.executeCompilation(Optional.empty()))
+        .thenReturn(Pair.of(PhysicalPlan.builder().build(), new TestPlan()));
+
+    try (var configLoader = mockStatic(ConfigLoaderUtils.class);
+        var springContext =
+            mockConstruction(
+                AnnotationConfigApplicationContext.class,
+                (mock, context) -> {
+                  when(mock.getBean(ExecutionEnginesHolder.class)).thenReturn(engineHolder);
+                  when(mock.getBean(Packager.class)).thenReturn(packager);
+                  when(mock.getBean(CompilationProcess.class)).thenReturn(compilationProcess);
+                })) {
+      configLoader
+          .when(
+              () ->
+                  ConfigLoaderUtils.loadUnresolvedConfig(
+                      any(ErrorCollector.class), eq(List.of(packageJsonPath))))
+          .thenReturn(sqrlConfig);
+
+      compileCmd.compile(ErrorCollector.root());
+
+      verify(springContext.constructed().get(0))
+          .registerBean(eq("projectRoot"), eq(Path.class), any(Supplier.class));
+    }
+  }
+
+  @Test
   void givenInferredProjectRoot_whenFormattingPackageFiles_thenRemovesInferredRoot()
       throws IOException {
     var projectDir = tempDir.resolve(Path.of("apps", "orders"));
@@ -142,7 +183,7 @@ class CompileCmdTest {
 
   @Test
   void
-      givenCustomBuildFolderAndProjectRoot_whenGettingBuildAndDefaultTargetDirs_thenResolvesBothFromProjectRoot()
+      givenCustomBuildFolderAndProjectRoot_whenGettingBuildAndDefaultTargetDirs_thenResolvesBothFromDefaultBuildFolder()
           throws IOException {
     var projectRoot = tempDir.resolve("project");
     Files.createDirectory(projectRoot);
@@ -152,9 +193,9 @@ class CompileCmdTest {
     compileCmd.projectRoot = Optional.of(Path.of("project"));
     compileCmd.buildFolder = Optional.of(Path.of("output"));
 
-    assertThat(compileCmd.getBuildDir()).isEqualTo(projectRoot.resolve("output"));
+    assertThat(compileCmd.getBuildDir()).isEqualTo(projectRoot.resolve("build/output"));
     assertThat(compileCmd.getTargetDir())
-        .isEqualTo(projectRoot.resolve("output").resolve("deploy"));
+        .isEqualTo(projectRoot.resolve("build/output").resolve("deploy"));
   }
 
   @Test
@@ -170,7 +211,8 @@ class CompileCmdTest {
   }
 
   @Test
-  void givenBuildFolderOutsideProjectRoot_whenGettingBuildDir_thenThrows() throws IOException {
+  void givenBuildFolderOutsideDefaultBuildFolder_whenGettingBuildDir_thenThrows()
+      throws IOException {
     var projectRoot = tempDir.resolve("banking");
     Files.createDirectory(projectRoot);
 
@@ -183,9 +225,9 @@ class CompileCmdTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage(
             "Build folder '../build-banking' resolves to '"
-                + tempDir.resolve("build-banking")
-                + "', which is outside project root '"
-                + projectRoot
+                + projectRoot.resolve("build-banking")
+                + "', which is outside build folder '"
+                + projectRoot.resolve("build")
                 + "'");
   }
 

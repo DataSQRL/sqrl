@@ -91,11 +91,9 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
 
     try (var springCtx = new AnnotationConfigApplicationContext()) {
       springCtx.registerBean(ErrorCollector.class, () -> errors);
-      if (projectRoot.isPresent()) {
-        // We only set this if project root is explicitly given
-        springCtx.registerBean("projectRoot", Path.class, this::getProjectRoot);
-      }
       springCtx.registerBean("workspaceDir", Path.class, () -> cli.workspaceDir);
+      springCtx.registerBean("projectRoot", Path.class, this::getProjectRoot);
+      springCtx.registerBean("buildBaseDir", Path.class, this::getBuildBaseDir);
       springCtx.registerBean("buildDir", Path.class, this::getBuildDir);
       springCtx.registerBean("targetDir", Path.class, this::getTargetDir);
       springCtx.registerBean(PackageJson.class, () -> sqrlConfig);
