@@ -112,6 +112,7 @@ import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
 import org.apache.flink.sql.parser.ddl.view.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.view.SqlCreateView;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
+import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -652,6 +653,7 @@ public class Sqrl2FlinkSQLTranslator {
             .originalSql(sql)
             .type(baseTable.getType())
             .primaryKey(baseTable.getPrimaryKey())
+            .insertConflictBehavior(baseTable.getInsertConflictBehavior())
             .optionalBaseTable(Optional.of(baseTable.getBaseTable()))
             .streamRoot(baseTable.getStreamRoot())
             .fromTables(List.of(baseTable))
@@ -988,14 +990,19 @@ public class Sqrl2FlinkSQLTranslator {
         .getTableIdentifier();
   }
 
-  public void insertInto(RelNode relNode, ObjectIdentifier sinkTableId) {
-    insertInto(relNode, sinkTableId, null);
-  }
-
   public void insertInto(
       RelNode relNode, ObjectIdentifier sinkTableId, @Nullable Integer batchIdx) {
     var selectQuery = RelToFlinkSql.convertToSqlNode(relNode);
     planBuilder.addInsert(FlinkSqlNodes.createInsert(selectQuery, sinkTableId), batchIdx);
+  }
+
+  public void insertInto(
+      RelNode relNode,
+      ObjectIdentifier sinkTableId,
+      Optional<SqlInsertConflictBehavior> conflictBehavior) {
+    var selectQuery = RelToFlinkSql.convertToSqlNode(relNode);
+    planBuilder.addInsert(
+        FlinkSqlNodes.createInsert(selectQuery, sinkTableId, conflictBehavior), null);
   }
 
   public void insertInto(RichSqlInsert insert, int batchIdx) {

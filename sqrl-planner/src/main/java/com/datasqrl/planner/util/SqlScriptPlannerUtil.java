@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner;
+package com.datasqrl.planner.util;
 
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.google.common.base.Preconditions;

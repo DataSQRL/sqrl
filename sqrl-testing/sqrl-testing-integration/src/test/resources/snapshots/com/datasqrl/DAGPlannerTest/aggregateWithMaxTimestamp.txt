@@ -283,26 +283,32 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`OrderAgg1_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`OrderAgg1`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrderAgg2_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`OrderAgg2`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrderAgg3_3`
 SELECT *
 FROM `default_catalog`.`default_database`.`OrderAgg3`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrderAgg4_4`
 SELECT *
 FROM `default_catalog`.`default_database`.`OrderAgg4`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_5`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`Orders`
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrdersState_6`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`OrdersState`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json

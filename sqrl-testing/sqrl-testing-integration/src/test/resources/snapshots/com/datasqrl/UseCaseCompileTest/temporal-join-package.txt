@@ -241,6 +241,7 @@ FROM `default_catalog`.`default_database`.`EnrichedSensorReading`
 INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
 SELECT `sensorid`, `temperature`, `placement`, `event_time`, `sensor_name`, `hash_columns`(`sensorid`, `temperature`, `placement`, `event_time`, `sensor_name`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`EnrichedSensorReading`
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorReading_3`
 SELECT *
@@ -249,6 +250,7 @@ FROM `default_catalog`.`default_database`.`SensorReading`
 INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
 SELECT `sensorid`, `temperature`, `placement`, `event_time`, `hash_columns`(`sensorid`, `temperature`, `placement`, `event_time`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`SensorReading`
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_5`
 SELECT *
@@ -257,6 +259,7 @@ FROM `default_catalog`.`default_database`.`SensorUpdates`
 INSERT INTO `default_catalog`.`default_database`.`SensorUpdates_6`
 SELECT *
 FROM `default_catalog`.`default_database`.`SensorUpdates`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json

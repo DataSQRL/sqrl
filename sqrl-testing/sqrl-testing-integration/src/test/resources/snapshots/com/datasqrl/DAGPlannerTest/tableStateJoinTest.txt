@@ -501,34 +501,42 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrderCustomer_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`OrderCustomer`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrderCustomerConstant_3`
 SELECT *
 FROM `default_catalog`.`default_database`.`OrderCustomerConstant`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrderCustomerLeft_4`
 SELECT *
 FROM `default_catalog`.`default_database`.`OrderCustomerLeft`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrderCustomerLeftExcluded_5`
 SELECT *
 FROM `default_catalog`.`default_database`.`OrderCustomerLeftExcluded`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrderCustomerRight_6`
 SELECT *
 FROM `default_catalog`.`default_database`.`OrderCustomerRight`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrderCustomerRightExcluded_7`
 SELECT `lastUpdated`, `customerid`, `name`, 1 AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`OrderCustomerRightExcluded`
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_8`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`Orders`
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json

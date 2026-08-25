@@ -41,6 +41,7 @@ import com.datasqrl.planner.hint.PrimaryKeyHint;
 import com.datasqrl.planner.hint.RowCountHint;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.Documented.Documentation;
+import com.datasqrl.planner.util.FlinkConflictBehaviorUtil;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.LinkedHashMultimap;
@@ -92,6 +93,7 @@ import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
+import org.apache.flink.table.api.InsertConflictStrategy.ConflictBehavior;
 import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
@@ -272,6 +274,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .originalRelnode(tableLookup.normalizeRelnode(originalRelnode))
             .type(analysis.getType())
             .primaryKey(analysis.primaryKey)
+            .insertConflictBehavior(analysis.getInsertConflictBehavior())
             .isMostRecentDistinct(isMostRecentDistinct)
             .optionalBaseTable(baseTable)
             .documentation(documentation)
@@ -456,6 +459,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
               .relNode(
                   updateRelnode(
                       functionScan, inputs.stream().map(RelNodeAnalysis::getRelNode).toList()))
+              .insertConflictBehavior(Optional.of(ConflictBehavior.DEDUPLICATE))
               .build());
     }
     // Generic table function call
@@ -832,7 +836,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             resultType,
             joinedPk,
             rootTable,
-            leftIn.hasNowFilter || rightIn.hasNowFilter));
+            leftIn.hasNowFilter || rightIn.hasNowFilter,
+            FlinkConflictBehaviorUtil.combineInsertConflictBehaviors(leftIn, rightIn)));
   }
 
   private boolean identicalStreamRoots(
@@ -861,7 +866,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             leftIn.type,
             pk,
             leftIn.getStreamRoot(),
-            leftIn.hasNowFilter || rightIn.hasNowFilter));
+            leftIn.hasNowFilter || rightIn.hasNowFilter,
+            FlinkConflictBehaviorUtil.combineInsertConflictBehaviors(leftIn, rightIn)));
   }
 
   /**
@@ -944,7 +950,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             resultType,
             pk,
             streamRoot,
-            nowFilter));
+            nowFilter,
+            FlinkConflictBehaviorUtil.combineInsertConflictBehaviors(inputs)));
   }
 
   @Override
@@ -1011,7 +1018,12 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     }
     return setProcessResult(
         new RelNodeAnalysis(
-            updateRelnode(aggregate, List.of(input.relNode)), resultType, pk, streamRoot, false));
+            updateRelnode(aggregate, List.of(input.relNode)),
+            resultType,
+            pk,
+            streamRoot,
+            false,
+            Optional.empty()));
   }
 
   @Override
