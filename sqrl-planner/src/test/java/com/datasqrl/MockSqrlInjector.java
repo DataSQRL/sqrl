@@ -21,7 +21,6 @@ import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -49,7 +48,7 @@ public class MockSqrlInjector {
         workspaceDir,
         workspaceDir.resolve("build"),
         workspaceDir.resolve("build").resolve("deploy"),
-        Optional.of(workspaceDir));
+        workspaceDir);
   }
 
   @Bean

@@ -20,7 +20,6 @@ import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import java.nio.file.Path;
-import java.util.Optional;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -35,7 +34,7 @@ public class SqrlInjector {
       @Qualifier("workspaceDir") Path workspaceDir,
       @Qualifier("buildDir") Path buildDir,
       @Qualifier("targetDir") Path targetDir,
-      @Qualifier("projectRoot") Optional<Path> projectRoot) {
+      @Qualifier("projectRoot") Path projectRoot) {
 
     return new WorkspacePaths(workspaceDir, buildDir, targetDir, projectRoot);
   }

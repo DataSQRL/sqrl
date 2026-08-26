@@ -16,10 +16,8 @@
 package com.datasqrl.config;
 
 import java.nio.file.Path;
-import java.util.Optional;
 
-public record WorkspacePaths(
-    Path workspaceDir, Path buildDir, Path targetDir, Optional<Path> projectRoot) {
+public record WorkspacePaths(Path workspaceDir, Path buildDir, Path targetDir, Path projectRoot) {
 
   public Path getUdfPath() {
     return targetDir.resolve(SqrlConstants.FLINK_ASSETS_DIR).resolve(SqrlConstants.LIB_DIR);
