@@ -88,7 +88,7 @@ The value is in GiB, must be positive, and is capped at 4000. It is a **hard sch
 
 #### Task Manager CPU Limit
 
-Each task manager is deployed with a CPU request and a CPU limit. The request is the size's CPU column, and the limit defaults to the request multiplied by the "Max CPU Burst" column above — 1 for every size except `dev`, so by default a task manager may not exceed its request. `taskmanager-cpu-limit` overrides that ceiling:
+Each task manager is deployed with a CPU request and a CPU limit. The request is the size's CPU column, doubled by a `.cpu` qualifier, and the limit defaults to that request multiplied by the "Max CPU Burst" column above — 1 for every size except `dev`, so by default a task manager may not exceed its request. `taskmanager-cpu-limit` overrides that ceiling:
 
 ```json
 {
@@ -103,11 +103,11 @@ Each task manager is deployed with a CPU request and a CPU limit. The request is
 }
 ```
 
-Accepted forms are a multiple of the request (`"2x"`), which moves with `taskmanager-size`, or an absolute ceiling (`"4000m"`, `"4"`). The limit may not resolve below the request.
+Accepted forms are a multiple of the request (`"2x"`), which moves with `taskmanager-size`, or an absolute ceiling (`"4000m"`, `"4"`). Both the multiple and the below-request check resolve against the qualified request, so on `medium.cpu` — which requests 4 CPU — `"2x"` gives a ceiling of 8 and an absolute `"3"` is rejected. The limit may not resolve below the request.
 
-Raise it when task managers share nodes with room to spare: bursting uses cores their neighbours leave idle, without asking the cluster for more capacity, which is the only lever available where a dedicated nodepool caps total CPU. Under contention each pod still gets the share its request guarantees.
+Raise it when task managers share nodes with room to spare: bursting uses cores their neighbours leave idle without asking the cluster for more capacity, which is useful where a dedicated nodepool caps total CPU. Under contention each pod still gets the share its request guarantees.
 
-A limit above the request makes the pod **Burstable** rather than **Guaranteed** QoS, which lowers its eviction priority when a node comes under memory pressure. Flink always writes a CPU limit, so the limit cannot be removed entirely — use a large multiple instead.
+A limit above the request makes the pod **Burstable** rather than **Guaranteed** QoS, which makes it a likelier eviction candidate when a node comes under memory pressure. Flink always writes a CPU limit, so the limit cannot be removed entirely — use a large multiple instead.
 
 #### Size Qualifiers
 
@@ -119,17 +119,17 @@ Task manager sizes support qualifiers for specialized workloads. Qualifiers are 
 
 | Qualifier          | Pod memory | Flink heap+managed | Typical use                            |
 |:-------------------|:-----------|:-------------------|:---------------------------------------|
-| `.cpu`             | base       | base × 0.80        | CPU-intensive jobs                     |
-| `.mem` / `.mem-2x` | base × 2   | base × 1.6         | State-heavy jobs                       |
-| `.mem-4x`          | base × 4   | base × 3.2         | Large state                            |
-| `.mem-8x`          | base × 8   | base × 6.4         | Very large state                       |
+| `.cpu`             | base       | base × 0.90        | CPU-intensive jobs                     |
+| `.mem` / `.mem-2x` | base × 2   | base × 1.8         | State-heavy jobs                       |
+| `.mem-4x`          | base × 4   | base × 3.6         | Large state                            |
+| `.mem-8x`          | base × 8   | base × 7.2         | Very large state                       |
 | `.mem-headroom-2x` | base × 2   | base × 1           | Sidecars / native memory consumers     |
 | `.mem-headroom-4x` | base × 4   | base × 1           | Larger sidecar headroom                |
 | `.mem-headroom-8x` | base × 8   | base × 1           | Maximum sidecar headroom (e.g. DuckDB) |
 
 Examples:
 
-* `medium.mem-4x` → pod 32 GB / Flink heap+managed ≈ 25.6 GB.
+* `medium.mem-4x` → pod 32 GB / Flink heap+managed ≈ 28.8 GB.
 * `xlarge.mem-headroom-8x` → pod 256 GB / Flink heap+managed = 32 GB (baseline) / 224 GB headroom.
 
 `.mem` is an alias for `.mem-2x`. The legacy `.mem-headroom` qualifier (triple memory, Flink stays at baseline) is **deprecated** — use `.mem-headroom-Nx` instead.
