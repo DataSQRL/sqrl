@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS `now_sink` (
+    id INT
+) WITH (
+    'connector' = 'blackhole'
+);
+
+NowSource := SELECT id, CAST(TIMESTAMP '2000-01-01 00:00:00' AS TIMESTAMP_LTZ(3)) AS event_time FROM (VALUES (1)) AS source(id);
+
+INSERT INTO `now_sink`
+SELECT id
+FROM NowSource
+WHERE event_time < NOW();
