@@ -78,7 +78,7 @@ public class DAGPlannerTest {
   @Disabled
   @Test
   void specificScript() {
-    var script = SCRIPT_DIR.resolve("insertInto.sqrl");
+    var script = SCRIPT_DIR.resolve("insertIntoNow.sqrl");
     scripts(script);
   }
 
