@@ -151,8 +151,8 @@ public class IndexSelector {
         indexedColumns.addAll(conj.inequalityColumns);
         indexedFunctions.addAll(conj.functionCalls);
       }
-      // Remove first primary key column
-      indexedColumns.remove(0);
+      // The database indexes the primary key, so its leading column needs no index of its own
+      getPrimaryKeyIndex(table).map(pk -> pk.getColumns().get(0)).ifPresent(indexedColumns::remove);
       // Pick generic index type
       var genericType = config.getPreferredGenericIndexType();
       Map<IndexDefinition, Double> indexes = new HashMap<>();
@@ -189,6 +189,26 @@ public class IndexSelector {
                 idxType));
   }
 
+  /**
+   * The index that the database maintains for the primary key of the physical table, if it
+   * maintains one. The primary key is resolved by name against the row type because the physical
+   * primary key is not necessarily the leading columns of the table: tables without an explicit key
+   * get a synthetic {@code __pk_hash} column appended at the end.
+   */
+  private Optional<IndexDefinition> getPrimaryKeyIndex(NamedTable table) {
+    if (!config.hasPrimaryKeyIndex() || !table.getAnalysis().getPrimaryKey().isDefined()) {
+      return Optional.empty();
+    }
+    var pkNames = table.getStmt().getPrimaryKey();
+    var pkColumns = pkNames.stream().map(table.getAnalysis()::getFieldIndex).toList();
+    if (pkNames.isEmpty() || pkColumns.contains(-1)) {
+      // A primary key column that is not part of the row type cannot be mapped to an index
+      return Optional.empty();
+    }
+    return Optional.of(
+        IndexDefinition.getPrimaryKeyIndex(table.getTableName(), pkColumns, pkNames));
+  }
+
   private Map<IndexDefinition, Double> optimizeIndexesWithCostMinimization(
       NamedTable table, Collection<QueryIndexSummary> indexes) {
     Map<IndexDefinition, Double> optIndexes = new HashMap<>();
@@ -196,12 +216,10 @@ public class IndexSelector {
     Set<IndexDefinition> candidates = new LinkedHashSet<>();
     indexes.forEach(idx -> candidates.addAll(generateIndexCandidates(idx)));
     Function<QueryIndexSummary, Double> initialCost = QueryIndexSummary::getBaseCost;
-    if (config.hasPrimaryKeyIndex() && table.getAnalysis().getPrimaryKey().isDefined()) {
+    var primaryKeyIndex = getPrimaryKeyIndex(table);
+    if (primaryKeyIndex.isPresent()) {
       // The baseline cost is the cost of doing the lookup with the primary key index
-      // we need to use the primary key on the physical table (i.e. from the statement)
-      var pkNames = table.getStmt().getPrimaryKey();
-      var pkIndexes = pkNames.stream().map(table.getAnalysis()::getFieldIndex).toList();
-      var pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getTableName(), pkIndexes, pkNames);
+      var pkIdx = primaryKeyIndex.get();
       initialCost = idx -> idx.getCost(pkIdx);
       candidates.remove(pkIdx);
     }
