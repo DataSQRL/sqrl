@@ -46,7 +46,6 @@ import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SqrlTableFunction;
-import com.datasqrl.planner.util.FlinkConflictBehaviorUtil;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.FlinkCompileException;
 import com.google.common.base.Preconditions;
@@ -242,9 +241,9 @@ public class DAGPlanner {
                       exportNode
                           .getOriginalInsert()
                           .ifPresentOrElse(
-                              insert -> sqrlEnv.insertInto(insert, exportNode.getBatchIndex()),
+                              insert -> sqrlEnv.addRawInsert(insert, exportNode.getBatchIndex()),
                               () ->
-                                  sqrlEnv.insertInto(
+                                  sqrlEnv.addDirectInsert(
                                       sqrlEnv
                                           .getTableScan(node.getIdentifier().objectIdentifier())
                                           .build(),
@@ -336,10 +335,11 @@ public class DAGPlanner {
                       new InputTableKey(exportStage, originalNodeTable.getObjectIdentifier()),
                       targetTable);
                   // Finally: add insert statement to sink into table
-                  var conflictBehavior =
-                      FlinkConflictBehaviorUtil.resolveInsertConflictBehavior(
-                          originalNodeTable, exportEngine.isUpsertSink(tblBuilder));
-                  sqrlEnv.insertInto(relBuilder.build(), targetTable, conflictBehavior);
+                  sqrlEnv.addInsert(
+                      relBuilder.build(),
+                      targetTable,
+                      originalNodeTable,
+                      exportEngine.isUpsertSink(tblBuilder));
                 }
               }
             });
