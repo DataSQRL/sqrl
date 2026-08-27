@@ -100,11 +100,7 @@ class IndexSelectorTest {
   private static final double FULL_SCAN = 100.0;
   private static final double INDEX_LOOKUP = 5.0;
 
-  /**
-   * The number of unrelated queries on the same table must not influence whether an index is
-   * created for the query it serves. See <a
-   * href="https://github.com/DataSQRL/sqrl/issues/2317">#2317</a>.
-   */
+  /** Issue #2317: unrelated queries on the table must not influence the decision. */
   @Test
   void givenIndexServingOneQuery_whenTableHasManyUnrelatedQueries_thenWorthIndexing() {
     for (var numQueries = 1; numQueries <= 100; numQueries++) {
@@ -144,11 +140,7 @@ class IndexSelectorTest {
         .isFalse();
   }
 
-  /**
-   * A table without an explicit key gets a synthetic {@code __pk_hash} primary key appended as the
-   * last column, so the leading data column is not part of the primary key and needs an index of
-   * its own. See <a href="https://github.com/DataSQRL/sqrl/issues/2317">#2317</a>.
-   */
+  /** Issue #2317: a synthetic {@code __pk_hash} key leaves column 0 needing an index of its own. */
   @Test
   void givenSyntheticHashPrimaryKey_whenFallbackToColumnIndexes_thenFirstColumnIsIndexed() {
     var hashKey = primaryKeyIndex(3, "__pk_hash");
@@ -176,14 +168,12 @@ class IndexSelectorTest {
         IndexDefinition.getPrimaryKeyIndex("Orders", List.of(column), List.of(columnName)));
   }
 
-  /** The queries only act as carriers of filter columns here, so they need no table. */
   private static List<QueryIndexSummary> queriesFilteringOn(int... columns) {
     return IntStream.of(columns)
         .mapToObj(column -> new QueryIndexSummary(null, Set.of(column), Set.of(), Set.of(), 1.0))
         .collect(Collectors.toList());
   }
 
-  /** The queries only act as identities here, so they do not need a table to belong to. */
   private static Map<QueryIndexSummary, Double> fullScans(int numQueries) {
     Map<QueryIndexSummary, Double> costs = new LinkedHashMap<>();
     for (var column = 0; column < numQueries; column++) {

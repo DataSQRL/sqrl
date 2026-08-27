@@ -173,7 +173,6 @@ public class QueryIndexSummary {
     return SqrlRelMdRowCount.getRowCount(table.getAnalysis(), coveredConjunction);
   }
 
-  /** The columns this query filters on, by name, for use in user facing messages. */
   public List<String> getFilterColumnNames() {
     var fieldNames = table.getAnalysis().getRowType().getFieldNames();
     return Stream.of(

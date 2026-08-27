@@ -29,11 +29,8 @@ public interface IndexSelectorConfig {
   boolean hasPrimaryKeyIndex();
 
   /**
-   * The maximum fraction of their prior cost that the queries served by an index may still cost
-   * once that index exists. An index candidate is only created if it improves the queries it serves
-   * by at least this much - unrelated queries on the same table do not count towards it.
-   *
-   * @return
+   * The most that the queries served by an index may still cost, as a fraction of their cost
+   * without it. Unrelated queries on the same table do not count.
    */
   double getCostImprovementThreshold();
 

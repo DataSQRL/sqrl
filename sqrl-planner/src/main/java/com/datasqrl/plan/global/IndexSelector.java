@@ -147,7 +147,6 @@ public class IndexSelector {
 
   private Set<IndexDefinition> optimizeIndexes(
       NamedTable table, Set<QueryIndexSummary> queryIndexSummaries) {
-    // Check how many unique QueryConjunctions we have on this table
     if (queryIndexSummaries.size() > config.maxIndexColumnSets()) {
       errors.warn(
           "Table `%s` is queried with %d distinct filter patterns which exceeds the maximum of %d. "
@@ -158,13 +157,11 @@ public class IndexSelector {
           config.maxIndexColumnSets(),
           INDEX_REMEDIATION);
       // Generate individual indexes so the database can combine them on-demand at query time
-      // 1) Generate an index for each column
       var indexedColumns = getFallbackIndexColumns(queryIndexSummaries, getPrimaryKeyIndex(table));
       Set<IndexableFunctionCall> indexedFunctions = new HashSet<>();
       for (QueryIndexSummary conj : queryIndexSummaries) {
         indexedFunctions.addAll(conj.functionCalls);
       }
-      // Pick generic index type
       var genericType = config.getPreferredGenericIndexType();
       Set<IndexDefinition> indexes = new LinkedHashSet<>();
       for (int colIndex : indexedColumns) {
@@ -186,12 +183,6 @@ public class IndexSelector {
     }
   }
 
-  /**
-   * The columns that get an index of their own when a table has too many distinct filter patterns
-   * to consider composite indexes. The leading primary key column is left out because the database
-   * already indexes the primary key. Note that the primary key of the physical table is not
-   * necessarily the leading column of the table, hence it has to be resolved by name.
-   */
   @VisibleForTesting
   static Set<Integer> getFallbackIndexColumns(
       Collection<QueryIndexSummary> queryIndexSummaries,
@@ -218,25 +209,17 @@ public class IndexSelector {
                 idxType));
   }
 
-  /**
-   * The index that the database maintains for the primary key of the physical table, if it
-   * maintains one. The primary key is resolved by name against the row type because the physical
-   * primary key is not necessarily the leading columns of the table: tables without an explicit key
-   * get a synthetic {@code __pk_hash} column appended at the end.
-   */
   private Optional<IndexDefinition> getPrimaryKeyIndex(NamedTable table) {
     var pkNames = table.getStmt().getPrimaryKey();
     if (!config.hasPrimaryKeyIndex()
         || !table.getAnalysis().getPrimaryKey().isDefined()
         || pkNames.isEmpty()) {
-      // The database does not index primary keys, or this table was created without one
       return Optional.empty();
     }
     var pkColumns = pkNames.stream().map(table.getAnalysis()::getFieldIndex).toList();
     if (pkColumns.contains(-1)) {
-      // The synthetic `__pk_hash` primary key is stripped from the row type that the analysis sees
-      // (see DAGPlanner#mapTypes) so no query can filter on it. Such an index serves no query and
-      // the baseline cost is a full table scan either way.
+      // A missing column is the synthetic `__pk_hash` that DAGPlanner#mapTypes strips from the row
+      // type, so no query can filter on it and the baseline is a full table scan either way
       return Optional.empty();
     }
     return Optional.of(
@@ -257,7 +240,6 @@ public class IndexSelector {
       initialCost = idx -> idx.getCost(pkIdx);
       candidates.remove(pkIdx);
     }
-    // Set initial costs
     Map<QueryIndexSummary, Double> currentCost = new HashMap<>();
     for (QueryIndexSummary idx : indexes) {
       currentCost.put(idx, initialCost.apply(idx));
@@ -285,23 +267,17 @@ public class IndexSelector {
         }
       }
       if (bestCandidate == null) {
-        // Every query that an index can help with is served
         return optIndexes;
       }
       optIndexes.add(bestCandidate);
       candidates.remove(bestCandidate);
       currentCost = bestCosts;
     }
-    // We ran out of index budget, so queries may be left without a supporting index
     warnAboutFullTableScans(table, currentCost);
     return optIndexes;
   }
 
-  /**
-   * Index selection is bounded by {@link IndexSelectorConfig#maxIndexes()}. Once that budget is
-   * exhausted, queries can be left without a supporting index, which is expensive and invisible in
-   * the compiled plan unless we point it out.
-   */
+  /** Only reached once {@link IndexSelectorConfig#maxIndexes()} is exhausted. */
   private void warnAboutFullTableScans(NamedTable table, Map<QueryIndexSummary, Double> finalCost) {
     var fullTableScans =
         finalCost.entrySet().stream()
@@ -320,10 +296,8 @@ public class IndexSelector {
   }
 
   /**
-   * An index is worth creating when it reduces the cost of the queries it actually serves by at
-   * least the configured threshold. Measuring the improvement against the total cost of all queries
-   * on the table instead would make index selection for one query a function of how many unrelated
-   * queries there are on the same table.
+   * Scoped to the queries the index serves: measuring against the whole table's cost would make
+   * index selection for one query a function of how many unrelated queries exist (issue #2317).
    */
   @VisibleForTesting
   static boolean servesQueriesWorthIndexing(

@@ -1,6 +1,4 @@
-/* A table with more distinct filter patterns than `maxIndexes` cannot have all of them indexed.
-   Those queries fall back to a full table scan, which is expensive and invisible in the compiled
-   plan, so the compiler warns about it. */
+/* More distinct filter patterns than `maxIndexes`, so the leftovers must be warned about. */
 
 CREATE TABLE Orders (
   orderId STRING NOT NULL,

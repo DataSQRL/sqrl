@@ -1,7 +1,4 @@
-/* Regression test for https://github.com/DataSQRL/sqrl/issues/2317
-   A table with more filter endpoints than the index limit must still get indexes: an index
-   candidate is judged by the queries it serves, not by the total cost of all queries on the
-   table. Before the fix, the 20th endpoint made every index on this table disappear. */
+/* Issue #2317: before the fix, the 20th endpoint made every index on this table disappear. */
 
 CREATE TABLE Orders (
   orderId STRING NOT NULL,
