@@ -1,0 +1,226 @@
+>>>pipeline_explain.txt
+=== NowSource
+ID:          default_catalog.default_database.NowSource
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1
+---
+Schema:
+ - id: INTEGER NOT NULL
+ - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Plan:
+LogicalProject(id=[$0], event_time=[2000-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)])
+  LogicalValues(tuples=[[{ 1 }]])
+SQL:
+CREATE VIEW `NowSource` AS  SELECT id, CAST(TIMESTAMP '2000-01-01 00:00:00' AS TIMESTAMP_LTZ(3)) AS event_time FROM (VALUES (1)) AS source(id);
+
+=== now_sink
+ID:          default_catalog.default_database.now_sink
+Type:        export
+Stage:       flink
+Connector:   blackhole
+---
+Inputs:
+ - default_catalog.default_database.now_sink_in1
+
+=== now_sink_in1
+ID:          default_catalog.default_database.now_sink_in1
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~5e7
+---
+Schema:
+ - id: INTEGER NOT NULL
+Inputs:
+ - default_catalog.default_database.NowSource
+Annotations:
+ - features: NOW (feature)
+Plan:
+LogicalProject(id=[$0])
+  LogicalFilter(condition=[<($1, NOW())])
+    LogicalTableScan(table=[[default_catalog, default_database, NowSource]])
+SQL:
+SELECT `NowSource`.`id`
+FROM `default_catalog`.`default_database`.`NowSource` AS `NowSource`
+WHERE `NowSource`.`event_time` < NOW()
+>>>flink-sql-no-functions.sql
+CREATE TABLE IF NOT EXISTS `now_sink` (
+  `id` INTEGER
+)
+WITH (
+  'connector' = 'blackhole'
+);
+CREATE VIEW `NowSource`
+AS
+SELECT `id`, CAST(TIMESTAMP '2000-01-01 00:00:00' AS TIMESTAMP_LTZ(3)) AS `event_time`
+FROM (VALUES ROW(1)) AS `source` (`id`);
+CREATE TABLE `NowSource_1` (
+  `id` INTEGER NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` INTEGER NOT NULL,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'NowSource_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`NowSource_1`
+SELECT `id`, `event_time`, 1 AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`NowSource`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `now_sink`
+SELECT `NowSource`.`id`
+FROM `default_catalog`.`default_database`.`NowSource` AS `NowSource`
+WHERE `NowSource`.`event_time` < NOW()
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "NowSource_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"NowSource_1\" (\"id\" INTEGER NOT NULL, \"event_time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" INTEGER NOT NULL, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "event_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "INTEGER",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "NowSource",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"NowSource\"(\"id\", \"event_time\") AS SELECT \"id\", \"event_time\"\nFROM \"NowSource_1\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "INTEGER",
+          "nullable" : false
+        },
+        {
+          "name" : "event_time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    }
+  ],
+  "standaloneExtensionStatements" : [ ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "NowSource",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"event_time\"\nFROM \"NowSource_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetNowSource",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query NowSource($limit: Int = 10, $offset: Int = 0) {\nNowSource(limit: $limit, offset: $offset) {\nid\nevent_time\n}\n\n}",
+            "queryName" : "NowSource",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/NowSource{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype NowSource {\n  id: Int!\n  event_time: DateTime!\n}\n\ntype Query {\n  NowSource(limit: Int = 10, offset: Int = 0): [NowSource!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

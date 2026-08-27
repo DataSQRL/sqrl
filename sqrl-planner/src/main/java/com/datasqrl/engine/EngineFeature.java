@@ -60,8 +60,9 @@ public enum EngineFeature {
   // Datastore engine support access to data without partition key
   ACCESS_WITHOUT_PARTITION;
 
-  public static EnumSet<EngineFeature> STANDARD_STREAM =
+  public static final EnumSet<EngineFeature> STANDARD_STREAM =
       EnumSet.of(
+          NOW,
           DENORMALIZE,
           TEMPORAL_JOIN,
           TO_STREAM,
@@ -70,7 +71,7 @@ public enum EngineFeature {
           CUSTOM_FUNCTIONS,
           EXPORT);
 
-  public static EnumSet<EngineFeature> STANDARD_DATABASE =
+  public static final EnumSet<EngineFeature> STANDARD_DATABASE =
       EnumSet.of(
           NOW,
           GLOBAL_SORT,
@@ -83,11 +84,11 @@ public enum EngineFeature {
           PARTITIONING,
           REQUIRES_NOT_NULL_PRIMARY_KEY);
 
-  public static EnumSet<EngineFeature> STANDARD_TABLE_FORMAT =
+  public static final EnumSet<EngineFeature> STANDARD_TABLE_FORMAT =
       EnumSet.of(DENORMALIZE, PARTITIONING, PARTITIONED_WRITES, ACCESS_WITHOUT_PARTITION);
 
-  public static EnumSet<EngineFeature> STANDARD_QUERY =
+  public static final EnumSet<EngineFeature> STANDARD_QUERY =
       EnumSet.of(NOW, GLOBAL_SORT, MULTI_RANK, TABLE_FUNCTION_SCAN, RELATIONS);
 
-  public static EnumSet<EngineFeature> NO_CAPABILITIES = EnumSet.noneOf(EngineFeature.class);
+  public static final EnumSet<EngineFeature> NO_CAPABILITIES = EnumSet.noneOf(EngineFeature.class);
 }
