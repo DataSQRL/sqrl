@@ -144,15 +144,11 @@ public class IndexSelector {
     if (queryIndexSummaries.size() > config.maxIndexColumnSets()) {
       // Generate individual indexes so the database can combine them on-demand at query time
       // 1) Generate an index for each column
-      Set<Integer> indexedColumns = new HashSet<>();
+      var indexedColumns = getFallbackIndexColumns(queryIndexSummaries, getPrimaryKeyIndex(table));
       Set<IndexableFunctionCall> indexedFunctions = new HashSet<>();
       for (QueryIndexSummary conj : queryIndexSummaries) {
-        indexedColumns.addAll(conj.equalityColumns);
-        indexedColumns.addAll(conj.inequalityColumns);
         indexedFunctions.addAll(conj.functionCalls);
       }
-      // The database indexes the primary key, so its leading column needs no index of its own
-      getPrimaryKeyIndex(table).map(pk -> pk.getColumns().get(0)).ifPresent(indexedColumns::remove);
       // Pick generic index type
       var genericType = config.getPreferredGenericIndexType();
       Map<IndexDefinition, Double> indexes = new HashMap<>();
@@ -174,6 +170,24 @@ public class IndexSelector {
     } else {
       return optimizeIndexesWithCostMinimization(table, queryIndexSummaries);
     }
+  }
+
+  /**
+   * The columns that get an index of their own when a table has too many distinct filter patterns
+   * to consider composite indexes. The leading primary key column is left out because the database
+   * already indexes the primary key. Note that the primary key of the physical table is not
+   * necessarily the leading column of the table, hence it has to be resolved by name.
+   */
+  static Set<Integer> getFallbackIndexColumns(
+      Collection<QueryIndexSummary> queryIndexSummaries,
+      Optional<IndexDefinition> primaryKeyIndex) {
+    Set<Integer> indexedColumns = new LinkedHashSet<>();
+    for (QueryIndexSummary conj : queryIndexSummaries) {
+      indexedColumns.addAll(conj.equalityColumns);
+      indexedColumns.addAll(conj.inequalityColumns);
+    }
+    primaryKeyIndex.map(pkIdx -> pkIdx.getColumns().get(0)).ifPresent(indexedColumns::remove);
+    return indexedColumns;
   }
 
   private Optional<IndexDefinition> getIndexDefinition(
@@ -229,45 +243,64 @@ public class IndexSelector {
       currentCost.put(idx, initialCost.apply(idx));
     }
     // Determine which index candidates reduce the cost the most
-    var beforeTotal = total(currentCost);
-    for (; ; ) {
-      if (optIndexes.size() >= config.maxIndexes()) {
-        break;
-      }
+    var currentTotal = total(currentCost);
+    while (optIndexes.size() < config.maxIndexes()) {
       IndexDefinition bestCandidate = null;
       Map<QueryIndexSummary, Double> bestCosts = null;
       var bestTotal = Double.POSITIVE_INFINITY;
       for (IndexDefinition candidate : candidates) {
         Map<QueryIndexSummary, Double> costs = new HashMap<>();
         currentCost.forEach(
-            (call, cost) -> {
-              var newcost = call.getCost(candidate);
-              if (newcost > cost) {
-                newcost = cost;
-              }
-              costs.put(call, newcost);
-            });
+            (call, cost) -> costs.put(call, Math.min(cost, call.getCost(candidate))));
+        if (!servesQueriesWorthIndexing(currentCost, costs)) {
+          // This candidate does not pay for itself, but the ones after it still might
+          continue;
+        }
         var total = total(costs);
-        if (total < beforeTotal
-            && (total + EPSILON < bestTotal
-                || (Precision.equals(total, bestTotal, 2 * EPSILON)
-                    && costLess(candidate, bestCandidate)))) {
+        if (total + EPSILON < bestTotal
+            || (Precision.equals(total, bestTotal, 2 * EPSILON)
+                && costLess(candidate, bestCandidate))) {
           bestCandidate = candidate;
           bestCosts = costs;
           bestTotal = total;
         }
       }
-      if (bestCandidate != null
-          && bestTotal / beforeTotal <= config.getCostImprovementThreshold()) {
-        optIndexes.put(bestCandidate, beforeTotal - bestTotal);
-        candidates.remove(bestCandidate);
-        beforeTotal = bestTotal;
-        currentCost = bestCosts;
-      } else {
+      if (bestCandidate == null) {
         break;
       }
+      optIndexes.put(bestCandidate, currentTotal - bestTotal);
+      candidates.remove(bestCandidate);
+      currentTotal = bestTotal;
+      currentCost = bestCosts;
     }
     return optIndexes;
+  }
+
+  /**
+   * An index is worth creating when it reduces the cost of the queries it actually serves by at
+   * least the configured threshold. Measuring the improvement against the total cost of all queries
+   * on the table instead would make index selection for one query a function of how many unrelated
+   * queries there are on the same table.
+   */
+  static boolean servesQueriesWorthIndexing(
+      Map<QueryIndexSummary, Double> before,
+      Map<QueryIndexSummary, Double> after,
+      double costImprovementThreshold) {
+    var servedBefore = 0.0;
+    var servedAfter = 0.0;
+    for (Map.Entry<QueryIndexSummary, Double> entry : before.entrySet()) {
+      var newCost = after.get(entry.getKey());
+      if (newCost + EPSILON < entry.getValue()) {
+        servedBefore += entry.getValue();
+        servedAfter += newCost;
+      }
+    }
+    return servedBefore > 0 && servedAfter / servedBefore <= costImprovementThreshold;
+  }
+
+  private boolean servesQueriesWorthIndexing(
+      Map<QueryIndexSummary, Double> before, Map<QueryIndexSummary, Double> after) {
+    return servesQueriesWorthIndexing(before, after, config.getCostImprovementThreshold());
   }
 
   private boolean costLess(IndexDefinition candidate, IndexDefinition bestCandidate) {
@@ -289,13 +322,6 @@ public class IndexSelector {
       score = score * 2 + column;
     }
     return score;
-  }
-
-  private double relativeIndexCost(IndexDefinition index) {
-    return config.relativeIndexCost(index)
-        + epsilon(
-            index
-                .getColumns()); // Add an epsilon that is insignificant but keeps index order stable
   }
 
   private static double total(Map<?, Double> costs) {
@@ -388,14 +414,6 @@ public class IndexSelector {
       selected[depth] = eq;
       generatePermutations(selected, depth + 1, eqCols, comparisons, permutations);
     }
-  }
-
-  static final double epsilon(List<Integer> columns) {
-    var eps = 0L;
-    for (int col : columns) {
-      eps = eps * 2 + col;
-    }
-    return eps * 1e-5;
   }
 
   class IndexFinder extends RelVisitor {

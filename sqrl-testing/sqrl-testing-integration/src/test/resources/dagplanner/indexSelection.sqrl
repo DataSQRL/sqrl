@@ -1,0 +1,58 @@
+/* Regression test for https://github.com/DataSQRL/sqrl/issues/2317
+   A table with more filter endpoints than the index limit must still get indexes: an index
+   candidate is judged by the queries it serves, not by the total cost of all queries on the
+   table. Before the fix, the 20th endpoint made every index on this table disappear. */
+
+CREATE TABLE Orders (
+  orderId STRING NOT NULL,
+  customerId STRING NOT NULL,
+  storeId STRING NOT NULL,
+  productId STRING NOT NULL,
+  category STRING NOT NULL,
+  status STRING NOT NULL,
+  paymentMethod STRING NOT NULL,
+  country STRING NOT NULL,
+  currency STRING NOT NULL,
+  channel STRING NOT NULL,
+  discountCode STRING NOT NULL,
+  shippingMethod STRING NOT NULL,
+  warehouseId STRING NOT NULL,
+  carrierId STRING NOT NULL,
+  campaignId STRING NOT NULL,
+  deviceType STRING NOT NULL,
+  riskLevel STRING NOT NULL,
+  fulfillmentStatus STRING NOT NULL,
+  returnReason STRING NOT NULL,
+  salesRepId STRING NOT NULL,
+  amount DOUBLE NOT NULL,
+  epoch_timestamp BIGINT NOT NULL,
+  createdAt AS COALESCE(TO_TIMESTAMP_LTZ(epoch_timestamp, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  WATERMARK FOR createdAt AS createdAt
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10',
+  'fields.epoch_timestamp.kind' = 'sequence',
+  'fields.epoch_timestamp.start' = '1719318565000',
+  'fields.epoch_timestamp.end' = '1719319565000'
+);
+
+ByOrderId(orderId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE orderId = :orderId;
+ByCustomerId(customerId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE customerId = :customerId;
+ByStoreId(storeId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE storeId = :storeId;
+ByProductId(productId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE productId = :productId;
+ByCategory(category STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE category = :category;
+ByStatus(status STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE status = :status;
+ByPaymentMethod(paymentMethod STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE paymentMethod = :paymentMethod;
+ByCountry(country STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE country = :country;
+ByCurrency(currency STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE currency = :currency;
+ByChannel(channel STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE channel = :channel;
+ByDiscountCode(discountCode STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE discountCode = :discountCode;
+ByShippingMethod(shippingMethod STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE shippingMethod = :shippingMethod;
+ByWarehouseId(warehouseId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE warehouseId = :warehouseId;
+ByCarrierId(carrierId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE carrierId = :carrierId;
+ByCampaignId(campaignId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE campaignId = :campaignId;
+ByDeviceType(deviceType STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE deviceType = :deviceType;
+ByRiskLevel(riskLevel STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE riskLevel = :riskLevel;
+ByFulfillmentStatus(fulfillmentStatus STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE fulfillmentStatus = :fulfillmentStatus;
+ByReturnReason(returnReason STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE returnReason = :returnReason;
+BySalesRepId(salesRepId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE salesRepId = :salesRepId;
