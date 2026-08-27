@@ -19,6 +19,7 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.google.auto.service.AutoService;
 import java.util.ArrayList;
@@ -40,7 +41,10 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
 
   @Override
   public JdbcPhysicalPlan rewrite(
-      PhysicalPlan fullPlan, EnginePhysicalPlan enginePlan, Sqrl2FlinkSQLTranslator sqrlEnv) {
+      PhysicalPlan fullPlan,
+      EnginePhysicalPlan enginePlan,
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorCollector errors) {
 
     var jdbcPlan = (JdbcPhysicalPlan) enginePlan;
     var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.stage().engine();
@@ -50,7 +54,8 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
        use CreateTableJdbcStatement#updatePrimaryKey
     */
     var indexSelectorConfig = engine.getIndexSelectorConfig();
-    var indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.tableIdMap());
+    var indexSelector =
+        new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.tableIdMap(), errors);
 
     Collection<QueryIndexSummary> queryIndexSummaries =
         jdbcPlan.queries().stream()

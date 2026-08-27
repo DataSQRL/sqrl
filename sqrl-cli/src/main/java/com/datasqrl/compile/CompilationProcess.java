@@ -131,7 +131,7 @@ public class CompilationProcess {
     }
 
     var rewriters = ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
-    physicalPlan = physicalPlan.applyRewriting(rewriters, environment);
+    physicalPlan = physicalPlan.applyRewriting(rewriters, environment, errors);
 
     // Read database file if configured and check compatibility
     mainScript

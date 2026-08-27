@@ -17,6 +17,7 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -67,6 +68,7 @@ public class IndexSelector {
   private final Sqrl2FlinkSQLTranslator framework;
   private final IndexSelectorConfig config;
   private final Map<String, CreateTableJdbcStatement> tableMap;
+  private final ErrorCollector errors;
 
   public List<QueryIndexSummary> getIndexSelection(RelNode queryRelnode) {
     var pushedDownFilters = applyPushDownFilters(queryRelnode);
@@ -142,6 +144,12 @@ public class IndexSelector {
       NamedTable table, Set<QueryIndexSummary> queryIndexSummaries) {
     // Check how many unique QueryConjunctions we have on this table
     if (queryIndexSummaries.size() > config.maxIndexColumnSets()) {
+      errors.warn(
+          "Table `%s` is queried with %d distinct filter patterns which exceeds the maximum of %d. "
+              + "Creating a single-column index for each filtered column instead of composite "
+              + "indexes. Reduce the number of distinct filter patterns on this table or specify "
+              + "the indexes explicitly with an `index` hint.",
+          table.getTableName(), queryIndexSummaries.size(), config.maxIndexColumnSets());
       // Generate individual indexes so the database can combine them on-demand at query time
       // 1) Generate an index for each column
       var indexedColumns = getFallbackIndexColumns(queryIndexSummaries, getPrimaryKeyIndex(table));
@@ -273,7 +281,35 @@ public class IndexSelector {
       currentTotal = bestTotal;
       currentCost = bestCosts;
     }
+    warnAboutFullTableScans(table, optIndexes.size(), currentCost);
     return optIndexes;
+  }
+
+  /**
+   * Index selection is bounded by {@link IndexSelectorConfig#maxIndexes()}, so once that budget is
+   * exhausted queries can end up without a supporting index. That is expensive and invisible in the
+   * compiled plan unless we point it out.
+   */
+  private void warnAboutFullTableScans(
+      NamedTable table, int numIndexes, Map<QueryIndexSummary, Double> finalCost) {
+    if (numIndexes < config.maxIndexes()) {
+      // We did not run out of indexes, so the remaining queries are ones no index can help with
+      return;
+    }
+    var fullTableScans =
+        finalCost.entrySet().stream()
+            .filter(entry -> entry.getValue() + EPSILON >= entry.getKey().getBaseCost())
+            .map(entry -> entry.getKey().getFilterColumnNames().toString())
+            .sorted()
+            .collect(Collectors.joining(", "));
+    if (fullTableScans.isEmpty()) {
+      return;
+    }
+    errors.warn(
+        "Created %d of at most %d indexes for table `%s`. These query filter patterns have no "
+            + "supporting index and require a full table scan: %s. Reduce the number of distinct "
+            + "filter patterns on this table or specify the indexes explicitly with an `index` hint.",
+        numIndexes, config.maxIndexes(), table.getTableName(), fullTableScans);
   }
 
   /**

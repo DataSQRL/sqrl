@@ -1,0 +1,35 @@
+/* A table with more distinct filter patterns than `maxIndexes` cannot have all of them indexed.
+   Those queries fall back to a full table scan, which is expensive and invisible in the compiled
+   plan, so the compiler warns about it. */
+
+CREATE TABLE Orders (
+  orderId STRING NOT NULL,
+  customerId STRING NOT NULL,
+  storeId STRING NOT NULL,
+  productId STRING NOT NULL,
+  category STRING NOT NULL,
+  status STRING NOT NULL,
+  paymentMethod STRING NOT NULL,
+  country STRING NOT NULL,
+  currency STRING NOT NULL,
+  amount DOUBLE NOT NULL,
+  epoch_timestamp BIGINT NOT NULL,
+  createdAt AS COALESCE(TO_TIMESTAMP_LTZ(epoch_timestamp, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  WATERMARK FOR createdAt AS createdAt
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10',
+  'fields.epoch_timestamp.kind' = 'sequence',
+  'fields.epoch_timestamp.start' = '1719318565000',
+  'fields.epoch_timestamp.end' = '1719319565000'
+);
+
+ByOrderId(orderId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE orderId = :orderId;
+ByCustomerId(customerId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE customerId = :customerId;
+ByStoreId(storeId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE storeId = :storeId;
+ByProductId(productId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE productId = :productId;
+ByCategory(category STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE category = :category;
+ByStatus(status STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE status = :status;
+ByPaymentMethod(paymentMethod STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE paymentMethod = :paymentMethod;
+ByCountry(country STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE country = :country;
+ByCurrency(currency STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE currency = :currency;
