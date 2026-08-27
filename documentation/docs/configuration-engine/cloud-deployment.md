@@ -45,7 +45,8 @@ Apache Flink deployments consist of 1 job manager and a configurable number of i
         "jobmanager-size": "small",    // Job manager instance size (see table below)
         "taskmanager-size": "medium",  // Task manager instance size (see table below)
         "taskmanager-count": 2,        // Number of task managers (positive integer)
-        "taskmanager-disk-size-gb": 400 // NVMe space per task manager (see "Task Manager Disk" below)
+        "taskmanager-disk-size-gb": 400, // NVMe space per task manager (see "Task Manager Disk" below)
+        "taskmanager-cpu-limit": "2x"  // CPU ceiling per task manager (see "Task Manager CPU Limit" below)
       }
     }
   }
@@ -85,6 +86,29 @@ Raise it when a job needs more local disk than its CPU/memory size implies — b
 
 The value is in GiB, must be positive, and is capped at 4000. It is a **hard scheduling requirement**: a task manager asking for more disk than any available node offers stays `Pending` instead of falling back to a smaller node.
 
+#### Task Manager CPU Limit
+
+Each task manager is deployed with a CPU request and a CPU limit. The request is the size's CPU column, and the limit defaults to the request multiplied by the "Max CPU Burst" column above — 1 for every size except `dev`, so by default a task manager may not exceed its request. `taskmanager-cpu-limit` overrides that ceiling:
+
+```json
+{
+  "engines": {
+    "flink": {
+      "deployment": {
+        "taskmanager-size": "medium.mem", // requests 2 CPU
+        "taskmanager-cpu-limit": "2x"     // ...but may burst to 4
+      }
+    }
+  }
+}
+```
+
+Accepted forms are a multiple of the request (`"2x"`), which moves with `taskmanager-size`, or an absolute ceiling (`"4000m"`, `"4"`). The limit may not resolve below the request.
+
+Raise it when task managers share nodes with room to spare: bursting uses cores their neighbours leave idle, without asking the cluster for more capacity, which is the only lever available where a dedicated nodepool caps total CPU. Under contention each pod still gets the share its request guarantees.
+
+A limit above the request makes the pod **Burstable** rather than **Guaranteed** QoS, which lowers its eviction priority when a node comes under memory pressure. Flink always writes a CPU limit, so the limit cannot be removed entirely — use a large multiple instead.
+
 #### Size Qualifiers
 
 Task manager sizes support qualifiers for specialized workloads. Qualifiers are grouped into memory-oriented and CPU-oriented variants:
@@ -109,6 +133,10 @@ Examples:
 * `xlarge.mem-headroom-8x` → pod 256 GB / Flink heap+managed = 32 GB (baseline) / 224 GB headroom.
 
 `.mem` is an alias for `.mem-2x`. The legacy `.mem-headroom` qualifier (triple memory, Flink stays at baseline) is **deprecated** — use `.mem-headroom-Nx` instead.
+
+CPU and memory are independent axes, so `.cpu` may be combined with one memory qualifier in either order: `medium.cpu.mem` is a medium with 4 CPU and 16 GB. Naming the same axis twice (`medium.mem.mem-4x`) is rejected.
+
+Combining is not the same as moving up a size. `large` also has 4 CPU and 16 GB, but it carries 4 task slots to medium's 2 — it splits the extra CPU across twice as many subtasks. Reach for `medium.cpu.mem` when the extra CPU is meant for the work the machine already has.
 
 Size qualifiers do not apply to the `dev` instance.
 
