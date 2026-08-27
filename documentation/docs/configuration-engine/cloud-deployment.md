@@ -138,6 +138,7 @@ PostgreSQL deployments consist of one primary instance and a configurable number
         "replica-count": 1,             // Number of read replicas (0 or larger)
         "disk-size-gb": 256,            // Disk size in GB (1 or larger)
         "auto-expand-percentage": 0.2,  // Auto-expand threshold (0 to disable, must be < 1)
+        "cpu-limit": "3x",              // CPU ceiling above the request (see "CPU Limit" below)
         "create-indexes": true,         // Whether to create table indexes (see "Create Indexes" below)
         "data-checksums": true,         // Whether data-page checksums are enabled (see "Data Checksums" below)
         "parameters": {}                // Extra postgresql.parameters (see "Parameters" below)
@@ -151,9 +152,9 @@ PostgreSQL deployments consist of one primary instance and a configurable number
 
 | Name   | CPU | Memory (GiB) | Default Disk | Max CPU Burst | Max Connections |
 |:-------|:----|:-------------|:-------------|:--------------|:----------------|
-| dev    | 0.5 | 4            | 10GB         | 1.5           | 100             |
-| small  | 1   | 8            | 128GB        | 1             | 100             |
-| medium | 2   | 16           | 256GB        | 1             | 200             |
+| dev    | 0.5 | 2            | 10GB         | 1.5           | 100             |
+| small  | 1   | 4            | 128GB        | 1             | 100             |
+| medium | 2   | 8            | 256GB        | 1             | 200             |
 | large  | 4   | 16           | 512GB        | 1             | 300             |
 | xlarge | 8   | 32           | 1TB          | 1             | 600             |
 
@@ -300,6 +301,42 @@ Set it to `false` to bootstrap the database **tables-only**, skipping all index 
   }
 }
 ```
+
+## CPU Limit (`cpu-limit`)
+
+Raises — or removes — the CPU ceiling of the PostgreSQL pods. By default a deployment's CPU limit is the "Max CPU Burst" multiple of the CPU request shown in the instance-size table above, which for every size except `dev` means limit == request: the database is capped at exactly the CPU it reserves, and is throttled once it reaches it, even when the node has idle cores. PostgreSQL only.
+
+| Engine     | Field       | Default                          |
+|:-----------|:------------|:---------------------------------|
+| PostgreSQL | `cpu-limit` | the size's "Max CPU Burst" value |
+
+The CPU request is never changed by this setting, only the limit. Three forms are accepted:
+
+| Value         | Meaning                                                                                              |
+|:--------------|:-----------------------------------------------------------------------------------------------------|
+| `"3x"`        | A multiple of the CPU request, so the ceiling moves with `instance-size`. Must be at least `1x`.       |
+| `"6000m"`, `"6"` | An absolute ceiling in millicores or cores. Must be at least the CPU request.                       |
+| `"unlimited"` | No CPU limit at all — the database may use whatever the node has idle.                                |
+
+```json
+{
+  "engines": {
+    "postgres": {
+      "deployment": {
+        "instance-size": "medium",   // reserves 2 CPU...
+        "cpu-limit": "3x"            // ...and may burst to 6 when the node has cores to spare
+      }
+    }
+  }
+}
+```
+
+Raising the limit is useful for spiky query workloads — index builds, analytical scans, vacuum catch-up — that are throttled at their reserved CPU while the node sits idle. Because CPU is a compressible resource, the reserved share is still guaranteed under contention: a burst can only consume capacity no other pod is asking for.
+
+Two consequences are worth knowing before setting it:
+
+- **Pod QoS drops from Guaranteed to Burstable.** Guaranteed requires requests == limits for CPU as well as memory, so any ceiling above the request forfeits it, which lowers the pods' eviction priority under node memory pressure. Memory requests and limits are untouched by this setting.
+- **Changing it restarts the database.** It is part of the pod spec, so an upgrade that changes it rolls the cluster: replicas first, then a switchover and a restart of the primary.
 
 ## Data Checksums (`data-checksums`)
 
