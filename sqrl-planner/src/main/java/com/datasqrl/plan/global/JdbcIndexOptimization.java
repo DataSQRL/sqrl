@@ -63,7 +63,7 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
             .flatMap(List::stream)
             .collect(Collectors.toList());
     List<IndexDefinition> indexDefinitions =
-        new ArrayList<>(indexSelector.optimizeIndexes(queryIndexSummaries).keySet());
+        new ArrayList<>(indexSelector.optimizeIndexes(queryIndexSummaries));
     jdbcPlan
         .tableIdMap()
         .values()

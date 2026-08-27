@@ -29,8 +29,9 @@ public interface IndexSelectorConfig {
   boolean hasPrimaryKeyIndex();
 
   /**
-   * The threshold in cost improvement. Once we cannot find an index that improves cost by this
-   * threshold amount, we stop searching.
+   * The maximum fraction of their prior cost that the queries served by an index may still cost
+   * once that index exists. An index candidate is only created if it improves the queries it serves
+   * by at least this much - unrelated queries on the same table do not count towards it.
    *
    * @return
    */

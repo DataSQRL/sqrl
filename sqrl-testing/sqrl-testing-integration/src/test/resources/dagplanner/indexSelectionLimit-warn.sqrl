@@ -24,12 +24,12 @@ CREATE TABLE Orders (
   'fields.epoch_timestamp.end' = '1719319565000'
 );
 
-ByOrderId(orderId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE orderId = :orderId;
-ByCustomerId(customerId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE customerId = :customerId;
-ByStoreId(storeId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE storeId = :storeId;
-ByProductId(productId STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE productId = :productId;
-ByCategory(category STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE category = :category;
-ByStatus(status STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE status = :status;
-ByPaymentMethod(paymentMethod STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE paymentMethod = :paymentMethod;
-ByCountry(country STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE country = :country;
-ByCurrency(currency STRING NOT NULL) := SELECT orderId, amount FROM Orders WHERE currency = :currency;
+ByOrderId(orderId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE orderId = :orderId;
+ByCustomerId(customerId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE customerId = :customerId;
+ByStoreId(storeId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE storeId = :storeId;
+ByProductId(productId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE productId = :productId;
+ByCategory(category STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE category = :category;
+ByStatus(status STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE status = :status;
+ByPaymentMethod(paymentMethod STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE paymentMethod = :paymentMethod;
+ByCountry(country STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE country = :country;
+ByCurrency(currency STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE currency = :currency;

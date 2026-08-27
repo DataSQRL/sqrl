@@ -176,12 +176,14 @@ class IndexSelectorTest {
         IndexDefinition.getPrimaryKeyIndex("Orders", List.of(column), List.of(columnName)));
   }
 
+  /** The queries only act as carriers of filter columns here, so they need no table. */
   private static List<QueryIndexSummary> queriesFilteringOn(int... columns) {
     return IntStream.of(columns)
         .mapToObj(column -> new QueryIndexSummary(null, Set.of(column), Set.of(), Set.of(), 1.0))
         .collect(Collectors.toList());
   }
 
+  /** The queries only act as identities here, so they do not need a table to belong to. */
   private static Map<QueryIndexSummary, Double> fullScans(int numQueries) {
     Map<QueryIndexSummary, Double> costs = new LinkedHashMap<>();
     for (var column = 0; column < numQueries; column++) {

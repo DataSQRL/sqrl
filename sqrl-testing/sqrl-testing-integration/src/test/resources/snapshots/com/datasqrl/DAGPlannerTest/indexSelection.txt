@@ -10,11 +10,11 @@ Annotations:
  - parameters: campaignId
  - base-table: ByCampaignId
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($14, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByCampaignId` AS  SELECT orderId, amount FROM Orders WHERE campaignId = ?          ;
+CREATE VIEW `ByCampaignId` AS  SELECT orderId, amount, createdAt FROM Orders WHERE campaignId = ?          ;
 
 === ByCarrierId
 ID:          default_catalog.default_database.ByCarrierId
@@ -27,11 +27,11 @@ Annotations:
  - parameters: carrierId
  - base-table: ByCarrierId
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($13, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByCarrierId` AS  SELECT orderId, amount FROM Orders WHERE carrierId = ?         ;
+CREATE VIEW `ByCarrierId` AS  SELECT orderId, amount, createdAt FROM Orders WHERE carrierId = ?         ;
 
 === ByCategory
 ID:          default_catalog.default_database.ByCategory
@@ -44,11 +44,11 @@ Annotations:
  - parameters: category
  - base-table: ByCategory
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($4, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByCategory` AS  SELECT orderId, amount FROM Orders WHERE category = ?        ;
+CREATE VIEW `ByCategory` AS  SELECT orderId, amount, createdAt FROM Orders WHERE category = ?        ;
 
 === ByChannel
 ID:          default_catalog.default_database.ByChannel
@@ -61,11 +61,11 @@ Annotations:
  - parameters: channel
  - base-table: ByChannel
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($9, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByChannel` AS  SELECT orderId, amount FROM Orders WHERE channel = ?       ;
+CREATE VIEW `ByChannel` AS  SELECT orderId, amount, createdAt FROM Orders WHERE channel = ?       ;
 
 === ByCountry
 ID:          default_catalog.default_database.ByCountry
@@ -78,11 +78,11 @@ Annotations:
  - parameters: country
  - base-table: ByCountry
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($7, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByCountry` AS  SELECT orderId, amount FROM Orders WHERE country = ?       ;
+CREATE VIEW `ByCountry` AS  SELECT orderId, amount, createdAt FROM Orders WHERE country = ?       ;
 
 === ByCurrency
 ID:          default_catalog.default_database.ByCurrency
@@ -95,11 +95,11 @@ Annotations:
  - parameters: currency
  - base-table: ByCurrency
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($8, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByCurrency` AS  SELECT orderId, amount FROM Orders WHERE currency = ?        ;
+CREATE VIEW `ByCurrency` AS  SELECT orderId, amount, createdAt FROM Orders WHERE currency = ?        ;
 
 === ByCustomerId
 ID:          default_catalog.default_database.ByCustomerId
@@ -112,11 +112,11 @@ Annotations:
  - parameters: customerId
  - base-table: ByCustomerId
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($1, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByCustomerId` AS  SELECT orderId, amount FROM Orders WHERE customerId = ?          ;
+CREATE VIEW `ByCustomerId` AS  SELECT orderId, amount, createdAt FROM Orders WHERE customerId = ?          ;
 
 === ByDeviceType
 ID:          default_catalog.default_database.ByDeviceType
@@ -129,11 +129,11 @@ Annotations:
  - parameters: deviceType
  - base-table: ByDeviceType
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($15, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByDeviceType` AS  SELECT orderId, amount FROM Orders WHERE deviceType = ?          ;
+CREATE VIEW `ByDeviceType` AS  SELECT orderId, amount, createdAt FROM Orders WHERE deviceType = ?          ;
 
 === ByDiscountCode
 ID:          default_catalog.default_database.ByDiscountCode
@@ -146,11 +146,11 @@ Annotations:
  - parameters: discountCode
  - base-table: ByDiscountCode
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($10, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByDiscountCode` AS  SELECT orderId, amount FROM Orders WHERE discountCode = ?            ;
+CREATE VIEW `ByDiscountCode` AS  SELECT orderId, amount, createdAt FROM Orders WHERE discountCode = ?            ;
 
 === ByFulfillmentStatus
 ID:          default_catalog.default_database.ByFulfillmentStatus
@@ -163,11 +163,11 @@ Annotations:
  - parameters: fulfillmentStatus
  - base-table: ByFulfillmentStatus
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($17, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByFulfillmentStatus` AS  SELECT orderId, amount FROM Orders WHERE fulfillmentStatus = ?                 ;
+CREATE VIEW `ByFulfillmentStatus` AS  SELECT orderId, amount, createdAt FROM Orders WHERE fulfillmentStatus = ?                 ;
 
 === ByOrderId
 ID:          default_catalog.default_database.ByOrderId
@@ -180,11 +180,11 @@ Annotations:
  - parameters: orderId
  - base-table: ByOrderId
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($0, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByOrderId` AS  SELECT orderId, amount FROM Orders WHERE orderId = ?       ;
+CREATE VIEW `ByOrderId` AS  SELECT orderId, amount, createdAt FROM Orders WHERE orderId = ?       ;
 
 === ByPaymentMethod
 ID:          default_catalog.default_database.ByPaymentMethod
@@ -197,11 +197,11 @@ Annotations:
  - parameters: paymentMethod
  - base-table: ByPaymentMethod
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($6, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByPaymentMethod` AS  SELECT orderId, amount FROM Orders WHERE paymentMethod = ?             ;
+CREATE VIEW `ByPaymentMethod` AS  SELECT orderId, amount, createdAt FROM Orders WHERE paymentMethod = ?             ;
 
 === ByProductId
 ID:          default_catalog.default_database.ByProductId
@@ -214,11 +214,11 @@ Annotations:
  - parameters: productId
  - base-table: ByProductId
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($3, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByProductId` AS  SELECT orderId, amount FROM Orders WHERE productId = ?         ;
+CREATE VIEW `ByProductId` AS  SELECT orderId, amount, createdAt FROM Orders WHERE productId = ?         ;
 
 === ByReturnReason
 ID:          default_catalog.default_database.ByReturnReason
@@ -231,11 +231,11 @@ Annotations:
  - parameters: returnReason
  - base-table: ByReturnReason
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($18, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByReturnReason` AS  SELECT orderId, amount FROM Orders WHERE returnReason = ?            ;
+CREATE VIEW `ByReturnReason` AS  SELECT orderId, amount, createdAt FROM Orders WHERE returnReason = ?            ;
 
 === ByRiskLevel
 ID:          default_catalog.default_database.ByRiskLevel
@@ -248,11 +248,11 @@ Annotations:
  - parameters: riskLevel
  - base-table: ByRiskLevel
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($16, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByRiskLevel` AS  SELECT orderId, amount FROM Orders WHERE riskLevel = ?         ;
+CREATE VIEW `ByRiskLevel` AS  SELECT orderId, amount, createdAt FROM Orders WHERE riskLevel = ?         ;
 
 === BySalesRepId
 ID:          default_catalog.default_database.BySalesRepId
@@ -265,11 +265,11 @@ Annotations:
  - parameters: salesRepId
  - base-table: BySalesRepId
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($19, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `BySalesRepId` AS  SELECT orderId, amount FROM Orders WHERE salesRepId = ?          ;
+CREATE VIEW `BySalesRepId` AS  SELECT orderId, amount, createdAt FROM Orders WHERE salesRepId = ?          ;
 
 === ByShippingMethod
 ID:          default_catalog.default_database.ByShippingMethod
@@ -282,11 +282,11 @@ Annotations:
  - parameters: shippingMethod
  - base-table: ByShippingMethod
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($11, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByShippingMethod` AS  SELECT orderId, amount FROM Orders WHERE shippingMethod = ?              ;
+CREATE VIEW `ByShippingMethod` AS  SELECT orderId, amount, createdAt FROM Orders WHERE shippingMethod = ?              ;
 
 === ByStatus
 ID:          default_catalog.default_database.ByStatus
@@ -299,11 +299,11 @@ Annotations:
  - parameters: status
  - base-table: ByStatus
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($5, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByStatus` AS  SELECT orderId, amount FROM Orders WHERE status = ?      ;
+CREATE VIEW `ByStatus` AS  SELECT orderId, amount, createdAt FROM Orders WHERE status = ?      ;
 
 === ByStoreId
 ID:          default_catalog.default_database.ByStoreId
@@ -316,11 +316,11 @@ Annotations:
  - parameters: storeId
  - base-table: ByStoreId
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($2, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByStoreId` AS  SELECT orderId, amount FROM Orders WHERE storeId = ?       ;
+CREATE VIEW `ByStoreId` AS  SELECT orderId, amount, createdAt FROM Orders WHERE storeId = ?       ;
 
 === ByWarehouseId
 ID:          default_catalog.default_database.ByWarehouseId
@@ -333,11 +333,11 @@ Annotations:
  - parameters: warehouseId
  - base-table: ByWarehouseId
 Plan:
-LogicalProject(orderId=[$0], amount=[$20])
+LogicalProject(orderId=[$0], amount=[$20], createdAt=[$22])
   LogicalFilter(condition=[=($12, ?0)])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
-CREATE VIEW `ByWarehouseId` AS  SELECT orderId, amount FROM Orders WHERE warehouseId = ?           ;
+CREATE VIEW `ByWarehouseId` AS  SELECT orderId, amount, createdAt FROM Orders WHERE warehouseId = ?           ;
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -846,7 +846,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"campaignId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"campaignId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -881,7 +881,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"carrierId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"carrierId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -916,7 +916,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"category\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"category\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -951,7 +951,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"channel\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"channel\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -986,7 +986,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"country\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"country\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1021,7 +1021,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"currency\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"currency\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1056,7 +1056,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"customerId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"customerId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1091,7 +1091,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"deviceType\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"deviceType\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1126,7 +1126,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"discountCode\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"discountCode\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1161,7 +1161,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"fulfillmentStatus\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"fulfillmentStatus\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1196,7 +1196,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"orderId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"orderId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1231,7 +1231,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"paymentMethod\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"paymentMethod\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1266,7 +1266,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"productId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"productId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1301,7 +1301,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"returnReason\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"returnReason\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1336,7 +1336,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"riskLevel\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"riskLevel\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1371,7 +1371,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"salesRepId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"salesRepId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1406,7 +1406,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"shippingMethod\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"shippingMethod\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1441,7 +1441,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"status\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"status\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1476,7 +1476,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"storeId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"storeId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1511,7 +1511,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"warehouseId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"warehouseId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1655,7 +1655,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByCampaignId($campaignId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCampaignId(campaignId: $campaignId, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByCampaignId($campaignId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCampaignId(campaignId: $campaignId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCampaignId",
             "operationType" : "QUERY"
           },
@@ -1673,6 +1673,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -1700,7 +1704,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByCarrierId($carrierId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCarrierId(carrierId: $carrierId, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByCarrierId($carrierId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCarrierId(carrierId: $carrierId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCarrierId",
             "operationType" : "QUERY"
           },
@@ -1718,6 +1722,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -1745,7 +1753,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByCategory($category: String!, $limit: Int = 10, $offset: Int = 0) {\nByCategory(category: $category, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByCategory($category: String!, $limit: Int = 10, $offset: Int = 0) {\nByCategory(category: $category, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCategory",
             "operationType" : "QUERY"
           },
@@ -1763,6 +1771,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -1790,7 +1802,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByChannel($channel: String!, $limit: Int = 10, $offset: Int = 0) {\nByChannel(channel: $channel, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByChannel($channel: String!, $limit: Int = 10, $offset: Int = 0) {\nByChannel(channel: $channel, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByChannel",
             "operationType" : "QUERY"
           },
@@ -1808,6 +1820,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -1835,7 +1851,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByCountry($country: String!, $limit: Int = 10, $offset: Int = 0) {\nByCountry(country: $country, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByCountry($country: String!, $limit: Int = 10, $offset: Int = 0) {\nByCountry(country: $country, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCountry",
             "operationType" : "QUERY"
           },
@@ -1853,6 +1869,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -1880,7 +1900,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByCurrency($currency: String!, $limit: Int = 10, $offset: Int = 0) {\nByCurrency(currency: $currency, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByCurrency($currency: String!, $limit: Int = 10, $offset: Int = 0) {\nByCurrency(currency: $currency, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCurrency",
             "operationType" : "QUERY"
           },
@@ -1898,6 +1918,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -1925,7 +1949,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByCustomerId($customerId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCustomerId(customerId: $customerId, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByCustomerId($customerId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCustomerId(customerId: $customerId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCustomerId",
             "operationType" : "QUERY"
           },
@@ -1943,6 +1967,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -1970,7 +1998,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByDeviceType($deviceType: String!, $limit: Int = 10, $offset: Int = 0) {\nByDeviceType(deviceType: $deviceType, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByDeviceType($deviceType: String!, $limit: Int = 10, $offset: Int = 0) {\nByDeviceType(deviceType: $deviceType, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByDeviceType",
             "operationType" : "QUERY"
           },
@@ -1988,6 +2016,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2015,7 +2047,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByDiscountCode($discountCode: String!, $limit: Int = 10, $offset: Int = 0) {\nByDiscountCode(discountCode: $discountCode, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByDiscountCode($discountCode: String!, $limit: Int = 10, $offset: Int = 0) {\nByDiscountCode(discountCode: $discountCode, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByDiscountCode",
             "operationType" : "QUERY"
           },
@@ -2033,6 +2065,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2060,7 +2096,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByFulfillmentStatus($fulfillmentStatus: String!, $limit: Int = 10, $offset: Int = 0) {\nByFulfillmentStatus(fulfillmentStatus: $fulfillmentStatus, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByFulfillmentStatus($fulfillmentStatus: String!, $limit: Int = 10, $offset: Int = 0) {\nByFulfillmentStatus(fulfillmentStatus: $fulfillmentStatus, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByFulfillmentStatus",
             "operationType" : "QUERY"
           },
@@ -2078,6 +2114,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2105,7 +2145,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByOrderId($orderId: String!, $limit: Int = 10, $offset: Int = 0) {\nByOrderId(orderId: $orderId, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByOrderId($orderId: String!, $limit: Int = 10, $offset: Int = 0) {\nByOrderId(orderId: $orderId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByOrderId",
             "operationType" : "QUERY"
           },
@@ -2123,6 +2163,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2150,7 +2194,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByPaymentMethod($paymentMethod: String!, $limit: Int = 10, $offset: Int = 0) {\nByPaymentMethod(paymentMethod: $paymentMethod, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByPaymentMethod($paymentMethod: String!, $limit: Int = 10, $offset: Int = 0) {\nByPaymentMethod(paymentMethod: $paymentMethod, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByPaymentMethod",
             "operationType" : "QUERY"
           },
@@ -2168,6 +2212,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2195,7 +2243,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByProductId($productId: String!, $limit: Int = 10, $offset: Int = 0) {\nByProductId(productId: $productId, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByProductId($productId: String!, $limit: Int = 10, $offset: Int = 0) {\nByProductId(productId: $productId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByProductId",
             "operationType" : "QUERY"
           },
@@ -2213,6 +2261,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2240,7 +2292,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByReturnReason($returnReason: String!, $limit: Int = 10, $offset: Int = 0) {\nByReturnReason(returnReason: $returnReason, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByReturnReason($returnReason: String!, $limit: Int = 10, $offset: Int = 0) {\nByReturnReason(returnReason: $returnReason, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByReturnReason",
             "operationType" : "QUERY"
           },
@@ -2258,6 +2310,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2285,7 +2341,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByRiskLevel($riskLevel: String!, $limit: Int = 10, $offset: Int = 0) {\nByRiskLevel(riskLevel: $riskLevel, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByRiskLevel($riskLevel: String!, $limit: Int = 10, $offset: Int = 0) {\nByRiskLevel(riskLevel: $riskLevel, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByRiskLevel",
             "operationType" : "QUERY"
           },
@@ -2303,6 +2359,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2330,7 +2390,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query BySalesRepId($salesRepId: String!, $limit: Int = 10, $offset: Int = 0) {\nBySalesRepId(salesRepId: $salesRepId, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query BySalesRepId($salesRepId: String!, $limit: Int = 10, $offset: Int = 0) {\nBySalesRepId(salesRepId: $salesRepId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "BySalesRepId",
             "operationType" : "QUERY"
           },
@@ -2348,6 +2408,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2375,7 +2439,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByShippingMethod($shippingMethod: String!, $limit: Int = 10, $offset: Int = 0) {\nByShippingMethod(shippingMethod: $shippingMethod, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByShippingMethod($shippingMethod: String!, $limit: Int = 10, $offset: Int = 0) {\nByShippingMethod(shippingMethod: $shippingMethod, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByShippingMethod",
             "operationType" : "QUERY"
           },
@@ -2393,6 +2457,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2420,7 +2488,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByStatus($status: String!, $limit: Int = 10, $offset: Int = 0) {\nByStatus(status: $status, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByStatus($status: String!, $limit: Int = 10, $offset: Int = 0) {\nByStatus(status: $status, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByStatus",
             "operationType" : "QUERY"
           },
@@ -2438,6 +2506,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2465,7 +2537,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByStoreId($storeId: String!, $limit: Int = 10, $offset: Int = 0) {\nByStoreId(storeId: $storeId, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByStoreId($storeId: String!, $limit: Int = 10, $offset: Int = 0) {\nByStoreId(storeId: $storeId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByStoreId",
             "operationType" : "QUERY"
           },
@@ -2483,6 +2555,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2510,7 +2586,7 @@ END
             }
           },
           "apiQuery" : {
-            "query" : "query ByWarehouseId($warehouseId: String!, $limit: Int = 10, $offset: Int = 0) {\nByWarehouseId(warehouseId: $warehouseId, limit: $limit, offset: $offset) {\norderId\namount\n}\n\n}",
+            "query" : "query ByWarehouseId($warehouseId: String!, $limit: Int = 10, $offset: Int = 0) {\nByWarehouseId(warehouseId: $warehouseId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByWarehouseId",
             "operationType" : "QUERY"
           },
@@ -2528,6 +2604,10 @@ END
                 },
                 "amount" : {
                   "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2536,7 +2616,7 @@ END
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type ByCampaignId {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByCarrierId {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByCategory {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByChannel {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByCountry {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByCurrency {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByCustomerId {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByDeviceType {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByDiscountCode {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByFulfillmentStatus {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByOrderId {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByPaymentMethod {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByProductId {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByReturnReason {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByRiskLevel {\n  orderId: String!\n  amount: Float!\n}\n\ntype BySalesRepId {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByShippingMethod {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByStatus {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByStoreId {\n  orderId: String!\n  amount: Float!\n}\n\ntype ByWarehouseId {\n  orderId: String!\n  amount: Float!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  orderId: String!\n  customerId: String!\n  storeId: String!\n  productId: String!\n  category: String!\n  status: String!\n  paymentMethod: String!\n  country: String!\n  currency: String!\n  channel: String!\n  discountCode: String!\n  shippingMethod: String!\n  warehouseId: String!\n  carrierId: String!\n  campaignId: String!\n  deviceType: String!\n  riskLevel: String!\n  fulfillmentStatus: String!\n  returnReason: String!\n  salesRepId: String!\n  amount: Float!\n  epoch_timestamp: Long!\n  createdAt: DateTime!\n}\n\ntype Query {\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  ByCampaignId(campaignId: String!, limit: Int = 10, offset: Int = 0): [ByCampaignId!]\n  ByCarrierId(carrierId: String!, limit: Int = 10, offset: Int = 0): [ByCarrierId!]\n  ByCategory(category: String!, limit: Int = 10, offset: Int = 0): [ByCategory!]\n  ByChannel(channel: String!, limit: Int = 10, offset: Int = 0): [ByChannel!]\n  ByCountry(country: String!, limit: Int = 10, offset: Int = 0): [ByCountry!]\n  ByCurrency(currency: String!, limit: Int = 10, offset: Int = 0): [ByCurrency!]\n  ByCustomerId(customerId: String!, limit: Int = 10, offset: Int = 0): [ByCustomerId!]\n  ByDeviceType(deviceType: String!, limit: Int = 10, offset: Int = 0): [ByDeviceType!]\n  ByDiscountCode(discountCode: String!, limit: Int = 10, offset: Int = 0): [ByDiscountCode!]\n  ByFulfillmentStatus(fulfillmentStatus: String!, limit: Int = 10, offset: Int = 0): [ByFulfillmentStatus!]\n  ByOrderId(orderId: String!, limit: Int = 10, offset: Int = 0): [ByOrderId!]\n  ByPaymentMethod(paymentMethod: String!, limit: Int = 10, offset: Int = 0): [ByPaymentMethod!]\n  ByProductId(productId: String!, limit: Int = 10, offset: Int = 0): [ByProductId!]\n  ByReturnReason(returnReason: String!, limit: Int = 10, offset: Int = 0): [ByReturnReason!]\n  ByRiskLevel(riskLevel: String!, limit: Int = 10, offset: Int = 0): [ByRiskLevel!]\n  BySalesRepId(salesRepId: String!, limit: Int = 10, offset: Int = 0): [BySalesRepId!]\n  ByShippingMethod(shippingMethod: String!, limit: Int = 10, offset: Int = 0): [ByShippingMethod!]\n  ByStatus(status: String!, limit: Int = 10, offset: Int = 0): [ByStatus!]\n  ByStoreId(storeId: String!, limit: Int = 10, offset: Int = 0): [ByStoreId!]\n  ByWarehouseId(warehouseId: String!, limit: Int = 10, offset: Int = 0): [ByWarehouseId!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type ByCampaignId {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByCarrierId {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByCategory {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByChannel {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByCountry {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByCurrency {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByCustomerId {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByDeviceType {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByDiscountCode {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByFulfillmentStatus {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByOrderId {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByPaymentMethod {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByProductId {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByReturnReason {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByRiskLevel {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype BySalesRepId {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByShippingMethod {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByStatus {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByStoreId {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\ntype ByWarehouseId {\n  orderId: String!\n  amount: Float!\n  createdAt: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  orderId: String!\n  customerId: String!\n  storeId: String!\n  productId: String!\n  category: String!\n  status: String!\n  paymentMethod: String!\n  country: String!\n  currency: String!\n  channel: String!\n  discountCode: String!\n  shippingMethod: String!\n  warehouseId: String!\n  carrierId: String!\n  campaignId: String!\n  deviceType: String!\n  riskLevel: String!\n  fulfillmentStatus: String!\n  returnReason: String!\n  salesRepId: String!\n  amount: Float!\n  epoch_timestamp: Long!\n  createdAt: DateTime!\n}\n\ntype Query {\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  ByCampaignId(campaignId: String!, limit: Int = 10, offset: Int = 0): [ByCampaignId!]\n  ByCarrierId(carrierId: String!, limit: Int = 10, offset: Int = 0): [ByCarrierId!]\n  ByCategory(category: String!, limit: Int = 10, offset: Int = 0): [ByCategory!]\n  ByChannel(channel: String!, limit: Int = 10, offset: Int = 0): [ByChannel!]\n  ByCountry(country: String!, limit: Int = 10, offset: Int = 0): [ByCountry!]\n  ByCurrency(currency: String!, limit: Int = 10, offset: Int = 0): [ByCurrency!]\n  ByCustomerId(customerId: String!, limit: Int = 10, offset: Int = 0): [ByCustomerId!]\n  ByDeviceType(deviceType: String!, limit: Int = 10, offset: Int = 0): [ByDeviceType!]\n  ByDiscountCode(discountCode: String!, limit: Int = 10, offset: Int = 0): [ByDiscountCode!]\n  ByFulfillmentStatus(fulfillmentStatus: String!, limit: Int = 10, offset: Int = 0): [ByFulfillmentStatus!]\n  ByOrderId(orderId: String!, limit: Int = 10, offset: Int = 0): [ByOrderId!]\n  ByPaymentMethod(paymentMethod: String!, limit: Int = 10, offset: Int = 0): [ByPaymentMethod!]\n  ByProductId(productId: String!, limit: Int = 10, offset: Int = 0): [ByProductId!]\n  ByReturnReason(returnReason: String!, limit: Int = 10, offset: Int = 0): [ByReturnReason!]\n  ByRiskLevel(riskLevel: String!, limit: Int = 10, offset: Int = 0): [ByRiskLevel!]\n  BySalesRepId(salesRepId: String!, limit: Int = 10, offset: Int = 0): [BySalesRepId!]\n  ByShippingMethod(shippingMethod: String!, limit: Int = 10, offset: Int = 0): [ByShippingMethod!]\n  ByStatus(status: String!, limit: Int = 10, offset: Int = 0): [ByStatus!]\n  ByStoreId(storeId: String!, limit: Int = 10, offset: Int = 0): [ByStoreId!]\n  ByWarehouseId(warehouseId: String!, limit: Int = 10, offset: Int = 0): [ByWarehouseId!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

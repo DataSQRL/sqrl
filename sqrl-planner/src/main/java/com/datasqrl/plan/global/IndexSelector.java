@@ -23,11 +23,13 @@ import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.hint.IndexHint;
 import com.datasqrl.util.ArrayUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.primitives.Ints;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -65,6 +67,10 @@ public class IndexSelector {
 
   private static final int MAX_LIMIT_INDEX_SCAN = 10000;
 
+  private static final String INDEX_REMEDIATION =
+      "Reduce the number of distinct filter patterns on this table or specify the indexes "
+          + "explicitly with an `index` hint.";
+
   private final Sqrl2FlinkSQLTranslator framework;
   private final IndexSelectorConfig config;
   private final Map<String, CreateTableJdbcStatement> tableMap;
@@ -93,10 +99,9 @@ public class IndexSelector {
     return program.run(null, queryRelnode, queryRelnode.getTraitSet(), List.of(), List.of());
   }
 
-  public Map<IndexDefinition, Double> optimizeIndexes(
-      Collection<QueryIndexSummary> queryIndexSummaries) {
+  public Set<IndexDefinition> optimizeIndexes(Collection<QueryIndexSummary> queryIndexSummaries) {
     // Prune down to database indexes and remove duplicates
-    Map<IndexDefinition, Double> optIndexes = new HashMap<>();
+    Set<IndexDefinition> optIndexes = new LinkedHashSet<>();
     LinkedHashMultimap<NamedTable, QueryIndexSummary> callsByTable = LinkedHashMultimap.create();
     queryIndexSummaries.forEach(
         idx -> {
@@ -105,7 +110,7 @@ public class IndexSelector {
         });
 
     for (NamedTable table : callsByTable.keySet()) {
-      optIndexes.putAll(optimizeIndexes(table, callsByTable.get(table)));
+      optIndexes.addAll(optimizeIndexes(table, callsByTable.get(table)));
     }
     return optIndexes;
   }
@@ -140,16 +145,18 @@ public class IndexSelector {
     return Optional.of(indexDefinitions);
   }
 
-  private Map<IndexDefinition, Double> optimizeIndexes(
+  private Set<IndexDefinition> optimizeIndexes(
       NamedTable table, Set<QueryIndexSummary> queryIndexSummaries) {
     // Check how many unique QueryConjunctions we have on this table
     if (queryIndexSummaries.size() > config.maxIndexColumnSets()) {
       errors.warn(
           "Table `%s` is queried with %d distinct filter patterns which exceeds the maximum of %d. "
               + "Creating a single-column index for each filtered column instead of composite "
-              + "indexes. Reduce the number of distinct filter patterns on this table or specify "
-              + "the indexes explicitly with an `index` hint.",
-          table.getTableName(), queryIndexSummaries.size(), config.maxIndexColumnSets());
+              + "indexes. %s",
+          table.getTableName(),
+          queryIndexSummaries.size(),
+          config.maxIndexColumnSets(),
+          INDEX_REMEDIATION);
       // Generate individual indexes so the database can combine them on-demand at query time
       // 1) Generate an index for each column
       var indexedColumns = getFallbackIndexColumns(queryIndexSummaries, getPrimaryKeyIndex(table));
@@ -159,21 +166,20 @@ public class IndexSelector {
       }
       // Pick generic index type
       var genericType = config.getPreferredGenericIndexType();
-      Map<IndexDefinition, Double> indexes = new HashMap<>();
+      Set<IndexDefinition> indexes = new LinkedHashSet<>();
       for (int colIndex : indexedColumns) {
-        indexes.put(
+        indexes.add(
             new IndexDefinition(
                 table.getTableName(),
                 List.of(colIndex),
                 table.getAnalysis().getRowType().getFieldNames(),
                 -1,
-                genericType),
-            0.0);
+                genericType));
       }
       indexedFunctions.stream()
           .map(fcall -> getIndexDefinition(fcall, table))
           .flatMap(Optional::stream)
-          .forEach(idxDef -> indexes.put(idxDef, Double.NaN));
+          .forEach(indexes::add);
       return indexes;
     } else {
       return optimizeIndexesWithCostMinimization(table, queryIndexSummaries);
@@ -186,6 +192,7 @@ public class IndexSelector {
    * already indexes the primary key. Note that the primary key of the physical table is not
    * necessarily the leading column of the table, hence it has to be resolved by name.
    */
+  @VisibleForTesting
   static Set<Integer> getFallbackIndexColumns(
       Collection<QueryIndexSummary> queryIndexSummaries,
       Optional<IndexDefinition> primaryKeyIndex) {
@@ -218,22 +225,27 @@ public class IndexSelector {
    * get a synthetic {@code __pk_hash} column appended at the end.
    */
   private Optional<IndexDefinition> getPrimaryKeyIndex(NamedTable table) {
-    if (!config.hasPrimaryKeyIndex() || !table.getAnalysis().getPrimaryKey().isDefined()) {
+    var pkNames = table.getStmt().getPrimaryKey();
+    if (!config.hasPrimaryKeyIndex()
+        || !table.getAnalysis().getPrimaryKey().isDefined()
+        || pkNames.isEmpty()) {
+      // The database does not index primary keys, or this table was created without one
       return Optional.empty();
     }
-    var pkNames = table.getStmt().getPrimaryKey();
     var pkColumns = pkNames.stream().map(table.getAnalysis()::getFieldIndex).toList();
-    if (pkNames.isEmpty() || pkColumns.contains(-1)) {
-      // A primary key column that is not part of the row type cannot be mapped to an index
+    if (pkColumns.contains(-1)) {
+      // The synthetic `__pk_hash` primary key is stripped from the row type that the analysis sees
+      // (see DAGPlanner#mapTypes) so no query can filter on it. Such an index serves no query and
+      // the baseline cost is a full table scan either way.
       return Optional.empty();
     }
     return Optional.of(
         IndexDefinition.getPrimaryKeyIndex(table.getTableName(), pkColumns, pkNames));
   }
 
-  private Map<IndexDefinition, Double> optimizeIndexesWithCostMinimization(
+  private Set<IndexDefinition> optimizeIndexesWithCostMinimization(
       NamedTable table, Collection<QueryIndexSummary> indexes) {
-    Map<IndexDefinition, Double> optIndexes = new HashMap<>();
+    Set<IndexDefinition> optIndexes = new LinkedHashSet<>();
     // Determine all index candidates
     Set<IndexDefinition> candidates = new LinkedHashSet<>();
     indexes.forEach(idx -> candidates.addAll(generateIndexCandidates(idx)));
@@ -251,7 +263,6 @@ public class IndexSelector {
       currentCost.put(idx, initialCost.apply(idx));
     }
     // Determine which index candidates reduce the cost the most
-    var currentTotal = total(currentCost);
     while (optIndexes.size() < config.maxIndexes()) {
       IndexDefinition bestCandidate = null;
       Map<QueryIndexSummary, Double> bestCosts = null;
@@ -260,7 +271,7 @@ public class IndexSelector {
         Map<QueryIndexSummary, Double> costs = new HashMap<>();
         currentCost.forEach(
             (call, cost) -> costs.put(call, Math.min(cost, call.getCost(candidate))));
-        if (!servesQueriesWorthIndexing(currentCost, costs)) {
+        if (!servesQueriesWorthIndexing(currentCost, costs, config.getCostImprovementThreshold())) {
           // This candidate does not pay for itself, but the ones after it still might
           continue;
         }
@@ -274,42 +285,38 @@ public class IndexSelector {
         }
       }
       if (bestCandidate == null) {
-        break;
+        // Every query that an index can help with is served
+        return optIndexes;
       }
-      optIndexes.put(bestCandidate, currentTotal - bestTotal);
+      optIndexes.add(bestCandidate);
       candidates.remove(bestCandidate);
-      currentTotal = bestTotal;
       currentCost = bestCosts;
     }
-    warnAboutFullTableScans(table, optIndexes.size(), currentCost);
+    // We ran out of index budget, so queries may be left without a supporting index
+    warnAboutFullTableScans(table, currentCost);
     return optIndexes;
   }
 
   /**
-   * Index selection is bounded by {@link IndexSelectorConfig#maxIndexes()}, so once that budget is
-   * exhausted queries can end up without a supporting index. That is expensive and invisible in the
-   * compiled plan unless we point it out.
+   * Index selection is bounded by {@link IndexSelectorConfig#maxIndexes()}. Once that budget is
+   * exhausted, queries can be left without a supporting index, which is expensive and invisible in
+   * the compiled plan unless we point it out.
    */
-  private void warnAboutFullTableScans(
-      NamedTable table, int numIndexes, Map<QueryIndexSummary, Double> finalCost) {
-    if (numIndexes < config.maxIndexes()) {
-      // We did not run out of indexes, so the remaining queries are ones no index can help with
-      return;
-    }
+  private void warnAboutFullTableScans(NamedTable table, Map<QueryIndexSummary, Double> finalCost) {
     var fullTableScans =
         finalCost.entrySet().stream()
             .filter(entry -> entry.getValue() + EPSILON >= entry.getKey().getBaseCost())
-            .map(entry -> entry.getKey().getFilterColumnNames().toString())
-            .sorted()
+            .map(entry -> entry.getKey().getFilterColumnNames())
+            .sorted(Comparator.comparing(columns -> String.join(",", columns)))
+            .map(columns -> "(" + String.join(", ", columns) + ")")
             .collect(Collectors.joining(", "));
     if (fullTableScans.isEmpty()) {
       return;
     }
     errors.warn(
-        "Created %d of at most %d indexes for table `%s`. These query filter patterns have no "
-            + "supporting index and require a full table scan: %s. Reduce the number of distinct "
-            + "filter patterns on this table or specify the indexes explicitly with an `index` hint.",
-        numIndexes, config.maxIndexes(), table.getTableName(), fullTableScans);
+        "Created the maximum of %d indexes for table `%s`. These query filter patterns have no "
+            + "supporting index and require a full table scan: %s. %s",
+        config.maxIndexes(), table.getTableName(), fullTableScans, INDEX_REMEDIATION);
   }
 
   /**
@@ -318,6 +325,7 @@ public class IndexSelector {
    * on the table instead would make index selection for one query a function of how many unrelated
    * queries there are on the same table.
    */
+  @VisibleForTesting
   static boolean servesQueriesWorthIndexing(
       Map<QueryIndexSummary, Double> before,
       Map<QueryIndexSummary, Double> after,
@@ -332,11 +340,6 @@ public class IndexSelector {
       }
     }
     return servedBefore > 0 && servedAfter / servedBefore <= costImprovementThreshold;
-  }
-
-  private boolean servesQueriesWorthIndexing(
-      Map<QueryIndexSummary, Double> before, Map<QueryIndexSummary, Double> after) {
-    return servesQueriesWorthIndexing(before, after, config.getCostImprovementThreshold());
   }
 
   private boolean costLess(IndexDefinition candidate, IndexDefinition bestCandidate) {
