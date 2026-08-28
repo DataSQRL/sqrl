@@ -24,45 +24,42 @@ import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.FlinkCompileException;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.commons.lang3.Strings;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.InsertConflictStrategy;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
+import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.connector.ChangelogMode;
 import org.apache.flink.table.operations.StatementSetOperation;
 import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalRel;
+import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalSink;
 import org.apache.flink.table.planner.plan.utils.ChangelogPlanUtils;
 import org.apache.flink.types.RowKind;
 
 /**
- * Resolves generated Flink {@code ON CONFLICT} clauses from optimized query changelog modes and
- * final sink validation.
+ * Resolves generated Flink {@code ON CONFLICT} clauses from the optimized sink plans: insert-only
+ * sinks get no clause, and sinks whose upsert key is not contained in the primary key get the
+ * clause the forked Flink planner requires.
  */
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 final class FlinkInsertConflictPlanner {
 
   private final List<PendingInsert> pendingInserts = new ArrayList<>();
-  private final Set<ObjectIdentifier> upsertKeyFallbackTargets = new HashSet<>();
 
   private final RuntimeExecutionMode executionMode;
   private final StreamTableEnvironmentImpl tEnv;
   private final Builder planBuilder;
 
-  /** Adds a generated insert and registers upsert-capable sinks for post-inference resolution. */
+  /** Adds a generated insert and registers upsert-capable sinks for post-planning resolution. */
   void addInsert(
       SqlNode selectQuery,
       ObjectIdentifier sinkTableId,
@@ -81,24 +78,22 @@ final class FlinkInsertConflictPlanner {
   }
 
   /**
-   * Replaces generated inserts with conflict behavior derived from each Flink-optimized sink
-   * changelog.
+   * Replaces generated inserts with conflict behavior derived from each Flink-optimized sink plan.
    */
   void resolve() {
     if (pendingInserts.isEmpty()) {
       return;
     }
 
-    // Changelog inference inspects StreamPhysicalSink, which is not used for batch plans.
-    var changelogModes =
+    // Sink planning inspects StreamPhysicalSink, which is not used for batch plans.
+    var sinkPlans =
         executionMode == RuntimeExecutionMode.STREAMING
-            ? inferSinkChangelogModes()
-            : Map.<ObjectIdentifier, ChangelogMode>of();
+            ? planSinks()
+            : pendingInserts.stream().map(insert -> Optional.<StreamPhysicalSink>empty()).toList();
 
-    for (var pendingInsert : pendingInserts) {
-      var changelogMode =
-          changelogModes.getOrDefault(pendingInsert.targetTableId(), ChangelogMode.all());
-      var conflictBehavior = resolveConflictBehavior(pendingInsert.table(), changelogMode);
+    for (var i = 0; i < pendingInserts.size(); i++) {
+      var pendingInsert = pendingInserts.get(i);
+      var conflictBehavior = resolveConflictBehavior(pendingInsert.table(), sinkPlans.get(i));
 
       planBuilder.replaceInsert(
           pendingInsert.batchIdx(),
@@ -108,75 +103,32 @@ final class FlinkInsertConflictPlanner {
     }
   }
 
-  /**
-   * Compiles the generated statement set, applying automatic conflict behavior when Flink reports
-   * an upsert key that does not match a sink primary key.
-   */
-  CompiledPlan compilePlan() {
-    while (true) {
-      var execute = planBuilder.getExecuteStatements();
-      var statements = RelToFlinkSql.convertToSqlString(execute);
-
-      try {
-        var statementSet =
-            (StatementSetOperation) tEnv.getParser().parse(statements.get(0) + ";").get(0);
-
-        return tEnv.compilePlan(statementSet.getOperations());
-
-      } catch (Exception e) {
-        if (!resolveUpsertKeyConflict(e)) {
-          var flinkSql = new ArrayList<>(planBuilder.getFlinkSql());
-          flinkSql.addAll(statements);
-          throw new FlinkCompileException(flinkSql, e);
-        }
-      }
-    }
-  }
-
   boolean hasPendingInserts() {
     return !pendingInserts.isEmpty();
   }
 
-  /**
-   * Adds conflict behavior when final Flink compilation rejects an insert because its upsert key
-   * differs from the sink primary key.
-   */
-  boolean resolveUpsertKeyConflict(Throwable error) {
-    var pendingInsert =
-        pendingInserts.stream()
-            .filter(insert -> !upsertKeyFallbackTargets.contains(insert.targetTableId()))
-            .filter(insert -> hasUpsertKeyConflict(error, insert.targetTableId()))
-            .findFirst();
+  /** Compiles the generated statement set. */
+  CompiledPlan compilePlan() {
+    var execute = planBuilder.getExecuteStatements();
+    var statements = RelToFlinkSql.convertToSqlString(execute);
+    var statementSet =
+        (StatementSetOperation) tEnv.getParser().parse(statements.get(0) + ";").get(0);
 
-    if (pendingInsert.isEmpty()) {
-      return false;
+    try {
+      return tEnv.compilePlan(statementSet.getOperations());
+    } catch (Exception e) {
+      throw new FlinkCompileException(withStatements(statements), e);
     }
-
-    var insert = pendingInsert.get();
-    var conflictBehavior =
-        insert
-            .table()
-            .getInsertConflictBehavior()
-            .map(FlinkInsertConflictPlanner::toSqlConflictBehavior)
-            .or(() -> automaticConflictBehavior(insert.table()))
-            .or(() -> Optional.of(SqlInsertConflictBehavior.NOTHING));
-
-    planBuilder.replaceInsert(
-        insert.batchIdx(),
-        insert.insertIdx(),
-        FlinkSqlNodes.createInsert(insert.selectQuery(), insert.targetTableId(), conflictBehavior));
-
-    upsertKeyFallbackTargets.add(insert.targetTableId());
-
-    return true;
   }
 
   /**
-   * Preserves explicit behavior or selects automatic behavior from the sink changelog, omitting it
-   * for insert-only sinks.
+   * Preserves explicit behavior and otherwise derives the clause from the optimized sink plan,
+   * mirroring the forked Flink planner's validation: append and retract sinks reject the clause,
+   * upsert sinks whose primary key does not contain the upsert key require one (falling back to
+   * {@code DO NOTHING}), and insert-only inputs need none.
    */
   private Optional<SqlInsertConflictBehavior> resolveConflictBehavior(
-      TableAnalysis table, ChangelogMode changelogMode) {
+      TableAnalysis table, Optional<StreamPhysicalSink> sinkPlan) {
 
     if (table.getInsertConflictBehavior().isPresent()) {
       return table
@@ -184,31 +136,53 @@ final class FlinkInsertConflictPlanner {
           .map(FlinkInsertConflictPlanner::toSqlConflictBehavior);
     }
 
-    if (changelogMode.containsOnly(RowKind.INSERT)) {
+    if (sinkPlan.isEmpty()) {
+      // Batch plans have no stream-physical sink and no conflict validation in the fork.
+      return automaticConflictBehavior(table);
+    }
+
+    var sink = sinkPlan.get();
+    var inputMode = inputChangelogMode(sink).orElse(ChangelogMode.all());
+    var sinkMode = sink.tableSink().getChangelogMode(inputMode);
+    if (sinkMode.containsOnly(RowKind.INSERT) || sinkMode.contains(RowKind.UPDATE_BEFORE)) {
       return Optional.empty();
     }
 
-    return automaticConflictBehavior(table);
+    if (!sink.primaryKeysContainsUpsertKey()) {
+      return automaticConflictBehavior(table)
+          .or(() -> Optional.of(SqlInsertConflictBehavior.NOTHING));
+    }
+
+    return inputMode.containsOnly(RowKind.INSERT)
+        ? Optional.empty()
+        : automaticConflictBehavior(table);
   }
 
   /**
-   * Plans generated queries without sink-specific conflict validation and extracts their changelog
-   * modes.
+   * Plans the pending inserts without conflict clauses and returns their optimized sink nodes. The
+   * fork's upsert-key validation is disabled during planning since this pass determines the very
+   * clauses that validation requires.
    */
-  private Map<ObjectIdentifier, ChangelogMode> inferSinkChangelogModes() {
-    var selectSql =
-        pendingInserts.stream()
-            .map(PendingInsert::selectQuery)
-            .map(RelToFlinkSql::convertToString)
-            .toList();
+  private List<Optional<StreamPhysicalSink>> planSinks() {
+    var config = tEnv.getConfig();
+    var requireOnConflict = config.get(ExecutionConfigOptions.TABLE_EXEC_SINK_REQUIRE_ON_CONFLICT);
+    config.set(ExecutionConfigOptions.TABLE_EXEC_SINK_REQUIRE_ON_CONFLICT, false);
+
     try {
-      var queryOperations =
-          selectSql.stream().map(sql -> tEnv.getParser().parse(sql).get(0)).toList();
+      var insertOperations =
+          pendingInserts.stream()
+              .map(
+                  insert ->
+                      FlinkSqlNodes.createInsert(insert.selectQuery(), insert.targetTableId()))
+              .map(RelToFlinkSql::convertToString)
+              .map(sql -> tEnv.getParser().parse(sql).get(0))
+              .toList();
 
-      // getExplainGraphs translates and optimizes the queries; _2() contains optimized RelNodes.
-      var optimizedPlans = ((PlannerBase) tEnv.getPlanner()).getExplainGraphs(queryOperations)._2();
+      // getExplainGraphs translates and optimizes the inserts; _2() contains optimized RelNodes.
+      var optimizedPlans =
+          ((PlannerBase) tEnv.getPlanner()).getExplainGraphs(insertOperations)._2();
 
-      var changelogModes = new HashMap<ObjectIdentifier, ChangelogMode>();
+      var sinkPlans = new ArrayList<Optional<StreamPhysicalSink>>();
       var iterator = optimizedPlans.iterator();
       for (var pendingInsert : pendingInserts) {
         if (!iterator.hasNext()) {
@@ -217,21 +191,34 @@ final class FlinkInsertConflictPlanner {
         }
 
         var plan = iterator.next();
-        if (plan instanceof StreamPhysicalRel streamPlan) {
-          var changelogMode = ChangelogPlanUtils.getChangelogMode(streamPlan);
-          if (changelogMode.isDefined()) {
-            changelogModes.put(pendingInsert.targetTableId(), changelogMode.get());
-          }
-        }
+        sinkPlans.add(
+            plan instanceof StreamPhysicalSink sinkPlan ? Optional.of(sinkPlan) : Optional.empty());
       }
 
-      return changelogModes;
+      return sinkPlans;
 
     } catch (Exception e) {
-      var flinkSql = new ArrayList<>(planBuilder.getFlinkSql());
-      flinkSql.addAll(selectSql);
-      throw new FlinkCompileException(flinkSql, e);
+      throw new FlinkCompileException(planBuilder.getFlinkSql(), e);
+    } finally {
+      config.set(ExecutionConfigOptions.TABLE_EXEC_SINK_REQUIRE_ON_CONFLICT, requireOnConflict);
     }
+  }
+
+  private static Optional<ChangelogMode> inputChangelogMode(StreamPhysicalSink sinkPlan) {
+    if (sinkPlan.getInput() instanceof StreamPhysicalRel input) {
+      var changelogMode = ChangelogPlanUtils.getChangelogMode(input);
+      if (changelogMode.isDefined()) {
+        return Optional.of(changelogMode.get());
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  private List<String> withStatements(List<String> statements) {
+    var flinkSql = new ArrayList<>(planBuilder.getFlinkSql());
+    flinkSql.addAll(statements);
+    return flinkSql;
   }
 
   private static Optional<SqlInsertConflictBehavior> automaticConflictBehavior(
@@ -246,26 +233,6 @@ final class FlinkInsertConflictPlanner {
                   : SqlInsertConflictBehavior.DEDUPLICATE);
       default -> Optional.empty();
     };
-  }
-
-  /**
-   * Returns whether the exception chain contains Flink's upsert-key validation failure for the
-   * given sink.
-   */
-  private static boolean hasUpsertKeyConflict(Throwable error, ObjectIdentifier targetTableId) {
-    var target = "'" + targetTableId.asSummaryString() + "'";
-    var cause = error;
-    while (cause != null) {
-      var msg = cause.getMessage();
-
-      if (Strings.CS.contains(msg, "The query has an upsert key that differs from the primary key")
-          && Strings.CS.contains(msg, target)) {
-        return true;
-      }
-      cause = cause.getCause();
-    }
-
-    return false;
   }
 
   private static SqlInsertConflictBehavior toSqlConflictBehavior(

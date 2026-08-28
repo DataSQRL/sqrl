@@ -17,84 +17,159 @@ package com.datasqrl.planner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
+import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import java.util.Optional;
-import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNodeList;
-import org.apache.calcite.sql.SqlSelect;
-import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.InsertConflictStrategy.ConflictBehavior;
+import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
+import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Exercises conflict-clause resolution against the real Flink planner: an updating query whose
+ * upsert key is not contained in the sink primary key must receive an {@code ON CONFLICT} clause,
+ * insert-only queries must not, and the resulting statement set must compile without retries.
+ */
 class FlinkInsertConflictPlannerTest {
 
-  @Test
-  void givenUpsertKeyValidationFailure_whenResolveConflict_thenAddsDeduplicateBehavior() {
-    var targetTableId = ObjectIdentifier.of("default_catalog", "default_database", "target_table");
-    var planBuilder = new FlinkPhysicalPlan.Builder(new Configuration());
-    var planner = new FlinkInsertConflictPlanner(RuntimeExecutionMode.STREAMING, null, planBuilder);
-    var table =
-        TableAnalysis.builder().objectIdentifier(targetTableId).type(TableType.STATE).build();
+  private static final ObjectIdentifier MISMATCH_SINK =
+      ObjectIdentifier.of("default_catalog", "default_database", "snk_cnt_pk");
+  private static final ObjectIdentifier MATCHING_SINK =
+      ObjectIdentifier.of("default_catalog", "default_database", "snk_name_pk");
 
-    planner.addInsert(createSelect(), targetTableId, table, true);
+  private StreamTableEnvironmentImpl tEnv;
+  private FlinkPhysicalPlan.Builder planBuilder;
+  private FlinkInsertConflictPlanner conflictPlanner;
 
-    var validationFailure = upsertKeyValidationFailure(targetTableId);
+  @BeforeEach
+  void setUp() {
+    var sEnv = StreamExecutionEnvironment.getExecutionEnvironment();
+    tEnv =
+        (StreamTableEnvironmentImpl)
+            StreamTableEnvironment.create(
+                sEnv, EnvironmentSettings.newInstance().inStreamingMode().build());
+    planBuilder = new FlinkPhysicalPlan.Builder(new Configuration());
+    conflictPlanner =
+        new FlinkInsertConflictPlanner(RuntimeExecutionMode.STREAMING, tEnv, planBuilder);
 
-    assertThat(planner.resolveUpsertKeyConflict(validationFailure)).isTrue();
-    assertThat(RelToFlinkSql.convertToSqlString(planBuilder.getExecuteStatements()).get(0))
-        .contains("ON CONFLICT DO DEDUPLICATE");
-    assertThat(planner.resolveUpsertKeyConflict(validationFailure)).isFalse();
+    tEnv.executeSql(
+        """
+        CREATE TABLE src (
+          name STRING NOT NULL,
+          ts TIMESTAMP(3),
+          WATERMARK FOR ts AS ts - INTERVAL '1' SECOND
+        ) WITH ('connector' = 'datagen')""");
+    createJdbcSink("snk_cnt_pk", "PRIMARY KEY (cnt) NOT ENFORCED");
+    createJdbcSink("snk_name_pk", "PRIMARY KEY (name) NOT ENFORCED");
   }
 
   @Test
-  void givenExplicitConflictBehavior_whenResolveConflict_thenPreservesExplicitBehavior() {
-    var targetTableId = ObjectIdentifier.of("default_catalog", "default_database", "target_table");
-    var planBuilder = new FlinkPhysicalPlan.Builder(new Configuration());
-    var planner = new FlinkInsertConflictPlanner(RuntimeExecutionMode.STREAMING, null, planBuilder);
-    var table =
-        TableAnalysis.builder()
-            .objectIdentifier(targetTableId)
-            .type(TableType.STATE)
-            .insertConflictBehavior(Optional.of(ConflictBehavior.ERROR))
-            .build();
+  void givenUpsertKeyNotInSinkPrimaryKey_whenResolve_thenAddsRequiredConflictClause() {
+    // Upsert key [name] is not contained in the sink primary key [cnt]; the RELATION type has no
+    // automatic behavior, so the required clause falls back to DO NOTHING.
+    addInsert(aggregateQuery(), MISMATCH_SINK, table(TableType.RELATION));
 
-    planner.addInsert(createSelect(), targetTableId, table, true);
+    conflictPlanner.resolve();
 
-    assertThat(planner.resolveUpsertKeyConflict(upsertKeyValidationFailure(targetTableId)))
-        .isTrue();
-    assertThat(RelToFlinkSql.convertToSqlString(planBuilder.getExecuteStatements()).get(0))
-        .contains("ON CONFLICT DO ERROR");
+    assertThat(insertSql(0)).contains("ON CONFLICT DO NOTHING");
+    assertThat(conflictPlanner.compilePlan()).isNotNull();
   }
 
-  private static RuntimeException upsertKeyValidationFailure(ObjectIdentifier targetTableId) {
-    return new RuntimeException(
-        "The query has an upsert key that differs from the primary key for table '"
-            + targetTableId.asSummaryString()
-            + "'");
+  @Test
+  void givenInsertOnlyQueryWithUpsertKeyInPrimaryKey_whenResolve_thenOmitsConflictClause() {
+    // Keep-first rowtime deduplication stays insert-only and derives upsert key [name].
+    var dedupQuery =
+        """
+        SELECT name, CAST(1 AS BIGINT) AS cnt FROM (
+          SELECT name, ROW_NUMBER() OVER (PARTITION BY name ORDER BY ts ASC) AS rn FROM src
+        ) WHERE rn = 1""";
+    addInsert(dedupQuery, MATCHING_SINK, table(TableType.STREAM));
+
+    conflictPlanner.resolve();
+
+    assertThat(insertSql(0)).doesNotContain("ON CONFLICT");
+    assertThat(conflictPlanner.compilePlan()).isNotNull();
   }
 
-  private static SqlSelect createSelect() {
-    var selectList = new SqlNodeList(SqlParserPos.ZERO);
-    selectList.add(new SqlIdentifier("*", SqlParserPos.ZERO));
-    return new SqlSelect(
-        SqlParserPos.ZERO,
-        null,
-        selectList,
-        FlinkSqlNodes.identifier("source_table"),
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
-        null);
+  @Test
+  void givenUpsertKeyContainedInSinkPrimaryKey_whenResolve_thenOmitsClauseForRelationTable() {
+    addInsert(aggregateQuery(), MATCHING_SINK, table(TableType.RELATION));
+
+    conflictPlanner.resolve();
+
+    assertThat(insertSql(0)).doesNotContain("ON CONFLICT");
+    assertThat(conflictPlanner.compilePlan()).isNotNull();
+  }
+
+  @Test
+  void givenExplicitConflictBehavior_whenResolve_thenPreservesBehavior() {
+    addInsert(
+        aggregateQuery(),
+        MISMATCH_SINK,
+        table(TableType.RELATION, Optional.of(ConflictBehavior.DEDUPLICATE)));
+
+    conflictPlanner.resolve();
+
+    assertThat(insertSql(0)).contains("ON CONFLICT DO DEDUPLICATE");
+    assertThat(conflictPlanner.compilePlan()).isNotNull();
+  }
+
+  @Test
+  void givenStateTableWithUpdatingQuery_whenResolve_thenDeduplicates() {
+    addInsert(aggregateQuery(), MATCHING_SINK, table(TableType.STATE));
+
+    conflictPlanner.resolve();
+
+    assertThat(insertSql(0)).contains("ON CONFLICT DO DEDUPLICATE");
+    assertThat(conflictPlanner.compilePlan()).isNotNull();
+  }
+
+  private void createJdbcSink(String name, String primaryKey) {
+    tEnv.executeSql(
+        """
+        CREATE TABLE %s (
+          name STRING NOT NULL,
+          cnt BIGINT NOT NULL,
+          %s
+        ) WITH (
+          'connector' = 'jdbc',
+          'url' = 'jdbc:postgresql://localhost:5432/unused',
+          'table-name' = '%s'
+        )"""
+            .formatted(name, primaryKey, name));
+  }
+
+  private static String aggregateQuery() {
+    return "SELECT name, COUNT(*) AS cnt FROM src GROUP BY name";
+  }
+
+  private void addInsert(String selectSql, ObjectIdentifier sinkTableId, TableAnalysis table) {
+    conflictPlanner.addInsert(
+        FlinkCalciteParser.parseSql(selectSql, tEnv), sinkTableId, table, true);
+  }
+
+  private String insertSql(int insertIdx) {
+    return RelToFlinkSql.convertToString(planBuilder.getStatementSets().get(0).get(insertIdx));
+  }
+
+  private static TableAnalysis table(TableType type) {
+    return table(type, Optional.empty());
+  }
+
+  private static TableAnalysis table(
+      TableType type, Optional<ConflictBehavior> insertConflictBehavior) {
+    return TableAnalysis.builder()
+        .objectIdentifier(ObjectIdentifier.of("catalog", "database", "table"))
+        .type(type)
+        .insertConflictBehavior(insertConflictBehavior)
+        .build();
   }
 }
