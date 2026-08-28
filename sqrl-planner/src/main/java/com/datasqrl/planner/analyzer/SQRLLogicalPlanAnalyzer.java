@@ -41,7 +41,6 @@ import com.datasqrl.planner.hint.PrimaryKeyHint;
 import com.datasqrl.planner.hint.RowCountHint;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.Documented.Documentation;
-import com.datasqrl.planner.util.FlinkConflictBehaviorUtil;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.LinkedHashMultimap;
@@ -837,7 +836,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             joinedPk,
             rootTable,
             leftIn.hasNowFilter || rightIn.hasNowFilter,
-            FlinkConflictBehaviorUtil.combineInsertConflictBehaviors(leftIn, rightIn)));
+            combineInsertConflictBehaviors(leftIn, rightIn)));
   }
 
   private boolean identicalStreamRoots(
@@ -867,7 +866,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             pk,
             leftIn.getStreamRoot(),
             leftIn.hasNowFilter || rightIn.hasNowFilter,
-            FlinkConflictBehaviorUtil.combineInsertConflictBehaviors(leftIn, rightIn)));
+            combineInsertConflictBehaviors(leftIn, rightIn)));
   }
 
   /**
@@ -951,7 +950,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             pk,
             streamRoot,
             nowFilter,
-            FlinkConflictBehaviorUtil.combineInsertConflictBehaviors(inputs)));
+            combineInsertConflictBehaviors(inputs)));
   }
 
   @Override
@@ -1065,5 +1064,18 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   public RelNode visit(LogicalExchange logicalExchange) {
     log.warn("LogicExchange not expected during initial processing");
     return visit((RelNode) logicalExchange);
+  }
+
+  private static Optional<ConflictBehavior> combineInsertConflictBehaviors(
+      RelNodeAnalysis left, RelNodeAnalysis right) {
+    return combineInsertConflictBehaviors(List.of(left, right));
+  }
+
+  private static Optional<ConflictBehavior> combineInsertConflictBehaviors(
+      List<RelNodeAnalysis> inputs) {
+    return inputs.stream()
+        .map(RelNodeAnalysis::getInsertConflictBehavior)
+        .flatMap(Optional::stream)
+        .findFirst();
   }
 }

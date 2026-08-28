@@ -154,9 +154,19 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
       nextBatch();
     }
 
-    public void addInsert(RichSqlInsert insert, @Nullable Integer batchIdx) {
+    public int addInsert(RichSqlInsert insert) {
+      return addInsert(insert, null);
+    }
+
+    public int addInsert(RichSqlInsert insert, @Nullable Integer batchIdx) {
       var idx = batchIdx != null ? batchIdx : statementSets.size() - 1;
-      statementSets.get(idx).add(insert);
+      var inserts = statementSets.get(idx);
+      inserts.add(insert);
+      return inserts.size() - 1;
+    }
+
+    public void replaceInsert(int batchIdx, int insertIdx, RichSqlInsert insert) {
+      statementSets.get(batchIdx).set(insertIdx, insert);
     }
 
     public int currentBatch() {

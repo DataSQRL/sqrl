@@ -501,12 +501,10 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
-ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerByMultiple_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomerByMultiple`
-ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerByMultipleTime_3`
 SELECT *
@@ -526,7 +524,6 @@ ON CONFLICT DO DEDUPLICATE
 INSERT INTO `default_catalog`.`default_database`.`CustomerByTimeAsc_6`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomerByTimeAsc`
-ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerByUpdated_7`
 SELECT *
@@ -536,7 +533,6 @@ ON CONFLICT DO DEDUPLICATE
 INSERT INTO `default_catalog`.`default_database`.`CustomerByUpdatedAsc_8`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomerByUpdatedAsc`
-ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`ExplicitDistinct_9`
 SELECT *

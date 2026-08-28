@@ -45,6 +45,15 @@ public interface ExportEngine extends ExecutionEngine {
       RelDataType relDataType,
       TableAnalysis tableAnalysis);
 
+  /**
+   * Returns whether the generated Flink sink accepts {@code ON CONFLICT} clauses.
+   *
+   * <p>This is distinct from whether the target system can merge records by primary key. Flink must
+   * expose the sink as upsert-capable before an {@code ON CONFLICT} clause can be used.
+   *
+   * @param tableBuilder definition of the generated Flink sink table
+   * @return whether the Flink sink accepts {@code ON CONFLICT} clauses
+   */
   default boolean isUpsertSink(FlinkTableBuilder tableBuilder) {
     return false;
   }

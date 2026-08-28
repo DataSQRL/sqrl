@@ -138,7 +138,6 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`SensorReading_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`SensorReading`
-ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json

@@ -475,7 +475,6 @@ FROM `default_catalog`.`default_database`.`CustomerImport`
 INSERT INTO `default_catalog`.`default_database`.`CustomerImport_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomerImport`
-ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`LargeOrders_3`
 SELECT *
@@ -489,7 +488,6 @@ FROM `default_catalog`.`default_database`.`LargeOrders`
 INSERT INTO `default_catalog`.`default_database`.`Orders_5`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`Orders`
-ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`SimpleOrders_6`
 SELECT *

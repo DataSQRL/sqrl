@@ -1031,12 +1031,10 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AnotherCustomer_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`AnotherCustomer`
-ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customer_2`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
-ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customer_3`
 SELECT *
@@ -1078,7 +1076,6 @@ ON CONFLICT DO DEDUPLICATE
 INSERT INTO `default_catalog`.`default_database`.`ExternalOrders_11`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`ExternalOrders`
-ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`InvalidDistinct_12`
 SELECT *
