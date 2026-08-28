@@ -142,9 +142,11 @@ public class PostgresStatementFactory extends AbstractJdbcStatementFactory {
             index.getName(),
             index.getTableName(),
             index.getColumnNames(),
+            index.getDirections(),
             index.getType(),
             ExtendedPostgresSqlDialect.DEFAULT);
-    return new GenericJdbcStatement(ddl.getIndexName(), Type.INDEX, ddl.getSql());
+
+    return new GenericJdbcStatement(ddl.indexName(), Type.INDEX, ddl.getSql());
   }
 
   /*
