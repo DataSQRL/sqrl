@@ -373,7 +373,6 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
-ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`DistinctCustomerWoutTs_2`
 SELECT *
@@ -393,12 +392,10 @@ ON CONFLICT DO DEDUPLICATE
 INSERT INTO `default_catalog`.`default_database`.`OrderFields_5`
 SELECT *
 FROM `default_catalog`.`default_database`.`OrderFields`
-ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_6`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `_ingest_time`
 FROM `default_catalog`.`default_database`.`Orders`
-ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json

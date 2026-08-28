@@ -55,7 +55,6 @@ import com.datasqrl.server.MetadataType;
 import com.datasqrl.server.exec.FlinkExecFunction;
 import com.datasqrl.server.exec.FlinkExecFunctionFactory;
 import com.datasqrl.util.CalciteUtil;
-import com.datasqrl.util.FlinkCompileException;
 import com.datasqrl.util.FunctionUtil;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -112,7 +111,6 @@ import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
 import org.apache.flink.sql.parser.ddl.view.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.view.SqlCreateView;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
-import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -128,7 +126,6 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.operations.Operation;
-import org.apache.flink.table.operations.StatementSetOperation;
 import org.apache.flink.table.operations.ddl.AlterViewAsOperation;
 import org.apache.flink.table.operations.ddl.CreateCatalogFunctionOperation;
 import org.apache.flink.table.operations.ddl.CreateTableOperation;
@@ -178,6 +175,7 @@ public class Sqrl2FlinkSQLTranslator {
   @Getter private final FlinkTypeFactory typeFactory;
   @Getter private final FlinkExecFunctionFactory execFnFactory;
   @Getter private final RelDataTypeParser relDataTypeParser;
+  private final FlinkInsertConflictPlanner insertConflictPlanner;
 
   @Getter private final Set<String> createdDatabases = new LinkedHashSet<>();
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
@@ -215,6 +213,7 @@ public class Sqrl2FlinkSQLTranslator {
             .withClassLoader(udfClassLoader)
             .build();
     this.tEnv = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(sEnv, tEnvSettings);
+    this.insertConflictPlanner = new FlinkInsertConflictPlanner(executionMode, tEnv, planBuilder);
 
     // Extract a number of classes we need access to for planning
     this.validatorSupplier = ((PlannerBase) tEnv.getPlanner())::createFlinkPlanner;
@@ -257,6 +256,7 @@ public class Sqrl2FlinkSQLTranslator {
    * @return
    */
   public FlinkPhysicalPlan compileFlinkPlan() {
+    insertConflictPlanner.resolve();
     var execute = planBuilder.getExecuteStatements();
 
     if (executionMode != RuntimeExecutionMode.BATCH && execute.size() > 1) {
@@ -264,20 +264,20 @@ public class Sqrl2FlinkSQLTranslator {
     }
 
     var insert = RelToFlinkSql.convertToSqlString(execute);
-    planBuilder.add(execute, insert);
 
     var compiledPlan = Optional.<CompiledPlan>empty();
-    if (executionMode == RuntimeExecutionMode.STREAMING && compileFlinkPlan) {
-      var parse = (StatementSetOperation) tEnv.getParser().parse(insert.get(0) + ";").get(0);
+    if (executionMode == RuntimeExecutionMode.STREAMING
+        && (compileFlinkPlan || insertConflictPlanner.hasPendingInserts())) {
 
-      try {
-        compiledPlan = Optional.of(tEnv.compilePlan(parse.getOperations()));
-
-      } catch (Exception e) {
-        throw new FlinkCompileException(planBuilder.getFlinkSql(), e);
+      var finalPlan = insertConflictPlanner.compilePlan();
+      if (compileFlinkPlan) {
+        compiledPlan = Optional.of(finalPlan);
       }
+      execute = planBuilder.getExecuteStatements();
+      insert = RelToFlinkSql.convertToSqlString(execute);
     }
 
+    planBuilder.add(execute, insert);
     return planBuilder.build(compiledPlan);
   }
 
@@ -990,22 +990,22 @@ public class Sqrl2FlinkSQLTranslator {
         .getTableIdentifier();
   }
 
-  public void insertInto(
+  /** Adds a generated materialization insert whose conflict behavior is resolved after planning. */
+  public void addInsert(
+      RelNode relNode, ObjectIdentifier sinkTableId, TableAnalysis table, boolean isUpsertSink) {
+    insertConflictPlanner.addInsert(
+        RelToFlinkSql.convertToSqlNode(relNode), sinkTableId, table, isUpsertSink);
+  }
+
+  /** Adds a generated direct-export insert without automatic conflict resolution. */
+  public void addDirectInsert(
       RelNode relNode, ObjectIdentifier sinkTableId, @Nullable Integer batchIdx) {
     var selectQuery = RelToFlinkSql.convertToSqlNode(relNode);
     planBuilder.addInsert(FlinkSqlNodes.createInsert(selectQuery, sinkTableId), batchIdx);
   }
 
-  public void insertInto(
-      RelNode relNode,
-      ObjectIdentifier sinkTableId,
-      Optional<SqlInsertConflictBehavior> conflictBehavior) {
-    var selectQuery = RelToFlinkSql.convertToSqlNode(relNode);
-    planBuilder.addInsert(
-        FlinkSqlNodes.createInsert(selectQuery, sinkTableId, conflictBehavior), null);
-  }
-
-  public void insertInto(RichSqlInsert insert, int batchIdx) {
+  /** Adds a user-authored insert without changing its SQL or conflict behavior. */
+  public void addRawInsert(RichSqlInsert insert, int batchIdx) {
     planBuilder.addInsert(insert, batchIdx);
   }
 

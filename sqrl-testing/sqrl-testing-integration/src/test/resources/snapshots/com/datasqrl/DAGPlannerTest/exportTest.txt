@@ -349,7 +349,6 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Customer_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
-ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerExport`
 SELECT *
@@ -382,7 +381,6 @@ ON CONFLICT DO NOTHING
 INSERT INTO `default_catalog`.`default_database`.`Orders_7`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`Orders`
-ON CONFLICT DO NOTHING
 ;
 END
 >>>kafka.json
