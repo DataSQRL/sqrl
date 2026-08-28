@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.IndexSelector.NamedTable;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import java.util.EnumSet;
@@ -33,7 +34,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
 import org.apache.calcite.rel.RelFieldCollation.Direction;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.type.RelDataType;
@@ -41,15 +41,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.junit.jupiter.api.Test;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import org.junit.jupiter.api.Test;
+
 class IndexSelectorTest {
 
   @Test
@@ -86,7 +78,9 @@ class IndexSelectorTest {
     when(config.supportedIndexTypes()).thenReturn(EnumSet.of(IndexType.BTREE));
     when(config.maxIndexColumns(IndexType.BTREE)).thenReturn(1);
 
-    var candidates = new IndexSelector(null, config, Map.of()).generateIndexCandidates(summary);
+    var candidates =
+        new IndexSelector(null, config, Map.of(), ErrorCollector.root())
+            .generateIndexCandidates(summary);
 
     assertThat(candidates)
         .singleElement()
