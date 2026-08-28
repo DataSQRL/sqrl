@@ -631,9 +631,9 @@ END
       "sql" : "CREATE INDEX IF NOT EXISTS \"MyOrdersIndexHash_2_hash_c1\" ON \"MyOrdersIndexHash_2\" USING hash (\"customerid\")"
     },
     {
-      "name" : "MyOrdersTwoIndex_5_btree_c2c0",
+      "name" : "MyOrdersTwoIndex_5_btree_c2dc0",
       "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS \"MyOrdersTwoIndex_5_btree_c2c0\" ON \"MyOrdersTwoIndex_5\" USING btree (\"time\",\"id\")"
+      "sql" : "CREATE INDEX IF NOT EXISTS \"MyOrdersTwoIndex_5_btree_c2dc0\" ON \"MyOrdersTwoIndex_5\" USING btree (\"time\" DESC,\"id\")"
     },
     {
       "name" : "MyOrdersTwoIndex_5_hash_c1",
