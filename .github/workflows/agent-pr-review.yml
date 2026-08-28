@@ -1,8 +1,8 @@
-name: Snapshot PR Review
+name: Agent PR Review
 
 on:
   pull_request_target:
-    types: [ opened, ready_for_review, labeled, review_requested ]
+    types: [ opened, ready_for_review, labeled ]
 
 permissions:
   contents: read
@@ -14,13 +14,12 @@ jobs:
     if: |
       (github.event.action == 'opened' && github.event.pull_request.draft == false)
       || github.event.action == 'ready_for_review'
-      || github.event.label.name == 'review-this'
-      || github.event.requested_reviewer.login == 'openhands-agent'
+      || github.event.label.name == 'agent-review'
     runs-on: ubuntu-latest
     steps:
       - name: Run PR Review
         uses: OpenHands/extensions/plugins/pr-review@main
         with:
-          llm-model: openai/gpt-5.5
+          llm-model: openai/gpt-5.6-terra
           llm-api-key: ${{ secrets.LLM_API_KEY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
