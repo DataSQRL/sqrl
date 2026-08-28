@@ -266,8 +266,13 @@ public class Sqrl2FlinkSQLTranslator {
     var insert = RelToFlinkSql.convertToSqlString(execute);
 
     var compiledPlan = Optional.<CompiledPlan>empty();
-    if (executionMode == RuntimeExecutionMode.STREAMING && compileFlinkPlan) {
-      compiledPlan = Optional.of(insertConflictPlanner.compilePlan());
+    if (executionMode == RuntimeExecutionMode.STREAMING
+        && (compileFlinkPlan || insertConflictPlanner.hasPendingInserts())) {
+
+      var finalPlan = insertConflictPlanner.compilePlan();
+      if (compileFlinkPlan) {
+        compiledPlan = Optional.of(finalPlan);
+      }
       execute = planBuilder.getExecuteStatements();
       insert = RelToFlinkSql.convertToSqlString(execute);
     }

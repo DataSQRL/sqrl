@@ -116,18 +116,25 @@ final class FlinkInsertConflictPlanner {
     while (true) {
       var execute = planBuilder.getExecuteStatements();
       var statements = RelToFlinkSql.convertToSqlString(execute);
-      var statementSet =
-          (StatementSetOperation) tEnv.getParser().parse(statements.get(0) + ";").get(0);
 
       try {
+        var statementSet =
+            (StatementSetOperation) tEnv.getParser().parse(statements.get(0) + ";").get(0);
+
         return tEnv.compilePlan(statementSet.getOperations());
 
       } catch (Exception e) {
         if (!resolveUpsertKeyConflict(e)) {
-          throw new FlinkCompileException(planBuilder.getFlinkSql(), e);
+          var flinkSql = new ArrayList<>(planBuilder.getFlinkSql());
+          flinkSql.addAll(statements);
+          throw new FlinkCompileException(flinkSql, e);
         }
       }
     }
+  }
+
+  boolean hasPendingInserts() {
+    return !pendingInserts.isEmpty();
   }
 
   /**
@@ -147,7 +154,11 @@ final class FlinkInsertConflictPlanner {
 
     var insert = pendingInsert.get();
     var conflictBehavior =
-        automaticConflictBehavior(insert.table())
+        insert
+            .table()
+            .getInsertConflictBehavior()
+            .map(FlinkInsertConflictPlanner::toSqlConflictBehavior)
+            .or(() -> automaticConflictBehavior(insert.table()))
             .or(() -> Optional.of(SqlInsertConflictBehavior.NOTHING));
 
     planBuilder.replaceInsert(
@@ -185,13 +196,14 @@ final class FlinkInsertConflictPlanner {
    * modes.
    */
   private Map<ObjectIdentifier, ChangelogMode> inferSinkChangelogModes() {
+    var selectSql =
+        pendingInserts.stream()
+            .map(PendingInsert::selectQuery)
+            .map(RelToFlinkSql::convertToString)
+            .toList();
     try {
       var queryOperations =
-          pendingInserts.stream()
-              .map(PendingInsert::selectQuery)
-              .map(RelToFlinkSql::convertToString)
-              .map(sql -> tEnv.getParser().parse(sql).get(0))
-              .toList();
+          selectSql.stream().map(sql -> tEnv.getParser().parse(sql).get(0)).toList();
 
       // getExplainGraphs translates and optimizes the queries; _2() contains optimized RelNodes.
       var optimizedPlans = ((PlannerBase) tEnv.getPlanner()).getExplainGraphs(queryOperations)._2();
@@ -216,7 +228,9 @@ final class FlinkInsertConflictPlanner {
       return changelogModes;
 
     } catch (Exception e) {
-      throw new FlinkCompileException(planBuilder.getFlinkSql(), e);
+      var flinkSql = new ArrayList<>(planBuilder.getFlinkSql());
+      flinkSql.addAll(selectSql);
+      throw new FlinkCompileException(flinkSql, e);
     }
   }
 
@@ -239,14 +253,13 @@ final class FlinkInsertConflictPlanner {
    * given sink.
    */
   private static boolean hasUpsertKeyConflict(Throwable error, ObjectIdentifier targetTableId) {
-    var qualifiedTarget = "'" + targetTableId + "'";
-    var objectName = targetTableId.getObjectName();
+    var target = "'" + targetTableId.asSummaryString() + "'";
     var cause = error;
     while (cause != null) {
       var msg = cause.getMessage();
 
       if (Strings.CS.contains(msg, "The query has an upsert key that differs from the primary key")
-          && Strings.CS.containsAny(msg, qualifiedTarget, "." + objectName + "'")) {
+          && Strings.CS.contains(msg, target)) {
         return true;
       }
       cause = cause.getCause();
