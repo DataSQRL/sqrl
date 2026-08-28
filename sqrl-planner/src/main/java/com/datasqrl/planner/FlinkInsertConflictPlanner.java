@@ -23,7 +23,9 @@ import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.FlinkCompileException;
+import com.google.common.collect.Streams;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import lombok.AccessLevel;
@@ -86,21 +88,23 @@ final class FlinkInsertConflictPlanner {
     }
 
     // Sink planning inspects StreamPhysicalSink, which is not used for batch plans.
-    var sinkPlans =
+    var plannedSinks =
         executionMode == RuntimeExecutionMode.STREAMING
             ? planSinks()
-            : pendingInserts.stream().map(insert -> Optional.<StreamPhysicalSink>empty()).toList();
+            : Collections.nCopies(pendingInserts.size(), Optional.<StreamPhysicalSink>empty());
 
-    for (var i = 0; i < pendingInserts.size(); i++) {
-      var pendingInsert = pendingInserts.get(i);
-      var conflictBehavior = resolveConflictBehavior(pendingInsert.table(), sinkPlans.get(i));
+    Streams.forEachPair(
+        pendingInserts.stream(),
+        plannedSinks.stream(),
+        (pendingInsert, plannedSink) -> {
+          var conflictBehavior = resolveConflictBehavior(pendingInsert.table(), plannedSink);
 
-      planBuilder.replaceInsert(
-          pendingInsert.batchIdx(),
-          pendingInsert.insertIdx(),
-          FlinkSqlNodes.createInsert(
-              pendingInsert.selectQuery(), pendingInsert.targetTableId(), conflictBehavior));
-    }
+          planBuilder.replaceInsert(
+              pendingInsert.batchIdx(),
+              pendingInsert.insertIdx(),
+              FlinkSqlNodes.createInsert(
+                  pendingInsert.selectQuery(), pendingInsert.targetTableId(), conflictBehavior));
+        });
   }
 
   boolean hasPendingInserts() {
@@ -128,7 +132,7 @@ final class FlinkInsertConflictPlanner {
    * {@code DO NOTHING}), and insert-only inputs need none.
    */
   private Optional<SqlInsertConflictBehavior> resolveConflictBehavior(
-      TableAnalysis table, Optional<StreamPhysicalSink> sinkPlan) {
+      TableAnalysis table, Optional<StreamPhysicalSink> plannedSink) {
 
     if (table.getInsertConflictBehavior().isPresent()) {
       return table
@@ -136,12 +140,12 @@ final class FlinkInsertConflictPlanner {
           .map(FlinkInsertConflictPlanner::toSqlConflictBehavior);
     }
 
-    if (sinkPlan.isEmpty()) {
+    if (plannedSink.isEmpty()) {
       // Batch plans have no stream-physical sink and no conflict validation in the fork.
       return automaticConflictBehavior(table);
     }
 
-    var sink = sinkPlan.get();
+    var sink = plannedSink.get();
     var inputMode = inputChangelogMode(sink).orElse(ChangelogMode.all());
     var sinkMode = sink.tableSink().getChangelogMode(inputMode);
     if (sinkMode.containsOnly(RowKind.INSERT) || sinkMode.contains(RowKind.UPDATE_BEFORE)) {
@@ -182,7 +186,7 @@ final class FlinkInsertConflictPlanner {
       var optimizedPlans =
           ((PlannerBase) tEnv.getPlanner()).getExplainGraphs(insertOperations)._2();
 
-      var sinkPlans = new ArrayList<Optional<StreamPhysicalSink>>();
+      var plannedSinks = new ArrayList<Optional<StreamPhysicalSink>>();
       var iterator = optimizedPlans.iterator();
       for (var pendingInsert : pendingInserts) {
         if (!iterator.hasNext()) {
@@ -191,21 +195,24 @@ final class FlinkInsertConflictPlanner {
         }
 
         var plan = iterator.next();
-        sinkPlans.add(
-            plan instanceof StreamPhysicalSink sinkPlan ? Optional.of(sinkPlan) : Optional.empty());
+        plannedSinks.add(
+            plan instanceof StreamPhysicalSink plannedSink
+                ? Optional.of(plannedSink)
+                : Optional.empty());
       }
 
-      return sinkPlans;
+      return plannedSinks;
 
     } catch (Exception e) {
       throw new FlinkCompileException(planBuilder.getFlinkSql(), e);
+
     } finally {
       config.set(ExecutionConfigOptions.TABLE_EXEC_SINK_REQUIRE_ON_CONFLICT, requireOnConflict);
     }
   }
 
-  private static Optional<ChangelogMode> inputChangelogMode(StreamPhysicalSink sinkPlan) {
-    if (sinkPlan.getInput() instanceof StreamPhysicalRel input) {
+  private static Optional<ChangelogMode> inputChangelogMode(StreamPhysicalSink plannedSink) {
+    if (plannedSink.getInput() instanceof StreamPhysicalRel input) {
       var changelogMode = ChangelogPlanUtils.getChangelogMode(input);
       if (changelogMode.isDefined()) {
         return Optional.of(changelogMode.get());
