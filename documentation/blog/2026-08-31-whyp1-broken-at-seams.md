@@ -6,8 +6,8 @@ tags: [agentic, data-engineering]
 ---
 
 <head>
-  <meta property="og:image" content="/img/diagrams/blog/harness_p1_broken_seams.jpeg" />
-  <meta name="twitter:image" content="/img/diagrams/blog/harness_p1_broken_seams.jpeg" />
+  <meta property="og:image" content="/img/blog/harness_p1_broken_seams.jpeg" />
+  <meta name="twitter:image" content="/img/blog/harness_p1_broken_seams.jpeg" />
 </head>
 
 # The Pipeline Compiles, the Demo Works, and the Seams Are Quietly Broken
@@ -20,11 +20,16 @@ tags: [agentic, data-engineering]
 
 We get that question a lot. We are building an [open-source data engineering harness](https://docs.datasqrl.com), the tooling and guardrails that a coding agent uses to build data pipelines. Claude Code, Codex, and OpenCode already write plausible data pipeline code. So what is the harness for?
 
+<img src="/img/blog/harness_p1_broken_seams.jpeg" alt="A data pipeline spanning multiple systems with broken seams at the boundaries between them >|" width="50%"/>
+
 This series answers that. It looks at where general purpose coding harnesses fail on data engineering work, and why those failures survive code review.
 
 Part 1 is about the seams. A pipeline spans multiple data systems, and the same fact (a type, a name, an encoding) has to be restated in each one. Restating facts consistently across systems is strict rule-following. The thing doing the restating is a probabilistic model. It gets most of them right. The ones it gets wrong compile cleanly, pass the demo, and surface in production as overflowed numbers and fields that were never there.
 
 A transpiler removes that entire class of error. It derives every boundary asset from one logical model, so the systems cannot disagree. The agent also writes less code, which means fewer tokens and fewer duplicated schema definitions cluttering its context.
+
+
+<!-- truncate -->
 
 ## 1. The same column, typed three different ways
 
