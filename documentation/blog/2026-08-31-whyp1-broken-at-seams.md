@@ -20,9 +20,9 @@ tags: [agentic, data-engineering]
 
 We get that question a lot. We are building an [open-source data engineering harness](https://docs.datasqrl.com), the tooling and guardrails that a coding agent uses to build data pipelines. Claude Code, Codex, and OpenCode already write plausible data pipeline code. So what is the harness for?
 
-<img src="/img/blog/harness_p1_broken_seams.jpeg" alt="A data pipeline spanning multiple systems with broken seams at the boundaries between them >|" width="50%"/>
+<img src="/img/blog/harness_p1_broken_seams.jpeg" alt="A data pipeline spanning multiple systems with broken seams at the boundaries between them." width="50%"/>
 
-This series answers that. It looks at where general purpose coding harnesses fail on data engineering work, and why those failures survive code review.
+This series answers that. It looks at where general-purpose coding harnesses fail on data engineering work, and why those failures survive code review.
 
 Part 1 is about the seams. A pipeline spans multiple data systems, and the same fact (a type, a name, an encoding) has to be restated in each one. Restating facts consistently across systems is strict rule-following. The thing doing the restating is a probabilistic model. It gets most of them right. The ones it gets wrong compile cleanly, pass the demo, and surface in production as overflowed numbers and fields that were never there.
 
@@ -97,7 +97,7 @@ A transpiler applies one identifier mapping across every generated asset, so a l
 
 ## Summary
 
-We could keep going down our list of seam-breaking errors we have seen in agentic implementaitons, but you get the idea: Don't generate probabilistically what can be derived deterministically from a shared ground truth.
+We could keep going down our list of seam-breaking errors we have seen in agentic implementations, but you get the idea: Don't generate probabilistically what can be derived deterministically from a shared ground truth.
 
 That's what the transpiler in the data engineering harness does. It takes one verified logical model as the ground truth and generates every boundary asset from it: the stream transformations, the database schema and queries, the connector configuration at each cut, the API schema, and every protocol endpoint. A type is inferred once and projected into each system. A field added once propagates to every asset. A name maps the same way everywhere. Both ends of a connection come from the same definition.
 

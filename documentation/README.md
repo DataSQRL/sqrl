@@ -63,5 +63,5 @@ npm run clear       # clear the Docusaurus cache when the dev server misbehaves
 
 ## Deployment
 
-The site is deployed automatically to CI/CD.
-Create PR on the docsUpdate branch or on main.
+The site is deployed automatically through CI/CD.
+Create a PR against either the `docsUpdate` branch or `main`.
