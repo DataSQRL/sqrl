@@ -131,7 +131,7 @@ final class FlinkInsertConflictPlanner {
    * upsert sinks whose primary key does not contain the upsert key require one (falling back to
    * {@code DO NOTHING}), and insert-only inputs need none.
    */
-  private Optional<SqlInsertConflictBehavior> resolveConflictBehavior(
+  Optional<SqlInsertConflictBehavior> resolveConflictBehavior(
       TableAnalysis table, Optional<StreamPhysicalSink> plannedSink) {
 
     if (table.getInsertConflictBehavior().isPresent()) {
@@ -148,13 +148,17 @@ final class FlinkInsertConflictPlanner {
     var sink = plannedSink.get();
     var inputMode = inputChangelogMode(sink).orElse(ChangelogMode.all());
     var sinkMode = sink.tableSink().getChangelogMode(inputMode);
-    if (sinkMode.containsOnly(RowKind.INSERT) || sinkMode.contains(RowKind.UPDATE_BEFORE)) {
+    if (sinkMode.containsOnly(RowKind.INSERT)) {
       return Optional.empty();
     }
 
     if (!sink.primaryKeysContainsUpsertKey()) {
       return automaticConflictBehavior(table)
           .or(() -> Optional.of(SqlInsertConflictBehavior.NOTHING));
+    }
+
+    if (sinkMode.contains(RowKind.UPDATE_BEFORE)) {
+      return Optional.empty();
     }
 
     return inputMode.containsOnly(RowKind.INSERT)

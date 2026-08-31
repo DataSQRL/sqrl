@@ -16,6 +16,9 @@
 package com.datasqrl.planner;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
@@ -24,12 +27,17 @@ import com.datasqrl.planner.analyzer.TableAnalysis;
 import java.util.Optional;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.Configuration;
+import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.InsertConflictStrategy.ConflictBehavior;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.connector.ChangelogMode;
+import org.apache.flink.table.connector.sink.DynamicTableSink;
+import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalSink;
+import org.apache.flink.types.RowKind;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -81,6 +89,32 @@ class FlinkInsertConflictPlannerTest {
 
     assertThat(insertSql(0)).contains("ON CONFLICT DO NOTHING");
     assertThat(conflictPlanner.compilePlan()).isNotNull();
+  }
+
+  @Test
+  void givenUpsertKeyMismatchWithRetracts_whenResolve_thenAddsDeduplicateClause() {
+    var sink = mock(StreamPhysicalSink.class);
+    var tableSink = mock(DynamicTableSink.class);
+    when(sink.tableSink()).thenReturn(tableSink);
+    when(sink.primaryKeysContainsUpsertKey()).thenReturn(false);
+    when(tableSink.getChangelogMode(any(ChangelogMode.class)))
+        .thenReturn(ChangelogMode.newBuilder().addContainedKind(RowKind.UPDATE_BEFORE).build());
+
+    assertThat(conflictPlanner.resolveConflictBehavior(table(TableType.STREAM), Optional.of(sink)))
+        .contains(SqlInsertConflictBehavior.DEDUPLICATE);
+  }
+
+  @Test
+  void givenUpsertKeyMismatchWithAppendOnlySink_whenResolve_thenOmitsConflictClause() {
+    var sink = mock(StreamPhysicalSink.class);
+    var tableSink = mock(DynamicTableSink.class);
+    when(sink.tableSink()).thenReturn(tableSink);
+    when(sink.primaryKeysContainsUpsertKey()).thenReturn(false);
+    when(tableSink.getChangelogMode(any(ChangelogMode.class)))
+        .thenReturn(ChangelogMode.insertOnly());
+
+    assertThat(conflictPlanner.resolveConflictBehavior(table(TableType.STREAM), Optional.of(sink)))
+        .isEmpty();
   }
 
   @Test
