@@ -1,41 +1,67 @@
 # Website
 
 This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+It is deployed to https://docs.datasqrl.com.
 
-### Installation
+## Prerequisites
 
-```
-$ yarn
-```
+- **Node.js 22 or newer** (see the `engines` field in `package.json`) and npm.
+  If you use [nvm](https://github.com/nvm-sh/nvm), run `nvm install 22 && nvm use 22`.
+- The `docs/stdlib-docs` git submodule, which provides the function definitions the docs are
+  generated from. Initialize it once from the repository root:
 
-### Local Development
+  ```bash
+  git submodule update --init --recursive
+  ```
 
-```
-$ yarn start
-```
+All commands below are run from the `documentation/` directory.
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+## Installation
 
-### Build
-
-```
-$ yarn build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-### Deployment
-
-Using SSH:
-
-```
-$ USE_SSH=true yarn deploy
+```bash
+npm install
 ```
 
-Not using SSH:
+## Local Development
 
-```
-$ GIT_USER=<Your GitHub username> yarn deploy
+```bash
+npm start
 ```
 
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+This starts a local development server on http://localhost:3000 and opens a browser window.
+Most changes are reflected live without having to restart the server.
+
+To use a different port:
+
+```bash
+npm start -- --port 3001
+```
+
+Note that `npm start` first runs `npm run generate-docs`, which regenerates
+`docs/functions-system-generated.md` and `docs/functions-library-generated.md` from the YAML files
+in the `docs/stdlib-docs` submodule. Those generated files should not be edited by hand.
+
+## Build
+
+```bash
+npm run build
+```
+
+This generates static content into the `build` directory, which can be served by any static
+content hosting service. To preview the production build locally:
+
+```bash
+npm run serve
+```
+
+Other useful commands:
+
+```bash
+npm run typecheck   # TypeScript type checking
+npm run clear       # clear the Docusaurus cache when the dev server misbehaves
+```
+
+## Deployment
+
+The site is deployed automatically through CI/CD.
+Create a PR against either the `docsUpdate` branch or `main`.
