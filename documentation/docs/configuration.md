@@ -52,7 +52,7 @@ Refer to the engine configuration documentation for more information on how to c
 
 ## Source Files (`script`)
 
-Configures the main SQRL script to compile, the (optional) GraphQL schema for the exposed API, and (optional) list of operations defined as GraphQL queries.
+Configures the main SQRL script to compile, exposed APIs, and template values.
 
 Optionally, it can also take a mutation database JSON generated during every compilation, and if it's kept and included in the config,
 SQRL will check backward compatibility during compile making sure that mutation schemas will not get overwritten by mistake.
@@ -99,6 +99,38 @@ MyTable :=
         AND o.coupon_code IS NULL
       ORDER BY o.tenant_id DESC;
 ```
+
+### API Versioning
+
+The top-level `script.graphql` and `script.operations` fields configure a single API at version `v1`.
+To serve multiple API versions concurrently, configure them under `script.api` instead.
+API version names must start with `v` followed by a number, such as `v1` or `v2`. Each version requires a GraphQL `schema` and can optionally define GraphQL `operations`.
+
+DataSQRL serves each API version with its version as an endpoint prefix. With the default server configuration, the `v1` endpoints include `/v1/graphql`, `/v1/rest`, and `/v1/mcp`.
+
+Use either the top-level fields or `script.api`. When `script.api` is configured, it defines the APIs that DataSQRL compiles and serves.
+
+```json
+{
+  "script": {
+    "main": "my-project.sqrl",
+    "api": {
+      "v1": {
+        "schema": "api/schema.v1.graphqls",
+        "operations": ["api/operations-v1/myop1.graphql"],
+        "openapi": "api/openapi-v1.json"
+      },
+      "v2": {
+        "schema": "api/schema.v2.graphqls",
+        "operations": ["api/operations-v2/myop1.graphql"]
+      }
+    }
+  }
+}
+```
+
+DataSQRL generates an OpenAPI specification for every API version. Set the optional `openapi` field to a previously generated specification to check backward compatibility during compilation.
+Compilation fails if the generated specification contains backward-incompatible changes.
 
 ### Include Other Sources
 
