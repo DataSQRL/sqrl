@@ -1,0 +1,103 @@
+/* Issue #2317: before the fix, the 20th endpoint made every index on this table disappear. */
+
+CREATE TABLE Orders (
+  orderId STRING NOT NULL,
+  customerId STRING NOT NULL,
+  storeId STRING NOT NULL,
+  productId STRING NOT NULL,
+  category STRING NOT NULL,
+  status STRING NOT NULL,
+  paymentMethod STRING NOT NULL,
+  country STRING NOT NULL,
+  currency STRING NOT NULL,
+  channel STRING NOT NULL,
+  discountCode STRING NOT NULL,
+  shippingMethod STRING NOT NULL,
+  warehouseId STRING NOT NULL,
+  carrierId STRING NOT NULL,
+  campaignId STRING NOT NULL,
+  deviceType STRING NOT NULL,
+  riskLevel STRING NOT NULL,
+  fulfillmentStatus STRING NOT NULL,
+  returnReason STRING NOT NULL,
+  salesRepId STRING NOT NULL,
+  amount DOUBLE NOT NULL,
+  epoch_timestamp BIGINT NOT NULL,
+  createdAt AS COALESCE(TO_TIMESTAMP_LTZ(epoch_timestamp, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  WATERMARK FOR createdAt AS createdAt
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10',
+  'fields.epoch_timestamp.kind' = 'sequence',
+  'fields.epoch_timestamp.start' = '1719318565000',
+  'fields.epoch_timestamp.end' = '1719319565000'
+);
+
+ByOrderId(orderId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE orderId = :orderId;
+ByCustomerId(customerId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE customerId = :customerId;
+ByStoreId(storeId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE storeId = :storeId;
+ByProductId(productId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE productId = :productId;
+ByCategory(category STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE category = :category;
+ByStatus(status STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE status = :status;
+ByPaymentMethod(paymentMethod STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE paymentMethod = :paymentMethod;
+ByCountry(country STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE country = :country;
+ByCurrency(currency STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE currency = :currency;
+ByChannel(channel STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE channel = :channel;
+ByDiscountCode(discountCode STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE discountCode = :discountCode;
+ByShippingMethod(shippingMethod STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE shippingMethod = :shippingMethod;
+ByWarehouseId(warehouseId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE warehouseId = :warehouseId;
+ByCarrierId(carrierId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE carrierId = :carrierId;
+ByCampaignId(campaignId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE campaignId = :campaignId;
+ByDeviceType(deviceType STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE deviceType = :deviceType;
+ByRiskLevel(riskLevel STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE riskLevel = :riskLevel;
+ByFulfillmentStatus(fulfillmentStatus STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE fulfillmentStatus = :fulfillmentStatus;
+ByReturnReason(returnReason STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE returnReason = :returnReason;
+BySalesRepId(salesRepId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM Orders WHERE salesRepId = :salesRepId;
+
+/* Hinted tables must skip automatic index selection and its diagnostics. */
+/*+index(btree, customerId) */
+ExplicitIndexes := SELECT * FROM Orders;
+/*+index */
+NoIndexes := SELECT * FROM Orders;
+
+ExplicitByOrderId(orderId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE orderId = :orderId;
+ExplicitByCustomerId(customerId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE customerId = :customerId;
+ExplicitByStoreId(storeId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE storeId = :storeId;
+ExplicitByProductId(productId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE productId = :productId;
+ExplicitByCategory(category STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE category = :category;
+ExplicitByStatus(status STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE status = :status;
+ExplicitByPaymentMethod(paymentMethod STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE paymentMethod = :paymentMethod;
+ExplicitByCountry(country STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE country = :country;
+ExplicitByCurrency(currency STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE currency = :currency;
+ExplicitByChannel(channel STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE channel = :channel;
+ExplicitByDiscountCode(discountCode STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE discountCode = :discountCode;
+ExplicitByShippingMethod(shippingMethod STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE shippingMethod = :shippingMethod;
+ExplicitByWarehouseId(warehouseId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE warehouseId = :warehouseId;
+ExplicitByCarrierId(carrierId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE carrierId = :carrierId;
+ExplicitByCampaignId(campaignId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE campaignId = :campaignId;
+ExplicitByDeviceType(deviceType STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE deviceType = :deviceType;
+ExplicitByRiskLevel(riskLevel STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE riskLevel = :riskLevel;
+ExplicitByFulfillmentStatus(fulfillmentStatus STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE fulfillmentStatus = :fulfillmentStatus;
+ExplicitByReturnReason(returnReason STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE returnReason = :returnReason;
+ExplicitBySalesRepId(salesRepId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE salesRepId = :salesRepId;
+
+NoIndexByOrderId(orderId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE orderId = :orderId;
+NoIndexByCustomerId(customerId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE customerId = :customerId;
+NoIndexByStoreId(storeId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE storeId = :storeId;
+NoIndexByProductId(productId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE productId = :productId;
+NoIndexByCategory(category STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE category = :category;
+NoIndexByStatus(status STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE status = :status;
+NoIndexByPaymentMethod(paymentMethod STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE paymentMethod = :paymentMethod;
+NoIndexByCountry(country STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE country = :country;
+NoIndexByCurrency(currency STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE currency = :currency;
+NoIndexByChannel(channel STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE channel = :channel;
+NoIndexByDiscountCode(discountCode STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE discountCode = :discountCode;
+NoIndexByShippingMethod(shippingMethod STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE shippingMethod = :shippingMethod;
+NoIndexByWarehouseId(warehouseId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE warehouseId = :warehouseId;
+NoIndexByCarrierId(carrierId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE carrierId = :carrierId;
+NoIndexByCampaignId(campaignId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE campaignId = :campaignId;
+NoIndexByDeviceType(deviceType STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE deviceType = :deviceType;
+NoIndexByRiskLevel(riskLevel STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE riskLevel = :riskLevel;
+NoIndexByFulfillmentStatus(fulfillmentStatus STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE fulfillmentStatus = :fulfillmentStatus;
+NoIndexByReturnReason(returnReason STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE returnReason = :returnReason;
+NoIndexBySalesRepId(salesRepId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE salesRepId = :salesRepId;

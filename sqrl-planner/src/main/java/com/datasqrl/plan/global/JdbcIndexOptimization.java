@@ -19,11 +19,14 @@ import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.google.auto.service.AutoService;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Value;
 
@@ -40,7 +43,10 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
 
   @Override
   public JdbcPhysicalPlan rewrite(
-      PhysicalPlan fullPlan, EnginePhysicalPlan enginePlan, Sqrl2FlinkSQLTranslator sqrlEnv) {
+      PhysicalPlan fullPlan,
+      EnginePhysicalPlan enginePlan,
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorCollector errors) {
 
     var jdbcPlan = (JdbcPhysicalPlan) enginePlan;
     var engine = (AbstractJDBCDatabaseEngine) jdbcPlan.stage().engine();
@@ -50,15 +56,10 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
        use CreateTableJdbcStatement#updatePrimaryKey
     */
     var indexSelectorConfig = engine.getIndexSelectorConfig();
-    var indexSelector = new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.tableIdMap());
+    var indexSelector =
+        new IndexSelector(sqrlEnv, indexSelectorConfig, jdbcPlan.tableIdMap(), errors);
 
-    Collection<QueryIndexSummary> queryIndexSummaries =
-        jdbcPlan.queries().stream()
-            .map(indexSelector::getIndexSelection)
-            .flatMap(List::stream)
-            .collect(Collectors.toList());
-    List<IndexDefinition> indexDefinitions =
-        new ArrayList<>(indexSelector.optimizeIndexes(queryIndexSummaries).keySet());
+    Map<String, List<IndexDefinition>> indexHintsByTable = new HashMap<>();
     jdbcPlan
         .tableIdMap()
         .values()
@@ -66,17 +67,21 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
             stmt -> {
               var createTable = stmt.getEngineTable();
               var tableName = createTable.tableName();
-              var table = createTable.tableAnalysis();
               indexSelector
-                  .getIndexHints(tableName, table)
-                  .ifPresent(
-                      indexHints -> {
-                        // First, remove all generated indexes for that table...
-                        indexDefinitions.removeIf(idx -> idx.getTableName().equals(tableName));
-                        // and overwrite with the specified ones
-                        indexDefinitions.addAll(indexHints);
-                      });
+                  .getIndexHints(tableName, createTable.tableAnalysis())
+                  .ifPresent(indexHints -> indexHintsByTable.put(tableName, indexHints));
             });
+
+    Collection<QueryIndexSummary> queryIndexSummaries =
+        jdbcPlan.queries().stream()
+            .map(indexSelector::getIndexSelection)
+            .flatMap(List::stream)
+            // Explicit index hints replace automatic selection, including its diagnostics.
+            .filter(summary -> !indexHintsByTable.containsKey(summary.getTable().getTableName()))
+            .collect(Collectors.toList());
+    List<IndexDefinition> indexDefinitions =
+        new ArrayList<>(indexSelector.optimizeIndexes(queryIndexSummaries));
+    indexHintsByTable.values().forEach(indexDefinitions::addAll);
     var builder = jdbcPlan.toBuilder();
     var stmtFactory = engine.getStatementFactory();
     indexDefinitions.stream().sorted().map(stmtFactory::addIndex).forEach(builder::statement);

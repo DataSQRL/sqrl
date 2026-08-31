@@ -1,0 +1,2 @@
+[WARN] Created the maximum of 8 indexes for table `Orders_1`. These query filter patterns have no supporting index and require a full table scan: (currency). Reduce the number of distinct filter patterns on this table or specify the indexes explicitly with an `index` hint.
+

@@ -18,6 +18,7 @@ package com.datasqrl.engine;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.deployment.model.MutationDatabaseModel;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.PhysicalPlanRewriter;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
@@ -48,7 +49,9 @@ public class PhysicalPlan {
   }
 
   public PhysicalPlan applyRewriting(
-      Collection<PhysicalPlanRewriter> rewriters, Sqrl2FlinkSQLTranslator sqrlEnv) {
+      Collection<PhysicalPlanRewriter> rewriters,
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorCollector errors) {
     if (rewriters.isEmpty()) {
       return this;
     }
@@ -57,7 +60,7 @@ public class PhysicalPlan {
       var enginePlan = stagePlan.plan;
       for (PhysicalPlanRewriter rewriter : rewriters) {
         if (rewriter.satisfied(this) && rewriter.appliesTo(enginePlan)) {
-          enginePlan = rewriter.rewrite(this, enginePlan, sqrlEnv);
+          enginePlan = rewriter.rewrite(this, enginePlan, sqrlEnv, errors);
         }
       }
       builder.stagePlan(new PhysicalStagePlan(stagePlan.stage, enginePlan));
