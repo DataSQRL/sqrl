@@ -22,6 +22,7 @@ import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.google.auto.service.AutoService;
 import java.util.List;
@@ -50,7 +51,10 @@ public class PagedRowTimeIndexRewriter implements PhysicalPlanRewriter {
 
   @Override
   public JdbcPhysicalPlan rewrite(
-      PhysicalPlan fullPlan, EnginePhysicalPlan enginePlan, Sqrl2FlinkSQLTranslator sqrlEnv) {
+      PhysicalPlan fullPlan,
+      EnginePhysicalPlan enginePlan,
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorCollector errors) {
     var jdbcPlan = (JdbcPhysicalPlan) enginePlan;
     var serverPlan =
         getServerPlan(fullPlan)

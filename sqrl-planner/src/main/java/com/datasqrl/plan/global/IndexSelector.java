@@ -17,16 +17,19 @@ package com.datasqrl.plan.global;
 
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.hint.IndexHint;
 import com.datasqrl.util.ArrayUtil;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.primitives.Ints;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -35,6 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
@@ -64,9 +68,14 @@ public class IndexSelector {
 
   private static final int MAX_LIMIT_INDEX_SCAN = 10000;
 
+  private static final String INDEX_REMEDIATION =
+      "Reduce the number of distinct filter patterns on this table or specify the indexes "
+          + "explicitly with an `index` hint.";
+
   private final Sqrl2FlinkSQLTranslator framework;
   private final IndexSelectorConfig config;
   private final Map<String, CreateTableJdbcStatement> tableMap;
+  private final ErrorCollector errors;
 
   public List<QueryIndexSummary> getIndexSelection(RelNode queryRelnode) {
     var pushedDownFilters = applyPushDownFilters(queryRelnode);
@@ -91,10 +100,9 @@ public class IndexSelector {
     return program.run(null, queryRelnode, queryRelnode.getTraitSet(), List.of(), List.of());
   }
 
-  public Map<IndexDefinition, Double> optimizeIndexes(
-      Collection<QueryIndexSummary> queryIndexSummaries) {
+  public Set<IndexDefinition> optimizeIndexes(Collection<QueryIndexSummary> queryIndexSummaries) {
     // Prune down to database indexes and remove duplicates
-    Map<IndexDefinition, Double> optIndexes = new HashMap<>();
+    Set<IndexDefinition> optIndexes = new LinkedHashSet<>();
     LinkedHashMultimap<NamedTable, QueryIndexSummary> callsByTable = LinkedHashMultimap.create();
     queryIndexSummaries.forEach(
         idx -> {
@@ -103,7 +111,7 @@ public class IndexSelector {
         });
 
     for (NamedTable table : callsByTable.keySet()) {
-      optIndexes.putAll(optimizeIndexes(table, callsByTable.get(table)));
+      optIndexes.addAll(optimizeIndexes(table, callsByTable.get(table)));
     }
     return optIndexes;
   }
@@ -138,42 +146,55 @@ public class IndexSelector {
     return Optional.of(indexDefinitions);
   }
 
-  private Map<IndexDefinition, Double> optimizeIndexes(
+  private Set<IndexDefinition> optimizeIndexes(
       NamedTable table, Set<QueryIndexSummary> queryIndexSummaries) {
-    // Check how many unique QueryConjunctions we have on this table
     if (queryIndexSummaries.size() > config.maxIndexColumnSets()) {
+      errors.warn(
+          "Table `%s` is queried with %d distinct filter patterns which exceeds the maximum of %d. "
+              + "Creating a single-column index for each filtered column instead of composite "
+              + "indexes. %s",
+          table.getTableName(),
+          queryIndexSummaries.size(),
+          config.maxIndexColumnSets(),
+          INDEX_REMEDIATION);
       // Generate individual indexes so the database can combine them on-demand at query time
-      // 1) Generate an index for each column
-      Set<Integer> indexedColumns = new HashSet<>();
+      var indexedColumns = getFallbackIndexColumns(queryIndexSummaries, getPrimaryKeyIndex(table));
       Set<IndexableFunctionCall> indexedFunctions = new HashSet<>();
       for (QueryIndexSummary conj : queryIndexSummaries) {
-        indexedColumns.addAll(conj.equalityColumns);
-        indexedColumns.addAll(conj.inequalityColumns);
         indexedFunctions.addAll(conj.functionCalls);
       }
-      // Remove first primary key column
-      indexedColumns.remove(0);
-      // Pick generic index type
       var genericType = config.getPreferredGenericIndexType();
-      Map<IndexDefinition, Double> indexes = new HashMap<>();
+      Set<IndexDefinition> indexes = new LinkedHashSet<>();
       for (int colIndex : indexedColumns) {
-        indexes.put(
+        indexes.add(
             new IndexDefinition(
                 table.getTableName(),
                 List.of(colIndex),
                 table.getAnalysis().getRowType().getFieldNames(),
                 -1,
-                genericType),
-            0.0);
+                genericType));
       }
       indexedFunctions.stream()
           .map(fcall -> getIndexDefinition(fcall, table))
           .flatMap(Optional::stream)
-          .forEach(idxDef -> indexes.put(idxDef, Double.NaN));
+          .forEach(indexes::add);
       return indexes;
     } else {
       return optimizeIndexesWithCostMinimization(table, queryIndexSummaries);
     }
+  }
+
+  @VisibleForTesting
+  static Set<Integer> getFallbackIndexColumns(
+      Collection<QueryIndexSummary> queryIndexSummaries,
+      Optional<IndexDefinition> primaryKeyIndex) {
+    Set<Integer> indexedColumns = new LinkedHashSet<>();
+    for (QueryIndexSummary conj : queryIndexSummaries) {
+      indexedColumns.addAll(conj.equalityColumns);
+      indexedColumns.addAll(conj.inequalityColumns);
+    }
+    primaryKeyIndex.map(pkIdx -> pkIdx.getColumns().get(0)).ifPresent(indexedColumns::remove);
+    return indexedColumns;
   }
 
   private Optional<IndexDefinition> getIndexDefinition(
@@ -189,67 +210,112 @@ public class IndexSelector {
                 idxType));
   }
 
-  private Map<IndexDefinition, Double> optimizeIndexesWithCostMinimization(
+  private Optional<IndexDefinition> getPrimaryKeyIndex(NamedTable table) {
+    var pkNames = table.getStmt().getPrimaryKey();
+    if (!config.hasPrimaryKeyIndex()
+        || !table.getAnalysis().getPrimaryKey().isDefined()
+        || pkNames.isEmpty()) {
+      return Optional.empty();
+    }
+    var pkColumns = pkNames.stream().map(table.getAnalysis()::getFieldIndex).toList();
+    if (pkColumns.contains(-1)) {
+      // A missing column is the synthetic `__pk_hash` that DAGPlanner#mapTypes strips from the row
+      // type, so no query can filter on it and the baseline is a full table scan either way
+      return Optional.empty();
+    }
+    return Optional.of(
+        IndexDefinition.getPrimaryKeyIndex(table.getTableName(), pkColumns, pkNames));
+  }
+
+  private Set<IndexDefinition> optimizeIndexesWithCostMinimization(
       NamedTable table, Collection<QueryIndexSummary> indexes) {
-    Map<IndexDefinition, Double> optIndexes = new HashMap<>();
+    Set<IndexDefinition> optIndexes = new LinkedHashSet<>();
     // Determine all index candidates
     Set<IndexDefinition> candidates = new LinkedHashSet<>();
     indexes.forEach(idx -> candidates.addAll(generateIndexCandidates(idx)));
     Function<QueryIndexSummary, Double> initialCost = QueryIndexSummary::getBaseCost;
-    if (config.hasPrimaryKeyIndex() && table.getAnalysis().getPrimaryKey().isDefined()) {
+    var primaryKeyIndex = getPrimaryKeyIndex(table);
+    if (primaryKeyIndex.isPresent()) {
       // The baseline cost is the cost of doing the lookup with the primary key index
-      // we need to use the primary key on the physical table (i.e. from the statement)
-      var pkNames = table.getStmt().getPrimaryKey();
-      var pkIndexes = pkNames.stream().map(table.getAnalysis()::getFieldIndex).toList();
-      var pkIdx = IndexDefinition.getPrimaryKeyIndex(table.getTableName(), pkIndexes, pkNames);
+      var pkIdx = primaryKeyIndex.get();
       initialCost = idx -> idx.getCost(pkIdx);
       candidates.remove(pkIdx);
     }
-    // Set initial costs
     Map<QueryIndexSummary, Double> currentCost = new HashMap<>();
     for (QueryIndexSummary idx : indexes) {
       currentCost.put(idx, initialCost.apply(idx));
     }
     // Determine which index candidates reduce the cost the most
-    var beforeTotal = total(currentCost);
-    for (; ; ) {
-      if (optIndexes.size() >= config.maxIndexes()) {
-        break;
-      }
+    while (optIndexes.size() < config.maxIndexes()) {
       IndexDefinition bestCandidate = null;
       Map<QueryIndexSummary, Double> bestCosts = null;
       var bestTotal = Double.POSITIVE_INFINITY;
       for (IndexDefinition candidate : candidates) {
         Map<QueryIndexSummary, Double> costs = new HashMap<>();
         currentCost.forEach(
-            (call, cost) -> {
-              var newcost = call.getCost(candidate);
-              if (newcost > cost) {
-                newcost = cost;
-              }
-              costs.put(call, newcost);
-            });
+            (call, cost) -> costs.put(call, Math.min(cost, call.getCost(candidate))));
+        if (!improvesAnyQueryByThreshold(
+            currentCost, costs, config.getCostImprovementThreshold())) {
+          // This candidate does not pay for itself, but the ones after it still might
+          continue;
+        }
         var total = total(costs);
-        if (total < beforeTotal
-            && (total + EPSILON < bestTotal
-                || (Precision.equals(total, bestTotal, 2 * EPSILON)
-                    && costLess(candidate, bestCandidate)))) {
+        if (total + EPSILON < bestTotal
+            || (Precision.equals(total, bestTotal, 2 * EPSILON)
+                && costLess(candidate, bestCandidate))) {
           bestCandidate = candidate;
           bestCosts = costs;
           bestTotal = total;
         }
       }
-      if (bestCandidate != null
-          && bestTotal / beforeTotal <= config.getCostImprovementThreshold()) {
-        optIndexes.put(bestCandidate, beforeTotal - bestTotal);
-        candidates.remove(bestCandidate);
-        beforeTotal = bestTotal;
-        currentCost = bestCosts;
-      } else {
-        break;
+      if (bestCandidate == null) {
+        return optIndexes;
+      }
+      optIndexes.add(bestCandidate);
+      candidates.remove(bestCandidate);
+      currentCost = bestCosts;
+    }
+    warnAboutFullTableScans(table, currentCost);
+    return optIndexes;
+  }
+
+  /** Only reached once {@link IndexSelectorConfig#maxIndexes()} is exhausted. */
+  private void warnAboutFullTableScans(NamedTable table, Map<QueryIndexSummary, Double> finalCost) {
+    var fullTableScans =
+        finalCost.entrySet().stream()
+            .filter(entry -> entry.getValue() + EPSILON >= entry.getKey().getBaseCost())
+            .map(entry -> entry.getKey().getFilterColumnNames())
+            .sorted(Comparator.comparing(columns -> String.join(",", columns)))
+            .map(columns -> "(" + String.join(", ", columns) + ")")
+            .collect(Collectors.joining(", "));
+    if (fullTableScans.isEmpty()) {
+      return;
+    }
+    errors.warn(
+        "Created the maximum of %d indexes for table `%s`. These query filter patterns have no "
+            + "supporting index and require a full table scan: %s. %s",
+        config.maxIndexes(), table.getTableName(), fullTableScans, INDEX_REMEDIATION);
+  }
+
+  /**
+   * Scoped to the queries the index serves: measuring against the whole table's cost would make
+   * index selection for one query a function of how many unrelated queries exist (issue #2317).
+   */
+  @VisibleForTesting
+  static boolean improvesAnyQueryByThreshold(
+      Map<QueryIndexSummary, Double> before,
+      Map<QueryIndexSummary, Double> after,
+      double costImprovementThreshold) {
+    var servedBefore = 0.0;
+    var servedAfter = 0.0;
+    for (Map.Entry<QueryIndexSummary, Double> entry : before.entrySet()) {
+      var newCost = after.get(entry.getKey());
+      if (newCost + EPSILON < entry.getValue()) {
+        servedBefore += entry.getValue();
+        servedAfter += newCost;
       }
     }
-    return optIndexes;
+    return servedBefore > 0 && servedAfter / servedBefore <= costImprovementThreshold;
   }
 
   private boolean costLess(IndexDefinition candidate, IndexDefinition bestCandidate) {
@@ -271,13 +337,6 @@ public class IndexSelector {
       score = score * 2 + column;
     }
     return score;
-  }
-
-  private double relativeIndexCost(IndexDefinition index) {
-    return config.relativeIndexCost(index)
-        + epsilon(
-            index
-                .getColumns()); // Add an epsilon that is insignificant but keeps index order stable
   }
 
   private static double total(Map<?, Double> costs) {
@@ -370,14 +429,6 @@ public class IndexSelector {
       selected[depth] = eq;
       generatePermutations(selected, depth + 1, eqCols, comparisons, permutations);
     }
-  }
-
-  static final double epsilon(List<Integer> columns) {
-    var eps = 0L;
-    for (int col : columns) {
-      eps = eps * 2 + col;
-    }
-    return eps * 1e-5;
   }
 
   class IndexFinder extends RelVisitor {
