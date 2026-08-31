@@ -129,7 +129,7 @@
     <commons-lang3.version>3.20.0</commons-lang3.version>
     <duckdb.version>1.5.5.1</duckdb.version>
     <feign.version>13.14</feign.version>
-    <freemarker.version>2.3.34</freemarker.version>
+    <freemarker.version>2.3.35</freemarker.version>
     <glassfish.version>3.0.0</glassfish.version>
     <graphql-java-extended-scalars.version>24.0</graphql-java-extended-scalars.version>
     <graphql-java.version>26.0</graphql-java.version>
