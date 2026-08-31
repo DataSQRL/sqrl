@@ -132,7 +132,7 @@
     <freemarker.version>2.3.35</freemarker.version>
     <glassfish.version>3.0.0</glassfish.version>
     <graphql-java-extended-scalars.version>24.0</graphql-java-extended-scalars.version>
-    <graphql-java.version>26.0</graphql-java.version>
+    <graphql-java.version>26.1</graphql-java.version>
     <graphql-micrometer.version>1.0.1</graphql-micrometer.version>
     <guava.version>33.7.1-jre</guava.version>
     <h2.version>2.4.240</h2.version>
