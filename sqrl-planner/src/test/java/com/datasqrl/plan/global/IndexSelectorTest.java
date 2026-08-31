@@ -17,7 +17,7 @@ package com.datasqrl.plan.global;
 
 import static com.datasqrl.engine.database.relational.IndexSelectorConfigByDialect.DEFAULT_COST_THRESHOLD;
 import static com.datasqrl.plan.global.IndexSelector.getFallbackIndexColumns;
-import static com.datasqrl.plan.global.IndexSelector.servesQueriesWorthIndexing;
+import static com.datasqrl.plan.global.IndexSelector.improvesAnyQueryByThreshold;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -102,7 +102,7 @@ class IndexSelectorTest {
       var after = new HashMap<>(before);
       after.put(before.keySet().iterator().next(), INDEX_LOOKUP);
 
-      assertThat(servesQueriesWorthIndexing(before, after, DEFAULT_COST_THRESHOLD))
+      assertThat(improvesAnyQueryByThreshold(before, after, DEFAULT_COST_THRESHOLD))
           .as("%d queries on the table", numQueries)
           .isTrue();
     }
@@ -114,7 +114,7 @@ class IndexSelectorTest {
     Map<QueryIndexSummary, Double> after = new LinkedHashMap<>();
     before.keySet().forEach(query -> after.put(query, INDEX_LOOKUP));
 
-    assertThat(servesQueriesWorthIndexing(before, after, DEFAULT_COST_THRESHOLD)).isTrue();
+    assertThat(improvesAnyQueryByThreshold(before, after, DEFAULT_COST_THRESHOLD)).isTrue();
   }
 
   @Test
@@ -123,14 +123,14 @@ class IndexSelectorTest {
     var after = new HashMap<>(before);
     after.put(before.keySet().iterator().next(), FULL_SCAN * 0.99);
 
-    assertThat(servesQueriesWorthIndexing(before, after, DEFAULT_COST_THRESHOLD)).isFalse();
+    assertThat(improvesAnyQueryByThreshold(before, after, DEFAULT_COST_THRESHOLD)).isFalse();
   }
 
   @Test
   void givenIndexThatImprovesNoQuery_whenEvaluated_thenNotWorthIndexing() {
     var before = fullScans(5);
 
-    assertThat(servesQueriesWorthIndexing(before, new HashMap<>(before), DEFAULT_COST_THRESHOLD))
+    assertThat(improvesAnyQueryByThreshold(before, new HashMap<>(before), DEFAULT_COST_THRESHOLD))
         .isFalse();
   }
 

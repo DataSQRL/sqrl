@@ -254,7 +254,8 @@ public class IndexSelector {
         Map<QueryIndexSummary, Double> costs = new HashMap<>();
         currentCost.forEach(
             (call, cost) -> costs.put(call, Math.min(cost, call.getCost(candidate))));
-        if (!servesQueriesWorthIndexing(currentCost, costs, config.getCostImprovementThreshold())) {
+        if (!improvesAnyQueryByThreshold(
+            currentCost, costs, config.getCostImprovementThreshold())) {
           // This candidate does not pay for itself, but the ones after it still might
           continue;
         }
@@ -301,7 +302,7 @@ public class IndexSelector {
    * index selection for one query a function of how many unrelated queries exist (issue #2317).
    */
   @VisibleForTesting
-  static boolean servesQueriesWorthIndexing(
+  static boolean improvesAnyQueryByThreshold(
       Map<QueryIndexSummary, Double> before,
       Map<QueryIndexSummary, Double> after,
       double costImprovementThreshold) {
