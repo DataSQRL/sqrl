@@ -1400,14 +1400,17 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`ExplicitIndexes_1`
 SELECT `orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`, `hash_columns`(`orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`ExplicitIndexes`
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`NoIndexes_2`
 SELECT `orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`, `hash_columns`(`orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`NoIndexes`
+ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_3`
 SELECT `orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`, `hash_columns`(`orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`Orders`
+ON CONFLICT DO NOTHING
 ;
 END
 >>>kafka.json
@@ -1420,7 +1423,15 @@ CREATE TABLE IF NOT EXISTS "ExplicitIndexes" ("orderId" TEXT NOT NULL, "customer
 CREATE TABLE IF NOT EXISTS "NoIndexes" ("orderId" TEXT NOT NULL, "customerId" TEXT NOT NULL, "storeId" TEXT NOT NULL, "productId" TEXT NOT NULL, "category" TEXT NOT NULL, "status" TEXT NOT NULL, "paymentMethod" TEXT NOT NULL, "country" TEXT NOT NULL, "currency" TEXT NOT NULL, "channel" TEXT NOT NULL, "discountCode" TEXT NOT NULL, "shippingMethod" TEXT NOT NULL, "warehouseId" TEXT NOT NULL, "carrierId" TEXT NOT NULL, "campaignId" TEXT NOT NULL, "deviceType" TEXT NOT NULL, "riskLevel" TEXT NOT NULL, "fulfillmentStatus" TEXT NOT NULL, "returnReason" TEXT NOT NULL, "salesRepId" TEXT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "epoch_timestamp" BIGINT NOT NULL, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "Orders" ("orderId" TEXT NOT NULL, "customerId" TEXT NOT NULL, "storeId" TEXT NOT NULL, "productId" TEXT NOT NULL, "category" TEXT NOT NULL, "status" TEXT NOT NULL, "paymentMethod" TEXT NOT NULL, "country" TEXT NOT NULL, "currency" TEXT NOT NULL, "channel" TEXT NOT NULL, "discountCode" TEXT NOT NULL, "shippingMethod" TEXT NOT NULL, "warehouseId" TEXT NOT NULL, "carrierId" TEXT NOT NULL, "campaignId" TEXT NOT NULL, "deviceType" TEXT NOT NULL, "riskLevel" TEXT NOT NULL, "fulfillmentStatus" TEXT NOT NULL, "returnReason" TEXT NOT NULL, "salesRepId" TEXT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "epoch_timestamp" BIGINT NOT NULL, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
-CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING btree ("customerId")
+CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING btree ("customerId");
+CREATE INDEX IF NOT EXISTS "Orders_hash_c0" ON "Orders" USING hash ("orderId");
+CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customerId");
+CREATE INDEX IF NOT EXISTS "Orders_hash_c2" ON "Orders" USING hash ("storeId");
+CREATE INDEX IF NOT EXISTS "Orders_hash_c3" ON "Orders" USING hash ("productId");
+CREATE INDEX IF NOT EXISTS "Orders_hash_c4" ON "Orders" USING hash ("category");
+CREATE INDEX IF NOT EXISTS "Orders_hash_c5" ON "Orders" USING hash ("status");
+CREATE INDEX IF NOT EXISTS "Orders_hash_c6" ON "Orders" USING hash ("paymentMethod");
+CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
 >>>vertx.json
 {
   "models" : {
@@ -3621,7 +3632,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitIndexes($limit: Int = 10, $offset: Int = 0) {\nExplicitIndexes(limit: $limit, offset: $offset) {\norderId\ncustomerId\nstoreId\nproductId\ncategory\nstatus\npaymentMethod\ncountry\ncurrency\nchannel\ndiscountCode\nshippingMethod\nwarehouseId\ncarrierId\ncampaignId\ndeviceType\nriskLevel\nfulfillmentStatus\nreturnReason\nsalesRepId\namount\nepoch_timestamp\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitIndexes",
@@ -3629,7 +3639,86 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitIndexes{?offset,limit}"
+          "uriTemplate" : "queries/ExplicitIndexes{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "paymentMethod" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "currency" : {
+                  "type" : "string"
+                },
+                "channel" : {
+                  "type" : "string"
+                },
+                "discountCode" : {
+                  "type" : "string"
+                },
+                "shippingMethod" : {
+                  "type" : "string"
+                },
+                "warehouseId" : {
+                  "type" : "string"
+                },
+                "carrierId" : {
+                  "type" : "string"
+                },
+                "campaignId" : {
+                  "type" : "string"
+                },
+                "deviceType" : {
+                  "type" : "string"
+                },
+                "riskLevel" : {
+                  "type" : "string"
+                },
+                "fulfillmentStatus" : {
+                  "type" : "string"
+                },
+                "returnReason" : {
+                  "type" : "string"
+                },
+                "salesRepId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "epoch_timestamp" : {
+                  "type" : "integer"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3647,7 +3736,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexes($limit: Int = 10, $offset: Int = 0) {\nNoIndexes(limit: $limit, offset: $offset) {\norderId\ncustomerId\nstoreId\nproductId\ncategory\nstatus\npaymentMethod\ncountry\ncurrency\nchannel\ndiscountCode\nshippingMethod\nwarehouseId\ncarrierId\ncampaignId\ndeviceType\nriskLevel\nfulfillmentStatus\nreturnReason\nsalesRepId\namount\nepoch_timestamp\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexes",
@@ -3655,7 +3743,86 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexes{?offset,limit}"
+          "uriTemplate" : "queries/NoIndexes{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "paymentMethod" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "currency" : {
+                  "type" : "string"
+                },
+                "channel" : {
+                  "type" : "string"
+                },
+                "discountCode" : {
+                  "type" : "string"
+                },
+                "shippingMethod" : {
+                  "type" : "string"
+                },
+                "warehouseId" : {
+                  "type" : "string"
+                },
+                "carrierId" : {
+                  "type" : "string"
+                },
+                "campaignId" : {
+                  "type" : "string"
+                },
+                "deviceType" : {
+                  "type" : "string"
+                },
+                "riskLevel" : {
+                  "type" : "string"
+                },
+                "fulfillmentStatus" : {
+                  "type" : "string"
+                },
+                "returnReason" : {
+                  "type" : "string"
+                },
+                "salesRepId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "epoch_timestamp" : {
+                  "type" : "integer"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3673,7 +3840,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               "required" : [ ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\norderId\ncustomerId\nstoreId\nproductId\ncategory\nstatus\npaymentMethod\ncountry\ncurrency\nchannel\ndiscountCode\nshippingMethod\nwarehouseId\ncarrierId\ncampaignId\ndeviceType\nriskLevel\nfulfillmentStatus\nreturnReason\nsalesRepId\namount\nepoch_timestamp\ncreatedAt\n}\n\n}",
             "queryName" : "Orders",
@@ -3681,7 +3847,86 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/Orders{?offset,limit}"
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "customerId" : {
+                  "type" : "string"
+                },
+                "storeId" : {
+                  "type" : "string"
+                },
+                "productId" : {
+                  "type" : "string"
+                },
+                "category" : {
+                  "type" : "string"
+                },
+                "status" : {
+                  "type" : "string"
+                },
+                "paymentMethod" : {
+                  "type" : "string"
+                },
+                "country" : {
+                  "type" : "string"
+                },
+                "currency" : {
+                  "type" : "string"
+                },
+                "channel" : {
+                  "type" : "string"
+                },
+                "discountCode" : {
+                  "type" : "string"
+                },
+                "shippingMethod" : {
+                  "type" : "string"
+                },
+                "warehouseId" : {
+                  "type" : "string"
+                },
+                "carrierId" : {
+                  "type" : "string"
+                },
+                "campaignId" : {
+                  "type" : "string"
+                },
+                "deviceType" : {
+                  "type" : "string"
+                },
+                "riskLevel" : {
+                  "type" : "string"
+                },
+                "fulfillmentStatus" : {
+                  "type" : "string"
+                },
+                "returnReason" : {
+                  "type" : "string"
+                },
+                "salesRepId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "epoch_timestamp" : {
+                  "type" : "integer"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3704,7 +3949,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByCampaignId($campaignId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCampaignId(campaignId: $campaignId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCampaignId",
@@ -3712,7 +3956,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByCampaignId{?offset,campaignId,limit}"
+          "uriTemplate" : "queries/ByCampaignId{?offset,campaignId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3735,7 +3998,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByCarrierId($carrierId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCarrierId(carrierId: $carrierId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCarrierId",
@@ -3743,7 +4005,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByCarrierId{?offset,limit,carrierId}"
+          "uriTemplate" : "queries/ByCarrierId{?offset,limit,carrierId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3766,7 +4047,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByCategory($category: String!, $limit: Int = 10, $offset: Int = 0) {\nByCategory(category: $category, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCategory",
@@ -3774,7 +4054,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByCategory{?offset,limit,category}"
+          "uriTemplate" : "queries/ByCategory{?offset,limit,category}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3797,7 +4096,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByChannel($channel: String!, $limit: Int = 10, $offset: Int = 0) {\nByChannel(channel: $channel, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByChannel",
@@ -3805,7 +4103,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByChannel{?offset,channel,limit}"
+          "uriTemplate" : "queries/ByChannel{?offset,channel,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3828,7 +4145,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByCountry($country: String!, $limit: Int = 10, $offset: Int = 0) {\nByCountry(country: $country, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCountry",
@@ -3836,7 +4152,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByCountry{?country,offset,limit}"
+          "uriTemplate" : "queries/ByCountry{?country,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3859,7 +4194,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByCurrency($currency: String!, $limit: Int = 10, $offset: Int = 0) {\nByCurrency(currency: $currency, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCurrency",
@@ -3867,7 +4201,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByCurrency{?offset,limit,currency}"
+          "uriTemplate" : "queries/ByCurrency{?offset,limit,currency}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3890,7 +4243,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByCustomerId($customerId: String!, $limit: Int = 10, $offset: Int = 0) {\nByCustomerId(customerId: $customerId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByCustomerId",
@@ -3898,7 +4250,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByCustomerId{?offset,customerId,limit}"
+          "uriTemplate" : "queries/ByCustomerId{?offset,customerId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3921,7 +4292,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByDeviceType($deviceType: String!, $limit: Int = 10, $offset: Int = 0) {\nByDeviceType(deviceType: $deviceType, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByDeviceType",
@@ -3929,7 +4299,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByDeviceType{?deviceType,offset,limit}"
+          "uriTemplate" : "queries/ByDeviceType{?deviceType,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3952,7 +4341,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByDiscountCode($discountCode: String!, $limit: Int = 10, $offset: Int = 0) {\nByDiscountCode(discountCode: $discountCode, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByDiscountCode",
@@ -3960,7 +4348,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByDiscountCode{?discountCode,offset,limit}"
+          "uriTemplate" : "queries/ByDiscountCode{?discountCode,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -3983,7 +4390,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByFulfillmentStatus($fulfillmentStatus: String!, $limit: Int = 10, $offset: Int = 0) {\nByFulfillmentStatus(fulfillmentStatus: $fulfillmentStatus, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByFulfillmentStatus",
@@ -3991,7 +4397,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByFulfillmentStatus{?offset,limit,fulfillmentStatus}"
+          "uriTemplate" : "queries/ByFulfillmentStatus{?offset,limit,fulfillmentStatus}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4014,7 +4439,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByOrderId($orderId: String!, $limit: Int = 10, $offset: Int = 0) {\nByOrderId(orderId: $orderId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByOrderId",
@@ -4022,7 +4446,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByOrderId{?offset,orderId,limit}"
+          "uriTemplate" : "queries/ByOrderId{?offset,orderId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4045,7 +4488,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByPaymentMethod($paymentMethod: String!, $limit: Int = 10, $offset: Int = 0) {\nByPaymentMethod(paymentMethod: $paymentMethod, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByPaymentMethod",
@@ -4053,7 +4495,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByPaymentMethod{?offset,limit,paymentMethod}"
+          "uriTemplate" : "queries/ByPaymentMethod{?offset,limit,paymentMethod}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4076,7 +4537,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByProductId($productId: String!, $limit: Int = 10, $offset: Int = 0) {\nByProductId(productId: $productId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByProductId",
@@ -4084,7 +4544,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByProductId{?productId,offset,limit}"
+          "uriTemplate" : "queries/ByProductId{?productId,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4107,7 +4586,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByReturnReason($returnReason: String!, $limit: Int = 10, $offset: Int = 0) {\nByReturnReason(returnReason: $returnReason, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByReturnReason",
@@ -4115,7 +4593,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByReturnReason{?offset,returnReason,limit}"
+          "uriTemplate" : "queries/ByReturnReason{?offset,returnReason,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4138,7 +4635,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByRiskLevel($riskLevel: String!, $limit: Int = 10, $offset: Int = 0) {\nByRiskLevel(riskLevel: $riskLevel, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByRiskLevel",
@@ -4146,7 +4642,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByRiskLevel{?riskLevel,offset,limit}"
+          "uriTemplate" : "queries/ByRiskLevel{?riskLevel,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4169,7 +4684,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query BySalesRepId($salesRepId: String!, $limit: Int = 10, $offset: Int = 0) {\nBySalesRepId(salesRepId: $salesRepId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "BySalesRepId",
@@ -4177,7 +4691,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/BySalesRepId{?offset,limit,salesRepId}"
+          "uriTemplate" : "queries/BySalesRepId{?offset,limit,salesRepId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4200,7 +4733,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByShippingMethod($shippingMethod: String!, $limit: Int = 10, $offset: Int = 0) {\nByShippingMethod(shippingMethod: $shippingMethod, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByShippingMethod",
@@ -4208,7 +4740,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByShippingMethod{?offset,shippingMethod,limit}"
+          "uriTemplate" : "queries/ByShippingMethod{?offset,shippingMethod,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4231,7 +4782,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByStatus($status: String!, $limit: Int = 10, $offset: Int = 0) {\nByStatus(status: $status, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByStatus",
@@ -4239,7 +4789,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByStatus{?offset,limit,status}"
+          "uriTemplate" : "queries/ByStatus{?offset,limit,status}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4262,7 +4831,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByStoreId($storeId: String!, $limit: Int = 10, $offset: Int = 0) {\nByStoreId(storeId: $storeId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByStoreId",
@@ -4270,7 +4838,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByStoreId{?offset,limit,storeId}"
+          "uriTemplate" : "queries/ByStoreId{?offset,limit,storeId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4293,7 +4880,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ByWarehouseId($warehouseId: String!, $limit: Int = 10, $offset: Int = 0) {\nByWarehouseId(warehouseId: $warehouseId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ByWarehouseId",
@@ -4301,7 +4887,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ByWarehouseId{?offset,warehouseId,limit}"
+          "uriTemplate" : "queries/ByWarehouseId{?offset,warehouseId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4324,7 +4929,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByCampaignId($campaignId: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByCampaignId(campaignId: $campaignId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByCampaignId",
@@ -4332,7 +4936,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByCampaignId{?offset,campaignId,limit}"
+          "uriTemplate" : "queries/ExplicitByCampaignId{?offset,campaignId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4355,7 +4978,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByCarrierId($carrierId: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByCarrierId(carrierId: $carrierId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByCarrierId",
@@ -4363,7 +4985,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByCarrierId{?offset,limit,carrierId}"
+          "uriTemplate" : "queries/ExplicitByCarrierId{?offset,limit,carrierId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4386,7 +5027,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByCategory($category: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByCategory(category: $category, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByCategory",
@@ -4394,7 +5034,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByCategory{?offset,limit,category}"
+          "uriTemplate" : "queries/ExplicitByCategory{?offset,limit,category}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4417,7 +5076,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByChannel($channel: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByChannel(channel: $channel, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByChannel",
@@ -4425,7 +5083,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByChannel{?offset,channel,limit}"
+          "uriTemplate" : "queries/ExplicitByChannel{?offset,channel,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4448,7 +5125,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByCountry($country: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByCountry(country: $country, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByCountry",
@@ -4456,7 +5132,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByCountry{?country,offset,limit}"
+          "uriTemplate" : "queries/ExplicitByCountry{?country,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4479,7 +5174,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByCurrency($currency: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByCurrency(currency: $currency, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByCurrency",
@@ -4487,7 +5181,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByCurrency{?offset,limit,currency}"
+          "uriTemplate" : "queries/ExplicitByCurrency{?offset,limit,currency}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4510,7 +5223,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByCustomerId($customerId: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByCustomerId(customerId: $customerId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByCustomerId",
@@ -4518,7 +5230,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByCustomerId{?offset,customerId,limit}"
+          "uriTemplate" : "queries/ExplicitByCustomerId{?offset,customerId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4541,7 +5272,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByDeviceType($deviceType: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByDeviceType(deviceType: $deviceType, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByDeviceType",
@@ -4549,7 +5279,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByDeviceType{?deviceType,offset,limit}"
+          "uriTemplate" : "queries/ExplicitByDeviceType{?deviceType,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4572,7 +5321,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByDiscountCode($discountCode: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByDiscountCode(discountCode: $discountCode, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByDiscountCode",
@@ -4580,7 +5328,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByDiscountCode{?discountCode,offset,limit}"
+          "uriTemplate" : "queries/ExplicitByDiscountCode{?discountCode,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4603,7 +5370,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByFulfillmentStatus($fulfillmentStatus: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByFulfillmentStatus(fulfillmentStatus: $fulfillmentStatus, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByFulfillmentStatus",
@@ -4611,7 +5377,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByFulfillmentStatus{?offset,limit,fulfillmentStatus}"
+          "uriTemplate" : "queries/ExplicitByFulfillmentStatus{?offset,limit,fulfillmentStatus}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4634,7 +5419,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByOrderId($orderId: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByOrderId(orderId: $orderId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByOrderId",
@@ -4642,7 +5426,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByOrderId{?offset,orderId,limit}"
+          "uriTemplate" : "queries/ExplicitByOrderId{?offset,orderId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4665,7 +5468,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByPaymentMethod($paymentMethod: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByPaymentMethod(paymentMethod: $paymentMethod, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByPaymentMethod",
@@ -4673,7 +5475,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByPaymentMethod{?offset,limit,paymentMethod}"
+          "uriTemplate" : "queries/ExplicitByPaymentMethod{?offset,limit,paymentMethod}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4696,7 +5517,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByProductId($productId: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByProductId(productId: $productId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByProductId",
@@ -4704,7 +5524,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByProductId{?productId,offset,limit}"
+          "uriTemplate" : "queries/ExplicitByProductId{?productId,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4727,7 +5566,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByReturnReason($returnReason: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByReturnReason(returnReason: $returnReason, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByReturnReason",
@@ -4735,7 +5573,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByReturnReason{?offset,returnReason,limit}"
+          "uriTemplate" : "queries/ExplicitByReturnReason{?offset,returnReason,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4758,7 +5615,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByRiskLevel($riskLevel: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByRiskLevel(riskLevel: $riskLevel, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByRiskLevel",
@@ -4766,7 +5622,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByRiskLevel{?riskLevel,offset,limit}"
+          "uriTemplate" : "queries/ExplicitByRiskLevel{?riskLevel,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4789,7 +5664,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitBySalesRepId($salesRepId: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitBySalesRepId(salesRepId: $salesRepId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitBySalesRepId",
@@ -4797,7 +5671,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitBySalesRepId{?offset,limit,salesRepId}"
+          "uriTemplate" : "queries/ExplicitBySalesRepId{?offset,limit,salesRepId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4820,7 +5713,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByShippingMethod($shippingMethod: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByShippingMethod(shippingMethod: $shippingMethod, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByShippingMethod",
@@ -4828,7 +5720,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByShippingMethod{?offset,shippingMethod,limit}"
+          "uriTemplate" : "queries/ExplicitByShippingMethod{?offset,shippingMethod,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4851,7 +5762,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByStatus($status: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByStatus(status: $status, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByStatus",
@@ -4859,7 +5769,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByStatus{?offset,limit,status}"
+          "uriTemplate" : "queries/ExplicitByStatus{?offset,limit,status}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4882,7 +5811,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByStoreId($storeId: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByStoreId(storeId: $storeId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByStoreId",
@@ -4890,7 +5818,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByStoreId{?offset,limit,storeId}"
+          "uriTemplate" : "queries/ExplicitByStoreId{?offset,limit,storeId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4913,7 +5860,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query ExplicitByWarehouseId($warehouseId: String!, $limit: Int = 10, $offset: Int = 0) {\nExplicitByWarehouseId(warehouseId: $warehouseId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "ExplicitByWarehouseId",
@@ -4921,7 +5867,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/ExplicitByWarehouseId{?offset,warehouseId,limit}"
+          "uriTemplate" : "queries/ExplicitByWarehouseId{?offset,warehouseId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4944,7 +5909,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByCampaignId($campaignId: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByCampaignId(campaignId: $campaignId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByCampaignId",
@@ -4952,7 +5916,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByCampaignId{?offset,campaignId,limit}"
+          "uriTemplate" : "queries/NoIndexByCampaignId{?offset,campaignId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -4975,7 +5958,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByCarrierId($carrierId: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByCarrierId(carrierId: $carrierId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByCarrierId",
@@ -4983,7 +5965,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByCarrierId{?offset,limit,carrierId}"
+          "uriTemplate" : "queries/NoIndexByCarrierId{?offset,limit,carrierId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5006,7 +6007,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByCategory($category: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByCategory(category: $category, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByCategory",
@@ -5014,7 +6014,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByCategory{?offset,limit,category}"
+          "uriTemplate" : "queries/NoIndexByCategory{?offset,limit,category}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5037,7 +6056,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByChannel($channel: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByChannel(channel: $channel, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByChannel",
@@ -5045,7 +6063,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByChannel{?offset,channel,limit}"
+          "uriTemplate" : "queries/NoIndexByChannel{?offset,channel,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5068,7 +6105,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByCountry($country: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByCountry(country: $country, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByCountry",
@@ -5076,7 +6112,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByCountry{?country,offset,limit}"
+          "uriTemplate" : "queries/NoIndexByCountry{?country,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5099,7 +6154,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByCurrency($currency: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByCurrency(currency: $currency, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByCurrency",
@@ -5107,7 +6161,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByCurrency{?offset,limit,currency}"
+          "uriTemplate" : "queries/NoIndexByCurrency{?offset,limit,currency}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5130,7 +6203,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByCustomerId($customerId: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByCustomerId(customerId: $customerId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByCustomerId",
@@ -5138,7 +6210,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByCustomerId{?offset,customerId,limit}"
+          "uriTemplate" : "queries/NoIndexByCustomerId{?offset,customerId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5161,7 +6252,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByDeviceType($deviceType: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByDeviceType(deviceType: $deviceType, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByDeviceType",
@@ -5169,7 +6259,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByDeviceType{?deviceType,offset,limit}"
+          "uriTemplate" : "queries/NoIndexByDeviceType{?deviceType,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5192,7 +6301,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByDiscountCode($discountCode: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByDiscountCode(discountCode: $discountCode, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByDiscountCode",
@@ -5200,7 +6308,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByDiscountCode{?discountCode,offset,limit}"
+          "uriTemplate" : "queries/NoIndexByDiscountCode{?discountCode,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5223,7 +6350,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByFulfillmentStatus($fulfillmentStatus: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByFulfillmentStatus(fulfillmentStatus: $fulfillmentStatus, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByFulfillmentStatus",
@@ -5231,7 +6357,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByFulfillmentStatus{?offset,limit,fulfillmentStatus}"
+          "uriTemplate" : "queries/NoIndexByFulfillmentStatus{?offset,limit,fulfillmentStatus}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5254,7 +6399,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByOrderId($orderId: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByOrderId(orderId: $orderId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByOrderId",
@@ -5262,7 +6406,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByOrderId{?offset,orderId,limit}"
+          "uriTemplate" : "queries/NoIndexByOrderId{?offset,orderId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5285,7 +6448,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByPaymentMethod($paymentMethod: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByPaymentMethod(paymentMethod: $paymentMethod, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByPaymentMethod",
@@ -5293,7 +6455,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByPaymentMethod{?offset,limit,paymentMethod}"
+          "uriTemplate" : "queries/NoIndexByPaymentMethod{?offset,limit,paymentMethod}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5316,7 +6497,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByProductId($productId: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByProductId(productId: $productId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByProductId",
@@ -5324,7 +6504,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByProductId{?productId,offset,limit}"
+          "uriTemplate" : "queries/NoIndexByProductId{?productId,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5347,7 +6546,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByReturnReason($returnReason: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByReturnReason(returnReason: $returnReason, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByReturnReason",
@@ -5355,7 +6553,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByReturnReason{?offset,returnReason,limit}"
+          "uriTemplate" : "queries/NoIndexByReturnReason{?offset,returnReason,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5378,7 +6595,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByRiskLevel($riskLevel: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByRiskLevel(riskLevel: $riskLevel, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByRiskLevel",
@@ -5386,7 +6602,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByRiskLevel{?riskLevel,offset,limit}"
+          "uriTemplate" : "queries/NoIndexByRiskLevel{?riskLevel,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5409,7 +6644,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexBySalesRepId($salesRepId: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexBySalesRepId(salesRepId: $salesRepId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexBySalesRepId",
@@ -5417,7 +6651,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexBySalesRepId{?offset,limit,salesRepId}"
+          "uriTemplate" : "queries/NoIndexBySalesRepId{?offset,limit,salesRepId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5440,7 +6693,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByShippingMethod($shippingMethod: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByShippingMethod(shippingMethod: $shippingMethod, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByShippingMethod",
@@ -5448,7 +6700,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByShippingMethod{?offset,shippingMethod,limit}"
+          "uriTemplate" : "queries/NoIndexByShippingMethod{?offset,shippingMethod,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5471,7 +6742,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByStatus($status: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByStatus(status: $status, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByStatus",
@@ -5479,7 +6749,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByStatus{?offset,limit,status}"
+          "uriTemplate" : "queries/NoIndexByStatus{?offset,limit,status}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5502,7 +6791,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByStoreId($storeId: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByStoreId(storeId: $storeId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByStoreId",
@@ -5510,7 +6798,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByStoreId{?offset,limit,storeId}"
+          "uriTemplate" : "queries/NoIndexByStoreId{?offset,limit,storeId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         },
         {
           "function" : {
@@ -5533,7 +6840,6 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
               ]
             }
           },
-          "format" : "JSON",
           "apiQuery" : {
             "query" : "query NoIndexByWarehouseId($warehouseId: String!, $limit: Int = 10, $offset: Int = 0) {\nNoIndexByWarehouseId(warehouseId: $warehouseId, limit: $limit, offset: $offset) {\norderId\namount\ncreatedAt\n}\n\n}",
             "queryName" : "NoIndexByWarehouseId",
@@ -5541,7 +6847,26 @@ CREATE INDEX IF NOT EXISTS "ExplicitIndexes_btree_c1" ON "ExplicitIndexes" USING
           },
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
-          "uriTemplate" : "queries/NoIndexByWarehouseId{?offset,warehouseId,limit}"
+          "uriTemplate" : "queries/NoIndexByWarehouseId{?offset,warehouseId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderId" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
         }
       ],
       "schema" : {
