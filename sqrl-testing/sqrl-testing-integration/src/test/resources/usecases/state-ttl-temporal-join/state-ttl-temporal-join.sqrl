@@ -1,0 +1,27 @@
+IMPORT tables.*;
+
+Dim := DISTINCT DimStream ON id ORDER BY updated DESC;
+Grp := DISTINCT GrpStream ON grp ORDER BY updated DESC;
+
+/*+primary_key(event_id) */
+Enriched :=
+SELECT e.*, g.val
+  FROM Events e
+  LEFT JOIN Dim FOR SYSTEM_TIME AS OF e.ts d ON d.id = e.id
+  LEFT JOIN Grp FOR SYSTEM_TIME AS OF e.ts g ON g.grp = d.grp; -- chained: keyed off the first dim
+
+Attributed := SELECT event_id, id, ts, val
+  FROM Enriched
+  WHERE val IS NOT NULL;
+
+/*+primary_key(val, event_date) */
+CountsByVal := SELECT /*+ STATE_TTL('e' = '7d') */ val, CAST(ts AS DATE) AS event_date, COUNT(*) AS cnt
+  FROM Attributed AS e
+  GROUP BY val, CAST(ts AS DATE);
+
+/*+test(no_rows) */
+TotalsTest := SELECT k.val, a.total AS actual_total, k.expected_total
+  FROM (VALUES ('a', 2), ('b', 1)) AS k(val, expected_total)
+  LEFT JOIN (SELECT val, SUM(cnt) AS total FROM CountsByVal GROUP BY val) a ON a.val = k.val
+  WHERE a.total IS DISTINCT FROM k.expected_total
+  ORDER BY k.val;
