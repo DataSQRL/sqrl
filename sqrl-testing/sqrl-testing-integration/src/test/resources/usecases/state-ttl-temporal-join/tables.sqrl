@@ -1,0 +1,41 @@
+CREATE TABLE DimStream (
+  id INT NOT NULL,
+  grp INT NOT NULL,
+  updated TIMESTAMP_LTZ(3) NOT NULL,
+  PRIMARY KEY (id) NOT ENFORCED,
+  WATERMARK FOR updated AS updated - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'path' = '${DATA_PATH}/dim.jsonl',
+  'source.monitor-interval' = '10 min',
+  'format' = 'json',
+  'json.timestamp-format.standard' = 'ISO-8601'
+);
+
+CREATE TABLE GrpStream (
+  grp INT NOT NULL,
+  val STRING NOT NULL,
+  updated TIMESTAMP_LTZ(3) NOT NULL,
+  PRIMARY KEY (grp) NOT ENFORCED,
+  WATERMARK FOR updated AS updated - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'path' = '${DATA_PATH}/grp.jsonl',
+  'source.monitor-interval' = '10 min',
+  'format' = 'json',
+  'json.timestamp-format.standard' = 'ISO-8601'
+);
+
+CREATE TABLE Events (
+  event_id STRING NOT NULL,
+  id INT NOT NULL,
+  ts TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR ts AS ts - INTERVAL '0.001' SECOND
+) WITH (
+  'connector' = 'filesystem',
+  'path' = '${DATA_PATH}/events.jsonl',
+  'source.monitor-interval' = '10 min',
+  'format' = 'json',
+  'json.timestamp-format.standard' = 'ISO-8601'
+);
+

@@ -51,11 +51,10 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
-import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
 
 /** The original RelToSqlConverter DO NOT REMOVE */
 @Getter
-public class FlinkRelToSqlConverter extends RelToSqlConverter {
+public class FlinkRelToSqlConverter extends WatermarkIgnoringRelToSqlConverter {
 
   private final AtomicInteger uniqueTableId;
   List<QueryPipelineItem> queries = new ArrayList<>();
@@ -195,10 +194,6 @@ public class FlinkRelToSqlConverter extends RelToSqlConverter {
             JoinConditionType.NONE.symbol(POS),
             null);
     return result(join, leftResult2, rightResult);
-  }
-
-  public Result visit(LogicalWatermarkAssigner e) {
-    return dispatch(e.getInput());
   }
 
   // Accessed via reflection

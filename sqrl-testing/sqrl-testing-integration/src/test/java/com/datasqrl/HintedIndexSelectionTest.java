@@ -18,6 +18,7 @@ package com.datasqrl;
 import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -30,7 +31,8 @@ public class HintedIndexSelectionTest {
   final CliCompileTestExtension snapshotExtension = new CliCompileTestExtension();
 
   @Test
-  void givenHintedTablesExceedIndexLimits_whenCompiled_thenDoesNotEmitWarningsForHintedTables() {
+  void givenHintedTablesExceedIndexLimits_whenCompiled_thenDoesNotEmitWarningsForHintedTables()
+      throws Exception {
     var packageFile = USECASE_DIR.resolve("pg-index-selection-compile").resolve("package.json");
     var hook =
         snapshotExtension.execute(
@@ -38,5 +40,14 @@ public class HintedIndexSelectionTest {
 
     assertThat(hook.isFailed()).as(hook.getMessages()).isFalse();
     assertThat(hook.getMessages()).doesNotContain("table `ExplicitIndexes`", "table `NoIndexes`");
+
+    var model = Files.readString(snapshotExtension.getPlanDir().resolve("vertx.json"));
+    var explicitQueryStart = model.indexOf("\"fieldName\" : \"ExplicitByCampaignId\"");
+    var noIndexQueryStart = model.indexOf("\"fieldName\" : \"NoIndexByCampaignId\"");
+    assertThat(explicitQueryStart).isGreaterThanOrEqualTo(0);
+    assertThat(noIndexQueryStart).isGreaterThan(explicitQueryStart);
+    assertThat(model.substring(explicitQueryStart, noIndexQueryStart))
+        .contains("FROM \"ExplicitIndexes\"");
+    assertThat(model.substring(noIndexQueryStart)).contains("FROM \"NoIndexes\"");
   }
 }

@@ -270,7 +270,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     var tableAnalysis =
         TableAnalysis.builder()
             .collapsedRelnode(analysis.relNode)
-            .originalRelnode(tableLookup.normalizeRelnode(originalRelnode))
+            .originalRelnode(originalRelnode)
             .type(analysis.getType())
             .primaryKey(analysis.primaryKey)
             .insertConflictBehavior(analysis.getInsertConflictBehavior())
@@ -288,24 +288,11 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis, hasMostRecentDistinct);
   }
 
-  /**
-   * Because Flink automatically expands views we are trying to "undo" this here by detecting
-   * whether a particular RelNode tree is associated with a previously defined table through the
-   * tableLookup interface. See {@link TableAnalysisLookup} for more information.
-   *
-   * @param input
-   * @return
-   */
   protected RelNodeAnalysis analyzeRelNode(RelNode input) {
-    var tableAnalysis = tableLookup.lookupView(input);
-    if (tableAnalysis.isPresent()) {
-      return fromSource(tableAnalysis.get(), input);
-    } else {
-      input.accept(this);
-      var analysis = this.intermediateAnalysis;
-      this.intermediateAnalysis = null;
-      return analysis;
-    }
+    input.accept(this);
+    var analysis = this.intermediateAnalysis;
+    this.intermediateAnalysis = null;
+    return analysis;
   }
 
   private RelNodeAnalysis fromSource(TableAnalysis tableAnalysis, RelNode input) {
@@ -324,22 +311,14 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       new RelShuttleImpl() {
         @Override
         public RelNode visit(TableScan tableScan) {
-          var tableAnalysis = tableLookup.lookupView(tableScan);
-          return tableAnalysis
-              .map(analysis -> fromSource(analysis, tableScan).relNode)
-              .orElse(tableScan);
+          var tableAnalysis = tableLookup.lookupViewFromScan(tableScan);
+          return tableAnalysis != null ? fromSource(tableAnalysis, tableScan).relNode : tableScan;
         }
 
         @Override
         protected RelNode visitChild(RelNode parent, int i, RelNode child) {
           if (i == 0) {
-            var tableAnalysis = tableLookup.lookupView(parent);
-            if (tableAnalysis.isPresent()) { // We replace this relnode sub-tree
-              parent = fromSource(tableAnalysis.get(), parent).relNode;
-              return parent;
-            } else { // otherwise we recurse
-              parent = parent.accept(subQueryRexShuttle);
-            }
+            parent = parent.accept(subQueryRexShuttle);
           }
           return super.visitChild(parent, i, child);
         }
@@ -408,6 +387,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   @Override
   public RelNode visit(TableScan tableScan) {
+    var viewAnalysis = tableLookup.lookupViewFromScan(tableScan);
+    if (viewAnalysis != null) {
+      return sourceTable(fromSource(viewAnalysis, tableScan));
+    }
     var table = tableScan.getTable();
     Preconditions.checkArgument(table instanceof TableSourceTable);
     var tablePath = ((TableSourceTable) table).contextResolvedTable().getIdentifier();

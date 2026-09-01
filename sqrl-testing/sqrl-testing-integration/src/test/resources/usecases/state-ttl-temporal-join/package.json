@@ -1,0 +1,20 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "kafka", "postgres", "vertx"],
+  "script": {
+    "main": "state-ttl-temporal-join.sqrl"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.runtime-mode": "STREAMING",
+        "table.exec.source.idle-timeout": "10 s",
+        "table.local-time-zone": "UTC"
+      }
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1,
+    "required-checkpoints": 1
+  }
+}

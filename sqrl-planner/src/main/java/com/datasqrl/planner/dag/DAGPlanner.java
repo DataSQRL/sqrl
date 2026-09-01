@@ -84,6 +84,7 @@ import org.apache.calcite.util.Pair;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
+import org.apache.flink.table.planner.plan.nodes.calcite.LogicalWatermarkAssigner;
 import org.apache.flink.table.planner.plan.schema.FlinkPreparingTableBase;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
@@ -635,6 +636,9 @@ public class DAGPlanner {
     public RelNode visit(RelNode other) {
       if (other instanceof LogicalTableFunctionScan scan) {
         return visit(scan);
+      } else if (other instanceof LogicalWatermarkAssigner watermarkAssigner) {
+        // Watermarks are stream-only metadata and must not leak into database queries.
+        return watermarkAssigner.getInput().accept(this);
       }
       return super.visit(other);
     }
@@ -718,14 +722,13 @@ public class DAGPlanner {
       @Override
       public RexNode visitInputRef(RexInputRef inputRef) {
         var type = inputRef.getType();
-        if (CalciteUtil.isTimeIndicator(type)) {
-          return new RexInputRef(inputRef.getIndex(), getNormalTimestampType(type));
-        } else if (newRowType != null) {
-          var index = inputRef.getIndex();
-          var newType = newRowType.getFieldList().get(index).getType();
-          if (!inputRef.getType().equals(newType)) {
-            return new RexInputRef(index, newType);
+        if (newRowType != null) {
+          var newType = newRowType.getFieldList().get(inputRef.getIndex()).getType();
+          if (!type.equals(newType)) {
+            return new RexInputRef(inputRef.getIndex(), newType);
           }
+        } else if (CalciteUtil.isTimeIndicator(type)) {
+          return new RexInputRef(inputRef.getIndex(), getNormalTimestampType(type));
         }
         return super.visitInputRef(inputRef);
       }

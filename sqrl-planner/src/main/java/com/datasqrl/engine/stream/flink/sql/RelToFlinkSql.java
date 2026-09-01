@@ -22,7 +22,7 @@ import java.util.function.UnaryOperator;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.rel2sql.RelToSqlConverter;
+import org.apache.calcite.rel.rel2sql.WatermarkIgnoringRelToSqlConverter;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriterConfig;
 import org.apache.flink.sql.parser.dml.SqlExecute;
@@ -56,7 +56,7 @@ public class RelToFlinkSql {
   }
 
   public static SqlNode convertToSqlNode(RelNode relNode) {
-    var converter = new RelToSqlConverter(FlinkDialect.DEFAULT);
+    var converter = new WatermarkIgnoringRelToSqlConverter(FlinkDialect.DEFAULT);
     return converter.visitRoot(relNode).asStatement();
   }
 }

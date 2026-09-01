@@ -137,6 +137,7 @@ import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.expressions.RexNodeExpression;
 import org.apache.flink.table.planner.operations.SqlNodeConvertContext;
 import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
+import org.apache.flink.table.planner.plan.FlinkCalciteCatalogReader;
 import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
 import org.apache.flink.table.types.CollectionDataType;
 import org.apache.flink.table.types.DataType;
@@ -169,6 +170,7 @@ public class Sqrl2FlinkSQLTranslator {
   private final boolean compileFlinkPlan;
   private final StreamTableEnvironmentImpl tEnv;
   private final Supplier<FlinkPlannerImpl> validatorSupplier;
+  private final Supplier<FlinkPlannerImpl> analysisPlannerSupplier;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
   private final FlinkPhysicalPlan.Builder planBuilder;
   @Getter private final CatalogManager catalogManager;
@@ -216,7 +218,21 @@ public class Sqrl2FlinkSQLTranslator {
     this.insertConflictPlanner = new FlinkInsertConflictPlanner(executionMode, tEnv, planBuilder);
 
     // Extract a number of classes we need access to for planning
-    this.validatorSupplier = ((PlannerBase) tEnv.getPlanner())::createFlinkPlanner;
+    var plannerBase = (PlannerBase) tEnv.getPlanner();
+    this.validatorSupplier = plannerBase::createFlinkPlanner;
+    this.analysisPlannerSupplier =
+        () -> {
+          var plannerContext = plannerBase.plannerContext();
+          return new FlinkPlannerImpl(
+              plannerContext.createFrameworkConfig(),
+              lenientCaseSensitivity ->
+                  new SqrlCatalogReader(
+                      (FlinkCalciteCatalogReader)
+                          plannerContext.createCatalogReader(lenientCaseSensitivity),
+                      tableLookup),
+              plannerBase.getTypeFactory(),
+              plannerContext.getCluster());
+        };
     var planner = this.validatorSupplier.get();
     typeFactory = (FlinkTypeFactory) planner.getOrCreateSqlValidator().getTypeFactory();
     // Initialize function catalog (custom)
@@ -295,7 +311,7 @@ public class Sqrl2FlinkSQLTranslator {
    */
   public ViewAnalysis analyzeView(
       SqlNode viewDef, boolean removeTopLevelSort, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
-    var flinkPlanner = this.validatorSupplier.get();
+    var flinkPlanner = this.analysisPlannerSupplier.get();
 
     var validated = flinkPlanner.validate(viewDef);
     RowLevelModificationContextUtils.clearContext();
@@ -342,10 +358,7 @@ public class Sqrl2FlinkSQLTranslator {
             tableLookup,
             viewName,
             relBuilder,
-            flinkPlanner
-                .getOrCreateSqlValidator()
-                .getCatalogReader()
-                .unwrap(CalciteCatalogReader.class),
+            getCalciteCatalog(validatorSupplier.get()),
             errors);
 
     var viewAnalysis = analyzer.analyze(hintsAndDoc);
@@ -356,7 +369,7 @@ public class Sqrl2FlinkSQLTranslator {
 
   public RelRoot toRelRoot(SqlNode query, @Nullable FlinkPlannerImpl flinkPlanner) {
     if (flinkPlanner == null) {
-      flinkPlanner = this.validatorSupplier.get();
+      flinkPlanner = this.analysisPlannerSupplier.get();
     }
     var context = new SqlNodeConvertContext(flinkPlanner, catalogManager);
     var validatedQuery = context.getSqlValidator().validate(query);
@@ -365,7 +378,7 @@ public class Sqrl2FlinkSQLTranslator {
 
   public FlinkRelBuilder getRelBuilder(@Nullable FlinkPlannerImpl flinkPlanner) {
     if (flinkPlanner == null) {
-      flinkPlanner = this.validatorSupplier.get();
+      flinkPlanner = this.analysisPlannerSupplier.get();
     }
     var config =
         flinkPlanner.config().getSqlToRelConverterConfig().withAddJsonTypeOperatorEnabled(false);
@@ -505,7 +518,7 @@ public class Sqrl2FlinkSQLTranslator {
   /** Analyzes a query executed directly by an INSERT statement. */
   public TableAnalysis analyzeInsertQuery(
       SqlNode query, ObjectIdentifier identifier, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
-    var flinkPlanner = validatorSupplier.get();
+    var flinkPlanner = analysisPlannerSupplier.get();
     var relRoot = toRelRoot(query, flinkPlanner);
     var analyzer =
         new SQRLLogicalPlanAnalyzer(
@@ -513,10 +526,7 @@ public class Sqrl2FlinkSQLTranslator {
             tableLookup,
             identifier.getObjectName(),
             getRelBuilder(flinkPlanner),
-            flinkPlanner
-                .getOrCreateSqlValidator()
-                .getCatalogReader()
-                .unwrap(CalciteCatalogReader.class),
+            getCalciteCatalog(validatorSupplier.get()),
             errors);
     return analyzer
         .analyze(hintsAndDoc)

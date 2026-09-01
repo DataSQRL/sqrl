@@ -48,7 +48,7 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
  * scans (i.e. remove catalog and database identifiers) - add hints to generated sql - other sqrl
  * specific changes (TODO: what are those? are those still needed?)
  */
-public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.RelToSqlConverter {
+public class RelToSqlConverterWithHints extends WatermarkIgnoringRelToSqlConverter {
 
   /** Mapping of table names to rename tables */
   private final Map<String, String> tableNameMapping;

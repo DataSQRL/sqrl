@@ -66,7 +66,7 @@ public class FullUseCaseIT {
   /** Ad-hoc debugging entry point. Change the path below to run a single use case manually. */
   static Stream<UseCaseParam> specificUseCaseProvider() {
     return Stream.of(
-        new UseCaseParam(USE_CASES.resolve("complex-mutation").resolve("package.json")));
+        new UseCaseParam(USE_CASES.resolve("state-ttl-temporal-join").resolve("package.json")));
   }
 
   @ParameterizedTest
