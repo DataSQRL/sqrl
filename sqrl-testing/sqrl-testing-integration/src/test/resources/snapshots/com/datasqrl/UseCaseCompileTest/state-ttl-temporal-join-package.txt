@@ -1,0 +1,1045 @@
+>>>inferred_schema.graphqls
+type CountsByVal {
+  val: String
+  event_date: Date!
+  cnt: Long!
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+type Dim {
+  id: Int!
+  grp: Int!
+  updated: DateTime!
+}
+
+type DimStream {
+  id: Int!
+  grp: Int!
+  updated: DateTime!
+}
+
+type Enriched {
+  event_id: String!
+  id: Int!
+  ts: DateTime!
+  val: String
+}
+
+type Events {
+  event_id: String!
+  id: Int!
+  ts: DateTime!
+}
+
+type Grp {
+  grp: Int!
+  val: String!
+  updated: DateTime!
+}
+
+type GrpStream {
+  grp: Int!
+  val: String!
+  updated: DateTime!
+}
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  Attributed(limit: Int = 10, offset: Int = 0): [Enriched!]
+  CountsByVal(limit: Int = 10, offset: Int = 0): [CountsByVal!]
+  Dim(limit: Int = 10, offset: Int = 0): [Dim!]
+  DimStream(limit: Int = 10, offset: Int = 0): [DimStream!]
+  Enriched(limit: Int = 10, offset: Int = 0): [Enriched!]
+  Events(limit: Int = 10, offset: Int = 0): [Events!]
+  Grp(limit: Int = 10, offset: Int = 0): [Grp!]
+  GrpStream(limit: Int = 10, offset: Int = 0): [GrpStream!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Attributed
+ID:          default_catalog.default_database.Attributed
+Type:        stream
+Stage:       flink
+Primary key: event_id
+Timestamp:   ts
+Row count:   ~9e7
+---
+Schema:
+ - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - id: INTEGER NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.Enriched
+
+=== CountsByVal
+ID:          default_catalog.default_database.CountsByVal
+Type:        state
+Stage:       flink
+Primary key: val, event_date
+Timestamp:   -
+Row count:   ~2e7
+---
+Schema:
+ - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - event_date: DATE NOT NULL
+ - cnt: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Attributed
+
+=== Dim
+ID:          default_catalog.default_database.Dim
+Type:        state
+Stage:       flink
+Primary key: id
+Timestamp:   updated
+Row count:   ~2e7
+---
+Schema:
+ - id: INTEGER NOT NULL
+ - grp: INTEGER NOT NULL
+ - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.DimStream
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: DimStream
+
+=== DimStream
+ID:          default_catalog.default_database.DimStream
+Type:        stream
+Stage:       flink
+Primary key: id
+Timestamp:   updated
+Row count:   ~1e8
+---
+Schema:
+ - id: INTEGER NOT NULL
+ - grp: INTEGER NOT NULL
+ - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.DimStream__base
+Annotations:
+ - stream-root: DimStream
+
+=== Enriched
+ID:          default_catalog.default_database.Enriched
+Type:        stream
+Stage:       flink
+Primary key: event_id
+Timestamp:   ts
+Row count:   ~8e7
+---
+Schema:
+ - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - id: INTEGER NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.Dim
+ - default_catalog.default_database.Events
+ - default_catalog.default_database.Grp
+
+=== Events
+ID:          default_catalog.default_database.Events
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+---
+Schema:
+ - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - id: INTEGER NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Events__base
+
+=== Grp
+ID:          default_catalog.default_database.Grp
+Type:        state
+Stage:       flink
+Primary key: grp
+Timestamp:   updated
+Row count:   ~2e7
+---
+Schema:
+ - grp: INTEGER NOT NULL
+ - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.GrpStream
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: GrpStream
+
+=== GrpStream
+ID:          default_catalog.default_database.GrpStream
+Type:        stream
+Stage:       flink
+Primary key: grp
+Timestamp:   updated
+Row count:   ~1e8
+---
+Schema:
+ - grp: INTEGER NOT NULL
+ - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - updated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.GrpStream__base
+Annotations:
+ - stream-root: GrpStream
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `DimStream` (
+  `id` INTEGER NOT NULL,
+  `grp` INTEGER NOT NULL,
+  `updated` TIMESTAMP_LTZ(3) NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED,
+  WATERMARK FOR `updated` AS `updated` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'json',
+  'json.timestamp-format.standard' = 'ISO-8601',
+  'path' = '${DATA_PATH}/dim.jsonl',
+  'source.monitor-interval' = '10 min'
+);
+CREATE TABLE `GrpStream` (
+  `grp` INTEGER NOT NULL,
+  `val` STRING NOT NULL,
+  `updated` TIMESTAMP_LTZ(3) NOT NULL,
+  PRIMARY KEY (`grp`) NOT ENFORCED,
+  WATERMARK FOR `updated` AS `updated` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'json',
+  'json.timestamp-format.standard' = 'ISO-8601',
+  'path' = '${DATA_PATH}/grp.jsonl',
+  'source.monitor-interval' = '10 min'
+);
+CREATE TABLE `Events` (
+  `event_id` STRING NOT NULL,
+  `id` INTEGER NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'json',
+  'json.timestamp-format.standard' = 'ISO-8601',
+  'path' = '${DATA_PATH}/events.jsonl',
+  'source.monitor-interval' = '10 min'
+);
+CREATE VIEW `Dim`
+AS
+SELECT `id`, `grp`, `updated`
+FROM (SELECT `id`, `grp`, `updated`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `updated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`DimStream`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `Grp`
+AS
+SELECT `grp`, `val`, `updated`
+FROM (SELECT `grp`, `val`, `updated`, ROW_NUMBER() OVER (PARTITION BY `grp` ORDER BY `updated` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`GrpStream`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `Enriched`
+AS
+SELECT `e`.*, `g`.`val`
+FROM `Events` AS `e`
+ LEFT JOIN `Dim` FOR SYSTEM_TIME AS OF `e`.`ts` AS `d` ON `d`.`id` = `e`.`id`
+ LEFT JOIN `Grp` FOR SYSTEM_TIME AS OF `e`.`ts` AS `g` ON `g`.`grp` = `d`.`grp`;
+CREATE VIEW `Attributed`
+AS
+SELECT `event_id`, `id`, `ts`, `val`
+FROM `Enriched`
+WHERE `val` IS NOT NULL;
+CREATE VIEW `CountsByVal`
+AS
+SELECT
+/*+ `STATE_TTL`('e' = '7d') */
+`val`, CAST(`ts` AS DATE) AS `event_date`, COUNT(*) AS `cnt`
+FROM `Attributed` AS `e`
+GROUP BY `val`, CAST(`ts` AS DATE);
+CREATE TABLE `Attributed_1` (
+  `event_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `id` INTEGER NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`event_id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Attributed',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CountsByVal_2` (
+  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `event_date` DATE NOT NULL,
+  `cnt` BIGINT NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'CountsByVal',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Dim_3` (
+  `id` INTEGER NOT NULL,
+  `grp` INTEGER NOT NULL,
+  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'TIMESTAMP',
+  'sink.on-conflict.timestamp-column' = 'updated',
+  'table-name' = 'Dim',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `DimStream_4` (
+  `id` INTEGER NOT NULL,
+  `grp` INTEGER NOT NULL,
+  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'DimStream',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Enriched_5` (
+  `event_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `id` INTEGER NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`event_id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Enriched',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Events_6` (
+  `event_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `id` INTEGER NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Events',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Grp_7` (
+  `grp` INTEGER NOT NULL,
+  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`grp`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'TIMESTAMP',
+  'sink.on-conflict.timestamp-column' = 'updated',
+  'table-name' = 'Grp',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `GrpStream_8` (
+  `grp` INTEGER NOT NULL,
+  `val` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `updated` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`grp`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'GrpStream',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Attributed_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`Attributed`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`CountsByVal_2`
+SELECT `val`, `event_date`, `cnt`, `hash_columns`(`val`, `event_date`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CountsByVal`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`Dim_3`
+SELECT *
+FROM `default_catalog`.`default_database`.`Dim`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`DimStream_4`
+SELECT *
+FROM `default_catalog`.`default_database`.`DimStream`
+;
+INSERT INTO `default_catalog`.`default_database`.`Enriched_5`
+SELECT *
+FROM `default_catalog`.`default_database`.`Enriched`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`Events_6`
+SELECT `event_id`, `id`, `ts`, `hash_columns`(`event_id`, `id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Events`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`Grp_7`
+SELECT *
+FROM `default_catalog`.`default_database`.`Grp`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`GrpStream_8`
+SELECT *
+FROM `default_catalog`.`default_database`.`GrpStream`
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Attributed" ("event_id" TEXT NOT NULL, "id" INTEGER NOT NULL, "ts" TIMESTAMP WITH TIME ZONE NOT NULL, "val" TEXT, PRIMARY KEY ("event_id"));
+CREATE TABLE IF NOT EXISTS "CountsByVal" ("val" TEXT, "event_date" DATE NOT NULL, "cnt" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Dim" ("id" INTEGER NOT NULL, "grp" INTEGER NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "DimStream" ("id" INTEGER NOT NULL, "grp" INTEGER NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "Enriched" ("event_id" TEXT NOT NULL, "id" INTEGER NOT NULL, "ts" TIMESTAMP WITH TIME ZONE NOT NULL, "val" TEXT, PRIMARY KEY ("event_id"));
+CREATE TABLE IF NOT EXISTS "Events" ("event_id" TEXT NOT NULL, "id" INTEGER NOT NULL, "ts" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Grp" ("grp" INTEGER NOT NULL, "val" TEXT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("grp"));
+CREATE TABLE IF NOT EXISTS "GrpStream" ("grp" INTEGER NOT NULL, "val" TEXT NOT NULL, "updated" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("grp"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Attributed",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Attributed\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CountsByVal",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"val\", \"event_date\", \"cnt\"\nFROM \"CountsByVal\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Dim",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Dim\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "DimStream",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"DimStream\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Enriched",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Enriched\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Events",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"event_id\", \"id\", \"ts\"\nFROM \"Events\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Grp",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Grp\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "GrpStream",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"GrpStream\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetAttributed",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Attributed($limit: Int = 10, $offset: Int = 0) {\nAttributed(limit: $limit, offset: $offset) {\nevent_id\nid\nts\nval\n}\n\n}",
+            "queryName" : "Attributed",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Attributed{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "event_id" : {
+                  "type" : "string"
+                },
+                "id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "val" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCountsByVal",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CountsByVal($limit: Int = 10, $offset: Int = 0) {\nCountsByVal(limit: $limit, offset: $offset) {\nval\nevent_date\ncnt\n}\n\n}",
+            "queryName" : "CountsByVal",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CountsByVal{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "string"
+                },
+                "event_date" : {
+                  "type" : "string",
+                  "format" : "date"
+                },
+                "cnt" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetDim",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Dim($limit: Int = 10, $offset: Int = 0) {\nDim(limit: $limit, offset: $offset) {\nid\ngrp\nupdated\n}\n\n}",
+            "queryName" : "Dim",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Dim{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "grp" : {
+                  "type" : "integer"
+                },
+                "updated" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetDimStream",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query DimStream($limit: Int = 10, $offset: Int = 0) {\nDimStream(limit: $limit, offset: $offset) {\nid\ngrp\nupdated\n}\n\n}",
+            "queryName" : "DimStream",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/DimStream{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "grp" : {
+                  "type" : "integer"
+                },
+                "updated" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetEnriched",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Enriched($limit: Int = 10, $offset: Int = 0) {\nEnriched(limit: $limit, offset: $offset) {\nevent_id\nid\nts\nval\n}\n\n}",
+            "queryName" : "Enriched",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Enriched{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "event_id" : {
+                  "type" : "string"
+                },
+                "id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "val" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetEvents",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Events($limit: Int = 10, $offset: Int = 0) {\nEvents(limit: $limit, offset: $offset) {\nevent_id\nid\nts\n}\n\n}",
+            "queryName" : "Events",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Events{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "event_id" : {
+                  "type" : "string"
+                },
+                "id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetGrp",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Grp($limit: Int = 10, $offset: Int = 0) {\nGrp(limit: $limit, offset: $offset) {\ngrp\nval\nupdated\n}\n\n}",
+            "queryName" : "Grp",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Grp{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "grp" : {
+                  "type" : "integer"
+                },
+                "val" : {
+                  "type" : "string"
+                },
+                "updated" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetGrpStream",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query GrpStream($limit: Int = 10, $offset: Int = 0) {\nGrpStream(limit: $limit, offset: $offset) {\ngrp\nval\nupdated\n}\n\n}",
+            "queryName" : "GrpStream",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/GrpStream{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "grp" : {
+                  "type" : "integer"
+                },
+                "val" : {
+                  "type" : "string"
+                },
+                "updated" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type CountsByVal {\n  val: String\n  event_date: Date!\n  cnt: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Dim {\n  id: Int!\n  grp: Int!\n  updated: DateTime!\n}\n\ntype DimStream {\n  id: Int!\n  grp: Int!\n  updated: DateTime!\n}\n\ntype Enriched {\n  event_id: String!\n  id: Int!\n  ts: DateTime!\n  val: String\n}\n\ntype Events {\n  event_id: String!\n  id: Int!\n  ts: DateTime!\n}\n\ntype Grp {\n  grp: Int!\n  val: String!\n  updated: DateTime!\n}\n\ntype GrpStream {\n  grp: Int!\n  val: String!\n  updated: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Attributed(limit: Int = 10, offset: Int = 0): [Enriched!]\n  CountsByVal(limit: Int = 10, offset: Int = 0): [CountsByVal!]\n  Dim(limit: Int = 10, offset: Int = 0): [Dim!]\n  DimStream(limit: Int = 10, offset: Int = 0): [DimStream!]\n  Enriched(limit: Int = 10, offset: Int = 0): [Enriched!]\n  Events(limit: Int = 10, offset: Int = 0): [Events!]\n  Grp(limit: Int = 10, offset: Int = 0): [Grp!]\n  GrpStream(limit: Int = 10, offset: Int = 0): [GrpStream!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

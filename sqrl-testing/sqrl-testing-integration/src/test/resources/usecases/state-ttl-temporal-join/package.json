@@ -1,0 +1,19 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "kafka", "postgres", "vertx"],
+  "script": {
+    "main": "state-ttl-temporal-join.sqrl"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "30s",
+        "table.local-time-zone": "UTC"
+      }
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1,
+    "required-checkpoints": 1
+  }
+}
