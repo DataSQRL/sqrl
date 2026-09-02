@@ -18,7 +18,6 @@ package com.datasqrl.error;
 import java.io.Serializable;
 import lombok.NonNull;
 
-// @JsonSerialize(as = ErrorLocation.class)
 public interface ErrorLocation extends Serializable {
 
   String getPrefix();
@@ -57,10 +56,6 @@ public interface ErrorLocation extends Serializable {
   ErrorLocation append(@NonNull ErrorLocation other);
 
   ErrorLocation resolve(@NonNull String location);
-
-  //  default ErrorLocation resolve(@NonNull Name location) {
-  //    return resolve(location.getDisplay());
-  //  }
 
   default ErrorLocation atFile(@NonNull ErrorLocation.FileLocation file) {
     return atFile(new FileRange(file));

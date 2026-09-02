@@ -61,7 +61,6 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
   }
 
   public E get(int index) {
-    //    Preconditions.checkArgument(index >= 0 && index < size());
     return elements[index];
   }
 
@@ -74,7 +73,6 @@ public abstract class AbstractPath<E extends Comparable, P extends AbstractPath<
   }
 
   public E getLast() {
-    //    Preconditions.checkArgument(elements.length > 0);
     return elements[elements.length - 1];
   }
 

@@ -62,8 +62,7 @@ public class SqlDataTypeSpecBuilder {
           typeFactory.createSqlType(sqlTypeName), nullable);
     }
 
-    if (typeSpec.getTypeNameSpec() instanceof SqlBasicTypeNameSpec) {
-      var basicTypeNameSpec = (SqlBasicTypeNameSpec) typeSpec.getTypeNameSpec();
+    if (typeSpec.getTypeNameSpec() instanceof SqlBasicTypeNameSpec basicTypeNameSpec) {
       var typeName = basicTypeNameSpec.getTypeName();
       SqlTypeName sqlTypeName = SqlTypeName.get(typeName.getSimple());
       RelDataType sqlType;
@@ -79,15 +78,14 @@ public class SqlDataTypeSpecBuilder {
       return typeFactory.createTypeWithNullability(sqlType, nullable);
     }
 
-    if (typeSpec.getTypeNameSpec() instanceof ExtendedSqlCollectionTypeNameSpec) {
-      var collectionTypeNameSpec = (ExtendedSqlCollectionTypeNameSpec) typeSpec.getTypeNameSpec();
+    if (typeSpec.getTypeNameSpec()
+        instanceof ExtendedSqlCollectionTypeNameSpec collectionTypeNameSpec) {
       var elementType = create(collectionTypeNameSpec.getElementTypeName(), typeFactory);
       return typeFactory.createTypeWithNullability(
           typeFactory.createArrayType(elementType, -1), nullable);
     }
 
-    if (typeSpec.getTypeNameSpec() instanceof SqlRowTypeNameSpec) {
-      var rowTypeNameSpec = (SqlRowTypeNameSpec) typeSpec.getTypeNameSpec();
+    if (typeSpec.getTypeNameSpec() instanceof SqlRowTypeNameSpec rowTypeNameSpec) {
       var fieldNames = rowTypeNameSpec.getFieldNames();
       var fieldTypeSpecs = rowTypeNameSpec.getFieldTypes();
 
@@ -101,15 +99,6 @@ public class SqlDataTypeSpecBuilder {
       return typeFactory.createTypeWithNullability(
           typeFactory.createStructType(fieldInfoBuilder), nullable);
     }
-    //
-    //    if (typeSpec.getTypeNameSpec() instanceof SqlRawTypeNameSpec) {
-    //      SqlRawTypeNameSpec rawTypeNameSpec = (SqlRawTypeNameSpec) typeSpec.getTypeNameSpec();
-    //      RawType<?> rawType = new RawType<>(
-    //          (Class<?>) rawTypeNameSpec.getClass().getName(),
-    //          rawTypeNameSpec.getSerializerString().toString());
-    //
-    //      return new RawRelDataType(rawType, typeSpec.getNullable());
-    //    }
 
     throw new UnsupportedOperationException(
         "Unsupported type when create RelDataType: " + typeSpec.getTypeNameSpec());
