@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "enabled-engines": ["test"],
+  "enabled-engines": ["iceberg"],
   "package": {
     "name": "datasqrl.test"
   }
