@@ -101,14 +101,6 @@ public class SqrlRexUtil {
   }
 
   public List<RexNode> getConjunctions(RexNode condition) {
-    //    RexNode cnfCondition = FlinkRexUtil.toCnf(rexBuilder, Short.MAX_VALUE,
-    //        condition); //TODO: make configurable
-    //    List<RexNode> conditions = new ArrayList<>();
-    //    if (cnfCondition instanceof RexCall && cnfCondition.isA(SqlKind.AND)) {
-    //      conditions.addAll(((RexCall) cnfCondition).getOperands());
-    //    } else { //Single condition
-    //      conditions.add(cnfCondition);
-    //    }
     return RelOptUtil.conjunctions(condition);
   }
 
@@ -272,7 +264,6 @@ public class SqrlRexUtil {
     return refFinder.refs;
   }
 
-  @Value
   private static class RexInputRefFinder extends RexShuttle {
 
     private final Set<Integer> refs = new HashSet<>();
