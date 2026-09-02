@@ -60,23 +60,4 @@ public class StatementParserException extends RuntimeException {
       throw new StatementParserException(errorLabel, fileLocation, message, args);
     }
   }
-
-  //  public static StatementParserException from(Exception e, FileLocation reference, int
-  // firstRowAddition) {
-  //    if (e.getCause() instanceof SqlParseException) {
-  //      SqlParseException cause = (SqlParseException) e.getCause();
-  //      FileLocation location = convertPosition(cause.getPos());
-  //      if (location.getLine()==1) {
-  //        location = new FileLocation(1, Math.max(location.getOffset()-firstRowAddition,1));
-  //      }
-  //      location = reference.add(location);
-  //      String message = cause.getMessage();
-  //      message = message.replaceAll(" at line \\d*, column \\d*", ""); //remove line number from
-  // message
-  //      return new StatementParserException(location, e, message);
-  //    } else {
-  //      return new StatementParserException(reference, e);
-  //    }
-  //  }
-
 }

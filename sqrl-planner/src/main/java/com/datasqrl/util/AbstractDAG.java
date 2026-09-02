@@ -62,15 +62,6 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
     return StreamUtil.filterByClass(allNodes.stream(), clazz);
   }
 
-  //  public D addNodes(Multimap<E, E> inputs) {
-  //      if (inputs.isEmpty()) {
-  //          return (D) this;
-  //      }
-  //    HashMultimap<E, E> newInputs = HashMultimap.create(this.inputs);
-  //    inputs.entries().forEach(e -> newInputs.put(e.getKey(), e.getValue()));
-  //    return create(newInputs);
-  //  }
-
   protected abstract D create(Multimap<E, E> inputs);
 
   public Set<E> getSinks() {
@@ -86,11 +77,6 @@ public abstract class AbstractDAG<E extends AbstractDAG.Node, D extends Abstract
     var reached = getAllInputsFromSource(getSinks(), true);
     return create(Multimaps.filterKeys(inputs, e -> reached.contains(e)));
   }
-
-  //
-  //  public Set<E> getAllInputsFromSource(E element, boolean includeElement) {
-  //    return getAllInputsFromSource(List.of(element), includeElement);
-  //  }
 
   public Set<E> getAllInputsFromSource(Collection<E> elements, boolean includeElements) {
     var reached = new HashSet<E>();

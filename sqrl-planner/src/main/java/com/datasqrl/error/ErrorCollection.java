@@ -36,8 +36,6 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
   }
 
   protected void addInternal(@NonNull ErrorMessage error) {
-    // Preconditions.checkArgument(error.getLocation().hasPrefix(), "Error is not grounded: %s",
-    // error);
     errors.add(error);
   }
 
@@ -102,20 +100,4 @@ public class ErrorCollection implements Iterable<ErrorMessage>, Serializable {
   public ErrorCollector asCollector(ErrorLocation location) {
     return new ErrorCollector(location, this);
   }
-
-  //  public void log() {
-  //    for (ErrorMessage message : errors) {
-  //      if (message.isNotice()) {
-  //        log.info(message.toStringNoSeverity());
-  //      } else if (message.isWarning()) {
-  //        log.warn(message.toStringNoSeverity());
-  //      } else if (message.isFatal()) {
-  //        log.error(message.toStringNoSeverity());
-  //      } else {
-  //        throw new UnsupportedOperationException("Unexpected severity: " +
-  // message.getSeverity());
-  //      }
-  //    }
-  //  }
-
 }
