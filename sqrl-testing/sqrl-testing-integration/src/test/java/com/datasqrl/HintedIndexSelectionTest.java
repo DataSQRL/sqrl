@@ -18,6 +18,7 @@ package com.datasqrl;
 import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -30,7 +31,8 @@ public class HintedIndexSelectionTest {
   final CliCompileTestExtension snapshotExtension = new CliCompileTestExtension();
 
   @Test
-  void givenHintedTablesExceedIndexLimits_whenCompiled_thenDoesNotEmitWarningsForHintedTables() {
+  void givenHintedTablesExceedIndexLimits_whenCompiled_thenRetainsHintedTableDependencies()
+      throws Exception {
     var packageFile = USECASE_DIR.resolve("pg-index-selection-compile").resolve("package.json");
     var hook =
         snapshotExtension.execute(
@@ -38,5 +40,18 @@ public class HintedIndexSelectionTest {
 
     assertThat(hook.isFailed()).as(hook.getMessages()).isFalse();
     assertThat(hook.getMessages()).doesNotContain("table `ExplicitIndexes`", "table `NoIndexes`");
+    var plan = Files.readString(snapshotExtension.getBuildDir().resolve("pipeline_explain.txt"));
+    assertEndpointInput(plan, "ExplicitByCarrierId", "ExplicitIndexes");
+    assertEndpointInput(plan, "NoIndexByCarrierId", "NoIndexes");
+    assertEndpointInput(plan, "ExplicitIndexesSink", "ExplicitIndexes");
+  }
+
+  private static void assertEndpointInput(String plan, String endpoint, String input) {
+    var start = plan.indexOf("=== " + endpoint);
+    var end = plan.indexOf("===", start + 3);
+    assertThat(start).isGreaterThanOrEqualTo(0);
+    assertThat(end).isGreaterThan(start);
+    assertThat(plan.substring(start, end))
+        .contains("Inputs:\n - default_catalog.default_database." + input);
   }
 }

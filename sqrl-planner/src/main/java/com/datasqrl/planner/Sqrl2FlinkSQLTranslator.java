@@ -97,9 +97,11 @@ import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOrderBy;
+import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
@@ -336,22 +338,43 @@ public class Sqrl2FlinkSQLTranslator {
       relationship) inference fails because the row types no longer match. */
       relNode = relRoot.project();
     }
+
     var analyzer =
         new SQRLLogicalPlanAnalyzer(
             relNode,
             tableLookup,
             viewName,
+            getReferencedViews(getQueryFromView(viewDef)),
             relBuilder,
-            flinkPlanner
-                .getOrCreateSqlValidator()
-                .getCatalogReader()
-                .unwrap(CalciteCatalogReader.class),
+            flinkPlanner,
             errors);
 
     var viewAnalysis = analyzer.analyze(hintsAndDoc);
     viewAnalysis.tableAnalysis().topLevelSort(topLevelSort);
 
     return viewAnalysis;
+  }
+
+  private Set<ObjectIdentifier> getReferencedViews(SqlNode query) {
+    query = removeSort(query);
+    if (!(query instanceof SqlSelect select)) {
+      return Set.of();
+    }
+    return getReferencedView(select.getFrom()).map(Set::of).orElseGet(Set::of);
+  }
+
+  private Optional<ObjectIdentifier> getReferencedView(SqlNode source) {
+    if (source instanceof org.apache.calcite.sql.SqlBasicCall call
+        && call.getKind() == SqlKind.AS) {
+      source = call.operand(0);
+    }
+    if (source instanceof SqlIdentifier identifier) {
+      var view = tableLookup.lookupView(qualifyIdentifier(identifier));
+      if (view != null) {
+        return Optional.of(view.getObjectIdentifier());
+      }
+    }
+    return Optional.empty();
   }
 
   public RelRoot toRelRoot(SqlNode query, @Nullable FlinkPlannerImpl flinkPlanner) {
@@ -505,6 +528,7 @@ public class Sqrl2FlinkSQLTranslator {
   /** Analyzes a query executed directly by an INSERT statement. */
   public TableAnalysis analyzeInsertQuery(
       SqlNode query, ObjectIdentifier identifier, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
+
     var flinkPlanner = validatorSupplier.get();
     var relRoot = toRelRoot(query, flinkPlanner);
     var analyzer =
@@ -512,12 +536,11 @@ public class Sqrl2FlinkSQLTranslator {
             relRoot.project(),
             tableLookup,
             identifier.getObjectName(),
+            getReferencedViews(query),
             getRelBuilder(flinkPlanner),
-            flinkPlanner
-                .getOrCreateSqlValidator()
-                .getCatalogReader()
-                .unwrap(CalciteCatalogReader.class),
+            flinkPlanner,
             errors);
+
     return analyzer
         .analyze(hintsAndDoc)
         .tableAnalysis()
