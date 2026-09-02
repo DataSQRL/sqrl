@@ -30,9 +30,11 @@ import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.AggregateCall;
 import org.apache.calcite.rel.core.CorrelationId;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.hint.Hintable;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalCorrelate;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
+import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.rex.RexBuilder;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexCorrelVariable;
@@ -45,6 +47,7 @@ import org.apache.flink.table.functions.FunctionIdentifier;
 import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlAggFunction;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
+import org.apache.flink.table.planner.hint.FlinkHints;
 import org.apache.flink.table.planner.plan.schema.CatalogSourceTable;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.types.inference.SystemTypeInference;
@@ -92,9 +95,7 @@ public class TableAnalysisLookup {
     if (viewMap.containsKey(hashCode)) {
       var normalizeRelnode = normalizeRelnode(originalRelnode);
       List<TableAnalysis> allMatches =
-          viewMap.get(hashCode).stream()
-              .filter(tbl -> matches(tbl, normalizeRelnode))
-              .collect(Collectors.toList());
+          viewMap.get(hashCode).stream().filter(tbl -> matches(tbl, normalizeRelnode)).toList();
       // return last one in case there are multiple matches
       if (allMatches.isEmpty()) {
         return Optional.empty();
@@ -153,7 +154,8 @@ public class TableAnalysisLookup {
    * are generated in Calcite using a global counter => we subtract the id of the first correlation
    * variable we encounter in the relnode tree from all ids we find - function names: during the
    * execution of an operation, Flink normalizes the function names but that doesn't happen during
-   * planning => we upper case all names for BridgingSqlFunctions
+   * planning => we upper case all names for BridgingSqlFunctions - aliases: Flink may add alias
+   * hints while expanding views, but they do not affect the view identity used for collapsing
    */
   private class RelnodeNormalizer extends RelShuttleImpl {
 
@@ -162,6 +164,20 @@ public class TableAnalysisLookup {
 
     public RelnodeNormalizer(RexBuilder rexBuilder) {
       this.rexBuilder = rexBuilder;
+    }
+
+    private RelNode withoutAliasHints(RelNode relNode) {
+      if (relNode instanceof Hintable hintable && !hintable.getHints().isEmpty()) {
+        var identityHints =
+            hintable.getHints().stream()
+                .filter(hint -> !FlinkHints.isAliasHint(hint.hintName))
+                .toList();
+        if (identityHints.size() != hintable.getHints().size()) {
+          return hintable.withHints(identityHints);
+        }
+      }
+
+      return relNode;
     }
 
     private Optional<CorrelationId> adjustCorrelationId(CorrelationId correlationId) {
@@ -205,6 +221,7 @@ public class TableAnalysisLookup {
 
     @Override
     public RelNode visit(LogicalAggregate aggregate) {
+      aggregate = (LogicalAggregate) withoutAliasHints(aggregate);
       List<AggregateCall> updatedCalls =
           aggregate.getAggCallList().stream()
               .map(
@@ -249,6 +266,7 @@ public class TableAnalysisLookup {
 
     @Override
     public RelNode visit(LogicalCorrelate correlate) {
+      correlate = (LogicalCorrelate) withoutAliasHints(correlate);
       var adjustedId = adjustCorrelationId(correlate.getCorrelationId());
       if (adjustedId.isPresent()) {
         var left = correlate.getLeft().accept(this);
@@ -267,6 +285,7 @@ public class TableAnalysisLookup {
 
     @Override
     public RelNode visit(RelNode relNode) {
+      relNode = withoutAliasHints(relNode);
       if (relNode instanceof LogicalTableFunctionScan && relNode.getInputs().isEmpty()) {
         // Since we only visit the children with the rexshuttle below,
         // we have to explicitly visit the table function scan since it is a sink (i.e. no children)
@@ -279,10 +298,21 @@ public class TableAnalysisLookup {
 
     @Override
     protected RelNode visitChild(RelNode parent, int i, RelNode child) {
+      parent = withoutAliasHints(parent);
       if (i == 0) {
         parent = parent.accept(rexNormalizer);
       }
       return super.visitChild(parent, i, child);
+    }
+
+    @Override
+    public RelNode visit(TableScan tableScan) {
+      return withoutAliasHints(tableScan);
+    }
+
+    @Override
+    public RelNode visit(LogicalValues values) {
+      return withoutAliasHints(values);
     }
 
     RexShuttle rexNormalizer = new RexNormalizer();
