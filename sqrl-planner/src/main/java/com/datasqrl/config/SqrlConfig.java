@@ -271,9 +271,11 @@ public class SqrlConfig {
   public <T> Value<List<T>> asList(String key, Class<T> clazz) {
     var n = node();
     List<T> list = List.of();
-    if (n != null && n.has(key) && n.get(key).isArray()) {
+    if (n != null && n.has(key)) {
+      var value = n.get(key);
+      errors.checkFatal(value.isArray(), "Expected an array for key [%s]", getFullKey(key));
       list = new ArrayList<>();
-      for (JsonNode element : n.get(key)) {
+      for (var element : value) {
         list.add(MAPPER.convertValue(element, clazz));
       }
     }

@@ -15,16 +15,23 @@
     },
     "enabled-engines": {
       "description": "List of engines to enable for the data pipeline. The compiler builds deployment artifacts for the enabled engines during the build.",
-      "oneOf": [
-        {
-          "type": "array",
-          "items": { "type": "string" },
-          "minItems": 1
-        },
-        {
-          "type": "string"
-        }
-      ]
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "duckdb",
+          "flink",
+          "iceberg",
+          "kafka",
+          "postgres",
+          "print",
+          "redshift",
+          "snowflake",
+          "sparksql",
+          "vertx"
+        ]
+      },
+      "minItems": 1
     },
     "compiler": {
       "type": "object",
@@ -352,7 +359,8 @@
           },
           "additionalProperties": false
         }
-      }
+      },
+      "additionalProperties": false
     },
     "connectors": {
       "type": "object",

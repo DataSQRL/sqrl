@@ -60,6 +60,8 @@ class PackageJsonSchemaTest {
   @ValueSource(
       strings = {
         "emptyEnabledEngines.json",
+        "invalidEnabledEngine.json",
+        "invalidEnabledEnginesType.json",
         "invalidVersionFormat.json",
         "emptyEnginesFlinkConnectors.json",
         "emptyTestRunner.json",

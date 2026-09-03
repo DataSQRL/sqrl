@@ -149,7 +149,7 @@ class ConfigLoaderUtilsTest {
     assertThat(underTest).isNotNull();
     assertThat(underTest.getVersion()).isEqualTo(1);
 
-    assertThat(underTest.getEnabledEngines()).contains("test");
+    assertThat(underTest.getEnabledEngines()).containsExactly("iceberg");
 
     assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();

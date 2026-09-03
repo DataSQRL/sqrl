@@ -137,6 +137,15 @@ public class SqrlConfigTest {
   }
 
   @Test
+  void givenNonArrayValue_whenGetList_thenThrowsException() {
+    config.setProperty("list-value", "not-a-list");
+
+    assertThatThrownBy(() -> config.asList("list-value", String.class))
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("Expected an array for key [list-value]");
+  }
+
+  @Test
   void givenNestedProperties_whenGetSubConfig_thenReturnsNestedNalues() {
     var parentConfig = config.getSubConfig("parent");
     var childConfig = parentConfig.getSubConfig("child");
