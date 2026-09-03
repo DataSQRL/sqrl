@@ -349,3 +349,5 @@ Typically used in a catch-up profile that trades durability for ingest throughpu
 }
 ```
 
+For deployments with [partitioned tables](postgres.md#partitioning), `pg_partman_bgw.interval` (seconds between pg_partman background-worker maintenance runs, default `3600`) can also be overridden here. The `pg_partman_bgw.dbname` and `pg_partman_bgw.role` settings are managed by the platform and cannot be overridden.
+
