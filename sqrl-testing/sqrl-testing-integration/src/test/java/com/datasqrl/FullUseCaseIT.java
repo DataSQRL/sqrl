@@ -22,7 +22,6 @@ import com.datasqrl.tests.DuckdbTestExtension;
 import com.datasqrl.tests.IcebergTestExtension;
 import com.datasqrl.tests.SnowflakeTestExtension;
 import com.datasqrl.util.ArgumentsProviders;
-import com.datasqrl.util.TestShardingExtension;
 import java.nio.file.Path;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -45,8 +44,6 @@ import org.junit.jupiter.params.support.ParameterDeclarations;
  */
 @Slf4j
 @ExtendWith({
-  // Keep sharding first so skipped invocations do not trigger use-case setup.
-  TestShardingExtension.class,
   FullPipelineContainerExtension.class,
   DuckdbTestExtension.class,
   IcebergTestExtension.class,
