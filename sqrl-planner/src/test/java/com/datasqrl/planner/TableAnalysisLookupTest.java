@@ -17,7 +17,9 @@ package com.datasqrl.planner;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.planner.analyzer.TableAnalysis;
 import java.util.List;
+import java.util.Set;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.volcano.VolcanoPlanner;
@@ -26,6 +28,7 @@ import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.junit.jupiter.api.Test;
 
 class TableAnalysisLookupTest {
@@ -78,5 +81,30 @@ class TableAnalysisLookupTest {
     assertThat(((Hintable) normalized).getHints())
         .containsExactly(RelHint.builder("STATE_TTL").build());
     assertThat(normalized.deepEquals(lookup.normalizeRelnode(unhintedProject))).isFalse();
+  }
+
+  @Test
+  void givenIdenticalViews_whenLookupViewWithReferencedView_thenSelectsReferencedView() {
+    var typeFactory = new JavaTypeFactoryImpl();
+    var cluster = RelOptCluster.create(new VolcanoPlanner(), new RexBuilder(typeFactory));
+    var relNode = LogicalValues.createOneRow(cluster);
+    var lookup = new TableAnalysisLookup();
+    var explicitIndexes = view(lookup, "ExplicitIndexes", relNode);
+    var noIndexes = view(lookup, "NoIndexes", relNode);
+    lookup.registerTable(explicitIndexes);
+    lookup.registerTable(noIndexes);
+
+    assertThat(lookup.lookupView(relNode, Set.of(explicitIndexes.getObjectIdentifier())))
+        .get()
+        .isEqualTo(explicitIndexes);
+  }
+
+  private static TableAnalysis view(
+      TableAnalysisLookup lookup, String name, LogicalValues relNode) {
+    return TableAnalysis.builder()
+        .objectIdentifier(ObjectIdentifier.of("catalog", "database", name))
+        .originalRelnode(lookup.normalizeRelnode(relNode))
+        .collapsedRelnode(relNode)
+        .build();
   }
 }

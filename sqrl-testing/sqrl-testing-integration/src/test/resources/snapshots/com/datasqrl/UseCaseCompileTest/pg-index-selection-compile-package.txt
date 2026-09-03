@@ -707,7 +707,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: campaignId
  - base-table: ExplicitByCampaignId
@@ -718,7 +718,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: carrierId
  - base-table: ExplicitByCarrierId
@@ -729,7 +729,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: category
  - base-table: ExplicitByCategory
@@ -740,7 +740,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: channel
  - base-table: ExplicitByChannel
@@ -751,7 +751,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: country
  - base-table: ExplicitByCountry
@@ -762,7 +762,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: currency
  - base-table: ExplicitByCurrency
@@ -773,7 +773,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: customerId
  - base-table: ExplicitByCustomerId
@@ -784,7 +784,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: deviceType
  - base-table: ExplicitByDeviceType
@@ -795,7 +795,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: discountCode
  - base-table: ExplicitByDiscountCode
@@ -806,7 +806,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: fulfillmentStatus
  - base-table: ExplicitByFulfillmentStatus
@@ -817,7 +817,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: orderId
  - base-table: ExplicitByOrderId
@@ -828,7 +828,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: paymentMethod
  - base-table: ExplicitByPaymentMethod
@@ -839,7 +839,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: productId
  - base-table: ExplicitByProductId
@@ -850,7 +850,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: returnReason
  - base-table: ExplicitByReturnReason
@@ -861,7 +861,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: riskLevel
  - base-table: ExplicitByRiskLevel
@@ -872,7 +872,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: salesRepId
  - base-table: ExplicitBySalesRepId
@@ -883,7 +883,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: shippingMethod
  - base-table: ExplicitByShippingMethod
@@ -894,7 +894,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: status
  - base-table: ExplicitByStatus
@@ -905,7 +905,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: storeId
  - base-table: ExplicitByStoreId
@@ -916,7 +916,7 @@ Type:        query
 Stage:       postgres
 ---
 Inputs:
- - default_catalog.default_database.NoIndexes
+ - default_catalog.default_database.ExplicitIndexes
 Annotations:
  - parameters: warehouseId
  - base-table: ExplicitByWarehouseId
@@ -955,6 +955,30 @@ Schema:
  - createdAt: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Orders
+
+=== ExplicitIndexesSink
+ID:          default_catalog.default_database.ExplicitIndexesSink
+Type:        export
+Stage:       flink
+Connector:   print
+---
+Inputs:
+ - default_catalog.default_database.ExplicitIndexesSink_in1
+
+=== ExplicitIndexesSink_in1
+ID:          default_catalog.default_database.ExplicitIndexesSink_in1
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   createdAt
+Row count:   ~1e8
+---
+Schema:
+ - orderId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - customerId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - createdAt: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.ExplicitIndexes
 
 === NoIndexByCampaignId
 ID:          default_catalog.default_database.NoIndexByCampaignId
@@ -1288,6 +1312,15 @@ CREATE VIEW `NoIndexes`
 AS
 SELECT *
 FROM `Orders`;
+CREATE TABLE `ExplicitIndexesSink` (
+  `orderId` STRING NOT NULL,
+  `customerId` STRING NOT NULL,
+  `createdAt` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `createdAt` AS `createdAt`
+)
+WITH (
+  'connector' = 'print'
+);
 CREATE TABLE `ExplicitIndexes_1` (
   `orderId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `customerId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -1401,6 +1434,10 @@ INSERT INTO `default_catalog`.`default_database`.`ExplicitIndexes_1`
 SELECT `orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`, `hash_columns`(`orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`ExplicitIndexes`
 ON CONFLICT DO NOTHING
+;
+INSERT INTO `ExplicitIndexesSink`
+SELECT `ExplicitIndexes`.`orderId`, `ExplicitIndexes`.`customerId`, `ExplicitIndexes`.`createdAt`
+FROM `default_catalog`.`default_database`.`ExplicitIndexes` AS `ExplicitIndexes`
 ;
 INSERT INTO `default_catalog`.`default_database`.`NoIndexes_2`
 SELECT `orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`, `hash_columns`(`orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`
@@ -2233,7 +2270,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"campaignId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"campaignId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2268,7 +2305,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"carrierId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"carrierId\" = $1\nORDER BY \"orderId\" NULLS FIRST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2303,7 +2340,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"category\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"category\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2338,7 +2375,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"channel\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"channel\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2373,7 +2410,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"country\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"country\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2408,7 +2445,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"currency\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"currency\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2443,7 +2480,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"customerId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"customerId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2478,7 +2515,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"deviceType\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"deviceType\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2513,7 +2550,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"discountCode\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"discountCode\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2548,7 +2585,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"fulfillmentStatus\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"fulfillmentStatus\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2583,7 +2620,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"orderId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"orderId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2618,7 +2655,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"paymentMethod\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"paymentMethod\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2653,7 +2690,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"productId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"productId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2688,7 +2725,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"returnReason\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"returnReason\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2723,7 +2760,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"riskLevel\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"riskLevel\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2758,7 +2795,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"salesRepId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"salesRepId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2793,7 +2830,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"shippingMethod\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"shippingMethod\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2828,7 +2865,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"status\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"status\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2863,7 +2900,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"storeId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"storeId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2898,7 +2935,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"warehouseId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"ExplicitIndexes\") AS \"t\"\nWHERE \"warehouseId\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -2968,7 +3005,7 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c7" ON "Orders" USING hash ("country")
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"carrierId\" = $1",
+              "sql" : "SELECT \"orderId\", \"amount\", \"createdAt\"\nFROM (SELECT \"orderId\", \"customerId\", \"storeId\", \"productId\", \"category\", \"status\", \"paymentMethod\", \"country\", \"currency\", \"channel\", \"discountCode\", \"shippingMethod\", \"warehouseId\", \"carrierId\", \"campaignId\", \"deviceType\", \"riskLevel\", \"fulfillmentStatus\", \"returnReason\", \"salesRepId\", \"amount\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"NoIndexes\") AS \"t\"\nWHERE \"carrierId\" = $1\nORDER BY \"orderId\" NULLS FIRST",
               "parameters" : [
                 {
                   "type" : "arg",

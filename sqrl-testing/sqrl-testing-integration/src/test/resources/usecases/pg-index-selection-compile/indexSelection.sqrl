@@ -60,6 +60,15 @@ ExplicitIndexes := SELECT * FROM Orders;
 /*+index */
 NoIndexes := SELECT * FROM Orders;
 
+CREATE TABLE ExplicitIndexesSink (
+  orderId STRING NOT NULL,
+  customerId STRING NOT NULL,
+  createdAt TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR createdAt AS createdAt
+) WITH ('connector' = 'print');
+
+INSERT INTO ExplicitIndexesSink SELECT orderId, customerId, createdAt FROM ExplicitIndexes;
+
 ExplicitByOrderId(orderId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE orderId = :orderId;
 ExplicitByCustomerId(customerId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE customerId = :customerId;
 ExplicitByStoreId(storeId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE storeId = :storeId;
@@ -73,7 +82,7 @@ ExplicitByChannel(channel STRING NOT NULL) := SELECT orderId, amount, createdAt 
 ExplicitByDiscountCode(discountCode STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE discountCode = :discountCode;
 ExplicitByShippingMethod(shippingMethod STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE shippingMethod = :shippingMethod;
 ExplicitByWarehouseId(warehouseId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE warehouseId = :warehouseId;
-ExplicitByCarrierId(carrierId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE carrierId = :carrierId;
+ExplicitByCarrierId(carrierId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE carrierId = :carrierId ORDER BY orderId;
 ExplicitByCampaignId(campaignId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE campaignId = :campaignId;
 ExplicitByDeviceType(deviceType STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE deviceType = :deviceType;
 ExplicitByRiskLevel(riskLevel STRING NOT NULL) := SELECT orderId, amount, createdAt FROM ExplicitIndexes WHERE riskLevel = :riskLevel;
@@ -94,7 +103,7 @@ NoIndexByChannel(channel STRING NOT NULL) := SELECT orderId, amount, createdAt F
 NoIndexByDiscountCode(discountCode STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE discountCode = :discountCode;
 NoIndexByShippingMethod(shippingMethod STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE shippingMethod = :shippingMethod;
 NoIndexByWarehouseId(warehouseId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE warehouseId = :warehouseId;
-NoIndexByCarrierId(carrierId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE carrierId = :carrierId;
+NoIndexByCarrierId(carrierId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE carrierId = :carrierId ORDER BY orderId;
 NoIndexByCampaignId(campaignId STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE campaignId = :campaignId;
 NoIndexByDeviceType(deviceType STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE deviceType = :deviceType;
 NoIndexByRiskLevel(riskLevel STRING NOT NULL) := SELECT orderId, amount, createdAt FROM NoIndexes WHERE riskLevel = :riskLevel;
