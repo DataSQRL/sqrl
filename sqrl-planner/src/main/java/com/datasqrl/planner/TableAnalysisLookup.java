@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import lombok.Value;
@@ -91,19 +92,36 @@ public class TableAnalysisLookup {
   }
 
   public Optional<TableAnalysis> lookupView(RelNode originalRelnode) {
+    return lookupView(originalRelnode, Set.of());
+  }
+
+  public Optional<TableAnalysis> lookupView(
+      RelNode originalRelnode, Set<ObjectIdentifier> referencedViews) {
+
     var hashCode = originalRelnode.getRowType().hashCode();
-    if (viewMap.containsKey(hashCode)) {
-      var normalizeRelnode = normalizeRelnode(originalRelnode);
-      List<TableAnalysis> allMatches =
-          viewMap.get(hashCode).stream().filter(tbl -> matches(tbl, normalizeRelnode)).toList();
-      // return last one in case there are multiple matches
-      if (allMatches.isEmpty()) {
-        return Optional.empty();
-      }
-      return Optional.of(allMatches.get(allMatches.size() - 1));
-    } else {
+    if (!viewMap.containsKey(hashCode)) {
       return Optional.empty();
     }
+
+    var normalizeRelnode = normalizeRelnode(originalRelnode);
+    var allMatches =
+        viewMap.get(hashCode).stream().filter(tbl -> matches(tbl, normalizeRelnode)).toList();
+
+    if (allMatches.isEmpty()) {
+      return Optional.empty();
+    }
+
+    var referencedMatches =
+        allMatches.stream()
+            .filter(tableAnalysis -> referencedViews.contains(tableAnalysis.getObjectIdentifier()))
+            .toList();
+
+    if (referencedMatches.size() == 1) {
+      return Optional.of(referencedMatches.get(0));
+    }
+
+    // return last one in case there are multiple matches
+    return Optional.of(allMatches.get(allMatches.size() - 1));
   }
 
   private static boolean matches(TableAnalysis tbl, RelNode otherRelNode) {

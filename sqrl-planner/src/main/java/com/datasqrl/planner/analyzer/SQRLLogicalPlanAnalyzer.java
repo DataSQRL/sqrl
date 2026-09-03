@@ -93,7 +93,9 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.validate.SqlUserDefinedTableFunction;
 import org.apache.calcite.tools.RelBuilder;
 import org.apache.flink.table.api.InsertConflictStrategy.ConflictBehavior;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionKind;
+import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.functions.sql.SqlWindowTableFunction;
@@ -114,13 +116,14 @@ import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 @Slf4j
 public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
-  final RelNode originalRelnode;
-  final SqrlRexUtil rexUtil;
-  final TableAnalysisLookup tableLookup;
-  final String viewName;
-  final FlinkRelBuilder relBuilder;
-  final CalciteCatalogReader catalog;
-  final ErrorCollector errors;
+  @NonNull final RelNode originalRelnode;
+  @NonNull final SqrlRexUtil rexUtil;
+  @NonNull final TableAnalysisLookup tableLookup;
+  @NonNull final String viewName;
+  @NonNull final Set<ObjectIdentifier> referencedViews;
+  @NonNull final FlinkRelBuilder relBuilder;
+  @NonNull final CalciteCatalogReader catalog;
+  @NonNull final ErrorCollector errors;
 
   /** The sources for this relational tree */
   private final List<TableOrFunctionAnalysis> sourceTables = new ArrayList<>();
@@ -146,18 +149,24 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   protected RelNodeAnalysis intermediateAnalysis = null;
 
   public SQRLLogicalPlanAnalyzer(
-      @NonNull RelNode relNode,
-      @NonNull TableAnalysisLookup tableLookup,
-      @NonNull String viewName,
-      @NonNull FlinkRelBuilder relBuilder,
-      @NonNull CalciteCatalogReader catalog,
-      @NonNull ErrorCollector errors) {
+      RelNode relNode,
+      TableAnalysisLookup tableLookup,
+      String viewName,
+      Set<ObjectIdentifier> referencedViews,
+      FlinkRelBuilder relBuilder,
+      FlinkPlannerImpl flinkPlanner,
+      ErrorCollector errors) {
     this.originalRelnode = relNode;
     this.rexUtil = new SqrlRexUtil(relNode.getCluster().getRexBuilder());
     this.tableLookup = tableLookup;
     this.viewName = viewName;
+    this.referencedViews = referencedViews == null ? Set.of() : referencedViews;
     this.relBuilder = relBuilder;
-    this.catalog = catalog;
+    this.catalog =
+        flinkPlanner
+            .getOrCreateSqlValidator()
+            .getCatalogReader()
+            .unwrap(CalciteCatalogReader.class);
     this.errors = errors;
   }
 
@@ -297,7 +306,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
    * @return
    */
   protected RelNodeAnalysis analyzeRelNode(RelNode input) {
-    var tableAnalysis = tableLookup.lookupView(input);
+    var tableAnalysis = tableLookup.lookupView(input, referencedViews);
     if (tableAnalysis.isPresent()) {
       return fromSource(tableAnalysis.get(), input);
     } else {
