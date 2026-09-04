@@ -178,6 +178,7 @@ public class Sqrl2FlinkSQLTranslator {
   @Getter private final FlinkExecFunctionFactory execFnFactory;
   @Getter private final RelDataTypeParser relDataTypeParser;
   private final FlinkInsertConflictPlanner insertConflictPlanner;
+  private final RelationAliasExpander relationAliasExpander;
 
   @Getter private final Set<String> createdDatabases = new LinkedHashSet<>();
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
@@ -219,6 +220,7 @@ public class Sqrl2FlinkSQLTranslator {
 
     // Extract a number of classes we need access to for planning
     this.validatorSupplier = ((PlannerBase) tEnv.getPlanner())::createFlinkPlanner;
+    this.relationAliasExpander = new RelationAliasExpander(tEnv, validatorSupplier);
     var planner = this.validatorSupplier.get();
     typeFactory = (FlinkTypeFactory) planner.getOrCreateSqlValidator().getTypeFactory();
     // Initialize function catalog (custom)
@@ -247,8 +249,12 @@ public class Sqrl2FlinkSQLTranslator {
     return new SqrlRexUtil(typeFactory);
   }
 
+  /**
+   * Parses a SQL statement, expanding any bare relation alias in a SELECT list into a ROW value
+   * over the columns of that relation, see {@link RelationAliasExpander}.
+   */
   public SqlNode parseSQL(String sqlStatement) {
-    return FlinkCalciteParser.parseSql(sqlStatement, tEnv);
+    return relationAliasExpander.expand(FlinkCalciteParser.parseSql(sqlStatement, tEnv));
   }
 
   /**
