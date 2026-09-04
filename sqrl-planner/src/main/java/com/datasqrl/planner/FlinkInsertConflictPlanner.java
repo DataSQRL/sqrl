@@ -30,21 +30,28 @@ import java.util.List;
 import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.api.common.RuntimeExecutionMode;
+import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
-import org.apache.flink.table.api.CompiledPlan;
+import org.apache.flink.sql.parser.dml.SqlStatementSet;
 import org.apache.flink.table.api.InsertConflictStrategy;
+import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.connector.ChangelogMode;
-import org.apache.flink.table.operations.StatementSetOperation;
+import org.apache.flink.table.operations.ModifyOperation;
+import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 import org.apache.flink.table.planner.delegation.PlannerBase;
+import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
+import org.apache.flink.table.planner.plan.ExecNodeGraphInternalPlan;
 import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalRel;
 import org.apache.flink.table.planner.plan.nodes.physical.stream.StreamPhysicalSink;
 import org.apache.flink.table.planner.plan.utils.ChangelogPlanUtils;
+import org.apache.flink.table.planner.utils.JavaScalaConversionUtil;
 import org.apache.flink.types.RowKind;
 
 /**
@@ -112,16 +119,15 @@ final class FlinkInsertConflictPlanner {
   }
 
   /** Compiles the generated statement set. */
-  CompiledPlan compilePlan() {
+  ExecNodeGraphInternalPlan compilePlan() {
     var execute = planBuilder.getExecuteStatements();
-    var statements = RelToFlinkSql.convertToSqlString(execute);
-    var statementSet =
-        (StatementSetOperation) tEnv.getParser().parse(statements.get(0) + ";").get(0);
+    var inserts = ((SqlStatementSet) execute.get(0).getStatement()).getInserts();
+    var operations = toModifyOperations(inserts);
 
     try {
-      return tEnv.compilePlan(statementSet.getOperations());
+      return (ExecNodeGraphInternalPlan) planner().compilePlan(operations);
     } catch (Exception e) {
-      throw new FlinkCompileException(withStatements(statements), e);
+      throw new FlinkCompileException(withStatements(RelToFlinkSql.convertToSqlString(execute)), e);
     }
   }
 
@@ -178,17 +184,14 @@ final class FlinkInsertConflictPlanner {
 
     try {
       var insertOperations =
-          pendingInserts.stream()
-              .map(
-                  insert ->
-                      FlinkSqlNodes.createInsert(insert.selectQuery(), insert.targetTableId()))
-              .map(RelToFlinkSql::convertToString)
-              .map(sql -> tEnv.getParser().parse(sql).get(0))
-              .toList();
+          toModifyOperations(
+              pendingInserts.stream()
+                  .map(
+                      insert ->
+                          FlinkSqlNodes.createInsert(insert.selectQuery(), insert.targetTableId()))
+                  .toList());
 
-      // getExplainGraphs translates and optimizes the inserts; _2() contains optimized RelNodes.
-      var optimizedPlans =
-          ((PlannerBase) tEnv.getPlanner()).getExplainGraphs(insertOperations)._2();
+      var optimizedPlans = optimize(insertOperations);
 
       var plannedSinks = new ArrayList<Optional<StreamPhysicalSink>>();
       var iterator = optimizedPlans.iterator();
@@ -213,6 +216,36 @@ final class FlinkInsertConflictPlanner {
     } finally {
       config.set(ExecutionConfigOptions.TABLE_EXEC_SINK_REQUIRE_ON_CONFLICT, requireOnConflict);
     }
+  }
+
+  private List<RelNode> optimize(List<ModifyOperation> insertOperations) {
+    var planner = planner();
+    planner.beforeTranslation();
+    try {
+      var relNodes = insertOperations.stream().map(planner::translateToRel).toList();
+      return JavaScalaConversionUtil.toJava(
+          planner.optimize(JavaScalaConversionUtil.toScala(relNodes)));
+    } finally {
+      planner.afterTranslation();
+    }
+  }
+
+  private List<ModifyOperation> toModifyOperations(List<RichSqlInsert> inserts) {
+    var flinkPlanner = planner().createFlinkPlanner();
+    return inserts.stream()
+        .map(FlinkSqlNodes::copyInsert)
+        .map(insert -> toModifyOperation(flinkPlanner, insert))
+        .toList();
+  }
+
+  private ModifyOperation toModifyOperation(FlinkPlannerImpl flinkPlanner, RichSqlInsert insert) {
+    return (ModifyOperation)
+        SqlNodeToOperationConversion.convert(flinkPlanner, tEnv.getCatalogManager(), insert)
+            .orElseThrow(() -> new TableException("Unsupported query: " + insert));
+  }
+
+  private PlannerBase planner() {
+    return (PlannerBase) tEnv.getPlanner();
   }
 
   private static Optional<ChangelogMode> inputChangelogMode(StreamPhysicalSink plannedSink) {
