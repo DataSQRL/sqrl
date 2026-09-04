@@ -1,0 +1,1601 @@
+>>>pipeline_explain.txt
+=== Customer
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
+Plan:
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+)
+=== CustomerBare
+ID:          default_catalog.default_database.CustomerBare
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - c: RecordType:peek_no_expand(BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL email, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, BIGINT NOT NULL lastUpdated, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL timestamp) NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+Plan:
+LogicalProject(customerid=[$0], c=[CAST(ROW($0, $1, $2, $3, $4)):RecordType:peek_no_expand(BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL email, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, BIGINT NOT NULL lastUpdated, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL timestamp) NOT NULL])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+CREATE VIEW `CustomerBare` AS  SELECT customerid, c FROM Customer c;
+
+=== CustomerRow
+ID:          default_catalog.default_database.CustomerRow
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - customer: RecordType:peek_no_expand(BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL email, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, BIGINT NOT NULL lastUpdated, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL timestamp) NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+Plan:
+LogicalProject(customerid=[$0], customer=[CAST(ROW($0, $1, $2, $3, $4)):RecordType:peek_no_expand(BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL email, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, BIGINT NOT NULL lastUpdated, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL timestamp) NOT NULL])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+CREATE VIEW `CustomerRow` AS  SELECT c.customerid, c AS customer FROM Customer c;
+
+=== CustomerRowById
+ID:          default_catalog.default_database.CustomerRowById
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+ - parameters: id
+ - base-table: CustomerRowById
+Plan:
+LogicalProject(customer=[CAST(ROW($0, $1, $2, $3, $4)):RecordType:peek_no_expand(BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL email, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, BIGINT NOT NULL lastUpdated, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL timestamp) NOT NULL])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+CREATE VIEW `CustomerRowById` AS  SELECT c AS customer FROM Customer c WHERE c.customerid = ?  ;
+
+=== NestedCustomerRow
+ID:          default_catalog.default_database.NestedCustomerRow
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - customer: RecordType:peek_no_expand(BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL email, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, BIGINT NOT NULL lastUpdated, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL timestamp) NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+Plan:
+LogicalProject(customer=[$0])
+  LogicalProject(customer=[CAST(ROW($0, $1, $2, $3, $4)):RecordType:peek_no_expand(BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL email, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, BIGINT NOT NULL lastUpdated, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL timestamp) NOT NULL])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+CREATE VIEW `NestedCustomerRow` AS  SELECT x.customer FROM (SELECT c AS customer FROM Customer c) x;
+
+=== OrderWithCustomer
+ID:          default_catalog.default_database.OrderWithCustomer
+Type:        stream
+Stage:       postgres
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - order: RecordType:peek_no_expand(BIGINT NOT NULL id, BIGINT NOT NULL customerid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL time, RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL entries) NOT NULL
+ - customer: RecordType:peek_no_expand(BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL email, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, BIGINT NOT NULL lastUpdated, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL timestamp) NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+ - default_catalog.default_database.Orders
+Plan:
+LogicalProject(id=[$0], order=[CAST(ROW($0, $1, $2, $3)):RecordType:peek_no_expand(BIGINT NOT NULL id, BIGINT NOT NULL customerid, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL time, RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL entries) NOT NULL], customer=[CAST(ROW($4, $5, $6, $7, $8)):RecordType:peek_no_expand(BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL email, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, BIGINT NOT NULL lastUpdated, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL timestamp) NOT NULL])
+  LogicalJoin(condition=[=($1, $4)], joinType=[inner])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+CREATE VIEW `OrderWithCustomer` AS  SELECT o.id, o AS `order`, c AS customer
+                     FROM Orders o JOIN Customer c ON o.customerid = c.customerid;
+
+=== Orders
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: Orders
+Plan:
+LogicalWatermarkAssigner(rowtime=[time], watermark=[-($2, 1:INTERVAL SECOND)])
+  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE TABLE `Orders` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+)
+=== Shadowed
+ID:          default_catalog.default_database.Shadowed
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - c: BIGINT NOT NULL
+ - label: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Shadowed__base
+Plan:
+LogicalTableScan(table=[[default_catalog, default_database, Shadowed]])
+SQL:
+CREATE TABLE `Shadowed` (
+  `c` BIGINT NOT NULL,
+  `label` STRING NOT NULL
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+)
+=== ShadowedAlias
+ID:          default_catalog.default_database.ShadowedAlias
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - c: BIGINT NOT NULL
+ - label: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Shadowed
+Plan:
+LogicalProject(c=[$0], label=[$1])
+  LogicalTableScan(table=[[default_catalog, default_database, Shadowed]])
+SQL:
+CREATE VIEW `ShadowedAlias` AS  SELECT c, label FROM Shadowed c;
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+);
+CREATE TABLE `Orders` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+);
+CREATE TABLE `Shadowed` (
+  `c` BIGINT NOT NULL,
+  `label` STRING NOT NULL
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+);
+CREATE VIEW `CustomerRow`
+AS
+SELECT `c`.`customerid`, CAST(ROW(`c`.`customerid`, `c`.`email`, `c`.`name`, `c`.`lastUpdated`, `c`.`timestamp`) AS ROW< `customerid` BIGINT NOT NULL, `email` VARCHAR(2147483647) NOT NULL, `name` VARCHAR(2147483647) NOT NULL, `lastUpdated` BIGINT NOT NULL, `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL >) AS `customer`
+FROM `Customer` AS `c`;
+CREATE VIEW `CustomerBare`
+AS
+SELECT `customerid`, CAST(ROW(`c`.`customerid`, `c`.`email`, `c`.`name`, `c`.`lastUpdated`, `c`.`timestamp`) AS ROW< `customerid` BIGINT NOT NULL, `email` VARCHAR(2147483647) NOT NULL, `name` VARCHAR(2147483647) NOT NULL, `lastUpdated` BIGINT NOT NULL, `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL >) AS `c`
+FROM `Customer` AS `c`;
+CREATE VIEW `OrderWithCustomer`
+AS
+SELECT `o`.`id`, CAST(ROW(`o`.`id`, `o`.`customerid`, `o`.`time`, `o`.`entries`) AS ROW< `id` BIGINT NOT NULL, `customerid` BIGINT NOT NULL, `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL, `entries` ARRAY< ROW< `productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE > NOT NULL > NOT NULL >) AS `order`, CAST(ROW(`c`.`customerid`, `c`.`email`, `c`.`name`, `c`.`lastUpdated`, `c`.`timestamp`) AS ROW< `customerid` BIGINT NOT NULL, `email` VARCHAR(2147483647) NOT NULL, `name` VARCHAR(2147483647) NOT NULL, `lastUpdated` BIGINT NOT NULL, `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL >) AS `customer`
+FROM `Orders` AS `o`
+ INNER JOIN `Customer` AS `c` ON `o`.`customerid` = `c`.`customerid`;
+CREATE VIEW `ShadowedAlias`
+AS
+SELECT `c`, `label`
+FROM `Shadowed` AS `c`;
+CREATE VIEW `NestedCustomerRow`
+AS
+SELECT `x`.`customer`
+FROM (SELECT CAST(ROW(`c`.`customerid`, `c`.`email`, `c`.`name`, `c`.`lastUpdated`, `c`.`timestamp`) AS ROW< `customerid` BIGINT NOT NULL, `email` VARCHAR(2147483647) NOT NULL, `name` VARCHAR(2147483647) NOT NULL, `lastUpdated` BIGINT NOT NULL, `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL >) AS `customer`
+  FROM `Customer` AS `c`) AS `x`;
+CREATE TABLE `Customer_1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Customer_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerBare_2` (
+  `customerid` BIGINT NOT NULL,
+  `c` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerBare_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerRow_3` (
+  `customerid` BIGINT NOT NULL,
+  `customer` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerRow_3',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `NestedCustomerRow_4` (
+  `customer` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'NestedCustomerRow_4',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Orders_5` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Orders_5',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Shadowed_6` (
+  `c` BIGINT NOT NULL,
+  `label` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Shadowed_6',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `ShadowedAlias_7` (
+  `c` BIGINT NOT NULL,
+  `label` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'ShadowedAlias_7',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Customer_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerBare_2`
+SELECT `customerid`, `to_jsonb`(`c`) AS `c`, `hash_columns`(`customerid`, `c`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomerBare`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerRow_3`
+SELECT `customerid`, `to_jsonb`(`customer`) AS `customer`, `hash_columns`(`customerid`, `customer`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomerRow`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`NestedCustomerRow_4`
+SELECT `to_jsonb`(`customer`) AS `customer`, `hash_columns`(`customer`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`NestedCustomerRow`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`Orders_5`
+SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+FROM `default_catalog`.`default_database`.`Orders`
+;
+INSERT INTO `default_catalog`.`default_database`.`Shadowed_6`
+SELECT `c`, `label`, `hash_columns`(`c`, `label`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Shadowed`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`ShadowedAlias_7`
+SELECT `c`, `label`, `hash_columns`(`c`, `label`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`ShadowedAlias`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Customer_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "CustomerBare_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerBare_2\" (\"customerid\" BIGINT NOT NULL, \"c\" JSONB, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "description" : "A bare alias derives its column name from the alias itself",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "c",
+          "type" : "JSONB",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "CustomerRow_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerRow_3\" (\"customerid\" BIGINT NOT NULL, \"customer\" JSONB, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "description" : "The whole customer row nested under a named field",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer",
+          "type" : "JSONB",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "NestedCustomerRow_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"NestedCustomerRow_4\" (\"customer\" JSONB, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "description" : "Relation aliases are expanded in subqueries too",
+      "fields" : [
+        {
+          "name" : "customer",
+          "type" : "JSONB",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "Orders_5",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_5\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"entries\" JSONB, PRIMARY KEY (\"id\",\"time\"))",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "id",
+        "time"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "Shadowed_6",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Shadowed_6\" (\"c\" BIGINT NOT NULL, \"label\" TEXT NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "c",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "label",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "ShadowedAlias_7",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ShadowedAlias_7\" (\"c\" BIGINT NOT NULL, \"label\" TEXT NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "description" : "A column of the same name takes precedence over the relation alias",
+      "fields" : [
+        {
+          "name" : "c",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "label",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "Customer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "CustomerBare",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerBare\"(\"customerid\", \"c\") AS SELECT \"customerid\", \"c\"\nFROM \"CustomerBare_2\"",
+      "description" : "A bare alias derives its column name from the alias itself",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "c",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "CustomerRow",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerRow\"(\"customerid\", \"customer\") AS SELECT \"customerid\", \"customer\"\nFROM \"CustomerRow_3\"",
+      "description" : "The whole customer row nested under a named field",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "NestedCustomerRow",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"NestedCustomerRow\"(\"customer\") AS SELECT \"customer\"\nFROM \"NestedCustomerRow_4\"",
+      "description" : "Relation aliases are expanded in subqueries too",
+      "fields" : [
+        {
+          "name" : "customer",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "OrderWithCustomer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderWithCustomer\"(\"id\", \"order\", \"customer\") AS SELECT \"Orders_50\".\"id\", CAST(ROW(\"Orders_50\".\"id\", \"Orders_50\".\"customerid\", \"Orders_50\".\"time\", \"Orders_50\".\"entries\") AS JSONB) AS \"order\", CAST(ROW(\"Customer_10\".\"customerid\", \"Customer_10\".\"email\", \"Customer_10\".\"name\", \"Customer_10\".\"lastUpdated\", \"Customer_10\".\"timestamp\") AS JSONB) AS \"customer\"\nFROM \"Orders_5\" AS \"Orders_50\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_50\".\"customerid\" = \"Customer_10\".\"customerid\"",
+      "description" : "Both sides of a join can be nested, including array columns",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "order",
+          "type" : "JSONB",
+          "nullable" : false
+        },
+        {
+          "name" : "customer",
+          "type" : "JSONB",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "Orders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"id\", \"customerid\", \"time\", \"entries\") AS SELECT *\nFROM \"Orders_5\"",
+      "fields" : [
+        {
+          "name" : "id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "time",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "entries",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "Shadowed",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Shadowed\"(\"c\", \"label\") AS SELECT \"c\", \"label\"\nFROM \"Shadowed_6\"",
+      "fields" : [
+        {
+          "name" : "c",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "label",
+          "type" : "TEXT",
+          "nullable" : false
+        }
+      ]
+    },
+    {
+      "name" : "ShadowedAlias",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"ShadowedAlias\"(\"c\", \"label\") AS SELECT \"c\", \"label\"\nFROM \"ShadowedAlias_7\"",
+      "description" : "A column of the same name takes precedence over the relation alias",
+      "fields" : [
+        {
+          "name" : "c",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "label",
+          "type" : "TEXT",
+          "nullable" : false
+        }
+      ]
+    }
+  ],
+  "standaloneExtensionStatements" : [ ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customer",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerBare",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customerid\", \"c\"\nFROM \"CustomerBare_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerRow",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customerid\", \"customer\"\nFROM \"CustomerRow_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "NestedCustomerRow",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customer\"\nFROM \"NestedCustomerRow_4\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrderWithCustomer",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"Orders_50\".\"id\", CAST(ROW(\"Orders_50\".\"id\", \"Orders_50\".\"customerid\", \"Orders_50\".\"time\", \"Orders_50\".\"entries\") AS JSONB) AS \"order\", CAST(ROW(\"Customer_10\".\"customerid\", \"Customer_10\".\"email\", \"Customer_10\".\"name\", \"Customer_10\".\"lastUpdated\", \"Customer_10\".\"timestamp\") AS JSONB) AS \"customer\"\nFROM \"Orders_5\" AS \"Orders_50\"\n INNER JOIN \"Customer_1\" AS \"Customer_10\" ON \"Orders_50\".\"customerid\" = \"Customer_10\".\"customerid\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Orders_5\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Shadowed",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"c\", \"label\"\nFROM \"Shadowed_6\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ShadowedAlias",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"c\", \"label\"\nFROM \"ShadowedAlias_7\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerRowById",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT CAST(ROW(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS JSONB) AS \"customer\"\nFROM \"Customer_1\"\nWHERE \"customerid\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "id",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerBare",
+            "description" : "A bare alias derives its column name from the alias itself",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerBare($limit: Int = 10, $offset: Int = 0) {\nCustomerBare(limit: $limit, offset: $offset) {\ncustomerid\nc {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n}\n\n}",
+            "queryName" : "CustomerBare",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerBare{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "c" : {
+                  "type" : "object",
+                  "properties" : {
+                    "customerid" : {
+                      "type" : "integer"
+                    },
+                    "email" : {
+                      "type" : "string"
+                    },
+                    "name" : {
+                      "type" : "string"
+                    },
+                    "lastUpdated" : {
+                      "type" : "integer"
+                    },
+                    "timestamp" : {
+                      "type" : "string",
+                      "format" : "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerRow",
+            "description" : "The whole customer row nested under a named field",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerRow($limit: Int = 10, $offset: Int = 0) {\nCustomerRow(limit: $limit, offset: $offset) {\ncustomerid\ncustomer {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n}\n\n}",
+            "queryName" : "CustomerRow",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerRow{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "customer" : {
+                  "type" : "object",
+                  "properties" : {
+                    "customerid" : {
+                      "type" : "integer"
+                    },
+                    "email" : {
+                      "type" : "string"
+                    },
+                    "name" : {
+                      "type" : "string"
+                    },
+                    "lastUpdated" : {
+                      "type" : "integer"
+                    },
+                    "timestamp" : {
+                      "type" : "string",
+                      "format" : "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetNestedCustomerRow",
+            "description" : "Relation aliases are expanded in subqueries too",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query NestedCustomerRow($limit: Int = 10, $offset: Int = 0) {\nNestedCustomerRow(limit: $limit, offset: $offset) {\ncustomer {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n}\n\n}",
+            "queryName" : "NestedCustomerRow",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/NestedCustomerRow{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer" : {
+                  "type" : "object",
+                  "properties" : {
+                    "customerid" : {
+                      "type" : "integer"
+                    },
+                    "email" : {
+                      "type" : "string"
+                    },
+                    "name" : {
+                      "type" : "string"
+                    },
+                    "lastUpdated" : {
+                      "type" : "integer"
+                    },
+                    "timestamp" : {
+                      "type" : "string",
+                      "format" : "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrderWithCustomer",
+            "description" : "Both sides of a join can be nested, including array columns",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrderWithCustomer($limit: Int = 10, $offset: Int = 0) {\nOrderWithCustomer(limit: $limit, offset: $offset) {\nid\norder {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\ncustomer {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n}\n\n}",
+            "queryName" : "OrderWithCustomer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderWithCustomer{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "order" : {
+                  "type" : "object",
+                  "properties" : {
+                    "id" : {
+                      "type" : "integer"
+                    },
+                    "customerid" : {
+                      "type" : "integer"
+                    },
+                    "time" : {
+                      "type" : "string",
+                      "format" : "date-time"
+                    },
+                    "entries" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object",
+                        "properties" : {
+                          "productid" : {
+                            "type" : "integer"
+                          },
+                          "quantity" : {
+                            "type" : "integer"
+                          },
+                          "unit_price" : {
+                            "type" : "number"
+                          },
+                          "discount" : {
+                            "type" : "number"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "customer" : {
+                  "type" : "object",
+                  "properties" : {
+                    "customerid" : {
+                      "type" : "integer"
+                    },
+                    "email" : {
+                      "type" : "string"
+                    },
+                    "name" : {
+                      "type" : "string"
+                    },
+                    "lastUpdated" : {
+                      "type" : "integer"
+                    },
+                    "timestamp" : {
+                      "type" : "string",
+                      "format" : "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\nid\ncustomerid\ntime\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "entries" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "productid" : {
+                        "type" : "integer"
+                      },
+                      "quantity" : {
+                        "type" : "integer"
+                      },
+                      "unit_price" : {
+                        "type" : "number"
+                      },
+                      "discount" : {
+                        "type" : "number"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetShadowed",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Shadowed($limit: Int = 10, $offset: Int = 0) {\nShadowed(limit: $limit, offset: $offset) {\nc\nlabel\n}\n\n}",
+            "queryName" : "Shadowed",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Shadowed{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "c" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetShadowedAlias",
+            "description" : "A column of the same name takes precedence over the relation alias",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ShadowedAlias($limit: Int = 10, $offset: Int = 0) {\nShadowedAlias(limit: $limit, offset: $offset) {\nc\nlabel\n}\n\n}",
+            "queryName" : "ShadowedAlias",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ShadowedAlias{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "c" : {
+                  "type" : "integer"
+                },
+                "label" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerRowById",
+            "description" : "The nested row is available to table functions as well",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "id" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "id"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerRowById($id: Long!, $limit: Int = 10, $offset: Int = 0) {\nCustomerRowById(id: $id, limit: $limit, offset: $offset) {\ncustomer {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n}\n\n}",
+            "queryName" : "CustomerRowById",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerRowById{?offset,limit,id}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer" : {
+                  "type" : "object",
+                  "properties" : {
+                    "customerid" : {
+                      "type" : "integer"
+                    },
+                    "email" : {
+                      "type" : "string"
+                    },
+                    "name" : {
+                      "type" : "string"
+                    },
+                    "lastUpdated" : {
+                      "type" : "integer"
+                    },
+                    "timestamp" : {
+                      "type" : "string",
+                      "format" : "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"A bare alias derives its column name from the alias itself\"\ntype CustomerBare {\n  customerid: Long!\n  c: CustomerBare_cOutput!\n}\n\ntype CustomerBare_cOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"The whole customer row nested under a named field\"\ntype CustomerRow {\n  customerid: Long!\n  customer: CustomerRow_customerOutput!\n}\n\n\"The nested row is available to table functions as well\"\ntype CustomerRowById {\n  customer: CustomerRowById_customerOutput!\n}\n\ntype CustomerRowById_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerRow_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\n\"Relation aliases are expanded in subqueries too\"\ntype NestedCustomerRow {\n  customer: NestedCustomerRow_customerOutput!\n}\n\ntype NestedCustomerRow_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"Both sides of a join can be nested, including array columns\"\ntype OrderWithCustomer {\n  id: Long!\n  order: OrderWithCustomer_orderOutput!\n  customer: OrderWithCustomer_customerOutput!\n}\n\ntype OrderWithCustomer_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype OrderWithCustomer_orderOutput {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [OrderWithCustomer_order_entriesOutput]!\n}\n\ntype OrderWithCustomer_order_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  \"A bare alias derives its column name from the alias itself\"\n  CustomerBare(limit: Int = 10, offset: Int = 0): [CustomerBare!]\n  \"The whole customer row nested under a named field\"\n  CustomerRow(limit: Int = 10, offset: Int = 0): [CustomerRow!]\n  \"Relation aliases are expanded in subqueries too\"\n  NestedCustomerRow(limit: Int = 10, offset: Int = 0): [NestedCustomerRow!]\n  \"Both sides of a join can be nested, including array columns\"\n  OrderWithCustomer(limit: Int = 10, offset: Int = 0): [OrderWithCustomer!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Shadowed(limit: Int = 10, offset: Int = 0): [Shadowed!]\n  \"A column of the same name takes precedence over the relation alias\"\n  ShadowedAlias(limit: Int = 10, offset: Int = 0): [Shadowed!]\n  \"The nested row is available to table functions as well\"\n  CustomerRowById(id: Long!, limit: Int = 10, offset: Int = 0): [CustomerRowById!]\n}\n\ntype Shadowed {\n  c: Long!\n  label: String!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

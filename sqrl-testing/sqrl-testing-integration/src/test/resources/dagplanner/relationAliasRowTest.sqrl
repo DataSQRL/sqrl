@@ -1,0 +1,31 @@
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders;
+
+CREATE TABLE Shadowed (
+  `c` BIGINT NOT NULL,
+  `label` STRING NOT NULL
+) WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+);
+
+/** The whole customer row nested under a named field */
+CustomerRow := SELECT c.customerid, c AS customer FROM Customer c;
+
+/** A bare alias derives its column name from the alias itself */
+CustomerBare := SELECT customerid, c FROM Customer c;
+
+/** Both sides of a join can be nested, including array columns */
+OrderWithCustomer := SELECT o.id, o AS `order`, c AS customer
+                     FROM Orders o JOIN Customer c ON o.customerid = c.customerid;
+
+/** A column of the same name takes precedence over the relation alias */
+ShadowedAlias := SELECT c, label FROM Shadowed c;
+
+/** Relation aliases are expanded in subqueries too */
+NestedCustomerRow := SELECT x.customer FROM (SELECT c AS customer FROM Customer c) x;
+
+/** The nested row is available to table functions as well */
+CustomerRowById(id BIGINT NOT NULL) := SELECT c AS customer FROM Customer c WHERE c.customerid = :id;

@@ -544,7 +544,7 @@ public class SqlScriptPlanner {
       sqrlEnv.nextBatch();
 
     } else if (stmt instanceof FlinkSQLStatement flinkStmt) {
-      var node = sqrlEnv.parseSQL(flinkStmt.sql().get());
+      var node = sqrlEnv.parseQuery(flinkStmt.sql().get());
       if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
         // plan like other definitions from above
         var visibility =

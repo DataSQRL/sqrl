@@ -178,6 +178,7 @@ public class Sqrl2FlinkSQLTranslator {
   @Getter private final FlinkExecFunctionFactory execFnFactory;
   @Getter private final RelDataTypeParser relDataTypeParser;
   private final FlinkInsertConflictPlanner insertConflictPlanner;
+  private final RelationAliasExpander relationAliasExpander = new RelationAliasExpander(this);
 
   @Getter private final Set<String> createdDatabases = new LinkedHashSet<>();
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
@@ -249,6 +250,21 @@ public class Sqrl2FlinkSQLTranslator {
 
   public SqlNode parseSQL(String sqlStatement) {
     return FlinkCalciteParser.parseSql(sqlStatement, tEnv);
+  }
+
+  /**
+   * Parses a query statement and expands any bare relation alias in its SELECT lists into a ROW
+   * value over the columns of that relation, see {@link RelationAliasExpander}.
+   */
+  public SqlNode parseQuery(String sqlStatement) {
+    return relationAliasExpander.expand(parseSQL(sqlStatement));
+  }
+
+  /** Validates a self-contained query and returns the row type it produces. */
+  public RelDataType validateRowType(SqlNode query) {
+    var flinkPlanner = validatorSupplier.get();
+    var validated = flinkPlanner.validate(query);
+    return flinkPlanner.getOrCreateSqlValidator().getValidatedNodeType(validated);
   }
 
   /**
@@ -485,7 +501,7 @@ public class Sqrl2FlinkSQLTranslator {
    * @return
    */
   public TableAnalysis addView(String originalSql, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
-    var viewDef = parseSQL(originalSql);
+    var viewDef = parseQuery(originalSql);
     checkArgument(
         viewDef instanceof SqlCreateView || viewDef instanceof SqlAlterViewAs,
         "Unexpected view definition: " + viewDef);
@@ -516,7 +532,7 @@ public class Sqrl2FlinkSQLTranslator {
        - pull out top-level sort
      NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
     */
-    var viewDef2 = parseSQL(originalSql);
+    var viewDef2 = parseQuery(originalSql);
     var viewAnalysis = analyzeView(viewDef2, removedSort, hintsAndDoc, errors);
     var tableAnalysis =
         viewAnalysis.tableAnalysis().objectIdentifier(identifier).originalSql(originalSql).build();
@@ -583,7 +599,7 @@ public class Sqrl2FlinkSQLTranslator {
 
     var parameters = getFunctionParameters(arguments);
     // Analyze Query
-    var funcDef2 = parseSQL(originalSql);
+    var funcDef2 = parseQuery(originalSql);
     var viewAnalysis = analyzeView(funcDef2, false, hintsAndDoc, errors);
     // Remap parameters in query so the RexDynamicParam point directly at the function parameter by
     // index
