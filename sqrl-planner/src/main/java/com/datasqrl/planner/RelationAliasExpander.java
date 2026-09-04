@@ -15,14 +15,15 @@
  */
 package com.datasqrl.planner;
 
-import static java.util.stream.Collectors.joining;
-
+import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
+import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -35,124 +36,105 @@ import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
+import org.apache.calcite.sql.SqlWith;
+import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
-import org.apache.calcite.sql.util.SqlShuttle;
+import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
-import org.apache.flink.sql.parser.ddl.view.SqlAlterViewAs;
-import org.apache.flink.sql.parser.ddl.view.SqlCreateView;
-import org.apache.flink.sql.parser.dml.RichSqlInsert;
-import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
-import org.apache.flink.table.utils.EncodingUtils;
+import org.apache.flink.table.api.internal.TableEnvironmentImpl;
+import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 
 /**
  * Expands a bare relation alias in a SELECT list into a ROW value over the columns of that
  * relation, which neither Calcite nor Flink support natively.
  *
  * <p>For example, {@code SELECT p AS project FROM Projects p} is rewritten to {@code SELECT
- * CAST(ROW(p.id, p.name) AS ROW<`id` BIGINT, `name` STRING>) AS project FROM Projects p} so that a
+ * CAST(ROW(p.id, p.name) AS ROW(id BIGINT, name VARCHAR)) AS project FROM Projects p} so that a
  * table's entire row can be nested under a single field without re-listing its columns.
  *
- * <p>A column of the same name takes precedence over the relation alias, and any query that cannot
- * be resolved is left untouched so that the regular validation reports the error.
+ * <p>The columns an alias contributes are resolved by validating a probe query built from the FROM
+ * clause alone, wrapped back into any enclosing {@code WITH} so that CTEs stay in scope. A column
+ * of the same name takes precedence over the relation alias. A FROM clause that does not validate
+ * on its own - a correlated or LATERAL join referencing the enclosing query - is left untouched, so
+ * that the regular validation reports the error.
  */
 @Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 class RelationAliasExpander {
 
-  private final Sqrl2FlinkSQLTranslator translator;
+  private final TableEnvironmentImpl tEnv;
+  private final Supplier<FlinkPlannerImpl> plannerSupplier;
 
   /** Rewrites the given statement in place and returns it. */
   SqlNode expand(SqlNode statement) {
-    var query = getQuery(statement);
-    if (query != null) {
-      query.accept(
-          new SqlShuttle() {
-            @Override
-            public SqlNode visit(SqlCall call) {
-              var result = super.visit(call);
-              if (result instanceof SqlSelect select) {
-                expandSelect(select);
-              }
-              return result;
-            }
-          });
-    }
+    statement.accept(new SelectListVisitor());
     return statement;
   }
 
-  private @Nullable SqlNode getQuery(SqlNode statement) {
-    if (statement instanceof SqlCreateView view) {
-      return view.getQuery();
+  /**
+   * Tracks the {@code WITH} clauses enclosing each SELECT so probes can be built in their scope.
+   */
+  private class SelectListVisitor extends SqlBasicVisitor<Void> {
+
+    private final Deque<SqlNodeList> enclosingWithLists = new ArrayDeque<>();
+
+    @Override
+    public Void visit(SqlCall call) {
+      if (call instanceof SqlWith with) {
+        enclosingWithLists.push(with.withList);
+        super.visit(call);
+        enclosingWithLists.pop();
+        return null;
+      }
+      super.visit(call);
+      if (call instanceof SqlSelect select) {
+        expandSelect(select, enclosingWithLists);
+      }
+      return null;
     }
-    if (statement instanceof SqlAlterViewAs alterView) {
-      return alterView.getNewQuery();
-    }
-    if (statement instanceof RichSqlInsert insert) {
-      return insert.getSource();
-    }
-    return statement.getKind() == SqlKind.WITH || SqlKind.QUERY.contains(statement.getKind())
-        ? statement
-        : null;
   }
 
-  private void expandSelect(SqlSelect select) {
-    var from = select.getFrom();
-    if (from == null) {
+  private void expandSelect(SqlSelect select, Deque<SqlNodeList> enclosingWithLists) {
+    if (select.getFrom() == null) {
       return;
     }
     var relationAliases = new HashSet<String>();
-    collectAliases(from, relationAliases);
+    collectAliases(select.getFrom(), relationAliases);
     var selectList = select.getSelectList();
-    var candidates = new LinkedHashMap<Integer, String>();
+    if (selectList.stream().noneMatch(item -> relationAliases.contains(bareName(item)))) {
+      return;
+    }
+
+    var queryType = resolveType(SqlIdentifier.star(SqlParserPos.ZERO), select, enclosingWithLists);
+    if (queryType == null) {
+      return;
+    }
+    var columns = Set.copyOf(queryType.getFieldNames());
+
     for (var i = 0; i < selectList.size(); i++) {
-      var alias = getBareIdentifier(selectList.get(i));
-      if (alias != null && relationAliases.contains(alias)) {
-        candidates.put(i, alias);
-      }
-    }
-    if (candidates.isEmpty()) {
-      return;
-    }
-
-    var probe = createProbe(select);
-    var fromType = resolveRowType(probe, SqlIdentifier.star(SqlParserPos.ZERO));
-    if (fromType == null) {
-      return;
-    }
-    var columns = Set.copyOf(fromType.getFieldNames());
-
-    var items = new ArrayList<>(selectList.getList());
-    var expanded = false;
-    for (var candidate : candidates.entrySet()) {
-      var alias = candidate.getValue();
-      if (columns.contains(alias)) {
+      var item = selectList.get(i);
+      var alias = bareName(item);
+      if (!relationAliases.contains(alias) || columns.contains(alias)) {
         continue;
       }
       var star = new SqlIdentifier(alias, SqlParserPos.ZERO).plusStar();
-      var rowType = resolveRowType(probe, star);
-      if (rowType == null || rowType.getFieldCount() == 0) {
-        continue;
+      var rowType = resolveType(star, select, enclosingWithLists);
+      if (rowType != null) {
+        selectList.set(
+            i, SqlValidatorUtil.addAlias(rowValue(alias, rowType), SqlValidatorUtil.alias(item)));
       }
-      var rowValue = createRowValue(alias, rowType);
-      if (rowValue == null) {
-        continue;
-      }
-      var item = items.get(candidate.getKey());
-      items.set(
-          candidate.getKey(), SqlValidatorUtil.addAlias(rowValue, SqlValidatorUtil.alias(item)));
-      expanded = true;
-    }
-    if (expanded) {
-      select.setSelectList(new SqlNodeList(items, selectList.getParserPosition()));
     }
   }
 
   /**
-   * Creates a copy of the query that keeps only the FROM clause, so that the columns each relation
-   * alias contributes can be resolved by validating it on its own.
+   * Validates a copy of the query that selects only the given item and keeps only the FROM clause,
+   * and returns the row type it produces. The probe is re-parsed from its serialized form because
+   * validation modifies the {@link SqlNode} tree it is given.
    */
-  private SqlSelect createProbe(SqlSelect select) {
+  private @Nullable RelDataType resolveType(
+      SqlIdentifier item, SqlSelect select, Deque<SqlNodeList> enclosingWithLists) {
     var probe = (SqlSelect) select.clone(SqlParserPos.ZERO);
+    probe.setSelectList(new SqlNodeList(List.of(item), SqlParserPos.ZERO));
     probe.setWhere(null);
     probe.setGroupBy(null);
     probe.setHaving(null);
@@ -160,10 +142,35 @@ class RelationAliasExpander {
     probe.setOrderBy(null);
     probe.setOffset(null);
     probe.setFetch(null);
-    return probe;
+
+    SqlNode statement = probe;
+    for (SqlNodeList withList : enclosingWithLists) {
+      statement = new SqlWith(SqlParserPos.ZERO, withList, statement);
+    }
+
+    var query = RelToFlinkSql.convertToString(statement);
+    try {
+      var planner = plannerSupplier.get();
+      var validated = planner.validate(FlinkCalciteParser.parseSql(query, tEnv));
+      return planner.getOrCreateSqlValidator().getValidatedNodeType(validated);
+    } catch (Exception e) {
+      log.debug("Could not resolve the row type of [{}]", query, e);
+      return null;
+    }
   }
 
-  private void collectAliases(SqlNode from, Set<String> aliases) {
+  private static SqlNode rowValue(String alias, RelDataType rowType) {
+    var fields =
+        rowType.getFieldNames().stream()
+            .map(field -> (SqlNode) new SqlIdentifier(List.of(alias, field), SqlParserPos.ZERO))
+            .toList();
+    return SqlStdOperatorTable.CAST.createCall(
+        SqlParserPos.ZERO,
+        SqlStdOperatorTable.ROW.createCall(SqlParserPos.ZERO, fields),
+        SqlDataTypeSpecBuilder.convertTypeToSpec(rowType));
+  }
+
+  private static void collectAliases(SqlNode from, Set<String> aliases) {
     if (from instanceof SqlJoin join) {
       collectAliases(join.getLeft(), aliases);
       collectAliases(join.getRight(), aliases);
@@ -175,7 +182,7 @@ class RelationAliasExpander {
     }
   }
 
-  private @Nullable String getBareIdentifier(SqlNode selectItem) {
+  private static @Nullable String bareName(SqlNode selectItem) {
     SqlNode node =
         selectItem.getKind() == SqlKind.AS ? ((SqlCall) selectItem).operand(0) : selectItem;
     return node instanceof SqlIdentifier identifier
@@ -183,42 +190,5 @@ class RelationAliasExpander {
             && !identifier.isStar()
         ? identifier.getSimple()
         : null;
-  }
-
-  /**
-   * Validates the probe query for the given select list item. The query is re-parsed from its
-   * serialized form because validation modifies the {@link SqlNode} tree it is given.
-   */
-  private @Nullable RelDataType resolveRowType(SqlSelect probe, SqlIdentifier star) {
-    probe.setSelectList(new SqlNodeList(List.of(star), SqlParserPos.ZERO));
-    var query = RelToFlinkSql.convertToString(probe);
-    try {
-      return translator.validateRowType(translator.parseSQL(query));
-    } catch (Exception e) {
-      log.debug("Could not resolve the row type of [{}]", query, e);
-      return null;
-    }
-  }
-
-  private @Nullable SqlNode createRowValue(String alias, RelDataType rowType) {
-    var quotedAlias = quote(alias);
-    var fields =
-        rowType.getFieldNames().stream()
-            .map(field -> quotedAlias + "." + quote(field))
-            .collect(joining(", "));
-    try {
-      var rowTypeSql = FlinkTypeFactory.toLogicalType(rowType).copy(true).asSerializableString();
-      var query =
-          (SqlSelect)
-              translator.parseSQL("SELECT CAST(ROW(%s) AS %s)".formatted(fields, rowTypeSql));
-      return query.getSelectList().get(0);
-    } catch (Exception e) {
-      log.debug("Could not create a row value for relation alias [{}]", alias, e);
-      return null;
-    }
-  }
-
-  private static String quote(String identifier) {
-    return EncodingUtils.escapeIdentifier(identifier);
   }
 }

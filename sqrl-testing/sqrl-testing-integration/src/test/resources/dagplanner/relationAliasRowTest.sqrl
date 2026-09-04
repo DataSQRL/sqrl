@@ -24,6 +24,10 @@ OrderWithCustomer := SELECT o.id, o AS `order`, c AS customer
 /** A column of the same name takes precedence over the relation alias */
 ShadowedAlias := SELECT c, label FROM Shadowed c;
 
+/** CTEs stay in scope while the alias is resolved */
+CteCustomerRow := WITH Recent AS (SELECT * FROM Customer WHERE customerid > 0)
+                  SELECT r.customerid, r AS customer FROM Recent r;
+
 /** Relation aliases are expanded in subqueries too */
 NestedCustomerRow := SELECT x.customer FROM (SELECT c AS customer FROM Customer c) x;
 
