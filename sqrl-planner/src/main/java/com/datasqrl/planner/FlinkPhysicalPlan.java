@@ -45,9 +45,8 @@ import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.sql.parser.dml.SqlExecute;
 import org.apache.flink.sql.parser.dml.SqlStatementSet;
-import org.apache.flink.table.api.CompiledPlan;
-import org.apache.flink.table.api.ExplainDetail;
-import org.apache.flink.table.api.ExplainFormat;
+import org.apache.flink.table.planner.plan.ExecNodeGraphInternalPlan;
+import org.apache.flink.table.planner.plan.nodes.exec.utils.ExecNodePlanDumper;
 
 /**
  * Represents the physical plan for Flink as both FlinkSQL and as a compiled plan. For the FlinkSQL
@@ -246,12 +245,8 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
           .toList();
     }
 
-    public FlinkPhysicalPlan build(Optional<CompiledPlan> compiledPlan) {
-      var explainedPlan =
-          compiledPlan.map(
-              plan ->
-                  plan.explain(
-                      ExplainFormat.TEXT, ExplainDetail.CHANGELOG_MODE, ExplainDetail.PLAN_ADVICE));
+    public FlinkPhysicalPlan build(Optional<ExecNodeGraphInternalPlan> compiledPlan) {
+      var explainedPlan = compiledPlan.map(Builder::explain);
 
       if (connectors.contains(IcebergEngineFactory.ENGINE_NAME)) {
         config.setString(ICEBERG_USE_V2_SINK, "true");
@@ -263,12 +258,18 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
           connectors,
           formats,
           fullyResolvedFunctions,
-          compiledPlan.map(CompiledPlan::asJsonString),
+          compiledPlan.map(ExecNodeGraphInternalPlan::asJsonString),
           explainedPlan,
           flinkSqlNoFunctions,
           config,
           flinkSqlBatched,
           flinkSqlNoFunctionsBatched);
+    }
+
+    private static String explain(ExecNodeGraphInternalPlan plan) {
+      return "== Optimized Execution Plan =="
+          + System.lineSeparator()
+          + ExecNodePlanDumper.dagToString(plan.getExecNodeGraph());
     }
 
     private boolean hasSink() {

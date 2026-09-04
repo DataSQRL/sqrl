@@ -51,6 +51,7 @@ import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.ViewQueryOperation;
 import com.datasqrl.server.MetadataType;
 import com.datasqrl.server.exec.FlinkExecFunction;
 import com.datasqrl.server.exec.FlinkExecFunctionFactory;
@@ -114,7 +115,6 @@ import org.apache.flink.sql.parser.ddl.view.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.view.SqlCreateView;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
@@ -125,13 +125,13 @@ import org.apache.flink.table.catalog.Column.ComputedColumn;
 import org.apache.flink.table.catalog.Column.MetadataColumn;
 import org.apache.flink.table.catalog.Column.PhysicalColumn;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.catalog.QueryOperationCatalogView;
 import org.apache.flink.table.catalog.ResolvedSchema;
+import org.apache.flink.table.catalog.UnresolvedIdentifier;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.operations.Operation;
-import org.apache.flink.table.operations.ddl.AlterViewAsOperation;
 import org.apache.flink.table.operations.ddl.CreateCatalogFunctionOperation;
 import org.apache.flink.table.operations.ddl.CreateTableOperation;
-import org.apache.flink.table.operations.ddl.CreateViewOperation;
 import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
@@ -139,6 +139,7 @@ import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.expressions.RexNodeExpression;
 import org.apache.flink.table.planner.operations.SqlNodeConvertContext;
 import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
+import org.apache.flink.table.planner.plan.ExecNodeGraphInternalPlan;
 import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
 import org.apache.flink.table.types.CollectionDataType;
 import org.apache.flink.table.types.DataType;
@@ -215,7 +216,7 @@ public class Sqrl2FlinkSQLTranslator {
             .withClassLoader(udfClassLoader)
             .build();
     this.tEnv = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(sEnv, tEnvSettings);
-    this.insertConflictPlanner = new FlinkInsertConflictPlanner(executionMode, tEnv, planBuilder);
+    this.insertConflictPlanner = new FlinkInsertConflictPlanner(tEnv, planBuilder);
 
     // Extract a number of classes we need access to for planning
     this.validatorSupplier = ((PlannerBase) tEnv.getPlanner())::createFlinkPlanner;
@@ -225,7 +226,11 @@ public class Sqrl2FlinkSQLTranslator {
     sqrlFunctionCatalog = new SqrlFunctionCatalog(typeFactory);
 
     var plannerConfigBuilder =
-        new FlinkPlannerConfigBuilder(compilerConfig, sqrlFunctionCatalog, planBuilder.getConfig());
+        new FlinkPlannerConfigBuilder(
+            compilerConfig,
+            sqrlFunctionCatalog,
+            planBuilder.getConfig(),
+            insertConflictPlanner.getConflictProgram());
     this.tEnv.getConfig().setPlannerConfig(plannerConfigBuilder.build());
     this.catalogManager = tEnv.getCatalogManager();
 
@@ -258,16 +263,13 @@ public class Sqrl2FlinkSQLTranslator {
    * @return
    */
   public FlinkPhysicalPlan compileFlinkPlan() {
-    insertConflictPlanner.resolve();
     var execute = planBuilder.getExecuteStatements();
 
     if (executionMode != RuntimeExecutionMode.BATCH && execute.size() > 1) {
       throw new UnsupportedOperationException("Multiple batches are only supported in BATCH mode");
     }
 
-    var insert = RelToFlinkSql.convertToSqlString(execute);
-
-    var compiledPlan = Optional.<CompiledPlan>empty();
+    var compiledPlan = Optional.<ExecNodeGraphInternalPlan>empty();
     if (executionMode == RuntimeExecutionMode.STREAMING
         && (compileFlinkPlan || insertConflictPlanner.hasPendingInserts())) {
 
@@ -275,9 +277,12 @@ public class Sqrl2FlinkSQLTranslator {
       if (compileFlinkPlan) {
         compiledPlan = Optional.of(finalPlan);
       }
-      execute = planBuilder.getExecuteStatements();
-      insert = RelToFlinkSql.convertToSqlString(execute);
+    } else {
+      insertConflictPlanner.resolve();
     }
+
+    execute = planBuilder.getExecuteStatements();
+    var insert = RelToFlinkSql.convertToSqlString(execute);
 
     planBuilder.add(execute, insert);
     return planBuilder.build(compiledPlan);
@@ -500,29 +505,41 @@ public class Sqrl2FlinkSQLTranslator {
     final var query = removeSort(originalQuery);
     var removedSort = originalQuery != query;
     final var rewrittenViewDef = updateViewQuery(query, viewDef);
-    // Add the view to Flink using the rewritten SqlNode from stage 1.
-    var op = executeSqlNode(rewrittenViewDef);
-    ObjectIdentifier identifier;
-    if (op instanceof AlterViewAsOperation operation) {
-      identifier = operation.getViewIdentifier();
+    planBuilder.add(rewrittenViewDef);
+    var isAlterView = viewDef instanceof SqlAlterViewAs;
+    var identifier = qualifyViewIdentifier(viewDef);
+    if (isAlterView) {
       tableLookup.removeView(identifier); // remove previously planned view
-    } else if (op instanceof CreateViewOperation operation) {
-      identifier = operation.getViewIdentifier();
-    } else {
-      throw new UnsupportedOperationException(op.getClass().toString());
     }
 
     /* Stage 2: Analyze the RelNode/RelRoot
        - pull out top-level sort
-     NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
+     The analyzed RelNode is registered as the view in Flink so that references to the view reuse
+     the planned tree instead of re-parsing and re-validating the whole upstream view chain.
     */
-    var viewDef2 = parseSQL(originalSql);
-    var viewAnalysis = analyzeView(viewDef2, removedSort, hintsAndDoc, errors);
+    var viewAnalysis = analyzeView(viewDef, removedSort, hintsAndDoc, errors);
+    var catalogView =
+        new QueryOperationCatalogView(
+            new ViewQueryOperation(
+                viewAnalysis.originalRelnode(), () -> RelToFlinkSql.convertToString(query)));
+    if (isAlterView) {
+      catalogManager.alterTable(catalogView, identifier, false);
+    } else {
+      catalogManager.createTable(catalogView, identifier, false);
+    }
     var tableAnalysis =
         viewAnalysis.tableAnalysis().objectIdentifier(identifier).originalSql(originalSql).build();
     tableLookup.registerTable(tableAnalysis);
 
     return tableAnalysis;
+  }
+
+  private ObjectIdentifier qualifyViewIdentifier(SqlNode viewDef) {
+    var fullName =
+        viewDef instanceof SqlCreateView createView
+            ? createView.getFullName()
+            : ((SqlAlterViewAs) viewDef).getFullName();
+    return catalogManager.qualifyIdentifier(UnresolvedIdentifier.of(fullName));
   }
 
   /** Analyzes a query executed directly by an INSERT statement. */

@@ -16,11 +16,13 @@
 package com.datasqrl.planner;
 
 import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.datasqrl.engine.stream.flink.sql.rules.SqrlMiniBatchIntervalInferRule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.table.api.PlannerConfig;
 import org.apache.flink.table.planner.calcite.CalciteConfigBuilder;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkChainedProgram;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkChangelogModeInferenceProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkGroupProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
@@ -43,18 +46,16 @@ import org.apache.flink.table.planner.plan.rules.logical.PushPartitionIntoLegacy
 import org.apache.flink.table.planner.plan.rules.logical.PushPartitionIntoTableSourceScanRule;
 import org.apache.flink.table.planner.plan.rules.logical.PushProjectIntoLegacyTableSourceScanRule;
 import org.apache.flink.table.planner.plan.rules.logical.PushProjectIntoTableSourceScanRule;
+import org.apache.flink.table.planner.plan.rules.physical.stream.MiniBatchIntervalInferRule;
 import scala.Tuple2;
 
 @RequiredArgsConstructor
 @Slf4j
 public class FlinkPlannerConfigBuilder {
 
-  /** We do not touch these programs. */
+  /** We do not strip rules from these programs. */
   private static final Set<String> IGNORED_PROGRAMS =
-      Set.of(
-          FlinkStreamProgram.DECORRELATE(),
-          FlinkStreamProgram.PHYSICAL_REWRITE(),
-          FlinkStreamProgram.TIME_INDICATOR());
+      Set.of(FlinkStreamProgram.DECORRELATE(), FlinkStreamProgram.TIME_INDICATOR());
 
   /**
    * Downstream filter rules to remove in case of {@link
@@ -101,10 +102,11 @@ public class FlinkPlannerConfigBuilder {
   private final CompilerConfig compilerConfig;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
   private final Configuration flinkConfig;
+  private final FlinkOptimizeProgram<StreamOptimizeContext> insertConflictProgram;
 
   @VisibleForTesting
   public FlinkPlannerConfigBuilder(CompilerConfig compilerConfig, Configuration flinkConfig) {
-    this(compilerConfig, null, flinkConfig);
+    this(compilerConfig, null, flinkConfig, null);
   }
 
   public PlannerConfig build() {
@@ -113,10 +115,8 @@ public class FlinkPlannerConfigBuilder {
       calciteConfigBuilder.addSqlOperatorTable(sqrlFunctionCatalog.getOperatorTable());
     }
 
-    if (compilerConfig.predicatePushdownRules() != PredicatePushdownRules.DEFAULT) {
-      var streamProgram = buildCustomStreamProgram(compilerConfig.predicatePushdownRules());
-      calciteConfigBuilder.replaceStreamProgram(streamProgram);
-    }
+    var streamProgram = buildCustomStreamProgram(compilerConfig.predicatePushdownRules());
+    calciteConfigBuilder.replaceStreamProgram(streamProgram);
 
     return calciteConfigBuilder.build();
   }
@@ -130,8 +130,23 @@ public class FlinkPlannerConfigBuilder {
     for (var programName : origStreamProgram.getProgramNames()) {
       var program = origStreamProgram.get(programName).get();
 
+      if (programName.equals(FlinkStreamProgram.PHYSICAL_REWRITE())
+          && insertConflictProgram != null) {
+        addAfterChangelogModeInference(program, insertConflictProgram);
+      }
+
       // Programs that can be ignored.
       if (IGNORED_PROGRAMS.contains(programName)) {
+        customStreamProgram.addLast(programName, program);
+        continue;
+      }
+
+      if (programName.equals(FlinkStreamProgram.PHYSICAL_REWRITE())) {
+        replaceRules(
+            programName,
+            program,
+            MiniBatchIntervalInferRule.class::isInstance,
+            SqrlMiniBatchIntervalInferRule.INSTANCE);
         customStreamProgram.addLast(programName, program);
         continue;
       }
@@ -153,6 +168,21 @@ public class FlinkPlannerConfigBuilder {
     }
 
     return customStreamProgram;
+  }
+
+  private void addAfterChangelogModeInference(
+      FlinkOptimizeProgram<StreamOptimizeContext> physicalRewrite,
+      FlinkOptimizeProgram<StreamOptimizeContext> program) {
+
+    var programs = extractGroupPrograms(physicalRewrite);
+    for (int i = 0; i < programs.size(); i++) {
+      if (programs.get(i)._1 instanceof FlinkChangelogModeInferenceProgram) {
+        programs.add(i + 1, new Tuple2<>(program, "insert conflict resolution"));
+        return;
+      }
+    }
+
+    throw new IllegalStateException("Stream program has no changelog mode inference");
   }
 
   private void removeTableSourceScanRules(
@@ -189,11 +219,27 @@ public class FlinkPlannerConfigBuilder {
     return programs.removeIf(shouldRemove);
   }
 
-  // Strip rule(s) from a FlinkOptimizeProgram instance based on a predicate.
-  // In case of a FlinkGroupProgram, rule strip happens for every program.
-  @SuppressWarnings("unchecked")
   private void stripRules(
       String programName, FlinkOptimizeProgram<?> program, Predicate<RelOptRule> shouldRemove) {
+    rewriteRules(programName, program, rules -> rules.removeIf(shouldRemove));
+  }
+
+  private void replaceRules(
+      String programName,
+      FlinkOptimizeProgram<?> program,
+      Predicate<RelOptRule> shouldReplace,
+      RelOptRule replacement) {
+    rewriteRules(
+        programName,
+        program,
+        rules -> rules.replaceAll(rule -> shouldReplace.test(rule) ? replacement : rule));
+  }
+
+  // Rewrite the rule list of a FlinkOptimizeProgram instance.
+  // In case of a FlinkGroupProgram, the rewrite happens for every program.
+  @SuppressWarnings("unchecked")
+  private void rewriteRules(
+      String programName, FlinkOptimizeProgram<?> program, Consumer<List<RelOptRule>> rewrite) {
 
     List<?> programs;
     if (program instanceof FlinkGroupProgram) {
@@ -205,7 +251,7 @@ public class FlinkPlannerConfigBuilder {
 
     for (var internalProgram : programs) {
       if (internalProgram instanceof FlinkGroupProgram) {
-        stripRules(programName, (FlinkOptimizeProgram<?>) internalProgram, shouldRemove);
+        rewriteRules(programName, (FlinkOptimizeProgram<?>) internalProgram, rewrite);
         continue;
       }
 
@@ -216,12 +262,12 @@ public class FlinkPlannerConfigBuilder {
         var current = (List<RelOptRule>) f.get(internalProgram);
         var mutable = new ArrayList<>(current);
 
-        var changed = mutable.removeIf(shouldRemove);
-        if (changed) {
+        rewrite.accept(mutable);
+        if (!mutable.equals(current)) {
           f.set(internalProgram, List.copyOf(mutable));
         }
       } catch (ReflectiveOperationException e) {
-        log.warn("Could not strip rules from program: " + programName, e);
+        log.warn("Could not rewrite rules of program: " + programName, e);
       }
     }
   }
