@@ -20,12 +20,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import java.util.Optional;
-import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -44,7 +44,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Exercises conflict-clause resolution against the real Flink planner: an updating query whose
  * upsert key is not contained in the sink primary key must receive an {@code ON CONFLICT} clause,
- * insert-only queries must not, and the resulting statement set must compile without retries.
+ * insert-only queries must not, and the clauses must be resolved by the single compilation pass.
  */
 class FlinkInsertConflictPlannerTest {
 
@@ -65,8 +65,14 @@ class FlinkInsertConflictPlannerTest {
             StreamTableEnvironment.create(
                 sEnv, EnvironmentSettings.newInstance().inStreamingMode().build());
     planBuilder = new FlinkPhysicalPlan.Builder(new Configuration());
-    conflictPlanner =
-        new FlinkInsertConflictPlanner(RuntimeExecutionMode.STREAMING, tEnv, planBuilder);
+    conflictPlanner = new FlinkInsertConflictPlanner(tEnv, planBuilder);
+    var compilerConfig = mock(CompilerConfig.class);
+    when(compilerConfig.predicatePushdownRules()).thenReturn(PredicatePushdownRules.DEFAULT);
+    tEnv.getConfig()
+        .setPlannerConfig(
+            new FlinkPlannerConfigBuilder(
+                    compilerConfig, null, new Configuration(), conflictPlanner.getConflictProgram())
+                .build());
 
     tEnv.executeSql(
         """
@@ -80,15 +86,15 @@ class FlinkInsertConflictPlannerTest {
   }
 
   @Test
-  void givenUpsertKeyNotInSinkPrimaryKey_whenResolve_thenAddsRequiredConflictClause() {
+  void givenUpsertKeyNotInSinkPrimaryKey_whenCompile_thenAddsRequiredConflictClause() {
     // Upsert key [name] is not contained in the sink primary key [cnt]; the RELATION type has no
     // automatic behavior, so the required clause falls back to DO NOTHING.
     addInsert(aggregateQuery(), MISMATCH_SINK, table(TableType.RELATION));
 
-    conflictPlanner.resolve();
+    var compiledPlan = conflictPlanner.compilePlan();
 
     assertThat(insertSql(0)).contains("ON CONFLICT DO NOTHING");
-    assertThat(conflictPlanner.compilePlan()).isNotNull();
+    assertThat(compiledPlan.asJsonString()).contains("\"conflictStrategy\"");
   }
 
   @Test
@@ -100,7 +106,9 @@ class FlinkInsertConflictPlannerTest {
     when(tableSink.getChangelogMode(any(ChangelogMode.class)))
         .thenReturn(ChangelogMode.newBuilder().addContainedKind(RowKind.UPDATE_BEFORE).build());
 
-    assertThat(conflictPlanner.resolveConflictBehavior(table(TableType.STREAM), Optional.of(sink)))
+    assertThat(
+            FlinkInsertConflictProgram.resolveConflictBehavior(
+                sink, Optional.of(SqlInsertConflictBehavior.DEDUPLICATE)))
         .contains(SqlInsertConflictBehavior.DEDUPLICATE);
   }
 
@@ -113,12 +121,14 @@ class FlinkInsertConflictPlannerTest {
     when(tableSink.getChangelogMode(any(ChangelogMode.class)))
         .thenReturn(ChangelogMode.insertOnly());
 
-    assertThat(conflictPlanner.resolveConflictBehavior(table(TableType.STREAM), Optional.of(sink)))
+    assertThat(
+            FlinkInsertConflictProgram.resolveConflictBehavior(
+                sink, Optional.of(SqlInsertConflictBehavior.DEDUPLICATE)))
         .isEmpty();
   }
 
   @Test
-  void givenInsertOnlyQueryWithUpsertKeyInPrimaryKey_whenResolve_thenOmitsConflictClause() {
+  void givenInsertOnlyQueryWithUpsertKeyInPrimaryKey_whenCompile_thenOmitsConflictClause() {
     // Keep-first rowtime deduplication stays insert-only and derives upsert key [name].
     var dedupQuery =
         """
@@ -127,43 +137,36 @@ class FlinkInsertConflictPlannerTest {
         ) WHERE rn = 1""";
     addInsert(dedupQuery, MATCHING_SINK, table(TableType.STREAM));
 
-    conflictPlanner.resolve();
-
-    assertThat(insertSql(0)).doesNotContain("ON CONFLICT");
     assertThat(conflictPlanner.compilePlan()).isNotNull();
+    assertThat(insertSql(0)).doesNotContain("ON CONFLICT");
   }
 
   @Test
-  void givenUpsertKeyContainedInSinkPrimaryKey_whenResolve_thenOmitsClauseForRelationTable() {
+  void givenUpsertKeyContainedInSinkPrimaryKey_whenCompile_thenOmitsClauseForRelationTable() {
     addInsert(aggregateQuery(), MATCHING_SINK, table(TableType.RELATION));
 
-    conflictPlanner.resolve();
-
-    assertThat(insertSql(0)).doesNotContain("ON CONFLICT");
     assertThat(conflictPlanner.compilePlan()).isNotNull();
+    assertThat(insertSql(0)).doesNotContain("ON CONFLICT");
   }
 
   @Test
-  void givenExplicitConflictBehavior_whenResolve_thenPreservesBehavior() {
+  void givenExplicitConflictBehavior_whenCompile_thenPreservesBehavior() {
     addInsert(
         aggregateQuery(),
         MISMATCH_SINK,
         table(TableType.RELATION, Optional.of(ConflictBehavior.DEDUPLICATE)));
 
-    conflictPlanner.resolve();
-
     assertThat(insertSql(0)).contains("ON CONFLICT DO DEDUPLICATE");
     assertThat(conflictPlanner.compilePlan()).isNotNull();
+    assertThat(insertSql(0)).contains("ON CONFLICT DO DEDUPLICATE");
   }
 
   @Test
-  void givenStateTableWithUpdatingQuery_whenResolve_thenDeduplicates() {
+  void givenStateTableWithUpdatingQuery_whenCompile_thenDeduplicates() {
     addInsert(aggregateQuery(), MATCHING_SINK, table(TableType.STATE));
 
-    conflictPlanner.resolve();
-
-    assertThat(insertSql(0)).contains("ON CONFLICT DO DEDUPLICATE");
     assertThat(conflictPlanner.compilePlan()).isNotNull();
+    assertThat(insertSql(0)).contains("ON CONFLICT DO DEDUPLICATE");
   }
 
   private void createJdbcSink(String name, String primaryKey) {
