@@ -38,3 +38,6 @@ CustomerRowById(id BIGINT NOT NULL) := SELECT c AS customer FROM Customer c WHER
 CteDefinitionRow := WITH Recent AS (SELECT * FROM Customer WHERE customerid > 0),
                          Wrapped AS (SELECT r.customerid, r AS customer FROM Recent r)
                     SELECT * FROM Wrapped;
+
+/** A quoted reserved word works as a relation alias */
+ReservedAliasRow := SELECT `order`.customerid, `order` AS whole FROM Customer `order`;

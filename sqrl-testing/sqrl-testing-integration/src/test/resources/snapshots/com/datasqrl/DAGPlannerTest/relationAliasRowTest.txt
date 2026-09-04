@@ -225,6 +225,27 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+=== ReservedAliasRow
+ID:          default_catalog.default_database.ReservedAliasRow
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - whole: RecordType:peek_no_expand(BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL email, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, BIGINT NOT NULL lastUpdated, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL timestamp) NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+Plan:
+LogicalProject(customerid=[$0], whole=[CAST(ROW($0, $1, $2, $3, $4)):RecordType:peek_no_expand(BIGINT NOT NULL customerid, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL email, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL name, BIGINT NOT NULL lastUpdated, TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL timestamp) NOT NULL])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+CREATE VIEW `ReservedAliasRow` AS  SELECT `order`.customerid, `order` AS whole FROM Customer `order`;
+
 === Shadowed
 ID:          default_catalog.default_database.Shadowed
 Type:        stream
@@ -345,6 +366,10 @@ WITH `Recent` AS (SELECT *
   WHERE `customerid` > 0), `Wrapped` AS (SELECT `r`.`customerid`, CAST(ROW(`r`.`customerid`, `r`.`email`, `r`.`name`, `r`.`lastUpdated`, `r`.`timestamp`) AS ROW(`customerid` BIGINT NOT NULL, `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `lastUpdated` BIGINT NOT NULL, `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL)) AS `customer`
   FROM `Recent` AS `r`) SELECT *
   FROM `Wrapped`;
+CREATE VIEW `ReservedAliasRow`
+AS
+SELECT `order`.`customerid`, CAST(ROW(`order`.`customerid`, `order`.`email`, `order`.`name`, `order`.`lastUpdated`, `order`.`timestamp`) AS ROW(`customerid` BIGINT NOT NULL, `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL, `lastUpdated` BIGINT NOT NULL, `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL)) AS `whole`
+FROM `Customer` AS `order`;
 CREATE TABLE `CteCustomerRow_1` (
   `customerid` BIGINT NOT NULL,
   `customer` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
@@ -452,9 +477,9 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `Shadowed_8` (
-  `c` BIGINT NOT NULL,
-  `label` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+CREATE TABLE `ReservedAliasRow_8` (
+  `customerid` BIGINT NOT NULL,
+  `whole` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
   PRIMARY KEY (`__pk_hash`) NOT ENFORCED
 )
@@ -463,11 +488,11 @@ WITH (
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
   'sink.on-conflict.action' = 'IGNORE',
-  'table-name' = 'Shadowed_8',
+  'table-name' = 'ReservedAliasRow_8',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `ShadowedAlias_9` (
+CREATE TABLE `Shadowed_9` (
   `c` BIGINT NOT NULL,
   `label` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
@@ -478,7 +503,22 @@ WITH (
   'driver' = 'org.postgresql.Driver',
   'password' = '${POSTGRES_PASSWORD}',
   'sink.on-conflict.action' = 'IGNORE',
-  'table-name' = 'ShadowedAlias_9',
+  'table-name' = 'Shadowed_9',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `ShadowedAlias_10` (
+  `c` BIGINT NOT NULL,
+  `label` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'ShadowedAlias_10',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
@@ -516,12 +556,17 @@ INSERT INTO `default_catalog`.`default_database`.`Orders_7`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`Orders`
 ;
-INSERT INTO `default_catalog`.`default_database`.`Shadowed_8`
+INSERT INTO `default_catalog`.`default_database`.`ReservedAliasRow_8`
+SELECT `customerid`, `to_jsonb`(`whole`) AS `whole`, `hash_columns`(`customerid`, `whole`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`ReservedAliasRow`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`Shadowed_9`
 SELECT `c`, `label`, `hash_columns`(`c`, `label`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`Shadowed`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`ShadowedAlias_9`
+INSERT INTO `default_catalog`.`default_database`.`ShadowedAlias_10`
 SELECT `c`, `label`, `hash_columns`(`c`, `label`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`ShadowedAlias`
 ON CONFLICT DO DEDUPLICATE
@@ -756,9 +801,39 @@ END
       "ttl" : 0.0
     },
     {
-      "name" : "Shadowed_8",
+      "name" : "ReservedAliasRow_8",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"Shadowed_8\" (\"c\" BIGINT NOT NULL, \"label\" TEXT NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ReservedAliasRow_8\" (\"customerid\" BIGINT NOT NULL, \"whole\" JSONB, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "description" : "A quoted reserved word works as a relation alias",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "whole",
+          "type" : "JSONB",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "Shadowed_9",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Shadowed_9\" (\"c\" BIGINT NOT NULL, \"label\" TEXT NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
       "fields" : [
         {
           "name" : "c",
@@ -785,9 +860,9 @@ END
       "ttl" : 0.0
     },
     {
-      "name" : "ShadowedAlias_9",
+      "name" : "ShadowedAlias_10",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"ShadowedAlias_9\" (\"c\" BIGINT NOT NULL, \"label\" TEXT NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"ShadowedAlias_10\" (\"c\" BIGINT NOT NULL, \"label\" TEXT NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
       "description" : "A column of the same name takes precedence over the relation alias",
       "fields" : [
         {
@@ -982,9 +1057,27 @@ END
       ]
     },
     {
+      "name" : "ReservedAliasRow",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"ReservedAliasRow\"(\"customerid\", \"whole\") AS SELECT \"customerid\", \"whole\"\nFROM \"ReservedAliasRow_8\"",
+      "description" : "A quoted reserved word works as a relation alias",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "whole",
+          "type" : "JSONB",
+          "nullable" : true
+        }
+      ]
+    },
+    {
       "name" : "Shadowed",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"Shadowed\"(\"c\", \"label\") AS SELECT \"c\", \"label\"\nFROM \"Shadowed_8\"",
+      "sql" : "CREATE OR REPLACE VIEW \"Shadowed\"(\"c\", \"label\") AS SELECT \"c\", \"label\"\nFROM \"Shadowed_9\"",
       "fields" : [
         {
           "name" : "c",
@@ -1001,7 +1094,7 @@ END
     {
       "name" : "ShadowedAlias",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"ShadowedAlias\"(\"c\", \"label\") AS SELECT \"c\", \"label\"\nFROM \"ShadowedAlias_9\"",
+      "sql" : "CREATE OR REPLACE VIEW \"ShadowedAlias\"(\"c\", \"label\") AS SELECT \"c\", \"label\"\nFROM \"ShadowedAlias_10\"",
       "description" : "A column of the same name takes precedence over the relation alias",
       "fields" : [
         {
@@ -1227,6 +1320,31 @@ END
         {
           "type" : "args",
           "parentType" : "Query",
+          "fieldName" : "ReservedAliasRow",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customerid\", \"whole\"\nFROM \"ReservedAliasRow_8\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
           "fieldName" : "Shadowed",
           "exec" : {
             "arguments" : [
@@ -1241,7 +1359,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"c\", \"label\"\nFROM \"Shadowed_8\"",
+              "sql" : "SELECT \"c\", \"label\"\nFROM \"Shadowed_9\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -1266,7 +1384,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"c\", \"label\"\nFROM \"ShadowedAlias_9\"",
+              "sql" : "SELECT \"c\", \"label\"\nFROM \"ShadowedAlias_10\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -1815,6 +1933,65 @@ END
         },
         {
           "function" : {
+            "name" : "GetReservedAliasRow",
+            "description" : "A quoted reserved word works as a relation alias",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ReservedAliasRow($limit: Int = 10, $offset: Int = 0) {\nReservedAliasRow(limit: $limit, offset: $offset) {\ncustomerid\nwhole {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n}\n\n}",
+            "queryName" : "ReservedAliasRow",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ReservedAliasRow{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "whole" : {
+                  "type" : "object",
+                  "properties" : {
+                    "customerid" : {
+                      "type" : "integer"
+                    },
+                    "email" : {
+                      "type" : "string"
+                    },
+                    "name" : {
+                      "type" : "string"
+                    },
+                    "lastUpdated" : {
+                      "type" : "integer"
+                    },
+                    "timestamp" : {
+                      "type" : "string",
+                      "format" : "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
             "name" : "GetShadowed",
             "parameters" : {
               "type" : "object",
@@ -1958,7 +2135,7 @@ END
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"CTEs stay in scope while the alias is resolved\"\ntype CteCustomerRow {\n  customerid: Long!\n  customer: CteCustomerRow_customerOutput!\n}\n\ntype CteCustomerRow_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"A bare alias derives its column name from the alias itself\"\ntype CustomerBare {\n  customerid: Long!\n  c: CustomerBare_cOutput!\n}\n\ntype CustomerBare_cOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"The whole customer row nested under a named field\"\ntype CustomerRow {\n  customerid: Long!\n  customer: CustomerRow_customerOutput!\n}\n\n\"The nested row is available to table functions as well\"\ntype CustomerRowById {\n  customer: CustomerRowById_customerOutput!\n}\n\ntype CustomerRowById_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerRow_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\n\"Relation aliases are expanded in subqueries too\"\ntype NestedCustomerRow {\n  customer: NestedCustomerRow_customerOutput!\n}\n\ntype NestedCustomerRow_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"Both sides of a join can be nested, including array columns\"\ntype OrderWithCustomer {\n  id: Long!\n  order: OrderWithCustomer_orderOutput!\n  customer: OrderWithCustomer_customerOutput!\n}\n\ntype OrderWithCustomer_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype OrderWithCustomer_orderOutput {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [OrderWithCustomer_order_entriesOutput]!\n}\n\ntype OrderWithCustomer_order_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  \"CTEs stay in scope while the alias is resolved\"\n  CteCustomerRow(limit: Int = 10, offset: Int = 0): [CteCustomerRow!]\n  \"Aliases inside a CTE definition see the preceding CTEs, but not their own binding\"\n  CteDefinitionRow(limit: Int = 10, offset: Int = 0): [CteCustomerRow!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  \"A bare alias derives its column name from the alias itself\"\n  CustomerBare(limit: Int = 10, offset: Int = 0): [CustomerBare!]\n  \"The whole customer row nested under a named field\"\n  CustomerRow(limit: Int = 10, offset: Int = 0): [CustomerRow!]\n  \"Relation aliases are expanded in subqueries too\"\n  NestedCustomerRow(limit: Int = 10, offset: Int = 0): [NestedCustomerRow!]\n  \"Both sides of a join can be nested, including array columns\"\n  OrderWithCustomer(limit: Int = 10, offset: Int = 0): [OrderWithCustomer!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  Shadowed(limit: Int = 10, offset: Int = 0): [Shadowed!]\n  \"A column of the same name takes precedence over the relation alias\"\n  ShadowedAlias(limit: Int = 10, offset: Int = 0): [Shadowed!]\n  \"The nested row is available to table functions as well\"\n  CustomerRowById(id: Long!, limit: Int = 10, offset: Int = 0): [CustomerRowById!]\n}\n\ntype Shadowed {\n  c: Long!\n  label: String!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"CTEs stay in scope while the alias is resolved\"\ntype CteCustomerRow {\n  customerid: Long!\n  customer: CteCustomerRow_customerOutput!\n}\n\ntype CteCustomerRow_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"A bare alias derives its column name from the alias itself\"\ntype CustomerBare {\n  customerid: Long!\n  c: CustomerBare_cOutput!\n}\n\ntype CustomerBare_cOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"The whole customer row nested under a named field\"\ntype CustomerRow {\n  customerid: Long!\n  customer: CustomerRow_customerOutput!\n}\n\n\"The nested row is available to table functions as well\"\ntype CustomerRowById {\n  customer: CustomerRowById_customerOutput!\n}\n\ntype CustomerRowById_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerRow_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\n\"Relation aliases are expanded in subqueries too\"\ntype NestedCustomerRow {\n  customer: NestedCustomerRow_customerOutput!\n}\n\ntype NestedCustomerRow_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\n\"Both sides of a join can be nested, including array columns\"\ntype OrderWithCustomer {\n  id: Long!\n  order: OrderWithCustomer_orderOutput!\n  customer: OrderWithCustomer_customerOutput!\n}\n\ntype OrderWithCustomer_customerOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype OrderWithCustomer_orderOutput {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [OrderWithCustomer_order_entriesOutput]!\n}\n\ntype OrderWithCustomer_order_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Orders {\n  id: Long!\n  customerid: Long!\n  time: DateTime!\n  entries: [Orders_entriesOutput]!\n}\n\ntype Orders_entriesOutput {\n  productid: Long!\n  quantity: Long!\n  unit_price: Float!\n  discount: Float\n}\n\ntype Query {\n  \"CTEs stay in scope while the alias is resolved\"\n  CteCustomerRow(limit: Int = 10, offset: Int = 0): [CteCustomerRow!]\n  \"Aliases inside a CTE definition see the preceding CTEs, but not their own binding\"\n  CteDefinitionRow(limit: Int = 10, offset: Int = 0): [CteCustomerRow!]\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  \"A bare alias derives its column name from the alias itself\"\n  CustomerBare(limit: Int = 10, offset: Int = 0): [CustomerBare!]\n  \"The whole customer row nested under a named field\"\n  CustomerRow(limit: Int = 10, offset: Int = 0): [CustomerRow!]\n  \"Relation aliases are expanded in subqueries too\"\n  NestedCustomerRow(limit: Int = 10, offset: Int = 0): [NestedCustomerRow!]\n  \"Both sides of a join can be nested, including array columns\"\n  OrderWithCustomer(limit: Int = 10, offset: Int = 0): [OrderWithCustomer!]\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"A quoted reserved word works as a relation alias\"\n  ReservedAliasRow(limit: Int = 10, offset: Int = 0): [ReservedAliasRow!]\n  Shadowed(limit: Int = 10, offset: Int = 0): [Shadowed!]\n  \"A column of the same name takes precedence over the relation alias\"\n  ShadowedAlias(limit: Int = 10, offset: Int = 0): [Shadowed!]\n  \"The nested row is available to table functions as well\"\n  CustomerRowById(id: Long!, limit: Int = 10, offset: Int = 0): [CustomerRowById!]\n}\n\n\"A quoted reserved word works as a relation alias\"\ntype ReservedAliasRow {\n  customerid: Long!\n  whole: ReservedAliasRow_wholeOutput!\n}\n\ntype ReservedAliasRow_wholeOutput {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype Shadowed {\n  c: Long!\n  label: String!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
