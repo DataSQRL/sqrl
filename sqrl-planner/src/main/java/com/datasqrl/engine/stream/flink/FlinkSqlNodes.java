@@ -20,6 +20,7 @@ import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonTypeSerializer;
 import com.datasqrl.planner.util.NonSecretEnvVarResolver;
 import com.datasqrl.sql.SqlCallRewriter;
+import com.datasqrl.sql.SqlNodeCopier;
 import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,6 +62,7 @@ import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
 import org.apache.flink.sql.parser.ddl.view.SqlCreateView;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
+import org.apache.flink.sql.parser.dml.RichSqlInsertKeyword;
 import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
 import org.apache.flink.table.catalog.ObjectIdentifier;
@@ -112,6 +114,29 @@ public class FlinkSqlNodes {
         null,
         null,
         conflictBehavior.map(cb -> cb.symbol(SqlParserPos.ZERO)).orElse(null));
+  }
+
+  /** Deep-copies an insert so it can be validated without rewriting the original. */
+  public static RichSqlInsert copyInsert(RichSqlInsert insert) {
+    var overwrite =
+        insert.isOverwrite()
+            ? new SqlNodeList(
+                List.of(RichSqlInsertKeyword.OVERWRITE.symbol(SqlParserPos.ZERO)),
+                SqlParserPos.ZERO)
+            : SqlNodeList.EMPTY;
+    return new RichSqlInsert(
+        insert.getParserPosition(),
+        copyList(insert.operand(0)),
+        overwrite,
+        SqlNodeCopier.copy(insert.getTargetTable()),
+        SqlNodeCopier.copy(insert.getSource()),
+        insert.getTargetColumnList() == null ? null : copyList(insert.getTargetColumnList()),
+        copyList(insert.getStaticPartitions()),
+        insert.getConflictStrategy().map(cb -> cb.symbol(SqlParserPos.ZERO)).orElse(null));
+  }
+
+  private static SqlNodeList copyList(@Nullable SqlNodeList list) {
+    return list == null ? SqlNodeList.EMPTY : (SqlNodeList) SqlNodeCopier.copy(list);
   }
 
   public static SqlCreateFunction createFunction(String name, String clazz, boolean isSystem) {
