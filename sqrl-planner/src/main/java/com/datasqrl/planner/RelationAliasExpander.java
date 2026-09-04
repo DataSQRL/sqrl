@@ -53,10 +53,10 @@ import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
  * table's entire row can be nested under a single field without re-listing its columns.
  *
  * <p>The columns an alias contributes are resolved by validating a probe query built from the FROM
- * clause alone, wrapped back into any enclosing {@code WITH} so that CTEs stay in scope. A column
- * of the same name takes precedence over the relation alias. A FROM clause that does not validate
- * on its own - a correlated or LATERAL join referencing the enclosing query - is left untouched, so
- * that the regular validation reports the error.
+ * clause alone, wrapped back into the {@code WITH} bindings visible at that point so that CTEs stay
+ * in scope. A column of the same name takes precedence over the relation alias. A FROM clause that
+ * does not validate on its own - a correlated or LATERAL join referencing the enclosing query - is
+ * left untouched, so that the regular validation reports the error.
  */
 @Slf4j
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
@@ -72,29 +72,35 @@ class RelationAliasExpander {
   }
 
   /**
-   * Tracks the {@code WITH} clauses enclosing each SELECT so probes can be built in their scope.
+   * Tracks the CTE bindings visible at each SELECT so probes can be built in their scope. A CTE
+   * definition only sees the bindings declared before it, the body sees all of them.
    */
   private class SelectListVisitor extends SqlBasicVisitor<Void> {
 
-    private final Deque<SqlNodeList> enclosingWithLists = new ArrayDeque<>();
+    private final Deque<SqlNodeList> visibleWithLists = new ArrayDeque<>();
 
     @Override
     public Void visit(SqlCall call) {
       if (call instanceof SqlWith with) {
-        enclosingWithLists.push(with.withList);
-        super.visit(call);
-        enclosingWithLists.pop();
+        var visible = new SqlNodeList(SqlParserPos.ZERO);
+        visibleWithLists.push(visible);
+        for (SqlNode item : with.withList) {
+          item.accept(this);
+          visible.add(item);
+        }
+        with.body.accept(this);
+        visibleWithLists.pop();
         return null;
       }
       super.visit(call);
       if (call instanceof SqlSelect select) {
-        expandSelect(select, enclosingWithLists);
+        expandSelect(select, visibleWithLists);
       }
       return null;
     }
   }
 
-  private void expandSelect(SqlSelect select, Deque<SqlNodeList> enclosingWithLists) {
+  private void expandSelect(SqlSelect select, Deque<SqlNodeList> visibleWithLists) {
     if (select.getFrom() == null) {
       return;
     }
@@ -105,7 +111,7 @@ class RelationAliasExpander {
       return;
     }
 
-    var queryType = resolveType(SqlIdentifier.star(SqlParserPos.ZERO), select, enclosingWithLists);
+    var queryType = resolveType(SqlIdentifier.star(SqlParserPos.ZERO), select, visibleWithLists);
     if (queryType == null) {
       return;
     }
@@ -118,7 +124,7 @@ class RelationAliasExpander {
         continue;
       }
       var star = new SqlIdentifier(alias, SqlParserPos.ZERO).plusStar();
-      var rowType = resolveType(star, select, enclosingWithLists);
+      var rowType = resolveType(star, select, visibleWithLists);
       if (rowType != null) {
         selectList.set(
             i, SqlValidatorUtil.addAlias(rowValue(alias, rowType), SqlValidatorUtil.alias(item)));
@@ -132,7 +138,7 @@ class RelationAliasExpander {
    * validation modifies the {@link SqlNode} tree it is given.
    */
   private @Nullable RelDataType resolveType(
-      SqlIdentifier item, SqlSelect select, Deque<SqlNodeList> enclosingWithLists) {
+      SqlIdentifier item, SqlSelect select, Deque<SqlNodeList> visibleWithLists) {
     var probe = (SqlSelect) select.clone(SqlParserPos.ZERO);
     probe.setSelectList(new SqlNodeList(List.of(item), SqlParserPos.ZERO));
     probe.setWhere(null);
@@ -144,8 +150,10 @@ class RelationAliasExpander {
     probe.setFetch(null);
 
     SqlNode statement = probe;
-    for (SqlNodeList withList : enclosingWithLists) {
-      statement = new SqlWith(SqlParserPos.ZERO, withList, statement);
+    for (SqlNodeList withList : visibleWithLists) {
+      if (!withList.isEmpty()) {
+        statement = new SqlWith(SqlParserPos.ZERO, withList, statement);
+      }
     }
 
     var query = RelToFlinkSql.convertToString(statement);

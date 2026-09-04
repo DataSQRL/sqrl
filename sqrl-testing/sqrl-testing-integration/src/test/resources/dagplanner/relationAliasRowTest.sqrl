@@ -33,3 +33,8 @@ NestedCustomerRow := SELECT x.customer FROM (SELECT c AS customer FROM Customer 
 
 /** The nested row is available to table functions as well */
 CustomerRowById(id BIGINT NOT NULL) := SELECT c AS customer FROM Customer c WHERE c.customerid = :id;
+
+/** Aliases inside a CTE definition see the preceding CTEs, but not their own binding */
+CteDefinitionRow := WITH Recent AS (SELECT * FROM Customer WHERE customerid > 0),
+                         Wrapped AS (SELECT r.customerid, r AS customer FROM Recent r)
+                    SELECT * FROM Wrapped;
