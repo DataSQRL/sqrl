@@ -216,7 +216,7 @@ public class Sqrl2FlinkSQLTranslator {
             .withClassLoader(udfClassLoader)
             .build();
     this.tEnv = (StreamTableEnvironmentImpl) StreamTableEnvironment.create(sEnv, tEnvSettings);
-    this.insertConflictPlanner = new FlinkInsertConflictPlanner(executionMode, tEnv, planBuilder);
+    this.insertConflictPlanner = new FlinkInsertConflictPlanner(tEnv, planBuilder);
 
     // Extract a number of classes we need access to for planning
     this.validatorSupplier = ((PlannerBase) tEnv.getPlanner())::createFlinkPlanner;
@@ -226,7 +226,11 @@ public class Sqrl2FlinkSQLTranslator {
     sqrlFunctionCatalog = new SqrlFunctionCatalog(typeFactory);
 
     var plannerConfigBuilder =
-        new FlinkPlannerConfigBuilder(compilerConfig, sqrlFunctionCatalog, planBuilder.getConfig());
+        new FlinkPlannerConfigBuilder(
+            compilerConfig,
+            sqrlFunctionCatalog,
+            planBuilder.getConfig(),
+            insertConflictPlanner.getConflictProgram());
     this.tEnv.getConfig().setPlannerConfig(plannerConfigBuilder.build());
     this.catalogManager = tEnv.getCatalogManager();
 
@@ -259,14 +263,11 @@ public class Sqrl2FlinkSQLTranslator {
    * @return
    */
   public FlinkPhysicalPlan compileFlinkPlan() {
-    insertConflictPlanner.resolve();
     var execute = planBuilder.getExecuteStatements();
 
     if (executionMode != RuntimeExecutionMode.BATCH && execute.size() > 1) {
       throw new UnsupportedOperationException("Multiple batches are only supported in BATCH mode");
     }
-
-    var insert = RelToFlinkSql.convertToSqlString(execute);
 
     var compiledPlan = Optional.<ExecNodeGraphInternalPlan>empty();
     if (executionMode == RuntimeExecutionMode.STREAMING
@@ -276,9 +277,12 @@ public class Sqrl2FlinkSQLTranslator {
       if (compileFlinkPlan) {
         compiledPlan = Optional.of(finalPlan);
       }
-      execute = planBuilder.getExecuteStatements();
-      insert = RelToFlinkSql.convertToSqlString(execute);
+    } else {
+      insertConflictPlanner.resolve();
     }
+
+    execute = planBuilder.getExecuteStatements();
+    var insert = RelToFlinkSql.convertToSqlString(execute);
 
     planBuilder.add(execute, insert);
     return planBuilder.build(compiledPlan);

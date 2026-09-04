@@ -32,6 +32,7 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.table.api.PlannerConfig;
 import org.apache.flink.table.planner.calcite.CalciteConfigBuilder;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkChainedProgram;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkChangelogModeInferenceProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkGroupProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
@@ -52,7 +53,7 @@ import scala.Tuple2;
 @Slf4j
 public class FlinkPlannerConfigBuilder {
 
-  /** We do not touch these programs. */
+  /** We do not strip rules from these programs. */
   private static final Set<String> IGNORED_PROGRAMS =
       Set.of(FlinkStreamProgram.DECORRELATE(), FlinkStreamProgram.TIME_INDICATOR());
 
@@ -101,10 +102,11 @@ public class FlinkPlannerConfigBuilder {
   private final CompilerConfig compilerConfig;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
   private final Configuration flinkConfig;
+  private final FlinkOptimizeProgram<StreamOptimizeContext> insertConflictProgram;
 
   @VisibleForTesting
   public FlinkPlannerConfigBuilder(CompilerConfig compilerConfig, Configuration flinkConfig) {
-    this(compilerConfig, null, flinkConfig);
+    this(compilerConfig, null, flinkConfig, null);
   }
 
   public PlannerConfig build() {
@@ -127,6 +129,11 @@ public class FlinkPlannerConfigBuilder {
 
     for (var programName : origStreamProgram.getProgramNames()) {
       var program = origStreamProgram.get(programName).get();
+
+      if (programName.equals(FlinkStreamProgram.PHYSICAL_REWRITE())
+          && insertConflictProgram != null) {
+        addAfterChangelogModeInference(program, insertConflictProgram);
+      }
 
       // Programs that can be ignored.
       if (IGNORED_PROGRAMS.contains(programName)) {
@@ -161,6 +168,21 @@ public class FlinkPlannerConfigBuilder {
     }
 
     return customStreamProgram;
+  }
+
+  private void addAfterChangelogModeInference(
+      FlinkOptimizeProgram<StreamOptimizeContext> physicalRewrite,
+      FlinkOptimizeProgram<StreamOptimizeContext> program) {
+
+    var programs = extractGroupPrograms(physicalRewrite);
+    for (int i = 0; i < programs.size(); i++) {
+      if (programs.get(i)._1 instanceof FlinkChangelogModeInferenceProgram) {
+        programs.add(i + 1, new Tuple2<>(program, "insert conflict resolution"));
+        return;
+      }
+    }
+
+    throw new IllegalStateException("Stream program has no changelog mode inference");
   }
 
   private void removeTableSourceScanRules(
