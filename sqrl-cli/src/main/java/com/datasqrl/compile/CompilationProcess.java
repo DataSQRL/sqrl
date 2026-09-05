@@ -64,12 +64,17 @@ public class CompilationProcess {
   private final ErrorCollector errors;
 
   public Pair<PhysicalPlan, TestPlan> executeCompilation(Optional<Path> testsPath) {
-
-    var environment =
+    try (var environment =
         new Sqrl2FlinkSQLTranslator(
             workspacePaths,
             (FlinkStreamEngine) planner.getStreamStage().engine(),
-            config.getCompilerConfig());
+            config.getCompilerConfig())) {
+      return executeCompilation(testsPath, environment);
+    }
+  }
+
+  private Pair<PhysicalPlan, TestPlan> executeCompilation(
+      Optional<Path> testsPath, Sqrl2FlinkSQLTranslator environment) {
     planner.planMain(mainScript, Optional.empty(), environment);
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
