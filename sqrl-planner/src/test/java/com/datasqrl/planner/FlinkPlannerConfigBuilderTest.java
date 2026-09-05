@@ -26,10 +26,14 @@ import org.apache.flink.configuration.Configuration;
 import org.apache.flink.table.api.ExplainFormat;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.planner.calcite.CalciteConfig;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkGroupProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkHepRuleSetProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeProgram;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkRuleSetProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
+import org.apache.flink.table.planner.plan.rules.logical.FlinkCalcMergeRule;
 import org.apache.flink.table.planner.plan.rules.physical.stream.MiniBatchIntervalInferRule;
+import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalCalcRule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -96,6 +100,32 @@ class FlinkPlannerConfigBuilderTest {
         .isEmpty();
   }
 
+  @ParameterizedTest
+  @EnumSource(PredicatePushdownRules.class)
+  void givenAnyPushdownRules_whenBuild_thenNoProgramContainsPythonRules(
+      PredicatePushdownRules rules) {
+    var plannerConfig =
+        (CalciteConfig) new FlinkPlannerConfigBuilder(config(rules), new Configuration()).build();
+    var streamProgram = plannerConfig.getStreamProgram().get();
+
+    var ruleSetPrograms =
+        streamProgram.getProgramNames().stream()
+            .map(name -> streamProgram.get(name).get())
+            .flatMap(program -> ruleSetPrograms(program).stream())
+            .toList();
+
+    assertThat(ruleSetPrograms).hasSizeGreaterThan(20);
+    assertThat(ruleSetPrograms)
+        .filteredOn(p -> p.contains(FlinkCalcMergeRule.INSTANCE))
+        .hasSizeGreaterThanOrEqualTo(2);
+    assertThat(ruleSetPrograms)
+        .filteredOn(p -> p.contains(StreamPhysicalCalcRule.INSTANCE()))
+        .hasSize(1);
+    for (var pythonRule : FlinkPlannerConfigBuilder.PYTHON_RULES) {
+      assertThat(ruleSetPrograms).filteredOn(p -> p.contains(pythonRule)).isEmpty();
+    }
+  }
+
   @Test
   void givenMiniBatchTemporalJoin_whenExplain_thenPlanEqualsFlinkDefaultProgram() {
     var sqrlPlan = explain(true);
@@ -126,6 +156,18 @@ class FlinkPlannerConfigBuilderTest {
     var compilerConf = mock(CompilerConfig.class);
     when(compilerConf.predicatePushdownRules()).thenReturn(rules);
     return compilerConf;
+  }
+
+  private List<FlinkRuleSetProgram<?>> ruleSetPrograms(FlinkOptimizeProgram<?> program) {
+    if (program instanceof FlinkRuleSetProgram<?> ruleSetProgram) {
+      return List.of(ruleSetProgram);
+    }
+    if (program instanceof FlinkGroupProgram) {
+      return subPrograms(program).stream()
+          .flatMap(sub -> ruleSetPrograms(sub._1).stream())
+          .toList();
+    }
+    return List.of();
   }
 
   @SuppressWarnings("unchecked")

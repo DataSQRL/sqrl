@@ -35,8 +35,10 @@ import org.apache.flink.table.planner.plan.optimize.program.FlinkChainedProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkChangelogModeInferenceProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkGroupProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeProgram;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkRuleSetProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
 import org.apache.flink.table.planner.plan.optimize.program.StreamOptimizeContext;
+import org.apache.flink.table.planner.plan.rules.logical.CalcPythonCorrelateTransposeRule;
 import org.apache.flink.table.planner.plan.rules.logical.FlinkFilterProjectTransposeRule;
 import org.apache.flink.table.planner.plan.rules.logical.FlinkProjectJoinTransposeRule;
 import org.apache.flink.table.planner.plan.rules.logical.PushFilterInCalcIntoTableSourceScanRule;
@@ -46,7 +48,20 @@ import org.apache.flink.table.planner.plan.rules.logical.PushPartitionIntoLegacy
 import org.apache.flink.table.planner.plan.rules.logical.PushPartitionIntoTableSourceScanRule;
 import org.apache.flink.table.planner.plan.rules.logical.PushProjectIntoLegacyTableSourceScanRule;
 import org.apache.flink.table.planner.plan.rules.logical.PushProjectIntoTableSourceScanRule;
+import org.apache.flink.table.planner.plan.rules.logical.PythonCalcSplitRule;
+import org.apache.flink.table.planner.plan.rules.logical.PythonCorrelateSplitRule;
+import org.apache.flink.table.planner.plan.rules.logical.PythonMapMergeRule;
+import org.apache.flink.table.planner.plan.rules.logical.PythonMapRenameRule;
+import org.apache.flink.table.planner.plan.rules.logical.SplitPythonConditionFromCorrelateRule;
+import org.apache.flink.table.planner.plan.rules.logical.SplitPythonConditionFromJoinRule;
 import org.apache.flink.table.planner.plan.rules.physical.stream.MiniBatchIntervalInferRule;
+import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalPythonAsyncCalcRule;
+import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalPythonCalcRule;
+import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalPythonCorrelateRule;
+import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalPythonGroupAggregateRule;
+import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalPythonGroupTableAggregateRule;
+import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalPythonGroupWindowAggregateRule;
+import org.apache.flink.table.planner.plan.rules.physical.stream.StreamPhysicalPythonOverAggregateRule;
 import scala.Tuple2;
 
 @RequiredArgsConstructor
@@ -87,6 +102,35 @@ public class FlinkPlannerConfigBuilder {
               // subgraphs around (temporal) joins.
               FlinkProjectJoinTransposeRule.INSTANCE)
           .build();
+
+  /**
+   * Rules that only match PyFlink calls, which SQRL cannot produce: zero attempts over 38 compiled
+   * projects. Matched by identity because the calc split rules share classes with async variants.
+   */
+  @VisibleForTesting
+  static final List<RelOptRule> PYTHON_RULES =
+      List.of(
+          SplitPythonConditionFromJoinRule.INSTANCE,
+          SplitPythonConditionFromCorrelateRule.INSTANCE,
+          CalcPythonCorrelateTransposeRule.INSTANCE,
+          PythonCorrelateSplitRule.INSTANCE,
+          PythonCalcSplitRule.SPLIT_CONDITION_REX_FIELD(),
+          PythonCalcSplitRule.SPLIT_PROJECTION_REX_FIELD(),
+          PythonCalcSplitRule.SPLIT_CONDITION(),
+          PythonCalcSplitRule.SPLIT_PROJECT(),
+          PythonCalcSplitRule.SPLIT_PANDAS_IN_PROJECT(),
+          PythonCalcSplitRule.EXPAND_PROJECT(),
+          PythonCalcSplitRule.PUSH_CONDITION(),
+          PythonCalcSplitRule.REWRITE_PROJECT(),
+          PythonMapRenameRule.INSTANCE,
+          PythonMapMergeRule.INSTANCE,
+          StreamPhysicalPythonCalcRule.INSTANCE(),
+          StreamPhysicalPythonAsyncCalcRule.INSTANCE,
+          StreamPhysicalPythonGroupAggregateRule.INSTANCE,
+          StreamPhysicalPythonGroupTableAggregateRule.INSTANCE,
+          StreamPhysicalPythonOverAggregateRule.INSTANCE,
+          StreamPhysicalPythonGroupWindowAggregateRule.INSTANCE,
+          StreamPhysicalPythonCorrelateRule.INSTANCE);
 
   /** Table source rules to remove in case of {@link PredicatePushdownRules#LIMITED_RULES}. */
   private static final List<RelOptRule> TABLE_SOURCE_RULES_TO_REMOVE =
@@ -140,6 +184,8 @@ public class FlinkPlannerConfigBuilder {
         customStreamProgram.addLast(programName, program);
         continue;
       }
+
+      stripRules(programName, program, FlinkPlannerConfigBuilder::isPythonRule);
 
       if (programName.equals(FlinkStreamProgram.PHYSICAL_REWRITE())) {
         replaceRules(
@@ -205,6 +251,10 @@ public class FlinkPlannerConfigBuilder {
     return rulesToMatch.stream().map(RelOptRule::getClass).anyMatch(cls -> cls.isInstance(rule));
   }
 
+  private static boolean isPythonRule(RelOptRule rule) {
+    return PYTHON_RULES.stream().anyMatch(python -> python == rule);
+  }
+
   ////////////////////////////////////////////////////////////////////////////////
   ///// Reflection utils to access private Flink class fields
   ////////////////////////////////////////////////////////////////////////////////
@@ -255,8 +305,12 @@ public class FlinkPlannerConfigBuilder {
         continue;
       }
 
+      if (!(internalProgram instanceof FlinkRuleSetProgram)) {
+        continue;
+      }
+
       try {
-        var f = internalProgram.getClass().getSuperclass().getDeclaredField("rules");
+        var f = FlinkRuleSetProgram.class.getDeclaredField("rules");
         f.setAccessible(true);
 
         var current = (List<RelOptRule>) f.get(internalProgram);
