@@ -16,6 +16,7 @@
 package com.datasqrl.planner;
 
 import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.datasqrl.engine.stream.flink.sql.rules.SqrlCalcMergeRule;
 import com.datasqrl.engine.stream.flink.sql.rules.SqrlMiniBatchIntervalInferRule;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.plan.RelOptRule;
@@ -35,6 +37,7 @@ import org.apache.flink.table.planner.plan.optimize.program.FlinkChainedProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkChangelogModeInferenceProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkGroupProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeProgram;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkRuleSetProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
 import org.apache.flink.table.planner.plan.optimize.program.StreamOptimizeContext;
 import org.apache.flink.table.planner.plan.rules.logical.FlinkFilterProjectTransposeRule;
@@ -141,12 +144,16 @@ public class FlinkPlannerConfigBuilder {
         continue;
       }
 
+      replaceRules(programName, program, SqrlCalcMergeRule::replacing);
+
       if (programName.equals(FlinkStreamProgram.PHYSICAL_REWRITE())) {
         replaceRules(
             programName,
             program,
-            MiniBatchIntervalInferRule.class::isInstance,
-            SqrlMiniBatchIntervalInferRule.INSTANCE);
+            rule ->
+                rule instanceof MiniBatchIntervalInferRule
+                    ? SqrlMiniBatchIntervalInferRule.INSTANCE
+                    : rule);
         customStreamProgram.addLast(programName, program);
         continue;
       }
@@ -225,14 +232,8 @@ public class FlinkPlannerConfigBuilder {
   }
 
   private void replaceRules(
-      String programName,
-      FlinkOptimizeProgram<?> program,
-      Predicate<RelOptRule> shouldReplace,
-      RelOptRule replacement) {
-    rewriteRules(
-        programName,
-        program,
-        rules -> rules.replaceAll(rule -> shouldReplace.test(rule) ? replacement : rule));
+      String programName, FlinkOptimizeProgram<?> program, UnaryOperator<RelOptRule> replacement) {
+    rewriteRules(programName, program, rules -> rules.replaceAll(replacement));
   }
 
   // Rewrite the rule list of a FlinkOptimizeProgram instance.
@@ -252,6 +253,9 @@ public class FlinkPlannerConfigBuilder {
     for (var internalProgram : programs) {
       if (internalProgram instanceof FlinkGroupProgram) {
         rewriteRules(programName, (FlinkOptimizeProgram<?>) internalProgram, rewrite);
+        continue;
+      }
+      if (!(internalProgram instanceof FlinkRuleSetProgram)) {
         continue;
       }
 
