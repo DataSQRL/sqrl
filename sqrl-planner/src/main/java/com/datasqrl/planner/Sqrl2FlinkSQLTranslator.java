@@ -162,13 +162,14 @@ import org.apache.flink.table.types.DataType;
  *   <li>Keeps track of everything we add to Flink the builder for the {@link FlinkPhysicalPlan}.
  * </ul>
  */
-public class Sqrl2FlinkSQLTranslator {
+public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
   private static final String SCHEMA_SUFFIX = "__schema";
   private static final String TEMP_VIEW_SUFFIX = "__view";
 
   private final RuntimeExecutionMode executionMode;
   private final boolean compileFlinkPlan;
+  private final URLClassLoader udfClassLoader;
   private final StreamTableEnvironmentImpl tEnv;
   private final Supplier<FlinkPlannerImpl> validatorSupplier;
   private final SqrlFunctionCatalog sqrlFunctionCatalog;
@@ -189,8 +190,7 @@ public class Sqrl2FlinkSQLTranslator {
     // Set up a StreamExecution Environment in Flink with configuration and access to jars
     var jarUrls = getUdfUrls(workspacePaths);
     // Create a UDF class loader and configure
-    ClassLoader udfClassLoader =
-        new URLClassLoader(jarUrls.toArray(new URL[0]), getClass().getClassLoader());
+    udfClassLoader = new URLClassLoader(jarUrls.toArray(new URL[0]), getClass().getClassLoader());
 
     // Init Flink config
     var config = flink.getBaseConfiguration();
@@ -241,6 +241,12 @@ public class Sqrl2FlinkSQLTranslator {
                 FunctionUtil.getFunctionName(fct.getClass()).getDisplay(),
                 fct.getClass().getName(),
                 true));
+  }
+
+  @Override
+  @SneakyThrows
+  public void close() {
+    udfClassLoader.close();
   }
 
   public SqrlRexUtil getRexUtil() {

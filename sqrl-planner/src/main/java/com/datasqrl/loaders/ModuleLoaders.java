@@ -54,17 +54,24 @@ public final class ModuleLoaders {
       SqrlStatementParser sqrlStatementParser,
       WorkspacePaths workspacePaths,
       ClasspathFunctionLoader classpathFunctionLoader,
+      UdfJarClassLoaders udfJarClassLoaders,
       ErrorCollector errors) {
 
     mainLoader =
         new ModuleLoaderImpl(
-            resourceResolver, sqrlStatementParser, workspacePaths, classpathFunctionLoader, errors);
+            resourceResolver,
+            sqrlStatementParser,
+            workspacePaths,
+            classpathFunctionLoader,
+            udfJarClassLoaders,
+            errors);
     rootLoader =
         new ModuleLoaderImpl(
             new FileResourceResolver(workspacePaths.buildDir()),
             sqrlStatementParser,
             workspacePaths,
             classpathFunctionLoader,
+            udfJarClassLoaders,
             errors);
     includeNamespaces =
         packageJson.getScriptConfig().getIncludeConfigs().stream()
