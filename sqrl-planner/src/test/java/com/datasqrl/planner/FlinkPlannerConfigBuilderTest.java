@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.datasqrl.engine.stream.flink.sql.rules.SqrlCalcMergeRule;
 import com.datasqrl.engine.stream.flink.sql.rules.SqrlMiniBatchIntervalInferRule;
 import java.util.List;
 import org.apache.flink.configuration.Configuration;
@@ -28,11 +29,14 @@ import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.planner.calcite.CalciteConfig;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkHepRuleSetProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkOptimizeProgram;
+import org.apache.flink.table.planner.plan.optimize.program.FlinkRuleSetProgram;
 import org.apache.flink.table.planner.plan.optimize.program.FlinkStreamProgram;
+import org.apache.flink.table.planner.plan.rules.logical.FlinkCalcMergeRule;
 import org.apache.flink.table.planner.plan.rules.physical.stream.MiniBatchIntervalInferRule;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import scala.Tuple2;
 
 class FlinkPlannerConfigBuilderTest {
@@ -70,6 +74,22 @@ class FlinkPlannerConfigBuilderTest {
       GROUP BY o.currency
       """;
 
+  private static final String NESTED_CALCS_QUERY =
+      """
+      SELECT * FROM (
+        SELECT id, currency FROM (
+          SELECT id, currency, ts FROM orders WHERE id > 1
+        ) WHERE id > 1
+      )
+      """;
+
+  private static final String RENAMING_CALCS_QUERY =
+      """
+      SELECT id AS order_id, currency AS ccy FROM (
+        SELECT id, currency, id + 1 AS next_id FROM orders WHERE currency <> 'EUR'
+      ) WHERE next_id > 2
+      """;
+
   @ParameterizedTest
   @EnumSource(PredicatePushdownRules.class)
   void givenAnyPushdownRules_whenBuild_thenPhysicalRewriteUsesSqrlMiniBatchRule(
@@ -96,16 +116,50 @@ class FlinkPlannerConfigBuilderTest {
         .isEmpty();
   }
 
+  @ParameterizedTest
+  @EnumSource(PredicatePushdownRules.class)
+  void givenAnyPushdownRules_whenBuild_thenCalcMergeRulesAreReplaced(PredicatePushdownRules rules) {
+    var flinkConf = new Configuration();
+    var plannerConfig =
+        (CalciteConfig) new FlinkPlannerConfigBuilder(config(rules), flinkConf).build();
+    var streamProgram = plannerConfig.getStreamProgram().get();
+
+    var logical = (FlinkRuleSetProgram<?>) streamProgram.get(FlinkStreamProgram.LOGICAL()).get();
+    var physical = (FlinkRuleSetProgram<?>) streamProgram.get(FlinkStreamProgram.PHYSICAL()).get();
+    var logicalRewrite =
+        subPrograms(streamProgram.get(FlinkStreamProgram.LOGICAL_REWRITE()).get()).stream()
+            .map(Tuple2::_1)
+            .map(FlinkRuleSetProgram.class::cast)
+            .toList();
+
+    assertThat(logical.contains(SqrlCalcMergeRule.INSTANCE)).isTrue();
+    assertThat(logical.contains(FlinkCalcMergeRule.INSTANCE)).isFalse();
+    assertThat(physical.contains(SqrlCalcMergeRule.STREAM_PHYSICAL_INSTANCE)).isTrue();
+    assertThat(physical.contains(FlinkCalcMergeRule.STREAM_PHYSICAL_INSTANCE)).isFalse();
+    assertThat(logicalRewrite).filteredOn(p -> p.contains(SqrlCalcMergeRule.INSTANCE)).hasSize(1);
+    assertThat(logicalRewrite).filteredOn(p -> p.contains(FlinkCalcMergeRule.INSTANCE)).isEmpty();
+  }
+
   @Test
   void givenMiniBatchTemporalJoin_whenExplain_thenPlanEqualsFlinkDefaultProgram() {
-    var sqrlPlan = explain(true);
-    var flinkPlan = explain(false);
+    var sqrlPlan = explain(true, QUERY);
+    var flinkPlan = explain(false, QUERY);
 
     assertThat(sqrlPlan).contains("MiniBatchAssigner").contains("TemporalJoin").contains("Rank");
     assertThat(sqrlPlan).isEqualTo(flinkPlan);
   }
 
-  private String explain(boolean sqrlPlannerConfig) {
+  @ParameterizedTest
+  @ValueSource(strings = {NESTED_CALCS_QUERY, RENAMING_CALCS_QUERY})
+  void givenNestedCalcs_whenExplain_thenPlanEqualsFlinkDefaultProgram(String query) {
+    var sqrlPlan = explain(true, query);
+    var flinkPlan = explain(false, query);
+
+    assertThat(sqrlPlan).contains("Calc(");
+    assertThat(sqrlPlan).isEqualTo(flinkPlan);
+  }
+
+  private String explain(boolean sqrlPlannerConfig, String query) {
     var flinkConf = new Configuration();
     flinkConf.setString("table.exec.mini-batch.enabled", "true");
     flinkConf.setString("table.exec.mini-batch.allow-latency", "5 s");
@@ -119,7 +173,7 @@ class FlinkPlannerConfigBuilderTest {
     }
     DDL.forEach(tEnv::executeSql);
 
-    return tEnv.explainSql(QUERY, ExplainFormat.TEXT);
+    return tEnv.explainSql(query, ExplainFormat.TEXT);
   }
 
   private CompilerConfig config(PredicatePushdownRules rules) {
