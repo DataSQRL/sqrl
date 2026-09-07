@@ -225,7 +225,7 @@ commands:
               ./codecov upload-coverage \
                 --file "$INTEGRATION_COVERAGE" \
                 --flag integration \
-                --name "integration-${TEST_SHARDING_INDEX:-0}" \
+                --name "integration-${SHARD_INDEX:-0}" \
                 $COMMON_ARGS
             else
               # Unit-test jobs have per-module JaCoCo reports instead of an aggregate report.
@@ -376,16 +376,72 @@ jobs:
             -DargLine="@{argLine} -Xmx2g -XX:MaxMetaspaceSize=512m"
       - save-test-results
 
-  integration-tests:
+  # One shard of the coordinated use-case suite; which tests it runs is the coordinator's
+  # choice. NOT the gate - test-verdict is, and this job's exit code is swallowed on
+  # purpose. See "Integration test sharding" in BUILD.md.
+  usecase-shards:
     executor: default-machine
     parameters:
-      test_sharding_total:
+      shard_index:
         type: integer
-      test_sharding_index:
+      shard_total:
         type: integer
-    environment:
-      TEST_SHARDING_TOTAL: << parameters.test_sharding_total >>
-      TEST_SHARDING_INDEX:  << parameters.test_sharding_index >>
+    steps:
+      - checkout-and-version
+      - skip-if-docs-only
+      - restore_cache:
+          keys:
+            - m2-{{ checksum "pom.xml" }}
+      - generate-settings
+      - install-jdk
+      - configure-jacoco
+      # BASH_ENV because `environment:` does not interpolate. Workspace id, not
+      # CIRCLE_WORKFLOW_ID: only it survives a rerun, so the shards rejoin the session.
+      - run:
+          name: Prepare shard environment
+          command: |
+            {
+              echo "export SHARD_INDEX=<< parameters.shard_index >>"
+              echo "export SHARD_COUNT=<< parameters.shard_total >>"
+              echo "export SHARD_SESSION_ID=$CIRCLE_WORKFLOW_WORKSPACE_ID"
+              echo "export SHARD_METADATA_CI=circleci"
+              echo "export SHARD_METADATA_SHA=$CIRCLE_SHA1"
+              echo "export SHARD_METADATA_BUILD=$CIRCLE_BUILD_URL"
+            } >> "$BASH_ENV"
+      - run:
+          name: Build the reactor
+          command: mvn -U -T2 -B install -DskipTests -DskipITs
+      - run:
+          name: Run coordinated integration tests
+          no_output_timeout: 55m
+          # Coordinator url and secret come from the datasqrl context, by environment only.
+          # The deadline must land before no_output_timeout, so both come off one number.
+          command: |
+            DRAIN_BUDGET_MINUTES=50
+            export SHARD_DEADLINE=$(date -u -d "+${DRAIN_BUDGET_MINUTES} minutes" +%Y-%m-%dT%H:%M:%SZ)
+            mvn -B -pl sqrl-testing/sqrl-testing-integration verify \
+              -Pcoordinated -DonlyITs -Dcoverage -Djacoco.agent.path="$JACOCO_AGENT_PATH" \
+              || echo "shard << parameters.shard_index >> exited non-zero; the verdict decides the run"
+            mvn -B -pl sqrl-testing/sqrl-testing-integration -DonlyITs -Dcoverage \
+              -Djacoco.aggregate jacoco:report-aggregate || true
+      - save-test-results
+
+  # The gate. Never falls back to ANDing the shards: that is the hole this job closes.
+  test-verdict:
+    docker:
+      - image: cimg/base:current
+    steps:
+      - checkout
+      - run:
+          name: Compute session verdict
+          command: |
+            export SHARD_SESSION_ID="$CIRCLE_WORKFLOW_WORKSPACE_ID"
+            ./.circleci/test-verdict.sh
+
+  # The integration tests outside the coordinated module: unsharded and gating, because the
+  # shards swallow their exit code and anything run beside them there would fail silently.
+  other-integration-tests:
+    executor: default-machine
     steps:
       - checkout-and-version
       - skip-if-docs-only
@@ -396,10 +452,10 @@ jobs:
       - install-jdk
       - configure-jacoco
       - run:
-          name: Run Integration Tests
+          name: Run non-use-case integration tests
           command: |
-            mvn -U -T2 -B install -DonlyITs -Dcoverage -Djacoco.agent.path="$JACOCO_AGENT_PATH"
-            mvn -B -DonlyITs -Dcoverage -Djacoco.aggregate jacoco:report-aggregate
+            mvn -U -T2 -B install -DonlyITs -Pskip-usecase-its \
+              -Dcoverage -Djacoco.agent.path="$JACOCO_AGENT_PATH"
       - save-test-results
 
   container-e2e-test:
@@ -720,7 +776,8 @@ workflows:
             - download-maven-dependencies
             - docker-build-base-image
             - docker-build-mcp-inspector
-      - integration-tests:
+      # shard_total must equal the length of shard_index.
+      - usecase-shards:
           <<: *job-defaults
           filters:
             branches:
@@ -729,8 +786,26 @@ workflows:
               ignore: /.*/
           matrix:
             parameters:
-              test_sharding_total:  [2]
-              test_sharding_index: [0, 1]
+              shard_total: [4]
+              shard_index: [0, 1, 2, 3]
+          requires:
+            - download-maven-dependencies
+      - test-verdict:
+          <<: *job-defaults
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
+          requires:
+            - usecase-shards
+      - other-integration-tests:
+          <<: *job-defaults
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
           requires:
             - download-maven-dependencies
       - build-images:
