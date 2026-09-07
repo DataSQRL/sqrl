@@ -19,10 +19,8 @@ import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
 import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonTypeSerializer;
 import com.datasqrl.planner.util.NonSecretEnvVarResolver;
-import com.datasqrl.sql.SqlCallRewriter;
 import jakarta.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +34,7 @@ import org.apache.calcite.sql.SqlBasicCall;
 import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlCharStringLiteral;
 import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
@@ -46,9 +45,9 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.util.SqlShuttle;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
 import org.apache.flink.sql.parser.ddl.SqlDistribution;
-import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlMetadataColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlRegularColumn;
 import org.apache.flink.sql.parser.ddl.SqlTableOption;
@@ -61,6 +60,7 @@ import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
 import org.apache.flink.sql.parser.ddl.view.SqlCreateView;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
+import org.apache.flink.sql.parser.dml.RichSqlInsertKeyword;
 import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
 import org.apache.flink.table.catalog.ObjectIdentifier;
@@ -112,6 +112,34 @@ public class FlinkSqlNodes {
         null,
         null,
         conflictBehavior.map(cb -> cb.symbol(SqlParserPos.ZERO)).orElse(null));
+  }
+
+  /** Deep-copies an insert so it can be validated without rewriting the original. */
+  public static RichSqlInsert copyInsert(RichSqlInsert insert) {
+    var overwrite = SqlNodeList.EMPTY;
+    if (insert.isOverwrite()) {
+      overwrite =
+          new SqlNodeList(
+              List.of(RichSqlInsertKeyword.OVERWRITE.symbol(SqlParserPos.ZERO)), SqlParserPos.ZERO);
+    }
+
+    var targetColumnList =
+        insert.getTargetColumnList() == null
+            ? null
+            : SqlNodeCopier.copyList(insert.getTargetColumnList());
+
+    var conflictStrategy =
+        insert.getConflictStrategy().map(cb -> cb.symbol(SqlParserPos.ZERO)).orElse(null);
+
+    return new RichSqlInsert(
+        insert.getParserPosition(),
+        SqlNodeCopier.copyList(insert.operand(0)),
+        overwrite,
+        SqlNodeCopier.copy(insert.getTargetTable()),
+        SqlNodeCopier.copy(insert.getSource()),
+        targetColumnList,
+        SqlNodeCopier.copyList(insert.getStaticPartitions()),
+        conflictStrategy);
   }
 
   public static SqlCreateFunction createFunction(String name, String clazz, boolean isSystem) {
@@ -438,13 +466,6 @@ public class FlinkSqlNodes {
   }
 
   public static SqlNodeList createColumns(RelDataType relDataType) {
-    return createColumns(relDataType, Collections.emptyMap(), null);
-  }
-
-  private static SqlNodeList createColumns(
-      RelDataType relDataType,
-      Map<String, MetadataEntry> metadataConfig,
-      MetadataExpressionParser expressionParser) {
     var fieldList = relDataType.getFieldList();
     if (fieldList.isEmpty()) {
       return SqlNodeList.EMPTY;
@@ -453,55 +474,18 @@ public class FlinkSqlNodes {
 
     for (RelDataTypeField column : fieldList) {
       var columnName = column.getName();
-      SqlNode node;
+      var columnNode =
+          new SqlRegularColumn(
+              SqlParserPos.ZERO,
+              identifier(columnName),
+              null,
+              SqlDataTypeSpecBuilder.convertTypeToFlinkSpec(column.getType()),
+              null);
 
-      if (metadataConfig.containsKey(columnName)) {
-        var metadataEntry = metadataConfig.get(columnName);
-        var attribute = metadataEntry.attribute();
-        var isVirtual = metadataEntry.virtual();
-        SqlNode metadataFnc;
-
-        if (attribute.isEmpty()) {
-          metadataFnc = SqlLiteral.createCharString(metadataEntry.type().get(), SqlParserPos.ZERO);
-        } else {
-          metadataFnc = expressionParser.parseExpression(attribute.get());
-          if (metadataFnc instanceof SqlIdentifier) {
-            metadataFnc = SqlLiteral.createCharString(attribute.get(), SqlParserPos.ZERO);
-          } else {
-            new SqlCallRewriter().performCallRewrite((SqlCall) metadataFnc);
-          }
-        }
-
-        if (metadataFnc instanceof SqlCall call) {
-          node = getComputedColumn(columnName, call);
-        } else {
-          node =
-              new SqlMetadataColumn(
-                  SqlParserPos.ZERO,
-                  identifier(columnName),
-                  null,
-                  SqlDataTypeSpecBuilder.convertTypeToFlinkSpec(column.getType()),
-                  metadataFnc,
-                  isVirtual.orElse(false));
-        }
-      } else {
-        node =
-            new SqlRegularColumn(
-                SqlParserPos.ZERO,
-                identifier(columnName),
-                null,
-                SqlDataTypeSpecBuilder.convertTypeToFlinkSpec(column.getType()),
-                null);
-      }
-      nodes.add(node);
+      nodes.add(columnNode);
     }
 
     return new SqlNodeList(nodes, SqlParserPos.ZERO);
-  }
-
-  public static SqlNode getComputedColumn(String columnName, SqlCall call) {
-    return new SqlTableColumn.SqlComputedColumn(
-        SqlParserPos.ZERO, identifier(columnName), null, call);
   }
 
   public static SqlSelect selectAllFromTable(SqlIdentifier tableName) {
@@ -521,17 +505,61 @@ public class FlinkSqlNodes {
         null);
   }
 
-  // Interface for parsing expressions
-  public interface MetadataExpressionParser {
-    SqlNode parseExpression(String expression);
-  }
+  /**
+   * Deep-copies a SQL tree so that validation, which rewrites nodes in place, leaves the original
+   * unparsing exactly as authored.
+   */
+  private static class SqlNodeCopier extends SqlShuttle {
 
-  public interface MetadataEntry {
+    static SqlNode copy(SqlNode node) {
+      return node.accept(new SqlNodeCopier());
+    }
 
-    Optional<String> type();
+    static SqlNodeList copyList(SqlNodeList list) {
+      return list == null ? SqlNodeList.EMPTY : (SqlNodeList) copy(list);
+    }
 
-    Optional<String> attribute();
+    @Override
+    public SqlNode visit(SqlLiteral literal) {
+      return literal.clone(literal.getParserPosition());
+    }
 
-    Optional<Boolean> virtual();
+    @Override
+    public SqlNode visit(SqlIdentifier id) {
+      return id.clone(id.getParserPosition());
+    }
+
+    @Override
+    public SqlNode visit(SqlDataTypeSpec type) {
+      return type.clone(type.getParserPosition());
+    }
+
+    @Override
+    public SqlNode visit(SqlDynamicParam param) {
+      return param.clone(param.getParserPosition());
+    }
+
+    @Override
+    public SqlNode visit(SqlIntervalQualifier intervalQualifier) {
+      return intervalQualifier.clone(intervalQualifier.getParserPosition());
+    }
+
+    @Override
+    public SqlNode visit(SqlCall call) {
+      var argHandler = new CallCopyingArgHandler(call, true);
+      call.getOperator().acceptCall(this, call, false, argHandler);
+
+      return argHandler.result();
+    }
+
+    @Override
+    public SqlNode visit(SqlNodeList nodeList) {
+      var copies = new ArrayList<SqlNode>(nodeList.size());
+      for (var node : nodeList) {
+        copies.add(node == null ? null : node.accept(this));
+      }
+
+      return new SqlNodeList(copies, nodeList.getParserPosition());
+    }
   }
 }

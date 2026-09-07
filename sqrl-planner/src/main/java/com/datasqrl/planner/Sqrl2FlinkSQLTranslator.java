@@ -114,7 +114,6 @@ import org.apache.flink.sql.parser.ddl.view.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.view.SqlCreateView;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.CompiledPlan;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
@@ -138,6 +137,7 @@ import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.expressions.RexNodeExpression;
 import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
+import org.apache.flink.table.planner.plan.ExecNodeGraphInternalPlan;
 import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
 import org.apache.flink.table.types.CollectionDataType;
 import org.apache.flink.table.types.DataType;
@@ -273,7 +273,7 @@ public class Sqrl2FlinkSQLTranslator {
 
     var insert = RelToFlinkSql.convertToSqlString(execute);
 
-    var compiledPlan = Optional.<CompiledPlan>empty();
+    var compiledPlan = Optional.<ExecNodeGraphInternalPlan>empty();
     if (executionMode == RuntimeExecutionMode.STREAMING
         && (compileFlinkPlan || insertConflictPlanner.hasPendingInserts())) {
 
