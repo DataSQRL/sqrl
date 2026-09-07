@@ -125,7 +125,7 @@ final class FlinkInsertConflictPlanner {
     var operations = toModifyOperations(inserts);
 
     try {
-      return (ExecNodeGraphInternalPlan) planner().compilePlan(operations);
+      return (ExecNodeGraphInternalPlan) getPlanner().compilePlan(operations);
     } catch (Exception e) {
       throw new FlinkCompileException(withStatements(RelToFlinkSql.convertToSqlString(execute)), e);
     }
@@ -219,7 +219,7 @@ final class FlinkInsertConflictPlanner {
   }
 
   private List<RelNode> optimize(List<ModifyOperation> insertOperations) {
-    var planner = planner();
+    var planner = getPlanner();
     planner.beforeTranslation();
     try {
       var relNodes = insertOperations.stream().map(planner::translateToRel).toList();
@@ -231,7 +231,7 @@ final class FlinkInsertConflictPlanner {
   }
 
   private List<ModifyOperation> toModifyOperations(List<RichSqlInsert> inserts) {
-    var flinkPlanner = planner().createFlinkPlanner();
+    var flinkPlanner = getPlanner().createFlinkPlanner();
     return inserts.stream()
         .map(FlinkSqlNodes::copyInsert)
         .map(insert -> toModifyOperation(flinkPlanner, insert))
@@ -244,8 +244,14 @@ final class FlinkInsertConflictPlanner {
             .orElseThrow(() -> new TableException("Unsupported query: " + insert));
   }
 
-  private PlannerBase planner() {
+  private PlannerBase getPlanner() {
     return (PlannerBase) tEnv.getPlanner();
+  }
+
+  private List<String> withStatements(List<String> statements) {
+    var flinkSql = new ArrayList<>(planBuilder.getFlinkSql());
+    flinkSql.addAll(statements);
+    return flinkSql;
   }
 
   private static Optional<ChangelogMode> inputChangelogMode(StreamPhysicalSink plannedSink) {
@@ -257,12 +263,6 @@ final class FlinkInsertConflictPlanner {
     }
 
     return Optional.empty();
-  }
-
-  private List<String> withStatements(List<String> statements) {
-    var flinkSql = new ArrayList<>(planBuilder.getFlinkSql());
-    flinkSql.addAll(statements);
-    return flinkSql;
   }
 
   private static Optional<SqlInsertConflictBehavior> automaticConflictBehavior(
