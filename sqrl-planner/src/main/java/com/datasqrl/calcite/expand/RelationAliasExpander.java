@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.planner;
+package com.datasqrl.calcite.expand;
 
 import com.datasqrl.calcite.schema.sql.SqlDataTypeSpecBuilder;
-import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
-import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
+import com.datasqrl.engine.stream.flink.FlinkSqlNodePlanner;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
@@ -41,8 +38,6 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.validate.SqlValidatorUtil;
-import org.apache.flink.table.api.internal.TableEnvironmentImpl;
-import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 
 /**
  * Expands a bare relation alias in a SELECT list into a ROW value over the columns of that
@@ -59,14 +54,13 @@ import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
  * left untouched, so that the regular validation reports the error.
  */
 @Slf4j
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
-class RelationAliasExpander {
+@RequiredArgsConstructor
+public final class RelationAliasExpander {
 
-  private final TableEnvironmentImpl tEnv;
-  private final Supplier<FlinkPlannerImpl> plannerSupplier;
+  private final FlinkSqlNodePlanner sqlNodePlanner;
 
   /** Rewrites the given statement in place and returns it. */
-  SqlNode expand(SqlNode statement) {
+  public SqlNode expand(SqlNode statement) {
     statement.accept(new SelectListVisitor());
     return statement;
   }
@@ -92,10 +86,12 @@ class RelationAliasExpander {
         visibleWithLists.pop();
         return null;
       }
+
       super.visit(call);
       if (call instanceof SqlSelect select) {
         expandSelect(select, visibleWithLists);
       }
+
       return null;
     }
   }
@@ -115,19 +111,22 @@ class RelationAliasExpander {
     if (queryType == null) {
       return;
     }
-    var columns = Set.copyOf(queryType.getFieldNames());
 
+    var columns = Set.copyOf(queryType.getFieldNames());
     for (var i = 0; i < selectList.size(); i++) {
       var item = selectList.get(i);
       var alias = bareName(item);
-      if (!relationAliases.contains(alias) || columns.contains(alias)) {
+      if (alias == null || !relationAliases.contains(alias) || columns.contains(alias)) {
         continue;
       }
+
       var star = new SqlIdentifier(alias, SqlParserPos.ZERO).plusStar();
       var rowType = resolveType(star, select, visibleWithLists);
+
       if (rowType != null) {
-        selectList.set(
-            i, SqlValidatorUtil.addAlias(rowValue(alias, rowType), SqlValidatorUtil.alias(item)));
+        var expandedNode =
+            SqlValidatorUtil.addAlias(rowValue(alias, rowType), SqlValidatorUtil.alias(item));
+        selectList.set(i, expandedNode);
       }
     }
   }
@@ -139,6 +138,7 @@ class RelationAliasExpander {
    */
   private @Nullable RelDataType resolveType(
       SqlIdentifier item, SqlSelect select, Deque<SqlNodeList> visibleWithLists) {
+
     var probe = (SqlSelect) select.clone(SqlParserPos.ZERO);
     probe.setSelectList(new SqlNodeList(List.of(item), SqlParserPos.ZERO));
     probe.setWhere(null);
@@ -156,13 +156,10 @@ class RelationAliasExpander {
       }
     }
 
-    var query = RelToFlinkSql.convertToString(statement);
     try {
-      var planner = plannerSupplier.get();
-      var validated = planner.validate(FlinkCalciteParser.parseSql(query, tEnv));
-      return planner.getOrCreateSqlValidator().getValidatedNodeType(validated);
+      return sqlNodePlanner.getValidatedNodeType(statement);
     } catch (Exception e) {
-      log.debug("Could not resolve the row type of [{}]", query, e);
+      log.debug("Could not resolve the row type of [{}]", statement, e);
       return null;
     }
   }
@@ -172,6 +169,7 @@ class RelationAliasExpander {
         rowType.getFieldNames().stream()
             .map(field -> (SqlNode) new SqlIdentifier(List.of(alias, field), SqlParserPos.ZERO))
             .toList();
+
     return SqlStdOperatorTable.CAST.createCall(
         SqlParserPos.ZERO,
         SqlStdOperatorTable.ROW.createCall(SqlParserPos.ZERO, fields),
@@ -184,19 +182,24 @@ class RelationAliasExpander {
       collectAliases(join.getRight(), aliases);
       return;
     }
+
     var alias = SqlValidatorUtil.alias(from);
     if (alias != null) {
       aliases.add(alias);
     }
   }
 
-  private static @Nullable String bareName(SqlNode selectItem) {
-    SqlNode node =
-        selectItem.getKind() == SqlKind.AS ? ((SqlCall) selectItem).operand(0) : selectItem;
-    return node instanceof SqlIdentifier identifier
-            && identifier.names.size() == 1
-            && !identifier.isStar()
-        ? identifier.getSimple()
-        : null;
+  private static String bareName(SqlNode selectItem) {
+    SqlNode node = selectItem;
+    if (selectItem.getKind() == SqlKind.AS && selectItem instanceof SqlCall selectCall) {
+      node = selectCall.operand(0);
+    }
+
+    String name = null;
+    if (node instanceof SqlIdentifier id && id.names.size() == 1 && !id.isStar()) {
+      name = id.getSimple();
+    }
+
+    return name;
   }
 }
