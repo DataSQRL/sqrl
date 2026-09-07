@@ -29,7 +29,14 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DetailedRequestTracer implements Handler<RoutingContext> {
 
+  private final ClientAddressResolver clientAddressResolver;
+
   public DetailedRequestTracer() {
+    this(new ClientAddressResolver(true));
+  }
+
+  public DetailedRequestTracer(ClientAddressResolver clientAddressResolver) {
+    this.clientAddressResolver = clientAddressResolver;
     log.info("DetailedRequestTracer enabled");
   }
 
@@ -96,7 +103,7 @@ public class DetailedRequestTracer implements Handler<RoutingContext> {
         request.uri(),
         headers.isEmpty() ? "none" : headers,
         params.isEmpty() ? "none" : params,
-        request.remoteAddress() != null ? request.remoteAddress().toString() : "unknown",
+        clientAddressResolver.resolve(request),
         requestBody,
         requestBodySize);
   }

@@ -66,6 +66,7 @@ public class ServerConfig {
   private GraphQLParserConfig graphQLParserConfig = new GraphQLParserConfig();
   private Map<String, Object> jwtAuth;
   private OAuthConfig oauthConfig;
+  private boolean logForwardedClientAddress = true;
 
   private KafkaConfig.KafkaMutationConfig kafkaMutationConfig;
   private KafkaConfig.KafkaSubscriptionConfig kafkaSubscriptionConfig;

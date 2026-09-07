@@ -15,11 +15,14 @@
  */
 package com.datasqrl.server.modules;
 
+import com.datasqrl.server.ClientAddressResolver;
 import com.datasqrl.server.DetailedRequestTracer;
+import com.datasqrl.server.ForwardedClientAddressLogFormatter;
 import com.datasqrl.server.config.CorsHandlerOptions;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.CorsHandler;
+import io.vertx.ext.web.handler.LoggerFormat;
 import io.vertx.ext.web.handler.LoggerHandler;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -30,13 +33,22 @@ public class GlobalHandlersModule implements ServerModule<VertxServerModuleConte
   @Override
   public CompletionStage<Void> configure(VertxServerModuleContext ctx) {
     var router = ctx.router();
+    var logForwardedClientAddress = ctx.config().isLogForwardedClientAddress();
+    var clientAddressResolver = new ClientAddressResolver(logForwardedClientAddress);
 
     router.route().handler(toCorsHandler(ctx.config().getCorsHandlerOptions()));
     router.route().handler(BodyHandler.create());
 
     // Detailed tracing reads request bodies, so it must remain after BodyHandler.
     if (System.getenv("SQRL_DEBUG") != null) {
-      router.route().handler(new DetailedRequestTracer());
+      router.route().handler(new DetailedRequestTracer(clientAddressResolver));
+
+    } else if (logForwardedClientAddress) {
+      var handler =
+          LoggerHandler.create(LoggerFormat.CUSTOM)
+              .customFormatter(new ForwardedClientAddressLogFormatter(clientAddressResolver));
+      router.route().handler(handler);
+
     } else {
       router.route().handler(LoggerHandler.create());
     }
