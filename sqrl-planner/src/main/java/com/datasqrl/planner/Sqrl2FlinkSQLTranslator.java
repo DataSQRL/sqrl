@@ -19,10 +19,12 @@ import static com.datasqrl.config.SqrlConstants.FLINK_DEFAULT_CATALOG;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.calcite.SqrlRexUtil;
+import com.datasqrl.calcite.expand.RelationAliasExpander;
 import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
+import com.datasqrl.engine.stream.flink.FlinkSqlNodePlanner;
 import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
@@ -78,9 +80,7 @@ import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import org.apache.calcite.prepare.CalciteCatalogReader;
 import org.apache.calcite.rel.RelNode;
-import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableFunctionScan;
@@ -137,7 +137,6 @@ import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.expressions.RexNodeExpression;
-import org.apache.flink.table.planner.operations.SqlNodeConvertContext;
 import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
 import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
 import org.apache.flink.table.types.CollectionDataType;
@@ -178,6 +177,8 @@ public class Sqrl2FlinkSQLTranslator {
   @Getter private final FlinkExecFunctionFactory execFnFactory;
   @Getter private final RelDataTypeParser relDataTypeParser;
   private final FlinkInsertConflictPlanner insertConflictPlanner;
+  private final FlinkSqlNodePlanner flinkSqlNodePlanner;
+  private final RelationAliasExpander relationAliasExpander;
 
   @Getter private final Set<String> createdDatabases = new LinkedHashSet<>();
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
@@ -219,6 +220,8 @@ public class Sqrl2FlinkSQLTranslator {
 
     // Extract a number of classes we need access to for planning
     this.validatorSupplier = ((PlannerBase) tEnv.getPlanner())::createFlinkPlanner;
+    this.flinkSqlNodePlanner = new FlinkSqlNodePlanner(tEnv, validatorSupplier);
+    this.relationAliasExpander = new RelationAliasExpander(flinkSqlNodePlanner);
     var planner = this.validatorSupplier.get();
     typeFactory = (FlinkTypeFactory) planner.getOrCreateSqlValidator().getTypeFactory();
     // Initialize function catalog (custom)
@@ -247,8 +250,11 @@ public class Sqrl2FlinkSQLTranslator {
     return new SqrlRexUtil(typeFactory);
   }
 
+  /** Parses a SQL statement and expands bare relation aliases in SELECT lists. */
   public SqlNode parseSQL(String sqlStatement) {
-    return FlinkCalciteParser.parseSql(sqlStatement, tEnv);
+    var sqlNode = FlinkCalciteParser.parseSql(sqlStatement, tEnv);
+
+    return relationAliasExpander.expand(sqlNode);
   }
 
   /**
@@ -312,8 +318,8 @@ public class Sqrl2FlinkSQLTranslator {
     } else {
       throw new UnsupportedOperationException("Unexpected SQLnode: " + validated);
     }
-    var relRoot = toRelRoot(query, flinkPlanner);
-    var relBuilder = getRelBuilder(flinkPlanner);
+    var relRoot = flinkSqlNodePlanner.toRelRoot(query, flinkPlanner);
+    var relBuilder = flinkSqlNodePlanner.getRelBuilder(flinkPlanner);
     var relNode = relRoot.rel;
     Optional<Sort> topLevelSort = Optional.empty();
     if (removeTopLevelSort) {
@@ -377,38 +383,6 @@ public class Sqrl2FlinkSQLTranslator {
     return Optional.empty();
   }
 
-  public RelRoot toRelRoot(SqlNode query, @Nullable FlinkPlannerImpl flinkPlanner) {
-    if (flinkPlanner == null) {
-      flinkPlanner = this.validatorSupplier.get();
-    }
-    var context = new SqlNodeConvertContext(flinkPlanner, catalogManager);
-    var validatedQuery = context.getSqlValidator().validate(query);
-    return context.toRelRoot(validatedQuery);
-  }
-
-  public FlinkRelBuilder getRelBuilder(@Nullable FlinkPlannerImpl flinkPlanner) {
-    if (flinkPlanner == null) {
-      flinkPlanner = this.validatorSupplier.get();
-    }
-    var config =
-        flinkPlanner.config().getSqlToRelConverterConfig().withAddJsonTypeOperatorEnabled(false);
-    // We are using a null schema because using the scan method on FlinkRelBuilder tries to expand
-    // views.
-    // Need to construct LogicalTableScan manually.
-    return (FlinkRelBuilder)
-        config
-            .getRelBuilderFactory()
-            .create(flinkPlanner.cluster(), null)
-            .transform(config.getRelBuilderConfigTransform());
-  }
-
-  private CalciteCatalogReader getCalciteCatalog(@Nullable FlinkPlannerImpl flinkPlanner) {
-    return flinkPlanner
-        .getOrCreateSqlValidator()
-        .getCatalogReader()
-        .unwrap(CalciteCatalogReader.class);
-  }
-
   public List<String> setDatabase(String databaseName, boolean withCatalog) {
     var allStmts = new ArrayList<String>();
     if (withCatalog) {
@@ -432,8 +406,8 @@ public class Sqrl2FlinkSQLTranslator {
 
   public FlinkRelBuilder getTableScan(ObjectIdentifier identifier) {
     var flinkPlanner = this.validatorSupplier.get();
-    var relBuilder = getRelBuilder(flinkPlanner);
-    var catalog = getCalciteCatalog(flinkPlanner);
+    var relBuilder = flinkSqlNodePlanner.getRelBuilder(flinkPlanner);
+    var catalog = flinkSqlNodePlanner.getCalciteCatalog(flinkPlanner);
     relBuilder.push(
         LogicalTableScan.create(
             flinkPlanner.cluster(), catalog.getTableForMember(identifier.toList()), List.of()));
@@ -530,14 +504,14 @@ public class Sqrl2FlinkSQLTranslator {
       SqlNode query, ObjectIdentifier identifier, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
 
     var flinkPlanner = validatorSupplier.get();
-    var relRoot = toRelRoot(query, flinkPlanner);
+    var relRoot = flinkSqlNodePlanner.toRelRoot(query, flinkPlanner);
     var analyzer =
         new SQRLLogicalPlanAnalyzer(
             relRoot.project(),
             tableLookup,
             identifier.getObjectName(),
             getReferencedViews(query),
-            getRelBuilder(flinkPlanner),
+            flinkSqlNodePlanner.getRelBuilder(flinkPlanner),
             flinkPlanner,
             errors);
 
@@ -618,7 +592,7 @@ public class Sqrl2FlinkSQLTranslator {
             .addAll(parsedReturnType.stream().map(ParsedRelDataTypeResult::field).toList())
             .build();
     // use values relnode from return type
-    var values = getRelBuilder(null).values(returnDataType).build();
+    var values = flinkSqlNodePlanner.getRelBuilder(null).values(returnDataType).build();
     var tableAnalysis =
         TableAnalysis.builder()
             .objectIdentifier(identifier)
