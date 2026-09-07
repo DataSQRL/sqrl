@@ -40,19 +40,6 @@ Be aware that `CREATE CATALOG` statements are only supported in separate scripts
 To learn more about how `IMPORT` works, see [IMPORT Statement](#import-statement).
 :::
 
-### Relation Alias as a Row Value
-
-A relation alias may be used by itself in a `SELECT` list to produce a `ROW` value that holds all
-columns of that relation:
-
-```sql
-OrderWithCustomer := SELECT o.id, c AS customer
-                     FROM Orders o JOIN Customer c ON o.customerid = c.customerid;
-```
-
-The `customer` field is a nested structure with the column names and types of `Customer`, which the
-API exposes as a nested object. A column of the same name takes precedence over the relation alias.
-
 ## Type System
 In SQRL, every table and function has a type based on how the table represents data.
 The type determines the semantic validity of queries against tables and how data is processed by different engines.
@@ -231,8 +218,20 @@ TableName.new_col := expression;
 
 Must appear **immediately after** the table definition it extends, and may reference previously added columns of the same table. Cannot be applied after `CREATE TABLE` statements.
 
+### Relation Alias As ROW
 
-### Passthrough definitions
+A relation alias may be used by itself in a `SELECT` list to produce a `ROW` value that holds all
+columns of that relation:
+
+```sql
+OrderWithCustomer := SELECT o.id, c AS customer
+                     FROM Orders o JOIN Customer c ON o.customerid = c.customerid;
+```
+
+The `customer` field is a nested structure with the column names and types of `Customer`, which the
+API exposes as a nested object. A column of the same name takes precedence over the relation alias.
+
+### Passthrough Definitions
 
 Passthrough definitions allow you to bypass SQRL's analysis and translation, passing SQL queries directly to the underlying database engine.
 This serves as a "backdoor" for SQL constructs that SQRL does not yet support natively.
