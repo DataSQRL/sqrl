@@ -44,6 +44,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getGraphQLParserConfig().getMaxTokens()).isNull();
     assertThat(serverConfig.getKafkaMutationConfig()).isNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNull();
+    assertThat(serverConfig.isLogForwardedClientAddress()).isTrue();
   }
 
   @Test
@@ -59,6 +60,7 @@ class ServerConfigTest {
     json.set("poolOptions", MAPPER.createObjectNode().put("maxSize", 20));
     json.set("corsHandlerOptions", MAPPER.createObjectNode().put("allowCredentials", true));
     json.set("jwtAuth", MAPPER.createObjectNode().put("algorithm", "HS256"));
+    json.put("logForwardedClientAddress", false);
     json.set("openApiConfig", MAPPER.createObjectNode().put("enabled", true));
     json.set(
         "graphQLTailSampleTracingConfig",
@@ -121,6 +123,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getGraphQLParserConfig().getRedactTokenParserErrorMessages()).isTrue();
     assertThat(serverConfig.getKafkaMutationConfig()).isNotNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNotNull();
+    assertThat(serverConfig.isLogForwardedClientAddress()).isFalse();
   }
 
   @Test

@@ -6,6 +6,7 @@
     "mcpEndpoint" : "/mcp",
     "usePgPool" : true
   },
+  "logForwardedClientAddress" : false,
   "graphQLHandlerOptions" : {
     "requestBatchingEnabled" : false,
     "requestMultipartEnabled" : false
