@@ -16,17 +16,36 @@
 package com.datasqrl.util;
 
 import com.datasqrl.canonicalizer.NameCanonicalizer;
+import com.datasqrl.compile.CompilationProcess;
+import com.datasqrl.compile.DagWriter;
+import com.datasqrl.config.PlannerComponents;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
+import com.datasqrl.packager.FilePreprocessingPipeline;
+import com.datasqrl.packager.Packager;
+import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
+import com.datasqrl.packager.preprocess.JBangPreprocessor;
+import com.datasqrl.packager.preprocess.JarPreprocessor;
+import com.datasqrl.packager.preprocess.SqrlPreprocessor;
 import java.nio.file.Path;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 @Configuration
-@ComponentScan(basePackages = "com.datasqrl")
+@Import({
+  PlannerComponents.class,
+  CompilationProcess.class,
+  DagWriter.class,
+  FilePreprocessingPipeline.class,
+  Packager.class,
+  CopyStaticDataPreprocessor.class,
+  JarPreprocessor.class,
+  JBangPreprocessor.class,
+  SqrlPreprocessor.class
+})
 public class SqrlInjector {
 
   @Bean
