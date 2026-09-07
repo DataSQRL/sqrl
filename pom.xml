@@ -173,7 +173,7 @@
     <swagger-core.version>2.2.55</swagger-core.version>
     <system-stubs.version>2.1.8</system-stubs.version>
     <testcontainers.version>2.0.5</testcontainers.version>
-    <vertx.version>5.1.6</vertx.version>
+    <vertx.version>5.1.7</vertx.version>
 
     <!-- Plugin versions -->
     <docker-maven-plugin.version>0.49.0</docker-maven-plugin.version>
