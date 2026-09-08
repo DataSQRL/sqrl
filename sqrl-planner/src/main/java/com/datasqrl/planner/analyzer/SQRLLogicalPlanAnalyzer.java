@@ -172,6 +172,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
   public record ViewAnalysis(
       RelNode relNode,
+      RelNode originalRelnode,
       RelBuilder relBuilder,
       TableAnalysis.TableAnalysisBuilder tableAnalysis,
       boolean hasMostRecentDistinct) {}
@@ -294,7 +295,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .tableStatistic(tableStatistic)
             .errors(errors);
 
-    return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis, hasMostRecentDistinct);
+    return new ViewAnalysis(
+        analysis.relNode, originalRelnode, relBuilder, tableAnalysis, hasMostRecentDistinct);
   }
 
   /**
