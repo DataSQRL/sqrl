@@ -27,6 +27,7 @@ import com.datasqrl.io.schema.flexible.converters.FlexibleTable2RelDataTypeConve
 import com.datasqrl.io.schema.flexible.input.FlexibleTableSchema;
 import com.datasqrl.io.schema.flexible.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.FileCompression;
+import com.datasqrl.util.FileCompression.CompressionIO;
 import com.datasqrl.util.FilenameAnalyzer;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.io.FileInputStream;
@@ -70,41 +71,66 @@ public abstract class AbstractDiscoveryTableSchemaFactory implements TableSchema
         location,
         fileComponents.compression());
 
-    // 2. Compute table statistics from file records
+    var reader = readerOpt.get();
+    var tableName = Name.system(location.getFileName().toString());
+    var cache = DiscoverySchemaCache.fromEnvironment();
+    var cacheKey = cache.key(location, reader.getFormat(), SchemaAdjustmentSettings.DEFAULT);
+    var schema =
+        cacheKey
+            .flatMap(key -> cache.lookup(key, tableName))
+            .orElseGet(
+                () -> {
+                  var discovered =
+                      discoverSchema(
+                          location,
+                          compressionOpt.get(),
+                          reader,
+                          cache.getMaxRecords(),
+                          tableName,
+                          localErrors);
+                  cacheKey.ifPresent(key -> cache.store(key, discovered));
+                  return discovered;
+                });
+
+    var rowType = convert(schema, tableName);
+    var options = new LinkedHashMap<String, String>();
+    options.put("connector", "filesystem");
+    options.put("format", reader.getFormat());
+    options.put("path", "${" + DATA_PATH + "}/" + location.getFileName().toString());
+
+    return new SchemaConversionResult(rowType, options);
+  }
+
+  private FlexibleTableSchema discoverSchema(
+      Path location,
+      CompressionIO compression,
+      RecordReader reader,
+      long maxRecords,
+      Name tableName,
+      ErrorCollector errors) {
     Optional<SourceTableStatistics> statistics;
-    try (var io = compressionOpt.get().decompress(new FileInputStream(location.toFile()))) {
-      var dataflow = readerOpt.get().read(io);
+    try (var io = compression.decompress(new FileInputStream(location.toFile()))) {
       statistics =
-          dataflow
+          reader
+              .read(io)
+              .limit(maxRecords)
               .flatMap(this::getTableStatistics)
               .reduce(
                   (base, add) -> {
                     base.merge(add);
                     return base;
                   });
-
     } catch (IOException e) {
-      throw localErrors.exception(
+      throw errors.exception(
           "Could not infer schema of file [%s] due to IO error: %s", location, e);
     }
-    localErrors.checkFatal(
+    errors.checkFatal(
         statistics.isPresent() && statistics.get().getCount() > 0,
         "Could not infer schema for data file [%s] because it contained no valid records",
         location);
 
-    // 3. Infer schema from table statistics
     var generator = new DefaultSchemaGenerator(SchemaAdjustmentSettings.DEFAULT);
-    FlexibleTableSchema schema;
-    var tableName = location.getFileName().toString();
-    schema = generator.mergeSchema(statistics.get(), Name.system(tableName), localErrors);
-
-    var rowType = convert(schema, tableName);
-    var options = new LinkedHashMap<String, String>();
-    options.put("connector", "filesystem");
-    options.put("format", readerOpt.get().getFormat());
-    options.put("path", "${" + DATA_PATH + "}/" + location.getFileName().toString());
-
-    return new SchemaConversionResult(rowType, options);
+    return generator.mergeSchema(statistics.get(), tableName, errors);
   }
 
   private Stream<SourceTableStatistics> getTableStatistics(Map<String, Object> data) {
@@ -123,8 +149,8 @@ public abstract class AbstractDiscoveryTableSchemaFactory implements TableSchema
     return Stream.of(acc);
   }
 
-  private static RelDataType convert(FlexibleTableSchema tableSchema, String tableName) {
-    var converter = new FlexibleTableConverter(tableSchema, Name.system(tableName));
+  private static RelDataType convert(FlexibleTableSchema tableSchema, Name tableName) {
+    var converter = new FlexibleTableConverter(tableSchema, tableName);
     var relDataTypeConverter = new FlexibleTable2RelDataTypeConverter();
     return converter.apply(relDataTypeConverter);
   }
