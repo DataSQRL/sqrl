@@ -49,8 +49,10 @@ final class FlinkInsertConflictProgram implements FlinkOptimizeProgram<StreamOpt
 
   private final Map<ObjectIdentifier, Optional<SqlInsertConflictBehavior>> fallbacks =
       new HashMap<>();
+
   private final Map<ObjectIdentifier, Optional<SqlInsertConflictBehavior>> resolved =
       new HashMap<>();
+
   private boolean requireOnConflict =
       ExecutionConfigOptions.TABLE_EXEC_SINK_REQUIRE_ON_CONFLICT.defaultValue();
 

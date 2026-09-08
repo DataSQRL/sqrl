@@ -72,12 +72,12 @@ final class FlinkInsertConflictPlanner {
       TableAnalysis table,
       boolean isUpsertSink) {
 
-    var explicitBehavior =
-        isUpsertSink
-            ? table
-                .getInsertConflictBehavior()
-                .map(FlinkInsertConflictPlanner::toSqlConflictBehavior)
-            : Optional.<SqlInsertConflictBehavior>empty();
+    var explicitBehavior = Optional.<SqlInsertConflictBehavior>empty();
+    if (isUpsertSink) {
+      explicitBehavior =
+          table.getInsertConflictBehavior().map(FlinkInsertConflictPlanner::toSqlConflictBehavior);
+    }
+
     if (!isUpsertSink || explicitBehavior.isPresent()) {
       planBuilder.addInsert(FlinkSqlNodes.createInsert(selectQuery, sinkTableId, explicitBehavior));
       return;
@@ -118,7 +118,7 @@ final class FlinkInsertConflictPlanner {
             conflictProgram.registerSink(pendingInsert.targetTableId(), pendingInsert.fallback()));
 
     try {
-      var compiledPlan = (ExecNodeGraphInternalPlan) getPlanner().compilePlan(operations);
+      var compiledPlan = (ExecNodeGraphInternalPlan) getPlannerBase().compilePlan(operations);
       pendingInserts.forEach(
           pendingInsert ->
               replaceInsert(
@@ -134,7 +134,8 @@ final class FlinkInsertConflictPlanner {
   }
 
   private List<ModifyOperation> toModifyOperations(List<RichSqlInsert> inserts) {
-    var flinkPlanner = getPlanner().createFlinkPlanner();
+    var flinkPlanner = getPlannerBase().createFlinkPlanner();
+
     return inserts.stream()
         .map(FlinkSqlNodes::copyInsert)
         .map(insert -> toModifyOperation(flinkPlanner, insert))
@@ -147,7 +148,7 @@ final class FlinkInsertConflictPlanner {
             .orElseThrow(() -> new TableException("Unsupported query: " + insert));
   }
 
-  private PlannerBase getPlanner() {
+  private PlannerBase getPlannerBase() {
     return (PlannerBase) tEnv.getPlanner();
   }
 
