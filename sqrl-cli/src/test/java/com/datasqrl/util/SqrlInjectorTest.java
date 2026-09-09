@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -33,7 +34,7 @@ class SqrlInjectorTest {
     var scanned =
         new ClassPathScanningCandidateComponentProvider(true)
             .findCandidateComponents("com.datasqrl").stream()
-                .map(definition -> definition.getBeanClassName())
+                .map(BeanDefinition::getBeanClassName)
                 .filter(name -> !isConfiguration(name))
                 .collect(Collectors.toSet());
 
