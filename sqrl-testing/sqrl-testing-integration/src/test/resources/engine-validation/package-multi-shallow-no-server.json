@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "enabled-engines": ["flink", "iceberg", "sparksql", "redshift"],
+  "enabled-engines": ["flink", "iceberg", "sparksql", "redshift", "trino"],
   "script": {
     "main": "script.sqrl"
   }

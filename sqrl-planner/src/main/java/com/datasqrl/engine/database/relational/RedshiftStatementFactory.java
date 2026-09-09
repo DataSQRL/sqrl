@@ -18,15 +18,13 @@ package com.datasqrl.engine.database.relational;
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.relational.ddl.GenericCreateTableDdlFactory;
+import com.datasqrl.engine.database.relational.ddl.ViewIdentifierResolver;
 import com.datasqrl.plan.global.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;
-import java.util.ArrayList;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.dialect.RedshiftSqlDialect;
-import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class RedshiftStatementFactory extends AbstractJdbcStatementFactory {
 
@@ -43,18 +41,9 @@ public class RedshiftStatementFactory extends AbstractJdbcStatementFactory {
   }
 
   @Override
-  protected SqlIdentifier getViewStatementIdentifier(String viewName) {
-    var names = new ArrayList<String>();
-    var database = engineConfig.getPropertyOptional("view-database");
-    if (database.isPresent()) {
-      names.add(database.get());
-      names.add(engineConfig.getPropertyOptional("view-schema").orElse("public"));
-    } else {
-      engineConfig.getPropertyOptional("view-schema").ifPresent(names::add);
-    }
-    names.add(viewName);
-
-    return new SqlIdentifier(names, SqlParserPos.ZERO);
+  protected ViewIdentifierResolver getViewIdentifierResolver() {
+    return ViewIdentifierResolver.propertyHierarchy(
+        engineConfig, "view-database", "view-schema", "public");
   }
 
   @Override

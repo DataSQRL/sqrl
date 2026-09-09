@@ -28,6 +28,7 @@ import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement.CreateTableDdlFactory;
 import com.datasqrl.engine.database.relational.ddl.GenericCreateViewDdlFactory;
+import com.datasqrl.engine.database.relational.ddl.ViewIdentifierResolver;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
 import com.datasqrl.planner.hint.PartitionKeyHint;
@@ -85,6 +86,15 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
   protected abstract SqlNode getSqlType(RelDataType type, Optional<DataTypeHint> hint);
 
+  protected GenericCreateViewDdlFactory getCreateViewDdlFactory() {
+    return new GenericCreateViewDdlFactory(
+        sqlConverters.getCalciteSqlDialect(), getViewIdentifierResolver());
+  }
+
+  protected ViewIdentifierResolver getViewIdentifierResolver() {
+    return viewName -> new SqlIdentifier(viewName, SqlParserPos.ZERO);
+  }
+
   @Override
   public QueryResult createQuery(
       Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap) {
@@ -122,8 +132,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     var viewName = query.function().getSimpleName();
     var rowType = query.relNode().getRowType();
     var viewSql =
-        new GenericCreateViewDdlFactory(sqlConverters.getCalciteSqlDialect())
-            .createView(viewName, rowType.getFieldNames(), passthroughSql);
+        getCreateViewDdlFactory().createView(viewName, rowType.getFieldNames(), passthroughSql);
     var view =
         new GenericJdbcStatement(
             viewName,
@@ -172,9 +181,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
     JdbcStatement view = null;
     if (withView) {
-      var viewSql =
-          new GenericCreateViewDdlFactory(sqlConverters.getCalciteSqlDialect())
-              .createView(viewName, rowType.getFieldNames(), sql);
+      var viewSql = getCreateViewDdlFactory().createView(viewName, rowType.getFieldNames(), sql);
 
       view = createViewStatement(viewName, rowType, viewSql, documentation);
     }
@@ -268,10 +275,6 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     return sqlConverters.convert(createView);
   }
 
-  protected SqlIdentifier getViewStatementIdentifier(String viewName) {
-    return new SqlIdentifier(viewName, SqlParserPos.ZERO);
-  }
-
   protected Set<DatabaseTypeExtension> extractTypeExtensions(
       Stream<RelNode> relNodes, List<DatabaseTypeExtension> extensions) {
     return relNodes
@@ -329,7 +332,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       RelDataType rowType,
       SqlNode sqlNode,
       Documented.Documentation documentation) {
-    var viewNameIdentifier = getViewStatementIdentifier(viewName);
+    var viewNameIdentifier = getCreateViewDdlFactory().getViewIdentifier(viewName);
     var columnList =
         new SqlNodeList(
             rowType.getFieldList().stream()
