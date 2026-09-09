@@ -33,7 +33,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -61,11 +60,17 @@ public class ModuleLoaderImpl implements ModuleLoader {
   private final SqrlStatementParser sqrlStatementParser;
   private final WorkspacePaths workspacePaths;
   private final ClasspathFunctionLoader classpathFunctionLoader;
+  private final UdfJarClassLoaders udfJarClassLoaders;
   private final ErrorCollector errors;
 
   private ModuleLoaderImpl withResourceResolver(ResourceResolver resourceResolver) {
     return new ModuleLoaderImpl(
-        resourceResolver, sqrlStatementParser, workspacePaths, classpathFunctionLoader, errors);
+        resourceResolver,
+        sqrlStatementParser,
+        workspacePaths,
+        classpathFunctionLoader,
+        udfJarClassLoaders,
+        errors);
   }
 
   @Override
@@ -203,10 +208,7 @@ public class ModuleLoaderImpl implements ModuleLoader {
 
   @SneakyThrows
   private Class<?> loadClass(URL jarPath, String functionClassName) {
-    URL[] urls = {jarPath};
-    var classLoader = new URLClassLoader(urls, Thread.currentThread().getContextClassLoader());
-
-    return Class.forName(functionClassName, true, classLoader);
+    return Class.forName(functionClassName, true, udfJarClassLoaders.forJar(jarPath));
   }
 
   @Override
