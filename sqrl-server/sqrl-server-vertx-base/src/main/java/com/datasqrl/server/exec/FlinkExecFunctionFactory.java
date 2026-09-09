@@ -39,7 +39,6 @@ public class FlinkExecFunctionFactory {
   AtomicInteger fnCounter = new AtomicInteger();
 
   TableConfig tableConfig;
-  FlinkTypeFactory typeFactory;
 
   public FlinkExecFunction create(
       RexNode expression, String description, RelDataType inputType, boolean listOutput) {
@@ -53,7 +52,7 @@ public class FlinkExecFunctionFactory {
       RelDataType inputType,
       boolean listOutput) {
     // Translate type information
-    var inRowType = (RowType) typeFactory.toLogicalType(inputType);
+    var inRowType = (RowType) FlinkTypeFactory.toLogicalType(inputType);
     var outRowType = toRowTypeFromRexNodes(expressions);
 
     var uniqueFunctionName = String.format(FUNCTON_NAME_TEMPLATE, fnCounter.getAndIncrement());

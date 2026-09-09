@@ -236,7 +236,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     this.tEnv.getConfig().setPlannerConfig(plannerConfigBuilder.build());
     this.catalogManager = tEnv.getCatalogManager();
 
-    execFnFactory = new FlinkExecFunctionFactory(tEnv.getConfig(), typeFactory);
+    execFnFactory = new FlinkExecFunctionFactory(tEnv.getConfig());
     relDataTypeParser = new RelDataTypeParser(this);
 
     // Register SQRL standard library functions
@@ -254,6 +254,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   @SneakyThrows
   public void close() {
     udfClassLoader.close();
+    catalogManager.close();
   }
 
   public SqrlRexUtil getRexUtil() {

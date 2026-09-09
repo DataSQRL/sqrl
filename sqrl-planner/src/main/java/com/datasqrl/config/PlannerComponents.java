@@ -18,6 +18,7 @@ package com.datasqrl.config;
 import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.loaders.ClasspathFunctionLoader;
 import com.datasqrl.loaders.ModuleLoaders;
+import com.datasqrl.loaders.UdfJarClassLoaders;
 import com.datasqrl.plan.MainScriptImpl;
 import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.dag.DAGPlanner;
@@ -41,6 +42,7 @@ import org.springframework.context.annotation.Import;
   SqrlConfigPipeline.class,
   ClasspathFunctionLoader.class,
   ModuleLoaders.class,
+  UdfJarClassLoaders.class,
   MainScriptImpl.class,
   DAGPlanner.class,
   SqrlStatementParser.class,

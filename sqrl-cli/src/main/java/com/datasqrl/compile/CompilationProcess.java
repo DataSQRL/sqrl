@@ -69,12 +69,14 @@ public class CompilationProcess {
             workspacePaths,
             (FlinkStreamEngine) planner.getStreamStage().engine(),
             config.getCompilerConfig())) {
-      return executeCompilation(testsPath, environment);
+
+      return executeCompilationInternal(testsPath, environment);
     }
   }
 
-  private Pair<PhysicalPlan, TestPlan> executeCompilation(
+  private Pair<PhysicalPlan, TestPlan> executeCompilationInternal(
       Optional<Path> testsPath, Sqrl2FlinkSQLTranslator environment) {
+
     planner.planMain(mainScript, Optional.empty(), environment);
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
