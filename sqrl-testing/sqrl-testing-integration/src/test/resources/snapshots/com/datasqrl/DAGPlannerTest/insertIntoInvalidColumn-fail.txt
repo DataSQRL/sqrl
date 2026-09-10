@@ -1,0 +1,7 @@
+[FATAL]  Column 'missing_column' not found in any table
+in script:insertIntoInvalidColumn-fail.sqrl [9:5]:
+INSERT INTO CustomerIds
+SELECT
+    missing_column
+----^
+

@@ -514,14 +514,16 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   public TableAnalysis analyzeInsertQuery(
       SqlNode query, ObjectIdentifier identifier, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
 
+    // Validation mutates the SQL tree, so analyze a copy and preserve the query for output.
+    var analysisQuery = FlinkSqlNodes.copyQuery(query);
     var flinkPlanner = validatorSupplier.get();
-    var relRoot = flinkSqlNodePlanner.toRelRoot(query, flinkPlanner);
+    var relRoot = flinkSqlNodePlanner.toRelRoot(analysisQuery, flinkPlanner);
     var analyzer =
         new SQRLLogicalPlanAnalyzer(
             relRoot.project(),
             tableLookup,
             identifier.getObjectName(),
-            getReferencedViews(query),
+            getReferencedViews(analysisQuery),
             flinkSqlNodePlanner.getRelBuilder(flinkPlanner),
             flinkPlanner,
             errors);
