@@ -1,0 +1,153 @@
+>>>pipeline_explain.txt
+=== ScopeSink
+ID:          default_catalog.original_db.ScopeSink
+Type:        export
+Stage:       flink
+Connector:   filesystem
+---
+Inputs:
+ - default_catalog.original_db.ScopeSink_in3
+
+=== ScopeSink_in3
+ID:          default_catalog.original_db.ScopeSink_in3
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - val: INTEGER
+Inputs:
+ - default_catalog.original_db.SourceTable
+
+=== SourceSink
+ID:          default_catalog.original_db.SourceSink
+Type:        export
+Stage:       flink
+Connector:   filesystem
+---
+Inputs:
+ - default_catalog.original_db.SourceSink_in1
+
+=== SourceSink_in1
+ID:          default_catalog.original_db.SourceSink_in1
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - val: INTEGER
+Inputs:
+ - default_catalog.original_db.SourceTable
+
+=== SourceTable
+ID:          default_catalog.original_db.SourceTable
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - val: INTEGER
+Inputs:
+ - default_catalog.original_db.SourceTable__base
+
+=== TargetSink
+ID:          default_catalog.original_db.TargetSink
+Type:        export
+Stage:       flink
+Connector:   filesystem
+---
+Inputs:
+ - default_catalog.original_db.TargetSink_in2
+
+=== TargetSink_in2
+ID:          default_catalog.original_db.TargetSink_in2
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - val: INTEGER
+Inputs:
+ - default_catalog.original_db.SourceTable
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `SourceTable` (
+  `val` INTEGER
+)
+WITH (
+  'connector' = 'datagen',
+  'fields.val.max' = '22',
+  'fields.val.min' = '22',
+  'number-of-rows' = '1'
+);
+CREATE TABLE `TargetSink` (
+  `val` INTEGER
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'csv',
+  'path' = 'file:///tmp/insert-table-identity/wrong-target'
+);
+CREATE DATABASE IF NOT EXISTS `original_db`;
+USE `original_db`;
+CREATE TABLE `SourceTable` (
+  `val` INTEGER
+)
+WITH (
+  'connector' = 'datagen',
+  'fields.val.max' = '11',
+  'fields.val.min' = '11',
+  'number-of-rows' = '1'
+);
+CREATE TABLE `SourceSink` (
+  `val` INTEGER
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'csv',
+  'path' = 'file:///tmp/insert-table-identity/source-sink'
+);
+CREATE TABLE `TargetSink` (
+  `val` INTEGER
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'csv',
+  'path' = 'file:///tmp/insert-table-identity/target-sink'
+);
+CREATE TABLE `ScopeSink` (
+  `val` INTEGER
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'csv',
+  'path' = 'file:///tmp/insert-table-identity/scope-sink'
+);
+USE CATALOG `default_catalog`;
+CREATE DATABASE IF NOT EXISTS `default_database`;
+USE `default_database`;
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`original_db`.`ScopeSink`
+WITH `SourceTable` AS (SELECT `val`
+FROM `default_catalog`.`original_db`.`SourceTable`) SELECT `q`.`val`
+FROM `SourceTable` AS `q`
+INNER JOIN (SELECT `val`
+FROM `default_catalog`.`original_db`.`SourceTable`) AS `b` ON `q`.`val` = `b`.`val`
+;
+INSERT INTO `default_catalog`.`original_db`.`SourceSink`
+SELECT `s`.`val`
+FROM `default_catalog`.`original_db`.`SourceTable` AS `s`
+;
+INSERT INTO `default_catalog`.`original_db`.`TargetSink`
+SELECT `val`
+FROM `default_catalog`.`original_db`.`SourceTable`
+;
+END
