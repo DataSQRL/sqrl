@@ -61,7 +61,8 @@ public class IcebergEngine extends AbstractJDBCTableFormatEngine {
     return engine instanceof SnowflakeEngine
         || engine instanceof DuckDBEngine
         || engine instanceof SparkSqlEngine
-        || engine instanceof RedshiftEngine;
+        || engine instanceof RedshiftEngine
+        || engine instanceof TrinoEngine;
   }
 
   @Override

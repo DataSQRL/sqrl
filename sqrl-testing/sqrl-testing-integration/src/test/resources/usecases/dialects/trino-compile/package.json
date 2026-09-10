@@ -1,0 +1,21 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "iceberg", "trino"],
+  "script": {
+    "main": "trino-dialect.sqrl"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "1 ms"
+      }
+    },
+    "trino": {
+      "view-catalog": "analytics",
+      "view-schema": "reporting"
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}
