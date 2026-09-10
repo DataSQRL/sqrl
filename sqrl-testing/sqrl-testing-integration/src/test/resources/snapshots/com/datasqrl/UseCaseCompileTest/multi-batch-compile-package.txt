@@ -49,7 +49,7 @@ Type:        stream
 Stage:       flink
 Primary key: -
 Timestamp:   -
-Row count:   ~1e8
+Row count:   ~2
 ---
 Schema:
  - val: INTEGER NOT NULL
@@ -132,8 +132,9 @@ SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
 INSERT INTO `TableA`
-SELECT `Src`.`val`
-FROM `default_catalog`.`default_database`.`Src` AS `Src`
+SELECT *
+FROM `Src`
+ORDER BY `val` DESC
 ;
 END
 >>>flink-sql-no-functions-1.sql
@@ -178,8 +179,11 @@ SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
 INSERT INTO `TableB`
-SELECT `Src`.`val`
-FROM `default_catalog`.`default_database`.`Src` AS `Src`
+SELECT *
+FROM `Src`
+ORDER BY `val` DESC
+OFFSET 1 ROWS
+FETCH NEXT 2 ROWS ONLY
 ;
 END
 >>>flink-sql-no-functions-2.sql
@@ -226,8 +230,8 @@ WITH (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `TableC`
-SELECT `Src`.`val`
-FROM `default_catalog`.`default_database`.`Src` AS `Src`
+SELECT *
+FROM `Src`
 ;
 END
 >>>flink-sql-no-functions.sql
@@ -278,8 +282,9 @@ SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
 INSERT INTO `TableA`
-SELECT `Src`.`val`
-FROM `default_catalog`.`default_database`.`Src` AS `Src`
+SELECT *
+FROM `Src`
+ORDER BY `val` DESC
 ;
 END;
 EXECUTE STATEMENT SET BEGIN
@@ -288,13 +293,16 @@ SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
 INSERT INTO `TableB`
-SELECT `Src`.`val`
-FROM `default_catalog`.`default_database`.`Src` AS `Src`
+SELECT *
+FROM `Src`
+ORDER BY `val` DESC
+OFFSET 1 ROWS
+FETCH NEXT 2 ROWS ONLY
 ;
 END;
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `TableC`
-SELECT `Src`.`val`
-FROM `default_catalog`.`default_database`.`Src` AS `Src`
+SELECT *
+FROM `Src`
 ;
 END
