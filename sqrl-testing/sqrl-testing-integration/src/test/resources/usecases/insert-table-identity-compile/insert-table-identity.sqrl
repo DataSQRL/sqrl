@@ -1,0 +1,18 @@
+CREATE TABLE SourceTable (
+  val INT
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '1',
+  'fields.val.min' = '22',
+  'fields.val.max' = '22'
+);
+
+CREATE TABLE TargetSink (
+  val INT
+) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/insert-table-identity/wrong-target',
+  'format' = 'csv'
+);
+
+IMPORT tables.original AS original_db;

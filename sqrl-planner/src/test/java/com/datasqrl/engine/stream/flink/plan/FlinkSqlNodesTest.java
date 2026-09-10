@@ -19,12 +19,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.convert.SqlConvertersFactory;
+import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
 import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlLiteral;
@@ -39,10 +41,61 @@ import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
 import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.sql.parser.type.SqlRawTypeNameSpec;
+import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.api.internal.TableEnvironmentImpl;
+import org.apache.flink.table.catalog.GenericInMemoryCatalog;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class FlinkSqlNodesTest {
+
+  @ParameterizedTest
+  @CsvSource(
+      delimiter = '|',
+      textBlock =
+          """
+          original_db.SourceTable.val | original_db.`SourceTable` | `other_catalog`.`original_db`.`SourceTable`.`val`
+          original_db.SourceTable.*   | original_db.`SourceTable` | `other_catalog`.`original_db`.`SourceTable`.*
+          original_db.SourceTable.val | `SourceTable` AS original_db | `original_db`.`SourceTable`.`val`
+          """)
+  void givenQualifiedColumnOrRowField_whenCatalogChanges_thenRetainsIdentityAndScope(
+      String column, String source, String expectedColumn) {
+    var env = (TableEnvironmentImpl) TableEnvironment.create(EnvironmentSettings.inBatchMode());
+    try {
+      var ddl =
+          "CREATE TABLE SourceTable (val INT, SourceTable ROW<val INT>) "
+              + "WITH ('connector'='datagen','number-of-rows'='1')";
+      env.executeSql(ddl);
+      env.registerCatalog(
+          "other_catalog", new GenericInMemoryCatalog("other_catalog", "original_db"));
+      env.useCatalog("other_catalog");
+      env.executeSql(ddl);
+      var query = FlinkCalciteParser.parseSql("SELECT " + column + " FROM " + source, env);
+      var from = ((SqlSelect) query).getFrom();
+      var table = (SqlIdentifier) (from instanceof SqlCall alias ? alias.operand(0) : from);
+      var position = table.getParserPosition();
+      var componentPosition = table.getComponentParserPosition(table.names.size() - 1);
+      var planner = ((PlannerBase) env.getPlanner()).createFlinkPlanner();
+      var validator = planner.getOrCreateSqlValidator();
+      var validated = validator.validate(FlinkSqlNodes.copyQuery(query));
+      FlinkSqlNodes.bindTableNames(query, validated, validator);
+
+      assertThat(unparse(query)).contains("SELECT " + expectedColumn);
+      assertThat(table.getParserPosition()).isEqualTo(position);
+      assertThat(table.getComponentParserPosition(2)).isEqualTo(componentPosition);
+      assertThat(table.isComponentQuoted(2)).isTrue();
+      env.useCatalog("default_catalog");
+      assertThat(env.explainSql(unparse(query)))
+          .contains("table=[[other_catalog, original_db, SourceTable]]")
+          .doesNotContain("table=[[default_catalog, default_database, SourceTable]]");
+    } finally {
+      env.getCatalogManager().close();
+    }
+  }
 
   private String unparse(SqlNode node) {
     return SqlConvertersFactory.get(Dialect.FLINK).convert(node);
