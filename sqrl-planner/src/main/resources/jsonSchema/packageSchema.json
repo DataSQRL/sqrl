@@ -28,6 +28,7 @@
           "redshift",
           "snowflake",
           "sparksql",
+          "trino",
           "vertx"
         ]
       },
@@ -239,6 +240,18 @@
           },
           "additionalProperties": false,
           "required": ["url"]
+        },
+        "trino": {
+          "type": "object",
+          "properties": {
+            "view-catalog": {
+              "type": "string"
+            },
+            "view-schema": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
         },
         "redshift": {
           "type": "object",

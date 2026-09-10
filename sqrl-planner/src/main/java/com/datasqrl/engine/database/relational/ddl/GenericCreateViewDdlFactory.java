@@ -17,22 +17,36 @@ package com.datasqrl.engine.database.relational.ddl;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import lombok.RequiredArgsConstructor;
 import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlIdentifier;
 
-@RequiredArgsConstructor
 public class GenericCreateViewDdlFactory {
 
   private final DdlIdentifierQuoter identifierQuoter;
+  private final ViewIdentifierResolver viewIdentifierResolver;
 
-  public GenericCreateViewDdlFactory(SqlDialect dialect) {
-    this(new DdlIdentifierQuoter(dialect));
+  public GenericCreateViewDdlFactory(
+      SqlDialect dialect, ViewIdentifierResolver viewIdentifierResolver) {
+    this.identifierQuoter = new DdlIdentifierQuoter(dialect);
+    this.viewIdentifierResolver = viewIdentifierResolver;
   }
 
   public String createView(String viewName, List<String> columns, String select) {
+    return createView(getViewIdentifier(viewName), columns, select);
+  }
+
+  public String createView(SqlIdentifier viewName, List<String> columns, String select) {
     var colStr = columns.stream().map(identifierQuoter::quote).collect(Collectors.joining(", "));
 
     return "CREATE OR REPLACE VIEW %s (%s) AS %s"
-        .formatted(identifierQuoter.quote(viewName), colStr, select);
+        .formatted(quoteIdentifier(viewName), colStr, select);
+  }
+
+  public SqlIdentifier getViewIdentifier(String viewName) {
+    return viewIdentifierResolver.resolve(viewName);
+  }
+
+  protected String quoteIdentifier(SqlIdentifier identifier) {
+    return identifier.names.stream().map(identifierQuoter::quote).collect(Collectors.joining("."));
   }
 }

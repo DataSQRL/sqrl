@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.calcite;
+package com.datasqrl.engine.database.relational;
 
-public enum Dialect {
-  SQRL,
-  CALCITE,
-  FLINK,
-  POSTGRES,
-  SNOWFLAKE,
-  DUCKDB,
-  SPARK_SQL,
-  REDSHIFT,
-  TRINO
+import com.datasqrl.config.EngineFactory;
+import com.datasqrl.engine.database.DatabaseEngineFactory;
+import com.google.auto.service.AutoService;
+
+@AutoService(EngineFactory.class)
+public class TrinoEngineFactory implements DatabaseEngineFactory {
+
+  public static final String ENGINE_NAME = "trino";
+
+  @Override
+  public String getEngineName() {
+    return ENGINE_NAME;
+  }
+
+  @Override
+  public Class getFactoryClass() {
+    return TrinoEngine.class;
+  }
 }

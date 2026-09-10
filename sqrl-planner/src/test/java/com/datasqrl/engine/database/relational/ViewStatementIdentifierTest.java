@@ -33,7 +33,8 @@ class ViewStatementIdentifierTest {
         .thenReturn(1);
     var factory = new PostgresStatementFactory(engineConfig);
 
-    assertThat(factory.getViewStatementIdentifier("Orders").names).containsExactly("Orders");
+    assertThat(factory.getCreateViewDdlFactory().getViewIdentifier("Orders").names)
+        .containsExactly("Orders");
   }
 
   @Test
@@ -43,7 +44,7 @@ class ViewStatementIdentifierTest {
     when(engineConfig.getPropertyOptional("view-database")).thenReturn(Optional.of("analytics"));
     var factory = new SparkSqlStatementFactory(engineConfig);
 
-    assertThat(factory.getViewStatementIdentifier("Orders").names)
+    assertThat(factory.getCreateViewDdlFactory().getViewIdentifier("Orders").names)
         .containsExactly("spark_catalog", "analytics", "Orders");
   }
 
@@ -54,7 +55,7 @@ class ViewStatementIdentifierTest {
     when(engineConfig.getPropertyOptional("view-database")).thenReturn(Optional.empty());
     var factory = new SparkSqlStatementFactory(engineConfig);
 
-    assertThat(factory.getViewStatementIdentifier("Orders").names)
+    assertThat(factory.getCreateViewDdlFactory().getViewIdentifier("Orders").names)
         .containsExactly("spark_catalog", "default", "Orders");
   }
 
@@ -65,7 +66,7 @@ class ViewStatementIdentifierTest {
     when(engineConfig.getPropertyOptional("view-schema")).thenReturn(Optional.of("reporting"));
     var factory = new RedshiftStatementFactory(engineConfig);
 
-    assertThat(factory.getViewStatementIdentifier("Orders").names)
+    assertThat(factory.getCreateViewDdlFactory().getViewIdentifier("Orders").names)
         .containsExactly("analytics", "reporting", "Orders");
   }
 
@@ -76,7 +77,29 @@ class ViewStatementIdentifierTest {
     when(engineConfig.getPropertyOptional("view-schema")).thenReturn(Optional.empty());
     var factory = new RedshiftStatementFactory(engineConfig);
 
-    assertThat(factory.getViewStatementIdentifier("Orders").names)
+    assertThat(factory.getCreateViewDdlFactory().getViewIdentifier("Orders").names)
+        .containsExactly("analytics", "public", "Orders");
+  }
+
+  @Test
+  void givenTrinoViewLocation_whenGettingViewIdentifier_thenPrependsCatalogAndSchema() {
+    var engineConfig = mock(EngineConfig.class);
+    when(engineConfig.getPropertyOptional("view-catalog")).thenReturn(Optional.of("analytics"));
+    when(engineConfig.getPropertyOptional("view-schema")).thenReturn(Optional.of("reporting"));
+    var factory = new TrinoStatementFactory(engineConfig);
+
+    assertThat(factory.getCreateViewDdlFactory().getViewIdentifier("Orders").names)
+        .containsExactly("analytics", "reporting", "Orders");
+  }
+
+  @Test
+  void givenTrinoViewCatalogWithoutSchema_whenGettingViewIdentifier_thenUsesPublicSchema() {
+    var engineConfig = mock(EngineConfig.class);
+    when(engineConfig.getPropertyOptional("view-catalog")).thenReturn(Optional.of("analytics"));
+    when(engineConfig.getPropertyOptional("view-schema")).thenReturn(Optional.empty());
+    var factory = new TrinoStatementFactory(engineConfig);
+
+    assertThat(factory.getCreateViewDdlFactory().getViewIdentifier("Orders").names)
         .containsExactly("analytics", "public", "Orders");
   }
 }
