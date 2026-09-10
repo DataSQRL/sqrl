@@ -44,9 +44,9 @@ LogicalProject(id=[$0])
   LogicalFilter(condition=[<($1, NOW())])
     LogicalTableScan(table=[[default_catalog, default_database, NowSource]])
 SQL:
-SELECT `NowSource`.`id`
-FROM `default_catalog`.`default_database`.`NowSource` AS `NowSource`
-WHERE `NowSource`.`event_time` < NOW()
+SELECT `id`
+FROM `NowSource`
+WHERE `event_time` < `NOW`()
 >>>flink-sql-no-functions.sql
 CREATE TABLE IF NOT EXISTS `now_sink` (
   `id` INTEGER
@@ -79,9 +79,9 @@ FROM `default_catalog`.`default_database`.`NowSource`
 ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `now_sink`
-SELECT `NowSource`.`id`
-FROM `default_catalog`.`default_database`.`NowSource` AS `NowSource`
-WHERE `NowSource`.`event_time` < NOW()
+SELECT `id`
+FROM `NowSource`
+WHERE `event_time` < `NOW`()
 ;
 END
 >>>kafka.json

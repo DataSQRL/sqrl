@@ -12,13 +12,13 @@ CREATE TABLE TableB (
   'connector' = 'print'
 );
 
-INSERT INTO TableA SELECT * FROM Src;
+INSERT INTO TableA SELECT * FROM Src ORDER BY val DESC;
 
 EXPORT Src TO tables.sinks.SinkA;
 
 NEXT_BATCH;
 
-INSERT INTO TableB SELECT * FROM Src;
+INSERT INTO TableB SELECT * FROM Src ORDER BY val DESC LIMIT 2 OFFSET 1;
 
 EXPORT Src TO tables.sinks.SinkB;
 

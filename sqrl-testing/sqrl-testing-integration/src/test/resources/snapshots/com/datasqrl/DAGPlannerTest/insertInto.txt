@@ -64,9 +64,9 @@ LogicalAggregate(group=[{0}], numEntries=[COUNT()])
   LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
-SELECT `Customer`.`customerid`, COUNT(*) AS `numEntries`
-FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
-GROUP BY `Customer`.`customerid`
+SELECT `customerid`, COUNT(*) AS `numEntries`
+FROM `Customer`
+GROUP BY `customerid`
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (
   `customerid` BIGINT NOT NULL,
@@ -114,9 +114,9 @@ SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `customer_id_count`
-SELECT `Customer`.`customerid`, COUNT(*) AS `numEntries`
-FROM `default_catalog`.`default_database`.`Customer` AS `Customer`
-GROUP BY `Customer`.`customerid`
+SELECT `customerid`, COUNT(*) AS `numEntries`
+FROM `Customer`
+GROUP BY `customerid`
 ;
 END
 >>>kafka.json

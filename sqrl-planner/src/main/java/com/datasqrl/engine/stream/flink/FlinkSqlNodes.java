@@ -114,6 +114,11 @@ public class FlinkSqlNodes {
         conflictBehavior.map(cb -> cb.symbol(SqlParserPos.ZERO)).orElse(null));
   }
 
+  /** Deep-copies a query so it can be validated without rewriting the original. */
+  public static SqlNode copyQuery(SqlNode query) {
+    return SqlNodeCopier.copy(query);
+  }
+
   /** Deep-copies an insert so it can be validated without rewriting the original. */
   public static RichSqlInsert copyInsert(RichSqlInsert insert) {
     var overwrite = SqlNodeList.EMPTY;

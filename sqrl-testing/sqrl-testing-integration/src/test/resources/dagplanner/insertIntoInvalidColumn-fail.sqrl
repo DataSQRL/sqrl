@@ -1,0 +1,10 @@
+IMPORT ecommerceTs.customer;
+
+CREATE TABLE CustomerIds (
+  customerid BIGINT
+) WITH ('connector' = 'blackhole');
+
+INSERT INTO CustomerIds
+SELECT
+    missing_column
+FROM Customer;

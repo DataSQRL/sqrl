@@ -43,8 +43,8 @@
   "stage" : "flink",
   "inputs" : [ "default_catalog.default_database.Src" ],
   "annotations" : [ ],
-  "plan" : "LogicalProject(val=[$0])\n  LogicalTableScan(table=[[default_catalog, default_database, Src]])\n",
-  "sql" : "SELECT `Src`.`val`\nFROM `default_catalog`.`default_database`.`Src` AS `Src`",
+  "plan" : "LogicalSort(sort0=[$0], dir0=[DESC-nulls-last])\n  LogicalProject(val=[$0])\n    LogicalTableScan(table=[[default_catalog, default_database, Src]])\n",
+  "sql" : "SELECT *\nFROM `Src`\nORDER BY `val` DESC",
   "timestamp" : "-",
   "schema" : [ {
     "name" : "val",
@@ -67,14 +67,14 @@
   "stage" : "flink",
   "inputs" : [ "default_catalog.default_database.Src" ],
   "annotations" : [ ],
-  "plan" : "LogicalProject(val=[$0])\n  LogicalTableScan(table=[[default_catalog, default_database, Src]])\n",
-  "sql" : "SELECT `Src`.`val`\nFROM `default_catalog`.`default_database`.`Src` AS `Src`",
+  "plan" : "LogicalSort(sort0=[$0], dir0=[DESC-nulls-last], offset=[1], fetch=[2])\n  LogicalProject(val=[$0])\n    LogicalTableScan(table=[[default_catalog, default_database, Src]])\n",
+  "sql" : "SELECT *\nFROM `Src`\nORDER BY `val` DESC\nOFFSET 1 ROWS\nFETCH NEXT 2 ROWS ONLY",
   "timestamp" : "-",
   "schema" : [ {
     "name" : "val",
     "type" : "INTEGER NOT NULL"
   } ],
-  "row_count" : "~1e8"
+  "row_count" : "~2"
 }, {
   "id" : "default_catalog.default_database.TableC",
   "name" : "TableC",
@@ -92,7 +92,7 @@
   "inputs" : [ "default_catalog.default_database.Src" ],
   "annotations" : [ ],
   "plan" : "LogicalProject(val=[$0])\n  LogicalTableScan(table=[[default_catalog, default_database, Src]])\n",
-  "sql" : "SELECT `Src`.`val`\nFROM `default_catalog`.`default_database`.`Src` AS `Src`",
+  "sql" : "SELECT *\nFROM `Src`",
   "timestamp" : "-",
   "schema" : [ {
     "name" : "val",
@@ -140,10 +140,10 @@ CREATE TABLE TableB (
 ) WITH (
   'connector' = 'print'
 );
-INSERT INTO TableA SELECT * FROM Src;
+INSERT INTO TableA SELECT * FROM Src ORDER BY val DESC;
 EXPORT Src TO tables.sinks.SinkA;
 NEXT_BATCH;
-INSERT INTO TableB SELECT * FROM Src;
+INSERT INTO TableB SELECT * FROM Src ORDER BY val DESC LIMIT 2 OFFSET 1;
 EXPORT Src TO tables.sinks.SinkB;
 NEXT_BATCH;
 CREATE TABLE TableC (
