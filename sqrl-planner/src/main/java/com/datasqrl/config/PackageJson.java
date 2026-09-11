@@ -33,6 +33,8 @@ public interface PackageJson {
 
   void setEnabledEngines(List<String> enabledEngines);
 
+  void removeDisabledEngineConfigurations(ErrorCollector errors);
+
   EnginesConfig getEngines();
 
   ConnectorsConfig getConnectors();
