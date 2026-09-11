@@ -1435,9 +1435,9 @@ SELECT `orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `p
 FROM `default_catalog`.`default_database`.`ExplicitIndexes`
 ON CONFLICT DO NOTHING
 ;
-INSERT INTO `ExplicitIndexesSink`
+INSERT INTO `default_catalog`.`default_database`.`ExplicitIndexesSink`
 SELECT `orderId`, `customerId`, `createdAt`
-FROM `ExplicitIndexes`
+FROM `default_catalog`.`default_database`.`ExplicitIndexes`
 ;
 INSERT INTO `default_catalog`.`default_database`.`NoIndexes_2`
 SELECT `orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`, `hash_columns`(`orderId`, `customerId`, `storeId`, `productId`, `category`, `status`, `paymentMethod`, `country`, `currency`, `channel`, `discountCode`, `shippingMethod`, `warehouseId`, `carrierId`, `campaignId`, `deviceType`, `riskLevel`, `fulfillmentStatus`, `returnReason`, `salesRepId`, `amount`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`

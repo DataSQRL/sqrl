@@ -131,9 +131,9 @@ INSERT INTO `default_catalog`.`default_database`.`SinkA_ex1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
-INSERT INTO `TableA`
+INSERT INTO `default_catalog`.`default_database`.`TableA`
 SELECT *
-FROM `Src`
+FROM `default_catalog`.`default_database`.`Src`
 ORDER BY `val` DESC
 ;
 END
@@ -178,9 +178,9 @@ INSERT INTO `default_catalog`.`default_database`.`SinkB_ex2`
 SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
-INSERT INTO `TableB`
+INSERT INTO `default_catalog`.`default_database`.`TableB`
 SELECT *
-FROM `Src`
+FROM `default_catalog`.`default_database`.`Src`
 ORDER BY `val` DESC
 OFFSET 1 ROWS
 FETCH NEXT 2 ROWS ONLY
@@ -229,9 +229,9 @@ WITH (
   'connector' = 'print'
 );
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `TableC`
+INSERT INTO `default_catalog`.`default_database`.`TableC`
 SELECT *
-FROM `Src`
+FROM `default_catalog`.`default_database`.`Src`
 ;
 END
 >>>flink-sql-no-functions.sql
@@ -281,9 +281,9 @@ INSERT INTO `default_catalog`.`default_database`.`SinkA_ex1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
-INSERT INTO `TableA`
+INSERT INTO `default_catalog`.`default_database`.`TableA`
 SELECT *
-FROM `Src`
+FROM `default_catalog`.`default_database`.`Src`
 ORDER BY `val` DESC
 ;
 END;
@@ -292,17 +292,17 @@ INSERT INTO `default_catalog`.`default_database`.`SinkB_ex2`
 SELECT *
 FROM `default_catalog`.`default_database`.`Src`
 ;
-INSERT INTO `TableB`
+INSERT INTO `default_catalog`.`default_database`.`TableB`
 SELECT *
-FROM `Src`
+FROM `default_catalog`.`default_database`.`Src`
 ORDER BY `val` DESC
 OFFSET 1 ROWS
 FETCH NEXT 2 ROWS ONLY
 ;
 END;
 EXECUTE STATEMENT SET BEGIN
-INSERT INTO `TableC`
+INSERT INTO `default_catalog`.`default_database`.`TableC`
 SELECT *
-FROM `Src`
+FROM `default_catalog`.`default_database`.`Src`
 ;
 END

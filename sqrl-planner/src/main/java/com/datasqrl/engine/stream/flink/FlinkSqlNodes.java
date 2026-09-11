@@ -38,14 +38,20 @@ import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlIntervalQualifier;
+import org.apache.calcite.sql.SqlKind;
 import org.apache.calcite.sql.SqlLiteral;
+import org.apache.calcite.sql.SqlMatchRecognize;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlUnresolvedFunction;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.util.SqlBasicVisitor;
 import org.apache.calcite.sql.util.SqlShuttle;
+import org.apache.calcite.sql.validate.SqlValidator;
+import org.apache.calcite.sql.validate.SqlValidatorImpl;
+import org.apache.calcite.sql.validate.SqlValidatorScope;
 import org.apache.flink.sql.parser.ddl.SqlCreateFunction;
 import org.apache.flink.sql.parser.ddl.SqlDistribution;
 import org.apache.flink.sql.parser.ddl.SqlTableColumn.SqlMetadataColumn;
@@ -117,6 +123,39 @@ public class FlinkSqlNodes {
   /** Deep-copies a query so it can be validated without rewriting the original. */
   public static SqlNode copyQuery(SqlNode query) {
     return SqlNodeCopier.copy(query);
+  }
+
+  /**
+   * Binds resolved table prefixes in the original query without changing its structure. Must run
+   * before relational conversion rewrites the validated tree.
+   */
+  public static void bindTableNames(SqlNode query, SqlNode validatedQuery, SqlValidator validator) {
+    var identifiers = new HashMap<SqlParserPos, SqlIdentifier>();
+    query.accept(
+        new SqlBasicVisitor<Void>() {
+          @Override
+          public Void visit(SqlIdentifier id) {
+            identifiers.putIfAbsent(id.getParserPosition(), id);
+            return null;
+          }
+        });
+    validatedQuery.accept(new TableNameBinder(validator, identifiers));
+  }
+
+  /** Adds resolved prefixes while retaining authored component positions and quoting. */
+  public static void qualifyIdentifier(SqlIdentifier id, List<String> qualifiedName) {
+    var prefixSize = qualifiedName.size() - id.names.size();
+    if (prefixSize <= 0) {
+      return;
+    }
+    var positions = new ArrayList<SqlParserPos>(qualifiedName.size());
+    for (var i = 0; i < prefixSize; i++) {
+      positions.add(id.getParserPosition());
+    }
+    for (var i = 0; i < id.names.size(); i++) {
+      positions.add(id.getComponentParserPosition(i));
+    }
+    id.setNames(qualifiedName, positions);
   }
 
   /** Deep-copies an insert so it can be validated without rewriting the original. */
@@ -508,6 +547,74 @@ public class FlinkSqlNodes {
         null,
         null,
         null);
+  }
+
+  /** Transfers resolved prefixes to the original identifiers while respecting SQL scopes. */
+  private static class TableNameBinder extends SqlBasicVisitor<Void> {
+    private final SqlValidator validator;
+    private final Map<SqlParserPos, SqlIdentifier> identifiers;
+    private SqlValidatorScope scope;
+
+    private TableNameBinder(SqlValidator validator, Map<SqlParserPos, SqlIdentifier> identifiers) {
+      this.validator = validator;
+      this.identifiers = identifiers;
+      scope = validator.getEmptyScope();
+    }
+
+    @Override
+    public Void visit(SqlCall call) {
+      var previousScope = scope;
+      scope =
+          call instanceof SqlSelect select
+              ? validator.getSelectScope(select)
+              : call instanceof SqlMatchRecognize match
+                  ? validator.getMatchRecognizeScope(match)
+                  : scope.getOperandScope(call);
+      try {
+        // SELECT operands are not marked as expressions. Only AS needs alias exclusion.
+        call.getOperator()
+            .acceptCall(
+                this,
+                call,
+                call.getKind() == SqlKind.AS,
+                SqlBasicVisitor.ArgHandlerImpl.instance());
+      } finally {
+        scope = previousScope;
+      }
+      return null;
+    }
+
+    @Override
+    public Void visit(SqlIdentifier id) {
+      var namespace = validator.getNamespace(id);
+      // Columns, aliases and CTE references do not have a catalog table namespace.
+      if (namespace != null && namespace.getTable() != null) {
+        var original = identifiers.get(id.getParserPosition());
+        if (original != null) {
+          qualifyIdentifier(original, namespace.getTable().getQualifiedName());
+        }
+      } else if (!id.isSimple() && !id.isStar() && namespace == null) {
+        var original =
+            identifiers.get(((SqlValidatorImpl) validator).getOriginal(id).getParserPosition());
+        if (original == null || original.names.size() <= 2) {
+          return null;
+        }
+        var qualified = scope.fullyQualify(id);
+        if (qualified.namespace != null && qualified.namespace.getTable() != null) {
+          var fullName = new ArrayList<>(qualified.namespace.getTable().getQualifiedName());
+          fullName.addAll(qualified.suffix());
+          // Database-qualified columns and stars need a catalog prefix; aliases and row fields do
+          // not.
+          if (fullName.size() == original.names.size() + 1) {
+            if (original.isStar()) {
+              fullName.set(fullName.size() - 1, "");
+            }
+            qualifyIdentifier(original, fullName);
+          }
+        }
+      }
+      return null;
+    }
   }
 
   /**

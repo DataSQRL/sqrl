@@ -16,13 +16,25 @@
 package com.datasqrl;
 
 import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
+import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.util.ArgumentsProviders;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import org.apache.flink.table.api.EnvironmentSettings;
+import org.apache.flink.table.api.TableEnvironment;
+import org.apache.flink.table.api.internal.TableEnvironmentImpl;
+import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
 import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
@@ -61,6 +73,50 @@ public class UseCaseCompileTest {
         packageFile,
         UseCaseTestHelper.defaultBuildDirFilter(),
         UseCaseTestHelper.defaultPlanDirFilter());
+  }
+
+  @Test
+  void givenImportedInserts_whenExecutedAfterDatabaseRestore_thenWriteOriginalDataToOriginalSinks(
+      @TempDir Path output) throws Exception {
+    var sql =
+        compileInsertIdentityUseCase()
+            .replace("file:///tmp/insert-table-identity", output.toUri().toString());
+    var env = (TableEnvironmentImpl) TableEnvironment.create(EnvironmentSettings.inBatchMode());
+    env.getConfig().getConfiguration().setString("parallelism.default", "1");
+    try {
+      var statements =
+          ((PlannerBase) env.getPlanner()).createFlinkPlanner().parser().parseSqlList(sql);
+      for (var statement : statements) {
+        env.executeSql(RelToFlinkSql.convertToString(statement)).await(60, TimeUnit.SECONDS);
+      }
+
+      assertThat(readSinkRows(output.resolve("source-sink"))).containsExactly("11");
+      assertThat(readSinkRows(output.resolve("target-sink"))).containsExactly("11");
+      assertThat(readSinkRows(output.resolve("scope-sink"))).containsExactly("11");
+      assertThat(readSinkRows(output.resolve("wrong-target"))).isEmpty();
+    } finally {
+      env.getCatalogManager().close();
+    }
+  }
+
+  private static List<String> readSinkRows(Path directory) throws IOException {
+    var rows = new ArrayList<String>();
+    if (Files.exists(directory)) {
+      try (var files = Files.walk(directory)) {
+        for (var file :
+            files.filter(p -> p.getFileName().toString().startsWith("part-")).toList()) {
+          rows.addAll(Files.readAllLines(file));
+        }
+      }
+    }
+    return rows;
+  }
+
+  private String compileInsertIdentityUseCase() throws IOException {
+    var useCase = USECASE_DIR.resolve("insert-table-identity-compile");
+    var hook = snapshotExtension.execute(useCase, "compile", "package.json");
+    assertThat(hook.isSuccess()).as(hook.getMessages()).isTrue();
+    return Files.readString(snapshotExtension.getPlanDir().resolve("flink-sql-no-functions.sql"));
   }
 
   @Test

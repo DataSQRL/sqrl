@@ -29,6 +29,7 @@ import com.datasqrl.engine.log.MutationEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
+import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
@@ -119,6 +120,7 @@ import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.commons.lang3.Strings;
 import org.apache.flink.sql.parser.ddl.catalog.SqlCreateCatalog;
 import org.apache.flink.sql.parser.ddl.table.SqlAlterTable;
@@ -1202,6 +1204,8 @@ public class SqlScriptPlanner {
                 sinkTableId.getObjectName() + INSERT_SUFFIX + insertTableCounter.incrementAndGet()),
             hintsAndDocs,
             errors);
+    FlinkSqlNodes.qualifyIdentifier(
+        (SqlIdentifier) insert.getTargetTableID(), sinkTableId.toList());
     var inputNode =
         new TableNode(
             inputTable,

@@ -1,0 +1,44 @@
+CREATE TABLE SourceTable (
+  val INT
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '1',
+  'fields.val.min' = '11',
+  'fields.val.max' = '11'
+);
+
+CREATE TABLE SourceSink (
+  val INT
+) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/insert-table-identity/source-sink',
+  'format' = 'csv'
+);
+
+CREATE TABLE TargetSink (
+  val INT
+) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/insert-table-identity/target-sink',
+  'format' = 'csv'
+);
+
+CREATE TABLE ScopeSink (
+  val INT
+) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/insert-table-identity/scope-sink',
+  'format' = 'csv'
+);
+
+-- Qualify the sink so target resolution cannot hide a source identity regression.
+INSERT INTO default_catalog.original_db.SourceSink SELECT s.val FROM SourceTable AS s;
+
+-- Qualify the source to isolate the initially unqualified target.
+INSERT INTO TargetSink SELECT val FROM default_catalog.original_db.SourceTable;
+
+-- The CTE shadows the physical table; its references and the aliases must stay local.
+INSERT INTO default_catalog.original_db.ScopeSink
+WITH SourceTable AS (SELECT val FROM SourceTable)
+SELECT q.val FROM SourceTable q
+JOIN (SELECT val FROM original_db.SourceTable) b ON q.val = b.val;
