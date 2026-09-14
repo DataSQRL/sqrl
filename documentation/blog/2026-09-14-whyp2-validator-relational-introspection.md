@@ -2,7 +2,7 @@
 slug: p2-validator-relational-introspection
 title: "The Bugs That Aren't in the Text: What Deep Relational Introspection Catches"
 authors: [matthias]
-tags: [agentic, data-engineering]
+tags: [technical, DataSQRL]
 ---
 
 <head>
@@ -25,6 +25,8 @@ We get that question a lot. We are building an [open-source data engineering har
 Part 1 was about the seams between systems, and how a transpiler generates them deterministically. Part 2 is about a harder problem.
 
 Some bugs have no correctness condition in the query text at all. The condition lives in the relationship between a query, the data it reads, and how that data changes over time. An agent reads SQL/code as text, and at the text level these bugs are invisible until the production deployment fails.
+
+<!-- truncate -->
 
 ## 1. No indexes for the paths the API actually queries
 
