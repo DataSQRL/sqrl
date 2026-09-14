@@ -54,8 +54,8 @@
             <name>Matthias Broecheler</name>
             <uri>https://github.com/mbroecheler</uri>
         </author>
-        <category label="agentic" term="agentic"/>
-        <category label="data-engineering" term="data-engineering"/>
+        <category label="technical" term="technical"/>
+        <category label="DataSQRL" term="DataSQRL"/>
     </entry>
     <entry>
         <title type="html"><![CDATA[The Pipeline Compiles, the Demo Works, and the Seams Are Quietly Broken]]></title>
@@ -114,8 +114,8 @@
             <name>Matthias Broecheler</name>
             <uri>https://github.com/mbroecheler</uri>
         </author>
-        <category label="agentic" term="agentic"/>
-        <category label="data-engineering" term="data-engineering"/>
+        <category label="technical" term="technical"/>
+        <category label="DataSQRL" term="DataSQRL"/>
     </entry>
     <entry>
         <title type="html"><![CDATA[AI in Data Engineering: Building Reliable Data Systems at Scale]]></title>

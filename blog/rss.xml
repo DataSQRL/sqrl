@@ -51,8 +51,8 @@
 <p>A validator doesn't review text. It parses the pipeline into a relational plan and traverses it the way a query optimizer would, and every fix above falls out of that one traversal. It infers keys and pushes them into the write configuration. It tracks timestamps and watermarks through each join and aggregation. It classifies every table as a stream, a changelog, or a lookup, and checks each operator against that. It propagates nullability, verifies that ordering columns actually increase, and reads the query workload to choose indexes. It rejects any plan that puts an operation on a system that cannot run it, or serves data that was never materialized.</p>
 <p>When something fails, the validator names the table, the column, and a suggested fix. That matters more than it sounds. In our testing, an agent handed structured feedback fixes the problem far more reliably than one reasoning backward from an opaque runtime error.</p>
 <p>The validator is open source, and you can add your own rules: <a href="https://github.com/DataSQRL/sqrl" target="_blank" rel="noopener noreferrer" class="">DataSQRL on GitHub</a>.</p>]]></content:encoded>
-            <category>agentic</category>
-            <category>data-engineering</category>
+            <category>technical</category>
+            <category>DataSQRL</category>
         </item>
         <item>
             <title><![CDATA[The Pipeline Compiles, the Demo Works, and the Seams Are Quietly Broken]]></title>
@@ -107,8 +107,8 @@
 <p>Because a compiler does that mapping instead of a language model, the entire category of "the systems disagree at the seam" does not need review to catch. It cannot be expressed. The agent decides what the pipeline computes. The transpiler guarantees the boundaries agree.</p>
 <p>This has the additional benefit that there is a lot less code for the agent to generate at the seams. That means faster implementation, fewer tokens, less context pollution, and less technical debt.</p>
 <p>Want to learn more about what exactly gets generated? The transpiler is part of the open source data engineering harness, so you can read exactly what gets generated: <a href="https://github.com/DataSQRL/sqrl" target="_blank" rel="noopener noreferrer" class="">DataSQRL on GitHub</a>.</p>]]></content:encoded>
-            <category>agentic</category>
-            <category>data-engineering</category>
+            <category>technical</category>
+            <category>DataSQRL</category>
         </item>
         <item>
             <title><![CDATA[AI in Data Engineering: Building Reliable Data Systems at Scale]]></title>
