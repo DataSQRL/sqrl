@@ -281,11 +281,13 @@ Protects a component's pods from **voluntary** autoscaler disruption (node conso
 
 ## Schedule (`schedule`)
 
-Runs a pipeline as a **scheduled batch job**: the Flink cluster is created at each fire time, runs the job to completion, and is torn down again. Flink only; absent by default, which means the pipeline runs continuously.
+Runs a pipeline as a **scheduled batch job**: the Flink cluster is created at each fire time, runs the job to completion, and is torn down again. Flink only; absent by default.
 
-| Engine | Field      | Default                |
-|:-------|:-----------|:-----------------------|
-| Flink  | `schedule` | absent (runs continuously) |
+| Engine | Field      | Default |
+|:-------|:-----------|:--------|
+| Flink  | `schedule` | absent  |
+
+Without a `schedule`, what the deployment does is decided by `execution.runtime-mode` alone: a `STREAMING` pipeline (the default) runs continuously, while a `BATCH` pipeline runs once and then stays dormant until it is deployed again.
 
 ```json
 {
@@ -312,7 +314,7 @@ Both fields are required when `schedule` is present:
 
 Both are validated before anything is deployed: an unparseable cron expression or an unknown timezone fails the deployment with an error naming the offending value.
 
-`"execution.runtime-mode": "BATCH"` is required. A streaming job never finishes, so it never releases the cluster and the schedule has no effect.
+`"execution.runtime-mode": "BATCH"` is required for the schedule to take effect. A streaming job never finishes, so it never releases the cluster and no fire time is ever reached.
 
 ### Run Cycle
 
