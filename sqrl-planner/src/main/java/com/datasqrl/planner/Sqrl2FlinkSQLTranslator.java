@@ -21,7 +21,6 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.calcite.expand.RelationAliasExpander;
 import com.datasqrl.config.PackageJson.CompilerConfig;
-import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
 import com.datasqrl.engine.stream.flink.FlinkSqlNodePlanner;
@@ -105,6 +104,7 @@ import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSyntax;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
+import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.PipelineOptions;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
@@ -125,6 +125,7 @@ import org.apache.flink.table.catalog.Column.MetadataColumn;
 import org.apache.flink.table.catalog.Column.PhysicalColumn;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.ResolvedSchema;
+import org.apache.flink.table.catalog.UnresolvedIdentifier;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.ddl.AlterViewAsOperation;
@@ -329,7 +330,10 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     } else {
       throw new UnsupportedOperationException("Unexpected SQLnode: " + validated);
     }
-    var relRoot = flinkSqlNodePlanner.toRelRoot(query, flinkPlanner);
+    var validator = flinkPlanner.getOrCreateSqlValidator();
+    var validatedQuery = validator.validate(query);
+    var referencedViews = getReferencedViews(validatedQuery, validator);
+    var relRoot = flinkPlanner.rel(validatedQuery);
     var relBuilder = flinkSqlNodePlanner.getRelBuilder(flinkPlanner);
     var relNode = relRoot.rel;
     Optional<Sort> topLevelSort = Optional.empty();
@@ -358,13 +362,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
     var analyzer =
         new SQRLLogicalPlanAnalyzer(
-            relNode,
-            tableLookup,
-            viewName,
-            getReferencedViews(getQueryFromView(viewDef)),
-            relBuilder,
-            flinkPlanner,
-            errors);
+            relNode, tableLookup, viewName, referencedViews, relBuilder, flinkPlanner, errors);
 
     var viewAnalysis = analyzer.analyze(hintsAndDoc);
     viewAnalysis.tableAnalysis().topLevelSort(topLevelSort);
@@ -372,26 +370,28 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     return viewAnalysis;
   }
 
-  private Set<ObjectIdentifier> getReferencedViews(SqlNode query) {
+  private Set<ObjectIdentifier> getReferencedViews(SqlNode query, SqlValidator validator) {
     query = removeSort(query);
     if (!(query instanceof SqlSelect select)) {
       return Set.of();
     }
-    return getReferencedView(select.getFrom()).map(Set::of).orElseGet(Set::of);
-  }
-
-  private Optional<ObjectIdentifier> getReferencedView(SqlNode source) {
+    var source = select.getFrom();
     if (source instanceof org.apache.calcite.sql.SqlBasicCall call
         && call.getKind() == SqlKind.AS) {
       source = call.operand(0);
     }
     if (source instanceof SqlIdentifier identifier) {
-      var view = tableLookup.lookupView(qualifyIdentifier(identifier));
-      if (view != null) {
-        return Optional.of(view.getObjectIdentifier());
+      var namespace = validator.getNamespace(identifier);
+      if (namespace != null && namespace.getTable() != null) {
+        var names = namespace.getTable().getQualifiedName();
+        var view =
+            tableLookup.lookupView(ObjectIdentifier.of(names.get(0), names.get(1), names.get(2)));
+        if (view != null) {
+          return Set.of(view.getObjectIdentifier());
+        }
       }
     }
-    return Optional.empty();
+    return Set.of();
   }
 
   public List<String> setDatabase(String databaseName, boolean withCatalog) {
@@ -510,20 +510,25 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     return tableAnalysis;
   }
 
-  /** Analyzes a query executed directly by an INSERT statement. */
+  /** Analyzes an independent copy and binds the output query's tables for deferred execution. */
   public TableAnalysis analyzeInsertQuery(
       SqlNode query, ObjectIdentifier identifier, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
 
-    // Validation mutates the SQL tree, so analyze a copy and preserve the query for output.
+    var originalSql = RelToFlinkSql.convertToString(query);
+    // Validation can replace the root as well as mutate nodes (notably ORDER BY).
     var analysisQuery = FlinkSqlNodes.copyQuery(query);
     var flinkPlanner = validatorSupplier.get();
-    var relRoot = flinkSqlNodePlanner.toRelRoot(analysisQuery, flinkPlanner);
+    var validator = flinkPlanner.getOrCreateSqlValidator();
+    var validatedQuery = validator.validate(analysisQuery);
+    FlinkSqlNodes.bindTableNames(query, validatedQuery, validator);
+    var referencedViews = getReferencedViews(validatedQuery, validator);
+    var relRoot = flinkPlanner.rel(validatedQuery);
     var analyzer =
         new SQRLLogicalPlanAnalyzer(
             relRoot.project(),
             tableLookup,
             identifier.getObjectName(),
-            getReferencedViews(analysisQuery),
+            referencedViews,
             flinkSqlNodePlanner.getRelBuilder(flinkPlanner),
             flinkPlanner,
             errors);
@@ -532,7 +537,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
         .analyze(hintsAndDoc)
         .tableAnalysis()
         .objectIdentifier(identifier)
-        .originalSql(RelToFlinkSql.convertToString(query))
+        .originalSql(originalSql)
         .build();
   }
 
@@ -799,14 +804,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   }
 
   ObjectIdentifier qualifyIdentifier(SqlIdentifier identifier) {
-    var names = identifier.names;
-    var size = names.size();
-
-    var databaseName = size > 1 ? names.get(size - 2) : catalogManager.getCurrentDatabase();
-    if (databaseName == null) databaseName = SqrlConstants.FLINK_DEFAULT_DATABASE;
-    var tableName = names.get(size - 1);
-
-    return ObjectIdentifier.of(FLINK_DEFAULT_CATALOG, databaseName, tableName);
+    return catalogManager.qualifyIdentifier(UnresolvedIdentifier.of(identifier.names));
   }
 
   /**
