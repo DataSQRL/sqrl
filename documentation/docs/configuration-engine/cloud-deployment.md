@@ -279,6 +279,55 @@ Protects a component's pods from **voluntary** autoscaler disruption (node conso
 
 ---
 
+## Schedule (`schedule`)
+
+Runs a pipeline as a **scheduled batch job**: the Flink cluster is created at each fire time, runs the job to completion, and is torn down again. Flink only; absent by default.
+
+| Engine | Field      | Default |
+|:-------|:-----------|:--------|
+| Flink  | `schedule` | absent  |
+
+Without a `schedule`, what the deployment does is decided by `execution.runtime-mode` alone: a `STREAMING` pipeline (the default) runs continuously, while a `BATCH` pipeline runs once and then stays dormant until it is deployed again.
+
+```json
+{
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.runtime-mode": "BATCH"   // required: a schedule only takes effect for batch jobs
+      },
+      "deployment": {
+        "schedule": {
+          "cron": "0 3 * * *",              // daily at 03:00
+          "timezone": "America/New_York"
+        }
+      }
+    }
+  }
+}
+```
+
+Both fields are required when `schedule` is present:
+
+* `cron`: a 5-field UNIX cron expression — `minute hour day-of-month month day-of-week`. There is no seconds field, so the shortest interval is one minute.
+* `timezone`: an [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) name, for example `UTC` or `America/New_York`. Fire times are computed in that zone, so a schedule follows the zone's daylight-saving shifts instead of a fixed UTC offset.
+
+Both are validated before anything is deployed: an unparseable cron expression or an unknown timezone fails the deployment with an error naming the offending value.
+
+`"execution.runtime-mode": "BATCH"` is required for the schedule to take effect. A streaming job never finishes, so it never releases the cluster and no fire time is ever reached.
+
+### Run Cycle
+
+A scheduled deployment alternates between running and dormant:
+
+1. **Run** — at the fire time the Flink cluster is created and the batch job processes the data currently available in its sources.
+2. **Sleep** — when the job reaches a terminal state the Flink cluster is removed, and the deployment reports as dormant. The database and the API stay up and keep serving the results of the last run; no Flink resources are consumed between runs.
+3. **Wake** — the next fire time is computed from the moment the run ended, and the cluster is recreated then.
+
+Because the next fire time is derived from the end of the previous run, runs never overlap. A run that takes longer than its interval pushes the following fire times out; occurrences that pass while the job is still running are skipped, not queued.
+
+---
+
 ## Create Indexes (`create-indexes`)
 
 Controls whether the PostgreSQL table indexes are created for the deployment. Defaults to `true`. PostgreSQL only.
