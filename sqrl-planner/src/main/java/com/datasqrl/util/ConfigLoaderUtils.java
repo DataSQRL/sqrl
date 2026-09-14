@@ -15,6 +15,7 @@
  */
 package com.datasqrl.util;
 
+import static com.datasqrl.config.PackageJsonImpl.ENGINES_PROPERTY;
 import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.config.PackageJson;
@@ -44,8 +45,12 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
@@ -293,6 +298,7 @@ public final class ConfigLoaderUtils {
       ErrorCollector errors, List<Path> files, List<String> defaults) {
     var valid = true;
     var jsons = new ArrayList<ObjectNode>();
+    var userEngineConfigs = new HashSet<String>();
 
     // Convert, validate, and add defaults
     for (String defaultPath : defaults) {
@@ -309,6 +315,7 @@ public final class ConfigLoaderUtils {
     for (Path file : files) {
       var json = convertFileToObjectNode(errors, Either.Left(file), true);
       valid &= isValidJson(errors, json, PACKAGE_SCHEMA_PATH);
+      userEngineConfigs.addAll(getConfiguredEngineNames(json));
       jsons.add(json);
     }
 
@@ -323,8 +330,16 @@ public final class ConfigLoaderUtils {
     // Merge all collected JSON into one object
     var merged = MAPPER.createObjectNode();
     jsons.forEach(node -> JsonUtils.merge(merged, node));
+    return SqrlConfig.loadResolvedConfig(errors, merged, null, userEngineConfigs);
+  }
 
-    return SqrlConfig.loadResolvedConfig(errors, merged);
+  private static Set<String> getConfiguredEngineNames(JsonNode json) {
+    return json.optional(ENGINES_PROPERTY)
+        .map(JsonNode::propertyStream)
+        .orElse(Stream.empty())
+        .filter(e -> !e.getValue().isNull())
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toSet());
   }
 
   private static void validatePlanDir(Path planDir) {

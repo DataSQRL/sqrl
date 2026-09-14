@@ -65,6 +65,8 @@ public class ExecutionEnginesHolder {
     if (isTestExec()) {
       packageJson.setEnabledEngines(List.copyOf(engines.keySet()));
     }
+
+    packageJson.removeDisabledEngineConfigurations(errors);
   }
 
   public Map<String, ExecutionEngine> getEngines() {
