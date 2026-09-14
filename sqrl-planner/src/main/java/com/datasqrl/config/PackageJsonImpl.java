@@ -15,8 +15,12 @@
  */
 package com.datasqrl.config;
 
+import com.datasqrl.error.ErrorCollector;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.Getter;
 
 public class PackageJsonImpl implements PackageJson {
@@ -31,13 +35,19 @@ public class PackageJsonImpl implements PackageJson {
   public static final String TEST_RUNNER_KEY = "test-runner";
 
   @Getter private final SqrlConfig sqrlConfig;
+  private final Set<String> userEngineConfigurations;
 
   public PackageJsonImpl() {
     this(SqrlConfig.createCurrentVersion());
   }
 
   public PackageJsonImpl(SqrlConfig sqrlConfig) {
+    this(sqrlConfig, Set.of());
+  }
+
+  public PackageJsonImpl(SqrlConfig sqrlConfig, Set<String> userEngineConfigurations) {
     this.sqrlConfig = sqrlConfig;
+    this.userEngineConfigurations = Set.copyOf(userEngineConfigurations);
   }
 
   @Override
@@ -48,6 +58,33 @@ public class PackageJsonImpl implements PackageJson {
   @Override
   public void setEnabledEngines(List<String> enabledEngines) {
     sqrlConfig.setProperty(ENABLED_ENGINES_KEY, enabledEngines);
+  }
+
+  @Override
+  public void removeDisabledEngineConfigurations(ErrorCollector errors) {
+    var enabledEngines = new HashSet<>(getEnabledEngines());
+    var engineConfigurations = sqrlConfig.getSubConfig(ENGINES_PROPERTY);
+    var engineNamesToRemove = new ArrayList<String>();
+
+    for (String engineName : engineConfigurations.getKeys()) {
+      if (!enabledEngines.contains(engineName)) {
+        engineNamesToRemove.add(engineName);
+      }
+    }
+
+    engineNamesToRemove.forEach(engineConfigurations::removeProperty);
+
+    var userEngineConfigurationsToRemove =
+        engineNamesToRemove.stream().filter(userEngineConfigurations::contains).toList();
+    if (!userEngineConfigurationsToRemove.isEmpty()) {
+      errors.warn(
+          "Removed configurations for engines not listed in 'enabled-engines': %s.",
+          userEngineConfigurationsToRemove);
+    }
+
+    if (!engineConfigurations.getKeys().iterator().hasNext()) {
+      sqrlConfig.removeProperty(ENGINES_PROPERTY);
+    }
   }
 
   @Override

@@ -37,6 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -71,15 +72,20 @@ public class SqrlConfig {
     this.prefix = prefix;
   }
 
-  public static PackageJson loadResolvedConfig(ErrorCollector errors, ObjectNode config) {
-    return loadResolvedConfig(errors, config, null);
+  public static PackageJson loadResolvedConfig(
+      ErrorCollector errors, ObjectNode config, @Nullable String jsonSchema) {
+    return loadResolvedConfig(errors, config, jsonSchema, Set.of());
   }
 
   public static PackageJson loadResolvedConfig(
-      ErrorCollector errors, ObjectNode config, @Nullable String jsonSchema) {
+      ErrorCollector errors,
+      ObjectNode config,
+      @Nullable String jsonSchema,
+      Set<String> userEngineConfigurations) {
 
     if (ConfigLoaderUtils.isValidJson(errors, config, jsonSchema)) {
-      return new PackageJsonImpl(new SqrlConfig(errors, config, SqrlConstants.PACKAGE_JSON, ""));
+      return new PackageJsonImpl(
+          new SqrlConfig(errors, config, SqrlConstants.PACKAGE_JSON, ""), userEngineConfigurations);
     }
 
     throw errors.exception(
@@ -315,6 +321,20 @@ public class SqrlConfig {
     return this;
   }
 
+  public SqrlConfig removeProperty(String key) {
+    var parts = getFullKey(key).split("\\.");
+    var curr = root;
+    for (var i = 0; i < parts.length - 1; i++) {
+      var child = curr.get(parts[i]);
+      if (!(child instanceof ObjectNode)) {
+        return this;
+      }
+      curr = (ObjectNode) child;
+    }
+    curr.remove(parts[parts.length - 1]);
+    return this;
+  }
+
   public void setProperties(Object value) {
     var tree = MAPPER.valueToTree(value);
     errors.checkFatal(
@@ -326,7 +346,7 @@ public class SqrlConfig {
   }
 
   public void copy(SqrlConfig from) {
-    errors.checkFatal(from instanceof SqrlConfig, "Cannot copy config from other impl");
+    errors.checkFatal(from != null, "Cannot copy config from other impl");
     root = from.root.deepCopy();
     this.prefix = from.prefix;
   }

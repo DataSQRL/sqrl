@@ -119,25 +119,51 @@ class ConfigLoaderUtilsTest {
   @Test
   void givenNoPaths_loadDefaultConfig_thenReturnsDefaults() {
     var underTest = ConfigLoaderUtils.loadDefaultConfig(errors);
+    underTest.removeDisabledEngineConfigurations(errors);
 
     assertThat(underTest).isNotNull();
     assertThat(underTest.getVersion()).isEqualTo(1);
     assertThat(underTest.getEnabledEngines()).contains("vertx", "postgres", "kafka", "flink");
     assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
+    assertThat(underTest.getEngines().getEngineConfig("duckdb")).isNotPresent();
+    assertThat(errors).isEmpty();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
   }
 
   @Test
   void givenNoPaths_whenLoadingUnresolvedConfig_thenReturnsDefaults() {
     var underTest = ConfigLoaderUtils.loadUnresolvedConfig(errors, List.of());
+    underTest.removeDisabledEngineConfigurations(errors);
 
     assertThat(underTest).isNotNull();
     assertThat(underTest.getVersion()).isEqualTo(1);
     assertThat(underTest.getEnabledEngines()).contains("vertx", "postgres", "kafka", "flink");
     assertThat(underTest.getTestConfig()).isNotNull();
     assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
+    assertThat(underTest.getEngines().getEngineConfig("duckdb")).isNotPresent();
+    assertThat(errors).isEmpty();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
+  }
+
+  @Test
+  @SneakyThrows
+  void givenDisabledEngineConfigurationInSeparatePackageFile_whenMerged_thenRemovesItWithWarning() {
+    var enabledEngines = tempDir.resolve("enabled-engines.json");
+    var engineConfiguration = tempDir.resolve("engine-configuration.json");
+    Files.writeString(enabledEngines, "{\"enabled-engines\":[\"flink\"]}");
+    Files.writeString(
+        engineConfiguration, "{\"engines\":{\"postgres\":{\"partition-premake\":4}}}");
+
+    var underTest =
+        ConfigLoaderUtils.loadUnresolvedConfig(
+            errors, List.of(enabledEngines, engineConfiguration), List.of());
+    underTest.removeDisabledEngineConfigurations(errors);
+
+    assertThat(underTest.getEngines().getEngineConfig("postgres")).isNotPresent();
+    assertThat(errors).hasSize(1);
+    assertThat(errors.toString())
+        .contains("Removed configurations for engines not listed in 'enabled-engines': [postgres]");
   }
 
   @Test
@@ -145,6 +171,7 @@ class ConfigLoaderUtilsTest {
     var underTest =
         ConfigLoaderUtils.loadUnresolvedConfig(
             errors, List.of(Path.of("src/test/resources/config/test-package.json")));
+    underTest.removeDisabledEngineConfigurations(errors);
 
     assertThat(underTest).isNotNull();
     assertThat(underTest.getVersion()).isEqualTo(1);
@@ -152,8 +179,22 @@ class ConfigLoaderUtilsTest {
     assertThat(underTest.getEnabledEngines()).containsExactly("iceberg");
 
     assertThat(underTest.getTestConfig()).isNotNull();
-    assertThat(underTest.getEngines().getEngineConfig("flink")).isPresent();
+    assertThat(underTest.getEngines().getEngineConfig("flink")).isNotPresent();
+    assertThat(errors).isEmpty();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
+  }
+
+  @Test
+  void givenTestEngineAddedBeforeCleanup_thenRetainsItsDefaultConfiguration() {
+    var underTest =
+        ConfigLoaderUtils.loadUnresolvedConfig(
+            errors, List.of(Path.of("src/test/resources/config/test-package.json")));
+
+    underTest.setEnabledEngines(List.of("iceberg", "postgres"));
+    underTest.removeDisabledEngineConfigurations(errors);
+
+    assertThat(underTest.getEngines().getEngineConfig("postgres")).isPresent();
+    assertThat(errors).isEmpty();
   }
 
   @Test
