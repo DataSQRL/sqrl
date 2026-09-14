@@ -29,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.MinIOContainer;
+import org.testcontainers.utility.DockerImageName;
 
 public class S3ContainerIT {
 
@@ -39,7 +40,9 @@ public class S3ContainerIT {
   private static final String CRED = "minioadmin";
 
   private final MinIOContainer minioContainer =
-      new MinIOContainer("minio/minio:RELEASE.2023-12-20T01-00-02Z")
+      new MinIOContainer(
+              DockerImageName.parse("quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z")
+                  .asCompatibleSubstituteFor("minio/minio"))
           .withNetwork(sqrl.getNetwork())
           .withNetworkAliases("minio")
           .withUserName(CRED)
