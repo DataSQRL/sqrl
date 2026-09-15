@@ -2,7 +2,7 @@
 slug: p1-broken-at-seams
 title: "The Pipeline Compiles, the Demo Works, and the Seams Are Quietly Broken"
 authors: [matthias]
-tags: [agentic, data-engineering]
+tags: [technical, DataSQRL]
 ---
 
 <head>
