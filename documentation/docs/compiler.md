@@ -159,6 +159,19 @@ Upon successful compilation, the compiler writes:
 - Visual representation to `build/pipeline_visual.html` (open in browser to inspect the DAG)
 - Deployment artifacts to the target folder
 
+### Schema Discovery
+
+When a `CREATE TABLE ... LIKE` statement references a local `.jsonl` or `.csv` file, the compiler infers the
+table schema from every record in that file. To reuse inferred schemas across compilations, point the compiler
+at a cache directory with the `SQRL_DISCOVERY_CACHE_DIR` environment variable or the `sqrl.discovery.cache.dir`
+system property (the system property takes precedence). Entries are keyed by the SHA-256 of the file content, the
+file name, the discovery settings, and the compiler version, so a cached schema is only reused when discovery
+would produce the same result. Without either setting the cache is disabled.
+
+To infer the schema from only the first N records of each file, set `SQRL_DISCOVERY_MAX_RECORDS` or
+`sqrl.discovery.max-records`. Sampling changes the inferred schema when later records introduce new fields or
+types, so it is disabled by default.
+
 ## Run Command
 
 The `run` command compiles and runs the generated data pipeline in Docker.
