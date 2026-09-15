@@ -9,7 +9,8 @@ Based on the SQRL script, DataSQRL generates the interface for the compiled data
 
 For data products, DataSQRL generates view definitions as deployment assets in `build/deploy/plan` which can be queried directly.
 
-The last three are APIs that can be invoked programmatically. The `protocols` [compiler configuration](configuration.md#compiler-compiler) controls which API protocols are exposed by the server.
+The last three are APIs that can be invoked programmatically. Every compiled API model is served through GraphQL.
+The `protocols` [compiler configuration](configuration.md#compiler-compiler) controls whether generated operations are exposed through REST and MCP.
 
 ## Data Products
 
@@ -49,7 +50,12 @@ Hidden columns, i.e. columns where the name starts with an underscore `_`, are n
 
 #### Schema Generation
 
-The compiler generates the GraphQL schema automatically from the SQRL script if no API schema is defined in the [`package.json`](configuration). Add the `--api graphql` flag to the [`compile` command](compiler.md#compile-command) to write the schema to the `schema.v1.graphqls` file in the same directory for inspection or fine-tuning.
+If no GraphQL schema is configured, the compiler infers one from the SQRL script and writes it to `build/inferred_schema.graphqls`.
+
+To provide and customize a schema for the default `v1` API, configure its path as `script.graphql` in [`package.json`](configuration.md#source-files-script).
+To serve multiple API versions, configure each version and its required schema under `script.api`. See [API Versioning](configuration.md#api-versioning).
+
+A useful customization workflow is to compile without a configured schema, copy `build/inferred_schema.graphqls` into the project (for example, `api/schema.v1.graphqls`), then configure that file as the API schema.
 
 #### Schema Customization
 
@@ -125,7 +131,8 @@ Selecting event times and totals together costs a single combined aggregate quer
 
 #### Authoritative Model
 
-DataSQRL uses the GraphQL schemas the authoritative model for all API protocols. It serves as the foundational model on which operations, endpoints, and access patterns are defined. This simplifies the conceptual model and server execution since any API operation maps to a GraphQL query which is executed by a centralized and optimized GraphQL engine.
+DataSQRL uses the GraphQL schema as the authoritative model for all API protocols. It is the foundation for operations, endpoints, and access patterns.
+This simplifies the conceptual model and server execution since any API operation maps to a GraphQL query which is executed by a centralized and optimized GraphQL engine.
 
 The GraphQL query execution engine sits at the core of the DataSQRL server engine and executes all requests even if the GraphQL API is not exposed. This ensures uniform execution of all requests and a shared authentication and authorization mechanism for security.
 
@@ -156,17 +163,17 @@ flowchart TD
 
 ### MCP and REST
 
-DataSQRL exposes an endpoint in MCP or REST for each GraphQL operation.
-DataSQRL generates a list of operations from the GraphQL schema: one for each query and mutation endpoint. 
-* Queries are mapped to MCP tools with a `Get` prefix and REST endpoints under `rest/queries`. If the arguments are simple scalars, the REST endpoint is GET with URL parameters, otherwise POST with the arguments as payload. For the result set, DataSQRL follows relationship fields up to a configured depth `max-result-depth` (and without loops).
-* Mutations are mapped to MCP tools with an `Add` prefix and REST POST endpoints under `rest/mutations`.
+DataSQRL exposes MCP and REST endpoints by converting GraphQL operations. With the default `compiler.api.endpoints: "FULL"`, it also generates one operation for each query and mutation field in the GraphQL schema.
 
-For complete control over the exposed MCP tools and resources as well as REST endpoints, you can define the GraphQL operations explicitly in one or multiple `.graphql` files which configured under `operations` in the [`package.json`](configuration).
+* Generated queries are mapped to GET REST endpoints under `rest/queries`; generated mutations are mapped to POST REST endpoints under `rest/mutations`. For generated result sets, DataSQRL follows relationship fields up to the configured `max-result-depth` without loops.
+* When `add-prefix` is enabled (the default), generated query and mutation operations are named with `Get` and `Add` prefixes respectively. MCP exposes eligible generated operations as tools.
+
+For complete control over the exposed MCP tools and resources as well as REST endpoints, define named GraphQL queries or mutations in one or more `.graphql` files configured under `script.operations` (or a version's `script.api.<version>.operations`) in [`package.json`](configuration.md#source-files-script).
 
 The GraphQL file defining the operations contains named queries or mutations.
 The name of the operation is the name of the MCP tool and REST endpoint and must be unique.
 
-The `@api` directive is applied to the directive to control how the operation is exposed:
+Apply the `@api` directive to an operation to control how it is exposed:
 * `rest`: `NONE`, `GET`, or `POST` to configure the HTTP method or not expose as REST endpoint.
 * `mcp`: `NONE`, `TOOL`, or `RESOURCE` to configure how the query is exposed in MCP.
 * `uri`: AN RFC 6570 template to configure the REST path and MCP resource path. Any operation arguments that are not defined in the uri template are considered part of the payload for REST (and the method must be POST).
@@ -185,7 +192,38 @@ This defines an operation `GetPersonByAge` which is the name of the MCP tool and
 
 The doc strings for the operations are used in the API and tooling documentation.
 
-By default, DataSQRL will add the custom operations to the generated ones. To only expose explicitly defined operations set `endpoints` option to `OPS_ONLY` in the [`package.json`](configuration).
+By default, DataSQRL adds explicit operations to the generated ones. Set `compiler.api.endpoints` to `OPS_ONLY` in the [`package.json`](configuration) to omit generated MCP and REST operations. The GraphQL endpoint remains available.
+
+### OpenAPI
+
+OpenAPI describes the REST API derived from GraphQL operations. It is not a second API definition.
+For every compiled API version, DataSQRL generates an OpenAPI 3 document from operations that expose a REST endpoint.
+The document includes REST paths, parameters, request bodies, and response schemas, but does not describe the GraphQL or MCP endpoints.
+
+The generated specification is packaged as `build/deploy/plan/vertx-<version>-openapi.json`.
+With the default Vert.x server configuration and at least one REST operation, it is served at `/v1/openapi` and Swagger UI is served at `/v1/swagger-ui`.
+Set `engines.vertx.config.openApiConfig.enabled` to `false` to disable those runtime documentation endpoints.
+The same configuration can customize the documentation endpoints and metadata, including `endpoint`, `uiEndpoint`, `title`, `description`, `version`, contact details, and license details.
+Compilation still generates the specification artifact.
+
+### GraphQL and OpenAPI Configuration
+
+GraphQL defines each API version, and OpenAPI is generated from that version's REST operations.
+The configuration determines which GraphQL schema is used and whether compilation checks the generated OpenAPI specification for backward compatibility.
+
+The `script.api.<version>.openapi` field points to a previously generated OpenAPI document for that compatibility check.
+It is not used as the served specification and does not define or customize the API.
+
+| `package.json` configuration                     | GraphQL schema              | OpenAPI behavior                                                                                                       |
+|--------------------------------------------------|-----------------------------|------------------------------------------------------------------------------------------------------------------------|
+| Neither `script.graphql` nor `script.api`        | Inferred as `v1`            | A `v1` OpenAPI artifact is generated; no compatibility check runs.                                                     |
+| `script.graphql`                                 | Configured as `v1`          | A `v1` OpenAPI artifact is generated; no compatibility check runs.                                                     |
+| `script.api.<version>.schema`                    | Configured for each version | An OpenAPI artifact is generated for each version.                                                                     |
+| `script.api.<version>.schema` and `.openapi`     | Configured for each version | The generated specification is compared with the configured prior document; compilation fails on incompatible changes. |
+| `script.api.<version>.openapi` without `.schema` | None                        | Invalid configuration: every `script.api` version requires `schema`.                                                   |
+
+Use the versioned `script.api` form when you need OpenAPI compatibility checks. When `script.api` is present, it defines the API versions to compile and serve.
+The top-level `script.graphql` and `script.operations` are not used for those versions.
 
 ### Testing
 
@@ -205,3 +243,5 @@ For example, if your test folder contains `myquery.graphql` you can configure cu
 ```text
 Authorization: Bearer XYZ
 ```
+
+By default, tests use the inferred schema, even when a custom schema is configured. Set `test-runner.use-inferred-schema` to `false` in [`package.json`](configuration) to test against the configured schema instead.
