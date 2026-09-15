@@ -136,6 +136,76 @@
   </dependencies>
 
   <profiles>
+    <!--
+      Coordinator-driven sharding, activated as -Pcoordinated. Off by default, so a local
+      `mvn verify` runs the suite in one JVM exactly as before; CI is the only thing that
+      turns it on. See "Integration test sharding" in BUILD.md.
+
+      Scoped to this module, and it must stay that way: the coordinator judges registration
+      equality over the whole census, so every JVM registering into one session has to
+      discover the same tests. A second module joining is rejected outright, which is why
+      sqrl-server-vertx-base keeps its own unsharded run.
+
+      Where the coordinator lives is never written down here - the engine reads
+      shard.coordinator.url from SHARD_COORDINATOR_URL and the credential from
+      SHARD_COORDINATOR_SECRET. Declaring the url as a Maven property would defeat that: an
+      unset property interpolates to the literal "${shard.coordinator.url}" and beats the
+      environment variable.
+    -->
+    <profile>
+      <id>coordinated</id>
+      <dependencies>
+        <dependency>
+          <groupId>com.marvinformatics</groupId>
+          <artifactId>shard4j-engine</artifactId>
+          <version>${shard4j.version}</version>
+          <scope>test</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.junit.platform</groupId>
+          <artifactId>junit-platform-launcher</artifactId>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <!-- Hands the suite to the shard4j engine, which delegates discovery and
+                   execution back to Jupiter one leased class-batch at a time. No
+                   <executions> block: plugin-level configuration reaches the execution the
+                   root pom already binds, so the one integration-test and the one verify
+                   are inherited rather than restated. A second integration-test execution
+                   would register a fresh shard against a session already finished. -->
+              <excludeJUnit5Engines>junit-jupiter</excludeJUnit5Engines>
+              <systemPropertyVariables>
+                <shard.enabled>true</shard.enabled>
+              </systemPropertyVariables>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!-- Lets the reactor run every other module's integration tests without this module's,
+         which the shards own. Used by the non-sharded CI job. -->
+    <profile>
+      <id>skip-usecase-its</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-failsafe-plugin</artifactId>
+            <configuration>
+              <skipITs>true</skipITs>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
     <profile>
       <id>default-test-classpath</id>
       <activation>
