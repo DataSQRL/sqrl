@@ -198,7 +198,7 @@ By default, DataSQRL adds explicit operations to the generated ones. Set `compil
 
 OpenAPI describes the REST API derived from GraphQL operations. It is not a second API definition.
 For every compiled API version, DataSQRL generates an OpenAPI 3 document from operations that expose a REST endpoint.
-The document includes REST paths, parameters, request bodies, and response schemas, but does not describe the GraphQL or MCP endpoints.
+The document describes the REST endpoints only, including their paths, parameters, request bodies, and response schemas.
 
 The generated specification is packaged as `build/deploy/plan/vertx-<version>-openapi.json`.
 With the default Vert.x server configuration and at least one REST operation, it is served at `/v1/openapi` and Swagger UI is served at `/v1/swagger-ui`.
@@ -213,6 +213,8 @@ The configuration determines which GraphQL schema is used and whether compilatio
 
 The `script.api.<version>.openapi` field points to a previously generated OpenAPI document for that compatibility check.
 It is not used as the served specification and does not define or customize the API.
+
+To customize the API, update the GraphQL schema or the GraphQL operations that define the endpoints, as described above.
 
 | `package.json` configuration                     | GraphQL schema              | OpenAPI behavior                                                                                                       |
 |--------------------------------------------------|-----------------------------|------------------------------------------------------------------------------------------------------------------------|
