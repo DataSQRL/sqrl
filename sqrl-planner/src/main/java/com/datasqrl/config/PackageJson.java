@@ -130,9 +130,13 @@ public interface PackageJson {
 
     String getVersion();
 
-    String getSchema();
+    default Optional<String> getSchema() {
+      return Optional.empty();
+    }
 
-    List<String> getOperations();
+    default List<String> getOperations() {
+      return List.of();
+    }
 
     default Optional<String> getOpenApi() {
       return Optional.empty();

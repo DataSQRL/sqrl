@@ -151,7 +151,10 @@
                 }
               },
               "additionalProperties": false,
-              "required": ["schema"]
+              "anyOf": [
+                { "required": ["schema"] },
+                { "required": ["openapi"] }
+              ]
             }
           },
           "additionalProperties": false
