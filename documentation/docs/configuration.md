@@ -247,12 +247,12 @@ Configuration options that control the compiler, such as where logging output is
     },
 
     "api": {
-      "protocols": [               // protocols that are being exposed by the server
+      "protocols": [               // public protocols exposed by the server
         "GRAPHQL",
         "REST",
         "MCP"
       ],
-      "endpoints": "FULL",         // endpoint generation strategy ("FULL", "GRAPHQL", "OPS_ONLY")
+      "endpoints": "FULL",         // endpoint strategy: "FULL", "GRAPHQL", or "OPS_ONLY" (explicit operations only)
       "add-prefix": true,          // add an operation-type prefix to function names to ensure uniqueness
       "max-result-depth": 3,       // maximum depth of graph traversal when generating operations from a schema
       "default-limit": 10,         // default query result limit
@@ -261,6 +261,10 @@ Configuration options that control the compiler, such as where logging output is
   }
 }
 ```
+
+`compiler.api.protocols` controls which public API routes are registered. The default enables `GRAPHQL`, `REST`, and `MCP`. Omitting `GRAPHQL` removes the versioned GraphQL HTTP, WebSocket, and GraphiQL routes while retaining the internal GraphQL execution engine used by REST and MCP. `REST` and `MCP` only register endpoints for operations that support those protocols.
+
+`compiler.api.endpoints` controls operation generation and GraphQL flexibility. `FULL` generates operations from every query and mutation, `GRAPHQL` keeps the GraphQL endpoint flexible but exposes only explicitly defined REST and MCP operations, and `OPS_ONLY` accepts only explicitly defined named operations through a public GraphQL endpoint.
 
 ### Optimizer Configuration
 

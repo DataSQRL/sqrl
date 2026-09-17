@@ -27,8 +27,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 class OpenApiInferredSchemaUseCaseTest {
 
-  private static final Path USE_CASE_DIR =
-      getResourcesDirectory("usecases/openapi-inferred-schema-compile");
+  private static final Path USE_CASE_DIR = getResourcesDirectory("usecases/server-api-compile");
 
   @RegisterExtension final CliCompileTestExtension compileExtension = new CliCompileTestExtension();
 
@@ -66,5 +65,18 @@ class OpenApiInferredSchemaUseCaseTest {
     var openApiArtifact = compileExtension.getPlanDir().resolve("vertx-v3-openapi.json");
     assertThat(openApiArtifact).isRegularFile();
     assertThat(Files.readString(openApiArtifact)).contains("/v3/rest/queries/GetGreetingById");
+  }
+
+  @Test
+  void givenRestOnlyProtocol_whenCompile_thenDisablesPublicGraphQLEndpoint() throws IOException {
+    var status =
+        compileExtension.execute(USE_CASE_DIR, List.of("compile", "package-rest-only.json"));
+
+    assertThat(status.isSuccess()).isTrue();
+    var vertxConfig = compileExtension.getPlanDir().resolve("vertx-config.json");
+    assertThat(vertxConfig).isRegularFile();
+    assertThat(Files.readString(vertxConfig))
+        .contains("\"publicGraphQLEndpointEnabled\": false")
+        .contains("\"onlyConfiguredGraphQLOperations\": true");
   }
 }

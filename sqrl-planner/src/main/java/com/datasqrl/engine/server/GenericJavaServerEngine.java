@@ -20,7 +20,7 @@ import static com.datasqrl.server.config.ServerConfigUtil.mergeConfigs;
 
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
-import com.datasqrl.config.QueryEngineConfigConverter;
+import com.datasqrl.config.ServerConfigConverter;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.EnginePhysicalPlan.ArtifactType;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
@@ -40,13 +40,13 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class GenericJavaServerEngine extends ExecutionEngine.Base implements ServerEngine {
 
   private final EngineConfig engineConfig;
-  private final QueryEngineConfigConverter configConverter;
+  private final List<ServerConfigConverter> configConverters;
 
   GenericJavaServerEngine(
-      String engineName, EngineConfig engineConfig, QueryEngineConfigConverter configConverter) {
+      String engineName, EngineConfig engineConfig, List<ServerConfigConverter> configConverters) {
     super(engineName, EngineType.SERVER, NO_CAPABILITIES);
     this.engineConfig = engineConfig;
-    this.configConverter = configConverter;
+    this.configConverters = configConverters;
   }
 
   @Override
@@ -92,7 +92,7 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
   ServerConfig readDefaultConfig() {
     try (var input = getClass().getResourceAsStream("/templates/server-config.json")) {
       var serverConfNode = (ObjectNode) JsonUtils.MAPPER.readTree(input);
-      configConverter.convertConfigsToJson().forEach(serverConfNode::setAll);
+      configConverters.forEach(converter -> converter.convert(serverConfNode));
 
       return JsonUtils.MAPPER.treeToValue(serverConfNode, ServerConfig.class).validated();
     }
