@@ -153,6 +153,7 @@
               "additionalProperties": false,
               "anyOf": [
                 { "required": ["schema"] },
+                { "required": ["operations"] },
                 { "required": ["openapi"] }
               ]
             }

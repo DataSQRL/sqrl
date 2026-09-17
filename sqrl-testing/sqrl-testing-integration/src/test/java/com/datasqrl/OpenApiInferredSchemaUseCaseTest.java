@@ -54,4 +54,17 @@ class OpenApiInferredSchemaUseCaseTest {
         .contains("not backwards compatible")
         .contains("openapi-incompatible.json");
   }
+
+  @Test
+  void givenVersionedOperationsWithoutSchema_whenCompile_thenGeneratesOperationsOnlyOpenApi()
+      throws IOException {
+    var status =
+        compileExtension.execute(
+            USE_CASE_DIR, List.of("compile", "package-operations-inferred-schema.json"));
+
+    assertThat(status.isSuccess()).isTrue();
+    var openApiArtifact = compileExtension.getPlanDir().resolve("vertx-v3-openapi.json");
+    assertThat(openApiArtifact).isRegularFile();
+    assertThat(Files.readString(openApiArtifact)).contains("/v3/rest/queries/GetGreetingById");
+  }
 }

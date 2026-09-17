@@ -1,0 +1,5 @@
+query GetGreetingById($id: Int!) {
+  GreetingById(id: $id) {
+    message
+  }
+}

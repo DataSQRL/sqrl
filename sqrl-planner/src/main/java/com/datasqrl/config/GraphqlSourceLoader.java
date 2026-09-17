@@ -50,9 +50,8 @@ public class GraphqlSourceLoader {
    * Loads the GraphQL schema and operation sources for every configured API version.
    *
    * <p>Uses an explicitly configured schema when present. Otherwise, generates a schema from the
-   * server plan when no GraphQL schema is configured, a versioned API is configured with OpenAPI
-   * but no schema, or tests request the inferred schema. Inferred schemas retain the configured API
-   * version and operations.
+   * server plan when no GraphQL schema is configured, a versioned API omits its schema, or tests
+   * request the inferred schema. Inferred schemas retain the configured API version and operations.
    *
    * @param serverPlan the physical plan from which an inferred schema is generated
    * @return the sources for each API version and, when generated, the inferred schema

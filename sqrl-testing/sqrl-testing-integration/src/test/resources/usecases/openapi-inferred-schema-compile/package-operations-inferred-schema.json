@@ -1,0 +1,17 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "postgres", "vertx"],
+  "script": {
+    "main": "openapi-inferred-schema.sqrl",
+    "api": {
+      "v3": {
+        "operations": ["operations.graphql"]
+      }
+    }
+  },
+  "compiler": {
+    "api": {
+      "endpoints": "OPS_ONLY"
+    }
+  }
+}
