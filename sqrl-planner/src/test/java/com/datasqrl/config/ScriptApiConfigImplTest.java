@@ -38,7 +38,7 @@ class ScriptApiConfigImplTest {
     var scriptApiConfig = new ScriptApiConfigImpl(v1);
 
     assertThat(scriptApiConfig.getVersion()).isEqualTo("v1");
-    assertThat(scriptApiConfig.getSchema()).isEqualTo("my-schema");
+    assertThat(scriptApiConfig.getSchema()).contains("my-schema");
     assertThat(scriptApiConfig.getOperations()).isEmpty();
   }
 
@@ -50,7 +50,7 @@ class ScriptApiConfigImplTest {
 
     var scriptApiConfig = new ScriptApiConfigImpl(v1);
 
-    assertThat(scriptApiConfig.getSchema()).isEqualTo("my-schema");
+    assertThat(scriptApiConfig.getSchema()).contains("my-schema");
     assertThat(scriptApiConfig.getOperations()).containsExactly("op");
   }
 
@@ -62,7 +62,7 @@ class ScriptApiConfigImplTest {
 
     var scriptApiConfig = new ScriptApiConfigImpl(v1);
 
-    assertThat(scriptApiConfig.getSchema()).isEqualTo("my-schema");
+    assertThat(scriptApiConfig.getSchema()).contains("my-schema");
     assertThat(scriptApiConfig.getOperations()).containsExactly("op1", "op2");
   }
 
@@ -74,6 +74,17 @@ class ScriptApiConfigImplTest {
 
     var scriptApiConfig = new ScriptApiConfigImpl(v1);
 
+    assertThat(scriptApiConfig.getOpenApi()).contains("openapi.json");
+  }
+
+  @Test
+  void givenOpenApiSpecWithoutSchema_whenGetSchema_thenReturnsEmpty() {
+    var v1 = config.getSubConfig("v1");
+    v1.setProperty("openapi", "openapi.json");
+
+    var scriptApiConfig = new ScriptApiConfigImpl(v1);
+
+    assertThat(scriptApiConfig.getSchema()).isEmpty();
     assertThat(scriptApiConfig.getOpenApi()).contains("openapi.json");
   }
 }

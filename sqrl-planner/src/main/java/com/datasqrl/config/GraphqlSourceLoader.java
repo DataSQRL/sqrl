@@ -46,33 +46,30 @@ public class GraphqlSourceLoader {
 
   public record LoadResult(List<ApiSources> apiVersions, Optional<String> inferredSchema) {}
 
+  /**
+   * Loads the GraphQL schema and operation sources for every configured API version.
+   *
+   * <p>Uses an explicitly configured schema when present. Otherwise, generates a schema from the
+   * server plan when no GraphQL schema is configured, a versioned API omits its schema, or tests
+   * request the inferred schema. Inferred schemas retain the configured API version and operations.
+   *
+   * @param serverPlan the physical plan from which an inferred schema is generated
+   * @return the sources for each API version and, when generated, the inferred schema
+   */
   public LoadResult load(ServerPhysicalPlan serverPlan) {
-    List<ApiSources> apiVersions;
-
     if (!scriptFiles.getApiConfigs().isEmpty()) {
-      apiVersions =
-          scriptFiles.getApiConfigs().stream()
-              .map(
-                  apiConf ->
-                      createApiSources(
-                          apiConf.getVersion(),
-                          apiConf.getSchema(),
-                          apiConf.getOperations(),
-                          resolver))
-              .toList();
-
-    } else if (scriptFiles.getGraphql().isEmpty()) {
-      apiVersions = List.of();
-
-    } else {
-      var sources =
-          createApiSources(
-              DEFAULT_API_VERSION,
-              scriptFiles.getGraphql().get(),
-              scriptFiles.getOperations(),
-              resolver);
-      apiVersions = List.of(sources);
+      return loadVersionedApis(serverPlan);
     }
+
+    var apiVersions =
+        scriptFiles
+            .getGraphql()
+            .map(
+                schema ->
+                    List.of(
+                        createApiSources(
+                            DEFAULT_API_VERSION, schema, scriptFiles.getOperations(), resolver)))
+            .orElse(List.of());
 
     if (!shouldUseInferredSchema(apiVersions)) {
       apiVersions.forEach(
@@ -80,17 +77,65 @@ public class GraphqlSourceLoader {
       return new LoadResult(apiVersions, Optional.empty());
     }
 
-    List<ApiSource> operations;
-    if (apiVersions.isEmpty()) {
-      operations =
-          scriptFiles.getOperations().stream().map(file -> resolvePath(file, resolver)).toList();
-    } else {
-      operations = apiVersions.stream().flatMap(a -> a.operations().stream()).toList();
+    var inferredSchema = graphqlSchemaHandler.inferGraphQLSchema(serverPlan);
+    apiVersions =
+        List.of(
+            new ApiSources(
+                inferredSchema,
+                apiVersions.isEmpty()
+                    ? resolveOperations(scriptFiles.getOperations())
+                    : apiVersions.stream().flatMap(a -> a.operations().stream()).toList()));
+
+    return new LoadResult(apiVersions, Optional.of(inferredSchema));
+  }
+
+  private LoadResult loadVersionedApis(ServerPhysicalPlan serverPlan) {
+    var apiConfigs = scriptFiles.getApiConfigs();
+    var inferForTests =
+        executionGoal == ExecutionGoal.TEST && config.getTestConfig().useInferredSchema();
+    var inferForMissingSchema =
+        apiConfigs.stream().anyMatch(apiConfig -> apiConfig.getSchema().isEmpty());
+
+    if (!inferForTests && !inferForMissingSchema) {
+      var apiVersions =
+          apiConfigs.stream()
+              .map(
+                  apiConf ->
+                      createApiSources(
+                          apiConf.getVersion(),
+                          apiConf.getSchema().orElseThrow(),
+                          apiConf.getOperations(),
+                          resolver))
+              .toList();
+
+      apiVersions.forEach(
+          apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));
+
+      return new LoadResult(apiVersions, Optional.empty());
     }
 
     var inferredSchema = graphqlSchemaHandler.inferGraphQLSchema(serverPlan);
-    return new LoadResult(
-        List.of(new ApiSources(inferredSchema, operations)), Optional.of(inferredSchema));
+    var apiVersions =
+        apiConfigs.stream()
+            .map(apiConfig -> createVersionedApiSources(apiConfig, inferredSchema, inferForTests))
+            .toList();
+
+    if (!inferForTests) {
+      apiVersions.stream()
+          .filter(apiVersion -> apiVersion.schema().getPath().isPresent())
+          .forEach(apiVersion -> graphqlSchemaHandler.validateSchema(apiVersion, serverPlan));
+    }
+    return new LoadResult(apiVersions, Optional.of(inferredSchema));
+  }
+
+  private ApiSources createVersionedApiSources(
+      PackageJson.ScriptApiConfig apiConfig, String inferredSchema, boolean forceInferredSchema) {
+    var operations = resolveOperations(apiConfig.getOperations());
+    var configuredSchema = apiConfig.getSchema().map(schema -> resolvePath(schema, resolver));
+    if (forceInferredSchema || apiConfig.getSchema().isEmpty()) {
+      return new ApiSources(apiConfig.getVersion(), new ApiSource(inferredSchema), operations);
+    }
+    return new ApiSources(apiConfig.getVersion(), configuredSchema.orElseThrow(), operations);
   }
 
   private boolean shouldUseInferredSchema(List<ApiSources> apiVersions) {
@@ -105,6 +150,10 @@ public class GraphqlSourceLoader {
     var opSrc = operations.stream().map(file -> resolvePath(file, resolver)).toList();
 
     return new ApiSources(version, schemaSrc, opSrc);
+  }
+
+  private List<ApiSource> resolveOperations(List<String> operations) {
+    return operations.stream().map(file -> resolvePath(file, resolver)).toList();
   }
 
   @SneakyThrows

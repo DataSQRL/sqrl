@@ -1,0 +1,5 @@
+Greeting := SELECT * FROM (VALUES (1, 'hello')) AS t(id, message);
+
+GreetingById(id INT NOT NULL) := SELECT * FROM Greeting WHERE id = :id;
+
+EXPORT Greeting TO print.greeting;

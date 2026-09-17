@@ -53,7 +53,7 @@ Hidden columns, i.e. columns where the name starts with an underscore `_`, are n
 If no GraphQL schema is configured, the compiler infers one from the SQRL script and writes it to `build/inferred_schema.graphqls`.
 
 To provide and customize a schema for the default `v1` API, configure its path as `script.graphql` in [`package.json`](configuration.md#source-files-script).
-To serve multiple API versions, configure each version and its required schema under `script.api`. See [API Versioning](configuration.md#api-versioning).
+To serve multiple API versions, configure each version under `script.api`. Each version must define a GraphQL `schema`, GraphQL `operations`, or an `openapi` compatibility specification. When a version does not define a schema, the compiler infers its GraphQL schema from the SQRL script. See [API Versioning](configuration.md#api-versioning).
 
 A useful customization workflow is to compile without a configured schema, copy `build/inferred_schema.graphqls` into the project (for example, `api/schema.v1.graphqls`), then configure that file as the API schema.
 
@@ -216,13 +216,14 @@ It is not used as the served specification and does not define or customize the 
 
 To customize the API, update the GraphQL schema or the GraphQL operations that define the endpoints, as described above.
 
-| `package.json` configuration                     | GraphQL schema              | OpenAPI behavior                                                                                                       |
-|--------------------------------------------------|-----------------------------|------------------------------------------------------------------------------------------------------------------------|
-| Neither `script.graphql` nor `script.api`        | Inferred as `v1`            | A `v1` OpenAPI artifact is generated; no compatibility check runs.                                                     |
-| `script.graphql`                                 | Configured as `v1`          | A `v1` OpenAPI artifact is generated; no compatibility check runs.                                                     |
-| `script.api.<version>.schema`                    | Configured for each version | An OpenAPI artifact is generated for each version.                                                                     |
-| `script.api.<version>.schema` and `.openapi`     | Configured for each version | The generated specification is compared with the configured prior document; compilation fails on incompatible changes. |
-| `script.api.<version>.openapi` without `.schema` | None                        | Invalid configuration: every `script.api` version requires `schema`.                                                   |
+| `package.json` configuration                                      | GraphQL schema              | OpenAPI behavior                                                                                                       |
+|-------------------------------------------------------------------|-----------------------------|------------------------------------------------------------------------------------------------------------------------|
+| Neither `script.graphql` nor `script.api`                         | Inferred as `v1`            | A `v1` OpenAPI artifact is generated; no compatibility check runs.                                                     |
+| `script.graphql`                                                  | Configured as `v1`          | A `v1` OpenAPI artifact is generated; no compatibility check runs.                                                     |
+| `script.api.<version>.schema`                                     | Configured for each version | An OpenAPI artifact is generated for each version.                                                                     |
+| `script.api.<version>.schema` and `.openapi`                      | Configured for each version | The generated specification is compared with the configured prior document; compilation fails on incompatible changes. |
+| `script.api.<version>.operations` without `.schema` or `.openapi` | Inferred for that version   | An OpenAPI artifact is generated; no compatibility check runs.                                                         |
+| `script.api.<version>.openapi` without `.schema`                  | Inferred for that version   | The generated specification is compared with the configured prior document; compilation fails on incompatible changes. |
 
 Use the versioned `script.api` form when you need OpenAPI compatibility checks. When `script.api` is present, it defines the API versions to compile and serve.
 The top-level `script.graphql` and `script.operations` are not used for those versions.

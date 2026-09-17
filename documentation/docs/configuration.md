@@ -104,7 +104,7 @@ MyTable :=
 
 The top-level `script.graphql` and `script.operations` fields configure a single API at version `v1`.
 To serve multiple API versions concurrently, configure them under `script.api` instead.
-API version names must start with `v` followed by a number, such as `v1` or `v2`. Each version requires a GraphQL `schema` and can optionally define GraphQL `operations`.
+API version names must start with `v` followed by a number, such as `v1` or `v2`. Each version must define a GraphQL `schema`, GraphQL `operations`, or an `openapi` compatibility specification. When a version does not define a schema, DataSQRL infers its GraphQL schema from the SQRL script.
 
 DataSQRL serves each API version with its version as an endpoint prefix. With the default server configuration, the `v1` endpoints include `/v1/graphql`, `/v1/rest`, and `/v1/mcp`.
 

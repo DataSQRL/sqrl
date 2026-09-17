@@ -98,13 +98,8 @@ class GraphqlSourceLoaderTest {
                   }
 
                   @Override
-                  public String getSchema() {
-                    return "v1-schema.graphqls";
-                  }
-
-                  @Override
-                  public List<String> getOperations() {
-                    return List.of();
+                  public Optional<String> getSchema() {
+                    return Optional.of("v1-schema.graphqls");
                   }
                 }));
     when(resolver.resolveFile(Path.of("v1-schema.graphqls"))).thenReturn(Optional.of(schemaPath));
@@ -118,6 +113,93 @@ class GraphqlSourceLoaderTest {
     assertThat(result.apiVersions().get(0).version()).isEqualTo("v1");
     assertThat(result.inferredSchema()).isEmpty();
     verify(graphqlSchemaHandler).validateSchema(result.apiVersions().get(0), serverPlan);
+  }
+
+  @Test
+  void givenVersionedOpenApiWithoutSchema_whenLoad_thenInfersVersionedSchema() throws IOException {
+    var opPath = writeFile("op.graphql", "query Foo { foo }");
+    when(scriptFiles.getApiConfigs())
+        .thenReturn(
+            List.of(
+                new ScriptApiConfig() {
+                  @Override
+                  public String getVersion() {
+                    return "v2";
+                  }
+
+                  @Override
+                  public List<String> getOperations() {
+                    return List.of("op.graphql");
+                  }
+
+                  @Override
+                  public Optional<String> getOpenApi() {
+                    return Optional.of("openapi.json");
+                  }
+                }));
+    when(resolver.resolveFile(Path.of("op.graphql"))).thenReturn(Optional.of(opPath));
+    when(graphqlSchemaHandler.inferGraphQLSchema(serverPlan))
+        .thenReturn("type Query { foo: String }");
+
+    var loader =
+        new GraphqlSourceLoader(
+            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+    var result = loader.load(serverPlan);
+
+    assertThat(result.inferredSchema()).contains("type Query { foo: String }");
+    assertThat(result.apiVersions())
+        .singleElement()
+        .satisfies(
+            api -> {
+              assertThat(api.version()).isEqualTo("v2");
+              assertThat(api.schema().getDefinition()).isEqualTo("type Query { foo: String }");
+              assertThat(api.schema().getPath()).isEmpty();
+              assertThat(api.operations())
+                  .extracting(ApiSource::getDefinition)
+                  .containsExactly("query Foo { foo }");
+            });
+    verify(graphqlSchemaHandler, never()).validateSchema(any(), any());
+  }
+
+  @Test
+  void givenVersionedOperationsWithoutSchema_whenLoad_thenInfersVersionedSchema()
+      throws IOException {
+    var opPath = writeFile("op.graphql", "query Foo { foo }");
+    when(scriptFiles.getApiConfigs())
+        .thenReturn(
+            List.of(
+                new ScriptApiConfig() {
+                  @Override
+                  public String getVersion() {
+                    return "v2";
+                  }
+
+                  @Override
+                  public List<String> getOperations() {
+                    return List.of("op.graphql");
+                  }
+                }));
+    when(resolver.resolveFile(Path.of("op.graphql"))).thenReturn(Optional.of(opPath));
+    when(graphqlSchemaHandler.inferGraphQLSchema(serverPlan))
+        .thenReturn("type Query { foo: String }");
+
+    var loader =
+        new GraphqlSourceLoader(
+            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.COMPILE);
+    var result = loader.load(serverPlan);
+
+    assertThat(result.inferredSchema()).contains("type Query { foo: String }");
+    assertThat(result.apiVersions())
+        .singleElement()
+        .satisfies(
+            api -> {
+              assertThat(api.version()).isEqualTo("v2");
+              assertThat(api.schema().getDefinition()).isEqualTo("type Query { foo: String }");
+              assertThat(api.operations())
+                  .extracting(ApiSource::getDefinition)
+                  .containsExactly("query Foo { foo }");
+            });
+    verify(graphqlSchemaHandler, never()).validateSchema(any(), any());
   }
 
   @Test
@@ -188,6 +270,33 @@ class GraphqlSourceLoaderTest {
         .extracting(ApiSource::getDefinition)
         .containsExactly("query Foo { foo }");
     verify(graphqlSchemaHandler, never()).validateSchema(any(), any());
+  }
+
+  @Test
+  void givenMissingVersionedSchemaInTestMode_whenLoad_thenThrowsIllegalArgument() {
+    when(scriptFiles.getApiConfigs())
+        .thenReturn(
+            List.of(
+                new ScriptApiConfig() {
+                  @Override
+                  public String getVersion() {
+                    return "v1";
+                  }
+
+                  @Override
+                  public Optional<String> getSchema() {
+                    return Optional.of("does-not-exist.graphqls");
+                  }
+                }));
+    when(resolver.resolveFile(Path.of("does-not-exist.graphqls"))).thenReturn(Optional.empty());
+
+    var loader =
+        new GraphqlSourceLoader(
+            scriptFiles, resolver, graphqlSchemaHandler, config, ExecutionGoal.TEST);
+
+    assertThatThrownBy(() -> loader.load(serverPlan))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("does-not-exist.graphqls");
   }
 
   @Test
