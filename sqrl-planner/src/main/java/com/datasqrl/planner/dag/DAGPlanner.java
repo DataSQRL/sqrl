@@ -502,7 +502,26 @@ public class DAGPlanner {
         // add constant as pk
         CalciteUtil.addColumn(relBuilder, relBuilder.literal(1), HASHED_PK_NAME);
       }
-      return PrimaryKeyMap.of(List.of(numCols));
+
+      var partitionKey = List.<Integer>of();
+      if (stage.supportsFeature(EngineFeature.PARTITIONING)) {
+        partitionKey =
+            table
+                .getHints()
+                .getHint(PartitionKeyHint.class)
+                .map(PartitionKeyHint::getColumnIndexes)
+                .orElse(List.of());
+      }
+
+      if (partitionKey.isEmpty()) {
+        return PrimaryKeyMap.of(List.of(numCols));
+      }
+
+      var primaryKey = new ArrayList<>(partitionKey);
+      primaryKey.add(numCols);
+
+      return PrimaryKeyMap.of(primaryKey);
+
     } else {
       return pk;
     }

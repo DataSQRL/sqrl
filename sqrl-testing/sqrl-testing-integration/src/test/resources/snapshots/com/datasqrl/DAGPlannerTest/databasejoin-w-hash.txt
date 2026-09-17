@@ -120,7 +120,7 @@ CREATE TABLE `_OrderEntries_1` (
   `quantity` BIGINT NOT NULL,
   `discount` DOUBLE,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
-  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+  PRIMARY KEY (`time`, `__pk_hash`) NOT ENFORCED
 )
 WITH (
   'connector' = 'jdbc-sqrl',
@@ -149,7 +149,7 @@ END
     {
       "name" : "_OrderEntries_1",
       "type" : "TABLE",
-      "sql" : "CREATE TABLE IF NOT EXISTS \"_OrderEntries_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"productid\" BIGINT NOT NULL, \"quantity\" BIGINT NOT NULL, \"discount\" DOUBLE PRECISION, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"_OrderEntries_1\" (\"id\" BIGINT NOT NULL, \"customerid\" BIGINT NOT NULL, \"time\" TIMESTAMP WITH TIME ZONE NOT NULL, \"productid\" BIGINT NOT NULL, \"quantity\" BIGINT NOT NULL, \"discount\" DOUBLE PRECISION, \"__pk_hash\" TEXT, PRIMARY KEY (\"time\",\"__pk_hash\")) PARTITION BY RANGE (\"time\");\n\nCREATE TABLE IF NOT EXISTS \"_OrderEntries_1_all\" PARTITION OF \"_OrderEntries_1\" FOR VALUES FROM (MINVALUE) TO (MAXVALUE)",
       "fields" : [
         {
           "name" : "id",
@@ -188,11 +188,14 @@ END
         }
       ],
       "primaryKey" : [
+        "time",
         "__pk_hash"
       ],
-      "partitionKey" : [ ],
-      "partitionType" : "NONE",
-      "numPartitions" : 0,
+      "partitionKey" : [
+        "time"
+      ],
+      "partitionType" : "RANGE",
+      "numPartitions" : 1,
       "ttl" : 0.0
     },
     {
