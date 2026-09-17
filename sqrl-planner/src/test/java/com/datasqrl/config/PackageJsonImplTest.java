@@ -120,7 +120,7 @@ class PackageJsonImplTest {
 
     assertThat(scriptConfig.getScriptApiConfigs()).hasSize(1);
     assertThat(scriptConfig.getScriptApiConfigs().get(0).getVersion()).isEqualTo("v1");
-    assertThat(scriptConfig.getScriptApiConfigs().get(0).getSchema()).isEqualTo("my-schema");
+    assertThat(scriptConfig.getScriptApiConfigs().get(0).getSchema()).contains("my-schema");
   }
 
   @Test

@@ -1,0 +1,19 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "Previous API",
+    "version": "1.0"
+  },
+  "paths": {
+    "/v2/rest/queries/Removed": {
+      "get": {
+        "operationId": "removed",
+        "responses": {
+          "200": {
+            "description": "Removed endpoint"
+          }
+        }
+      }
+    }
+  }
+}

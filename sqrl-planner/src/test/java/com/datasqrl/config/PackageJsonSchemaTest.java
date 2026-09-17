@@ -41,6 +41,8 @@ class PackageJsonSchemaTest {
         "onlyVersionFieldExists.json",
         "scriptApiVersion.json",
         "scriptApiWithOpenApi.json",
+        "scriptApiWithOpenApiWithoutSchema.json",
+        "scriptApiWithoutSchemaOrOpenApi.json",
         "compilerEndpointsOpsOnly.json",
         "validFlinkDeployment.json",
         "validPostgresDeployment.json",

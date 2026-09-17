@@ -31,8 +31,8 @@ public class ScriptApiConfigImpl implements ScriptApiConfig {
   }
 
   @Override
-  public String getSchema() {
-    return sqrlConfig.asString("schema").get();
+  public Optional<String> getSchema() {
+    return sqrlConfig.asString("schema").getOptional();
   }
 
   @Override
