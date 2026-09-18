@@ -20,7 +20,6 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import org.apache.calcite.prepare.CalciteCatalogReader;
-import org.apache.calcite.rel.RelRoot;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
@@ -39,12 +38,6 @@ public final class FlinkSqlNodePlanner {
     var planner = plannerSupplier.get();
     var validated = planner.validate(FlinkCalciteParser.parseSql(sql, tableEnvironment));
     return planner.getOrCreateSqlValidator().getValidatedNodeType(validated);
-  }
-
-  public RelRoot toRelRoot(SqlNode query, @Nullable FlinkPlannerImpl flinkPlanner) {
-    var planner = getPlanner(flinkPlanner);
-    var validatedQuery = planner.getOrCreateSqlValidator().validate(query);
-    return planner.rel(validatedQuery);
   }
 
   public FlinkRelBuilder getRelBuilder(@Nullable FlinkPlannerImpl flinkPlanner) {
