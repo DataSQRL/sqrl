@@ -1009,7 +1009,7 @@ END
     {
       "name" : "OrderWithCustomer",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"OrderWithCustomer\"(\"id\", \"order\", \"customer\") AS SELECT \"Orders_70\".\"id\", CAST(ROW(\"Orders_70\".\"id\", \"Orders_70\".\"customerid\", \"Orders_70\".\"time\", \"Orders_70\".\"entries\") AS JSONB) AS \"order\", CAST(ROW(\"Customer_30\".\"customerid\", \"Customer_30\".\"email\", \"Customer_30\".\"name\", \"Customer_30\".\"lastUpdated\", \"Customer_30\".\"timestamp\") AS JSONB) AS \"customer\"\nFROM \"Orders_7\" AS \"Orders_70\"\n INNER JOIN \"Customer_3\" AS \"Customer_30\" ON \"Orders_70\".\"customerid\" = \"Customer_30\".\"customerid\"",
+      "sql" : "CREATE OR REPLACE VIEW \"OrderWithCustomer\"(\"id\", \"order\", \"customer\") AS SELECT \"Orders_70\".\"id\", \"jsonb_build_object\"('id', \"Orders_70\".\"id\", 'customerid', \"Orders_70\".\"customerid\", 'time', \"Orders_70\".\"time\", 'entries', \"Orders_70\".\"entries\") AS \"order\", \"jsonb_build_object\"('customerid', \"Customer_30\".\"customerid\", 'email', \"Customer_30\".\"email\", 'name', \"Customer_30\".\"name\", 'lastUpdated', \"Customer_30\".\"lastUpdated\", 'timestamp', \"Customer_30\".\"timestamp\") AS \"customer\"\nFROM \"Orders_7\" AS \"Orders_70\"\n INNER JOIN \"Customer_3\" AS \"Customer_30\" ON \"Orders_70\".\"customerid\" = \"Customer_30\".\"customerid\"",
       "description" : "Both sides of a join can be nested, including array columns",
       "fields" : [
         {
@@ -1284,7 +1284,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"Orders_70\".\"id\", CAST(ROW(\"Orders_70\".\"id\", \"Orders_70\".\"customerid\", \"Orders_70\".\"time\", \"Orders_70\".\"entries\") AS JSONB) AS \"order\", CAST(ROW(\"Customer_30\".\"customerid\", \"Customer_30\".\"email\", \"Customer_30\".\"name\", \"Customer_30\".\"lastUpdated\", \"Customer_30\".\"timestamp\") AS JSONB) AS \"customer\"\nFROM \"Orders_7\" AS \"Orders_70\"\n INNER JOIN \"Customer_3\" AS \"Customer_30\" ON \"Orders_70\".\"customerid\" = \"Customer_30\".\"customerid\"",
+              "sql" : "SELECT \"Orders_70\".\"id\", \"jsonb_build_object\"('id', \"Orders_70\".\"id\", 'customerid', \"Orders_70\".\"customerid\", 'time', \"Orders_70\".\"time\", 'entries', \"Orders_70\".\"entries\") AS \"order\", \"jsonb_build_object\"('customerid', \"Customer_30\".\"customerid\", 'email', \"Customer_30\".\"email\", 'name', \"Customer_30\".\"name\", 'lastUpdated', \"Customer_30\".\"lastUpdated\", 'timestamp', \"Customer_30\".\"timestamp\") AS \"customer\"\nFROM \"Orders_7\" AS \"Orders_70\"\n INNER JOIN \"Customer_3\" AS \"Customer_30\" ON \"Orders_70\".\"customerid\" = \"Customer_30\".\"customerid\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -1413,7 +1413,7 @@ END
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT CAST(ROW(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS JSONB) AS \"customer\"\nFROM \"Customer_3\"\nWHERE \"customerid\" = $1",
+              "sql" : "SELECT \"jsonb_build_object\"('customerid', \"customerid\", 'email', \"email\", 'name', \"name\", 'lastUpdated', \"lastUpdated\", 'timestamp', \"timestamp\") AS \"customer\"\nFROM \"Customer_3\"\nWHERE \"customerid\" = $1",
               "parameters" : [
                 {
                   "type" : "arg",
