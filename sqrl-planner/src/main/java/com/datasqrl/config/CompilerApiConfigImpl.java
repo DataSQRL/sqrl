@@ -43,6 +43,11 @@ public class CompilerApiConfigImpl implements CompilerApiConfig {
   }
 
   @Override
+  public boolean isOperationsOnly() {
+    return sqrlConfig.as("endpoints", Endpoints.class).get() == Endpoints.OPS_ONLY;
+  }
+
+  @Override
   public boolean isAddOperationsPrefix() {
     return sqrlConfig.asBool("add-prefix").get();
   }
@@ -64,7 +69,7 @@ public class CompilerApiConfigImpl implements CompilerApiConfig {
 
   public enum Endpoints {
     OPS_ONLY, // only support the pre-defined operations in the GraphQL API, do not support flexible
-    // GraphQL queries TODO: not yet implemented
+    // GraphQL queries
     GRAPHQL, // support flexible GraphQL API but only pre-defined operations for other protocols
     FULL; // support flexible GraphQL API and add generated operations from GraphQL schema to
     // pre-defined ones for other protocols

@@ -53,6 +53,8 @@ public class ServerConfig {
   private ServletConfig servletConfig = new ServletConfig();
   private GraphQLHandlerOptions graphQLHandlerOptions = new GraphQLHandlerOptions();
   private GraphiQLHandlerOptions graphiQLHandlerOptions;
+  private boolean publicGraphQLEndpointEnabled = true;
+  private boolean onlyConfiguredGraphQLOperations;
 
   @JsonSerialize(using = HttpServerOptionsSerializer.class)
   private HttpServerOptions httpServerOptions = new HttpServerOptions();

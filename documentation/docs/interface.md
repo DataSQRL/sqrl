@@ -9,8 +9,8 @@ Based on the SQRL script, DataSQRL generates the interface for the compiled data
 
 For data products, DataSQRL generates view definitions as deployment assets in `build/deploy/plan` which can be queried directly.
 
-The last three are APIs that can be invoked programmatically. Every compiled API model is served through GraphQL.
-The `protocols` [compiler configuration](configuration.md#compiler-compiler) controls whether generated operations are exposed through REST and MCP.
+The last three are APIs that can be invoked programmatically. Every compiled API model uses the GraphQL execution model.
+The `protocols` [compiler configuration](configuration.md#compiler-compiler) controls which public API protocols the server exposes.
 
 ## Data Products
 
@@ -136,6 +136,14 @@ This simplifies the conceptual model and server execution since any API operatio
 
 The GraphQL query execution engine sits at the core of the DataSQRL server engine and executes all requests even if the GraphQL API is not exposed. This ensures uniform execution of all requests and a shared authentication and authorization mechanism for security.
 
+The `compiler.api.protocols` setting controls the public API surface for every compiled version:
+
+* Include `GRAPHQL` to expose the versioned GraphQL HTTP and WebSocket endpoint, and GraphiQL when it is enabled in the server configuration.
+* Include `REST` and/or `MCP` to expose operations through those protocols.
+* Omit `GRAPHQL` to make a REST-only, MCP-only, or REST-and-MCP-only server. The GraphQL execution engine remains internal and executes those bridge requests, but no GraphQL HTTP, WebSocket, or GraphiQL route is registered.
+
+The default includes all three protocols.
+
 ```mermaid
 flowchart TD
     A[Incoming Request] --> B[HTTP + Authentication]
@@ -192,7 +200,7 @@ This defines an operation `GetPersonByAge` which is the name of the MCP tool and
 
 The doc strings for the operations are used in the API and tooling documentation.
 
-By default, DataSQRL adds explicit operations to the generated ones. Set `compiler.api.endpoints` to `OPS_ONLY` in the [`package.json`](configuration) to omit generated MCP and REST operations. The GraphQL endpoint remains available.
+By default, DataSQRL adds explicit operations to the generated ones. Set `compiler.api.endpoints` to `OPS_ONLY` in the [`package.json`](configuration) to omit generated MCP and REST operations and restrict a public GraphQL endpoint to explicitly defined named operations. The server executes its stored operation definition, so clients cannot alter its selection set. Whether the GraphQL endpoint is publicly available is controlled independently by whether `compiler.api.protocols` includes `GRAPHQL`.
 
 ### OpenAPI
 

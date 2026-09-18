@@ -15,37 +15,23 @@
  */
 package com.datasqrl.config;
 
-import com.datasqrl.engine.database.QueryEngine;
-import com.datasqrl.util.JsonUtils;
+import com.datasqrl.server.operation.ApiProtocol;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class QueryEngineConfigConverter implements ServerConfigConverter {
+public class CompilerApiConfigConverter implements ServerConfigConverter {
 
-  private final ExecutionEnginesHolder enginesHolder;
   private final PackageJson packageJson;
 
+  @Override
   public void convert(ObjectNode serverConfig) {
-    var enabledQueryEngines = enginesHolder.getEngines(QueryEngine.class).values();
-
-    for (var engine : enabledQueryEngines) {
-      var queryEngine = (QueryEngine) engine;
-      var engineConf = packageJson.getEngines().getEngineConfig(queryEngine.getName());
-      if (engineConf.isEmpty()) {
-        continue;
-      }
-
-      if (engineConf.get() instanceof EngineConfigImpl impl) {
-        var engineConfigMap = impl.sqrlConfig.toMap();
-
-        var configNode = JsonUtils.MAPPER.valueToTree(engineConfigMap);
-        queryEngine
-            .serverConfigName()
-            .ifPresent(engineConfigName -> serverConfig.set(engineConfigName, configNode));
-      }
-    }
+    var apiConfig = packageJson.getCompilerConfig().getApiConfig();
+    var protocols = apiConfig.getProtocols();
+    // Make sure prop names matching with ServerConfig
+    serverConfig.put("publicGraphQLEndpointEnabled", protocols.contains(ApiProtocol.GRAPHQL));
+    serverConfig.put("onlyConfiguredGraphQLOperations", apiConfig.isOperationsOnly());
   }
 }
