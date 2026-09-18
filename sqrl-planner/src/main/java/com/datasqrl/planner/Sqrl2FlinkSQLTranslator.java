@@ -336,10 +336,10 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     var relRoot = flinkPlanner.rel(validatedQuery);
     var relBuilder = flinkSqlNodePlanner.getRelBuilder(flinkPlanner);
     var relNode = relRoot.rel;
-    Optional<Sort> topLevelSort = Optional.empty();
+    var topLevelSort = Optional.<Sort>empty();
     if (removeTopLevelSort) {
-      Set<String> missingSorts = new HashSet<>(relNode.getRowType().getFieldNames());
-      missingSorts.removeAll(relRoot.validatedRowType.getFieldNames());
+      var missingSorts = new HashSet<>(relNode.getRowType().getFieldNames());
+      relRoot.validatedRowType.getFieldNames().forEach(missingSorts::remove);
       errors.checkFatal(
           missingSorts.isEmpty(),
           ErrorCode.MISSING_SORT_COLUMN,

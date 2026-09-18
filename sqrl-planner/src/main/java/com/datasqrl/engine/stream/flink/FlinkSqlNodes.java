@@ -148,13 +148,16 @@ public class FlinkSqlNodes {
     if (prefixSize <= 0) {
       return;
     }
+
     var positions = new ArrayList<SqlParserPos>(qualifiedName.size());
     for (var i = 0; i < prefixSize; i++) {
       positions.add(id.getParserPosition());
     }
+
     for (var i = 0; i < id.names.size(); i++) {
       positions.add(id.getComponentParserPosition(i));
     }
+
     id.setNames(qualifiedName, positions);
   }
 
