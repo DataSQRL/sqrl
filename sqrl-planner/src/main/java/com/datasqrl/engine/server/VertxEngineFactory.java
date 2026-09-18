@@ -17,10 +17,11 @@ package com.datasqrl.engine.server;
 
 import com.datasqrl.config.EngineFactory;
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.config.QueryEngineConfigConverter;
+import com.datasqrl.config.ServerConfigConverter;
 import com.datasqrl.engine.IExecutionEngine;
 import com.google.auto.service.AutoService;
 import jakarta.inject.Inject;
+import java.util.List;
 
 @AutoService(EngineFactory.class)
 public class VertxEngineFactory extends GenericJavaServerEngineFactory {
@@ -40,11 +41,11 @@ public class VertxEngineFactory extends GenericJavaServerEngineFactory {
   public static class VertxEngine extends GenericJavaServerEngine {
 
     @Inject
-    public VertxEngine(PackageJson packageJson, QueryEngineConfigConverter configConverter) {
+    public VertxEngine(PackageJson packageJson, List<ServerConfigConverter> configConverters) {
       super(
           ENGINE_NAME,
           packageJson.getEngines().getEngineConfigOrEmpty(ENGINE_NAME),
-          configConverter);
+          configConverters);
     }
   }
 }

@@ -6,7 +6,6 @@
     "mcpEndpoint" : "/mcp",
     "usePgPool" : true
   },
-  "logForwardedClientAddress" : false,
   "graphQLHandlerOptions" : {
     "requestBatchingEnabled" : false,
     "requestMultipartEnabled" : false
@@ -22,6 +21,8 @@
     "query" : null,
     "variables" : null
   },
+  "publicGraphQLEndpointEnabled" : true,
+  "onlyConfiguredGraphQLOperations" : false,
   "httpServerOptions" : {
     "acceptBacklog" : -1,
     "acceptUnmaskedFrames" : false,
@@ -193,6 +194,7 @@
   },
   "jwtAuth" : null,
   "oauthConfig" : null,
+  "logForwardedClientAddress" : false,
   "kafkaMutationConfig" : {
     "bootstrap.servers" : "${KAFKA_BOOTSTRAP_SERVERS}",
     "compression.type" : "zstd",

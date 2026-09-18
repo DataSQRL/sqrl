@@ -26,11 +26,13 @@ import com.datasqrl.server.graphql.CustomScalars;
 import com.datasqrl.server.graphql.GraphQLEngineBuilder;
 import com.datasqrl.server.graphql.GraphQLQueryMetricsInstrumentation;
 import com.datasqrl.server.graphql.GraphQLTailSampleTracingInstrumentation;
+import com.datasqrl.server.graphql.OperationOnlyPreparsedDocumentProvider;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.jdbc.DatabaseType;
 import com.datasqrl.server.jdbc.JdbcClientsConfig;
 import com.datasqrl.server.jdbc.VertxJdbcClient;
 import com.datasqrl.server.jdbc.VertxParamArgumentTypeMapper;
+import com.datasqrl.server.operation.ApiOperation;
 import com.google.common.collect.ImmutableMap;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
@@ -78,21 +80,48 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   @Override
   public void start(Promise<Void> startPromise) {
     try {
-      setupGraphQLRoutes(startPromise);
+      setupGraphQL(startPromise);
     } catch (Exception e) {
-      log.error("Could not setup GraphQL routes", e);
+      log.error("Could not set up GraphQL", e);
       startPromise.fail(e);
     }
   }
 
   /**
-   * Sets up GraphQL routes including authentication handlers, GraphiQL interface, and the main
-   * GraphQL endpoint with WebSocket support.
+   * Creates the GraphQL execution engine and, when configured, exposes it through GraphQL HTTP,
+   * WebSocket, and GraphiQL routes. REST and MCP bridge verticles always use the engine directly,
+   * including when the public GraphQL endpoint is disabled.
    *
    * @param startPromise the promise to complete when setup is finished
    */
-  protected void setupGraphQLRoutes(Promise<Void> startPromise) {
-    // Setup GraphiQL handler if configured
+  protected void setupGraphQL(Promise<Void> startPromise) {
+    var subscriptionConfig = new SubscriptionConfigurationImpl(vertx, config);
+    this.graphQLEngine = createGraphQLEngine(subscriptionConfig);
+
+    if (config.isPublicGraphQLEndpointEnabled()) {
+      setupPublicGraphQLRoutes();
+    } else {
+      log.info("GraphQL endpoint disabled, retaining engine for API bridges");
+    }
+
+    // Wait for all subscriptions to be set up before completing the promise
+    subscriptionConfig
+        .getAllSubscriptionsFuture()
+        .onSuccess(v -> startPromise.complete())
+        .onFailure(startPromise::fail);
+  }
+
+  protected GraphQL createGraphQLEngine(SubscriptionConfigurationImpl subscriptionConfig) {
+    var jdbcConfig = new JdbcClientsConfig(vertx, config);
+    var dbClients = jdbcConfig.createClients();
+    return createGraphQL(
+        dbClients,
+        subscriptionConfig,
+        createMetadataReaders(),
+        new FlinkFunctionExecutor(vertx, execFunctionPlan));
+  }
+
+  private void setupPublicGraphQLRoutes() {
     if (this.config.getGraphiQLHandlerOptions() != null) {
       var versionedOptions =
           createVersionedGraphiQLHandlerOptions(modelVersion, config.getGraphiQLHandlerOptions());
@@ -103,11 +132,6 @@ public class GraphQLServerVerticle extends AbstractVerticle {
           .subRouter(graphiQlHandler.router());
     }
 
-    // Setup database clients
-    var jdbcConfig = new JdbcClientsConfig(vertx, config);
-    var dbClients = jdbcConfig.createClients();
-
-    // Setup GraphQL endpoint with auth if configured
     var handler = router.route(this.config.getServletConfig().getGraphQLEndpoint(modelVersion));
     if (!authProviders.isEmpty()) {
       log.info(
@@ -120,26 +144,9 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       handler.failureHandler(new JwtFailureHandler());
     }
 
-    // Create subscription configuration to track async subscription setups
-    var subscriptionConfig = new SubscriptionConfigurationImpl(vertx, config);
-
-    // Create GraphQL engine
-    this.graphQLEngine =
-        createGraphQL(
-            dbClients,
-            subscriptionConfig,
-            createMetadataReaders(),
-            new FlinkFunctionExecutor(vertx, execFunctionPlan));
-
     handler
         .handler(GraphQLWSHandler.create(this.graphQLEngine))
         .handler(GraphQLHandler.create(this.graphQLEngine, this.config.getGraphQLHandlerOptions()));
-
-    // Wait for all subscriptions to be set up before completing the promise
-    subscriptionConfig
-        .getAllSubscriptionsFuture()
-        .onSuccess(v -> startPromise.complete())
-        .onFailure(startPromise::fail);
   }
 
   private Map<MetadataType, MetadataReader> createMetadataReaders() {
@@ -198,6 +205,12 @@ public class GraphQLServerVerticle extends AbstractVerticle {
                   .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
                   .build(),
               vertxServerCtx);
+
+      if (config.isOnlyConfiguredGraphQLOperations()) {
+        graphQL.preparsedDocumentProvider(
+            new OperationOnlyPreparsedDocumentProvider(
+                model.getOperations().stream().map(ApiOperation::getApiQuery).toList()));
+      }
 
       var instrumentations = new ArrayList<Instrumentation>();
       var meterRegistry = BackendRegistries.getDefaultNow();

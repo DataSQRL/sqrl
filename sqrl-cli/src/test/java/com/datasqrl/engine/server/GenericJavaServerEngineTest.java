@@ -18,7 +18,7 @@ package com.datasqrl.engine.server;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
-import com.datasqrl.config.QueryEngineConfigConverter;
+import com.datasqrl.config.ServerConfigConverter;
 import com.datasqrl.server.config.ServerConfigUtil;
 import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Test;
 class GenericJavaServerEngineTest {
 
   GenericJavaServerEngine underTest =
-      new GenericJavaServerEngine("", new EmptyEngineConfig(""), new DummyConverter()) {};
+      new GenericJavaServerEngine("", new EmptyEngineConfig(""), List.of(new DummyConverter())) {};
 
   @Test
   void test() {
@@ -104,11 +104,9 @@ class GenericJavaServerEngineTest {
     return Map.of("jwtAuth", jwtAuth);
   }
 
-  private static class DummyConverter implements QueryEngineConfigConverter {
+  private static class DummyConverter implements ServerConfigConverter {
 
     @Override
-    public List<ObjectNode> convertConfigsToJson() {
-      return List.of();
-    }
+    public void convert(ObjectNode serverConfig) {}
   }
 }

@@ -76,6 +76,8 @@ public interface PackageJson {
 
     boolean generateOperations();
 
+    boolean isOperationsOnly();
+
     boolean isAddOperationsPrefix();
 
     int getMaxResultDepth();

@@ -1,0 +1,229 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+type Greeting {
+  id: Int!
+  message: String!
+}
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  Greeting(limit: Int = 10, offset: Int = 0): [Greeting!]
+  GreetingById(id: Int!, limit: Int = 10, offset: Int = 0): [Greeting!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Greeting
+ID:          default_catalog.default_database.Greeting
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1
+---
+Schema:
+ - id: INTEGER NOT NULL
+ - message: CHAR(5) CHARACTER SET "UTF-16LE" NOT NULL
+
+=== GreetingById
+ID:          default_catalog.default_database.GreetingById
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Greeting
+Annotations:
+ - parameters: id
+ - base-table: Greeting
+
+=== greeting
+ID:          print.greeting
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.Greeting
+
+>>>flink-sql-no-functions.sql
+CREATE VIEW `Greeting`
+AS
+SELECT *
+FROM (VALUES ROW(1, 'hello')) AS `t` (`id`, `message`);
+CREATE TABLE `greeting_1` (
+  `id` INTEGER NOT NULL,
+  `message` CHAR(5) CHARACTER SET `UTF-16LE` NOT NULL,
+  `__pk_hash` INTEGER NOT NULL,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'print',
+  'print-identifier' = 'greeting'
+);
+CREATE TABLE `Greeting_2` (
+  `id` INTEGER NOT NULL,
+  `message` CHAR(5) CHARACTER SET `UTF-16LE` NOT NULL,
+  `__pk_hash` INTEGER NOT NULL,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Greeting',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`greeting_1`
+SELECT `id`, `message`, 1 AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Greeting`
+;
+INSERT INTO `default_catalog`.`default_database`.`Greeting_2`
+SELECT `id`, `message`, 1 AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Greeting`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Greeting" ("id" INTEGER NOT NULL, "message" TEXT NOT NULL, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"))
+>>>vertx.json
+{
+  "models" : {
+    "v4" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Greeting",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"message\"\nFROM \"Greeting\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "GreetingById",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "id"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"id\", \"message\"\n  FROM \"Greeting\") AS \"t\"\nWHERE \"id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "id",
+                  "sqlType" : "INTEGER"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetGreetingById",
+            "description" : "",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer",
+                  "description" : ""
+                }
+              },
+              "required" : [
+                "id"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query GetGreetingById($id: Int!) {\n  GreetingById(id: $id) {\n    message\n  }\n}\n",
+            "queryName" : "GetGreetingById",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "NONE",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/GetGreetingById{?id}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "message" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Greeting {\n  id: Int!\n  message: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Greeting(limit: Int = 10, offset: Int = 0): [Greeting!]\n  GreetingById(id: Int!, limit: Int = 10, offset: Int = 0): [Greeting!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
