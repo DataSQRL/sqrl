@@ -110,7 +110,26 @@ Examples:
 
 `.mem` is an alias for `.mem-2x`. The legacy `.mem-headroom` qualifier (triple memory, Flink stays at baseline) is **deprecated** — use `.mem-headroom-Nx` instead.
 
-Size qualifiers do not apply to the `dev` instance.
+Qualifiers apply to every size including `dev`: `dev.mem-2x` is a `dev` task manager (0.5 CPU, one task slot) with `small`'s 4 GB of memory.
+
+#### Task Manager CPU Limit
+
+Every size fixes CPU and memory together at 4 GB per core, so a task manager sized for its memory carries more CPU request than it needs. `taskmanager-cpu-limit` separates the ceiling from the request:
+
+```json
+{
+  "engines": {
+    "flink": {
+      "deployment": {
+        "taskmanager-size": "medium",
+        "taskmanager-cpu-limit": "4x"   // request 2 cores, burst to 8
+      }
+    }
+  }
+}
+```
+
+Accepted forms are a multiple of the request (`"4x"`), an absolute amount (`"8000m"` or `"8"`), and nothing at all, which keeps the size's own limit factor. A limit below the request is rejected — Kubernetes will not accept one. Anything above the request makes the pod Burstable rather than Guaranteed, which lowers its eviction priority under node pressure. `"unlimited"` is not accepted for task managers, because Flink always derives and writes a limit.
 
 ### Job Manager Sizes
 
@@ -135,6 +154,7 @@ PostgreSQL deployments consist of one primary instance and a configurable number
     "postgres": {
       "deployment": {
         "instance-size": "medium",      // Instance size (see table below)
+        "cpu-limit": "3x",              // CPU ceiling (see "CPU Limit" below)
         "replica-count": 1,             // Number of read replicas (0 or larger)
         "disk-size-gb": 256,            // Disk size in GB (1 or larger)
         "auto-expand-percentage": 0.2,  // Auto-expand threshold (0 to disable, must be < 1)
@@ -151,13 +171,33 @@ PostgreSQL deployments consist of one primary instance and a configurable number
 
 | Name   | CPU | Memory (GiB) | Default Disk | Max CPU Burst | Max Connections |
 |:-------|:----|:-------------|:-------------|:--------------|:----------------|
-| dev    | 0.5 | 4            | 10GB         | 1.5           | 100             |
-| small  | 1   | 8            | 128GB        | 1             | 100             |
-| medium | 2   | 16           | 256GB        | 1             | 200             |
+| dev    | 0.5 | 2            | 10GB         | 1.5           | 100             |
+| small  | 1   | 4            | 128GB        | 1             | 100             |
+| medium | 2   | 8            | 256GB        | 1             | 200             |
 | large  | 4   | 16           | 512GB        | 1             | 300             |
 | xlarge | 8   | 32           | 1TB          | 1             | 600             |
 
 The `dev` size is intended for development and testing with small amounts of data.
+
+### Size Qualifiers
+
+Instance sizes accept the same `.mem-Nx` and `.cpu` qualifiers as task managers, which is how a database asks for memory without the cores the size would otherwise bring:
+
+* `small.mem-4x` → 1 CPU, 16 GiB — the memory of `large` at a quarter of its CPU request.
+* `medium.cpu` → 4 CPU, 8 GiB.
+
+Qualifiers change the CPU request, so a `cpu-limit` factor multiplies the qualified request: `small.mem-4x` with `"cpu-limit": "8x"` requests 1 core and may burst to 8.
+
+### CPU Limit
+
+`cpu-limit` sets the CPU ceiling independently of the request:
+
+| Value           | Meaning                                                         |
+|:----------------|:----------------------------------------------------------------|
+| `"3x"`          | a multiple of the CPU request, so it moves with `instance-size`  |
+| `"6000m"`/`"6"` | an absolute ceiling in millicores or cores                       |
+
+Omitted, the limit factor baked into the instance size applies. A limit below the request is rejected. Anything above the request moves the pod from Guaranteed to Burstable QoS, since Guaranteed requires `requests == limits` for CPU as well as memory.
 
 ---
 
@@ -171,7 +211,8 @@ Vert.x API server deployments consist of a configurable number of identically si
     "vertx": {
       "deployment": {
         "instance-size": "small",  // Instance size (see table below)
-        "instance-count": 2        // Number of server instances (positive integer)
+        "instance-count": 2,       // Number of server instances (positive integer)
+        "cpu-limit": "4x"          // CPU ceiling (see "CPU Limit" below)
       }
     }
   }
@@ -188,6 +229,17 @@ Vert.x API server deployments consist of a configurable number of identically si
 | large  | 4   | 16           | 220GB      | 1             | 15           |
 
 The `dev` size is intended for development and testing with small amounts of data. The `.disk` qualifier enables NVMe storage for instances that require local disk access.
+
+### Size Qualifiers
+
+Server sizes accept the `.mem-Nx` and `.cpu` qualifiers as well, and they compose with `.disk`:
+
+* `dev.mem-2x` → 0.5 CPU, 4 GiB — `small`'s memory at half its CPU request.
+* `small.disk.mem-2x` → 1 CPU, 8 GiB, with NVMe storage.
+
+### CPU Limit
+
+`cpu-limit` takes the same forms as the PostgreSQL setting above — a factor (`"4x"`), an absolute amount (`"2000m"` or `"2"`), or omitted to keep the size's own limit factor.
 
 ---
 
