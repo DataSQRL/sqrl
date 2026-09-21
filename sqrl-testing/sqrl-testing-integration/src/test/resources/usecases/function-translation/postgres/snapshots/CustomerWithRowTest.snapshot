@@ -1,0 +1,10 @@
+{
+  "data" : {
+    "CustomerWithRowTest" : [ {
+      "customer" : {
+        "customerid" : 1,
+        "name" : "Alice"
+      }
+    } ]
+  }
+}

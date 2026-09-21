@@ -1,5 +1,11 @@
 _InputData := SELECT * FROM (VALUES (1)) AS base(dummy);
 
+_CustomerData := SELECT * FROM (VALUES (1, 'Alice')) AS base(customerid, name);
+
+/** A relation alias is serialized as a named JSONB object in PostgreSQL. */
+/*+engine(postgres)*/
+CustomerWithRow := SELECT c AS customer FROM _CustomerData c;
+
 /*+engine(postgres)*/
 FunctionCalls := SELECT
     LOG2(8)                                          AS log2_example,
@@ -153,3 +159,6 @@ ArrayFunctionsTest :=
         ARRAY_POSITION(arrayagg_example, 'y') IS NOT NULL AS array_has_y,
         ARRAY_POSITION(arrayagg_example, 'z') IS NOT NULL AS array_has_z
     FROM ArrayFunctions;
+
+/*+test */
+CustomerWithRowTest := SELECT * FROM CustomerWithRow;
