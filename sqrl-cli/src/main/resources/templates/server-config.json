@@ -129,6 +129,7 @@
     "pipeliningLimit" : 256,
     "sslMode" : "DISABLE",
     "sslNegotiation" : "POSTGRES",
+    "channelBinding" : "PREFER",
     "useLayer7Proxy" : false,
     "usingDomainSocket" : false,
     "socketAddress" : {
