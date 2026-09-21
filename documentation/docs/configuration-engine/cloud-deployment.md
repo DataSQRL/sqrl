@@ -91,11 +91,11 @@ Task manager sizes support qualifiers for specialized workloads. Qualifiers are 
 
 * **`.mem-Nx`** scales the pod memory by `N` and gives Flink **proportionally more** memory (Flink heap+managed grows with `N`). Use for state-heavy jobs.
 * **`.mem-headroom-Nx`** scales the pod memory by `N` but keeps Flink's allocation at the **baseline** memory; the extra memory is reserved for sidecar / native consumers (e.g., DuckDB, JNI libs, page cache).
-* **`.cpu`** is **deprecated** — it doubles CPU with the same memory, which `cpu-request-factor: 2` says precisely. It cannot be combined with either factor.
+* **`.cpu`** is **deprecated** — it doubles the CPU request *and* the ceiling, which also doubles task slots. Say it precisely with `cpu-request-factor: 2` plus `cpu-limit-factor`; see the migration note below.
 
 | Qualifier          | Pod memory | Flink heap+managed | Typical use                            |
 |:-------------------|:-----------|:-------------------|:---------------------------------------|
-| `.cpu` (deprecated) | base      | base × 0.80        | Use `cpu-request-factor` instead       |
+| `.cpu` (deprecated) | base      | base × 0.80        | Doubles slots too — use the CPU factors |
 | `.mem` / `.mem-2x` | base × 2   | base × 1.6         | State-heavy jobs                       |
 | `.mem-4x`          | base × 4   | base × 3.2         | Large state                            |
 | `.mem-8x`          | base × 8   | base × 6.4         | Very large state                       |
@@ -132,7 +132,7 @@ Qualifiers apply to every size including `dev`: `dev.mem-2x` is a `dev` task man
 
 Each accepts a number greater than 0 and at most 4. `taskmanager-cpu-request-factor` defaults to `1`; `taskmanager-cpu-limit-factor` defaults to the size's own limit factor. The ceiling must be at least `max(1, taskmanager-cpu-request-factor)`.
 
-**Task slots follow the ceiling, not the request.** Raising `taskmanager-cpu-limit-factor` raises the slots per task manager in the same proportion, because burst headroom with no subtasks to fill it buys nothing — a `medium` (2 slots) at `taskmanager-cpu-limit-factor: 2` gets 4 slots. Lowering `taskmanager-cpu-request-factor` leaves slots alone, which is how you keep the parallelism of a size while sharing its cores at steady state.
+**Task slots follow the ceiling, not the request.** Slots scale by the ceiling *relative to the size's own* — `slots x (taskmanager-cpu-limit-factor / the size's default factor)` — because burst headroom with no subtasks to fill it buys nothing. A `medium` (2 slots, default factor 1) at `taskmanager-cpu-limit-factor: 2` gets 4 slots; `dev`'s default factor is already 2, so factor 2 leaves it at 1 slot and factor 4 gives it 2. Lowering `taskmanager-cpu-request-factor` leaves slots alone, which is how you keep the parallelism of a size while sharing its cores at steady state.
 
 Because slots move, so does parallelism (`instances x slots`), and `pipeline.max-parallelism` is baked into savepoints. Raising the limit factor on a running deployment is rejected when the new parallelism no longer divides the recorded `pipeline.max-parallelism`; the error lists the `taskmanager-count` values that do.
 
@@ -150,7 +150,11 @@ Choose the job manager size based on the number of subtasks in your Flink job.
 ---
 
 :::warning Migrating from `cpu-limit`
-`cpu-limit`, `taskmanager-cpu-limit` and the `.cpu` size qualifier are gone. A ceiling is now always a factor of the size's own vCPU, so absolute amounts (`"6000m"`) and `"unlimited"` are no longer accepted. Replace `"cpu-limit": "4x"` with `"cpu-limit-factor": 4`, and `.cpu` with `"cpu-request-factor": 2`. A leftover `cpu-limit` is rejected with a message naming its replacement rather than being ignored.
+`cpu-limit` and `taskmanager-cpu-limit` are **removed**. A ceiling is now always a factor of the size's own vCPU, so absolute amounts (`"6000m"`) and `"unlimited"` are no longer accepted — replace `"cpu-limit": "4x"` with `"cpu-limit-factor": 4`. A leftover `cpu-limit` is rejected with a message naming its replacement rather than being silently ignored.
+
+The `.cpu` qualifier still works but is **deprecated**. It is equivalent to setting *both* factors — `cpu-request-factor: 2` **and** `cpu-limit-factor: 2` (4 on task-manager `dev`, whose ceiling is already 2x). Setting `cpu-request-factor: 2` on its own is rejected, because the ceiling would then sit below the request. `.cpu` cannot be combined with either factor.
+
+**Migrating `.cpu` on a task manager changes parallelism.** Because slots follow the ceiling, `.cpu` doubles the slots per task manager — `medium.cpu` runs 4 slots, not 2. That is true today as well, so migrating to explicit factors is how you take back control of it: `cpu-request-factor: 2` with `cpu-limit-factor: 1` keeps `medium`'s 2 slots while still reserving 4 cores.
 :::
 
 ## PostgreSQL (`engines.postgres.deployment`)
@@ -194,7 +198,7 @@ Instance sizes accept the same `.mem-Nx` qualifiers as task managers, which is h
 
 * `small.mem-4x` → 1 CPU, 16 GiB — the memory of `large` at a quarter of its CPU request.
 
-Memory qualifiers no longer change the CPU request; `cpu-request-factor` does. The `.cpu` qualifier is **deprecated** and cannot be combined with either CPU factor.
+A memory qualifier moves memory only — CPU is moved by `cpu-request-factor`. A qualifier also leaves `max_connections` and the default disk size at the base size's values. The `.cpu` qualifier is **deprecated** and cannot be combined with either CPU factor.
 
 ### CPU Request and Limit Factors
 
@@ -203,7 +207,7 @@ Every size fixes CPU and memory together at 4 GB per core, so a component sized 
 | Setting | Range | Default | Effect |
 |:--------|:------|:--------|:-------|
 | `cpu-request-factor` | 0 (exclusive) to 4 | `1` | `request = size vCPU x factor` |
-| `cpu-limit-factor`   | 0 (exclusive) to 4 | the size's own limit factor | `limit = size vCPU x factor` |
+| `cpu-limit-factor`   | 1 to 4 | the size's own limit factor | `limit = size vCPU x factor` |
 
 For a `medium` task manager (2 vCPU):
 
