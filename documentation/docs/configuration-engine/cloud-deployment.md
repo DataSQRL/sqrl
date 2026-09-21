@@ -91,11 +91,11 @@ Task manager sizes support qualifiers for specialized workloads. Qualifiers are 
 
 * **`.mem-Nx`** scales the pod memory by `N` and gives Flink **proportionally more** memory (Flink heap+managed grows with `N`). Use for state-heavy jobs.
 * **`.mem-headroom-Nx`** scales the pod memory by `N` but keeps Flink's allocation at the **baseline** memory; the extra memory is reserved for sidecar / native consumers (e.g., DuckDB, JNI libs, page cache).
-* **`.cpu`** doubles CPU with the same memory.
+* **`.cpu`** is **deprecated** — it doubles CPU with the same memory, which `cpu-request-factor: 2` says precisely. It cannot be combined with either factor.
 
 | Qualifier          | Pod memory | Flink heap+managed | Typical use                            |
 |:-------------------|:-----------|:-------------------|:---------------------------------------|
-| `.cpu`             | base       | base × 0.80        | CPU-intensive jobs                     |
+| `.cpu` (deprecated) | base      | base × 0.80        | Use `cpu-request-factor` instead       |
 | `.mem` / `.mem-2x` | base × 2   | base × 1.6         | State-heavy jobs                       |
 | `.mem-4x`          | base × 4   | base × 3.2         | Large state                            |
 | `.mem-8x`          | base × 8   | base × 6.4         | Very large state                       |
@@ -112,9 +112,9 @@ Examples:
 
 Qualifiers apply to every size including `dev`: `dev.mem-2x` is a `dev` task manager (0.5 CPU, one task slot) with `small`'s 4 GB of memory.
 
-#### Task Manager CPU Limit
+#### Task Manager CPU Request and Limit Factors
 
-Every size fixes CPU and memory together at 4 GB per core, so a task manager sized for its memory carries more CPU request than it needs. `taskmanager-cpu-limit` separates the ceiling from the request:
+`taskmanager-cpu-request-factor` and `taskmanager-cpu-limit-factor` move the request and the ceiling independently. Both are multiples of the vCPU the size already carries:
 
 ```json
 {
@@ -122,14 +122,19 @@ Every size fixes CPU and memory together at 4 GB per core, so a task manager siz
     "flink": {
       "deployment": {
         "taskmanager-size": "medium",
-        "taskmanager-cpu-limit": "4x"   // request 2 cores, burst to 8
+        "taskmanager-cpu-request-factor": 0.25,  // request 0.5 cores
+        "taskmanager-cpu-limit-factor": 1        // ceiling stays at 2 cores
       }
     }
   }
 }
 ```
 
-Accepted forms are a multiple of the request (`"4x"`), an absolute amount (`"8000m"` or `"8"`), and nothing at all, which keeps the size's own limit factor. A limit below the request is rejected — Kubernetes will not accept one. Anything above the request makes the pod Burstable rather than Guaranteed, which lowers its eviction priority under node pressure. `"unlimited"` is not accepted for task managers, because Flink always derives and writes a limit.
+Each accepts a number greater than 0 and at most 4. `taskmanager-cpu-request-factor` defaults to `1`; `taskmanager-cpu-limit-factor` defaults to the size's own limit factor. The ceiling must be at least `max(1, taskmanager-cpu-request-factor)`.
+
+**Task slots follow the ceiling, not the request.** Raising `taskmanager-cpu-limit-factor` raises the slots per task manager in the same proportion, because burst headroom with no subtasks to fill it buys nothing — a `medium` (2 slots) at `taskmanager-cpu-limit-factor: 2` gets 4 slots. Lowering `taskmanager-cpu-request-factor` leaves slots alone, which is how you keep the parallelism of a size while sharing its cores at steady state.
+
+Because slots move, so does parallelism (`instances x slots`), and `pipeline.max-parallelism` is baked into savepoints. Raising the limit factor on a running deployment is rejected when the new parallelism no longer divides the recorded `pipeline.max-parallelism`; the error lists the `taskmanager-count` values that do.
 
 ### Job Manager Sizes
 
@@ -144,6 +149,10 @@ Choose the job manager size based on the number of subtasks in your Flink job.
 
 ---
 
+:::warning Migrating from `cpu-limit`
+`cpu-limit`, `taskmanager-cpu-limit` and the `.cpu` size qualifier are gone. A ceiling is now always a factor of the size's own vCPU, so absolute amounts (`"6000m"`) and `"unlimited"` are no longer accepted. Replace `"cpu-limit": "4x"` with `"cpu-limit-factor": 4`, and `.cpu` with `"cpu-request-factor": 2`. A leftover `cpu-limit` is rejected with a message naming its replacement rather than being ignored.
+:::
+
 ## PostgreSQL (`engines.postgres.deployment`)
 
 PostgreSQL deployments consist of one primary instance and a configurable number of read replicas, all using the same instance size.
@@ -154,7 +163,7 @@ PostgreSQL deployments consist of one primary instance and a configurable number
     "postgres": {
       "deployment": {
         "instance-size": "medium",      // Instance size (see table below)
-        "cpu-limit": "3x",              // CPU ceiling (see "CPU Limit" below)
+        "cpu-limit-factor": 3,          // CPU ceiling (see "CPU Request and Limit Factors")
         "replica-count": 1,             // Number of read replicas (0 or larger)
         "disk-size-gb": 256,            // Disk size in GB (1 or larger)
         "auto-expand-percentage": 0.2,  // Auto-expand threshold (0 to disable, must be < 1)
@@ -181,23 +190,30 @@ The `dev` size is intended for development and testing with small amounts of dat
 
 ### Size Qualifiers
 
-Instance sizes accept the same `.mem-Nx` and `.cpu` qualifiers as task managers, which is how a database asks for memory without the cores the size would otherwise bring:
+Instance sizes accept the same `.mem-Nx` qualifiers as task managers, which is how a database asks for memory without the cores the size would otherwise bring:
 
 * `small.mem-4x` → 1 CPU, 16 GiB — the memory of `large` at a quarter of its CPU request.
-* `medium.cpu` → 4 CPU, 8 GiB.
 
-Qualifiers change the CPU request, so a `cpu-limit` factor multiplies the qualified request: `small.mem-4x` with `"cpu-limit": "8x"` requests 1 core and may burst to 8.
+Memory qualifiers no longer change the CPU request; `cpu-request-factor` does. The `.cpu` qualifier is **deprecated** and cannot be combined with either CPU factor.
 
-### CPU Limit
+### CPU Request and Limit Factors
 
-`cpu-limit` sets the CPU ceiling independently of the request:
+Every size fixes CPU and memory together at 4 GB per core, so a component sized for its memory carries more CPU request than it needs. Two factors move the request and the ceiling independently, and **both are multiples of the vCPU the size already carries** — not of each other:
 
-| Value           | Meaning                                                         |
-|:----------------|:----------------------------------------------------------------|
-| `"3x"`          | a multiple of the CPU request, so it moves with `instance-size`  |
-| `"6000m"`/`"6"` | an absolute ceiling in millicores or cores                       |
+| Setting | Range | Default | Effect |
+|:--------|:------|:--------|:-------|
+| `cpu-request-factor` | 0 (exclusive) to 4 | `1` | `request = size vCPU x factor` |
+| `cpu-limit-factor`   | 0 (exclusive) to 4 | the size's own limit factor | `limit = size vCPU x factor` |
 
-Omitted, the limit factor baked into the instance size applies. A limit below the request is rejected. Anything above the request moves the pod from Guaranteed to Burstable QoS, since Guaranteed requires `requests == limits` for CPU as well as memory.
+For a `medium` task manager (2 vCPU):
+
+| Factors | Request | Limit | Meaning |
+|:--------|:--------|:------|:--------|
+| request `0.25`, limit `1` | 0.5 | 2 | share cores at steady state, keep the full ceiling |
+| request `1`, limit `2`    | 2   | 4 | reserve the size, burst to double |
+| request `0.25`, limit `4` | 0.5 | 8 | reserve little, burst hard |
+
+`cpu-limit-factor` must be at least `max(1, cpu-request-factor)`, otherwise the ceiling would fall below the request and Kubernetes rejects the pod. Any ceiling above the request makes the pod Burstable rather than Guaranteed, which lowers its eviction priority under node pressure; a request factor below 1 reserves less than the size and shares cores with neighbours at steady state.
 
 ---
 
@@ -212,7 +228,7 @@ Vert.x API server deployments consist of a configurable number of identically si
       "deployment": {
         "instance-size": "small",  // Instance size (see table below)
         "instance-count": 2,       // Number of server instances (positive integer)
-        "cpu-limit": "4x"          // CPU ceiling (see "CPU Limit" below)
+        "cpu-limit-factor": 4      // CPU ceiling (see "CPU Request and Limit Factors")
       }
     }
   }
@@ -232,14 +248,14 @@ The `dev` size is intended for development and testing with small amounts of dat
 
 ### Size Qualifiers
 
-Server sizes accept the `.mem-Nx` and `.cpu` qualifiers as well, and they compose with `.disk`:
+Server sizes accept the `.mem-Nx` qualifiers as well, and they compose with `.disk`:
 
 * `dev.mem-2x` → 0.5 CPU, 4 GiB — `small`'s memory at half its CPU request.
 * `small.disk.mem-2x` → 1 CPU, 8 GiB, with NVMe storage.
 
-### CPU Limit
+### CPU Request and Limit Factors
 
-`cpu-limit` takes the same forms as the PostgreSQL setting above — a factor (`"4x"`), an absolute amount (`"2000m"` or `"2"`), or omitted to keep the size's own limit factor.
+`cpu-request-factor` and `cpu-limit-factor` behave exactly as for PostgreSQL above: each is a number greater than 0 and at most 4, measured against the vCPU the size already carries, with `cpu-limit-factor` at least `max(1, cpu-request-factor)`.
 
 ---
 
