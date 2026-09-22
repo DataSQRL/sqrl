@@ -45,6 +45,6 @@ public class VertxParamArgumentTypeMapper implements ParamArgumentTypeMapper {
       return Arrays.toString(vec.getValue());
     }
 
-    return param;
+    return sqlType.map(type -> SqlTypeConverter.convert(param, type)).orElse(param);
   }
 }

@@ -56,6 +56,8 @@ public abstract class AbstractQueryExecutionContext<C extends ServerContext>
       Optional<String> paramSqlType;
       if (param instanceof RootGraphQLModel.ArgumentParameter argParam) {
         paramSqlType = Optional.of(argParam.getSqlType());
+      } else if (param instanceof RootGraphQLModel.ParentParameter parentParam) {
+        paramSqlType = Optional.ofNullable(parentParam.getSqlType());
       } else {
         paramSqlType = Optional.empty();
       }
