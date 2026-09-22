@@ -1036,7 +1036,8 @@ END
                 },
                 {
                   "type" : "source",
-                  "key" : "customerid"
+                  "key" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -1066,7 +1067,8 @@ END
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "customerid"
+                  "key" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

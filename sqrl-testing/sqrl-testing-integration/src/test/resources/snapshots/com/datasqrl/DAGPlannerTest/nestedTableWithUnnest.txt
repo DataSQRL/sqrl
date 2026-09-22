@@ -277,7 +277,8 @@ END
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

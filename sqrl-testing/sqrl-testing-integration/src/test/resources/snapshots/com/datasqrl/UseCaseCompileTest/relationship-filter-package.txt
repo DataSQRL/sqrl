@@ -362,7 +362,8 @@ CREATE TABLE IF NOT EXISTS "subqueryQuery" ("id" TEXT NOT NULL, "label" TEXT NOT
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "CHAR"
                 }
               ],
               "pagination" : "NONE",

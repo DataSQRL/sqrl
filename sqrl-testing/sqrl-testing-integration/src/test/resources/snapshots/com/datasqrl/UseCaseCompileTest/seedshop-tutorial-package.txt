@@ -857,7 +857,8 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -887,7 +888,8 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -917,7 +919,8 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -947,7 +950,8 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "customerid"
+                  "key" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -977,7 +981,8 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -1007,7 +1012,8 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

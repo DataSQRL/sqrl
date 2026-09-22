@@ -524,7 +524,8 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "machineId"
+                  "key" : "machineId",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -554,7 +555,8 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -584,7 +586,8 @@ CREATE INDEX IF NOT EXISTS "Sensors_hash_c1" ON "Sensors" USING hash ("machineId
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
