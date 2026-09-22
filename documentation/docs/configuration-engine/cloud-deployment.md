@@ -241,12 +241,13 @@ Vert.x API server deployments consist of a configurable number of identically si
 
 ### Instance Sizes
 
-| Name   | CPU | Memory (GiB) | NVMe Space | Max CPU Burst | Pg Pool Size |
-|:-------|:----|:-------------|:-----------|:--------------|:-------------|
-| dev    | 0.5 | 2            | -          | 1.25          | 5            |
-| small  | 1   | 4            | 55GB       | 1             | 5            |
-| medium | 2   | 8            | 110GB      | 1             | 10           |
-| large  | 4   | 16           | 220GB      | 1             | 15           |
+| Name   | CPU  | Memory (GiB) | Max CPU Burst | Pg Pool Size |
+|:-------|:-----|:-------------|:--------------|:-------------|
+| dev    | 0.25 | 1            | 1.25          | 5            |
+| small  | 0.5  | 2            | 1             | 5            |
+| medium | 1    | 4            | 1             | 10           |
+| large  | 2    | 8            | 1             | 15           |
+| xlarge | 4    | 16           | 1             | 20           |
 
 The `dev` size is intended for development and testing with small amounts of data. The `.disk` qualifier enables NVMe storage for instances that require local disk access.
 
@@ -254,8 +255,8 @@ The `dev` size is intended for development and testing with small amounts of dat
 
 Server sizes accept the `.mem-Nx` qualifiers as well, and they compose with `.disk`:
 
-* `dev.mem-2x` → 0.5 CPU, 4 GiB — `small`'s memory at half its CPU request.
-* `small.disk.mem-2x` → 1 CPU, 8 GiB, with NVMe storage.
+* `dev.mem-2x` → 0.25 CPU, 2 GiB — `small`'s memory at half its CPU request.
+* `small.disk.mem-2x` → 0.5 CPU, 4 GiB.
 
 ### CPU Request and Limit Factors
 
