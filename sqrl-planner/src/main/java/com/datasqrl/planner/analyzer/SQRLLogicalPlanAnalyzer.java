@@ -85,6 +85,7 @@ import org.apache.calcite.rel.logical.LogicalValues;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
+import org.apache.calcite.rex.RexLiteral;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexOver;
 import org.apache.calcite.rex.RexShuttle;
@@ -528,6 +529,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     Set<PrimaryKeyMap.ColumnSet> pksToRemove = new HashSet<>();
     List<Integer> newPk = null;
     var isMostRecentDistinct = false;
+    var isWindowDeduplication = false;
     for (RexNode node : conjunctions) {
       var idxOpt = CalciteUtil.isEqualToConstant(node);
       // It's a constrained primary key, remove it from the list
@@ -568,6 +570,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
               isMostRecentDistinct = false;
             }
           }
+          isWindowDeduplication = newPk != null && isWindowDeduplication(project, over, node);
         }
       }
     }
@@ -578,7 +581,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     TableType type = input.getType();
     if (newPk != null) {
       pk = PrimaryKeyMap.of(newPk);
-      if (type == STREAM) { // Update type
+      if (type == STREAM && !isWindowDeduplication) { // Update type
         type = TableType.VERSIONED_STATE;
       }
     } else if (!pksToRemove.isEmpty()) { // Remove them
@@ -597,6 +600,57 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .primaryKey(pk)
             .hasNowFilter(hasNowFilter)
             .build());
+  }
+
+  /**
+   * Identifies Flink window deduplication, whose output is append-only because Flink emits only the
+   * final record for each closed window. This deliberately matches only the directly-supported
+   * TVFs, rather than treating arbitrary window columns as window boundaries.
+   */
+  private static boolean isWindowDeduplication(
+      LogicalProject project, RexOver over, RexNode filterCondition) {
+
+    if (!isRowNumberEqualsOne(filterCondition) || !isSupportedWindowTvf(project.getInput())) {
+      return false;
+    }
+
+    var inputFields = project.getInput().getRowType().getFieldList();
+    var partitionFieldNames =
+        over.getWindow().partitionKeys.stream()
+            .map(CalciteUtil::getInputRef)
+            .flatMap(Optional::stream)
+            .map(inputFields::get)
+            .map(RelDataTypeField::getName)
+            .collect(Collectors.toSet());
+
+    return partitionFieldNames.stream().anyMatch("window_start"::equalsIgnoreCase)
+        && partitionFieldNames.stream().anyMatch("window_end"::equalsIgnoreCase);
+  }
+
+  private static boolean isRowNumberEqualsOne(RexNode filterCondition) {
+    if (!filterCondition.isA(SqlKind.EQUALS)) {
+      return false;
+    }
+
+    return ((RexCall) filterCondition)
+        .getOperands().stream()
+            .filter(RexLiteral.class::isInstance)
+            .map(RexLiteral.class::cast)
+            .anyMatch(
+                literal -> !RexLiteral.isNullLiteral(literal) && RexLiteral.intValue(literal) == 1);
+  }
+
+  private static boolean isSupportedWindowTvf(RelNode input) {
+    if (!(input instanceof TableFunctionScan functionScan)
+        || !(functionScan.getCall() instanceof RexCall call)
+        || !(call.getOperator() instanceof SqlWindowTableFunction)) {
+      return false;
+    }
+
+    var functionName = call.getOperator().getName();
+    return functionName.equalsIgnoreCase("TUMBLE")
+        || functionName.equalsIgnoreCase("HOP")
+        || functionName.equalsIgnoreCase("CUMULATE");
   }
 
   @Override
