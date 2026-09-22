@@ -124,7 +124,7 @@ PostgreSQL deployments consist of one primary instance and a configurable number
 }
 ```
 
-### Instance Sizes
+### Database Instance Sizes
 
 | Name   | CPU | Memory (GiB) | Default Disk | Max CPU Burst | Max Connections |
 |:-------|:----|:-------------|:-------------|:--------------|:----------------|
@@ -158,7 +158,7 @@ Vert.x API server deployments consist of a configurable number of identically si
 }
 ```
 
-### Instance Sizes
+### Server Instance Sizes
 
 | Name   | CPU  | Memory (GiB) | Max CPU Burst | Pg Pool Size |
 |:-------|:-----|:-------------|:--------------|:-------------|
@@ -176,7 +176,7 @@ The `dev` size is intended for development and testing with small amounts of dat
 
 ## Size Qualifiers
 
-A size name can carry qualifiers, written after it and separated by dots — `medium.mem-4x`. A qualifier scales the **pod's memory** and nothing else: CPU, `max_connections` and the default disk size all stay at the base size's values. CPU is moved by the [CPU factors](#cpu-request-and-limit-factors) instead.
+A size name can carry qualifiers, written after it and separated by dots — `medium.mem-4x`. A memory qualifier scales the **pod's memory** and nothing else: CPU, `max_connections` and the default disk size all stay at the base size's values. The one exception is `.cpu`, which moves CPU rather than memory and is **deprecated** — the [CPU factors](#cpu-request-and-limit-factors) say the same thing precisely.
 
 | Setting                                     | Qualifiers                                          |
 |:--------------------------------------------|:----------------------------------------------------|
@@ -187,9 +187,9 @@ A size name can carry qualifiers, written after it and separated by dots — `me
 
 | Qualifier          | Pod memory | Flink heap+managed | Typical use                            |
 |:-------------------|:-----------|:-------------------|:---------------------------------------|
-| `.mem` / `.mem-2x` | base × 2   | base × 1.6         | State-heavy jobs                       |
-| `.mem-4x`          | base × 4   | base × 3.2         | Large state                            |
-| `.mem-8x`          | base × 8   | base × 6.4         | Very large state                       |
+| `.mem` / `.mem-2x` | base × 2   | base × 1.8         | State-heavy jobs                       |
+| `.mem-4x`          | base × 4   | base × 3.6         | Large state                            |
+| `.mem-8x`          | base × 8   | base × 7.2         | Very large state                       |
 | `.mem-headroom-2x` | base × 2   | base × 1           | Sidecars / native memory consumers     |
 | `.mem-headroom-4x` | base × 4   | base × 1           | Larger sidecar headroom                |
 | `.mem-headroom-8x` | base × 8   | base × 1           | Maximum sidecar headroom (e.g. DuckDB) |
@@ -198,12 +198,12 @@ The "Flink heap+managed" column applies to task managers only. `.mem-Nx` gives F
 
 Examples:
 
-* `medium.mem-4x` → pod 32 GB / Flink heap+managed ≈ 25.6 GB.
+* `medium.mem-4x` → pod 32 GB / Flink heap+managed ≈ 28.8 GB.
 * `xlarge.mem-headroom-8x` → pod 256 GB / Flink heap+managed = 32 GB (baseline) / 224 GB headroom.
 
 At most one memory qualifier may be named; naming two is rejected rather than letting the last one win. `general` is accepted and means "no qualifier". Qualifiers apply to every size including `dev`: `dev.mem-2x` is a `dev` task manager (0.5 CPU, one task slot) with `small`'s 4 GB of memory.
 
-`.mem` is an alias for `.mem-2x`. The legacy `.mem-headroom` qualifier (triple memory, Flink stays at baseline) is **deprecated** — use `.mem-headroom-Nx` instead. `.cpu` is also **deprecated**; see the migration note below.
+`.mem` is an alias for `.mem-2x`. The legacy `.mem-headroom` qualifier (triple memory, Flink stays at baseline) is **deprecated** — use `.mem-headroom-Nx` instead. For `.cpu`, see the migration note below.
 
 ---
 
@@ -255,7 +255,19 @@ On a Flink task manager the slot count moves with the **ceiling**, not the reque
 Because slots move, so does parallelism (`instances x slots`), and `pipeline.max-parallelism` is baked into savepoints. Raising the limit factor on a running deployment is rejected when the new parallelism no longer divides the recorded `pipeline.max-parallelism`; the error lists the `taskmanager-count` values that do.
 
 :::warning Migrating from `cpu-limit`
-`cpu-limit` and `taskmanager-cpu-limit` are **removed**. A ceiling is now always a factor of the size's own vCPU, so absolute amounts (`"6000m"`) and `"unlimited"` are no longer accepted — replace `"cpu-limit": "4x"` with `"cpu-limit-factor": 4`. A leftover `cpu-limit` is rejected with a message naming its replacement rather than being silently ignored.
+`taskmanager-cpu-limit` (Flink) and `cpu-limit` (PostgreSQL) are **deprecated but still accepted**; a later release removes them. Vert.x never had either key. A deployment that still sets one keeps deploying: the value is translated into the matching limit factor and logged as deprecated.
+
+| Old value                         | Translated to          |
+|:----------------------------------|:-----------------------|
+| `"2x"`                            | `cpu-limit-factor: 2`  |
+| `"6000m"` on a `medium` (2 vCPU)  | `cpu-limit-factor: 3`  |
+| `"6"` on a `medium`               | `cpu-limit-factor: 3`  |
+
+An absolute amount is divided by the size's own vCPU — `m` means millicores, a bare number means cores. The translation fails instead of deploying on `"unlimited"`, on a value that is not a number, on one that works out above 4, and when the old key is set alongside `cpu-request-factor` or `cpu-limit-factor`. Set one or the other.
+
+**The two keys do not mean the same thing.** `cpu-limit` stated the ceiling as a multiple of the **request**; `cpu-limit-factor` states it against the **size**. Those agree only while the request equals the size — which is exactly what a configuration written before `cpu-request-factor` existed does, so the translation is faithful today and diverges the moment you lower the request.
+
+**On a task manager the translation also moves task slots.** Slots follow the ceiling, so a deployment carrying `taskmanager-cpu-limit: "2x"` on a `medium` goes from 2 slots to 4 and doubles its parallelism — an upgrade whose new parallelism no longer divides the savepoint's `pipeline.max-parallelism` is rejected. Migrate deliberately rather than letting the translation move it for you.
 
 The `.cpu` qualifier still works but is **deprecated**. It is equivalent to setting *both* factors — `cpu-request-factor: 2` **and** a limit factor at twice the size's Max CPU Burst, so 2 for most sizes and 4 on a `dev` task manager. Setting `cpu-request-factor: 2` on its own is rejected on any size whose Max CPU Burst is below 2, because the ceiling would then sit below the request. `.cpu` cannot be combined with either factor.
 
