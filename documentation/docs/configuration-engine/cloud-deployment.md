@@ -257,9 +257,9 @@ Because slots move, so does parallelism (`instances x slots`), and `pipeline.max
 :::warning Migrating from `cpu-limit`
 `cpu-limit` and `taskmanager-cpu-limit` are **removed**. A ceiling is now always a factor of the size's own vCPU, so absolute amounts (`"6000m"`) and `"unlimited"` are no longer accepted — replace `"cpu-limit": "4x"` with `"cpu-limit-factor": 4`. A leftover `cpu-limit` is rejected with a message naming its replacement rather than being silently ignored.
 
-The `.cpu` qualifier still works but is **deprecated**. It is equivalent to setting *both* factors — `cpu-request-factor: 2` **and** a limit factor at twice the size's Max CPU Burst (so 2 for most sizes, 4 on a `dev` task manager, 3 on a `dev` database). Setting `cpu-request-factor: 2` on its own is rejected on any size whose Max CPU Burst is below 2, because the ceiling would then sit below the request. `.cpu` cannot be combined with either factor.
+The `.cpu` qualifier still works but is **deprecated**. It is equivalent to setting *both* factors — `cpu-request-factor: 2` **and** a limit factor at twice the size's Max CPU Burst, so 2 for most sizes and 4 on a `dev` task manager. Setting `cpu-request-factor: 2` on its own is rejected on any size whose Max CPU Burst is below 2, because the ceiling would then sit below the request. `.cpu` cannot be combined with either factor.
 
-**Migrating `.cpu` on a task manager changes parallelism.** Because slots follow the ceiling, `.cpu` doubles the slots per task manager — `medium.cpu` runs 4 slots, not 2. That is true today as well, so migrating to explicit factors is how you take back control of it: `cpu-request-factor: 2` with `cpu-limit-factor: 1` keeps `medium`'s 2 slots while still reserving 4 cores.
+**Migrating `.cpu` on a task manager changes parallelism.** Because slots follow the ceiling, `.cpu` doubles the slots per task manager — `medium.cpu` runs 4 slots, not 2. Explicit factors do not undo that: a request factor of 2 forces a ceiling of at least 2, and the slots follow. What they add is the other half of the trade, which `.cpu` could never express — `taskmanager-cpu-request-factor: 0.25` with `taskmanager-cpu-limit-factor: 1` keeps `medium`'s 2 slots and shares its cores at steady state.
 :::
 
 ---
