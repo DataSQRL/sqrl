@@ -40,9 +40,9 @@ const pillars: Pillar[] = [
     title: 'Human Control',
     claim: 'One SQL file your team can read.',
     text: 'Not thousands of lines of Python, dbt, YAML, and glue. The whole pipeline, ' +
-        'from ingest to API, is expressed in SQL your engineers can understand, run, and approve.',
+        'from ingest to API, is expressed in SQL you can understand, run, and approve.',
     link: '/blog/p4-human-understanding-one-sql-file',
-    linkText: 'Why readability is the bottleneck',
+    linkText: 'Why verifiability is the bottleneck',
   },
   {
     title: 'Correctness',
@@ -65,6 +65,8 @@ const pillars: Pillar[] = [
 interface UseCase {
   title: string;
   text: string;
+  link?: string;
+  linkText?: string;
 }
 
 const useCases: UseCase[] = [
@@ -72,6 +74,8 @@ const useCases: UseCase[] = [
   {title: 'Data APIs', text: 'GraphQL, REST, and MCP endpoints generated from SQL, with authentication and authorization built in.'},
   {title: 'Data Products', text: 'Curated, documented, and tested datasets for analytics and downstream teams.'},
   {title: 'Operational Data', text: 'Low-latency data for applications and AI agents, including embeddings and LLM enrichment.'},
+  {title: 'See It in Action', text: 'Browse data products for a retail bank and self-contained pipelines across finance, healthcare, IoT, logistics, and more.',
+    link: '/docs/intro/examples', linkText: 'Explore the examples'},
 ];
 
 function PillarCard({title, claim, text, link, linkText}: Pillar) {
@@ -93,15 +97,26 @@ function PillarCard({title, claim, text, link, linkText}: Pillar) {
   );
 }
 
-function UseCaseCard({title, text}: UseCase) {
-  return (
-      <div className="col col--3 margin-bottom--lg">
-        <div className="card" style={{height: '100%'}}>
-          <div className="card__body">
-            <h4>{title}</h4>
-            <p className="margin-bottom--none">{text}</p>
-          </div>
+function UseCaseCard({title, text, link, linkText}: UseCase) {
+  const card = (
+      <div className={link ? 'card shadow--md' : 'card'}
+           style={{height: '100%', ...(link && {border: '2px solid var(--ifm-color-primary)'})}}>
+        <div className="card__body">
+          <h4>{title}</h4>
+          <p className="margin-bottom--none">{text}</p>
         </div>
+        {link && (
+            <div className="card__footer">
+              <strong>{linkText} →</strong>
+            </div>
+        )}
+      </div>
+  );
+  return (
+      <div className="col margin-bottom--lg">
+        {link
+            ? <Link to={link} style={{color: 'inherit', textDecoration: 'none', display: 'block', height: '100%'}}>{card}</Link>
+            : card}
       </div>
   );
 }
@@ -119,11 +134,9 @@ export default function Home() {
                 <div className="col col--10 col--offset-1 text--center">
                   <h2>Agents write data code faster than humans can verify it</h2>
                   <p className="hero__subtitle">
-                    A general-purpose coding agent handles a data engineering task by producing
-                    dozens of files in several languages. The result looks plausible and the demo
-                    works. The expensive bugs sit at the seams between systems and in time
-                    semantics, and they pass code review. Writing code is no longer the bottleneck
-                    for data teams. Trusting it is.
+                    Writing code is no longer the bottleneck for data teams. Trusting and managing it is.<br />
+                    General-purpose coding agents solve data engineering tasks with dozens of files in multiple languages.
+                    The results look plausible but contain subtle bugs and misalignments that are hard to spot.
                   </p>
                   <img src={useBaseUrl("/img/diagrams/agentic/control_comparison.svg")}
                        alt="A coding agent on its own produces dozens of files; with the DataSQRL harness it produces one readable SQL file that the compiler turns into every deployment asset"
@@ -175,14 +188,14 @@ SpendingTransactionsByTime(
                 <div className="col col--5 col--offset-1 text--left">
                   <h2>Human Control: Review the Logic, Not the Plumbing</h2>
                   <p className="hero__subtitle">
-                    The agent's output is one declarative SQL file covering ingestion,
-                    transformation, storage, and a secure MCP/REST/GraphQL endpoint. You
-                    can understand it in one sitting.
+                    The agent's output is declarative SQL covering ingestion,
+                    transformation, storage, and a secure MCP/REST/GraphQL endpoint.
+                    Easy to understand, review, and argue about.
                   </p>
                   <p className="hero__subtitle">
-                    Grain, units, filters, and joins are on one screen, so reviewers check what the
-                    pipeline means. Changes arrive as small, readable diffs. One command runs the
-                    whole thing locally so you can look at real results before you approve.
+                    Aggregations, units, filters, and joins sit on one screen.
+                    One command runs the whole pipeline locally, API included,
+                    so you can inspect real results and experiment quickly.
                   </p>
                 </div>
               </div>
@@ -199,13 +212,11 @@ SpendingTransactionsByTime(
                   <p className="hero__subtitle">
                     Language models are probabilistic. Mapping types, keys, schemas, and connectors
                     across Flink, Kafka, Postgres, Iceberg, and the API layer requires strict
-                    rule-following that's better handled by a cmopiler.
+                    rule-following that's better handled by a compiler.
                   </p>
                   <p className="hero__subtitle">
-                    Every boundary asset is generated from one logical model, so the systems cannot
-                    disagree. A relational validator catches wrong keys, time-dependent joins,
-                    stalled watermarks, and unbounded state. Each error comes with a fix the agent
-                    can apply.
+                    Every deployment asset is generated from one logical model, so the systems cannot
+                    disagree.
                   </p>
                 </div>
               </div>
@@ -235,7 +246,7 @@ NoUnenrichedTransactions :=
                   </p>
                   <p className="hero__subtitle">
                     Late and out-of-order data, races between streams, idle sources, updates, and
-                    deletes become deterministic tests. The agent keeps iterating until they pass.
+                    deletes become deterministic tests.
                   </p>
                   <Link to="/blog/p3-testing-framework">
                     Why standard integration tests fall short →
@@ -304,10 +315,10 @@ Schema:
                 <div className="col col--10 col--offset-1 text--center">
                   <h2>Your Harness, Your Organization</h2>
                   <p className="hero__subtitle">
-                    A generic coding agent doesn't know your sources, conventions, domain, or
-                    compliance rules. DataSQRL is a toolkit for building a harness that does and
-                    packages it one Docker container: a data engineering
-                    agent your teams, CI pipelines, and platforms can call.
+                    Every data organization has its own conventions,
+                    domain vocabulary, compliance requirements,
+                    and target infrastructure. DataSQRL is a harness you use
+                    to build an agent that honors those.
                   </p>
                 </div>
               </div>
@@ -319,7 +330,7 @@ Schema:
                     <tr><td><strong>Validators &amp; policies</strong></td><td>Custom compiler rules for governance, security, and data quality</td></tr>
                     <tr><td><strong>Functions &amp; connectors</strong></td><td>Your UDFs, sources, sinks, and formats</td></tr>
                     <tr><td><strong>Engines &amp; deployment</strong></td><td>Flink, Kafka, Postgres, Iceberg on Docker, Kubernetes, or cloud</td></tr>
-                    <tr><td><strong>Coding agent</strong></td><td>Claude Code, Codex, OpenCode, Pi: your choice</td></tr>
+                    <tr><td><strong>Coding agent</strong></td><td>Claude Code, Codex, OpenCode, Pi, etc: your choice</td></tr>
                     </tbody>
                   </table>
                 </div>

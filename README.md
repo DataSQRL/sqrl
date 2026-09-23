@@ -47,7 +47,7 @@ Before anything is deployed, the compiler analyzes the whole data flow, and it w
 
 ## Customize Your Harness
 
-Every data organization has its own conventions, domain vocabulary, compliance requirements, and target infrastructure. DataSQRL is a **toolkit** you use to build a harness that honors those.
+Every data organization has its own conventions, domain vocabulary, compliance requirements, and target infrastructure. DataSQRL is a **toolkit** you use to build an agent that honors those.
 
 | Layer | What you customize                                                                                                                                               |
 |---|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
