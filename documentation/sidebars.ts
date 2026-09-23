@@ -149,6 +149,11 @@ const sidebars = {
       label: '🎓 Examples',
     },
     {
+      type: 'doc',
+      id: 'intro/faq',
+      label: '❓ FAQ',
+    },
+    {
       type: 'category',
       label: '🧪 Advanced',
       items: [
