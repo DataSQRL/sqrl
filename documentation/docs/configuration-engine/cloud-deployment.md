@@ -90,14 +90,14 @@ The value is in GiB, must be positive, and is capped at 4000. It is a **hard sch
 
 ### Job Manager Sizes
 
-| Name   | SubTasks | CPU | Memory (GiB) |
-|:-------|:---------|:----|:-------------|
-| dev    | &lt;100  | 0.5 | 1            |
-| small  | 100-800  | 0.5 | 2            |
-| medium | 801-2000 | 1   | 4            |
-| large  | &gt;2000 | 2   | 8            |
+| Name   | SubTasks | CPU | Max CPU Burst | Memory (GiB) |
+|:-------|:---------|:----|:--------------|:-------------|
+| dev    | &lt;100  | 0.5 | 2             | 1            |
+| small  | 100-800  | 0.5 | 2             | 2            |
+| medium | 801-2000 | 1   | 2             | 4            |
+| large  | &gt;2000 | 2   | 2             | 8            |
 
-Choose the job manager size based on the number of subtasks in your Flink job. `jobmanager-size` takes a bare size name: it accepts neither size qualifiers nor CPU factors.
+Choose the job manager size based on the number of subtasks in your Flink job. `jobmanager-size` takes a bare size name without [size qualifiers](#size-qualifiers); its CPU request and ceiling move with [`jobmanager-cpu-request-factor` and `jobmanager-cpu-limit-factor`](#cpu-request-and-limit-factors).
 
 ---
 
@@ -209,15 +209,14 @@ At most one memory qualifier may be named; naming two is rejected rather than le
 
 ## CPU Request and Limit Factors
 
-Every size fixes CPU and memory together at 4 GB per core, so a component sized for its memory carries more CPU request than it needs. Two factors move the request and the ceiling independently, and **both are multiples of the vCPU the size already carries** — not of each other:
+Sizes fix CPU and memory together at 4 GiB per core (the job manager's `dev`, at 2 GiB, is the one exception), so a component sized for its memory carries more CPU request than it needs. Two factors move the request and the ceiling independently, and **both are multiples of the vCPU the size already carries** — not of each other:
 
 | Engine             | Request                          | Ceiling                        |
 |:-------------------|:---------------------------------|:-------------------------------|
 | Flink task manager | `taskmanager-cpu-request-factor` | `taskmanager-cpu-limit-factor` |
+| Flink job manager  | `jobmanager-cpu-request-factor`  | `jobmanager-cpu-limit-factor`  |
 | PostgreSQL         | `cpu-request-factor`             | `cpu-limit-factor`             |
 | Vert.x             | `cpu-request-factor`             | `cpu-limit-factor`             |
-
-The Flink job manager has neither; it is sized by `jobmanager-size` alone.
 
 | Setting        | Range                    | Default                        | Effect                        |
 |:---------------|:-------------------------|:-------------------------------|:------------------------------|
@@ -250,7 +249,7 @@ The limit factor must be at least `max(1, request factor)`, otherwise the ceilin
 
 ### Task Slots Follow the Ceiling
 
-On a Flink task manager the slot count moves with the **ceiling**, not the request, because burst headroom with no subtasks to fill it buys nothing. Slots scale by the ceiling *relative to the size's own*: `slots x (taskmanager-cpu-limit-factor / the size's Max CPU Burst)`. A `medium` (2 slots, burst 1) at `taskmanager-cpu-limit-factor: 2` gets 4 slots; `dev`'s burst is already 2, so factor 2 leaves it at 1 slot and factor 4 gives it 2. Lowering `taskmanager-cpu-request-factor` leaves slots alone, which is how you keep the parallelism of a size while sharing its cores at steady state.
+On a Flink task manager the slot count moves with the **ceiling**, not the request, because burst headroom with no subtasks to fill it buys nothing. Slots scale by the ceiling *relative to the size's own*: `slots x (taskmanager-cpu-limit-factor / the size's Max CPU Burst)`. A `medium` (2 slots, burst 1) at `taskmanager-cpu-limit-factor: 2` gets 4 slots; `dev`'s burst is already 2, so factor 2 leaves it at 1 slot and factor 4 gives it 2. Lowering `taskmanager-cpu-request-factor` leaves slots alone, which is how you keep the parallelism of a size while sharing its cores at steady state. The job manager runs no subtasks, so its factors never move slots or parallelism.
 
 Because slots move, so does parallelism (`instances x slots`), and `pipeline.max-parallelism` is baked into savepoints. Raising the limit factor on a running deployment is rejected when the new parallelism no longer divides the recorded `pipeline.max-parallelism`; the error lists the `taskmanager-count` values that do.
 
