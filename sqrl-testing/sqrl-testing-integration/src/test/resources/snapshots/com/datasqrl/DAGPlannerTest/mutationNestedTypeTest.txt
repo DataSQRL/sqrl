@@ -56,6 +56,7 @@ CREATE TABLE `NestedCustomers` (
 )
 WITH (
   'connector' = 'upsert-kafka-safe',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -63,6 +64,7 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-NestedCustomers',
   'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 )
 === Orders
@@ -125,6 +127,7 @@ CREATE TABLE `NestedCustomers` (
 )
 WITH (
   'connector' = 'upsert-kafka-safe',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -132,6 +135,7 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-NestedCustomers',
   'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 );
 CREATE VIEW `CustomerData`

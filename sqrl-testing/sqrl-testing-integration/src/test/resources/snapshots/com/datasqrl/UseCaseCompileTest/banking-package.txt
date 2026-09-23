@@ -324,8 +324,8 @@ CREATE TEMPORARY TABLE `CustomersStream__schema` (
 )
 WITH (
   'connector' = 'filesystem',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'path' = '${DATA_PATH}/customers.jsonl'
 );
 CREATE TABLE `CustomersStream` (
@@ -344,8 +344,8 @@ CREATE TEMPORARY TABLE `ApplicationUpdates__schema` (
 )
 WITH (
   'connector' = 'filesystem',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'path' = '${DATA_PATH}/application_updates.jsonl'
 );
 CREATE TABLE `ApplicationUpdates` (
@@ -363,8 +363,8 @@ CREATE TEMPORARY TABLE `ApplicationsStream__schema` (
 )
 WITH (
   'connector' = 'filesystem',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'path' = '${DATA_PATH}/applications.jsonl'
 );
 CREATE TABLE `ApplicationsStream` (
@@ -388,8 +388,8 @@ CREATE TEMPORARY TABLE `LoanTypesStream__schema` (
 )
 WITH (
   'connector' = 'filesystem',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'path' = '${DATA_PATH}/loan_types.jsonl'
 );
 CREATE TABLE `LoanTypesStream` (
@@ -413,6 +413,7 @@ CREATE TABLE `ApplicationUpdates` (
 )
 WITH (
   'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -432,6 +433,7 @@ CREATE TABLE `AddChatMessage` (
 )
 WITH (
   'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -513,6 +515,7 @@ CREATE TABLE `ApplicationAlert_2` (
 )
 WITH (
   'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',

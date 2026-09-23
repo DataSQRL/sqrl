@@ -124,7 +124,7 @@ Inputs:
  - default_catalog.default_database._SubmissionRaw__base
 
 >>>flink-sql-no-functions.sql
-CREATE TABLE `_SubmissionRaw` (
+CREATE TEMPORARY TABLE `_SubmissionRaw__schema` (
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `version` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `variant` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -141,17 +141,22 @@ CREATE TABLE `_SubmissionRaw` (
   `file` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `hash` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `authorId` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `submissionTime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'filesystem',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/submission.jsonl'
+);
+CREATE TABLE `_SubmissionRaw` (
   `event_time` AS `NOW`(),
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.001' SECOND
 )
 WITH (
-  'connector' = 'filesystem',
-  'format' = 'flexible-json',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'path' = '${DATA_PATH}/submission.jsonl',
   'source.monitor-interval' = '10 sec'
-);
+)
+LIKE `_SubmissionRaw__schema`;
 CREATE VIEW `Submission`
 AS
 SELECT *, `IFNULL`(`variant`, 'default') AS `variant0`, `concat`('https://repository.datasqrl.com/', `file`) AS `repoURL`

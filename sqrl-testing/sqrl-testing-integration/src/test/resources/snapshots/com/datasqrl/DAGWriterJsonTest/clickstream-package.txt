@@ -66,7 +66,7 @@
     "description" : "Click"
   } ],
   "plan" : "LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($0, 1:INTERVAL SECOND)])\n  LogicalTableScan(table=[[default_catalog, default_database, Click]])\n",
-  "sql" : "CREATE TEMPORARY TABLE `Click__schema` (\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n)\nWITH (\n  'connector' = 'filesystem',\n  'format' = 'flexible-json',\n  'flexible-json.timestamp-format.standard' = 'ISO-8601',\n  'path' = '${DATA_PATH}/click.jsonl'\n);\nCREATE TABLE `Click` (\n  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n)\nLIKE `Click__schema`",
+  "sql" : "CREATE TEMPORARY TABLE `Click__schema` (\n  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,\n  `userid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,\n  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL\n)\nWITH (\n  'connector' = 'filesystem',\n  'flexible-json.timestamp-format.standard' = 'ISO-8601',\n  'format' = 'flexible-json',\n  'path' = '${DATA_PATH}/click.jsonl'\n);\nCREATE TABLE `Click` (\n  PRIMARY KEY (`url`, `userid`, `timestamp`) NOT ENFORCED,\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND\n)\nLIKE `Click__schema`",
   "timestamp" : "timestamp",
   "schema" : [ {
     "name" : "timestamp",
@@ -87,8 +87,8 @@
   "stage" : "flink",
   "connector" : {
     "format" : "flexible-json",
-    "flexible-json.timestamp-format.standard" : "ISO-8601",
     "path" : "${DATA_PATH}/click.jsonl",
+    "flexible-json.timestamp-format.standard" : "ISO-8601",
     "connector" : "filesystem"
   }
 }, {
@@ -174,8 +174,8 @@ CREATE TEMPORARY TABLE `Click__schema` (
 )
 WITH (
   'connector' = 'filesystem',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'path' = '${DATA_PATH}/click.jsonl'
 );
 CREATE TABLE `Click` (

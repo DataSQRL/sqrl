@@ -86,8 +86,8 @@ CREATE TEMPORARY TABLE `Product__schema` (
 )
 WITH (
   'connector' = 'filesystem',
-  'format' = 'flexible-json',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
   'path' = '${DATA_PATH}/product.jsonl'
 );
 CREATE TABLE `Product` (
@@ -97,7 +97,6 @@ CREATE TABLE `Product` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/product.jsonl',
   'source.monitor-interval' = '10 sec'
 )
