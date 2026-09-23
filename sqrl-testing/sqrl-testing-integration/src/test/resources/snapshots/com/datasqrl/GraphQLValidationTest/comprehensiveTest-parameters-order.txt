@@ -681,6 +681,7 @@ type Customer {
     timestamp: DateTime
     related(limit: Int = 10, offset: Int = 0): [Customer!]
     relatedByLength(length: Int, limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByTimestamp(limit: Int = 10, offset: Int = 0): [Customer!]
 }
 
 type CustomerByMultipleTime {
@@ -1782,6 +1783,7 @@ CREATE TABLE IF NOT EXISTS "SelectCustomers" ("customerid" BIGINT NOT NULL, "ema
 CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB, "customerid0" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL, PRIMARY KEY ("id","time"));
 CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION, "newId" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 
+CREATE INDEX IF NOT EXISTS "Customer_btree_c4" ON "Customer" USING btree ("timestamp");
 CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name")
 >>>postgres-views.sql
 CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "timestamp", "name") AS SELECT "ExternalOrders"."id", "ExternalOrders"."customerid", "ExternalOrders"."time", "ExternalOrders"."entries", CAST("ExplicitDistinct"."timestamp" AS TIMESTAMP WITH TIME ZONE) AS "timestamp", "ExplicitDistinct"."name"
@@ -1972,7 +1974,8 @@ FROM "ExternalOrders"
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "customerid"
+                  "key" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -2011,7 +2014,8 @@ FROM "ExternalOrders"
                 },
                 {
                   "type" : "source",
-                  "key" : "customerid"
+                  "key" : "customerid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

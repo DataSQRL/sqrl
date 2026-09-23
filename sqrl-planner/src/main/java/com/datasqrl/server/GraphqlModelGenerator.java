@@ -242,7 +242,8 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
     final var sqrlParam = (SqrlFunctionParameter) fnParam;
 
     if (sqrlParam.isParentField()) {
-      return new ParentParameter(sqrlParam.getName());
+      return new ParentParameter(
+          sqrlParam.getName(), sqrlParam.getRelDataType().getSqlTypeName().getName());
     }
 
     if (sqrlParam.isMetadata()) {

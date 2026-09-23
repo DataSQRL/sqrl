@@ -655,7 +655,8 @@ CREATE INDEX IF NOT EXISTS "Events_text_c3c4" ON "Events" USING GIN (to_tsvector
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",

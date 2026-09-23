@@ -443,6 +443,7 @@ public class RootGraphQLModel {
 
     static final String type = "source";
     String key;
+    String sqlType;
 
     @Override
     public <R, C> R accept(ParameterHandlerVisitor<R, C> visitor, C context) {

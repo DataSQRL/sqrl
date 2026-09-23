@@ -23,6 +23,9 @@ Customer.related := SELECT * FROM Customer other WHERE this.customerid = other.c
 Customer.relatedByLength(length INT) := SELECT * FROM Customer other WHERE this.customerid = other.customerid
                 AND CHAR_LENGTH(other.email) >= :length ORDER BY other.`timestamp`;
 
+Customer.relatedByTimestamp := SELECT * FROM Customer other
+    WHERE this.`timestamp` <= other.`timestamp`
+    ORDER BY other.`timestamp`;
 
 /** This is for selected customers
     and their orders

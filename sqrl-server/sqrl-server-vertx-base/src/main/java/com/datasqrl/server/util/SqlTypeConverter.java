@@ -16,6 +16,13 @@
 package com.datasqrl.server.util;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -23,9 +30,7 @@ import lombok.NoArgsConstructor;
 public final class SqlTypeConverter {
 
   /**
-   * Maps a SQL type name from a Calcite {@code RelDataType} to the corresponding built-in Java
-   * class. Unrecognised types (including date-time and character types) fall through to {@link
-   * String}.
+   * Maps a SQL type name from a Calcite {@code RelDataType} to the corresponding Java class.
    *
    * @param sqlTypeName the SQL type name as returned by {@code
    *     RelDataType#getSqlTypeName().name()};
@@ -36,7 +41,6 @@ public final class SqlTypeConverter {
       return null;
     }
 
-    // TODO: Cover date-time/timestamp types if necessary.
     return switch (sqlTypeName) {
       case "INTEGER" -> Integer.class;
       case "BIGINT" -> Long.class;
@@ -46,7 +50,82 @@ public final class SqlTypeConverter {
       case "DOUBLE" -> Double.class;
       case "DECIMAL" -> BigDecimal.class;
       case "BOOLEAN" -> Boolean.class;
+      case "DATE" -> LocalDate.class;
+      case "TIME" -> LocalTime.class;
+      case "TIME_WITH_LOCAL_TIME_ZONE" -> OffsetTime.class;
+      case "TIMESTAMP" -> LocalDateTime.class;
+      case "TIMESTAMP_WITH_LOCAL_TIME_ZONE", "TIMESTAMP_WITH_TIME_ZONE" -> OffsetDateTime.class;
+      case "CHAR", "VARCHAR" -> String.class;
       default -> String.class;
     };
+  }
+
+  /** Converts a JSON-compatible parameter value to the Java type expected for the SQL type. */
+  public static Object convert(Object value, String sqlTypeName) {
+    if (value == null || sqlTypeName == null) {
+      return value;
+    }
+
+    return switch (sqlTypeName) {
+      case "INTEGER" -> number(value).intValue();
+      case "BIGINT" -> number(value).longValue();
+      case "SMALLINT" -> number(value).shortValue();
+      case "TINYINT" -> number(value).byteValue();
+      case "FLOAT", "REAL" -> number(value).floatValue();
+      case "DOUBLE" -> number(value).doubleValue();
+      case "DECIMAL" -> value instanceof BigDecimal ? value : new BigDecimal(value.toString());
+      case "BOOLEAN" -> value instanceof Boolean ? value : Boolean.valueOf(value.toString());
+      case "DATE" -> value instanceof LocalDate ? value : LocalDate.parse(value.toString());
+      case "TIME" -> value instanceof LocalTime ? value : LocalTime.parse(value.toString());
+      case "TIME_WITH_LOCAL_TIME_ZONE" -> toOffsetTime(value);
+      case "TIMESTAMP" -> toLocalDateTime(value);
+      case "TIMESTAMP_WITH_LOCAL_TIME_ZONE", "TIMESTAMP_WITH_TIME_ZONE" -> toOffsetDateTime(value);
+      case "CHAR", "VARCHAR" -> value.toString();
+      default -> value;
+    };
+  }
+
+  private static Number number(Object value) {
+    return value instanceof Number number ? number : new BigDecimal(value.toString());
+  }
+
+  private static LocalDateTime toLocalDateTime(Object value) {
+    if (value instanceof LocalDateTime localDateTime) {
+      return localDateTime;
+    }
+
+    if (value instanceof OffsetDateTime offsetDateTime) {
+      return offsetDateTime.toLocalDateTime();
+    }
+
+    return LocalDateTime.parse(value.toString());
+  }
+
+  private static OffsetTime toOffsetTime(Object value) {
+    if (value instanceof OffsetTime offsetTime) {
+      return offsetTime;
+    }
+
+    if (value instanceof OffsetDateTime offsetDateTime) {
+      return offsetDateTime.toOffsetTime();
+    }
+
+    return OffsetTime.parse(value.toString());
+  }
+
+  private static OffsetDateTime toOffsetDateTime(Object value) {
+    if (value instanceof OffsetDateTime offsetDateTime) {
+      return offsetDateTime;
+    }
+
+    if (value instanceof LocalDateTime localDateTime) {
+      return localDateTime.atOffset(ZoneOffset.UTC);
+    }
+
+    try {
+      return OffsetDateTime.parse(value.toString());
+    } catch (DateTimeParseException e) {
+      return LocalDateTime.parse(value.toString()).atOffset(ZoneOffset.UTC);
+    }
   }
 }

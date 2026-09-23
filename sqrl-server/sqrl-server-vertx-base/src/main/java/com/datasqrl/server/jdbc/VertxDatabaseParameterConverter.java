@@ -17,7 +17,8 @@ package com.datasqrl.server.jdbc;
 
 import java.util.Optional;
 
-public interface ParamArgumentTypeMapper {
+/** Converts a typed SQL parameter to the Java value expected by a database's Vert.x client. */
+public interface VertxDatabaseParameterConverter {
 
-  Object map(Object param, Optional<String> sqlType, DatabaseType databaseType);
+  Object convert(Object param, Optional<String> sqlType);
 }

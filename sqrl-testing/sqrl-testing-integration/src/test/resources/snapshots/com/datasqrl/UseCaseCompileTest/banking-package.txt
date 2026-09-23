@@ -903,7 +903,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "loan_application_id"
+                  "key" : "loan_application_id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -933,7 +934,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "loan_type_id"
+                  "key" : "loan_type_id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -963,7 +965,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -1093,7 +1096,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -1123,7 +1127,8 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "id"
+                  "key" : "id",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
