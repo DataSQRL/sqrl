@@ -32,7 +32,8 @@ class SqlTypeConverterTest {
 
   @ParameterizedTest
   @MethodSource("scalarValues")
-  void convertsRegisteredSqlTypes(String sqlType, Object value, Object expected) {
+  void givenRegisteredSqlType_whenConverting_thenReturnsExpectedJavaValue(
+      String sqlType, Object value, Object expected) {
     assertThat(SqlTypeConverter.convert(value, sqlType)).isEqualTo(expected);
   }
 
@@ -52,6 +53,10 @@ class SqlTypeConverterTest {
         Arguments.of("TIME", "10:15:30", LocalTime.parse("10:15:30")),
         Arguments.of(
             "TIME_WITH_LOCAL_TIME_ZONE", "10:15:30+02:00", OffsetTime.parse("10:15:30+02:00")),
+        Arguments.of(
+            "TIME_WITH_LOCAL_TIME_ZONE",
+            OffsetDateTime.parse("2025-09-09T10:15:30+02:00"),
+            OffsetTime.parse("10:15:30+02:00")),
         Arguments.of(
             "TIMESTAMP", "2025-09-09T10:15:30", LocalDateTime.parse("2025-09-09T10:15:30")),
         Arguments.of(

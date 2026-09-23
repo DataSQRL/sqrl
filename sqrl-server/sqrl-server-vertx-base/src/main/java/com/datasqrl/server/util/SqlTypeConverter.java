@@ -77,8 +77,7 @@ public final class SqlTypeConverter {
       case "BOOLEAN" -> value instanceof Boolean ? value : Boolean.valueOf(value.toString());
       case "DATE" -> value instanceof LocalDate ? value : LocalDate.parse(value.toString());
       case "TIME" -> value instanceof LocalTime ? value : LocalTime.parse(value.toString());
-      case "TIME_WITH_LOCAL_TIME_ZONE" ->
-          value instanceof OffsetTime ? value : OffsetTime.parse(value.toString());
+      case "TIME_WITH_LOCAL_TIME_ZONE" -> toOffsetTime(value);
       case "TIMESTAMP" -> toLocalDateTime(value);
       case "TIMESTAMP_WITH_LOCAL_TIME_ZONE", "TIMESTAMP_WITH_TIME_ZONE" -> toOffsetDateTime(value);
       case "CHAR", "VARCHAR" -> value.toString();
@@ -94,19 +93,35 @@ public final class SqlTypeConverter {
     if (value instanceof LocalDateTime localDateTime) {
       return localDateTime;
     }
+
     if (value instanceof OffsetDateTime offsetDateTime) {
       return offsetDateTime.toLocalDateTime();
     }
+
     return LocalDateTime.parse(value.toString());
+  }
+
+  private static OffsetTime toOffsetTime(Object value) {
+    if (value instanceof OffsetTime offsetTime) {
+      return offsetTime;
+    }
+
+    if (value instanceof OffsetDateTime offsetDateTime) {
+      return offsetDateTime.toOffsetTime();
+    }
+
+    return OffsetTime.parse(value.toString());
   }
 
   private static OffsetDateTime toOffsetDateTime(Object value) {
     if (value instanceof OffsetDateTime offsetDateTime) {
       return offsetDateTime;
     }
+
     if (value instanceof LocalDateTime localDateTime) {
       return localDateTime.atOffset(ZoneOffset.UTC);
     }
+
     try {
       return OffsetDateTime.parse(value.toString());
     } catch (DateTimeParseException e) {

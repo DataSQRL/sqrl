@@ -46,8 +46,9 @@ public abstract class AbstractQueryExecutionContext<C extends ServerContext>
   }
 
   protected CompletableFuture<List<Object>> getParamArgumentsFuture(
-      List<RootGraphQLModel.QueryParameterHandler> parameters) {
+      RootGraphQLModel.SqlQuery query) {
 
+    var parameters = query.getParameters();
     var paramFutures = new CompletableFuture[parameters.size()];
     for (int i = 0; i < parameters.size(); i++) {
       var param = parameters.get(i);
@@ -64,7 +65,8 @@ public abstract class AbstractQueryExecutionContext<C extends ServerContext>
 
       var paramFuture = wrapToFuture(paramValue);
       paramFutures[i] =
-          paramFuture.thenApply(obj -> paramArgumentTypeMapper.map(obj, paramSqlType));
+          paramFuture.thenApply(
+              obj -> paramArgumentTypeMapper.map(obj, paramSqlType, query.getDatabase()));
     }
 
     return CompletableFuture.allOf(paramFutures)
