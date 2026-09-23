@@ -19,6 +19,7 @@ For the full design, read the [harness architecture](/blog/agentic-data-engineer
 |---|---|
 | Try it on my own data | [Getting Started](getting-started): run the basic agent in Docker, or install the plugin for Claude Code, Codex, Cursor, or Copilot |
 | See what it can build | [Examples](examples): data products for a retail bank, plus self-contained pipelines across many use cases |
+| Compare DataSQRL to Flink, Spark, dbt, and other tools | [FAQ](faq): short answers to the questions data engineers ask most |
 | Understand why a harness matters | The four-part series: [broken seams](/blog/p1-broken-at-seams), [relational introspection](/blog/p2-validator-relational-introspection), [event-time testing](/blog/p3-testing-framework), and [human understanding](/blog/p4-human-understanding-one-sql-file) |
 | Read and review the SQL an agent produces | [SQRL Language](../sqrl-language) and [Streaming Concepts](concepts) |
 | Connect my data sources and sinks | [Connectors](../connectors) |
@@ -33,6 +34,7 @@ For the full design, read the [harness architecture](/blog/agentic-data-engineer
 **Start here**
 - [Getting Started](getting-started): set up the DataSQRL agent and build your first pipeline
 - [Examples](examples): a gallery of what DataSQRL can build
+- [FAQ](faq): how DataSQRL compares to other tools, and common questions
 
 **Core concepts**
 - [SQRL Language](../sqrl-language): imports and exports, table functions and relationships, hints, subscriptions, and stream and state semantics
