@@ -1,0 +1,18 @@
+IMPORT ecommerceTs.customer;
+
+WindowDedupedCustomer :=
+    SELECT
+        customerid,
+        email,
+        name,
+        CAST(`timestamp` AS TIMESTAMP_LTZ) AS `timestamp`,
+        window_time AS mini_batch_event_time
+    FROM (
+        SELECT *,
+            ROW_NUMBER() OVER (
+                PARTITION BY window_start, window_end, customerid
+                ORDER BY `timestamp` DESC
+            ) AS rownum
+        FROM TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTES)
+    )
+    WHERE rownum = 1;
