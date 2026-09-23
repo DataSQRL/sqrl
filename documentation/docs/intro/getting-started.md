@@ -189,6 +189,5 @@ Deploying adds a new deployment without changing which one the project serves. T
 
 - **[Example Projects](https://github.com/DataSQRL/datasqrl-examples)**: self-contained data products and APIs built with DataSQRL
 - **[SQRL Language Reference](/docs/sqrl-language)**: how to read and review the SQL the agent produces
-- **[Testing](/docs/howto/testing)**: how the event-time replay tests work
 - **[Plugin Documentation](https://github.com/DataSQRL/datasqrl-plugin)**: the full reference for the DataSQRL plugin
 - **[Harness Architecture](/blog/agentic-data-engineering-harness)**: the design behind DataSQRL

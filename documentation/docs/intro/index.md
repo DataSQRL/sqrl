@@ -1,126 +1,52 @@
 # DataSQRL Documentation
 
-DataSQRL is an open-source **data engineering harness** that provides guardrails and feedback for AI coding agents to build reliable data pipelines, data APIs (REST, MCP, GraphQL), and data products.
+DataSQRL is an open-source **data engineering harness** for building data engineering agents designed around **human control, correctness, and safety**. It extends your coding agent (Claude Code, Codex, OpenCode, Pi, and others) with a SQL compiler, a validator, an event-time simulator, and your own skills and policies. The result is an agent you can trust with data pipelines, batch jobs, data APIs (REST, GraphQL, MCP), data products, and operational data.
 
-DataSQRL ensures coding agents meet the **non-functional requirements** of production data systems: data quality, scalability, governance, and reliability. It provides deep-inspection of SQL, relational validators, and deterministic event-replay simulation to guide agent-generated code through iterative feedback loops.
+<img src="/img/diagrams/agentic/harness_toolkit.svg" alt="DataSQRL harness: your skills and policies, a coding agent, and the DataSQRL framework packaged as one data engineering agent" width="100%" />
 
-## Why a Data Engineering Harness?
+## How It Works
 
-Coding agents can generate SQL queries that produce correct results on test data. But will those queries perform at scale? Handle late-arriving events correctly? Maintain data quality when upstream schemas change? Provide lineage tracking and meet compliance requirements?
+1. **The agent writes SQL.** The whole pipeline, from ingest to transform to store to serve, is expressed in [SQRL](../sqrl-language): SQL extended with stream processing and API definitions. It stays readable enough for a human to review.
+2. **The compiler validates and generates.** DataSQRL checks the logical plan (schemas, keys, timestamps, table types) and the physical plan (engine capabilities, type mappings). It then generates every deployment asset from one model: Flink plans, Kafka topics, Postgres and Iceberg schemas, and GraphQL, REST, and MCP APIs.
+3. **The simulator tests.** Pipelines run locally with timestamp-accurate event replay, so time-dependent behavior becomes a deterministic test.
+4. **You review and deploy.** Compile outputs such as the pipeline DAG and lineage support human review and automated policy checks. The artifacts run on open-source infrastructure you operate yourself.
 
-These non-functional requirements, data quality, scalability, governance, reliability, cost efficiency, distinguish data engineering from general software development. General-purpose coding agents aren't equipped to handle them consistently.
+For the full design, read the [harness architecture](/blog/agentic-data-engineering-harness).
 
-A data engineering harness provides the guardrails, feedback loops, and domain-specific constraints that coding agents need. Without a harness, you get pipelines that work in demos but fail in production. With a harness, you get pipelines that embody data engineering best practices.
+## Where to Go Next
 
-[Learn more about the harness architecture](/blog/agentic-data-engineering-harness) and the design choices behind DataSQRL.
+| I want to… | Go to |
+|---|---|
+| Try it on my own data | [Getting Started](getting-started): run the basic agent in Docker, or install the plugin for Claude Code, Codex, Cursor, or Copilot |
+| See what it can build | [Examples](examples): data products for a retail bank, plus self-contained pipelines across many use cases |
+| Understand why a harness matters | The four-part series: [broken seams](/blog/p1-broken-at-seams), [relational introspection](/blog/p2-validator-relational-introspection), [event-time testing](/blog/p3-testing-framework), and [human understanding](/blog/p4-human-understanding-one-sql-file) |
+| Read and review the SQL an agent produces | [SQRL Language](../sqrl-language) and [Streaming Concepts](concepts) |
+| Connect my data sources and sinks | [Connectors](../connectors) |
+| Shape the APIs and data products | [Interface](../interface) |
+| Choose engines and deploy | [Configuration](../configuration) and [Deployment Configuration](../configuration-engine/cloud-deployment) |
+| Add custom logic | [Functions](../functions): the built-in library and your own UDFs |
+| Compile, test, and run from the command line | [Compiler](../compiler) |
+| Customize or extend the harness itself | [How DataSQRL Works](../deepdive) |
 
-## Key Capabilities
+## Documentation Map
 
-DataSQRL provides three capabilities that coding agents need to produce production-grade data systems:
+**Start here**
+- [Getting Started](getting-started): set up the DataSQRL agent and build your first pipeline
+- [Examples](examples): a gallery of what DataSQRL can build
 
-### 1. Conceptual Framework
+**Core concepts**
+- [SQRL Language](../sqrl-language): imports and exports, table functions and relationships, hints, subscriptions, and stream and state semantics
+- [Connectors](../connectors): ingest from and export to Kafka, databases, data lakes, and files
+- [Interface](../interface): generated GraphQL, REST, and MCP APIs and data product tables, and how to customize them
+- [Configuration](../configuration): engines, connectors, dependencies, and compiler options in `package.json`, with a page for each engine ([Flink](../configuration-engine/flink), [Kafka](../configuration-engine/kafka), [Postgres](../configuration-engine/postgres), [Iceberg](../configuration-engine/iceberg), [Iceberg query engines](../configuration-engine/iceberg-query), [Vert.x](../configuration-engine/vertx)) and the [default configuration](../configuration-default)
+- [Functions](../functions): [system](../functions-system-generated) and [library](../functions-library-generated) functions, plus custom functions
+- [Compiler](../compiler): the `compile`, `test`, and `run` commands and what each one produces
+- [Streaming Concepts](concepts): time, watermarks, and other stream processing basics
 
-DataSQRL extends SQL to a comprehensive framework for data platforms. SQL provides the ideal foundation because it offers a mathematical foundation (relational algebra), deep introspection through its declarative nature, deterministic validation and optimization, human readability, and strong support from modern LLMs.
-
-The framework separates **logical** and **physical** layers:
-- **Logical Layer**: Expresses *what* data transformations are needed using SQRL (SQL extended with stream processing semantics)
-- **Physical Layer**: Represents *how* data gets processed through engine assignment and configuration
-
-This separation lets agents reason about business logic while the harness handles infrastructure complexity.
-
-<img src="/img/diagrams/automation_overview.png" alt="DataSQRL Framework Overview" width="100%" />
-
-### 2. Comprehensive Validation
-
-DataSQRL validates at every level. From syntax and schema validation through physical plan verification to deployment asset generation:
-
-- **Logical Validation**: Syntax, schema consistency, data flow semantics, timestamp propagation, primary key inference
-- **Physical Validation**: Engine capability matching, data type mapping, topological constraint satisfaction
-- **Deployment Validation**: Generated artifacts (Flink plans, Postgres schemas, GraphQL models) guaranteed consistent with logical definitions
-
-The validation system provides comprehensive context and suggested fixes, producing better results than agents reasoning about errors independently.
-
-### 3. Real-World Feedback
-
-Static validation catches many issues but can't substitute for execution feedback. DataSQRL provides:
-
-- **Simulation**: Execute pipelines locally in Docker with timestamp-accurate event replay for deterministic, reproducible testing
-- **Production Telemetry**: Hooks for correlating runtime observations back to source code for autonomous troubleshooting
-
-Since the entire pipeline is defined in SQL, it remains humanly readable and easy to verify. DataSQRL produces detailed execution plans, data lineage graphs, and optimization reports—enabling both automated analysis by agents and manual inspection by engineers.
-
-## Quick Start
-
-Check out the [**Getting Started**](getting-started) guide to build a data pipeline with DataSQRL and see how the test-driven feedback loop guides coding agents toward correct solutions.
-
-Explore the [DataSQRL Examples](examples) for real-world patterns and how to setup an automated data platform with DataSQRL.
-
-## DataSQRL Components
-
-### 1. [SQRL Language](../sqrl-language)
-SQRL extends Flink SQL to capture the complete logical layer of data pipelines:
-- **IMPORT/EXPORT** statements for connecting data systems
-- **Table functions and relationships** for API endpoint definitions
-- **Hints** to control pipeline structure and execution
-- **Subscription syntax** for real-time data streaming
-- **Stream/state semantics** for temporal data processing
-
-### 2. [Interface Design](../interface)
-DataSQRL automatically generates interfaces from your SQRL script for multiple protocols:
-- **Data Products** as database/data lake views and tables
-- **GraphQL APIs** with queries, mutations, and subscriptions
-- **REST endpoints** with GET/POST operations
-- **MCP tools/resources** for AI agent integration
-- **Schema customization** and operation control
-
-### 3. [Configuration](../configuration)
-JSON configuration defines the physical layer, *how* the pipeline gets executed:
-- **Engines**: Data technologies (Flink, Postgres, Kafka, Iceberg, etc.)
-- **Connectors**: Templates for data sources and sinks
-- **Dependencies**: External data packages and libraries
-- **Compiler options**: Optimization and deployment settings
-
-### 4. [Compiler](../compiler)
-The DataSQRL compiler implements validation and simulation:
-- **Transpiles** SQRL scripts into deployment assets
-- **Validates** logical and physical plans against data engineering constraints
-- **Optimizes** data processing DAGs across multiple engines
-- **Simulates** pipeline execution with deterministic event replay
-
-## Documentation Guide
-
-### Getting Started
-- [**Getting Started**](getting-started) - Build a pipeline with the test-driven feedback loop
-- [**Examples**](examples) - Practical examples for specific use cases
-
-### Core Documentation
-- [**SQRL Language**](../sqrl-language) - Complete language specification and syntax
-- [**Interface Design**](../interface) - API generation and data product interfaces
-- [**Configuration**](../configuration) - Engine setup and project configuration
-- [**Compiler**](../compiler) - Command-line interface and compilation options
-- [**Functions**](../functions) - Built-in functions and custom function libraries
-
-### Integration & Deployment
-- [**Connectors**](../connectors) - Ingest from and export to external systems
-- [**Concepts**](concepts) - Key concepts in stream processing (time, watermarks, etc.)
-- [**How-To Guides**](/docs/category/-how-to) - Best practices and implementation patterns
-
-### Advanced Topics
-- [**Developer Documentation**](../deepdive) - Internal architecture and advanced customization
-- [**Compatibility**](../compatibility) - Version compatibility and migration guides
-
-## Use Cases
-
-DataSQRL enables AI-assisted automation of:
-- **Data Pipelines**: Processing data in realtime or batch with production-grade reliability
-- **Data APIs**: Serving processed data through REST, GraphQL, or MCP APIs
-- **Data Lakehouse**: Producing Apache Iceberg tables with catalog and schema management
+**Advanced**
+- [How DataSQRL Works](../deepdive): internal architecture and advanced customization
+- [Compatibility](../compatibility): version compatibility and migration
 
 ## Community & Support
 
-DataSQRL is open source and community-driven:
-
-- **Issues**: [GitHub Issues](https://github.com/DataSQRL/sqrl/issues)
-- **Community**: [GitHub Discussions](https://github.com/DataSQRL/sqrl/discussions/)
-
-We welcome feedback, bug reports, and contributions to build a data engineering harness that enables safe, reliable automation of data platforms.
+DataSQRL is [open source](https://github.com/DataSQRL/sqrl). Report bugs in [GitHub Issues](https://github.com/DataSQRL/sqrl/issues) and ask questions or share feedback in [GitHub Discussions](https://github.com/DataSQRL/sqrl/discussions/). Contributions are welcome.
