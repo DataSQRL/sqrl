@@ -22,6 +22,7 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.PrestoSqlDialect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.validate.SqlConformance;
 import org.apache.calcite.util.RelToSqlConverterUtil;
 
 /**
@@ -43,6 +44,11 @@ public class ExtendedTrinoSqlDialect extends PrestoSqlDialect {
 
   public ExtendedTrinoSqlDialect(Context context) {
     super(context);
+  }
+
+  @Override
+  public SqlConformance getConformance() {
+    return new SortByAliasConformance(super.getConformance());
   }
 
   @Override

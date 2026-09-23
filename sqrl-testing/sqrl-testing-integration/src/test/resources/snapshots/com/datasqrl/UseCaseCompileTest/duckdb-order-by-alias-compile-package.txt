@@ -1,0 +1,105 @@
+>>>pipeline_explain.txt
+=== Plain
+ID:          default_catalog.default_database.Plain
+Type:        stream
+Stage:       iceberg
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - rid: CHAR(32) CHARACTER SET "UTF-16LE"
+ - original_source_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.Records
+Annotations:
+ - sort: [1 DESC-nulls-last]
+
+=== Records
+ID:          default_catalog.default_database.Records
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - source_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - patient_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - is_deleted: BOOLEAN
+Inputs:
+ - default_catalog.default_database.Records__base
+
+=== Shadowed
+ID:          default_catalog.default_database.Shadowed
+Type:        stream
+Stage:       iceberg
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - source_id: CHAR(32) CHARACTER SET "UTF-16LE"
+ - original_source_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database.Records
+Annotations:
+ - sort: [1 DESC-nulls-last]
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Records` (
+  `source_id` STRING,
+  `patient_id` STRING,
+  `is_deleted` BOOLEAN
+)
+WITH (
+  'catalog-name' = 'dummy_catalog',
+  'catalog-type' = 'hadoop',
+  'connector' = 'iceberg',
+  'format-version' = '2',
+  'warehouse' = 'sqrl_iceberg_data'
+);
+CREATE VIEW `Shadowed`
+AS
+SELECT `MD5`(`s`.`patient_id` || 'salt') AS `source_id`, `s`.`source_id` AS `original_source_id`
+FROM `Records` AS `s`;
+CREATE VIEW `Plain`
+AS
+SELECT `MD5`(`s`.`patient_id` || 'salt') AS `rid`, `s`.`source_id` AS `original_source_id`
+FROM `Records` AS `s`;
+CREATE TABLE `Records_1` (
+  `source_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `patient_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `is_deleted` BOOLEAN
+)
+WITH (
+  'catalog-name' = 'default_catalog',
+  'catalog-table' = 'Records',
+  'catalog-type' = 'hadoop',
+  'commit.retry.max-wait-ms' = '5000',
+  'commit.retry.min-wait-ms' = '100',
+  'commit.retry.num-retries' = '20',
+  'connector' = 'iceberg',
+  'format-version' = '2',
+  'warehouse' = 'sqrl_iceberg_data',
+  'write.distribution-mode' = 'hash'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Records_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`Records`
+;
+END
+>>>iceberg-duckdb-schema.sql
+CREATE TABLE IF NOT EXISTS "Records" ("source_id" VARCHAR(65536), "patient_id" VARCHAR(65536), "is_deleted" BOOLEAN)
+>>>iceberg-duckdb-views.sql
+CREATE OR REPLACE VIEW "Plain"("rid", "original_source_id") AS SELECT *
+FROM (SELECT MD5("patient_id" || 'salt') AS "rid", "source_id" AS "original_source_id"
+  FROM "iceberg_scan"('sqrl_iceberg_data/default_database/Records', ALLOW_MOVED_PATHS = TRUE)
+  ORDER BY "source_id" DESC NULLS LAST) AS "t1";
+CREATE OR REPLACE VIEW "Shadowed"("source_id", "original_source_id") AS SELECT *
+FROM (SELECT MD5("patient_id" || 'salt') AS "source_id", "source_id" AS "original_source_id"
+  FROM "iceberg_scan"('sqrl_iceberg_data/default_database/Records', ALLOW_MOVED_PATHS = TRUE)
+  ORDER BY 2 DESC NULLS LAST) AS "t1"
+>>>iceberg-schema.sql
+CREATE TABLE IF NOT EXISTS "Records" ("source_id" TEXT, "patient_id" TEXT, "is_deleted" BOOLEAN)

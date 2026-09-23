@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.calcite.convert;
+package com.datasqrl.calcite.dialect;
 
-import com.datasqrl.calcite.Dialect;
-import com.datasqrl.calcite.dialect.ExtendedRedshiftSqlDialect;
-import com.google.auto.service.AutoService;
+import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.dialect.RedshiftSqlDialect;
+import org.apache.calcite.sql.validate.SqlConformance;
 
-@AutoService(SqlConverters.class)
-public class RedshiftSqlConverters extends AbstractSqlConverters {
+public class ExtendedRedshiftSqlDialect extends RedshiftSqlDialect {
 
-  public RedshiftSqlConverters() {
-    super(Dialect.REDSHIFT, ExtendedRedshiftSqlDialect.DEFAULT, false);
+  public static final SqlDialect DEFAULT =
+      new ExtendedRedshiftSqlDialect(RedshiftSqlDialect.DEFAULT_CONTEXT);
+
+  public ExtendedRedshiftSqlDialect(Context context) {
+    super(context);
+  }
+
+  @Override
+  public SqlConformance getConformance() {
+    return new SortByAliasConformance(super.getConformance());
   }
 }

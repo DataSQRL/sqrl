@@ -22,6 +22,7 @@ import org.apache.calcite.sql.SqlAlienSystemTypeNameSpec;
 import org.apache.calcite.sql.SqlDataTypeSpec;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlConformance;
 
 public class DuckDbSqlDialect extends BasePostgresSqlDialect {
 
@@ -51,6 +52,11 @@ public class DuckDbSqlDialect extends BasePostgresSqlDialect {
     return new SqlDataTypeSpec(
         new SqlAlienSystemTypeNameSpec(castSpec, type.getSqlTypeName(), SqlParserPos.ZERO),
         SqlParserPos.ZERO);
+  }
+
+  @Override
+  public SqlConformance getConformance() {
+    return new SortByAliasConformance(super.getConformance());
   }
 
   @Override
