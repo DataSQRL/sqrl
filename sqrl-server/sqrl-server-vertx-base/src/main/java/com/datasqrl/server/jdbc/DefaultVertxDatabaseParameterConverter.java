@@ -15,9 +15,17 @@
  */
 package com.datasqrl.server.jdbc;
 
+import com.datasqrl.server.util.SqlTypeConverter;
+import io.vertx.sqlclient.data.NullValue;
 import java.util.Optional;
 
-public interface ParamArgumentTypeMapper {
+final class DefaultVertxDatabaseParameterConverter implements VertxDatabaseParameterConverter {
 
-  Object map(Object param, Optional<String> sqlType, DatabaseType databaseType);
+  @Override
+  public Object convert(Object param, Optional<String> sqlType) {
+    if (param == null && sqlType.isPresent()) {
+      return NullValue.of(SqlTypeConverter.sqlTypeNameToJavaClass(sqlType.get()));
+    }
+    return sqlType.map(type -> SqlTypeConverter.convert(param, type)).orElse(param);
+  }
 }

@@ -4,5 +4,8 @@ query sortedQuery {
         detail {
             info
         }
+        relatedByTimestamp {
+            id
+        }
     }
 }

@@ -4,17 +4,32 @@
       "id" : "c",
       "detail" : {
         "info" : "detail-c"
-      }
+      },
+      "relatedByTimestamp" : [ {
+        "id" : "c"
+      } ]
     }, {
       "id" : "b",
       "detail" : {
         "info" : "detail-b"
-      }
+      },
+      "relatedByTimestamp" : [ {
+        "id" : "b"
+      }, {
+        "id" : "c"
+      } ]
     }, {
       "id" : "a",
       "detail" : {
         "info" : "detail-a"
-      }
+      },
+      "relatedByTimestamp" : [ {
+        "id" : "a"
+      }, {
+        "id" : "b"
+      }, {
+        "id" : "c"
+      } ]
     } ]
   }
 }

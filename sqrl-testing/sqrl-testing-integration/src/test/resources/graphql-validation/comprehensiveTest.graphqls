@@ -12,6 +12,7 @@ type Customer {
     timestamp: DateTime
     related(limit: Int = 10, offset: Int = 0): [Customer!]
     relatedByLength(length: Int, limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByTimestamp(limit: Int = 10, offset: Int = 0): [Customer!]
 }
 
 type CustomerByMultipleTime {

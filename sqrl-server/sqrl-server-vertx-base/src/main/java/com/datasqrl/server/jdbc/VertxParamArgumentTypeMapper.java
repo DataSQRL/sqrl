@@ -16,22 +16,37 @@
 package com.datasqrl.server.jdbc;
 
 import com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType;
-import com.datasqrl.server.util.SqlTypeConverter;
 import io.vertx.core.json.JsonArray;
-import io.vertx.sqlclient.data.NullValue;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class VertxParamArgumentTypeMapper implements ParamArgumentTypeMapper {
 
-  @Override
-  public Object map(Object param, Optional<String> sqlType) {
-    if (param == null && sqlType.isPresent()) {
-      var cls = SqlTypeConverter.sqlTypeNameToJavaClass(sqlType.get());
-      return NullValue.of(cls);
-    }
+  private final Map<DatabaseType, VertxDatabaseParameterConverter> databaseConverters;
+  private final VertxDatabaseParameterConverter defaultConverter;
 
+  public VertxParamArgumentTypeMapper() {
+    this(new DefaultVertxDatabaseParameterConverter());
+  }
+
+  private VertxParamArgumentTypeMapper(VertxDatabaseParameterConverter defaultConverter) {
+    this(
+        Map.of(
+            DatabaseType.POSTGRES, new PostgresVertxDatabaseParameterConverter(defaultConverter)),
+        defaultConverter);
+  }
+
+  public VertxParamArgumentTypeMapper(
+      Map<DatabaseType, VertxDatabaseParameterConverter> databaseConverters,
+      VertxDatabaseParameterConverter defaultConverter) {
+    this.databaseConverters = Map.copyOf(databaseConverters);
+    this.defaultConverter = defaultConverter;
+  }
+
+  @Override
+  public Object map(Object param, Optional<String> sqlType, DatabaseType databaseType) {
     if (param instanceof List<?> l) {
       return l.toArray();
     }
@@ -45,6 +60,6 @@ public class VertxParamArgumentTypeMapper implements ParamArgumentTypeMapper {
       return Arrays.toString(vec.getValue());
     }
 
-    return param;
+    return databaseConverters.getOrDefault(databaseType, defaultConverter).convert(param, sqlType);
   }
 }

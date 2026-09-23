@@ -1,6 +1,8 @@
 /*+primary_key(id) */
 Thing := SELECT * FROM (VALUES
-    ('a', 'label-a'), ('b', 'label-b'), ('c', 'label-c')) AS t (id, label);
+    ('a', 'label-a', CAST('2024-01-01 00:00:00' AS TIMESTAMP_LTZ(3))),
+    ('b', 'label-b', CAST('2024-01-02 00:00:00' AS TIMESTAMP_LTZ(3))),
+    ('c', 'label-c', CAST('2024-01-03 00:00:00' AS TIMESTAMP_LTZ(3)))) AS t (id, label, `timestamp`);
 
 /*+primary_key(id) */
 Detail := SELECT * FROM (VALUES
@@ -11,6 +13,11 @@ Tombstone := SELECT * FROM (VALUES ('c')) AS t (id);
 
 -- Nested relationship field on Thing
 Thing.detail := SELECT * FROM Detail d WHERE this.id = d.id LIMIT 1;
+
+-- Bind a TIMESTAMP_LTZ parent value in the nested PostgreSQL query.
+Thing.relatedByTimestamp := SELECT * FROM Thing other
+WHERE this.`timestamp` <= other.`timestamp`
+ORDER BY other.`timestamp`;
 
 -- A) clean passthrough -> result keeps `detail`
 cleanQuery := SELECT * FROM Thing WHERE label IS NOT NULL;

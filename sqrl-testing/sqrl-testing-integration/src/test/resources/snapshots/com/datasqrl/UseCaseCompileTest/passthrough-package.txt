@@ -290,7 +290,8 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "employeeid"
+                  "key" : "employeeid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
@@ -320,7 +321,8 @@ CREATE INDEX IF NOT EXISTS "Reporting_hash_c1" ON "Reporting" USING hash ("manag
               "parameters" : [
                 {
                   "type" : "source",
-                  "key" : "employeeid"
+                  "key" : "employeeid",
+                  "sqlType" : "BIGINT"
                 }
               ],
               "pagination" : "LIMIT_AND_OFFSET",
