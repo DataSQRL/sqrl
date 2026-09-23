@@ -41,7 +41,7 @@ const pillars: Pillar[] = [
     claim: 'One SQL file your team can read.',
     text: 'Not thousands of lines of Python, dbt, YAML, and glue. The whole pipeline, ' +
         'from ingest to API, is expressed in SQL your engineers can understand, run, and approve.',
-    link: '/blog/2026/08/29/human-understanding-one-sql-file',
+    link: '/blog/p4-human-understanding-one-sql-file',
     linkText: 'Why readability is the bottleneck',
   },
   {
@@ -237,7 +237,7 @@ NoUnenrichedTransactions :=
                     Late and out-of-order data, races between streams, idle sources, updates, and
                     deletes become deterministic tests. The agent keeps iterating until they pass.
                   </p>
-                  <Link to="/blog/2026/08/01/event-time-testing-framework">
+                  <Link to="/blog/p3-testing-framework">
                     Why standard integration tests fall short →
                   </Link>
                 </div>
