@@ -378,6 +378,7 @@ CREATE TEMPORARY TABLE `_EventStream__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/events.jsonl'
 );
 CREATE TABLE `_EventStream` (
@@ -423,6 +424,7 @@ CREATE TEMPORARY TABLE `_Likes__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/likes.jsonl'
 );
 CREATE TABLE `_Likes` (
@@ -443,6 +445,7 @@ CREATE TEMPORARY TABLE `_AddInterestStream__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/add_interest.jsonl'
 );
 CREATE TABLE `_AddInterestStream` (

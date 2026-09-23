@@ -96,6 +96,7 @@ CREATE TEMPORARY TABLE `Json__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/json.jsonl'
 );
 CREATE TABLE `Json` (
@@ -105,6 +106,7 @@ CREATE TABLE `Json` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/json.jsonl'
 )
 LIKE `Json__schema`;

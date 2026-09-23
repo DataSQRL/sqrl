@@ -432,6 +432,7 @@ CREATE TEMPORARY TABLE `_CustomersStream__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/customers.jsonl'
 );
 CREATE TABLE `_CustomersStream` (
@@ -453,6 +454,7 @@ CREATE TEMPORARY TABLE `_ProductsStream__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/products.jsonl'
 );
 CREATE TABLE `_ProductsStream` (
@@ -469,6 +471,7 @@ CREATE TEMPORARY TABLE `Orders__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/orders.jsonl'
 );
 CREATE TABLE `Orders` (
@@ -531,6 +534,7 @@ CREATE TABLE `SinkTable_ex1` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = 's3://test/'
 )
 LIKE `SinkTable_ex1__schema`;

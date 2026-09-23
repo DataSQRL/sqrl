@@ -22,9 +22,21 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 public interface RecordReader {
+
   String getFormat();
 
   Stream<Map<String, Object>> read(InputStream input) throws IOException;
 
   Set<String> getExtensions();
+
+  /**
+   * Returns format-specific options, without the format identifier prefix.
+   *
+   * <p>For example, an option returned as {@code timestamp-format.standard} for a format named
+   * {@code flexible-json} is emitted as {@code flexible-json.timestamp-format.standard} in the
+   * Flink table definition.
+   */
+  default Map<String, String> getFormatOptions() {
+    return Map.of();
+  }
 }

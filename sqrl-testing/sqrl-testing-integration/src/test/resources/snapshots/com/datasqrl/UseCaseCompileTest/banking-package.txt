@@ -325,6 +325,7 @@ CREATE TEMPORARY TABLE `CustomersStream__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/customers.jsonl'
 );
 CREATE TABLE `CustomersStream` (
@@ -344,6 +345,7 @@ CREATE TEMPORARY TABLE `ApplicationUpdates__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/application_updates.jsonl'
 );
 CREATE TABLE `ApplicationUpdates` (
@@ -362,6 +364,7 @@ CREATE TEMPORARY TABLE `ApplicationsStream__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/applications.jsonl'
 );
 CREATE TABLE `ApplicationsStream` (
@@ -386,6 +389,7 @@ CREATE TEMPORARY TABLE `LoanTypesStream__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/loan_types.jsonl'
 );
 CREATE TABLE `LoanTypesStream` (

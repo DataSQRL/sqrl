@@ -246,6 +246,7 @@ CREATE TEMPORARY TABLE `MachineGroup__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/machine_group.jsonl'
 );
 CREATE TABLE `MachineGroup` (
@@ -261,6 +262,7 @@ CREATE TEMPORARY TABLE `Sensors__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/sensors.jsonl'
 );
 CREATE TABLE `Sensors` (

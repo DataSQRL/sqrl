@@ -128,6 +128,7 @@ CREATE TEMPORARY TABLE `Employees__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/employees.jsonl'
 );
 CREATE TABLE `Employees` (
@@ -145,6 +146,7 @@ CREATE TEMPORARY TABLE `Reporting__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/reporting.jsonl'
 );
 CREATE TABLE `Reporting` (

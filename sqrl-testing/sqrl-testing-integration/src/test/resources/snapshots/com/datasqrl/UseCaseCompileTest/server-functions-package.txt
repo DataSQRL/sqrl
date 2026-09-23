@@ -96,6 +96,7 @@ CREATE TEMPORARY TABLE `Customers__schema` (
 WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/customers.jsonl'
 );
 CREATE TABLE `Customers` (
