@@ -102,6 +102,7 @@ public abstract class AbstractDiscoveryTableSchemaFactory implements TableSchema
     var options = new LinkedHashMap<String, String>();
     options.put("connector", "filesystem");
     options.put("format", readerOpt.get().getFormat());
+    readerOpt.get().getDefaultFormatOptions().forEach(options::putIfAbsent);
     options.put("path", "${" + DATA_PATH + "}/" + location.getFileName().toString());
 
     return new SchemaConversionResult(rowType, options);

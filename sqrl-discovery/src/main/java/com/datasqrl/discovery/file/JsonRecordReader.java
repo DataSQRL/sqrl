@@ -61,4 +61,9 @@ public class JsonRecordReader implements RecordReader {
   public Set<String> getExtensions() {
     return Set.of("jsonl");
   }
+
+  @Override
+  public Map<String, String> getDefaultFormatOptions() {
+    return Map.of("flexible-json.timestamp-format.standard", "ISO-8601");
+  }
 }

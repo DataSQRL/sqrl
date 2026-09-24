@@ -431,6 +431,7 @@ CREATE TEMPORARY TABLE `_CustomersStream__schema` (
 )
 WITH (
   'connector' = 'filesystem',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/customers.jsonl'
 );
@@ -452,6 +453,7 @@ CREATE TEMPORARY TABLE `_ProductsStream__schema` (
 )
 WITH (
   'connector' = 'filesystem',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/products.jsonl'
 );
@@ -468,6 +470,7 @@ CREATE TEMPORARY TABLE `Orders__schema` (
 )
 WITH (
   'connector' = 'filesystem',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/orders.jsonl'
 );
@@ -557,6 +560,7 @@ CREATE TABLE `CustomerPromotion_1` (
 )
 WITH (
   'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',

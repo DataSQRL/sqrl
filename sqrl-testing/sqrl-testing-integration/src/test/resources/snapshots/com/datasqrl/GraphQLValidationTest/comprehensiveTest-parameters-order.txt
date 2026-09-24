@@ -1353,6 +1353,7 @@ CREATE TABLE `Orders` (
 )
 WITH (
   'connector' = 'upsert-kafka-safe',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -1360,6 +1361,7 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'Orders',
   'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 );
 CREATE VIEW `CustomerTimeWindow`
@@ -1427,6 +1429,7 @@ CREATE TABLE `Customer_3` (
 )
 WITH (
   'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',
@@ -1496,6 +1499,7 @@ CREATE TABLE `CustomerSubscription_7` (
 )
 WITH (
   'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',
