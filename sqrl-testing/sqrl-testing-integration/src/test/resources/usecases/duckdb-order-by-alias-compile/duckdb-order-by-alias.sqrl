@@ -1,0 +1,22 @@
+CREATE TABLE Records (
+  source_id STRING,
+  patient_id STRING,
+  is_deleted BOOLEAN
+) WITH (
+  'connector' = 'iceberg',
+  'catalog-type' = 'hadoop',
+  'catalog-name' = 'dummy_catalog',
+  'warehouse' = 'sqrl_iceberg_data',
+  'format-version' = '2'
+);
+
+-- The output alias source_id shadows the input column the query sorts by
+/*+engine(iceberg) */
+Shadowed := SELECT MD5(s.patient_id || 'salt') AS source_id,
+                   s.source_id AS original_source_id
+            FROM Records AS s ORDER BY s.source_id DESC;
+
+/*+engine(iceberg) */
+Plain := SELECT MD5(s.patient_id || 'salt') AS rid,
+                s.source_id AS original_source_id
+         FROM Records AS s ORDER BY s.source_id DESC;

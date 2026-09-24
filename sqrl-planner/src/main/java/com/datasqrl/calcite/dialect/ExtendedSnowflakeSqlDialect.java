@@ -20,6 +20,7 @@ import org.apache.calcite.sql.SqlCall;
 import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlWriter;
 import org.apache.calcite.sql.dialect.SnowflakeSqlDialect;
+import org.apache.calcite.sql.validate.SqlConformance;
 
 public class ExtendedSnowflakeSqlDialect extends SnowflakeSqlDialect {
 
@@ -32,6 +33,11 @@ public class ExtendedSnowflakeSqlDialect extends SnowflakeSqlDialect {
 
   public ExtendedSnowflakeSqlDialect(Context context) {
     super(context);
+  }
+
+  @Override
+  public SqlConformance getConformance() {
+    return new SortByAliasConformance(super.getConformance());
   }
 
   @Override

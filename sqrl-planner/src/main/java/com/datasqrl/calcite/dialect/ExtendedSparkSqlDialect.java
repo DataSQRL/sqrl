@@ -23,6 +23,7 @@ import org.apache.calcite.sql.SqlDialect;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.dialect.SparkSqlDialect;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlConformance;
 
 public class ExtendedSparkSqlDialect extends SparkSqlDialect {
 
@@ -36,6 +37,11 @@ public class ExtendedSparkSqlDialect extends SparkSqlDialect {
 
   public ExtendedSparkSqlDialect(Context context) {
     super(context);
+  }
+
+  @Override
+  public SqlConformance getConformance() {
+    return new SortByAliasConformance(super.getConformance());
   }
 
   @Override
