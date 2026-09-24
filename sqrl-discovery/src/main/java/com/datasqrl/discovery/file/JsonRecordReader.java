@@ -63,7 +63,7 @@ public class JsonRecordReader implements RecordReader {
   }
 
   @Override
-  public Map<String, String> getFormatOptions() {
-    return Map.of("timestamp-format.standard", "ISO-8601");
+  public Map<String, String> getDefaultFormatOptions() {
+    return Map.of("flexible-json.timestamp-format.standard", "ISO-8601");
   }
 }
