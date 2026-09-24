@@ -62,31 +62,39 @@ iceberg:
 
 openai:
   - name: completions(String prompt, String model_name)
-    description: Generates a completion for the given prompt using the specified OpenAI model. For example, `completions('What is AI?', 'gpt-4o')` returns a possible response to the prompt.
+    description: Generates a completion for the given prompt using the specified OpenAI model. For example, `completions('What is AI?', 'gpt-6-luna')` returns a possible response to the prompt.
     identifier: completions
     requirement: Set OPENAI_API_KEY environment variable
   - name: completions(String prompt, String model_name, Integer maxOutputTokens)
-    description: Generates a completion for the given prompt using the specified OpenAI model, with an upper limit on the number of output tokens. For example, `completions('What is AI?', 'gpt-4o', 100)` returns a possible response to the prompt, limited to 100 characters.
+    description: Generates a completion for the given prompt using the specified OpenAI model, with an upper limit on the number of output tokens. For example, `completions('What is AI?', 'gpt-6-luna', 100)` returns a possible response to the prompt, limited to 100 characters.
     identifier: completions
     requirement: Set OPENAI_API_KEY environment variable
   - name: completions(String prompt, String model_name, Integer maxOutputTokens, Double temperature)
-    description: Generates a completion for the given prompt using the specified OpenAI model, with an upper limit on the number of output tokens and a specified temperature. For example, `completions('What is AI?', 'gpt-4o', 100, 0.5)` returns a possible response to the prompt, limited to 100 characters and weighted by a temperature of 0.5.
+    description: Generates a completion for the given prompt using the specified OpenAI model, with an upper limit on the number of output tokens and a specified temperature. With GPT-6 Luna, use the overload that also accepts reasoningEffort and set it to `none`.
     identifier: completions
     requirement: Set OPENAI_API_KEY environment variable
   - name: completions(String prompt, String model_name, Integer maxOutputTokens, Double temperature, Double topP)
-    description: Generates a completion for the given prompt using the specified OpenAI model, with an upper limit on the number of output tokens, a specified temperature, and a specified top-p value. For example, `completions('What is AI?', 'gpt-4o', 100, 0.5, 0.9)` returns a possible response to the prompt, limited to 100 characters, weighted by a temperature of 0.5, and with a top-p value of 0.9.
+    description: Generates a completion for the given prompt using the specified OpenAI model, with an upper limit on the number of output tokens, a specified temperature, and a specified top-p value. With GPT-6 Luna, use the overload that also accepts reasoningEffort and set it to `none`.
+    identifier: completions
+    requirement: Set OPENAI_API_KEY environment variable
+  - name: completions(String prompt, String model_name, Integer maxOutputTokens, Double temperature, Double topP, String reasoningEffort)
+    description: Generates a completion with a reasoning-effort setting. For GPT-6 Luna custom sampling requires reasoningEffort to be `none`; for example, `completions('What is AI?', 'gpt-6-luna', 100, 0.5, 1.0, 'none')`.
     identifier: completions
     requirement: Set OPENAI_API_KEY environment variable
   - name: extract_json(String prompt, String model_name)
-    description: Extracts JSON data from the given prompt using the specified OpenAI model. For example, `extract_json('What is AI?', 'gpt-4o')` returns any relevant JSON data for the prompt.
+    description: Extracts JSON data from the given prompt using the specified OpenAI model. For example, `extract_json('What is AI?', 'gpt-6-luna')` returns any relevant JSON data for the prompt.
     identifier: extract_json
     requirement: Set OPENAI_API_KEY environment variable
   - name: extract_json(String prompt, String model_name, Double temperature)
-    description: Extracts JSON data from the given prompt using the specified OpenAI model and a specified temperature. For example, `extract_json('What is AI?', 'gpt-4o', 0.5)` returns any relevant JSON data for the prompt, weighted by a temperature of 0.5.
+    description: Extracts JSON data from the given prompt using the specified OpenAI model and a specified temperature. With GPT-6 Luna, use the overload that also accepts a JSON schema and reasoningEffort, and set reasoningEffort to `none`.
     identifier: extract_json
     requirement: Set OPENAI_API_KEY environment variable
   - name: extract_json(String prompt, String model_name, Double temperature, Double topP)
-    description: Extracts JSON data from the given prompt using the specified OpenAI model, with a specified temperature and top-p value. For example, `extract_json('What is AI?', 'gpt-4o', 0.5, 0.9)` returns any relevant JSON data for the prompt, weighted by a temperature of 0.5 and with a top-p value of 0.9.
+    description: Extracts JSON data from the given prompt using the specified OpenAI model, with a specified temperature and top-p value. With GPT-6 Luna, use the overload that also accepts a JSON schema and reasoningEffort, and set reasoningEffort to `none`.
+    identifier: extract_json
+    requirement: Set OPENAI_API_KEY environment variable
+  - name: extract_json(String prompt, String model_name, Double temperature, Double topP, String jsonSchema, String reasoningEffort)
+    description: Extracts JSON data with an optional JSON schema and reasoning-effort setting. For models that support custom sampling in non-reasoning mode, set reasoningEffort to `none`.
     identifier: extract_json
     requirement: Set OPENAI_API_KEY environment variable
   - name: vector_embed(String text, String model_name)
