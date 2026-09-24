@@ -15,9 +15,6 @@
  */
 package com.datasqrl.planner.parser;
 
-import static com.datasqrl.planner.parser.StatementParserException.checkFatal;
-
-import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
@@ -104,29 +101,12 @@ public final class SqlScriptStatementSplitter {
       }
     }
 
-    if (current != null) {
-      var fileLoc = new FileLocation(statementLineNo, 1);
-      checkFatal(
-          openQuote == NO_QUOTE,
-          fileLoc,
-          ErrorLabel.GENERIC,
-          "Unterminated %s: missing closing quote (%s)",
-          openQuote == SINGLE_QUOTE ? "string literal" : "quoted identifier",
-          openQuote);
-      checkFatal(
-          !inPreservedBlockComment,
-          fileLoc,
-          ErrorLabel.GENERIC,
-          "Unterminated block comment: missing closing */");
-      // A trailing line comment swallowed the delimiter appended by formatEndOfSqlFile.
-      // Comments trailing the last statement are not a statement on their own.
-      if (statementContainsSql) {
-        var statement =
-            CharMatcher.whitespace().trimTrailingFrom(current)
-                + STATEMENT_DELIMITER
-                + LINE_DELIMITER;
-        statements.add(new ParsedObject<>(statement, fileLoc));
-      }
+    // Emit an unterminated last statement so the SQL parser can report it; skip trailing comments.
+    if (current != null && (statementContainsSql || inPreservedBlockComment)) {
+      var statement =
+          addStatementDelimiter(CharMatcher.whitespace().trimTrailingFrom(current))
+              + LINE_DELIMITER;
+      statements.add(new ParsedObject<>(statement, new FileLocation(statementLineNo, 1)));
     }
 
     return statements;

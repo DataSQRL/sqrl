@@ -16,7 +16,6 @@
 package com.datasqrl.planner.parser;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import org.junit.jupiter.api.Test;
@@ -349,7 +348,7 @@ class SqlScriptStatementSplitterTest {
   }
 
   @Test
-  void givenUnterminatedStringLiteral_whenSplitStatements_thenThrows() {
+  void givenUnterminatedStringLiteral_whenSplitStatements_thenEmitsRemainderAsOneStatement() {
     var script =
         """
         SELECT 1 AS `val`;
@@ -357,15 +356,19 @@ class SqlScriptStatementSplitterTest {
         SELECT 3 AS `val`;
         """;
 
-    assertThatThrownBy(() -> SqlScriptStatementSplitter.splitStatements(script))
-        .isInstanceOfSatisfying(
-            StatementParserException.class,
-            e -> assertThat(e.fileLocation).isEqualTo(new FileLocation(2, 1)))
-        .hasMessage("Unterminated string literal: missing closing quote (')");
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly(
+            "SELECT 1 AS `val`;\n", "SELECT 'unterminated AS `val`;\nSELECT 3 AS `val`;\n");
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(2, 1));
   }
 
   @Test
-  void givenUnterminatedBlockComment_whenSplitStatements_thenThrows() {
+  void givenUnterminatedBlockComment_whenSplitStatements_thenEmitsRemainderAsOneStatement() {
     var script =
         """
         SELECT 1 AS `val`;
@@ -373,11 +376,14 @@ class SqlScriptStatementSplitterTest {
         SELECT 3 AS `val`;
         """;
 
-    assertThatThrownBy(() -> SqlScriptStatementSplitter.splitStatements(script))
-        .isInstanceOfSatisfying(
-            StatementParserException.class,
-            e -> assertThat(e.fileLocation).isEqualTo(new FileLocation(2, 1)))
-        .hasMessage("Unterminated block comment: missing closing */");
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly("SELECT 1 AS `val`;\n", "/* unterminated comment\nSELECT 3 AS `val`;\n");
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(2, 1));
   }
 
   @Test
@@ -456,7 +462,7 @@ class SqlScriptStatementSplitterTest {
   }
 
   @Test
-  void givenUnterminatedQuotedIdentifier_whenSplitStatements_thenThrows() {
+  void givenUnterminatedQuotedIdentifier_whenSplitStatements_thenEmitsRemainderAsOneStatement() {
     var script =
         """
         SELECT 1 AS `val`;
@@ -464,10 +470,13 @@ class SqlScriptStatementSplitterTest {
         SELECT 3 AS val;
         """;
 
-    assertThatThrownBy(() -> SqlScriptStatementSplitter.splitStatements(script))
-        .isInstanceOfSatisfying(
-            StatementParserException.class,
-            e -> assertThat(e.fileLocation).isEqualTo(new FileLocation(2, 1)))
-        .hasMessage("Unterminated quoted identifier: missing closing quote (`)");
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly("SELECT 1 AS `val`;\n", "SELECT 2 AS `unterminated;\nSELECT 3 AS val;\n");
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(2, 1));
   }
 }
