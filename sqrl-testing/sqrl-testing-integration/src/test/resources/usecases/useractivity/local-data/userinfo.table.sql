@@ -7,6 +7,7 @@ CREATE TABLE `userinfo` (
 ) WITH (
   'connector' = 'filesystem',
   'format' = 'flexible-json',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'path' = '${DATA_PATH}/userinfo.jsonl',
   'source.monitor-interval' = '10 sec'
 );

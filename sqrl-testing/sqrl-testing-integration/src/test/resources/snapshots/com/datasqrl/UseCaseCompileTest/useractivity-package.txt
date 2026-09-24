@@ -128,6 +128,7 @@ CREATE TABLE `UserTokens` (
 )
 WITH (
   'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -154,6 +155,7 @@ CREATE TABLE `_UserInfo` (
 )
 WITH (
   'connector' = 'filesystem',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/userinfo.jsonl',
   'source.monitor-interval' = '10 sec'
@@ -209,6 +211,7 @@ CREATE TABLE `UsageAlert_3` (
 )
 WITH (
   'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',

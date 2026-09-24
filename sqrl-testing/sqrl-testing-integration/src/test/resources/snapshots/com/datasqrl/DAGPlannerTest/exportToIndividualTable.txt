@@ -272,12 +272,14 @@ CREATE TABLE `DistinctStream_3` (
 )
 WITH (
   'connector' = 'upsert-kafka-safe',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-DistinctStream',
   'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 );
 CREATE TABLE `DistinctCustomer_4` (
@@ -304,6 +306,7 @@ CREATE TABLE `JoinStream_5` (
 )
 WITH (
   'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',

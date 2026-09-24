@@ -85,6 +85,7 @@ CREATE TABLE `Sensors` (
 )
 WITH (
   'connector' = 'upsert-kafka-safe',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -93,6 +94,7 @@ WITH (
   'properties.isolation.level' = 'read_committed',
   'topic' = 'kafka-mutation-Sensors',
   'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 )
 === _SensorReading
@@ -126,6 +128,7 @@ CREATE TABLE `_SensorReading` (
 )
 WITH (
   'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -143,6 +146,7 @@ CREATE TABLE `Sensors` (
 )
 WITH (
   'connector' = 'upsert-kafka-safe',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
@@ -151,6 +155,7 @@ WITH (
   'properties.isolation.level' = 'read_committed',
   'topic' = 'kafka-mutation-Sensors',
   'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 );
 CREATE TABLE `_SensorReading` (
@@ -162,6 +167,7 @@ CREATE TABLE `_SensorReading` (
 )
 WITH (
   'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',

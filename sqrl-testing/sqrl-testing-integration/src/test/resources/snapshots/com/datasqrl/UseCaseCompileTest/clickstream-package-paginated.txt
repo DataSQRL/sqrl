@@ -178,6 +178,7 @@ CREATE TEMPORARY TABLE `Click__schema` (
 )
 WITH (
   'connector' = 'filesystem',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
   'format' = 'flexible-json',
   'path' = '${DATA_PATH}/click.jsonl'
 );

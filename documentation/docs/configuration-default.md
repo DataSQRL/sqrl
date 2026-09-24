@@ -58,6 +58,7 @@ The following is the [default configuration file](https://raw.githubusercontent.
     "kafka-mutation": {
       "connector": "kafka-safe",
       "format": "flexible-json",
+      "flexible-json.timestamp-format.standard": "ISO-8601",
       "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
       "properties.group.id": "${KAFKA_GROUP_ID}",
       "properties.auto.offset.reset": "earliest",
@@ -67,6 +68,7 @@ The following is the [default configuration file](https://raw.githubusercontent.
     "kafka": {
       "connector": "kafka-safe",
       "format": "flexible-json",
+      "flexible-json.timestamp-format.standard": "ISO-8601",
       "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
       "properties.group.id": "${KAFKA_GROUP_ID}",
       "properties.compression.type": "zstd",
