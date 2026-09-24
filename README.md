@@ -24,13 +24,13 @@ Everything the agent builds, from ingest to transform to store to serve, is expr
 
 - **Review meaning, not plumbing.** Aggregations, units, filters, and joins sit on one screen. Reviewers can check that the pipeline does what was asked instead of skimming thousands of generated lines.
 - **Run it yourself.** One command runs the whole pipeline locally, API included, so you can inspect real results and experiment quickly.
-- **Build abstraction layers.** Extend with custom  UDFs, table functions, and operators that capture your business semantics.
+- **Build abstraction layers.** Extend with custom UDFs, table functions, and operators that capture your business semantics.
 
 Agents speed up the work. You still own the logic.
 
 ### 2. Compiler for Correctness and Introspection
 
-A language model is a probabilistic tool that's prone to errors and hallucinations. DataSQRL provides a compiler that spans the entire data pipeline,  keeping types, names, keys, and schemas consistent across Flink, Kafka, Postgres, Iceberg, and an API layer.
+A language model is a probabilistic tool that's prone to errors and hallucinations. DataSQRL provides a compiler that spans the entire data pipeline, keeping types, names, keys, and schemas consistent across Flink, Kafka, Postgres, Iceberg, and an API layer.
 
 - **Seams are generated.** Types, schemas, connector configs, API contracts, and identifier mappings are all derived from one logical model, so the systems cannot disagree.
 - **Deep relational validation.** The validator walks the relational plan and catches bugs that are not visible in the query text: wrong or missing primary keys, changelogs treated as event streams, time-dependent joins, unbounded state, etc. Each error comes with a suggested fix the agent can act on.
@@ -40,22 +40,22 @@ A language model is a probabilistic tool that's prone to errors and hallucinatio
 
 Before anything is deployed, the compiler analyzes the whole data flow, and it writes out readable artifacts for physical and deployment plans.
 
-- **Deep artifacts for governance.** Every compile produces the full computation DAG with table types, inferred keys, timestamps, schemas, and engine assignments, along with every deployment asset. Use these artifacts for data lineage, impact analysis, audit, and automated policy checks.
+- **Deep artifacts for governance.** Every compilation produces the full computation DAG with table types, inferred keys, timestamps, schemas, and engine assignments, along with every deployment asset. Use these artifacts for data lineage, impact analysis, audit, and automated policy checks.
 - **Scalable and fault-tolerant by design.** Deployment artifacts are compiled for robust operations with automatic index selection, partitioning, and fail-over. 
 - **Security by construction.** API endpoints use parameterized queries, and authorization is bound to JWT claims in the SQL definition. 
-- **Your policies enforced.** Add custom validation rules for PII handling, naming, retention, or data residency. Every pipeline the agent builds is checked against them automatically.
+- **Your policies, enforced.** Add custom validation rules for PII handling, naming, retention, or data residency. Every pipeline the agent builds is checked against them automatically.
 
 ## Customize Your Harness
 
 Every data organization has its own conventions, domain vocabulary, compliance requirements, and target infrastructure. DataSQRL is a **toolkit** you use to build an agent that honors those.
 
-| Layer | What you customize                                                                                                                                               |
-|---|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Skills** | How your team gathers requirements, plans, implements, tests, and deploys. Includes domain knowledge and data catalog context.                                   |
-| **Validators & policies** | Custom compiler rules for governance, security, and data quality standards                                                                                       |
-| **Functions & connectors** | Your UDFs, source and sink connectors, and data formats                                                                                                          |
-| **Engines & deployment** | Your target infrastructure: Flink, Kafka, Postgres, Iceberg, and more, on Docker, Kubernetes, or managed cloud services. Extendable to the technologies you use. |
-| **Coding agent** | Your choice: Claude Code, Codex, OpenCode, Pi, etc                                                                                                               |
+| Layer                      | What you customize                                                                                                                                               |
+|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Skills**                 | How your team gathers requirements, plans, implements, tests, and deploys. Includes domain knowledge and data catalog context.                                   |
+| **Validators & policies**  | Custom compiler rules for governance, security, and data quality standards.                                                                                      |
+| **Functions & connectors** | Your UDFs, source and sink connectors, and data formats.                                                                                                         |
+| **Engines & deployment**   | Your target infrastructure: Flink, Kafka, Postgres, Iceberg, and more, on Docker, Kubernetes, or managed cloud services. Extendable to the technologies you use. |
+| **Coding agent**           | Your choice: Claude Code, Codex, OpenCode, Pi, etc.                                                                                                              |
 
 Packaged into **one Docker container** which contains the data engineering agent that your teams, CI pipelines, and platforms can call.
 
@@ -76,7 +76,7 @@ The compiled deployment artifacts run on proven open-source technologies that yo
 The basic DataSQRL agent wraps the Pi coding agent with the DataSQRL framework and skills in one Docker image. All you need is [Docker](https://www.docker.com/products/docker-desktop/) and an API key from your LLM provider. Run it in your project folder:
 
 ```bash
-docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi
+docker run -e ANTHROPIC_API_KEY -it --rm -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi
 ```
 
 (In PowerShell on Windows, use `-v "${PWD}:/workspace"`. For OpenAI, Bedrock, Azure, or Vertex AI, swap in that provider's environment variables.)
