@@ -1,0 +1,13 @@
+IMPORT ecommerceTs.customer;
+
+-- apostrophe in a quoted identifier must not be mistaken for the start of a string literal
+Apostrophe := SELECT c.customerid, c.`it's` AS name FROM (SELECT customerid, name AS `it's` FROM Customer) AS c;
+
+AfterAlias := SELECT customerid, email FROM Customer;
+
+-- quotes inside double-quoted database identifiers of pass-through queries are ignored as well
+PassThroughApostrophe RETURNS (customerid BIGINT NOT NULL) := SELECT customerid FROM "AfterAlias" AS "it's";
+
+PassThroughBacktick RETURNS (customerid BIGINT NOT NULL) := SELECT customerid FROM "AfterAlias" AS "a`b";
+
+AfterPassThrough := SELECT customerid, name FROM Customer;

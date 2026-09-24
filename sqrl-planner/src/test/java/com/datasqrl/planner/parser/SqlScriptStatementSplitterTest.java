@@ -16,6 +16,7 @@
 package com.datasqrl.planner.parser;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import org.junit.jupiter.api.Test;
@@ -260,5 +261,213 @@ class SqlScriptStatementSplitterTest {
     assertThat(statements)
         .extracting(ParsedObject::getFileLocation)
         .containsExactly(new FileLocation(1, 1), new FileLocation(4, 1));
+  }
+
+  @Test
+  void givenApostropheInQuotedIdentifier_whenSplitStatements_thenKeepsFollowingStatements() {
+    var script =
+        """
+        Src := SELECT source_id, patient_id FROM Records;
+
+        Apostrophe := SELECT s.patient_id AS `it's` FROM Src AS s;
+
+        AfterAlias := SELECT source_id FROM Records;
+        """;
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly(
+            "Src := SELECT source_id, patient_id FROM Records;\n",
+            "Apostrophe := SELECT s.patient_id AS `it's` FROM Src AS s;\n",
+            "AfterAlias := SELECT source_id FROM Records;\n");
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(3, 1), new FileLocation(5, 1));
+  }
+
+  @Test
+  void
+      givenCommentMarkersAndDelimiterInQuotedIdentifier_whenSplitStatements_thenPreservesIdentifier() {
+    var script =
+        """
+        SELECT 1 AS `a--b;c`, 2 AS `x/*y`, 3 AS `it``'s`;
+        SELECT 4 AS `val`;
+        """;
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly(
+            "SELECT 1 AS `a--b;c`, 2 AS `x/*y`, 3 AS `it``'s`;\n", "SELECT 4 AS `val`;\n");
+  }
+
+  @Test
+  void givenBacktickInStringLiteral_whenSplitStatements_thenIgnoresBacktick() {
+    var script =
+        """
+        SELECT 'it`s -- not a comment' AS `val`;
+        SELECT 2 AS `val`;
+        """;
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly("SELECT 'it`s -- not a comment' AS `val`;\n", "SELECT 2 AS `val`;\n");
+  }
+
+  @Test
+  void givenEscapedQuoteInStringLiteral_whenSplitStatements_thenPreservesLiteral() {
+    var script =
+        """
+        SELECT 'it''s; -- not a comment' AS `val`;
+        SELECT 2 AS `val`;
+        """;
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly("SELECT 'it''s; -- not a comment' AS `val`;\n", "SELECT 2 AS `val`;\n");
+  }
+
+  @Test
+  void givenStatementDelimiterAtLineEndInStringLiteral_whenSplitStatements_thenDoesNotSplitEarly() {
+    var script =
+        """
+        SELECT 'first line;
+                last line' AS `val`
+        FROM Records;
+        """;
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements).extracting(ParsedObject::get).containsExactly(script);
+  }
+
+  @Test
+  void givenUnterminatedStringLiteral_whenSplitStatements_thenThrows() {
+    var script =
+        """
+        SELECT 1 AS `val`;
+        SELECT 'unterminated AS `val`;
+        SELECT 3 AS `val`;
+        """;
+
+    assertThatThrownBy(() -> SqlScriptStatementSplitter.splitStatements(script))
+        .isInstanceOfSatisfying(
+            StatementParserException.class,
+            e -> assertThat(e.fileLocation).isEqualTo(new FileLocation(2, 1)))
+        .hasMessage("Unterminated string literal: missing closing quote (')");
+  }
+
+  @Test
+  void givenUnterminatedBlockComment_whenSplitStatements_thenThrows() {
+    var script =
+        """
+        SELECT 1 AS `val`;
+        /* unterminated comment
+        SELECT 3 AS `val`;
+        """;
+
+    assertThatThrownBy(() -> SqlScriptStatementSplitter.splitStatements(script))
+        .isInstanceOfSatisfying(
+            StatementParserException.class,
+            e -> assertThat(e.fileLocation).isEqualTo(new FileLocation(2, 1)))
+        .hasMessage("Unterminated block comment: missing closing */");
+  }
+
+  @Test
+  void
+      givenTrailingLineCommentAfterUndelimitedLastStatement_whenSplitStatements_thenKeepsStatement() {
+    var script =
+        """
+        SELECT 1 AS `val`;
+        SELECT 2 AS `val`
+        -- trailing comment
+        """;
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly("SELECT 1 AS `val`;\n", "SELECT 2 AS `val`;\n");
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(2, 1));
+  }
+
+  @Test
+  void givenTrailingCommentsAfterLastStatement_whenSplitStatements_thenIgnoresComments() {
+    var script =
+        """
+        SELECT 1 AS `val`;
+        /* trailing */ -- note
+        """;
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements).extracting(ParsedObject::get).containsExactly("SELECT 1 AS `val`;\n");
+  }
+
+  @Test
+  void givenQuotesInDoubleQuotedIdentifier_whenSplitStatements_thenKeepsFollowingStatements() {
+    var script =
+        """
+        PassThrough RETURNS (customerid BIGINT) := SELECT customerid FROM "Customer" AS "it's";
+        PassThroughBacktick RETURNS (customerid BIGINT) := SELECT customerid FROM "Customer" AS "a`b";
+        AfterAlias := SELECT customerid FROM Customer;
+        """;
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly(
+            "PassThrough RETURNS (customerid BIGINT) := SELECT customerid FROM \"Customer\" AS \"it's\";\n",
+            "PassThroughBacktick RETURNS (customerid BIGINT) := SELECT customerid FROM \"Customer\" AS \"a`b\";\n",
+            "AfterAlias := SELECT customerid FROM Customer;\n");
+  }
+
+  @Test
+  void givenMultilineDoubleQuotedIdentifier_whenSplitStatements_thenKeepsFollowingStatements() {
+    var script =
+        """
+        PassThrough RETURNS (customerid BIGINT NOT NULL) :=
+        SELECT customerid FROM "Customer" AS "a
+        b";
+        AfterAlias := SELECT customerid FROM Customer;
+        """;
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly(
+            """
+            PassThrough RETURNS (customerid BIGINT NOT NULL) :=
+            SELECT customerid FROM "Customer" AS "a
+            b";
+            """,
+            "AfterAlias := SELECT customerid FROM Customer;\n");
+  }
+
+  @Test
+  void givenUnterminatedQuotedIdentifier_whenSplitStatements_thenThrows() {
+    var script =
+        """
+        SELECT 1 AS `val`;
+        SELECT 2 AS `unterminated;
+        SELECT 3 AS val;
+        """;
+
+    assertThatThrownBy(() -> SqlScriptStatementSplitter.splitStatements(script))
+        .isInstanceOfSatisfying(
+            StatementParserException.class,
+            e -> assertThat(e.fileLocation).isEqualTo(new FileLocation(2, 1)))
+        .hasMessage("Unterminated quoted identifier: missing closing quote (`)");
   }
 }

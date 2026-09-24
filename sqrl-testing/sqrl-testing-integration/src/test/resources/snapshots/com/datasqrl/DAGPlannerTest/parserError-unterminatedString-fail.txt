@@ -1,0 +1,7 @@
+[FATAL] Unterminated string literal: missing closing quote (')
+in script:parserError-unterminatedString-fail.sqrl [3:1]:
+IMPORT ecommerceTs.customer;
+
+Unterminated := SELECT customerid, 'unterminated AS label FROM Customer;
+^
+

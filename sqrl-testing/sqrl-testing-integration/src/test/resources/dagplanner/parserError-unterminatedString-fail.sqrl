@@ -1,0 +1,5 @@
+IMPORT ecommerceTs.customer;
+
+Unterminated := SELECT customerid, 'unterminated AS label FROM Customer;
+
+AfterUnterminated := SELECT customerid FROM Customer;
