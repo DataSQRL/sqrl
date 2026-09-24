@@ -28,7 +28,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.containers.MinIOContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 public class S3ContainerIT {
@@ -37,33 +38,32 @@ public class S3ContainerIT {
   static SqrlContainerExtension sqrl = new SqrlContainerExtension("seedshop-tutorial");
 
   private static final String BUCKET_NAME = "test";
-  private static final String CRED = "minioadmin";
+  private static final String CRED = "s3mock";
+  private static final int S3_MOCK_PORT = 9090;
 
-  private final MinIOContainer minioContainer =
-      new MinIOContainer(
-              DockerImageName.parse("quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z")
-                  .asCompatibleSubstituteFor("minio/minio"))
+  private final GenericContainer<?> s3MockContainer =
+      new GenericContainer<>(DockerImageName.parse("adobe/s3mock:5.2.2"))
           .withNetwork(sqrl.getNetwork())
-          .withNetworkAliases("minio")
-          .withUserName(CRED)
-          .withPassword(CRED)
-          .withExposedPorts(9000, 9001);
+          .withNetworkAliases("s3mock")
+          .withExposedPorts(S3_MOCK_PORT)
+          .waitingFor(
+              Wait.forHttp("/favicon.ico")
+                  .forPort(S3_MOCK_PORT)
+                  .forStatusCode(200)
+                  .withStartupTimeout(Duration.ofSeconds(30)));
 
   private AmazonS3 s3Client;
 
   @BeforeEach
   void setup() {
-    minioContainer.start();
+    s3MockContainer.start();
 
-    // Get MinIO connection details
-    String endpoint = minioContainer.getS3URL();
-    String accessKey = minioContainer.getUserName();
-    String secretKey = minioContainer.getPassword();
+    var endpoint =
+        "http://" + s3MockContainer.getHost() + ":" + s3MockContainer.getMappedPort(S3_MOCK_PORT);
 
     s3Client =
         AmazonS3Client.builder()
-            .withCredentials(
-                new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
+            .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(CRED, CRED)))
             .withPathStyleAccessEnabled(true)
             .withEndpointConfiguration(
                 new AwsClientBuilder.EndpointConfiguration(endpoint, "unused-region"))
@@ -80,8 +80,8 @@ public class S3ContainerIT {
       s3Client.shutdown();
     }
 
-    if (minioContainer != null) {
-      minioContainer.stop();
+    if (s3MockContainer != null) {
+      s3MockContainer.stop();
     }
   }
 
