@@ -122,7 +122,7 @@ public class UseCaseCompileTest {
   @Test
   @Disabled("Intended for manual usage")
   void runTestCaseByName() {
-    var pkg = USECASE_DIR.resolve("complex-mutation").resolve("package-invalid-watermark.json");
+    var pkg = USECASE_DIR.resolve("stdlib-openai").resolve("package.json");
     UseCaseTestHelper.testUseCase(
         snapshotExtension,
         getClass(),

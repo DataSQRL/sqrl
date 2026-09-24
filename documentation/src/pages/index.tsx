@@ -157,7 +157,7 @@ EnrichedTransactionsTest :=
 ContentEmbedding :=
     SELECT
       vector_embedd(text, 'text-embedding-3-small') AS embedding,
-      completions(concat('Summarize:', text), 'gpt-4o') AS summary
+      completions(concat('Summarize:', text), 'gpt-6-luna') AS summary
     FROM Content;
 `}
                   </CodeBlock>
