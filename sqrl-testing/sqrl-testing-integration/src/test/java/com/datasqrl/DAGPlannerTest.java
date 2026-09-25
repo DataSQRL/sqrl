@@ -23,6 +23,8 @@ import com.datasqrl.SnapshotTestSupport.TestNameModifier;
 import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Path;
+import java.util.Locale;
+import java.util.Map;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -42,6 +44,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 public class DAGPlannerTest {
 
   public static final Path SCRIPT_DIR = getResourcesDirectory("dagplanner");
+  private static final String NO_COMPILE_MARKER = "noflinkcompile";
 
   @RegisterExtension
   final CliCompileTestExtension snapshotExtension =
@@ -51,7 +54,13 @@ public class DAGPlannerTest {
   @ArgumentsSource(DagPlannerSQRLFiles.class)
   void scripts(Path script) {
     assertThat(script).isRegularFile();
-    snapshotExtension.writeTempPackage(script, "__SQRL_SCRIPT__");
+    snapshotExtension.writeTempPackage(
+        script,
+        Map.of(
+            "__SQRL_SCRIPT__",
+            script.getFileName().toString(),
+            "__COMPILE_FLINK_PLAN__",
+            String.valueOf(compileFlinkPlan(script))));
 
     var testModifier = TestNameModifier.of(script);
     var expectFailure = testModifier == TestNameModifier.fail;
@@ -80,6 +89,11 @@ public class DAGPlannerTest {
   void specificScript() {
     var script = SCRIPT_DIR.resolve("windowDeduplication.sqrl");
     scripts(script);
+  }
+
+  private boolean compileFlinkPlan(Path script) {
+    var name = "-" + getDisplayName(script).toLowerCase(Locale.ROOT) + "-";
+    return !name.contains("-" + NO_COMPILE_MARKER + "-");
   }
 
   private Predicate<Path> getBuildDirFilter() {

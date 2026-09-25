@@ -1,0 +1,278 @@
+>>>pipeline_explain.txt
+=== HintedRecords
+ID:          default_catalog.default_database.HintedRecords
+Type:        stream
+Stage:       postgres
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - source_id: INTEGER
+Inputs:
+ - default_catalog.default_database.Records__base
+Plan:
+LogicalProject(source_id=[$0])
+  LogicalTableScan(table=[[default_catalog, default_database, Records]], hints=[[[OPTIONS inheritPath:[] options:{rows-per-second=11}]]]) hints[OPTIONS]
+SQL:
+CREATE VIEW `HintedRecords` AS 
+  SELECT source_id
+  FROM Records /*+ OPTIONS('rows-per-second'='11') */;
+
+=== Records
+ID:          default_catalog.default_database.Records
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - source_id: INTEGER
+Inputs:
+ - default_catalog.default_database.Records__base
+Plan:
+LogicalTableScan(table=[[default_catalog, default_database, Records]])
+SQL:
+CREATE TABLE `Records` (
+  `source_id` INTEGER
+)
+WITH (
+  'connector' = 'datagen',
+  'rows-per-second' = '10'
+)
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Records` (
+  `source_id` INTEGER
+)
+WITH (
+  'connector' = 'datagen',
+  'rows-per-second' = '10'
+);
+CREATE VIEW `HintedRecords`
+AS
+SELECT `source_id`
+FROM `Records`
+ /*+ `OPTIONS`('rows-per-second' = '11') */;
+CREATE TABLE `Records_1` (
+  `source_id` INTEGER,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Records_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Records_1`
+SELECT `source_id`, `hash_columns`(`source_id`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Records`
+/*+ `OPTIONS`(`rows-per-second` = '11') */
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Records_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Records_1\" (\"source_id\" INTEGER, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "source_id",
+          "type" : "INTEGER",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0
+    },
+    {
+      "name" : "HintedRecords",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"HintedRecords\"(\"source_id\") AS SELECT \"source_id\"\nFROM \"Records_1\"",
+      "fields" : [
+        {
+          "name" : "source_id",
+          "type" : "INTEGER",
+          "nullable" : true
+        }
+      ]
+    },
+    {
+      "name" : "Records",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Records\"(\"source_id\") AS SELECT \"source_id\"\nFROM \"Records_1\"",
+      "fields" : [
+        {
+          "name" : "source_id",
+          "type" : "INTEGER",
+          "nullable" : true
+        }
+      ]
+    }
+  ],
+  "standaloneExtensionStatements" : [ ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "HintedRecords",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"source_id\"\nFROM \"Records_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Records",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"source_id\"\nFROM \"Records_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetHintedRecords",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query HintedRecords($limit: Int = 10, $offset: Int = 0) {\nHintedRecords(limit: $limit, offset: $offset) {\nsource_id\n}\n\n}",
+            "queryName" : "HintedRecords",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/HintedRecords{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "source_id" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetRecords",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Records($limit: Int = 10, $offset: Int = 0) {\nRecords(limit: $limit, offset: $offset) {\nsource_id\n}\n\n}",
+            "queryName" : "Records",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Records{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "source_id" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype HintedRecords {\n  source_id: Int\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  HintedRecords(limit: Int = 10, offset: Int = 0): [HintedRecords!]\n  Records(limit: Int = 10, offset: Int = 0): [Records!]\n}\n\ntype Records {\n  source_id: Int\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

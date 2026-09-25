@@ -1,0 +1,11 @@
+CREATE TABLE Records (
+  source_id INT
+) WITH (
+  'connector' = 'datagen',
+  'rows-per-second' = '10'
+);
+
+/*+ engine(postgres) */
+HintedRecords :=
+  SELECT source_id
+  FROM Records /*+ OPTIONS('rows-per-second'='11') */;

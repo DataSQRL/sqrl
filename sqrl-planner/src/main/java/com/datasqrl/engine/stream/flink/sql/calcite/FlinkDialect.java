@@ -18,6 +18,8 @@ package com.datasqrl.engine.stream.flink.sql.calcite;
 import org.apache.calcite.avatica.util.Casing;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlNodeList;
+import org.apache.calcite.sql.SqlWriter;
 import org.apache.flink.sql.parser.validate.FlinkSqlConformance;
 
 public class FlinkDialect extends SqlDialect {
@@ -43,5 +45,15 @@ public class FlinkDialect extends SqlDialect {
   @Override
   public boolean supportsImplicitTypeCoercion(RexCall call) {
     return false;
+  }
+
+  @Override
+  public void unparseTableScanHints(
+      SqlWriter writer, SqlNodeList hints, int leftPrec, int rightPrec) {
+
+    writer.newlineAndIndent();
+    writer.keyword("/*+");
+    hints.unparse(writer, 0, 0);
+    writer.keyword("*/");
   }
 }
