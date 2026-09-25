@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 500" width="960" height="500" role="img" aria-label="DataSQRL compiles SQL into a complete data architecture: sources (database, data streams, data lake, data files, APIs) flow into Apache Flink for ingest and processing, into Postgres, Kafka and Iceberg for storage, into an API server and catalog views for serving, and out through MCP, GraphQL, RAG, REST and data product interfaces">
+<defs>
+<marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1d3557"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#7299C1"/></marker>
+</defs>
+<rect x="1" y="1" width="958" height="498" rx="16" fill="#ffffff" stroke="#e0e0e0"/>
+<rect x="475" y="18" width="160" height="46" rx="10" fill="#1d3557"/>
+<text x="555" y="48" text-anchor="middle" font-size="18" font-weight="700" fill="#ffffff" font-family="SFMono-Regular, Menlo, Consolas, monospace">SQL</text>
+<line x1="555" y1="66" x2="555" y2="102" stroke="#1d3557" stroke-width="2.5" marker-end="url(#ah)"/>
+<text x="538" y="86" text-anchor="end" font-size="12" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">compiles</text>
+<rect x="170" y="108" width="770" height="372" rx="14" fill="#fbf9fe" stroke="#a46ee0" stroke-width="2"/>
+<path d="M144 151 H261" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round"/>
+<path d="M144 219 H261" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round"/>
+<path d="M261 151 V126 H601 V148" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M261 126 V258" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M144 287 H204" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M144 355 H184" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round"/>
+<path d="M144 423 H184" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round"/>
+<path d="M184 287 V423" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round"/>
+<path d="M316 292 H364" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M341 292 V182 H364" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M341 292 V402 H364" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M486 182 H534" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M486 292 H534" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M486 402 H534" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M511 402 V260 H534" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M666 237 H691" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round"/>
+<path d="M691 160 V310" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round"/>
+<path d="M691 160 H714" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M691 210 H714" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M691 260 H714" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M691 310 H714" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<path d="M666 402 H714" fill="none" stroke="#7299C1" stroke-width="2" stroke-linejoin="round" marker-end="url(#ag)"/>
+<rect x="24" y="128" width="120" height="46" rx="10" fill="#f3ecfb" stroke="#c89df4" stroke-width="1.5"/>
+<text x="84.0" y="156.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Database</text>
+<rect x="24" y="196" width="120" height="46" rx="10" fill="#f3ecfb" stroke="#c89df4" stroke-width="1.5"/>
+<text x="84.0" y="224.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Data Streams</text>
+<rect x="24" y="264" width="120" height="46" rx="10" fill="#f3ecfb" stroke="#c89df4" stroke-width="1.5"/>
+<text x="84.0" y="292.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Data Lake</text>
+<rect x="24" y="332" width="120" height="46" rx="10" fill="#f3ecfb" stroke="#c89df4" stroke-width="1.5"/>
+<text x="84.0" y="360.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Data Files</text>
+<rect x="24" y="400" width="120" height="46" rx="10" fill="#f3ecfb" stroke="#c89df4" stroke-width="1.5"/>
+<text x="84.0" y="428.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">APIs</text>
+<rect x="206" y="260" width="110" height="64" rx="10" fill="#ffffff" stroke="#86AACE" stroke-width="1.5"/>
+<text x="261.0" y="290.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Apache Flink</text>
+<text x="261.0" y="307.0" text-anchor="middle" font-size="11.5" fill="#555" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">stream &amp; batch</text>
+<rect x="366" y="150" width="120" height="64" rx="10" fill="#ffffff" stroke="#86AACE" stroke-width="1.5"/>
+<text x="426.0" y="180.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Postgres</text>
+<text x="426.0" y="197.0" text-anchor="middle" font-size="11.5" fill="#555" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">database</text>
+<rect x="366" y="260" width="120" height="64" rx="10" fill="#ffffff" stroke="#86AACE" stroke-width="1.5"/>
+<text x="426.0" y="290.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Apache Kafka</text>
+<text x="426.0" y="307.0" text-anchor="middle" font-size="11.5" fill="#555" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">event log</text>
+<rect x="366" y="370" width="120" height="64" rx="10" fill="#ffffff" stroke="#86AACE" stroke-width="1.5"/>
+<text x="426.0" y="400.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Apache Iceberg</text>
+<text x="426.0" y="417.0" text-anchor="middle" font-size="11.5" fill="#555" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">table format</text>
+<rect x="536" y="150" width="130" height="174" rx="10" fill="#ffffff" stroke="#86AACE" stroke-width="1.5"/>
+<text x="601.0" y="235.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Server</text>
+<text x="601.0" y="252.0" text-anchor="middle" font-size="11.5" fill="#555" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">GraphQL engine</text>
+<rect x="536" y="370" width="130" height="64" rx="10" fill="#ffffff" stroke="#86AACE" stroke-width="1.5"/>
+<text x="601.0" y="400.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Catalog Views</text>
+<text x="601.0" y="417.0" text-anchor="middle" font-size="11.5" fill="#555" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">query engines</text>
+<rect x="716" y="140" width="200" height="40" rx="10" fill="#eef3f8" stroke="#86AACE" stroke-width="1.5"/>
+<text x="816.0" y="165.0" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Model Context Protocol</text>
+<rect x="716" y="190" width="200" height="40" rx="10" fill="#eef3f8" stroke="#86AACE" stroke-width="1.5"/>
+<text x="816.0" y="215.0" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">GraphQL API</text>
+<rect x="716" y="240" width="200" height="40" rx="10" fill="#eef3f8" stroke="#86AACE" stroke-width="1.5"/>
+<text x="816.0" y="265.0" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">RAG</text>
+<rect x="716" y="290" width="200" height="40" rx="10" fill="#eef3f8" stroke="#86AACE" stroke-width="1.5"/>
+<text x="816.0" y="315.0" text-anchor="middle" font-size="13.5" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">REST API</text>
+<rect x="716" y="370" width="200" height="64" rx="10" fill="#eef3f8" stroke="#86AACE" stroke-width="1.5"/>
+<text x="816.0" y="400.0" text-anchor="middle" font-size="14" font-weight="700" fill="#1d3557" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">Data Product</text>
+<text x="816.0" y="417.0" text-anchor="middle" font-size="11.5" fill="#555" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">datasets &amp; tables</text>
+<text x="84" y="464" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="0.8" fill="#365B81" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">SOURCES</text>
+<text x="261" y="464" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="0.8" fill="#365B81" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">INGEST &amp; PROCESSING</text>
+<text x="426" y="464" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="0.8" fill="#365B81" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">STORAGE</text>
+<text x="601" y="464" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="0.8" fill="#365B81" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">SERVING</text>
+<text x="816" y="464" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="0.8" fill="#365B81" font-family="Inter, -apple-system, Segoe UI, Helvetica, Arial, sans-serif">INTERFACE</text>
+</svg>

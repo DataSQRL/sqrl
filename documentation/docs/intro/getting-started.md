@@ -1,183 +1,193 @@
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
+
 # Getting Started with DataSQRL
 
+## Basic DataSQRL Agent
 
-The easiest way to understand how DataSQRL provides guardrails and feedback for AI coding agents is to build a data pipeline. We'll create a messenger pipeline, then let a coding agent extend it using DataSQRL's test-driven feedback loop.
+The basic DataSQRL agent runs as a Docker image on your local machine. It wraps the Pi coding agent with the DataSQRL framework, an `AGENTS.md` file, and skills.
+All you need is a recent version of [Docker](https://www.docker.com/products/docker-desktop/) and an API key from the LLM provider you'd like to use.
 
-## Prerequisites
-
-You'll need:
-
-- **Docker** installed and running
-- A terminal (macOS/Linux: Terminal, Windows: PowerShell or WSL)
-- A coding agent (Claude Code, Codex, Gemini CLI, Copilot, or similar)
-
-### Install Docker
-
-If you don't already have Docker:
-
-- **macOS**: [Download Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)
-- **Windows**: [Download Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
-- **Linux**: Use your package manager (e.g., `sudo apt install docker.io`)
-
-Verify Docker is working:
+<Tabs groupId="os">
+<TabItem value="macOS" label="macOS" default>
 
 ```bash
-docker --version
+docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi
 ```
 
-## Create New Project
+</TabItem>
+<TabItem value="windows" label="Windows">
 
-Create a new data project with the `init` command in an empty folder:
+Run in PowerShell:
+
+```powershell
+docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "${PWD}:/workspace" -w /workspace datasqrl/datasqrl-pi
+```
+
+</TabItem>
+<TabItem value="linux" label="Linux">
 
 ```bash
-docker run --rm -v $PWD:/workspace datasqrl/cmd init api messenger
+docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi
 ```
-(Use `${PWD}` in Powershell on Windows)
 
-This creates a data API project called `messenger` with sample data sources and a processing script called `messenger.sqrl`.
+</TabItem>
+</Tabs>
 
-The engines executing the pipeline are defined in the `package.json` files:
-![Initial Pipeline Architecture](/img/diagrams/getting_started_diagram1.png)
+Run the command above in your terminal. To use a different model provider, replace `-e ANTHROPIC_API_KEY` with the environment variables for that provider:
 
-## Run the Pipeline
+1. Anthropic: `-e ANTHROPIC_API_KEY`
+2. OpenAI: `-e OPENAI_API_KEY`
+3. Amazon Bedrock: `-e AWS_BEARER_TOKEN_BEDROCK -e AWS_REGION=us-west-2`
+4. Azure OpenAI: `-e AZURE_OPENAI_API_KEY -e AZURE_OPENAI_BASE_URL=https://your-resource.openai.azure.com`
+5. Google Vertex AI: `-e GOOGLE_CLOUD_PROJECT=your-project -e GOOGLE_CLOUD_LOCATION=us-central1 -e GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcp.json -v /path/to/key.json:/secrets/gcp.json:ro`
 
-Execute the SQRL project:
+Passing `-e ANTHROPIC_API_KEY` without a value copies the variable from your current terminal session. To set the value explicitly, use:
 
 ```bash
-docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd run messenger-prod-package.json
+-e ANTHROPIC_API_KEY=sk-xyzxyz
 ```
 
-Access the GraphQL API at [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/).
+Once the Pi terminal is running, give the coding agent a prompt like:
 
-Add a message:
-```graphql
-mutation {
-    Messages(event: {message: "Hello World"}) {
-        message_time
-    }
-}
+> Build a pipeline that ingests our order data from Kafka in real time and serves hourly revenue per product through an API.
+
+The [agent README on GitHub](https://github.com/DataSQRL/sqrl/blob/main/agent/README.md) shows how to customize the basic agent to use a different coding agent, skills, AGENTS.md, and more.
+
+## Advanced DataSQRL Agent
+
+You can also run DataSQRL as a sub-agent with planning mode, iterative improvement, and deployment workflows. It plugs into your existing coding agent and GitHub to act as your data engineering sidekick.
+
+Install the DataSQRL plugin, describe the pipeline you want in plain English, review the plan, and let the DataSQRL agent build it. The DataSQRL agent implements, compiles, tests, verifies, and refines the pipeline until the tests pass. It is more thorough and complete than the basic agent but takes more time and resources to run.
+
+### Prerequisites
+
+- **Docker**, installed and running locally. The agent image is fetched automatically on first use, so there is no manual `docker pull`.
+  - macOS and Windows: [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+  - Linux: use your package manager, e.g. `sudo apt install docker.io`
+  - Verify with `docker --version`
+- **An Anthropic credential**: either an `ANTHROPIC_API_KEY` environment variable or a `claude login` subscription. The plugin discovers either one automatically.
+- **A git repository** for your project. The repository is mounted read-only so the agent can discover sibling projects and shared data catalogs. Your project folder is the only place it writes to.
+- **A bash shell.** On Windows, use **WSL**. Git Bash is not enough to run the containerized agent.
+- **A coding agent**: Claude Code, Codex, Cursor, or GitHub Copilot.
+
+### Install the Plugin
+
+<Tabs groupId="coding-agent">
+<TabItem value="claude-code" label="Claude Code" default>
+
+Run these commands inside Claude Code:
+
+```
+/plugin marketplace add DataSQRL/datasqrl-plugin
+/plugin install datasqrl@datasqrl
 ```
 
-Query messages:
-```graphql
-{
-    Messages {
-        uuid
-        message
-        message_time
-    }
-}
-```
-
-Terminate with `CTRL-C`.
-
-## Let Agents Extend the Pipeline
-
-Now instruct your coding agent to extend `messenger.sqrl`. For example:
-
-> "Add an endpoint that returns the total message count and the timestamp of the most recent message. Include test coverage."
-
-The agent should modify `messenger.sqrl` and iterate using the test command:
+</TabItem>
+<TabItem value="codex" label="Codex">
 
 ```bash
-docker run -it --rm -v $PWD:/workspace datasqrl/cmd test messenger-test-package.json
+codex plugin marketplace add DataSQRL/datasqrl-plugin
 ```
 
-This feedback loop is how DataSQRL guides agents toward correct solutions. The test command:
-- Compiles the SQRL script and validates semantics
-- Runs the pipeline in simulation with timestamp-accurate event replay
-- Compares results against snapshot expectations
+</TabItem>
+<TabItem value="cursor" label="Cursor">
 
-The first time a new test runs, it creates a snapshot. Subsequent runs validate against that snapshot. When tests fail, the compiler provides actionable error messages that help agents refine their solution.
+Point Cursor at the [`DataSQRL/datasqrl-plugin`](https://github.com/DataSQRL/datasqrl-plugin) repository. The plugin manifest is at the repository root.
 
-A correct implementation might look like:
+</TabItem>
+<TabItem value="copilot" label="GitHub Copilot">
 
-```sql
-TotalMessages := SELECT COUNT(*) as num_messages, MAX(message_time) as latest_timestamp
-                 FROM Messages LIMIT 1;
-```
+Copilot has no plugin system. It reads skills from directories inside the repository you are working in. Clone the plugin repository and run the installer against your project:
 
-## Add Real-Time Subscriptions
-
-Ask your agent to add a subscription for error messages:
-
-> "Add a subscription that pushes messages containing the word 'error' to consumers in real-time."
-
-The agent should add something like:
-
-```sql
-AlertMessages := SUBSCRIBE SELECT * FROM Messages WHERE LOWER(message) LIKE '%error%';
-```
-
-Run the production version to test subscriptions:
 ```bash
-docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd run messenger-prod-package.json
+git clone https://github.com/DataSQRL/datasqrl-plugin
+./datasqrl-plugin/install-skills.sh /path/to/your/repo
 ```
 
-In GraphiQL, start a subscription:
-```graphql
-subscription {
-    AlertMessages {
-        uuid
-        message
-        message_time
-    }
-}
-```
+This copies the skills into `.github/skills/` and `.agents/skills/`. The skills call `codeagent.sh` by name, so it must be on your `PATH`. The installer tells you how to set that up.
 
-In a new browser tab, add an error message:
-```graphql
-mutation {
-    Messages(event: {message: "I found an ERROR! Oh no"}) {
-        message_time
-    }
-}
-```
+</TabItem>
+</Tabs>
 
-The subscription tab should show the message pushed through in real-time.
+### Build Your First Pipeline
 
-## Improving Agent Performance
+#### 1. Describe what you need
 
-Agent performance improves significantly when they understand DataSQRL's capabilities. Point your agent to:
+In your project repository, tell your coding agent what you want to build in plain English:
 
-- **[SQRL Language Reference](/docs/sqrl-language)**: Stream processing semantics, temporal joins, windowed aggregations, and SQRL-specific syntax
-- **[Configuration Guide](/docs/configuration)**: Package configuration, engine selection, and deployment options
+> Build a pipeline that ingests our order data from Kafka in real time and serves hourly revenue per product through an API.
 
-For more complex projects, consider creating a custom instructions file that includes relevant documentation snippets. Agents that understand SQRL patterns like CDC deduplication, temporal enrichment joins, and subscription syntax produce better results with fewer iterations.
+You rarely need to type a skill command. When you describe pipeline work, the DataSQRL workflow starts on its own. In Claude Code, you can also start it explicitly with `/datasqrl:start`.
 
-## Compile for Deployment
+#### 2. Agree on the requirements
 
-Build deployment artifacts:
-```bash
-docker run --rm -v $PWD:/workspace datasqrl/cmd compile messenger-prod-package.json
-```
+Your agent asks clarifying questions about sources, payloads, entities, time semantics, transformations, the API surface, and test data. It then writes a requirements document to `adr/requirements_<ts>.md`. Review it and correct anything that is wrong. Precise requirements produce a better pipeline.
 
-The `build/deploy/plan` directory contains:
-- Flink compiled plans
-- Kafka topic definitions
-- PostgreSQL schemas and views
-- Server queries and GraphQL models
+#### 3. Review the plan
 
-The `build` directory also includes files useful for inspection and verification:
-- `pipeline_visual.html`: Visual representation of the pipeline DAG
-- `pipeline_explain.txt`: Textual DAG representation for coding agents
-- `inferred_schema.graphqls`: Generated GraphQL schema
+The DataSQRL agent turns the requirements into a checkbox-tracked plan at `adr/plan_<ts>.md`. Read through it. This is the point where you steer the design, before anything is built. Ask for changes, or tell your agent the plan looks good to proceed.
+
+#### 4. Let the agent implement
+
+Once you approve the plan, the DataSQRL agent runs the full implement → compile → test → verify → refine loop. An implementation run takes 30–60+ minutes, so it runs **detached**:
+
+- The run belongs to Docker, not to your session. You can close the session, interrupt your agent, or restart your editor, and the run still finishes.
+- The launch prints a `tail -f` command you can run in another terminal to follow the agent's progress live.
+- Your agent waits for the run in the background and reports the result when it ends.
+- Ask your agent at any time whether the run is still going, what its output means, or to stop it (`/datasqrl:progress`). This works from any session, even one that did not start the run.
+- Only one run at a time is allowed per project, so two agents never edit the same files. Different projects can run in parallel.
+
+#### 5. Review the result
+
+When the run finishes, your project contains the SQRL scripts, their tests, and the package configuration. Read the scripts. The whole pipeline, from ingest to API, is expressed in SQL.
+
+Compiling the project also writes files for inspection to the `build` directory:
+
+- `pipeline_visual.html`: an interactive view of the pipeline DAG. Click a node to see its schema, logical plan, and physical plan.
+- `pipeline_explain.txt`: a text version of the DAG with table types, keys, timestamps, and engine assignments.
+- `deploy/plan`: the deployment assets, including Flink plans, Kafka topics, Postgres schemas, and API definitions.
 
 ![DataSQRL Pipeline Visualization](/img/screenshots/dag_messenger.png)
 
-Click nodes in the visualization to inspect schema, logical plan, and physical plan details. The deployment artifacts support human validation of pipeline correctness and quality. You can use them to build an ensemble of judges to provide automatic validation of compliance, governance, and reliability requirements.
+To run the pipeline and its API locally, use the [`run` command](/docs/compiler#run-command). The API is then available at [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/), and via REST and MCP.
 
-## Next Steps
+### Make Changes
 
-You've seen how DataSQRL provides the feedback loop that coding agents need to build production-grade data pipelines. The test command validates agent-generated code, the compiler provides actionable errors, and the simulator ensures real-world correctness.
+For a small, well-scoped change to an existing project, you don't need the full requirements and planning workflow. Ask your agent for a patch (`/datasqrl:patch` in Claude Code). It sends the request straight to the implementing agent, which makes the change, updates the affected tests and documentation, and runs the tests until they pass.
 
-Next:
-- **[Full Documentation](/docs/intro)**: Complete reference and language spec
-- **[Tutorials](examples)**: Learn by building more complex pipelines
-- **[Example Projects](https://github.com/DataSQRL/datasqrl-examples)**: See real-world patterns in action
+> Add an endpoint that returns the total order count and the timestamp of the most recent order.
+
+For larger changes, describe them like a new pipeline and go through requirements and planning again.
+
+### Deploy
+
+**To your own infrastructure:** compile the deployment assets and deploy them to Kubernetes or managed cloud services:
+
+```bash
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile package.json
+```
+
+See the [compiler documentation](/docs/compiler) for details.
+
+**To DataSQRL Cloud:** ask your agent to deploy (`/datasqrl:deploy`). Deployment is always a separate request, never the tail end of an implementation run. It deploys a commit from GitHub, not your working tree, so commit and push first. You also need:
+
+- `curl` and `jq` on your `PATH`
+- A DataSQRL Cloud account with the Member or Owner role, and the project already created and linked to your GitHub repository
+- A browser to approve the sign-in, at most once per session
+
+Deploying adds a new deployment without changing which one the project serves. To make it the main deployment, ask your agent to promote it (`/datasqrl:promote`) once you have seen the deployment succeed.
 
 ## Troubleshooting
 
-- **Ports already in use**: Check if 8888 or 8081 is being used by another app
-- **Agent not understanding SQRL**: Share the [SQRL Language Reference](/docs/sqrl-language) with your agent
-- **Test failures**: Review the error output—DataSQRL provides specific guidance on what to fix
+- **The image pull asks for authentication**: if `ghcr.io/datasqrl/code-agent` is private for you, authenticate with a GitHub token that has the `read:packages` scope.
+- **Mount or path errors on Windows**: run the agent from WSL. Git Bash rewrites the Docker mount paths.
+- **An implementation is refused**: another run is already in progress for this project. Ask your agent about its progress, or to stop it.
+- **Ports already in use when running locally**: check whether ports 8888 or 8081 are used by another application.
+
+## Next Steps
+
+- **[Example Projects](https://github.com/DataSQRL/datasqrl-examples)**: self-contained data products and APIs built with DataSQRL
+- **[SQRL Language Reference](/docs/sqrl-language)**: how to read and review the SQL the agent produces
+- **[Plugin Documentation](https://github.com/DataSQRL/datasqrl-plugin)**: the full reference for the DataSQRL plugin
+- **[Harness Architecture](/blog/agentic-data-engineering-harness)**: the design behind DataSQRL

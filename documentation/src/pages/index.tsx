@@ -1,63 +1,179 @@
 import React from 'react';
-import clsx from 'clsx';
 import Layout from '@theme/Layout';
 import Link from '@docusaurus/Link';
-import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import styles from './index.module.css';
 import useBaseUrl from "@docusaurus/useBaseUrl";
 
-import HomepageFeatures from '../components/HomepageFeatures';
 import HomepageHeader, {HomepageHeaderProps} from '../components/HomepageHeader';
 import CodeBlock from "@theme/CodeBlock";
+import Tabs from '@theme/Tabs';
+import TabItem from '@theme/TabItem';
 
+// Matches the rounded corners of the SVG diagrams
+const roundedImage: React.CSSProperties = {borderRadius: '16px'};
 
 
 const header: HomepageHeaderProps = {
-  title: 'DataSQRL - Data Engineering Harness',
-  tagLine: 'Agentic Data Engineering Harness',
+  title: 'DataSQRL - Agentic Data Engineering Harness',
+  tagLine: 'Data Engineering Harness',
   text: (
       <>
-        The open-source harness that gives coding agents the guardrails, validation, and feedback
-        they need to build production-grade data pipelines.
+        DataSQRL is an open-source toolkit for building data engineering agents
+        designed around human control, correctness, and safety.
       </>
   ),
   buttonLink: 'docs/intro/getting-started',
   buttonText: 'Start Building',
-  image: "/img/diagrams/agentic/harness_overview.svg"
+  image: "/img/diagrams/agentic/harness_toolkit.svg"
 };
 
-export default function Home() {
-  const {siteConfig} = useDocusaurusContext();
+interface Pillar {
+  title: string;
+  claim: string;
+  text: string;
+  link: string;
+  linkText: string;
+}
 
+const pillars: Pillar[] = [
+  {
+    title: 'Human Control',
+    claim: 'One SQL file your team can read.',
+    text: 'Not thousands of lines of Python, dbt, YAML, and glue. The whole pipeline, ' +
+        'from ingest to API, is expressed in SQL you can understand, run, and approve.',
+    link: '/blog/p4-human-understanding-one-sql-file',
+    linkText: 'Why verifiability is the bottleneck',
+  },
+  {
+    title: 'Correctness',
+    claim: 'A compiler instead of guesswork.',
+    text: 'Deterministic generation removes errors at the seams between systems. Relational ' +
+        'validation and event-time replay tests catch the bugs that code review misses.',
+    link: '/blog/p1-broken-at-seams',
+    linkText: 'Where coding agents break pipelines',
+  },
+  {
+    title: 'Safety',
+    claim: 'Guardrails you can inspect and extend.',
+    text: 'Problems surface at compile time. Every compile writes out lineage, schemas, and the ' +
+        'full data flow, so you can enforce your organization\'s policies automatically.',
+    link: '/blog/p2-validator-relational-introspection',
+    linkText: 'What deep introspection catches',
+  },
+];
+
+interface UseCase {
+  title: string;
+  text: string;
+  link?: string;
+  linkText?: string;
+}
+
+const useCases: UseCase[] = [
+  {title: 'Streaming & Batch Pipelines', text: 'CDC, temporal joins, windowed aggregations, and deduplication on Flink, Kafka, and Iceberg.'},
+  {title: 'Data APIs', text: 'GraphQL, REST, and MCP endpoints generated from SQL, with authentication and authorization built in.'},
+  {title: 'Data Products', text: 'Curated, documented, and tested datasets for analytics and downstream teams.'},
+  {title: 'Operational Data', text: 'Low-latency data for applications and AI agents, including embeddings and LLM enrichment.'},
+  {title: 'See It in Action', text: 'Browse data products for a retail bank and self-contained pipelines across finance, healthcare, IoT, logistics, and more.',
+    link: '/docs/intro/examples', linkText: 'Explore the examples'},
+];
+
+function PillarCard({title, claim, text, link, linkText}: Pillar) {
+  return (
+      <div className="col col--4 margin-bottom--lg">
+        <div className="card shadow--md" style={{height: '100%'}}>
+          <div className="card__header">
+            <h3 style={{marginBottom: '0.25rem'}}>{title}</h3>
+            <strong>{claim}</strong>
+          </div>
+          <div className="card__body">
+            <p>{text}</p>
+          </div>
+          <div className="card__footer">
+            <Link to={link}>{linkText} →</Link>
+          </div>
+        </div>
+      </div>
+  );
+}
+
+function UseCaseCard({title, text, link, linkText}: UseCase) {
+  const card = (
+      <div className={link ? 'card shadow--md' : 'card'}
+           style={{height: '100%', ...(link && {border: '2px solid var(--ifm-color-primary)'})}}>
+        <div className="card__body">
+          <h4>{title}</h4>
+          <p className="margin-bottom--none">{text}</p>
+        </div>
+        {link && (
+            <div className="card__footer">
+              <strong>{linkText} →</strong>
+            </div>
+        )}
+      </div>
+  );
+  return (
+      <div className="col margin-bottom--lg">
+        {link
+            ? <Link to={link} style={{color: 'inherit', textDecoration: 'none', display: 'block', height: '100%'}}>{card}</Link>
+            : card}
+      </div>
+  );
+}
+
+export default function Home() {
   return (
       <Layout title={header.title} description={header.tagLine}>
         <HomepageHeader {...header} />
         <main>
           <section className={styles.content}>
-
             <div className="container">
+
+              {/* ---------- The problem ---------- */}
+              <div className="row margin-top--lg margin-bottom--xl">
+                <div className="col col--10 col--offset-1 text--center">
+                  <h2>Agents write data code faster than humans can verify it</h2>
+                  <p className="hero__subtitle">
+                    Writing code is no longer the bottleneck for data teams. Trusting and managing it is.<br />
+                    General-purpose coding agents solve data engineering tasks with dozens of files in multiple languages.
+                    The results look plausible but contain subtle bugs and misalignments that are hard to spot.
+                  </p>
+                  <img src={useBaseUrl("/img/diagrams/agentic/control_comparison.svg")}
+                       alt="A coding agent on its own produces dozens of files; with the DataSQRL harness it produces one readable SQL file that the compiler turns into every deployment asset"
+                       style={{maxWidth: '900px', width: '100%'}}/>
+                </div>
+              </div>
+
+              {/* ---------- Three pillars ---------- */}
+              <div className="row margin-bottom--md">
+                <div className="col text--center">
+                  <h2>Automate data engineering without giving up control</h2>
+                </div>
+              </div>
+              <div className="row margin-bottom--xl">
+                {pillars.map((p) => <PillarCard key={p.title} {...p} />)}
+              </div>
+
+              {/* ---------- 1. Human control ---------- */}
               <div className="row margin-bottom--xl margin-top--lg">
                 <div className="col col--6">
-                  <CodeBlock language="sql">
-                    {`-- Ingest data from connected systems
-IMPORT banking_data.*;
+                  <CodeBlock language="sql" title="banking.sqrl">
+                    {`IMPORT banking_data.*;
 
--- Enrich debit transactions with creditor information using time-consistent join
+-- Latest version of each account from the CDC stream
+Accounts := DISTINCT AccountsCDC ON account_id ORDER BY update_time DESC;
+
+-- Enrich transactions with the account as of transaction time
 SpendingTransactions :=
-    SELECT
-        t.*,
-        h.name AS creditor_name,
-        h.type AS creditor_type
+    SELECT t.*, h.name AS creditor_name, h.type AS creditor_type
     FROM Transactions t
-             JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a
-                  ON t.credit_account_id = a.account_id
-             JOIN AccountHolders FOR SYSTEM_TIME AS OF t.tx_time h
-                  ON a.holder_id = h.holder_id;
+      JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a
+        ON t.credit_account_id = a.account_id
+      JOIN AccountHolders FOR SYSTEM_TIME AS OF t.tx_time h
+        ON a.holder_id = h.holder_id;
 
--- Create secure MCP tooling endpoint with description for agentic retrieval
-/** Retrieve spending transactions within the given time-range.
-  from_time (inclusive) and to_time (exclusive) must be RFC-3339 compliant date time.
-*/
+/** Spending transactions for the authenticated account
+    within [from_time, to_time). Exposed via GraphQL, REST, and MCP. */
 SpendingTransactionsByTime(
   account_id STRING NOT NULL METADATA FROM 'auth.accountId',
   from_time TIMESTAMP NOT NULL,
@@ -65,384 +181,263 @@ SpendingTransactionsByTime(
 ) :=
     SELECT * FROM SpendingTransactions
     WHERE debit_account_id = :account_id
-      AND :from_time <= tx_time
-      AND :to_time > tx_time
+      AND :from_time <= tx_time AND :to_time > tx_time
     ORDER BY tx_time DESC;`}
                   </CodeBlock>
                 </div>
-                <div className="col col--5 text--left">
-                  <h2>SQL: The Logical Layer for Agent Output</h2>
+                <div className="col col--5 col--offset-1 text--left">
+                  <h2>Human Control: Review the Logic, Not the Plumbing</h2>
                   <p className="hero__subtitle">
-                    SQL is ideal for AI-generated data pipelines: its declarative nature enables
-                    deep introspection by the compiler, most LLMs are well-trained on SQL syntax,
-                    and humans can easily verify agent output.
+                    The agent's output is declarative SQL covering ingestion,
+                    transformation, storage, and a secure MCP/REST/GraphQL endpoint.
+                    Easy to understand, review, and argue about.
                   </p>
                   <p className="hero__subtitle">
-                    The relational algebra foundation provides mathematical rigor for deterministic
-                    validation and optimization that agents can rely on.
-                  </p>
-                  <p className="text--center">
-                    <Link className="button button--primary button--lg" to="https://github.com/DataSQRL/datasqrl-examples">
-                      See more Examples
-                    </Link>
+                    Aggregations, units, filters, and joins sit on one screen.
+                    One command runs the whole pipeline locally, API included,
+                    so you can inspect real results and experiment quickly.
                   </p>
                 </div>
               </div>
-              <div className="row margin-bottom--lg margin-top--lg">
-                <div className="col col--6 text--center">
-                  <img src={useBaseUrl("/img/diagrams/agentic/complete_framework.png")}
-                       alt="DataSQRL physical layer optimization"/>
-                </div>
-                <div className="col col--5 text--left">
-                  <h2>Physical Layer Optimization</h2>
-                  <p className="hero__subtitle">
-                    The harness handles what agents struggle with: mapping logical operations to
-                    physical engines. A cost-based optimizer assigns computations to Flink, Kafka,
-                    Postgres, or Iceberg while respecting capability constraints.
-                  </p>
-                  <p className="hero__subtitle">
-                    Schema alignment, data type mapping, and connector configuration are generated
-                    deterministically—eliminating subtle bugs that probabilistic generation introduces.
-                  </p>
-                </div>
-              </div>
-              <div className="row margin-bottom--xl margin-top--lg">
-                <div className="col col--6">
-                  <CodeBlock language="sql">
-                    {`/*+test */
-EnrichedTransactionsTest :=
-    SELECT debit_holder_name,
-           COUNT(*) AS debit_tx_count,
-           SUM(amount) AS total_debit_amount
-    FROM EnrichedTransactions
-    GROUP BY debit_holder_name ORDER BY debit_holder_name ASC;`}
-                  </CodeBlock>
-                </div>
-                <div className="col col--5 text--left">
-                  <h2>Simulation for Real-World Feedback</h2>
-                  <p className="hero__subtitle">
-                    Agents need feedback beyond static validation. The simulator executes pipelines
-                    locally with timestamp-accurate event replay, providing real-world results that
-                    drive iterative refinement.
-                  </p>
-                  <p className="hero__subtitle">
-                    100% reproducibility means agents can test edge cases—late data, race conditions,
-                    schema changes—that only occur rarely in production.
-                  </p>
-                </div>
-              </div>
-              <div className="row margin-bottom--xl margin-top--lg">
-                <div className="col col--6 text--center">
-                  <img src={useBaseUrl("/img/screenshots/banking_dag.png")}
-                       alt="DataSQRL builds the processing DAG"/>
-                </div>
-                <div className="col col--5 text--left">
-                  <h2>Deterministic Artifact Generation</h2>
-                  <p className="hero__subtitle">
-                    The transpiler generates deployment artifacts from the optimized DAG: Flink plans,
-                    Kafka topics, Postgres schemas, GraphQL models. Deterministic generation means
-                    consistent results regardless of how many iterations the agent runs.
-                  </p>
-                  <p className="hero__subtitle">
-                    Agents focus on business logic while the harness handles the complex plumbing
-                    that would otherwise introduce data inconsistencies.
-                  </p>
-                </div>
-              </div>
-              <div className="row margin-bottom--xl margin-top--lg">
-                <div className="col col--6">
-                  <CodeBlock language="sql">
-                    {`IMPORT stdlib.openai.*;
 
-ContentEmbedding :=
-    SELECT
-      vector_embedd(text, 'text-embedding-3-small') AS embedding,
-      completions(concat('Summarize:', text), 'gpt-6-luna') AS summary
-    FROM Content;
-`}
-                  </CodeBlock>
-                </div>
-                <div className="col col--5 text--left">
-                  <h2>AI-Native Data Processing</h2>
-                  <p className="hero__subtitle">
-                    Built-in functions for vector embeddings, LLM invocation, and ML model inference.
-                    Agents can generate pipelines that incorporate AI capabilities without needing
-                    to understand the underlying integration complexity.
-                  </p>
-                </div>
-              </div>
+              {/* ---------- 2. Correctness: compiler ---------- */}
               <div className="row margin-bottom--xl margin-top--lg">
                 <div className="col col--6 text--center">
-                  <img src={useBaseUrl("/img/diagrams/architecture_proven_oss.png")}
-                       alt="DataSQRL compiles to proven open-source technologies"/>
+                  <img src={useBaseUrl("/img/diagrams/agentic/complete_framework_clean.svg")}
+                       alt="DataSQRL compiles one logical model into assets for every engine"
+                       style={roundedImage}/>
                 </div>
-                <div className="col col--5 text--left">
-                  <h2>Non-Functional Requirements Built In</h2>
+                <div className="col col--5 col--offset-1 text--left">
+                  <h2>Correctness: Deterministic Where It Matters</h2>
                   <p className="hero__subtitle">
-                    The harness encodes requirements that agents struggle with: scalability through
-                    proper partitioning, reliability through proven technologies like Flink and Kafka,
-                    and consistency through exactly-once semantics.
+                    Language models are probabilistic. Mapping types, keys, schemas, and connectors
+                    across Flink, Kafka, Postgres, Iceberg, and the API layer requires strict
+                    rule-following that's better handled by a compiler.
                   </p>
                   <p className="hero__subtitle">
-                    Agent-generated code benefits from production-grade infrastructure without
-                    needing to reason about distributed systems complexity.
+                    Every deployment asset is generated from one logical model, so the systems cannot
+                    disagree.
                   </p>
                 </div>
               </div>
-              <div className="row margin-top--lg">
-                <div className="col col--6">
-                  <CodeBlock language="sql">
-                    {`-- Create a relationship between holder and accounts
-AccountHolders.accounts(status STRING) :=
-    SELECT * FROM Accounts a
-    WHERE a.holder_id = this.holder_id AND a.status = :status
-    ORDER BY a.account_type ASC;
 
--- Link accounts with spending transactions
-Accounts.spendingTransactions(since TIMESTAMP NOT NULL) :=
-    SELECT * FROM SpendingTransactions t
-    WHERE t.debit_account_id = this.account_id AND :since <= tx_time
-    ORDER BY tx_time DESC;`}
-                  </CodeBlock>
-                </div>
-                <div className="col col--5 text--left">
-                  <h2>Serving Layer for Data APIs</h2>
-                  <p className="hero__subtitle">
-                    Table functions and relationships extend the logical layer to support data serving.
-                    The harness maps these to GraphQL, REST, and MCP endpoints automatically.
-                  </p>
-                  <p className="hero__subtitle">
-                    Agents define data access patterns in SQL; the harness generates the API schema
-                    and query mappings with proper validation.
-                  </p>
-                </div>
-              </div>
+              {/* ---------- 2b. Correctness: event-time testing ---------- */}
               <div className="row margin-bottom--xl margin-top--lg">
                 <div className="col col--6">
-                  <CodeBlock language="sql">
-                    {`Transactions(account_id STRING METADATA FROM 'auth.acct_id') :=
-    SELECT * FROM SpendingTransactions
-    WHERE debit_account_id = :account_id
-    ORDER BY tx_time DESC;`}
+                  <CodeBlock language="sql" title="tests">
+                    {`-- Snapshot test, replayed at original event timestamps
+/*+ test */
+SpendingByHolderTest :=
+    SELECT creditor_name, COUNT(*) AS tx_count, SUM(amount) AS total
+    FROM SpendingTransactions
+    GROUP BY creditor_name ORDER BY creditor_name;
+
+-- Assert that every transaction was enriched with its creditor
+/*+ test(no_rows) */
+NoUnenrichedTransactions :=
+    SELECT * FROM SpendingTransactions WHERE creditor_name IS NULL;`}
                   </CodeBlock>
                 </div>
-                <div className="col col--5 text--left">
-                  <h2>Security Guardrails</h2>
+                <div className="col col--5 col--offset-1 text--left">
+                  <h2>Correctness: Test the Pipeline in Motion</h2>
                   <p className="hero__subtitle">
-                    The harness enforces security patterns that agents might overlook: JWT authentication,
-                    parameterized queries that prevent injection attacks, and fine-grained authorization.
+                    Static test fixtures miss the bugs that only appear over time. The simulator runs
+                    the real deployment artifacts and replays events at their original timestamps.
                   </p>
                   <p className="hero__subtitle">
-                    Agent-generated code inherits these protections through the transpilation process,
-                    not through prompting the agent to remember security best practices.
+                    Late and out-of-order data, races between streams, idle sources, updates, and
+                    deletes become deterministic tests.
+                  </p>
+                  <Link to="/blog/p3-testing-framework">
+                    Why standard integration tests fall short →
+                  </Link>
+                </div>
+              </div>
+
+              {/* ---------- 3. Safety ---------- */}
+              <div className="row margin-bottom--xl margin-top--lg">
+                <div className="col col--6">
+                  <CodeBlock language="text" title="build/pipeline_explain.txt">
+                    {`=== CustomerTransaction
+Type:   stream
+Stage:  flink
+Inputs: _CardAssignment, _Merchant, sources.Transaction
+Annotations:
+ - stream-root: Transaction
+Primary Key: transactionId, time
+Timestamp  : time
+Schema:
+ - transactionId: BIGINT NOT NULL
+ - cardNo: VARCHAR NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - amount: DOUBLE NOT NULL
+ - merchantName: VARCHAR NOT NULL
+ - customerId: BIGINT NOT NULL`}
+                  </CodeBlock>
+                </div>
+                <div className="col col--5 col--offset-1 text--left">
+                  <h2>Safety: Every Pipeline Is Fully Inspectable</h2>
+                  <p className="hero__subtitle">
+                    Each compile
+                    writes out the complete data flow: table types, inferred keys, timestamps,
+                    schemas, engine assignments, and every deployment asset.
+                  </p>
+                  <p className="hero__subtitle">
+                    Use these artifacts for lineage, impact analysis, and audit. Add custom rules
+                    that enforce your policies on PII, naming, retention, or residency for every
+                    pipeline the agent builds.
                   </p>
                 </div>
               </div>
+
               <div className="row margin-bottom--xl margin-top--lg">
                 <div className="col col--6 text--center">
                   <img src={useBaseUrl("/img/screenshots/banking_dag_expanded.png")}
-                       alt="DataSQRL DAG with full lineage"/>
+                       alt="DataSQRL data flow DAG with full lineage"
+                       style={roundedImage}/>
                 </div>
-                <div className="col col--5 text--left">
-                  <h2>Validation Through Introspection</h2>
+                <div className="col col--5 col--offset-1 text--left">
+                  <h2>Safety: Guardrails by Construction</h2>
                   <p className="hero__subtitle">
-                    The compiler produces detailed representations of the computational DAG: table types,
-                    execution stages, inferred keys, timestamps, and complete schemas. This output
-                    feeds back to agents for iterative refinement.
+                    The compiler rejects invalid engine assignments, capability mismatches, and
+                    inconsistent data flows before anything is deployed.
                   </p>
                   <p className="hero__subtitle">
-                    Data lineage tracking provides governance compliance without agent intervention.
+                    API endpoints use parameterized queries, and authorization is bound to JWT
+                    claims in the SQL itself. Agent-built endpoints get these protections from the
+                    compiler, not from a prompt.
+                  </p>
+                </div>
+              </div>
+
+              {/* ---------- Your harness ---------- */}
+              <div className="row margin-bottom--lg margin-top--xl">
+                <div className="col col--10 col--offset-1 text--center">
+                  <h2>Your Harness, Your Organization</h2>
+                  <p className="hero__subtitle">
+                    Every data organization has its own conventions,
+                    domain vocabulary, compliance requirements,
+                    and target infrastructure. DataSQRL is a harness you use
+                    to build an agent that honors those.
                   </p>
                 </div>
               </div>
               <div className="row margin-bottom--xl">
                 <div className="col col--6">
+                  <table className={styles.table}>
+                    <tbody>
+                    <tr><td><strong>Skills</strong></td><td>How your team gathers requirements, plans, implements, tests, and deploys, plus domain and catalog knowledge</td></tr>
+                    <tr><td><strong>Validators &amp; policies</strong></td><td>Custom compiler rules for governance, security, and data quality</td></tr>
+                    <tr><td><strong>Functions &amp; connectors</strong></td><td>Your UDFs, sources, sinks, and formats</td></tr>
+                    <tr><td><strong>Engines &amp; deployment</strong></td><td>Flink, Kafka, Postgres, Iceberg on Docker, Kubernetes, or cloud</td></tr>
+                    <tr><td><strong>Coding agent</strong></td><td>Claude Code, Codex, OpenCode, Pi, etc: your choice</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div className="col col--5 col--offset-1 text--left">
                   <CodeBlock language="sh">
-                    {`# Agent compiles and gets validation feedback
-docker run --rm -v $PWD:/build \\
-             datasqrl/cmd compile pipeline.sqrl;
-# Agent runs tests and gets real-world feedback
-docker run --rm -v $PWD:/build \\
-             datasqrl/cmd test pipeline.sqrl;
-# Agent iterates until tests pass, then deploys
-docker run --rm -v $PWD:/build \\
-             datasqrl/cmd compile pipeline.sqrl;
-# Deployment artifacts ready for K8s or cloud
-(cd build/deploy/plan; ls)`}
+                    {`# The agent's inner loop, driven by the harness
+# 1. Validate and explain the data flow
+docker run --rm -v $PWD:/workspace \\
+    datasqrl/cmd compile package.json
+# 2. Event-time replay tests
+docker run --rm -v $PWD:/workspace \\
+    datasqrl/cmd test test-package.json
+# 3. Deployment assets for K8s or cloud
+ls build/deploy/plan`}
                   </CodeBlock>
                 </div>
-                <div className="col col--5 text--left">
-                  <h2>Agentic Workflow Integration</h2>
-                  <p className="hero__subtitle">
-                    Simple CLI commands that agents invoke in iterative loops: compile for validation
-                    feedback, test for simulation results, compile again after refinement.
-                  </p>
-                  <p className="hero__subtitle">
-                    Each command produces structured output that agents consume to improve the pipeline
-                    toward production requirements.
-                  </p>
+              </div>
+
+              {/* ---------- Use cases ---------- */}
+              <div className="row margin-bottom--md margin-top--lg">
+                <div className="col text--center">
+                  <h2>What a DataSQRL Data Engineering Agent Builds</h2>
                 </div>
               </div>
-              <div className="row margin-bottom--xl margin-top--lg">
-                <div className="col col--6 text--center">
-                  <img src={useBaseUrl("/img/screenshots/deployment_options.png")}
-                       alt="DataSQRL deployment options"
-                       style={{ height: '300px' }} />
-                </div>
-                <div className="col col--5 text--left">
-                  <h2>Flexible Deployment</h2>
-                  <p className="hero__subtitle">
-                    The same artifacts that run in local simulation deploy to Kubernetes or
-                    cloud-managed services. Agents don't need to reason about deployment targets—the
-                    harness abstracts that complexity.
-                  </p>
-                  <p className="hero__subtitle">
-                    Production telemetry hooks correlate runtime behavior back to source code for
-                    autonomous troubleshooting.
-                  </p>
-                </div>
+              <div className="row margin-bottom--xl">
+                {useCases.map((u) => <UseCaseCard key={u.title} {...u} />)}
               </div>
-              <div className="row margin-bottom--xl margin-top--lg">
-                <div className="col col--6">
-                  <CodeBlock language="sql">
-                    {`CREATE TABLE Transactions (
-  \`timestamp\` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
-  WATERMARK FOR \`timestamp\` AS \`timestamp\`
-) WITH (
-  'connector' = 'kafka',
-  'topic' = 'indicators',
-  'properties.bootstrap.servers' = '\${BOOTSTRAP_SERVERS}',
-  'properties.group.id' = 'mygroup',
-  'scan.startup.mode' = 'earliest-offset',
-  'format' = 'flexible-json'
-);
-`}
-                  </CodeBlock>
-                </div>
-                <div className="col col--5 text--left">
-                  <h2>Connector Configuration</h2>
-                  <p className="hero__subtitle">
-                    Agents generate connector configurations for Kafka, databases, data lakes, and APIs.
-                    The harness validates configuration parameters and handles the integration complexity.
-                  </p>
-                  <p className="hero__subtitle">
-                    Schema discovery and alignment happen automatically during compilation.
-                  </p>
-                </div>
-              </div>
+
               <div className="row margin-bottom--xl margin-top--lg">
                 <div className="col col--6 text--center">
                   <img src={useBaseUrl("/img/screenshots/open_source_technologies.png")}
                        alt="DataSQRL compiles to open-source technologies"
-                       style={{ height: '250px' }} />
+                       style={{...roundedImage, height: '250px'}}/>
                 </div>
-                <div className="col col--5 text--left">
-                  <h2>Extensible Open-Source Framework</h2>
+                <div className="col col--5 col--offset-1 text--left">
+                  <h2>Runs on Infrastructure You Own</h2>
                   <p className="hero__subtitle">
-                    DataSQRL compiles to proven open-source technologies: Flink, Kafka, Postgres, Iceberg.
-                    The framework is extensible—add custom functions, connectors, or execution engines
-                    to build a harness tailored to your organization.
-                  </p>
-                  <p className="hero__subtitle">
-                    Encode domain-specific knowledge into the harness so agents benefit from it automatically.
+                    DataSQRL compiles to Flink, Kafka, Postgres, and Iceberg and deploys to Docker,
+                    Kubernetes, or managed cloud services. There is no proprietary runtime, and the
+                    harness is open source.
                   </p>
                 </div>
               </div>
+
+              {/* ---------- Getting started ---------- */}
               <div className="row margin-bottom--xl margin-top--lg">
                 <div className="col col--6">
-                  <CodeBlock language="sql">
-                    {`-- Deduplicate an update stream to a stateful table
-Accounts := DISTINCT AccountsCDC ON account_id ORDER BY update_time DESC;
+                  <p>
+                    All you need is <Link to="https://www.docker.com/products/docker-desktop/">Docker</Link>{' '}
+                    and an API key from your LLM provider. Run the DataSQRL agent in your project folder:
+                  </p>
+                  <Tabs groupId="os">
+                    <TabItem value="macOS" label="macOS" default>
+                      <CodeBlock language="bash">
+                        {`docker run -e ANTHROPIC_API_KEY -it --rm \\
+  --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM \\
+  -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi`}
+                      </CodeBlock>
+                    </TabItem>
+                    <TabItem value="windows" label="Windows">
+                      <CodeBlock language="powershell">
+                        {`docker run -e ANTHROPIC_API_KEY -it --rm \`
+  --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM \`
+  -v "\${PWD}:/workspace" -w /workspace datasqrl/datasqrl-pi`}
+                      </CodeBlock>
+                    </TabItem>
+                    <TabItem value="linux" label="Linux">
+                      <CodeBlock language="bash">
+                        {`docker run -e ANTHROPIC_API_KEY -it --rm \\
+  --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM \\
+  -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi`}
+                      </CodeBlock>
+                    </TabItem>
+                  </Tabs>
+                  <p>
+                    Using OpenAI, Bedrock, Azure, or Vertex AI? Swap in that provider&apos;s
+                    environment variables, as shown in
+                    the <Link to="/docs/intro/getting-started">getting started guide</Link>.
+                  </p>
+                </div>
+                <div className="col col--5 col--offset-1 text--left">
+                  <h2>Getting Started</h2>
+                  <p className="hero__subtitle">
+                    The agent wraps the Pi coding agent with the DataSQRL framework and skills. Once
+                    it is running, tell it what you need in plain English:
+                  </p>
+                  <blockquote>
+                    Build a pipeline that ingests our order data from Kafka in real time and serves
+                    hourly revenue per product through an API.
+                  </blockquote>
+                  <p>
+                    You get SQL scripts with tests that you can read, run, and verify.
+                  </p>
+                  <p>
+                    Want planning, iterative refinement, and deployment workflows? <Link to="https://github.com/DataSQRL/datasqrl-plugin">Install the
+                    advanced DataSQRL agent</Link> as a plugin for Claude Code, Codex, Cursor, or GitHub
+                    Copilot.
+                  </p>
+                  <Link className="button button--primary button--lg margin-right--sm margin-bottom--sm"
+                        to="/docs/intro/getting-started">Getting Started Guide</Link>
+                  <Link className="button button--secondary button--lg margin-bottom--sm"
+                        to="https://github.com/DataSQRL/datasqrl-plugin">Plugin Docs</Link>
+                </div>
+              </div>
 
--- Join transactions with accounts at the time of the transaction consistently
-SpendingTransactions :=
-    SELECT t.*,
-           h.name AS creditor_name,
-    FROM Transactions t JOIN Accounts FOR SYSTEM_TIME AS OF t.tx_time a
-                        ON t.credit_account_id=a.account_id;
-
--- Aggregate over tumbling time windows
-SpendingByWeek := SELECT
-      account_id,
-      type,
-      window_start AS week,
-      SUM(amount) AS total_spending
-   FROM TABLE(TUMBLE(
-                TABLE SpendingTransactions,
-                DESCRIPTOR(tx_time),
-                INTERVAL '1' DAY
-              ))
-   GROUP BY debit_account_id, type, window_start, window_end;`}
-                  </CodeBlock>
-                </div>
-                <div className="col col--5 text--left">
-                  <h2>Complex Transformations, Simple Syntax</h2>
-                  <p className="hero__subtitle">
-                    CDC deduplication, temporal joins, windowed aggregations—expressed concisely in SQL.
-                    Agents reason about business logic using familiar syntax while the harness handles
-                    the complex stream processing semantics.
-                  </p>
-                  <p className="hero__subtitle">
-                    Custom UDFs extend the vocabulary when SQL alone isn't enough.
-                  </p>
-                </div>
-              </div>
-              <div className="row margin-bottom--xl margin-top--lg">
-                <div className="col col--6">
-                  <CodeBlock language="sql">
-                    {`-- Compute enriched transaction to Iceberg with partition
-/*+engine(iceberg), partition_key(credit_holder_type) */
-EnrichedTransactions := SELECT
-      t.*,
-      hc.name AS credit_holder_name,
-    FROM Transactions t JOIN AccountHolders hc
-                        ON t.credit_holder_id = hc.holder_id;`}
-                  </CodeBlock>
-                </div>
-                <div className="col col--5 text--left">
-                  <h2>Agent Hints as Constraints</h2>
-                  <p className="hero__subtitle">
-                    Agents provide hints to guide the optimizer: force specific engine assignments,
-                    set partition keys, or configure execution parameters. The optimizer respects
-                    these constraints while ensuring consistency.
-                  </p>
-                  <p className="hero__subtitle">
-                    Humans can inject domain knowledge through hints that agents then propagate.
-                  </p>
-                </div>
-              </div>
-              <div className="row margin-bottom--xl margin-top--lg">
-                <div className="col col--6 text--center">
-                  <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden' }}>
-                    <iframe
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
-                        src="https://www.youtube.com/embed/RfMzdrtrEqQ"
-                        title="DataSQRL Agentic Workflow"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                    ></iframe>
-                  </div>
-                </div>
-                <div className="col col--5 text--left">
-                  <h2>See the Harness in Action</h2>
-                  <p className="hero__subtitle">
-                    Watch a coding agent use DataSQRL to build a complete data pipeline—from initial
-                    SQL through iterative refinement to production deployment.
-                  </p>
-                  <p className="hero__subtitle">
-                    The harness guides the agent at every step, providing the feedback needed to
-                    produce pipelines that actually work in production.
-                  </p>
-                  <Link className="button button--primary button--lg margin-right--sm"
-                        to="/docs/intro/getting-started">Get Started</Link>
-                  <Link className="button button--primary button--lg"
-                        to="/blog/agentic-data-engineering-harness">Learn More</Link>
-                </div>
-              </div>
             </div>
           </section>
-
         </main>
       </Layout>
   );
