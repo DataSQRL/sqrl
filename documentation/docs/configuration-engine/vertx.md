@@ -257,6 +257,88 @@ The `audience` field is **required** for Auth0 client credentials requests. With
 - **JWKS endpoint** — Auth0 publishes signing keys at `https://<tenant>.auth0.com/.well-known/jwks.json`. The server fetches these automatically from the OIDC discovery document (`/.well-known/openid-configuration`) and rotates them without restart.
 - **Custom domains** — If your Auth0 tenant uses a custom domain (e.g. `https://auth.example.com/`), use that URL as both `site` and `authorizationServerUrl`.
 
+### OAuth 2.0 with AWS Cognito
+
+Use the Cognito user pool issuer URL as `oauthConfig.oauth2Options.site`:
+
+```text
+https://cognito-idp.<aws-region>.amazonaws.com/<user-pool-id>
+```
+
+Do not use the Cognito Hosted UI domain as `site`; that domain is only for clients obtaining tokens.
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "authKind": ["OAUTH"],
+      "config": {
+        "oauthConfig": {
+          "oauth2Options": {
+            "site": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_ABC123"
+          },
+          "authorizationServerUrl": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_ABC123",
+          "resource": "https://api.example.com/v1/mcp"
+        }
+      }
+    }
+  }
+}
+```
+
+Environment-variable version:
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "authKind": ["OAUTH"],
+      "config": {
+        "oauthConfig": {
+          "oauth2Options": {
+            "site": "${COGNITO_ISSUER}"
+          },
+          "authorizationServerUrl": "${COGNITO_AUTHORIZATION_SERVER_URL}",
+          "resource": "${DATASQRL_MCP_RESOURCE}"
+        }
+      }
+    }
+  }
+}
+```
+
+Pass the variables at compile and server startup time:
+
+```bash
+COGNITO_ISSUER=https://cognito-idp.us-east-1.amazonaws.com/us-east-1_ABC123
+COGNITO_AUTHORIZATION_SERVER_URL=https://cognito-idp.us-east-1.amazonaws.com/us-east-1_ABC123
+DATASQRL_MCP_RESOURCE=https://api.example.com/v1/mcp
+```
+
+For Cognito, `COGNITO_ISSUER` and `COGNITO_AUTHORIZATION_SERVER_URL` usually point to the same public AWS URL.
+
+Clients obtain tokens from Cognito through the configured OAuth flow. For example, a client credentials request uses the Hosted UI domain:
+
+```bash
+curl -s -X POST https://<your-cognito-domain>.auth.<aws-region>.amazoncognito.com/oauth2/token \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -u "<CLIENT_ID>:<CLIENT_SECRET>" \
+  -d "grant_type=client_credentials&scope=api/read"
+```
+
+Send the returned JWT to DataSQRL:
+
+```http
+Authorization: Bearer <cognito-access-token>
+```
+
+:::info
+- Use the issuer value exactly as Cognito publishes it, typically without a trailing slash.
+- Cognito JWKS discovery is automatic through `/.well-known/openid-configuration`.
+- Send a Cognito JWT access token or ID token signed by the user pool.
+- Add server-side validation if you need to enforce `aud`, `client_id`, `scope`, groups, or custom claims.
+:::
+
 ## Cloud Deployment
 
 For cloud deployment configuration (instance sizes, instance counts), see [Cloud Deployment Configuration](cloud-deployment.md#vertx-enginesvertxdeployment).
