@@ -66,6 +66,7 @@ import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableFunctionScan;
 import org.apache.calcite.rel.core.TableScan;
+import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.logical.LogicalAggregate;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.logical.LogicalJoin;
@@ -84,6 +85,7 @@ import org.apache.calcite.util.Pair;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionDefinition;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
+import org.apache.flink.table.planner.hint.FlinkHints;
 import org.apache.flink.table.planner.plan.schema.FlinkPreparingTableBase;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
 import org.apache.flink.table.planner.plan.schema.TimeIndicatorRelDataType;
@@ -208,6 +210,7 @@ public class DAGPlanner {
             });
 
     var streamTableMapping = new HashMap<InputTableKey, ObjectIdentifier>();
+    var sourceHints = collectSourceHints(dag, streamStage);
     final var exportTableCounter = new AtomicInteger(0);
     Function<String, String> uniqueNameFct =
         name -> name + UNIQUE_TABLE_APPENDIX + exportTableCounter.incrementAndGet();
@@ -217,130 +220,138 @@ public class DAGPlanner {
     dag.allNodesByClassAndStage(TableNode.class, streamStage)
         .forEach(
             node -> {
-              var downstreamStages =
-                  new HashSet<
-                      ExecutionStage>(); // We want to only plan each node once for each stage even
-              // if it
-              // is consumed multiple times
-              // We need stable iteration order for reproducibility
-              var downstreamNodes = dag.getOutputs(node).stream().sorted().toList();
-              for (var downstream : downstreamNodes) {
-                if (downstream instanceof ExportNode
-                    || !downstream.getChosenStage().equals(streamStage)) {
-                  // Create sink
-                  ExecutionStage exportStage;
-                  ObjectIdentifier targetTable;
-                  String originalTableName;
-                  if (downstream instanceof ExportNode exportNode) {
-                    originalTableName = exportNode.getSinkPath().getLast().getDisplay();
-                    if (exportNode.getSinkTo().isPresent()) {
-                      exportStage = exportNode.getSinkTo().get();
-                    } else {
-                      // Special case, we sink directly to table
-                      targetTable = exportNode.getCreatedSinkTable().get();
-                      exportNode
-                          .getOriginalInsert()
-                          .ifPresentOrElse(
-                              insert -> sqrlEnv.addRawInsert(insert, exportNode.getBatchIndex()),
-                              () ->
-                                  sqrlEnv.addDirectInsert(
-                                      sqrlEnv
-                                          .getTableScan(node.getIdentifier().objectIdentifier())
-                                          .build(),
-                                      targetTable,
-                                      exportNode.getBatchIndex()));
-                      continue;
-                    }
-                  } else { // We are sinking into another engine
-                    exportStage = downstream.getChosenStage();
-                    originalTableName = node.getTableAnalysis().getName();
-                    if (!downstreamStages.add(
-                        exportStage)) { // we already planned this node for this stage
-                      continue;
-                    }
-                  }
-                  assert exportStage != null;
-                  Preconditions.checkArgument(
-                      exportStage.engine().getType().supportsExport(),
-                      "Execution stage [%s] does not support exporting [%s]",
-                      exportStage,
-                      node);
-                  var exportEngine = (ExportEngine) exportStage.engine();
-                  TableAnalysis originalNodeTable = node.getTableAnalysis(),
-                      sinkNodeTable = originalNodeTable;
-                  var hasStreamConsumer =
-                      dag.getOutputs(node).stream()
-                          .anyMatch(
-                              output ->
-                                  output != downstream
-                                      && (output instanceof ExportNode
-                                          || output.getChosenStage().equals(streamStage)));
-                  if (exportEngine.supports(EngineFeature.MATERIALIZE_ON_KEY)
-                      && node.getTableAnalysis().isMostRecentDistinct()
-                      && !hasStreamConsumer) {
-                    // If we are sinking to a datastore and the node is a most recent distinct, we
-                    // can remove that node when it has no other stream consumers
-                    // since materializing into the table on primary key has the same effect and is
-                    // more efficient
-                    errors.checkFatal(
-                        node.getTableAnalysis().getPrimaryKey().isDefined(),
-                        "Expected primary key: %s",
-                        node);
-                    sinkNodeTable =
-                        ((TableNode) Iterables.getOnlyElement(dag.getInputs(node)))
-                            .getTableAnalysis();
-                  }
-                  var relBuilder = sqrlEnv.getTableScan(sinkNodeTable.getObjectIdentifier());
-                  var tblBuilder = new FlinkTableBuilder();
-                  tblBuilder.setName(uniqueNameFct.apply(originalTableName));
-                  // #1st: determine primary key and partition key (if present)
-                  var pk = determinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
-                  if (pk.isDefined()) {
-                    var fields = relBuilder.peek().getRowType().getFieldList();
-                    var pkColNames =
-                        pk.asSimpleList().stream()
-                            .map(fields::get)
-                            .map(RelDataTypeField::getName)
-                            .collect(Collectors.toList());
-                    tblBuilder.setPrimaryKey(pkColNames);
-                  }
-                  if (exportEngine.supports(EngineFeature.PARTITIONING)) {
-                    originalNodeTable
-                        .getHints()
-                        .getHint(PartitionKeyHint.class)
-                        .ifPresent(
-                            partitionKeyHint -> {
-                              var partitionKey = partitionKeyHint.getColumnNames();
-                              tblBuilder.setPartition(partitionKey);
-                            });
-                  }
-
-                  // #2nd: apply type casting
-                  mapTypes(
-                      relBuilder,
-                      sqrlEnv,
-                      originalNodeTable.getRowTime().orElse(-1),
-                      exportEngine.getTypeMapping(),
-                      Direction.TO_DATABASE);
-
-                  // #3rd: create table
-                  var datatype = relBuilder.peek().getRowType();
-                  tblBuilder.setColumns(datatype);
-                  var createdTable =
-                      exportEngine.createTable(
-                          exportStage, originalTableName, tblBuilder, datatype, originalNodeTable);
-                  exportPlans.get(exportStage).table(createdTable);
-                  targetTable = sqrlEnv.createSinkTable(tblBuilder);
-                  streamTableMapping.put(
-                      new InputTableKey(exportStage, originalNodeTable.getObjectIdentifier()),
-                      targetTable);
-                  // Finally: add insert statement to sink into table
-                  sqrlEnv.addInsert(
-                      relBuilder.build(),
-                      targetTable,
-                      originalNodeTable,
-                      exportEngine.isUpsertSink(tblBuilder));
+              var downstreamStages = new HashSet<ExecutionStage>();
+              // Sort downstream nodes for reproducible materialization names.
+              for (var downstream : dag.getOutputs(node).stream().sorted().toList()) {
+                if (!(downstream instanceof ExportNode)
+                    && downstream.getChosenStage().equals(streamStage)) {
+                  continue;
                 }
+                List<RelHint> readHints = List.of();
+                // Create sink
+                ExecutionStage exportStage;
+                ObjectIdentifier targetTable;
+                String originalTableName;
+                if (downstream instanceof ExportNode exportNode) {
+                  originalTableName = exportNode.getSinkPath().getLast().getDisplay();
+                  if (exportNode.getSinkTo().isPresent()) {
+                    exportStage = exportNode.getSinkTo().get();
+                  } else {
+                    // Special case, we sink directly to table
+                    targetTable = exportNode.getCreatedSinkTable().get();
+                    exportNode
+                        .getOriginalInsert()
+                        .ifPresentOrElse(
+                            insert -> sqrlEnv.addRawInsert(insert, exportNode.getBatchIndex()),
+                            () ->
+                                sqrlEnv.addDirectInsert(
+                                    sqrlEnv
+                                        .getTableScan(node.getIdentifier().objectIdentifier())
+                                        .build(),
+                                    targetTable,
+                                    exportNode.getBatchIndex()));
+                    continue;
+                  }
+                } else { // We are sinking into another engine
+                  exportStage = downstream.getChosenStage();
+                  originalTableName = node.getTableAnalysis().getName();
+                  var key =
+                      new InputTableKey(exportStage, node.getTableAnalysis().getObjectIdentifier());
+                  if (!node.isSource() && sourceHints.containsKey(key)) {
+                    // The physical source materializes this table; its logical source view shares
+                    // that materialization.
+                    continue;
+                  }
+                  if (!downstreamStages.add(exportStage)) {
+                    // A node can feed a stage through multiple DAG edges, but needs only one
+                    // materialization there.
+                    continue;
+                  }
+                  readHints = sourceHints.getOrDefault(key, List.of());
+                }
+                assert exportStage != null;
+                Preconditions.checkArgument(
+                    exportStage.engine().getType().supportsExport(),
+                    "Execution stage [%s] does not support exporting [%s]",
+                    exportStage,
+                    node);
+                var exportEngine = (ExportEngine) exportStage.engine();
+                TableAnalysis originalNodeTable = node.getTableAnalysis(),
+                    sinkNodeTable = originalNodeTable;
+                var hasStreamConsumer =
+                    dag.getOutputs(node).stream()
+                        .anyMatch(
+                            output ->
+                                output != downstream
+                                    && (output instanceof ExportNode
+                                        || output.getChosenStage().equals(streamStage)));
+                if (exportEngine.supports(EngineFeature.MATERIALIZE_ON_KEY)
+                    && node.getTableAnalysis().isMostRecentDistinct()
+                    && !hasStreamConsumer) {
+                  // A most-recent-distinct node with no other stream consumers can be replaced
+                  // by materializing its input on the primary key in the datastore.
+                  errors.checkFatal(
+                      node.getTableAnalysis().getPrimaryKey().isDefined(),
+                      "Expected primary key: %s",
+                      node);
+                  sinkNodeTable =
+                      ((TableNode) Iterables.getOnlyElement(dag.getInputs(node)))
+                          .getTableAnalysis();
+                }
+                var relBuilder =
+                    sqrlEnv.getTableScan(sinkNodeTable.getObjectIdentifier(), readHints);
+                var tblBuilder = new FlinkTableBuilder();
+                tblBuilder.setName(uniqueNameFct.apply(originalTableName));
+                // #1st: determine primary key and partition key (if present)
+                var pk = determinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
+                if (pk.isDefined()) {
+                  var fields = relBuilder.peek().getRowType().getFieldList();
+                  var pkColNames =
+                      pk.asSimpleList().stream()
+                          .map(fields::get)
+                          .map(RelDataTypeField::getName)
+                          .collect(Collectors.toList());
+                  tblBuilder.setPrimaryKey(pkColNames);
+                }
+                if (exportEngine.supports(EngineFeature.PARTITIONING)) {
+                  originalNodeTable
+                      .getHints()
+                      .getHint(PartitionKeyHint.class)
+                      .ifPresent(
+                          partitionKeyHint -> {
+                            var partitionKey = partitionKeyHint.getColumnNames();
+                            tblBuilder.setPartition(partitionKey);
+                          });
+                }
+
+                // #2nd: apply type casting
+                mapTypes(
+                    relBuilder,
+                    sqrlEnv,
+                    originalNodeTable.hasRowType()
+                        ? originalNodeTable.getRowTime().orElse(-1)
+                        : CalciteUtil.findBestRowTimeIndex(relBuilder.peek().getRowType())
+                            .orElse(-1),
+                    exportEngine.getTypeMapping(),
+                    Direction.TO_DATABASE);
+
+                // #3rd: create table
+                var datatype = relBuilder.peek().getRowType();
+                tblBuilder.setColumns(datatype);
+                var createdTable =
+                    exportEngine.createTable(
+                        exportStage, originalTableName, tblBuilder, datatype, originalNodeTable);
+                exportPlans.get(exportStage).table(createdTable);
+                targetTable = sqrlEnv.createSinkTable(tblBuilder);
+                streamTableMapping.put(
+                    new InputTableKey(exportStage, originalNodeTable.getObjectIdentifier()),
+                    targetTable);
+                // Finally: add insert statement to sink into table
+                sqrlEnv.addInsert(
+                    relBuilder.build(),
+                    targetTable,
+                    originalNodeTable,
+                    exportEngine.isUpsertSink(tblBuilder));
               }
             });
 
@@ -454,8 +465,9 @@ public class DAGPlanner {
       FlinkRelBuilder relBuilder,
       Sqrl2FlinkSQLTranslator sqrlEnv,
       ExecutionStage stage) {
-    var pk = table.getSimplePrimaryKey();
-    var numCols = table.getRowType().getFieldCount();
+    var rowType = relBuilder.peek().getRowType();
+    var pk = table.getPrimaryKey().makeSimple(rowType);
+    var numCols = rowType.getFieldCount();
     List<Integer> addHashColumn = null;
     if (pk.isDefined() && pk.getLength() == 0) {
       // need to add a constant at the end so we have an actual pk column which is required by most
@@ -479,7 +491,7 @@ public class DAGPlanner {
     } else {
       var hasNullPk =
           pk.asSimpleList().stream()
-              .map(table::getField)
+              .map(rowType.getFieldList()::get)
               .map(RelDataTypeField::getType)
               .anyMatch(RelDataType::isNullable);
       // we hash all the pk columns if it is required that they are not null
@@ -595,6 +607,70 @@ public class DAGPlanner {
   }
 
   public record InputTableKey(ExecutionStage stage, ObjectIdentifier tableId) {}
+
+  private Map<InputTableKey, List<RelHint>> collectSourceHints(
+      PipelineDAG dag, ExecutionStage streamStage) {
+    var hintsByTable = new HashMap<InputTableKey, List<RelHint>>();
+    for (var source : dag.allNodesByClassAndStage(TableNode.class, streamStage).toList()) {
+      if (!source.isSource()) {
+        continue;
+      }
+      for (var downstream : dag.getOutputs(source)) {
+        if (downstream instanceof ExportNode) {
+          continue;
+        }
+        var stage = downstream.getChosenStage();
+        if (stage.equals(streamStage)) {
+          continue;
+        }
+        var key = new InputTableKey(stage, source.getTableAnalysis().getObjectIdentifier());
+        var hints = sourceReadHints(source, downstream);
+        var existing = hintsByTable.putIfAbsent(key, hints);
+        errors.checkFatal(
+            existing == null || existing.equals(hints),
+            "Conflicting Flink source hints for [%s] in stage [%s]: one materialized table cannot use different source reads",
+            key.tableId(),
+            stage.name());
+      }
+    }
+    return hintsByTable;
+  }
+
+  /** Finds the source hints that must survive the cut to a downstream materialization stage. */
+  private List<RelHint> sourceReadHints(TableNode source, PipelineNode downstream) {
+    if (!source.isSource() || !(downstream instanceof PlannedNode plannedNode)) {
+      return List.of();
+    }
+    var relNode = plannedNode.getAnalysis().getRelNode();
+    if (relNode == null) {
+      return List.of();
+    }
+
+    var tableId = source.getTableAnalysis().getObjectIdentifier();
+    var reads = new ArrayList<TableScan>();
+    relNode.accept(
+        new RelShuttleImpl() {
+          @Override
+          public RelNode visit(TableScan scan) {
+            if (scan.getTable() instanceof TableSourceTable sourceTable
+                && sourceTable.contextResolvedTable().getIdentifier().equals(tableId)) {
+              reads.add(scan);
+            }
+            return scan;
+          }
+        });
+    var hints = reads.isEmpty() ? List.<RelHint>of() : sourceReadHints(reads.get(0));
+    errors.checkFatal(
+        reads.stream().allMatch(scan -> sourceReadHints(scan).equals(hints)),
+        "Conflicting Flink source hints for [%s] in [%s]: one materialized table cannot use different source reads",
+        source.getIdentifier(),
+        downstream.getId());
+    return hints;
+  }
+
+  private static List<RelHint> sourceReadHints(TableScan scan) {
+    return scan.getHints().stream().filter(hint -> !FlinkHints.isAliasHint(hint.hintName)).toList();
+  }
 
   /** Expands the views in a query that are executed in the same execution stage. */
   @AllArgsConstructor

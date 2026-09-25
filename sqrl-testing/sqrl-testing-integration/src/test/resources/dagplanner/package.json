@@ -4,6 +4,7 @@
     "main": "__SQRL_SCRIPT__"
   },
   "compiler": {
+    "compile-flink-plan": __COMPILE_FLINK_PLAN__,
     "explain": {
       "sql": true,
       "logical": true,
