@@ -99,6 +99,38 @@ WITH (
   'topic' = 'kafka-mutation-SensorReadingMutation'
 )
 LIKE `_SensorReading_schema`
+>>>pipeline_mutation_database.json
+{
+  "tables" : [ {
+    "canonicalName" : "SensorReadingMutation",
+    "engine" : "kafka",
+    "createTableSql" : "CREATE TABLE `SensorReadingMutation` (\n  `testField` DOUBLE,\n  `recordedTime` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',\n  WATERMARK FOR `recordedTime` AS `recordedTime` - INTERVAL '0.0' SECOND\n)\nWITH (\n  'connector' = 'kafka-safe',\n  'flexible-json.timestamp-format.standard' = 'ISO-8601',\n  'format' = 'flexible-json',\n  'properties.auto.offset.reset' = 'earliest',\n  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',\n  'properties.compression.type' = 'zstd',\n  'properties.group.id' = '${KAFKA_GROUP_ID}',\n  'topic' = 'kafka-mutation-SensorReadingMutation'\n)\nLIKE `_SensorReading_schema`",
+    "definition" : {
+      "columns" : [ {
+        "name" : "uuid",
+        "spec" : "STRING NOT NULL"
+      }, {
+        "name" : "sensorid",
+        "spec" : "BIGINT NOT NULL"
+      }, {
+        "name" : "epoch_timestamp",
+        "spec" : "BIGINT NOT NULL"
+      }, {
+        "name" : "temperature",
+        "spec" : "DOUBLE NOT NULL"
+      }, {
+        "name" : "testField",
+        "spec" : "DOUBLE"
+      }, {
+        "name" : "recordedTime",
+        "spec" : "TIMESTAMP_LTZ(3) *ROWTIME* METADATA FROM 'timestamp'"
+      } ],
+      "primaryKey" : [ ],
+      "partitionKey" : [ ]
+    },
+    "configOptions" : { }
+  } ]
+}
 >>>flink-sql-no-functions.sql
 CREATE TABLE `_SensorReading_schema` (
   `uuid` STRING NOT NULL,
