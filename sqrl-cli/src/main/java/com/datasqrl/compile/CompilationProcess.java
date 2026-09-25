@@ -81,7 +81,7 @@ public class CompilationProcess {
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);
-    var mutationDatabase = physicalPlan.getMutationDatabase();
+    var mutationDatabase = physicalPlan.getMutationDatabase(environment);
     dagWriter.run(dag, planner.getCompleteScript().toString(), mutationDatabase);
 
     TestPlan testPlan = null;

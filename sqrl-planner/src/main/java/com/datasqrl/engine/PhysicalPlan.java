@@ -44,8 +44,8 @@ public class PhysicalPlan {
     return StreamUtil.filterByClass(stagePlans.stream().map(PhysicalStagePlan::plan), clazz);
   }
 
-  public MutationDatabaseModel getMutationDatabase() {
-    return MutationDatabase.from(mutationTables.values());
+  public MutationDatabaseModel getMutationDatabase(Sqrl2FlinkSQLTranslator sqrlEnv) {
+    return MutationDatabase.from(mutationTables.values(), sqrlEnv);
   }
 
   public PhysicalPlan applyRewriting(
