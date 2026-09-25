@@ -22,13 +22,14 @@ import com.google.auto.service.AutoService;
 import java.util.Map;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 
 @AutoService(SqlConverters.class)
 public class FlinkSqlConverters implements SqlConverters {
 
   @Override
-  public SqlNode convert(RelNode relNode, Map<String, String> tableNameMapping) {
+  public SqlNode convert(RelNode relNode, Map<String, SqlIdentifier> tableNameMapping) {
     throw new UnsupportedOperationException();
   }
 
