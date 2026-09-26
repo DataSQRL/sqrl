@@ -50,7 +50,9 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.sql.SqlDataTypeSpec;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParserPos;
 
 public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
 
@@ -103,7 +105,9 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
     }
 
     var tableNameMapping = new HashMap<>(getTableNameMapping(tableIdMap));
-    ctes.forEach(cte -> tableNameMapping.put(cte.tableId(), cte.name()));
+    ctes.forEach(
+        cte ->
+            tableNameMapping.put(cte.tableId(), new SqlIdentifier(cte.name(), SqlParserPos.ZERO)));
 
     var materializedTableIds =
         ctes.stream().map(MaterializedScanCte::tableId).collect(Collectors.toSet());
@@ -131,7 +135,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
         query.function().getDocumentation());
   }
 
-  private String toSql(RelNode relNode, Map<String, String> tableNameMapping) {
+  private String toSql(RelNode relNode, Map<String, SqlIdentifier> tableNameMapping) {
     var rewrittenRelNode = dialectCallConverter.convert(relNode);
     return sqlConverters.convert(sqlConverters.convert(rewrittenRelNode, tableNameMapping));
   }

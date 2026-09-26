@@ -38,7 +38,7 @@ public class GenericCreateViewDdlFactory {
   public String createView(SqlIdentifier viewName, List<String> columns, String select) {
     var colStr = columns.stream().map(identifierQuoter::quote).collect(Collectors.joining(", "));
 
-    return "CREATE OR REPLACE VIEW %s (%s) AS %s"
+    return "CREATE OR REPLACE VIEW %s(%s) AS %s"
         .formatted(quoteIdentifier(viewName), colStr, select);
   }
 
