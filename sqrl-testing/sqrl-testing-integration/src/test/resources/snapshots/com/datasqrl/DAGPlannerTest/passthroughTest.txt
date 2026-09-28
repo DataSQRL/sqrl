@@ -256,7 +256,7 @@ END
     {
       "name" : "PassThroughTable",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"PassThroughTable\" (\"id\", \"updateTime\") AS SELECT id, time AS updateTime FROM \"FilteredOrders\"",
+      "sql" : "CREATE OR REPLACE VIEW \"PassThroughTable\"(\"id\", \"updateTime\") AS SELECT id, time AS updateTime FROM \"FilteredOrders\"",
       "fields" : [
         {
           "name" : "id",

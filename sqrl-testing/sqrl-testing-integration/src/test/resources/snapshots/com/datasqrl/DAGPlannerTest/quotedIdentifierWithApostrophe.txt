@@ -434,7 +434,7 @@ END
     {
       "name" : "PassThroughApostrophe",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"PassThroughApostrophe\" (\"customerid\") AS SELECT customerid FROM \"AfterAlias\" AS \"it's\"",
+      "sql" : "CREATE OR REPLACE VIEW \"PassThroughApostrophe\"(\"customerid\") AS SELECT customerid FROM \"AfterAlias\" AS \"it's\"",
       "fields" : [
         {
           "name" : "customerid",
@@ -446,7 +446,7 @@ END
     {
       "name" : "PassThroughBacktick",
       "type" : "VIEW",
-      "sql" : "CREATE OR REPLACE VIEW \"PassThroughBacktick\" (\"customerid\") AS SELECT customerid FROM \"AfterAlias\" AS \"a`b\"",
+      "sql" : "CREATE OR REPLACE VIEW \"PassThroughBacktick\"(\"customerid\") AS SELECT customerid FROM \"AfterAlias\" AS \"a`b\"",
       "fields" : [
         {
           "name" : "customerid",

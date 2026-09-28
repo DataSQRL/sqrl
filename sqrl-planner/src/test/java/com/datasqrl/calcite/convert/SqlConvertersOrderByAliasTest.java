@@ -34,12 +34,31 @@ import org.apache.calcite.rel.logical.LogicalProject;
 import org.apache.calcite.rel.logical.LogicalSort;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rex.RexBuilder;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
+import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 class SqlConvertersOrderByAliasTest {
+
+  @Test
+  void givenMultipartTableIdentifier_whenConvertToRedshiftSql_thenQualifiesEachIdentifierPart() {
+    var converters = SqlConvertersFactory.get(Dialect.REDSHIFT);
+    var sql =
+        converters.convert(
+            converters.convert(
+                sortBySourceIdDesc("rid"),
+                Map.of(
+                    "Records",
+                    new SqlIdentifier(
+                        List.of("awsdatacatalog", "sqrl", "deployment_orders"),
+                        SqlParserPos.ZERO))));
+
+    assertThat(sql).contains("FROM \"awsdatacatalog\".\"sqrl\".\"deployment_orders\"");
+  }
 
   @ParameterizedTest
   @EnumSource(

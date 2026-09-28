@@ -50,10 +50,11 @@ import org.apache.flink.calcite.shaded.com.google.common.collect.ImmutableList;
  */
 public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.RelToSqlConverter {
 
-  /** Mapping of table names to rename tables */
-  private final Map<String, String> tableNameMapping;
+  /** Mapping of planner table names to physical table identifiers. */
+  private final Map<String, SqlIdentifier> tableNameMapping;
 
-  public RelToSqlConverterWithHints(SqlDialect dialect, Map<String, String> tableNameMapping) {
+  public RelToSqlConverterWithHints(
+      SqlDialect dialect, Map<String, SqlIdentifier> tableNameMapping) {
     super(dialect);
     this.tableNameMapping = tableNameMapping;
   }
@@ -151,10 +152,12 @@ public class RelToSqlConverterWithHints extends org.apache.calcite.rel.rel2sql.R
     var result = super.visit(e);
     if (result.node instanceof SqlIdentifier tableId) {
       var originalTableName = tableId.names.get(tableId.names.size() - 1);
-      var newTableName = tableNameMapping.get(originalTableName);
-      if (newTableName == null) newTableName = originalTableName;
-      if (tableId.names.size() > 1 || !newTableName.equals(originalTableName)) {
-        var simpleId = new SqlIdentifier(newTableName, SqlParserPos.ZERO);
+      var mappedTableId = tableNameMapping.get(originalTableName);
+      if (mappedTableId != null) {
+        return this.result(mappedTableId, ImmutableList.of(Clause.FROM), e, (Map) null);
+      }
+      if (tableId.names.size() > 1) {
+        var simpleId = new SqlIdentifier(originalTableName, SqlParserPos.ZERO);
         return this.result(simpleId, ImmutableList.of(Clause.FROM), e, (Map) null);
       }
     }

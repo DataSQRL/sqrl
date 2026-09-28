@@ -25,6 +25,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.rel2sql.RelToSqlConverterWithHints;
 import org.apache.calcite.sql.CalciteFixes;
 import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 
@@ -36,7 +37,7 @@ abstract class AbstractSqlConverters implements SqlConverters {
   private final boolean appendSelectLists;
 
   @Override
-  public final SqlNode convert(RelNode relNode, Map<String, String> tableNameMapping) {
+  public final SqlNode convert(RelNode relNode, Map<String, SqlIdentifier> tableNameMapping) {
     var sqlNode =
         new RelToSqlConverterWithHints(calciteSqlDialect, tableNameMapping)
             .visitRoot(relNode)

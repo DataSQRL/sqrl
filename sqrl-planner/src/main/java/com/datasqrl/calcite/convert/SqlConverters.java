@@ -19,6 +19,7 @@ import com.datasqrl.calcite.Dialect;
 import java.util.Map;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.sql.SqlDialect;
+import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 
 /** Provides conversions to SQL representations for a specific dialect. */
@@ -28,10 +29,10 @@ public interface SqlConverters {
    * Converts a relational plan to a SQL node for this converter's dialect.
    *
    * @param relNode relational plan to convert
-   * @param tableNameMapping mapping from planner table identifiers to physical table names
+   * @param tableNameMapping mapping from planner table identifiers to physical table identifiers
    * @return the dialect-specific SQL node
    */
-  SqlNode convert(RelNode relNode, Map<String, String> tableNameMapping);
+  SqlNode convert(RelNode relNode, Map<String, SqlIdentifier> tableNameMapping);
 
   /**
    * Serializes a SQL node as SQL for this converter's dialect.

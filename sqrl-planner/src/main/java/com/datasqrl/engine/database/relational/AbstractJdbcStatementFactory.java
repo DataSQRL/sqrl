@@ -21,7 +21,6 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.convert.SqlConverters;
 import com.datasqrl.calcite.convert.SqlConvertersFactory;
-import com.datasqrl.calcite.dialect.postgres.SqlCreatePostgresView;
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.deployment.model.JdbcStatementModel.Field;
 import com.datasqrl.deployment.model.JdbcStatementModel.PartitionType;
@@ -61,7 +60,6 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
@@ -107,10 +105,13 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         query.function().getDocumentation());
   }
 
-  protected static Map<String, String> getTableNameMapping(
+  protected Map<String, SqlIdentifier> getTableNameMapping(
       Map<String, JdbcEngineCreateTable> tableIdMap) {
     return tableIdMap.entrySet().stream()
-        .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().tableName()));
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                e -> new SqlIdentifier(e.getValue().tableName(), SqlParserPos.ZERO)));
   }
 
   @Override
@@ -149,7 +150,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       String viewName,
       RelNode relNode,
       boolean withView,
-      Map<String, String> tableNameMapping,
+      Map<String, SqlIdentifier> tableNameMapping,
       Documented.Documentation documentation) {
     var rewrittenRelNode = dialectCallConverter.convert(relNode);
     var sqlNode = sqlConverters.convert(rewrittenRelNode, tableNameMapping);
@@ -266,15 +267,6 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         documentation.getColumn(field.getName(), null));
   }
 
-  protected String createView(
-      SqlIdentifier viewNameIdentifier, SqlNodeList columnList, SqlNode viewSqlNode) {
-    var createView =
-        new SqlCreatePostgresView(
-            SqlParserPos.ZERO, true, viewNameIdentifier, columnList, viewSqlNode);
-
-    return sqlConverters.convert(createView);
-  }
-
   protected Set<DatabaseTypeExtension> extractTypeExtensions(
       Stream<RelNode> relNodes, List<DatabaseTypeExtension> extensions) {
     return relNodes
@@ -332,14 +324,11 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       RelDataType rowType,
       SqlNode sqlNode,
       Documented.Documentation documentation) {
-    var viewNameIdentifier = getCreateViewDdlFactory().getViewIdentifier(viewName);
-    var columnList =
-        new SqlNodeList(
-            rowType.getFieldList().stream()
-                .map(f -> new SqlIdentifier(f.getName(), SqlParserPos.ZERO))
-                .collect(Collectors.toList()),
-            SqlParserPos.ZERO);
-    var viewSql = createView(viewNameIdentifier, columnList, sqlNode);
+    var viewDdlFactory = getCreateViewDdlFactory();
+    var viewNameIdentifier = viewDdlFactory.getViewIdentifier(viewName);
+    var viewSql =
+        viewDdlFactory.createView(
+            viewNameIdentifier, rowType.getFieldNames(), sqlConverters.convert(sqlNode));
 
     return createViewStatement(viewName, rowType, viewSql, documentation);
   }
