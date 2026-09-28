@@ -9,7 +9,7 @@ The basic DataSQRL agent runs as a Docker image on your local machine. It wraps 
 All you need is a recent version of [Docker](https://www.docker.com/products/docker-desktop/) and an API key from the LLM provider you'd like to use.
 
 <Tabs groupId="os">
-<TabItem value="macOS" label="macOS" default>
+<TabItem value="macos" label="macOS" default>
 
 ```bash
 docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi
