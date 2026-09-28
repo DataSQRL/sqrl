@@ -20,6 +20,7 @@ import com.datasqrl.deployment.model.MutationDatabaseModel;
 import com.datasqrl.deployment.model.MutationDatabaseModel.ColumnDefinition;
 import com.datasqrl.deployment.model.MutationDatabaseModel.Table;
 import com.datasqrl.deployment.model.MutationDatabaseModel.TableDefinition;
+import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.RelDataTypeParser.ParsedRelDataTypeResult;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
@@ -31,6 +32,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
+import org.apache.flink.table.catalog.Column;
 import org.apache.flink.table.catalog.UniqueConstraint;
 
 /** Builds and compares {@link MutationDatabaseModel}s during planning. */
@@ -52,8 +54,7 @@ public final class MutationDatabase {
                           .map(
                               node -> {
                                 var name = node.getName();
-                                var entireColumn = node.asSummaryString();
-                                var spec = entireColumn.substring(entireColumn.indexOf(' ') + 1);
+                                var spec = columnSpec(node);
                                 var docs = mutTbl.getDocumentation().getColumn(name, null);
                                 return new ColumnDefinition(name, spec, docs);
                               })
@@ -78,6 +79,24 @@ public final class MutationDatabase {
             .toList();
 
     return new MutationDatabaseModel(tables);
+  }
+
+  /** Returns a SQL column definition without Flink's display-only time-attribute annotations. */
+  private static String columnSpec(Column column) {
+    if (column instanceof Column.ComputedColumn computedColumn) {
+      return "AS " + computedColumn.getExpression().asSerializableString();
+    }
+
+    var type = column.getDataType().getLogicalType().asSerializableString();
+    if (column instanceof Column.MetadataColumn metadataColumn) {
+      var metadataKey =
+          metadataColumn
+              .getMetadataKey()
+              .map(key -> " FROM " + FlinkSqlNodes.createStringLiteral(key))
+              .orElse("");
+      return type + " METADATA" + metadataKey + (metadataColumn.isVirtual() ? " VIRTUAL" : "");
+    }
+    return type;
   }
 
   public static boolean isBackwardsCompatible(

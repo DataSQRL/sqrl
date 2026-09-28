@@ -108,7 +108,7 @@ LIKE `_SensorReading_schema`
     "definition" : {
       "columns" : [ {
         "name" : "uuid",
-        "spec" : "STRING NOT NULL"
+        "spec" : "VARCHAR(2147483647) NOT NULL"
       }, {
         "name" : "sensorid",
         "spec" : "BIGINT NOT NULL"
@@ -123,7 +123,7 @@ LIKE `_SensorReading_schema`
         "spec" : "DOUBLE"
       }, {
         "name" : "recordedTime",
-        "spec" : "TIMESTAMP_LTZ(3) *ROWTIME* METADATA FROM 'timestamp'"
+        "spec" : "TIMESTAMP(3) WITH LOCAL TIME ZONE METADATA FROM 'timestamp'"
       } ],
       "primaryKey" : [ ],
       "partitionKey" : [ ]
