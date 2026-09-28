@@ -30,9 +30,7 @@ import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
-import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
-import org.apache.calcite.sql.SqlNodeList;
 
 public class TrinoStatementFactory extends AbstractJdbcStatementFactory {
   private final EngineConfig engineConfig;
@@ -65,11 +63,6 @@ public class TrinoStatementFactory extends AbstractJdbcStatementFactory {
         TrinoTypeFormatter.format(field.getType()),
         field.getType().isNullable(),
         documentation.getColumn(field.getName(), null));
-  }
-
-  @Override
-  protected String createView(SqlIdentifier viewName, SqlNodeList columns, SqlNode query) {
-    return getCreateViewDdlFactory().createView(viewName, sqlConverters.convert(query));
   }
 
   @Override

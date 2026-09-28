@@ -31,7 +31,6 @@ import java.util.List;
 import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.sql.SqlDynamicParam;
 import org.apache.calcite.sql.SqlIdentifier;
-import org.apache.calcite.sql.SqlNodeList;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.fun.SqlStdOperatorTable;
 import org.apache.calcite.sql.parser.SqlParser;
@@ -97,11 +96,12 @@ class TrinoStatementFactoryTest {
         SqlParser.create("SELECT CAST(NULL AS INTEGER ARRAY) AS \"items\" FROM \"source\"")
             .parseQuery();
     assertThat(
-            factory.createView(
-                new SqlIdentifier("my view", SqlParserPos.ZERO),
-                new SqlNodeList(
-                    List.of(new SqlIdentifier("items", SqlParserPos.ZERO)), SqlParserPos.ZERO),
-                query))
+            factory
+                .getCreateViewDdlFactory()
+                .createView(
+                    new SqlIdentifier("my view", SqlParserPos.ZERO),
+                    List.of("items"),
+                    SqlConvertersFactory.get(Dialect.TRINO).convert(query)))
         .contains(
             "CREATE OR REPLACE VIEW \"my view\" AS SELECT CAST(NULL AS INTEGER ARRAY) AS \"items\"");
     assertThatThrownBy(() -> factory.addIndex(null))
