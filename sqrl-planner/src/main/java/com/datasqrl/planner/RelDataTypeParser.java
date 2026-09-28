@@ -32,6 +32,7 @@ import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
 import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.catalog.ResolvedCatalogTable;
 import org.apache.flink.table.operations.ddl.CreateTableOperation;
 
 @RequiredArgsConstructor(access = AccessLevel.PACKAGE)
@@ -94,12 +95,18 @@ public class RelDataTypeParser {
    * @return the parsed fields, including metadata and computed-column information
    */
   public List<ParsedRelDataTypeResult> parseToRelDataType(String createTableStatement) {
+    var resolvedTable = parseToResolvedTable(createTableStatement);
+
+    return translator.parseSchema(resolvedTable.getResolvedSchema(), true);
+  }
+
+  public ResolvedCatalogTable parseToResolvedTable(String createTableStatement) {
     var sqlNode = translator.parseSQL(createTableStatement);
     sqlNode = resolveLikeSource(sqlNode);
 
     var op = (CreateTableOperation) translator.getOperation(sqlNode);
 
-    return translator.parseSchema(op.getCatalogTable().getResolvedSchema(), true);
+    return op.getCatalogTable();
   }
 
   /**

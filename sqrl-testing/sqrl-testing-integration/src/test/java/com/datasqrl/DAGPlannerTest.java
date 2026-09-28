@@ -80,7 +80,8 @@ public class DAGPlannerTest {
     if (printMessages) {
       snapshotExtension.createMessageSnapshot(hook.getMessages());
     } else {
-      snapshotExtension.createSnapshot(getBuildDirFilter(), getOutputDirFilter(), planDir -> true);
+      snapshotExtension.createSnapshot(
+          getBuildDirFilter(script), getOutputDirFilter(), planDir -> true);
     }
   }
 
@@ -96,14 +97,14 @@ public class DAGPlannerTest {
     return !name.contains("-" + NO_COMPILE_MARKER + "-");
   }
 
-  private Predicate<Path> getBuildDirFilter() {
-    return file -> {
-      switch (file.getFileName().toString()) {
-        case "pipeline_explain.txt":
-          return true;
-      }
-      return false;
-    };
+  private Predicate<Path> getBuildDirFilter(Path script) {
+    return file ->
+        switch (file.getFileName().toString()) {
+          case "pipeline_explain.txt" -> true;
+          case "pipeline_mutation_database.json" ->
+              script.getFileName().toString().equals("createTableLike.sqrl");
+          default -> false;
+        };
   }
 
   private Predicate<Path> getOutputDirFilter() {
