@@ -112,8 +112,8 @@ public final class SnapshotTestSupport {
   }
 
   /**
-   * We extract the TestNameModifier from the end of the filename and use it to set expectations for
-   * the test.
+   * We extract a hyphen-delimited TestNameModifier from the filename and use it to set expectations
+   * for the test.
    */
   public enum TestNameModifier {
     none, // Normal test that we expect to succeed
@@ -129,7 +129,7 @@ public final class SnapshotTestSupport {
       }
       var name = FileUtil.separateExtension(filename).getLeft().toLowerCase();
       return Arrays.stream(TestNameModifier.values())
-          .filter(mod -> name.endsWith(mod.name()))
+          .filter(mod -> name.contains("-" + mod.name() + "-") || name.endsWith("-" + mod.name()))
           .findFirst()
           .orElse(none);
     }

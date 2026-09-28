@@ -83,6 +83,7 @@ import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
 import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableFunctionScan;
+import org.apache.calcite.rel.hint.RelHint;
 import org.apache.calcite.rel.logical.LogicalTableFunctionScan;
 import org.apache.calcite.rel.logical.LogicalTableScan;
 import org.apache.calcite.rel.type.RelDataType;
@@ -416,12 +417,16 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   }
 
   public FlinkRelBuilder getTableScan(ObjectIdentifier identifier) {
+    return getTableScan(identifier, List.of());
+  }
+
+  public FlinkRelBuilder getTableScan(ObjectIdentifier identifier, List<RelHint> hints) {
     var flinkPlanner = this.validatorSupplier.get();
     var relBuilder = flinkSqlNodePlanner.getRelBuilder(flinkPlanner);
     var catalog = flinkSqlNodePlanner.getCalciteCatalog(flinkPlanner);
     relBuilder.push(
         LogicalTableScan.create(
-            flinkPlanner.cluster(), catalog.getTableForMember(identifier.toList()), List.of()));
+            flinkPlanner.cluster(), catalog.getTableForMember(identifier.toList()), hints));
     return relBuilder;
   }
 

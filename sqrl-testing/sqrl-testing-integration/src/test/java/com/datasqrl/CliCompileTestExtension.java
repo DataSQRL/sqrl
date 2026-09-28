@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import lombok.Getter;
@@ -121,14 +122,22 @@ public class CliCompileTestExtension implements BeforeEachCallback, AfterEachCal
    */
   @SneakyThrows
   public void writeTempPackage(Path script, String templateToReplace) {
+    writeTempPackage(script, Map.of(templateToReplace, script.getFileName().toString()));
+  }
+
+  /** Writes a temporary package file after replacing the supplied template variables. */
+  @SneakyThrows
+  public void writeTempPackage(Path script, Map<String, String> templateVariables) {
     var templatePkg = script.getParent().resolve("package.json");
     assertThat(templatePkg).isRegularFile();
 
     var content = Files.readString(templatePkg);
-    assertThat(content)
-        .as("Template package must contain given template string")
-        .contains(templateToReplace);
-    content = content.replace(templateToReplace, script.getFileName().toString());
+    for (var templateVariable : templateVariables.entrySet()) {
+      assertThat(content)
+          .as("Template package must contain template string: %s", templateVariable.getKey())
+          .contains(templateVariable.getKey());
+      content = content.replace(templateVariable.getKey(), templateVariable.getValue());
+    }
 
     if (tempPackage != null) {
       Files.deleteIfExists(tempPackage);
