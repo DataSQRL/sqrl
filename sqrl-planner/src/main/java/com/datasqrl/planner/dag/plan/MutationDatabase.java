@@ -20,7 +20,9 @@ import com.datasqrl.deployment.model.MutationDatabaseModel;
 import com.datasqrl.deployment.model.MutationDatabaseModel.ColumnDefinition;
 import com.datasqrl.deployment.model.MutationDatabaseModel.Table;
 import com.datasqrl.deployment.model.MutationDatabaseModel.TableDefinition;
+import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.planner.RelDataTypeParser.ParsedRelDataTypeResult;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.server.exec.FlinkExecFunction;
 import java.util.Collection;
@@ -30,41 +32,46 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
-import org.apache.flink.sql.parser.ddl.SqlTableColumn;
+import org.apache.flink.table.catalog.Column;
+import org.apache.flink.table.catalog.UniqueConstraint;
 
 /** Builds and compares {@link MutationDatabaseModel}s during planning. */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class MutationDatabase {
 
-  public static MutationDatabaseModel from(Collection<MutationTable> mutationTables) {
+  public static MutationDatabaseModel from(
+      Collection<MutationTable> mutationTables, Sqrl2FlinkSQLTranslator env) {
     var tables =
         mutationTables.stream()
             .map(
                 mutTbl -> {
                   var tblBuilder = mutTbl.getTableBuilder();
+                  var createTableSql = tblBuilder.buildSql(false).toString();
+                  var resolvedTable =
+                      env.getRelDataTypeParser().parseToResolvedTable(createTableSql);
                   var columns =
-                      tblBuilder.getColumnList().getList().stream()
+                      resolvedTable.getResolvedSchema().getColumns().stream()
                           .map(
                               node -> {
-                                if (node instanceof SqlTableColumn column) {
-                                  var name = column.getName().toString();
-                                  var entireColumn = column.toString();
-                                  var spec = entireColumn.substring(entireColumn.indexOf(' ') + 1);
-                                  var docs = mutTbl.getDocumentation().getColumn(name, null);
-                                  return new ColumnDefinition(name, spec, docs);
-                                }
-                                return new ColumnDefinition("", node.toString(), null);
+                                var name = node.getName();
+                                var spec = columnSpec(node);
+                                var docs = mutTbl.getDocumentation().getColumn(name, null);
+                                return new ColumnDefinition(name, spec, docs);
                               })
                           .toList();
                   var definition =
                       new TableDefinition(
                           columns,
-                          tblBuilder.getPrimaryKey().orElse(List.of()),
-                          tblBuilder.getPartition());
+                          resolvedTable
+                              .getResolvedSchema()
+                              .getPrimaryKey()
+                              .map(UniqueConstraint::getColumns)
+                              .orElse(List.of()),
+                          resolvedTable.getPartitionKeys());
                   return new Table(
                       mutTbl.getName().getCanonical(),
                       mutTbl.getStage().name(),
-                      tblBuilder.buildSql(false).toString(),
+                      createTableSql,
                       definition,
                       mutTbl.getCreateTable().getConfig(),
                       mutTbl.getDocumentation().getDocString(null));
@@ -72,6 +79,24 @@ public final class MutationDatabase {
             .toList();
 
     return new MutationDatabaseModel(tables);
+  }
+
+  /** Returns a SQL column definition without Flink's display-only time-attribute annotations. */
+  private static String columnSpec(Column column) {
+    if (column instanceof Column.ComputedColumn computedColumn) {
+      return "AS " + computedColumn.getExpression().asSerializableString();
+    }
+
+    var type = column.getDataType().getLogicalType().asSerializableString();
+    if (column instanceof Column.MetadataColumn metadataColumn) {
+      var metadataKey =
+          metadataColumn
+              .getMetadataKey()
+              .map(key -> " FROM " + FlinkSqlNodes.createStringLiteral(key))
+              .orElse("");
+      return type + " METADATA" + metadataKey + (metadataColumn.isVirtual() ? " VIRTUAL" : "");
+    }
+    return type;
   }
 
   public static boolean isBackwardsCompatible(
@@ -114,9 +139,24 @@ public final class MutationDatabase {
         compatible = false;
       }
 
+      if (!hasUsableSchema(compareTable)) {
+        errors.warn(
+            "Table '%s' has no usable schema in the provided mutation database. Skipping schema compatibility check.",
+            table.canonicalName());
+        continue;
+      }
+
       var parser = env.getRelDataTypeParser();
       var newSchema = parser.parseToRelDataType(table.createTableSql());
-      var oldSchema = parser.parseToRelDataType(compareTable.createTableSql());
+      List<ParsedRelDataTypeResult> oldSchema;
+      try {
+        oldSchema = parser.parseToRelDataType(compareTable.createTableSql());
+      } catch (Exception e) {
+        errors.warn(
+            "Table '%s' has an unreadable schema in the provided mutation database. Skipping schema compatibility check: %s",
+            table.canonicalName(), e.getMessage());
+        continue;
+      }
 
       var oldFieldsByName =
           oldSchema.stream()
@@ -167,5 +207,12 @@ public final class MutationDatabase {
     }
 
     return compatible;
+  }
+
+  private static boolean hasUsableSchema(Table table) {
+    return table.definition() != null
+        && table.definition().columns() != null
+        && table.definition().columns().stream()
+            .anyMatch(column -> column.name() != null && !column.name().isBlank());
   }
 }
