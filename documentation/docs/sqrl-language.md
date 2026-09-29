@@ -418,6 +418,16 @@ Use `/*+ test(no_rows) */` to assert that a test table returns no rows. These te
 Ensure that test tables have a well-defined order and that only predictable columns are selected for the results are stable between test runs.
 :::
 
+For repeatable end-to-end tests, keep connector definitions separate from the main script and select production or fixture sources with a configuration variable:
+
+```sql
+IMPORT connectors.source-{{variant}}.*;
+```
+
+Set `variant` to `prod` in the production package and to `test` in a test package. The test source definitions should expose the same tables as production, but read static JSONL fixtures. Use fixed event timestamps, replace metadata and non-deterministic computed columns with ordinary fixture columns, and add a final record with a later timestamp when a streaming test must advance its watermark.
+
+The test command also executes GraphQL operations from the configured `test-folder`; table and GraphQL results share the `snapshot-folder`. Its first run creates snapshots, and later runs compare against them. Review and commit accepted snapshots, then run the command in CI. See the [`test-runner` configuration](configuration#test-runner-test-runner) for these folders, delays, checkpoints, and request headers.
+
 
 ---
 ## NEXT_BATCH
