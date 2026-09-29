@@ -70,7 +70,7 @@ public class TestCmd extends AbstractCompileCmd {
       formatter.buildStatus(success, getElapsedTime(), LocalDateTime.now());
 
       if (!success) {
-        formatter.helpLink("Help 1", "https://docs.datasqrl.com/docs/howto/testing");
+        formatter.helpLink("Help 1", "https://docs.datasqrl.com/docs/sqrl-language#testing");
         formatter.newline();
       }
     }
