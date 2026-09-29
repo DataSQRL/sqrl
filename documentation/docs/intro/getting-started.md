@@ -12,7 +12,7 @@ All you need is a recent version of [Docker](https://www.docker.com/products/doc
 <TabItem value="macos" label="macOS" default>
 
 ```bash
-docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi
+docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/core-agent
 ```
 
 </TabItem>
@@ -21,14 +21,14 @@ docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -
 Run in PowerShell:
 
 ```powershell
-docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "${PWD}:/workspace" -w /workspace datasqrl/datasqrl-pi
+docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "${PWD}:/workspace" -w /workspace datasqrl/core-agent
 ```
 
 </TabItem>
 <TabItem value="linux" label="Linux">
 
 ```bash
-docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi
+docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/core-agent
 ```
 
 </TabItem>
@@ -180,7 +180,6 @@ Deploying adds a new deployment without changing which one the project serves. T
 
 ## Troubleshooting
 
-- **The image pull asks for authentication**: if `ghcr.io/datasqrl/code-agent` is private for you, authenticate with a GitHub token that has the `read:packages` scope.
 - **Mount or path errors on Windows**: run the agent from WSL. Git Bash rewrites the Docker mount paths.
 - **An implementation is refused**: another run is already in progress for this project. Ask your agent about its progress, or to stop it.
 - **Ports already in use when running locally**: check whether ports 8888 or 8081 are used by another application.

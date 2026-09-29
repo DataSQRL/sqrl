@@ -387,21 +387,21 @@ ls build/deploy/plan`}
                       <CodeBlock language="bash">
                         {`docker run -e ANTHROPIC_API_KEY -it --rm \\
   --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM \\
-  -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi`}
+  -v "$PWD":/workspace -w /workspace datasqrl/core-agent`}
                       </CodeBlock>
                     </TabItem>
                     <TabItem value="windows" label="Windows">
                       <CodeBlock language="powershell">
                         {`docker run -e ANTHROPIC_API_KEY -it --rm \`
   --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM \`
-  -v "\${PWD}:/workspace" -w /workspace datasqrl/datasqrl-pi`}
+  -v "\${PWD}:/workspace" -w /workspace datasqrl/core-agent`}
                       </CodeBlock>
                     </TabItem>
                     <TabItem value="linux" label="Linux">
                       <CodeBlock language="bash">
                         {`docker run -e ANTHROPIC_API_KEY -it --rm \\
   --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM \\
-  -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi`}
+  -v "$PWD":/workspace -w /workspace datasqrl/core-agent`}
                       </CodeBlock>
                     </TabItem>
                   </Tabs>

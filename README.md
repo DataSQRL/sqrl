@@ -76,7 +76,7 @@ The compiled deployment artifacts run on proven open-source technologies that yo
 The basic DataSQRL agent wraps the Pi coding agent with the DataSQRL framework and skills in one Docker image. All you need is [Docker](https://www.docker.com/products/docker-desktop/) and an API key from your LLM provider. Run it in your project folder:
 
 ```bash
-docker run -e ANTHROPIC_API_KEY -it --rm -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/datasqrl-pi
+docker run -e ANTHROPIC_API_KEY -it --rm -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/core-agent
 ```
 
 (In PowerShell on Windows, use `-v "${PWD}:/workspace"`. For OpenAI, Bedrock, Azure, or Vertex AI, swap in that provider's environment variables.)

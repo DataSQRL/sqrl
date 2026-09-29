@@ -20,7 +20,7 @@ The image starts Pi in `/workspace`. Mount a project there, provide a model-prov
 Build from the repository root:
 
 ```bash
-docker build -t datasqrl-agent -f agent/Dockerfile .
+docker build -t core-agent -f agent/Dockerfile .
 ```
 
 Start the agent in a project directory. Pi uses the provider key from the environment and opens an interactive terminal session:
@@ -29,7 +29,7 @@ Start the agent in a project directory. Pi uses the provider key from the enviro
 docker run --rm -it \
   -e OPENAI_API_KEY \
   -v "$PWD:/workspace" \
-  datasqrl-agent
+  core-agent
 ```
 
 ### Reference examples
@@ -42,7 +42,7 @@ docker run --rm -it \
   -e OPENAI_API_KEY \
   -v "$PWD:/workspace" \
   -v /path/to/datasqrl-examples:/opt/datasqrl-examples:ro \
-  datasqrl-agent
+  core-agent
 ```
 
 Mount any curated or project-specific examples directory at this path. Skills
@@ -57,7 +57,7 @@ For an Anthropic model, pass `ANTHROPIC_API_KEY` instead:
 docker run --rm -it \
   -e ANTHROPIC_API_KEY \
   -v "$PWD:/workspace" \
-  datasqrl-agent
+  core-agent
 ```
 
 To select a model explicitly, set `PI_MODEL`. `PI_PROVIDER` overrides provider inference when needed:
@@ -67,7 +67,7 @@ docker run --rm -it \
   -e OPENAI_API_KEY \
   -e PI_MODEL=gpt-5.1-codex \
   -v "$PWD:/workspace" \
-  datasqrl-agent
+  core-agent
 ```
 
 ## How the agent uses knowledge
@@ -76,12 +76,12 @@ Pi reads [`AGENTS.md`](AGENTS.md) at startup, so place instructions that should 
 
 Use `AGENTS.md` for concise, durable operating rules: project layout, commands to run, safety constraints, and the order of work. Use a skill for specialized workflows or reference material that only applies to certain tasks. Keep a skill self-contained: its `SKILL.md` identifies when to use it, while its sibling files contain the detailed reference material it links to.
 
-## Extend the baseline agent
+## Extend the core agent
 
 Create a small image that extends the baseline when you need organization- or project-specific knowledge. Copy skills into Pi's global skill directory and replace `AGENTS.md` only when your custom version includes the baseline guidance you still want to retain.
 
 ```dockerfile
-FROM datasqrl-agent:latest
+FROM core-agent:latest
 
 COPY company-skills/ /root/.pi/agent/skills/
 COPY company-AGENTS.md /root/.pi/agent/AGENTS.md
@@ -90,7 +90,7 @@ COPY company-AGENTS.md /root/.pi/agent/AGENTS.md
 For additional system tools or libraries, add them in the derived image. Keep runtime dependencies separate from skills so instruction-only changes do not reinstall packages:
 
 ```dockerfile
-FROM datasqrl-agent:latest
+FROM core-agent:latest
 
 USER root
 RUN apt-get update \
