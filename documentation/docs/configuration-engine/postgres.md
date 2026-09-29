@@ -38,10 +38,6 @@ For example, `ttl(14 days)` with the default divisor produces 1-day partitions.
 
 At setup time, pg_partman pre-creates the historical partitions covering the full TTL window (via `p_start_partition`), so replayed or late-arriving data within the retention period lands in a dated partition rather than the DEFAULT partition. The `partition-premake` key controls how many future partitions are created ahead of the current one.
 
-## Cloud Deployment
-
-For cloud deployment configuration (instance sizes, replica counts), see [Cloud Deployment Configuration](cloud-deployment.md#postgresql-enginespostgresdeployment).
-
 ## Conflict Handling
 
 When a generated PostgreSQL table receives a row that conflicts with an existing row on a primary key or unique constraint,
