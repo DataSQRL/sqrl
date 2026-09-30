@@ -22,12 +22,14 @@ import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.graphql.RootGraphQLModel.MutationCoordsVisitor;
 import com.datasqrl.server.io.SinkProducer;
 import com.datasqrl.server.kafka.KafkaSinkProducer;
+import com.datasqrl.server.kafka.SaslRetryingSinkProducer;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.kafka.client.producer.KafkaProducer;
+import java.time.Duration;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -51,6 +53,8 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor
 public class MutationConfigurationImpl implements MutationConfiguration<DataFetcher<?>> {
 
+  private static final Duration SASL_RETRY_DELAY = Duration.ofSeconds(1);
+
   private Vertx vertx;
   private ServerConfig config;
 
@@ -60,8 +64,10 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       KafkaProducer<String, String> producer =
           KafkaProducer.create(
               vertx, config.getKafkaMutationConfig().asMap(coords.isTransactional()));
+      producer.exceptionHandler(e -> logProducerError(coords.getTopic(), e));
 
       var emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
+      var retryingEmitter = new SaslRetryingSinkProducer(vertx, emitter, SASL_RETRY_DELAY);
       var keyColumns = coords.getKeyColumns();
       final var computedInputColumns = new HashMap<String, ComputeInputColumns>();
 
@@ -99,7 +105,7 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
             coords.isTransactional()
                 ? sendMessagesTransactionally(producer, emitter, records, timestampColumns)
                 : sendMessagesNonTransactionally(
-                    createSendFutures(emitter, records, timestampColumns));
+                    createSendFutures(retryingEmitter, records, timestampColumns));
 
         sendFuture
             .onSuccess(results -> completeWithResults(cf, results, coords.isReturnList()))
@@ -174,6 +180,14 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       cf.complete(results);
     } else {
       cf.complete(results.get(0));
+    }
+  }
+
+  private static void logProducerError(String topic, Throwable e) {
+    if (SaslRetryingSinkProducer.isSaslAuthFailure(e)) {
+      log.warn("Kafka authentication failed on topic {}", topic, e);
+    } else {
+      log.error("Kafka producer error on topic {}", topic, e);
     }
   }
 

@@ -40,10 +40,7 @@ public class KafkaSinkProducer<OUT> implements SinkProducer {
       return Future.failedFuture(e);
     }
     // TODO: generate UUID server side
-    return kafkaProducer
-        .send(producerRecord)
-        .map(
-            result ->
-                new SinkResult(Instant.ofEpochMilli(((RecordMetadata) result).getTimestamp())));
+    Future<RecordMetadata> sent = kafkaProducer.send(producerRecord);
+    return sent.map(result -> new SinkResult(Instant.ofEpochMilli(result.getTimestamp())));
   }
 }

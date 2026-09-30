@@ -22,18 +22,26 @@ import io.vertx.launcher.application.HookContext;
 import io.vertx.launcher.application.VertxApplication;
 import io.vertx.launcher.application.VertxApplicationHooks;
 import io.vertx.micrometer.MicrometerMetricsFactory;
+import java.security.Security;
 
 /** Main entry point for launching the Vert.x application with Prometheus metrics. */
 public class SqrlLauncher implements VertxApplicationHooks {
 
+  private static final String DNS_NEGATIVE_TTL = "networkaddress.cache.negative.ttl";
+
   public static void main(String[] args) {
     GlobalEnvironmentStore.putAll(System.getenv());
+    disableNegativeDnsCache();
 
     if (args == null || args.length == 0) {
       args = new String[] {HttpServerVerticle.class.getName()};
     }
     VertxApplication vertxApplication = new VertxApplication(args, new SqrlLauncher());
     vertxApplication.launch();
+  }
+
+  private static void disableNegativeDnsCache() {
+    Security.setProperty(DNS_NEGATIVE_TTL, "0");
   }
 
   @Override
