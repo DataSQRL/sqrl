@@ -42,9 +42,12 @@ import graphql.language.ScalarTypeDefinition;
 import graphql.language.Type;
 import graphql.language.TypeName;
 import graphql.parser.Parser;
+import graphql.schema.GraphQLInputObjectType;
 import graphql.schema.GraphQLInputType;
+import graphql.schema.GraphQLList;
 import graphql.schema.GraphQLNamedType;
 import graphql.schema.GraphQLNonNull;
+import graphql.schema.GraphQLType;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.UnExecutableSchemaGenerator;
@@ -63,14 +66,17 @@ import org.apache.calcite.schema.FunctionParameter;
 public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
 
   private final ErrorCollector errorCollector;
+  private final boolean extendedScalarTypes;
 
   @Inject
   public GraphqlSchemaValidator(
       List<SqrlTableFunction> tableFunctions,
       List<MutationTable> mutations,
-      ErrorCollector errorCollector) {
+      ErrorCollector errorCollector,
+      boolean extendedScalarTypes) {
     super(tableFunctions, mutations);
     this.errorCollector = errorCollector;
+    this.extendedScalarTypes = extendedScalarTypes;
   }
 
   @Override
@@ -82,12 +88,162 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
   @Override
   protected void visitMutation(
       FieldDefinition atField, TypeDefinitionRegistry registry, MutationTable mutation) {
+    var inputType = getValidMutationInputType(atField, registry);
     validateStructurallyEqualMutation(
         atField,
         getValidMutationOutputType(atField, registry),
-        getValidMutationInputType(atField, registry),
+        inputType,
         mutation.getComputedColumns().keySet().stream().toList(),
         registry);
+
+    validateMutationInputMatchesTable(atField, inputType, mutation, registry);
+  }
+
+  /**
+   * Validates the user-supplied mutation input against the row type of the corresponding mutation
+   * table. Comparing the mutation's GraphQL input and output alone is insufficient: both can agree
+   * with each other while still being incompatible with the table that receives the mutation.
+   */
+  private void validateMutationInputMatchesTable(
+      FieldDefinition mutationField,
+      InputObjectTypeDefinition inputType,
+      MutationTable mutation,
+      TypeDefinitionRegistry registry) {
+    var expectedType =
+        GraphqlSchemaUtil.getGraphQLInputType(
+                mutation.getInputDataType(),
+                NamePath.of(mutation.getName()),
+                extendedScalarTypes,
+                mutation.getDocumentation().getColumnLookup())
+            .orElseThrow(
+                () ->
+                    createThrowable(
+                        mutationField.getSourceLocation(),
+                        "Could not infer the input type for mutation table: %s",
+                        mutation.getName()));
+
+    validateInputObjectMatchesTable(mutationField, inputType, expectedType, registry);
+  }
+
+  private void validateInputObjectMatchesTable(
+      FieldDefinition mutationField,
+      InputObjectTypeDefinition actualType,
+      GraphQLInputType expectedType,
+      TypeDefinitionRegistry registry) {
+    var unwrappedExpectedType = unwrapNonNull(expectedType);
+    checkState(
+        unwrappedExpectedType instanceof GraphQLInputObjectType,
+        mutationField.getSourceLocation(),
+        "Expected an input object type for mutation: %s",
+        mutationField.getName());
+
+    var expectedObjectType = (GraphQLInputObjectType) unwrappedExpectedType;
+    for (var expectedField : expectedObjectType.getFieldDefinitions()) {
+      var actualField =
+          findExactlyOneInputValue(
+              mutationField, expectedField.getName(), actualType.getInputValueDefinitions());
+      validateInputTypeMatchesTable(
+          mutationField,
+          expectedField.getName(),
+          expectedField.getType(),
+          actualField.getType(),
+          registry);
+    }
+
+    for (var actualField : actualType.getInputValueDefinitions()) {
+      checkState(
+          expectedObjectType.getFieldDefinition(actualField.getName()) != null,
+          actualField.getSourceLocation(),
+          "Field '%s' is not present in the mutation table input",
+          actualField.getName());
+    }
+  }
+
+  private void validateInputTypeMatchesTable(
+      FieldDefinition mutationField,
+      String fieldName,
+      GraphQLType expectedType,
+      Type actualType,
+      TypeDefinitionRegistry registry) {
+
+    if (expectedType instanceof GraphQLNonNull expectedNonNull) {
+      checkState(
+          actualType instanceof NonNullType,
+          actualType.getSourceLocation(),
+          "Field '%s' must be non-null to match the mutation table input",
+          fieldName);
+      validateInputTypeMatchesTable(
+          mutationField,
+          fieldName,
+          expectedNonNull.getWrappedType(),
+          ((NonNullType) actualType).getType(),
+          registry);
+      return;
+    }
+
+    // A non-null GraphQL input is safe for a nullable table column.
+    if (actualType instanceof NonNullType actualNonNull) {
+      validateInputTypeMatchesTable(
+          mutationField, fieldName, expectedType, actualNonNull.getType(), registry);
+      return;
+    }
+
+    if (expectedType instanceof GraphQLList expectedList) {
+      checkState(
+          actualType instanceof ListType,
+          actualType.getSourceLocation(),
+          "List type mismatch for mutation input field '%s'",
+          fieldName);
+      validateInputTypeMatchesTable(
+          mutationField,
+          fieldName,
+          expectedList.getWrappedType(),
+          ((ListType) actualType).getType(),
+          registry);
+      return;
+    }
+
+    checkState(
+        actualType instanceof TypeName,
+        actualType.getSourceLocation(),
+        "Expected a scalar or input object type for mutation input field '%s'",
+        fieldName);
+    var actualTypeName = (TypeName) actualType;
+
+    if (expectedType instanceof GraphQLInputObjectType expectedObjectType) {
+      var actualObjectType =
+          registry
+              .getType(actualTypeName)
+              .filter(InputObjectTypeDefinition.class::isInstance)
+              .map(InputObjectTypeDefinition.class::cast)
+              .orElseThrow(
+                  () ->
+                      createThrowable(
+                          actualType.getSourceLocation(),
+                          "Expected an input object type for mutation input field '%s'",
+                          fieldName));
+      validateInputObjectMatchesTable(
+          mutationField, actualObjectType, expectedObjectType, registry);
+      return;
+    }
+
+    checkState(
+        expectedType instanceof GraphQLNamedType,
+        actualType.getSourceLocation(),
+        "Unsupported table type for mutation input field '%s'",
+        fieldName);
+
+    var expectedTypeName = ((GraphQLNamedType) expectedType).getName();
+    var actualTypeDefinition = registry.getType(actualTypeName).orElse(null);
+    checkState(
+        expectedTypeName.equals(actualTypeName.getName())
+            || (expectedTypeName.equals("String")
+                && actualTypeDefinition instanceof EnumTypeDefinition),
+        actualType.getSourceLocation(),
+        "Mutation input type mismatch for field '%s': found '%s' but table requires '%s'",
+        fieldName,
+        actualTypeName.getName(),
+        expectedTypeName);
   }
 
   private Object validateStructurallyEqualMutation(
@@ -307,16 +463,6 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
     return (InputObjectTypeDefinition) typeDef.get();
   }
 
-  private static Type unwrapNullAndList(Type type) {
-    if (type instanceof NonNullType nullType) {
-      return unwrapNullAndList(nullType.getType());
-    } else if (type instanceof ListType listType) {
-      return unwrapNullAndList(listType.getType());
-    } else {
-      return type;
-    }
-  }
-
   private ObjectTypeDefinition getValidMutationOutputType(
       FieldDefinition fieldDefinition, TypeDefinitionRegistry registry) {
     var type = fieldDefinition.getType();
@@ -522,6 +668,20 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
       }
     } catch (Exception e) {
       throw errorCollector.handle(e, "Cannot validate operations for API " + api.version());
+    }
+  }
+
+  private static GraphQLType unwrapNonNull(GraphQLType type) {
+    return type instanceof GraphQLNonNull nonNull ? nonNull.getWrappedType() : type;
+  }
+
+  private static Type unwrapNullAndList(Type type) {
+    if (type instanceof NonNullType nullType) {
+      return unwrapNullAndList(nullType.getType());
+    } else if (type instanceof ListType listType) {
+      return unwrapNullAndList(listType.getType());
+    } else {
+      return type;
     }
   }
 }
