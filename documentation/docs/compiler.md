@@ -282,6 +282,12 @@ Compiles, then tests a SQRL project.
   -V, --version             Print version information and exit.
 ```
 
+:::info
+Like `run`, `test` loads the `run`-specific configuration settings. It also loads [configuration settings](https://raw.githubusercontent.com/DataSQRL/sqrl/refs/heads/main/sqrl-planner/src/main/resources/default-test-package.json)
+that are applicable exclusively during tests, which disable Flink source idleness: the test drains the Flink job before taking snapshots, and idle sources can make the drain drop the last events behind chained temporal joins.
+These `test`-specific configuration options will be replaced if they are defined in any custom package configuration file.
+:::
+
 ### Example
 
 ```bash

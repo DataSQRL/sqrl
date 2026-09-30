@@ -15,6 +15,7 @@
  */
 package com.datasqrl.util;
 
+import static org.apache.flink.table.api.config.ExecutionConfigOptions.TABLE_EXEC_SOURCE_IDLE_TIMEOUT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -144,6 +145,30 @@ class ConfigLoaderUtilsTest {
     assertThat(underTest.getEngines().getEngineConfig("duckdb")).isNotPresent();
     assertThat(errors).isEmpty();
     assertThat(underTest.getScriptConfig().getGraphql()).isEmpty();
+  }
+
+  @Test
+  void givenNoIdleTimeout_whenLoadingUnresolvedTestConfig_thenSourceIdlenessIsDisabled() {
+    var underTest = ConfigLoaderUtils.loadUnresolvedTestConfig(errors, List.of());
+
+    assertThat(underTest.getEngines().getEngineConfigOrEmpty("flink").getConfig())
+        .containsEntry(TABLE_EXEC_SOURCE_IDLE_TIMEOUT.key(), "0 s");
+    assertThat(errors).isEmpty();
+  }
+
+  @Test
+  @SneakyThrows
+  void givenUserIdleTimeout_whenLoadingUnresolvedTestConfig_thenUserValueOverridesTestDefault() {
+    var packageFile = tempDir.resolve("package.json");
+    Files.writeString(
+        packageFile,
+        "{\"engines\":{\"flink\":{\"config\":{\"table.exec.source.idle-timeout\":\"1 s\"}}}}");
+
+    var underTest = ConfigLoaderUtils.loadUnresolvedTestConfig(errors, List.of(packageFile));
+
+    assertThat(underTest.getEngines().getEngineConfigOrEmpty("flink").getConfig())
+        .containsEntry(TABLE_EXEC_SOURCE_IDLE_TIMEOUT.key(), "1 s");
+    assertThat(errors).isEmpty();
   }
 
   @Test

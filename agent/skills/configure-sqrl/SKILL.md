@@ -56,7 +56,7 @@ The `lending360` project with a test and a production environment:
   },
   "engines": {
     "flink": {
-      "config": { "table.exec.source.idle-timeout": "1 s" } // Set to 1 s not to wait during test
+      "config": { "table.exec.source.idle-timeout": "0 s" } // Disabling source idleness is advised for tests, see the `/test-sqrl` skill
     }
   },
   "test-runner": {
@@ -89,7 +89,7 @@ The `lending360` project with a test and a production environment:
 
 Rules for writing the configuration files:
 
-* **Merging is per field, last file wins.** In the example above, the test overlay's `table.exec.source.idle-timeout: "1 s"` replaces the base's `"30 s"`, while `execution.runtime-mode: "STREAMING"` from the base is kept. An overlay does not replace the whole `engines.flink.config` object.
+* **Merging is per field, last file wins.** In the example above, the test overlay's `table.exec.source.idle-timeout: "0 s"` replaces the base's `"30 s"`, while `execution.runtime-mode: "STREAMING"` from the base is kept. An overlay does not replace the whole `engines.flink.config` object.
 * **`test-runner` belongs only in the `-test` overlay**.
 * **Every independently compiled or tested project and sub-project MUST have a named package file for each environment it uses:** `<project-or-sub-project>-<env>-package.json` (for example, `fraud_store-test-package.json`). Do not use an unqualified standalone package file for a deployable sub-project. The name lets the agent's package-discovery fallback identify the package that belongs to each build.
 * If settings are common across environments or sibling sub-projects, share them through a `*-shared-package.json` base; keep only environment- or sub-project-specific settings in the named package files.
