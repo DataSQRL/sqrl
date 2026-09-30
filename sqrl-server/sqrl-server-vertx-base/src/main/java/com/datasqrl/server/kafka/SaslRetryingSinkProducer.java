@@ -18,29 +18,31 @@ package com.datasqrl.server.kafka;
 import com.datasqrl.server.io.SinkProducer;
 import com.datasqrl.server.io.SinkResult;
 import io.vertx.core.Future;
-import io.vertx.kafka.client.producer.KafkaProducer;
-import io.vertx.kafka.client.producer.KafkaProducerRecord;
-import io.vertx.kafka.client.producer.RecordMetadata;
-import java.time.Instant;
-import lombok.AllArgsConstructor;
+import io.vertx.core.Vertx;
+import java.time.Duration;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.kafka.common.errors.SaslAuthenticationException;
 
-@AllArgsConstructor
-public class KafkaSinkProducer<OUT> implements SinkProducer {
+@RequiredArgsConstructor
+public class SaslRetryingSinkProducer implements SinkProducer {
 
-  private final String topic;
-  private final KafkaProducer<String, OUT> kafkaProducer;
+  private final Vertx vertx;
+  private final SinkProducer delegate;
+  private final Duration delay;
 
   @Override
   public Future<SinkResult> send(Record record) {
-    final KafkaProducerRecord producerRecord;
+    return delegate
+        .send(record)
+        .recover(
+            e ->
+                isSaslAuthFailure(e)
+                    ? vertx.timer(delay).compose(v -> delegate.send(record))
+                    : Future.failedFuture(e));
+  }
 
-    try {
-      producerRecord = KafkaProducerRecord.create(topic, record.key(), record.value());
-    } catch (Exception e) {
-      return Future.failedFuture(e);
-    }
-    // TODO: generate UUID server side
-    Future<RecordMetadata> sent = kafkaProducer.send(producerRecord);
-    return sent.map(result -> new SinkResult(Instant.ofEpochMilli(result.getTimestamp())));
+  public static boolean isSaslAuthFailure(Throwable e) {
+    return ExceptionUtils.indexOfType(e, SaslAuthenticationException.class) >= 0;
   }
 }

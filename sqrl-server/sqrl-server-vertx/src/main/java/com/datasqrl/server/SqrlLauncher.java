@@ -31,15 +31,17 @@ public class SqrlLauncher implements VertxApplicationHooks {
 
   public static void main(String[] args) {
     GlobalEnvironmentStore.putAll(System.getenv());
-    if (System.getProperty("sun.net.inetaddr.negative.ttl") == null) {
-      Security.setProperty(DNS_NEGATIVE_TTL, "1");
-    }
+    disableNegativeDnsCache();
 
     if (args == null || args.length == 0) {
       args = new String[] {HttpServerVerticle.class.getName()};
     }
     VertxApplication vertxApplication = new VertxApplication(args, new SqrlLauncher());
     vertxApplication.launch();
+  }
+
+  private static void disableNegativeDnsCache() {
+    Security.setProperty(DNS_NEGATIVE_TTL, "0");
   }
 
   @Override
