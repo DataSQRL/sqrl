@@ -178,9 +178,11 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
       locErrors.fatal("No package file were given, and default %s not found", PACKAGE_JSON);
     }
 
-    return loadRunDefaults()
-        ? ConfigLoaderUtils.loadUnresolvedRunConfig(locErrors, finalPackageFiles)
-        : ConfigLoaderUtils.loadUnresolvedConfig(locErrors, finalPackageFiles);
+    return switch (getGoal()) {
+      case COMPILE -> ConfigLoaderUtils.loadUnresolvedConfig(locErrors, finalPackageFiles);
+      case RUN -> ConfigLoaderUtils.loadUnresolvedRunConfig(locErrors, finalPackageFiles);
+      case TEST -> ConfigLoaderUtils.loadUnresolvedTestConfig(locErrors, finalPackageFiles);
+    };
   }
 
   List<Path> formatGivenPackageFiles() {
@@ -212,9 +214,5 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     formatter.newline();
     formatter.buildStatus(true, getElapsedTime(), LocalDateTime.now());
     formatter.newline();
-  }
-
-  private boolean loadRunDefaults() {
-    return getGoal() == ExecutionGoal.RUN || getGoal() == ExecutionGoal.TEST;
   }
 }

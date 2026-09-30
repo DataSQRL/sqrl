@@ -7,7 +7,6 @@
   "engines": {
     "flink": {
       "config": {
-        "table.exec.source.idle-timeout": "30s",
         "table.local-time-zone": "UTC"
       }
     }

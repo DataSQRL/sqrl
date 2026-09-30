@@ -77,6 +77,13 @@ public final class ConfigLoaderUtils {
       Stream.concat(DEFAULTS.stream(), Stream.of("/default-run-package.json")).toList();
 
   /**
+   * Tests end by draining the Flink job, so they disable source idleness: with idleness, the drain
+   * can drop the last events behind chained event-time operators such as temporal joins.
+   */
+  private static final List<String> TEST_DEFAULTS =
+      Stream.concat(RUN_DEFAULTS.stream(), Stream.of("/default-test-package.json")).toList();
+
+  /**
    * Loads a resolved SQRL {@code package.json} from an already compiled project.
    *
    * @param buildDir build directory of a compiled SQRL project
@@ -147,6 +154,18 @@ public final class ConfigLoaderUtils {
    */
   public static PackageJson loadUnresolvedRunConfig(ErrorCollector errors, List<Path> files) {
     return loadUnresolvedConfig(errors, files, RUN_DEFAULTS);
+  }
+
+  /**
+   * Loads the default SQRL test config, and overwrites that with the content of any given JSON
+   * file. Any upcoming file will overwrite previous values for any key that were already present.
+   *
+   * @param errors collector to handle errors
+   * @param files additional JSON file(s)
+   * @return the loaded and merged config as a {@link PackageJson}
+   */
+  public static PackageJson loadUnresolvedTestConfig(ErrorCollector errors, List<Path> files) {
+    return loadUnresolvedConfig(errors, files, TEST_DEFAULTS);
   }
 
   /**
