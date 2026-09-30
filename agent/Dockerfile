@@ -16,7 +16,7 @@
 
 # Build from the repository root. Pass the locally built CLI image when
 # developing both images together:
-# docker build --build-arg SQRL_IMAGE=datasqrl/cmd:local -t datasqrl-agent -f agent/Dockerfile .
+# docker build --build-arg SQRL_IMAGE=datasqrl/cmd:local -t core-agent -f agent/Dockerfile .
 ARG SQRL_IMAGE=datasqrl/cmd:dev
 ARG NODE_IMAGE=node:22-bookworm-slim
 
