@@ -43,6 +43,6 @@ public class SaslRetryingSinkProducer implements SinkProducer {
   }
 
   public static boolean isSaslAuthFailure(Throwable e) {
-    return ExceptionUtils.indexOfType(e, SaslAuthenticationException.class) >= 0;
+    return ExceptionUtils.throwableOfType(e, SaslAuthenticationException.class) != null;
   }
 }
