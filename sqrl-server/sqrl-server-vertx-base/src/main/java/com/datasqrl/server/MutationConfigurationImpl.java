@@ -60,8 +60,11 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       KafkaProducer<String, String> producer =
           KafkaProducer.create(
               vertx, config.getKafkaMutationConfig().asMap(coords.isTransactional()));
+      producer.exceptionHandler(
+          e -> log.warn("Kafka producer error on topic {}", coords.getTopic(), e));
 
-      var emitter = new KafkaSinkProducer<>(coords.getTopic(), producer);
+      var emitter =
+          new KafkaSinkProducer<>(vertx, coords.getTopic(), producer, !coords.isTransactional());
       var keyColumns = coords.getKeyColumns();
       final var computedInputColumns = new HashMap<String, ComputeInputColumns>();
 
