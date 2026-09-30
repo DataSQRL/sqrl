@@ -127,9 +127,11 @@ commands:
             set -x
             # helper to extract the first PR number, if any
             get_pr_number() {
-              if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              if [ -n "${CIRCLE_PR_NUMBER:-}" ]; then
+                echo "$CIRCLE_PR_NUMBER"
+              elif [ -n "${CIRCLE_PULL_REQUEST:-}" ]; then
                 basename "$CIRCLE_PULL_REQUEST"
-              elif [ -n "$CIRCLE_PULL_REQUESTS" ]; then
+              elif [ -n "${CIRCLE_PULL_REQUESTS:-}" ]; then
                 echo "$CIRCLE_PULL_REQUESTS" | cut -d',' -f1 | xargs basename
               fi
             }
@@ -531,7 +533,8 @@ jobs:
 
             build_and_push() {
               local repo="$1" ; shift
-              local dir="$1"  ; shift
+              local dockerfile="$1" ; shift
+              local context="$1" ; shift
               local extra_args="$@"
 
               # Mirror releases to GHCR alongside Docker Hub so downstream can pull
@@ -546,8 +549,8 @@ jobs:
                 --push \
                 $extra_args \
                 "${tags[@]}" \
-                -f $dir/Dockerfile \
-                $dir
+                -f "$dockerfile" \
+                "$context"
 
               # tag :latest on release builds
               if [ "$LATEST_TAG" = "true" ]; then
@@ -562,8 +565,9 @@ jobs:
               fi
             }
 
-            build_and_push cmd         sqrl-cli                      --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg BASE_TAG=$BASE_TAG
-            build_and_push sqrl-server sqrl-server/sqrl-server-vertx --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
+            build_and_push cmd         sqrl-cli/Dockerfile                      sqrl-cli                      --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg BASE_TAG=$BASE_TAG
+            build_and_push sqrl-server sqrl-server/sqrl-server-vertx/Dockerfile sqrl-server/sqrl-server-vertx --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
+            build_and_push core-agent  agent/Dockerfile                         .                             --build-arg SQRL_IMAGE=$REGISTRY/cmd:$TAG_SUFFIX
 
   docker-build-duckdb-extensions:
     machine:
