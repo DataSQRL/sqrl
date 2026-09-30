@@ -33,7 +33,7 @@ Frequently configured options:
 | `table.optimizer.agg-phase-strategy` | `AUTO` | `TWO_PHASE`, `ONE_PHASE` | Forces two-phase (partial + final) aggregation for better parallelism                                         |
 | `table.optimizer.distinct-agg.split.enabled` | `false` | `true` | Splits `COUNT(DISTINCT ...)` into two phases to avoid data skew                                               |
 | `table.optimizer.join-reorder-enabled` | `false` | `true` | Lets the optimizer reorder joins based on table statistics for better plans                                   |
-| `table.exec.source.idle-timeout` | `-1 ms` (disabled) | `30s`, `60s` | Marks idle sources so watermarks can advance when some partitions go quiet                                    |
+| `table.exec.source.idle-timeout` | `1 s`; `0 s` (disabled) for `test` | `30s`, `60s` | Marks idle sources so watermarks can advance when some partitions go quiet                                    |
 | `table.exec.sink.not-null-enforcer` | `ERROR` | `DROP` | Controls whether null-constraint violations throw errors or silently drop rows                                |
 | `table.exec.sink.upsert-materialize` | `AUTO` | `NONE`, `FORCED` | Controls materialization of upsert streams before writing to non-upsert sinks                                 |
 | `table.optimizer.reuse-sub-plan-enabled` | `true` | `false` | Disabling can help when shared sub-plans cause unexpected state sharing                                       |

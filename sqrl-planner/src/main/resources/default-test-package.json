@@ -1,0 +1,9 @@
+{
+  "engines": {
+    "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "0 s"
+      }
+    }
+  }
+}

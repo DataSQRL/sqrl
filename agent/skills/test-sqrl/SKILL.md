@@ -63,7 +63,7 @@ mutation AddCustomer {
 **Test Execution Order:**
 1. Subscribe to all subscriptions (must be triggered by mutation)
 2. Execute mutations sequentially (alphabetical filename order) with `mutation-delay-sec` between
-3. Wait for configured timeout
+3. Wait for configured timeout, then drain the Flink job
 4. Execute queries
 5. Collect subscription results
 
@@ -92,7 +92,7 @@ Provide test input through sources that suit the behavior under test and fit the
 - Make the data deterministic where snapshot output depends on it.
 - The `timestamp-format.standard` option for `flexible-json` is required for ISO-8601 timestamps (`2024-01-01T10:00:00.000Z`) in the data file; the format's default is `SQL` (`2024-01-01 10:00:00.000`), and timestamps in the other notation fail to parse.
 
-For filesystem sources, end-of-file advances the watermark automatically; time-window and temporal-join fixtures do not need dummy sentinel records solely to advance it.
+Before taking snapshots, the `test` command drains the Flink job, which advances all watermarks to the end, so fixtures do not need dummy sentinel records to close windows or temporal joins. Do not set `table.exec.source.idle-timeout` to more than 0 seconds in the test package, since the test runner disables idleness. If a base package sets it, override it with `"0 s"` in the test overlay. With idleness enabled, the drain can drop the last events behind chained temporal joins.
 
 ## Authentication Testing
 
