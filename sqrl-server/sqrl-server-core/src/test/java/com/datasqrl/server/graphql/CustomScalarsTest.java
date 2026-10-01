@@ -17,10 +17,37 @@ package com.datasqrl.server.graphql;
 
 import static com.datasqrl.server.graphql.CustomScalars.FlexibleDateTimeCoercing.normalizeTimestamp;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import graphql.GraphQLContext;
+import graphql.schema.CoercingSerializeException;
+import java.math.BigDecimal;
+import java.util.Locale;
 import org.junit.jupiter.api.Test;
 
 class CustomScalarsTest {
+
+  @Test
+  void givenFiniteDouble_whenSerialized_thenRoundsToEightDecimalPlaces() {
+    var result = serialize(1.234567891d);
+
+    assertThat(result).isEqualTo(new BigDecimal("1.23456789"));
+  }
+
+  @Test
+  void givenNonFiniteDouble_whenSerialized_thenThrowsCoercingSerializeException() {
+    assertThatThrownBy(() -> serialize(Double.NaN)).isInstanceOf(CoercingSerializeException.class);
+    assertThatThrownBy(() -> serialize(Double.POSITIVE_INFINITY))
+        .isInstanceOf(CoercingSerializeException.class);
+    assertThatThrownBy(() -> serialize(Double.NEGATIVE_INFINITY))
+        .isInstanceOf(CoercingSerializeException.class);
+  }
+
+  private static Object serialize(Object value) {
+    return CustomScalars.DOUBLE
+        .getCoercing()
+        .serialize(value, GraphQLContext.newContext().build(), Locale.ROOT);
+  }
 
   @Test
   void givenFullRFC3339Timestamp_whenNormalizeTimestamp_thenReturnsSameFormat() {
