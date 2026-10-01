@@ -49,6 +49,10 @@ public class CustomScalars {
                     Object dataFetcherResult, GraphQLContext ctx, Locale locale) {
 
                   if (dataFetcherResult instanceof Double doubleValue) {
+                    if (!Double.isFinite(doubleValue)) {
+                      return Scalars.GraphQLFloat.getCoercing()
+                          .serialize(dataFetcherResult, ctx, locale);
+                    }
                     var bd =
                         new BigDecimal(doubleValue)
                             .setScale(8, RoundingMode.HALF_UP)
