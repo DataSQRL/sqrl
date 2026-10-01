@@ -1,0 +1,6 @@
+/*+engine(kafka)*/
+CREATE TABLE Orders (
+  price DOUBLE NOT NULL,
+  quantity INT NOT NULL,
+  total AS price * quantity
+);

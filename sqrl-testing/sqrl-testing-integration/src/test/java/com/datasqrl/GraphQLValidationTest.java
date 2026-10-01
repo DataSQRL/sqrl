@@ -17,6 +17,7 @@ package com.datasqrl;
 
 import static com.datasqrl.SnapshotTestSupport.getDisplayName;
 import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.compile.DagWriter;
 import com.datasqrl.util.ArgumentsProviders;
@@ -57,6 +58,14 @@ public class GraphQLValidationTest {
   void specificSchema() {
     var schema = USECASE_DIR.resolve("comprehensiveTest-paged-results.graphqls");
     testUseCase(schema);
+  }
+
+  @Test
+  void flinkComputedColumnIsExcludedFromMutationInput() {
+    var useCase = USECASE_DIR.resolve("computed-column-mutation");
+    var result = snapshotExtension.execute(useCase, "compile", "package.json");
+
+    assertThat(result.isSuccess()).as(result.getMessages()).isTrue();
   }
 
   private Predicate<Path> getBuildDirFilter() {

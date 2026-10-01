@@ -19,10 +19,10 @@ in script:comprehensiveTest.sqrl [54:1]:
 CustomerTimeWindow := SELECT
 ^
 
-[FATAL] Scalar types not matching for field amount : found Float but wanted Int
+[FATAL] Mutation input type mismatch for field 'amount': found 'Int' but table requires 'Float'
 in script:comprehensiveTest-fail-not-equal-mutations-field-types.graphqls [22:13]:
 input OrdersInput {
     orderid: Int!
-    amount: Float
+    amount: Int
 ------------^
 

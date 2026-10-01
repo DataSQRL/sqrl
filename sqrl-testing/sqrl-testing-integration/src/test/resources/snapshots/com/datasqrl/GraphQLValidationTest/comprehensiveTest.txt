@@ -202,7 +202,7 @@ type Mutation {
 
 input OrdersInput {
     orderid: Int!
-    amount: Float
+    amount: Int
 }
 
 type OrdersResultOutput {

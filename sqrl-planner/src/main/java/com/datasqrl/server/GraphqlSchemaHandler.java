@@ -17,6 +17,7 @@ package com.datasqrl.server;
 
 import static com.datasqrl.server.GraphqlSchemaFactory.API_DIRECTIVE_NAME;
 
+import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
 import graphql.schema.GraphQLSchema;
@@ -33,6 +34,7 @@ public class GraphqlSchemaHandler {
 
   private final ErrorCollector errorCollector;
   private final GraphqlSchemaFactory graphqlSchemaFactory;
+  private final CompilerConfig compilerConfig;
 
   @SneakyThrows
   public String inferGraphQLSchema(ServerPhysicalPlan serverPlan) {
@@ -51,7 +53,8 @@ public class GraphqlSchemaHandler {
         new GraphqlSchemaValidator(
             serverPlan.getFunctions(),
             serverPlan.getMutations(),
-            errorCollector.withScript(api.schema().getPath(), api.schema().getDefinition()));
+            errorCollector.withScript(api.schema().getPath(), api.schema().getDefinition()),
+            compilerConfig.isExtendedScalarTypes());
 
     schemaValidator.validate(api);
   }

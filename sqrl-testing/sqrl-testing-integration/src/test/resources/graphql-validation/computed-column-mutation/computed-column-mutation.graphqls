@@ -1,0 +1,24 @@
+type Mutation {
+  Orders(event: OrdersInput!): OrdersResultOutput!
+}
+
+input OrdersInput {
+  price: Float!
+  quantity: Int!
+}
+
+type OrdersResultOutput {
+  price: Float!
+  quantity: Int!
+  total: Float
+}
+
+type Orders {
+  price: Float!
+  quantity: Int!
+  total: Float
+}
+
+type Query {
+  Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+}
