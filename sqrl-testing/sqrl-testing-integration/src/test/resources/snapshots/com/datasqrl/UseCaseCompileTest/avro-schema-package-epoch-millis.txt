@@ -1,0 +1,215 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  Schema(limit: Int = 10, offset: Int = 0): [Schema!]
+}
+
+type Schema {
+  uuidField: String!
+  timestampMillisField: DateTime!
+  nullableTimestampMillisField: DateTime
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Schema
+ID:          default_catalog.default_database.Schema
+Type:        stream
+Stage:       flink
+Primary key: uuidField, timestampMillisField
+Timestamp:   timestampMillisField
+Row count:   ~1e8
+---
+Schema:
+ - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - timestampMillisField: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - nullableTimestampMillisField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Inputs:
+ - default_catalog.default_database._Schema
+Annotations:
+ - stream-root: _Schema
+ - sort: [0 DESC-nulls-last]
+
+=== _Schema
+ID:          default_catalog.default_database._Schema
+Type:        stream
+Stage:       flink
+Primary key: uuidField, timestampMillisField
+Timestamp:   timestampMillisField
+Row count:   ~1e8
+---
+Schema:
+ - uuidField: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - timestampMillisField: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - nullableTimestampMillisField: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3)
+Inputs:
+ - default_catalog.default_database._Schema__base
+Annotations:
+ - stream-root: _Schema
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `_Schema__schema` (
+  `uuidField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `nullableTimestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE
+)
+WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `_Schema` (
+  PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED,
+  WATERMARK FOR `timestampMillisField` AS `timestampMillisField`
+)
+WITH (
+  'avro.encoding' = 'json',
+  'connector' = 'filesystem',
+  'format' = 'avro',
+  'path' = '${DATA_PATH}/schema-epoch-millis.jsonl'
+)
+LIKE `_Schema__schema`;
+CREATE VIEW `Schema`
+AS
+SELECT *
+FROM `_Schema`;
+CREATE TABLE `Schema_1` (
+  `uuidField` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `nullableTimestampMillisField` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`uuidField`, `timestampMillisField`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Schema',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Schema_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`Schema`
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Schema" ("uuidField" TEXT NOT NULL, "timestampMillisField" TIMESTAMP WITH TIME ZONE NOT NULL, "nullableTimestampMillisField" TIMESTAMP WITH TIME ZONE, PRIMARY KEY ("uuidField","timestampMillisField"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Schema",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"uuidField\", \"timestampMillisField\", \"nullableTimestampMillisField\"\n  FROM \"Schema\"\n  ORDER BY \"uuidField\" DESC NULLS LAST) AS \"t\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetSchema",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Schema($limit: Int = 10, $offset: Int = 0) {\nSchema(limit: $limit, offset: $offset) {\nuuidField\ntimestampMillisField\nnullableTimestampMillisField\n}\n\n}",
+            "queryName" : "Schema",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Schema{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "uuidField" : {
+                  "type" : "string"
+                },
+                "timestampMillisField" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "nullableTimestampMillisField" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Schema(limit: Int = 10, offset: Int = 0): [Schema!]\n}\n\ntype Schema {\n  uuidField: String!\n  timestampMillisField: DateTime!\n  nullableTimestampMillisField: DateTime\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

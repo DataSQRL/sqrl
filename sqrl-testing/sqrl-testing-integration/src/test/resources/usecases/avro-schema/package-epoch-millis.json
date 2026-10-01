@@ -1,0 +1,13 @@
+{
+  "version": "1",
+  "script": {
+    "main": "avro-schema.sqrl",
+    "config": {
+      "variant": "avro_epoch_millis"
+    }
+  },
+  "test-runner": {
+    "snapshot-folder": "snapshots-tmp",
+    "delay-sec": -1
+  }
+}

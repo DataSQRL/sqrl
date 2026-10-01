@@ -1,0 +1,29 @@
+{
+  "type": "record",
+  "name": "EpochMillisRecord",
+  "namespace": "com.example.avro",
+  "fields": [
+    {
+      "name": "uuidField",
+      "type": {
+        "type": "string",
+        "logicalType": "uuid"
+      }
+    },
+    {
+      "name": "timestampMillisField",
+      "type": {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }
+    },
+    {
+      "name": "nullableTimestampMillisField",
+      "type": ["null", {
+        "type": "long",
+        "logicalType": "timestamp-millis"
+      }],
+      "default": null
+    }
+  ]
+}
