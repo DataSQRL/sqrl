@@ -1,0 +1,7 @@
+{
+  "version": "1",
+  "script": {
+    "main": "computed-column-mutation.sqrl",
+    "graphql": "computed-column-mutation.graphqls"
+  }
+}

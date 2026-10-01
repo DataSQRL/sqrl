@@ -968,7 +968,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
           if (pk.isUndefined() && computedColumn.metadataType() == MetadataType.UUID) {
             pk = PrimaryKeyMap.of(List.of(i));
           }
-        } else {
+        } else if (!(column instanceof ComputedColumn)) {
           inputType.add(field);
         }
       }
