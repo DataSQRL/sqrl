@@ -55,6 +55,7 @@ import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
@@ -93,7 +94,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
         atField,
         getValidMutationOutputType(atField, registry),
         inputType,
-        mutation.getComputedColumns().keySet().stream().toList(),
+        getComputedColumnNames(mutation),
         registry);
 
     validateMutationInputMatchesTable(atField, inputType, mutation, registry);
@@ -123,6 +124,21 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
                         mutation.getName()));
 
     validateInputObjectMatchesTable(mutationField, inputType, expectedType, registry);
+  }
+
+  /**
+   * Returns fields which are calculated by the mutation table and therefore belong only in the
+   * mutation result. Besides DataSQRL-managed metadata, Flink tables may define computed columns
+   * directly in the {@code CREATE TABLE} statement.
+   */
+  private List<String> getComputedColumnNames(MutationTable mutation) {
+    var inputFieldNames = mutation.getInputDataType().getFieldNames();
+    return Stream.concat(
+            mutation.getComputedColumns().keySet().stream(),
+            mutation.getOutputDataType().getFieldNames().stream()
+                .filter(fieldName -> !inputFieldNames.contains(fieldName)))
+        .distinct()
+        .toList();
   }
 
   private void validateInputObjectMatchesTable(
