@@ -55,6 +55,7 @@ public class ServerConfig {
   private GraphiQLHandlerOptions graphiQLHandlerOptions;
   private boolean publicGraphQLEndpointEnabled = true;
   private boolean onlyConfiguredGraphQLOperations;
+  private long gracefulShutdownTimeoutSeconds = 15;
 
   @JsonSerialize(using = HttpServerOptionsSerializer.class)
   private HttpServerOptions httpServerOptions = new HttpServerOptions();

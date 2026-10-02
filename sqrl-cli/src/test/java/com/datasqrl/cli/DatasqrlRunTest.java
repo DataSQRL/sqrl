@@ -25,9 +25,13 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.datasqrl.config.PackageJson;
+import io.vertx.core.Future;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -36,6 +40,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.CheckpointingOptions;
 import org.apache.flink.configuration.Configuration;
@@ -119,6 +125,44 @@ class DatasqrlRunTest {
         .thenReturn("file:///nonexistent-dir");
 
     assertThat(underTest.getLastSavepoint()).isEmpty();
+  }
+
+  @Test
+  void closeVertxAndShutdown_waitsForVertxToClose() throws Exception {
+    var vertx = mock(Vertx.class);
+    var closePromise = Promise.<Void>promise();
+    var closeStarted = new CountDownLatch(1);
+    when(vertx.close())
+        .thenAnswer(
+            ignored -> {
+              closeStarted.countDown();
+              return closePromise.future();
+            });
+    setVertx(underTest, vertx);
+
+    var shutdownThread = new Thread(underTest::closeVertxAndShutdown);
+    shutdownThread.start();
+    try {
+      assertThat(closeStarted.await(1, TimeUnit.SECONDS)).isTrue();
+      assertThat(shutdownThread.isAlive()).isTrue();
+    } finally {
+      closePromise.tryComplete();
+      shutdownThread.join(TimeUnit.SECONDS.toMillis(1));
+    }
+
+    assertThat(shutdownThread.isAlive()).isFalse();
+  }
+
+  @Test
+  void closeVertxAndShutdown_handlesCloseFailure() throws Exception {
+    var vertx = mock(Vertx.class);
+    var failure = new IllegalStateException("Vert.x close failed");
+    when(vertx.close()).thenReturn(Future.failedFuture(failure));
+    setVertx(underTest, vertx);
+
+    underTest.closeVertxAndShutdown();
+
+    verify(vertx).close();
   }
 
   @Test
@@ -222,6 +266,12 @@ class DatasqrlRunTest {
     when(sqrlConfig.getCompilerConfig().compileFlinkPlan()).thenReturn(false);
 
     return DatasqrlRun.nonBlocking(planDir, sqrlConfig, realFlinkConfig, env);
+  }
+
+  private static void setVertx(DatasqrlRun run, Vertx vertx) throws ReflectiveOperationException {
+    var field = DatasqrlRun.class.getDeclaredField("vertx");
+    field.setAccessible(true);
+    field.set(run, vertx);
   }
 
   private Connection givenPostgresPlan(String postgresJson) throws Exception {

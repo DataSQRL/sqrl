@@ -23,6 +23,7 @@
   },
   "publicGraphQLEndpointEnabled" : true,
   "onlyConfiguredGraphQLOperations" : false,
+  "gracefulShutdownTimeoutSeconds" : 15,
   "httpServerOptions" : {
     "acceptBacklog" : -1,
     "acceptUnmaskedFrames" : false,
