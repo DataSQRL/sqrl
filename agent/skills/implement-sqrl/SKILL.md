@@ -10,9 +10,9 @@ The “R” in **SQRL** stands for *Reactive* and *Relationships*.
 
 This document focuses only on features **unique to SQRL**; when SQRL accepts Flink SQL verbatim we simply refer to the upstream spec.
 
-## Reference Examples
+## Reference Templates
 
-When available examples contain a relevant implementation, use them as reference material to inform the design. Do not require or copy a particular example; adapt only the parts that fit the task.
+Review project examples in `/opt/sqrl_templates/README.md` before implementing new features to identify related projects and copy features from those reference implementations.
 
 ## Script Structure
 
@@ -137,12 +137,17 @@ CREATE TABLE Customer (
 );
 ```
 
-Example (external):
+The internal table does not need `WATERMARK` declaration. SQRL generates the watermark for it. 
+Declare a `WATERMARK` explicitely on an internal table only when the user asks for one.
+
+Example (external): An external table connects to a data system through a `WITH (...)` clause and declares its own `WATERMARK`:
 
 ```sql
 CREATE TABLE kafka_json_table (
-  user_id INT,
-  name    STRING
+  user_id    INT,
+  name       STRING,
+  event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR event_time AS event_time - INTERVAL '1' SECOND
 ) WITH (
   'connector' = 'kafka-safe',
   'topic'     = 'users',
@@ -206,6 +211,16 @@ DistinctTbl := DISTINCT SourceTbl
 * The SQRL `DISTINCT` statement is not SQL `SELECT DISTINCT`.
 * Hint `/*+filtered_distinct_order*/` (see hints) may precede the statement to push filters before deduplication for optimization.
 
+**Use `DISTINCT` when the source table is a `STREAM` of updates to an entity that needs to be converted to a state table, i.e. changelog.** A `DISTINCT` statement adds a stateful operator and changes the semantics of the table.
+Check the type of the source table before you write one:
+
+| Source table | What to do |
+|---|---|
+| A `STREAM` that carries several records for the same key, for example an append-only change feed | Write the `DISTINCT` statement where a consumer needs a single version per entity, either the current one or the one valid at an event's timestamp in a temporal join. It turns the stream into `VERSIONED_STATE`. |
+| A table that already declares a `PRIMARY KEY` with upsert semantics, for example an `upsert-kafka` source or an internal table with an engine hint and a primary key | Read the table directly. It is `VERSIONED_STATE` already, so a `DISTINCT` on that same key returns the same rows and only costs state. |
+
+Read the `STREAM` directly where a consumer needs the changes themselves, such as a history endpoint, an aggregation over every update, an alert per change, or a stream-to-stream join. When both consumers exist, keep the `STREAM` and define the `DISTINCT` table, if needed, beside it, so each keeps its own semantics.
+
 ```sql
 -- Intermediate dedup step (feeds into another table) — use _ prefix
 _DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
@@ -214,6 +229,84 @@ _DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
 /** Latest version of each product, deduplicated by id */
 DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
 ```
+
+### Primary key columns
+
+A table gets a primary key from a `PRIMARY KEY` in its `CREATE TABLE`, or from a `DISTINCT ... ON` or `GROUP BY` on the key columns. Such a table has the type `VERSIONED_STATE` or `STATE` (see *Type System*).
+
+Clean the primary key columns before the first table that has that primary key, and select them unchanged in every table that reads from that table, directly or through other tables.
+For example, when `Customer` has the primary key `customer_id`, a later table selects `customer_id`, and never `TRIM(customer_id) AS customer_id`.
+
+A function on a key column in such a later table (`TRIM`, `LOWER`, `REGEXP_REPLACE`, `CAST`, `NULLIF`) hides the key from the Flink planner. A function can turn two different keys into the same value, so the planner treats the result as a normal column, not as a key. Every join that reads the later table stores each full row in its state and finds a row by comparing all of its columns (`NoUniqueKey`), instead of finding it by its key. This state grows with the data, and every update becomes slower.
+Columns that are not part of the key can be cleaned in any table.
+
+These rules apply to entity data (see the `/manage-connector` skill, Entity Data), where each new record replaces the previous version of the same entity, such as a customer or an account.
+
+**Writing entity data.** When the pipeline writes entity data into a table that other tables or projects read, clean the key before the `EXPORT`.
+Such a table is a mutation table with a `PRIMARY KEY` (an internal table with an engine hint) or a Kafka sink with a `PRIMARY KEY`.
+Every reader then receives the final key value and can select it unchanged.
+Follow these steps:
+
+1. Clean the key in a view, and keep only the rows whose cleaned key is not empty.
+2. Make the cleaned key unique with `DISTINCT ... ON` the cleaned key.
+3. Export the `DISTINCT` table into the table with the primary key.
+
+In this example, `RawCustomerUpdate` is the source table the pipeline reads. It has no key, and its `customer_id` values can contain extra spaces or be empty.
+
+```sql
+/*+engine(kafka) */
+CREATE TABLE Customer (
+  customer_id STRING NOT NULL,
+  email STRING,
+  event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  PRIMARY KEY (customer_id) NOT ENFORCED
+);
+
+_CleanCustomerUpdate := SELECT NULLIF(TRIM(REGEXP_REPLACE(customer_id, '\s+', ' ')), '') AS customer_id,
+                               email, event_time
+                        FROM RawCustomerUpdate
+                        WHERE NULLIF(TRIM(REGEXP_REPLACE(customer_id, '\s+', ' ')), '') IS NOT NULL;
+
+_LatestCustomerUpdate := DISTINCT _CleanCustomerUpdate ON customer_id ORDER BY event_time DESC;
+
+EXPORT _LatestCustomerUpdate TO Customer;
+```
+
+Step 2 is required.
+Flink rejects an `EXPORT` into a table with a `PRIMARY KEY` when the exported query is not unique on that key, with the error `The query has an upsert key that differs from the primary key of the sink table`.
+
+**Reading keys that arrive dirty.** When the writer is outside this project, for example an external client that calls a mutation endpoint, the pipeline cannot clean the key before it is stored.
+Clean it in the first table after the mutation instead:
+
+1. Declare the mutation without a `PRIMARY KEY`, so that each write is stored as an event with the key value exactly as the client sent it.
+   A `PRIMARY KEY` on the raw key would make the raw value the key, and cleaning it in a later table would hide that key from the planner.
+2. Clean the key in a view, and keep only the rows whose cleaned key is not empty.
+3. Make the cleaned key unique with `DISTINCT ... ON` the cleaned key. Every later table reads this `DISTINCT` table.
+
+```sql
+/*+engine(kafka) */
+CREATE TABLE CustomerUpdate (
+  customer_id STRING NOT NULL,
+  email STRING,
+  event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+_CleanCustomerUpdate := SELECT NULLIF(TRIM(REGEXP_REPLACE(customer_id, '\s+', ' ')), '') AS customer_id,
+                               email, event_time
+                        FROM CustomerUpdate
+                        WHERE NULLIF(TRIM(REGEXP_REPLACE(customer_id, '\s+', ' ')), '') IS NOT NULL;
+
+/** Current version of each customer, with the cleaned id as primary key */
+Customer := DISTINCT _CleanCustomerUpdate ON customer_id ORDER BY event_time DESC;
+```
+
+Follow the same steps for an external source whose keys can arrive dirty.
+When an external source's keys always arrive clean, read its key unchanged and skip the cleaning.
+
+Clean the key in a view, as shown above, and not inside the `CREATE TABLE`.
+Flink accepts a `PRIMARY KEY` only on physical columns, so a computed column such as `customer_id AS TRIM(raw_customer_id)` cannot be the key.
+
+When the compiler asks for a `/*+primary_key(...)*/` hint on a table whose key column comes from a function, use `DISTINCT ... ON` the cleaned key instead, because the hint does not make the column unique.
 
 ### Function definition
 
