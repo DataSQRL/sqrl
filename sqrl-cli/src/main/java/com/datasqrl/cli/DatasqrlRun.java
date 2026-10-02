@@ -196,13 +196,20 @@ public class DatasqrlRun {
   }
 
   public void closeVertxAndShutdown() {
-    if (vertx != null) {
-      vertx.close();
-    }
-
-    // Signal shutdown to release the hold
-    if (shutdownLatch != null) {
-      shutdownLatch.countDown();
+    try {
+      if (vertx != null) {
+        vertx.close().toCompletionStage().toCompletableFuture().get();
+      }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      log.warn("Interrupted while waiting for Vert.x to stop", e);
+    } catch (ExecutionException e) {
+      log.error("Failed to stop Vert.x cleanly", e.getCause());
+    } finally {
+      // Signal shutdown to release the hold only after Vert.x has stopped.
+      if (shutdownLatch != null) {
+        shutdownLatch.countDown();
+      }
     }
   }
 

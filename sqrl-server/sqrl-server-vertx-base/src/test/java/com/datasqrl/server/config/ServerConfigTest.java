@@ -32,6 +32,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getServletConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLHandlerOptions()).isNotNull();
     assertThat(serverConfig.getGraphiQLHandlerOptions()).isNull();
+    assertThat(serverConfig.getGracefulShutdownTimeoutSeconds()).isEqualTo(15);
     assertThat(serverConfig.getHttpServerOptions()).isNotNull();
     assertThat(serverConfig.getPgConnectOptions()).isNotNull();
     assertThat(serverConfig.getPoolOptions()).isNotNull();
@@ -53,6 +54,7 @@ class ServerConfigTest {
     json.set("servletConfig", MAPPER.createObjectNode().put("graphQLEndpoint", "/custom-graphql"));
     json.set("graphQLHandlerOptions", MAPPER.createObjectNode());
     json.set("graphiQLHandlerOptions", MAPPER.createObjectNode());
+    json.put("gracefulShutdownTimeoutSeconds", 45);
     json.set("httpServerOptions", MAPPER.createObjectNode().put("port", 9999));
     json.set(
         "pgConnectOptions",
@@ -99,6 +101,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getServletConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLHandlerOptions()).isNotNull();
     assertThat(serverConfig.getGraphiQLHandlerOptions()).isNotNull();
+    assertThat(serverConfig.getGracefulShutdownTimeoutSeconds()).isEqualTo(45);
     assertThat(serverConfig.getHttpServerOptions()).isNotNull();
     assertThat(serverConfig.getPgConnectOptions()).isNotNull();
     assertThat(serverConfig.getPoolOptions()).isNotNull();

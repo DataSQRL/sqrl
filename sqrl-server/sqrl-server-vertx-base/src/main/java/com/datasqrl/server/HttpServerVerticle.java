@@ -35,6 +35,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import java.io.File;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +64,9 @@ public class HttpServerVerticle extends AbstractVerticle {
 
   /** Server model */
   private Map<String, RootGraphQLModel> models;
+
+  /** HTTP server that must be drained before dependent resources are closed. */
+  private HttpServer httpServer;
 
   // ---------------------------------------------------------------------------
   // Lifecycle
@@ -113,16 +117,25 @@ public class HttpServerVerticle extends AbstractVerticle {
   }
 
   @Override
-  public void stop(Promise<Void> stopPromise) throws Exception {
-    try {
-      for (AutoCloseable closeable : closeables) {
-        closeable.close();
-      }
-      stopPromise.complete();
+  public void stop(Promise<Void> stopPromise) {
+    var shutdown =
+        httpServer == null
+            ? Future.succeededFuture()
+            : httpServer.shutdown(Duration.ofSeconds(config.getGracefulShutdownTimeoutSeconds()));
 
-    } catch (Exception e) {
-      stopPromise.fail(e);
-    }
+    shutdown.onComplete(
+        shutdownResult ->
+            closeResources()
+                .onComplete(
+                    closeResult -> {
+                      if (shutdownResult.failed()) {
+                        stopPromise.fail(shutdownResult.cause());
+                      } else if (closeResult.failed()) {
+                        stopPromise.fail(closeResult.cause());
+                      } else {
+                        stopPromise.complete();
+                      }
+                    }));
   }
 
   // ---------------------------------------------------------------------------
@@ -141,6 +154,7 @@ public class HttpServerVerticle extends AbstractVerticle {
         .compose(ignored -> startHttpServer(router))
         .onSuccess(
             server -> {
+              httpServer = server;
               log.info("HTTP server listening on port {}", server.actualPort());
               startPromise.complete();
             })
@@ -192,6 +206,25 @@ public class HttpServerVerticle extends AbstractVerticle {
         .createHttpServer(config.getHttpServerOptions())
         .requestHandler(router)
         .listen(config.getHttpServerOptions().getPort());
+  }
+
+  private Future<Void> closeResources() {
+    Exception failure = null;
+    for (AutoCloseable closeable : closeables) {
+      try {
+        closeable.close();
+      } catch (Exception e) {
+        if (failure == null) {
+          failure = e;
+        } else {
+          failure.addSuppressed(e);
+        }
+      }
+    }
+    if (failure == null) {
+      return Future.succeededFuture();
+    }
+    return Future.failedFuture(failure);
   }
 
   // ---------------------------------------------------------------------------
