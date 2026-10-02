@@ -23,7 +23,7 @@ import java.util.Map;
  *
  * @param tableName the internal table id the planner assigned, e.g. {@code Orders_3}
  * @param logicalName the SQRL table name substituted for {@code ${sqrl:table-name}} in the topic
- *     template, {@code null} for topics that are not derived from a table
+ *     template
  */
 public record KafkaNewTopicModel(
     String topicName,
@@ -40,31 +40,13 @@ public record KafkaNewTopicModel(
   public KafkaNewTopicModel(
       String topicName,
       String tableName,
-      String format,
+      String logicalName,
       int numPartitions,
-      short replicationFactor,
-      Type type,
-      List<String> messageKeys,
-      String messageSchema,
-      Map<String, String> config) {
+      short replicationFactor) {
     this(
         topicName,
         tableName,
-        null,
-        format,
-        numPartitions,
-        replicationFactor,
-        type,
-        messageKeys,
-        messageSchema,
-        config);
-  }
-
-  public KafkaNewTopicModel(
-      String topicName, String tableName, int numPartitions, short replicationFactor) {
-    this(
-        topicName,
-        tableName,
+        logicalName,
         null,
         numPartitions,
         replicationFactor,
@@ -74,8 +56,8 @@ public record KafkaNewTopicModel(
         Map.of());
   }
 
-  public KafkaNewTopicModel(String topicName, String tableName) {
-    this(topicName, tableName, 1, (short) 1);
+  public KafkaNewTopicModel(String topicName, String tableName, String logicalName) {
+    this(topicName, tableName, logicalName, 1, (short) 1);
   }
 
   public enum Type {

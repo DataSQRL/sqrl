@@ -44,34 +44,8 @@ public record JdbcStatementModel(
     Role role) {
 
   public JdbcStatementModel(
-      String name,
-      Type type,
-      String sql,
-      String description,
-      List<Field> fields,
-      List<String> primaryKey,
-      List<String> partitionKey,
-      PartitionType partitionType,
-      Integer numPartitions,
-      Duration ttl) {
-    this(
-        name,
-        type,
-        sql,
-        description,
-        fields,
-        primaryKey,
-        partitionKey,
-        partitionType,
-        numPartitions,
-        ttl,
-        null,
-        null);
-  }
-
-  public JdbcStatementModel(
       String name, Type type, String sql, String description, List<Field> fields) {
-    this(name, type, sql, description, fields, null, null, null, null, null);
+    this(name, type, sql, description, fields, null, null, null, null, null, null, null);
   }
 
   public enum Type {

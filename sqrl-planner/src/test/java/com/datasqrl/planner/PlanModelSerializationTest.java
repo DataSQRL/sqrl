@@ -135,8 +135,8 @@ class PlanModelSerializationTest {
 
   @Test
   void givenKafkaPhysicalPlan_whenMapped_thenReturnsWrappedTopicModel() {
-    var topic = new KafkaNewTopicModel("orders", "orders", 3, (short) 2);
-    var testRunnerTopic = new KafkaNewTopicModel("test-orders", "test-orders");
+    var topic = new KafkaNewTopicModel("orders", "orders", "orders", 3, (short) 2);
+    var testRunnerTopic = new KafkaNewTopicModel("test-orders", "test-orders", "test-orders");
     var plan =
         KafkaPhysicalPlan.builder()
             .topic(new KafkaNewTopic(topic))
@@ -207,7 +207,7 @@ class PlanModelSerializationTest {
   }
 
   @Test
-  void givenKafkaTopicWithLogicalName_whenSerialized_thenEmitsLogicalNameNextToTableId() {
+  void givenPrefixedKafkaTopic_whenSerialized_thenLogicalNameKeepsUnprefixedName() {
     var topic =
         new KafkaNewTopicModel(
             "sqrl-mutation-Orders",
@@ -220,7 +220,7 @@ class PlanModelSerializationTest {
             List.of(),
             "",
             Map.of());
-    var testRunnerTopic = new KafkaNewTopicModel("test-orders", "test-orders");
+    var testRunnerTopic = new KafkaNewTopicModel("test-orders", "test-orders", "test-orders");
     var plan =
         KafkaPhysicalPlan.builder()
             .topic(new KafkaNewTopic(topic))
@@ -233,6 +233,7 @@ class PlanModelSerializationTest {
     assertThat(topicJson.get("tableName").asText()).isEqualTo("Orders_2");
     assertThat(topicJson.get("logicalName").asText()).isEqualTo("Orders");
     assertThat(topicJson.get("type").asText()).isEqualTo("MUTATION");
-    assertThat(json.get("testRunnerTopics").get(0).has("logicalName")).isFalse();
+    assertThat(json.get("testRunnerTopics").get(0).get("logicalName").asText())
+        .isEqualTo("test-orders");
   }
 }

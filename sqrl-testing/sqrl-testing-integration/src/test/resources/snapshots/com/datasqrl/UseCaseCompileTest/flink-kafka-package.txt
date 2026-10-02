@@ -332,6 +332,7 @@ END
     {
       "topicName" : "input_topic1",
       "tableName" : "input_topic1",
+      "logicalName" : "input_topic1",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "type" : "SUBSCRIPTION",
@@ -342,6 +343,7 @@ END
     {
       "topicName" : "input_topic2",
       "tableName" : "input_topic2",
+      "logicalName" : "input_topic2",
       "numPartitions" : 1,
       "replicationFactor" : 1,
       "type" : "SUBSCRIPTION",
