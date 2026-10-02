@@ -15,13 +15,7 @@
  */
 package com.datasqrl.cli;
 
-import static com.datasqrl.env.EnvVariableNames.KAFKA_BOOTSTRAP_SERVERS;
-import static com.datasqrl.env.EnvVariableNames.POSTGRES_JDBC_URL;
-import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
-import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
-
 import com.datasqrl.config.PackageJson;
-import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.engine.server.VertxEngineFactory;
 import com.datasqrl.flinkrunner.SqrlRunner;
 import com.datasqrl.flinkrunner.utils.EnvUtils;
@@ -29,7 +23,7 @@ import com.datasqrl.flinkrunner.utils.EnvVarResolver;
 import com.datasqrl.server.HttpServerVerticle;
 import com.datasqrl.server.config.ServerConfigUtil;
 import com.datasqrl.server.graphql.ModelContainer;
-import com.datasqrl.util.ConfigLoaderUtils;
+import com.datasqrl.util.CmdUtils;
 import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.micrometer.prometheusmetrics.PrometheusConfig;
@@ -44,21 +38,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.Statement;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -72,14 +58,10 @@ import org.apache.flink.configuration.ExecutionOptions;
 import org.apache.flink.configuration.StateRecoveryOptions;
 import org.apache.flink.core.execution.SavepointFormatType;
 import org.apache.flink.table.api.TableResult;
-import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.admin.AdminClientConfig;
-import org.apache.kafka.clients.admin.NewTopic;
 
 @Slf4j
 public class DatasqrlRun {
 
-  private static final int TOPIC_CREATE_TIMEOUT_MS = 8000;
   private static final int VERTX_DEPLOY_TIMEOUT_SEC = 30;
 
   private final Path planDir;
@@ -117,8 +99,8 @@ public class DatasqrlRun {
   }
 
   public TableResult run() {
-    initPostgres();
-    initKafka();
+    CmdUtils.initializePostgres(planDir, env);
+    CmdUtils.initializeKafka(planDir, env);
 
     startVertx();
     tableResult = runFlinkJob();
@@ -247,97 +229,6 @@ public class DatasqrlRun {
     var runner = new SqrlRunner(execMode, flinkConfig, resolver, sqlFile, planFile, udfPath);
 
     return runner.run();
-  }
-
-  @SneakyThrows
-  private void initKafka() {
-    var kafkaPlanOpt = ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir);
-    if (kafkaPlanOpt.isEmpty() || kafkaPlanOpt.get().isEmpty()) {
-      log.debug("The Kafka physical plan is empty, skip init");
-      return;
-    }
-
-    var kafkaPlan = kafkaPlanOpt.get();
-    var topicsToCreate = new HashSet<String>();
-
-    Stream.concat(kafkaPlan.topics().stream(), kafkaPlan.testRunnerTopics().stream())
-        .map(KafkaNewTopicModel::topicName)
-        .forEach(topicsToCreate::add);
-
-    var bootstrapServers = getenv(KAFKA_BOOTSTRAP_SERVERS);
-    if (bootstrapServers == null) {
-      throw new IllegalStateException(
-          "Failed to get Kafka 'bootstrap.servers', KAFKA_BOOTSTRAP_SERVERS is not set");
-    }
-
-    var props = new Properties();
-    props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-    props.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, TOPIC_CREATE_TIMEOUT_MS);
-    try (var adminClient = AdminClient.create(props)) {
-      Set<String> existingTopics = adminClient.listTopics().names().get();
-      for (var topicName : topicsToCreate) {
-        if (existingTopics.contains(topicName)) {
-          continue;
-        }
-        // We need to limit both partitions and replication factor to 1 here,
-        // cause this will run on the Redpanda "cluster" inside the cmd image.
-        var newTopic = new NewTopic(topicName, 1, (short) 1);
-        adminClient.createTopics(Collections.singletonList(newTopic)).all().get();
-      }
-    } catch (Exception e) {
-      log.warn(
-          "Failed to create Kafka topic(s). One or more required topics for the SQRL pipeline might not exist."
-              + " Please ensure all topics are pre-created, as automatic topic creation is only available for the internal Kafka instance.");
-      log.debug("Topic creation error details:", e);
-    }
-  }
-
-  @SneakyThrows
-  private void initPostgres() {
-    var postgresPlanOpt = ConfigLoaderUtils.loadPostgresPhysicalPlan(planDir);
-    if (postgresPlanOpt.isEmpty() || postgresPlanOpt.get().statements().isEmpty()) {
-      log.debug("The Postgres physical plan is empty, skip init");
-      return;
-    }
-
-    var statements = postgresPlanOpt.get().statements();
-    try (Connection connection =
-        DriverManager.getConnection(
-            getenv(POSTGRES_JDBC_URL), getenv(POSTGRES_USERNAME), getenv(POSTGRES_PASSWORD))) {
-      for (var jdbcStmt : statements) {
-        log.info("Executing statement {} of type {}", jdbcStmt.name(), jdbcStmt.type());
-        try (Statement stmt = connection.createStatement()) {
-          stmt.execute(jdbcStmt.sql());
-        } catch (Exception e) {
-          e.printStackTrace();
-          assert false : e.getMessage();
-        }
-      }
-      // Extension statements manage the lifecycle of extension-backed tables (e.g. pg_partman
-      // creates the partitions of ttl() tables); without them partitioned parents have no
-      // partitions and every insert fails. Failures are non-fatal so plans still run against
-      // a Postgres that lacks the extension.
-      for (var jdbcStmt : postgresPlanOpt.get().standaloneExtensionStatements()) {
-        log.info(
-            "Executing standalone extension statement {} of type {}",
-            jdbcStmt.name(),
-            jdbcStmt.type());
-        try (Statement stmt = connection.createStatement()) {
-          stmt.execute(jdbcStmt.sql());
-        } catch (Exception e) {
-          log.warn(
-              "Failed to execute standalone extension statement '{}'. The required Postgres"
-                  + " extension may not be installed; extension-managed features will be"
-                  + " unavailable.",
-              jdbcStmt.name(),
-              e);
-        }
-      }
-    }
-  }
-
-  private String getenv(String key) {
-    return this.env.get(key);
   }
 
   @SneakyThrows

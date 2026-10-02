@@ -25,6 +25,7 @@ import com.datasqrl.cli.output.TestOutputManager;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.engine.database.relational.JdbcStatement;
+import com.datasqrl.util.CmdUtils;
 import com.datasqrl.util.FlinkOperatorStatusChecker;
 import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -217,6 +218,8 @@ public class DatasqrlTest {
     // the same data.
     if (rerunForNewSnapshots && containsNewSnapshots(testResults)) {
       formatter.sectionHeader("Validating newly created snapshots");
+      formatter.info("Resetting the test environment.");
+      resetTestEnvironment();
       formatter.info("Re-running the pipeline to verify the generated snapshots...");
       return runInternal(false);
     }
@@ -402,6 +405,11 @@ public class DatasqrlTest {
   private String getRequiredEnv(String envVarName) {
     return Objects.requireNonNull(
         env.get(envVarName), "Missing environment variable: " + envVarName);
+  }
+
+  private void resetTestEnvironment() {
+    CmdUtils.resetPostgres(planDir, env);
+    CmdUtils.resetKafka(planDir, env);
   }
 
   static boolean containsNewSnapshots(List<TestResult> testResults) {
