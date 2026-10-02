@@ -87,7 +87,7 @@ Then tell the agent what you need in plain English:
 
 You get SQL scripts with tests that you can read, run, and verify.
 
-For planning, iterative refinement, and deployment workflows, install the advanced DataSQRL agent as a plugin for Claude Code, Codex, Cursor, or GitHub Copilot. The [Getting Started guide](https://docs.datasqrl.com/docs/intro/getting-started) covers both agents in detail.
+For planning, iterative refinement, and deployment workflows, install the [advanced DataSQRL agent](https://github.com/DataSQRL/datasqrl-plugin) as a plugin for Claude Code, Codex, Cursor, or GitHub Copilot. The [Getting Started guide](https://docs.datasqrl.com/docs/intro/getting-started) covers both agents in detail.
 
 ## Next steps
 - [Getting Started tutorial](https://docs.datasqrl.com/docs/intro/getting-started)

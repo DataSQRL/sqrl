@@ -6,7 +6,7 @@ import TabItem from '@theme/TabItem';
 ## Basic DataSQRL Agent
 
 The basic DataSQRL agent runs as a Docker image on your local machine. It wraps the Pi coding agent with the DataSQRL framework, an `AGENTS.md` file, and skills.
-All you need is a recent version of [Docker](https://www.docker.com/products/docker-desktop/) and an API key from the LLM provider you'd like to use.
+All you need is a recent version of [Docker](https://www.docker.com/products/docker-desktop/) and an API key from the LLM provider you'd like to use. If you don't have an API key or want to see how the agent works step-by-step, [follow this tutorial](getting-started-no-key) instead.
 
 <Tabs groupId="os">
 <TabItem value="macos" label="macOS" default>

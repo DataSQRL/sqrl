@@ -22,7 +22,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'DataSQRL',
-  tagline: 'Data Streaming Framework',
+  tagline: 'Data Engineering Harness',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
