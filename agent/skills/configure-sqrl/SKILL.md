@@ -204,6 +204,12 @@ Important rules:
 * An enabled engine with **no** entry under `engines` runs on its defaults. Add a setting only when a requirement, a connector, or the engine's reference file calls for it.
 * Keep `engines` entries aligned with `enabled-engines`. SQRL removes a configuration for a disabled engine and warns when that configuration came from a user package; delete it yourself when pruning the engine.
 
+### Deployment (`engines.<engine>.deployment`)
+
+The `deployment` section under each `engines` configuration specifies what resources (i.e. instance type and number of instances) to use for deploying a DataSQRL pipeline in DataSQRL Cloud.
+
+Always read [Cloud Deployment Configuration](cloud-deployment.md) when configuring deployment size and resources.
+
 ## Script (`script`)
 
 ```json
