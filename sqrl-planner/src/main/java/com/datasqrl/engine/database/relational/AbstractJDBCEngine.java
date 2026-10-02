@@ -23,6 +23,7 @@ import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.JdbcDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.deployment.model.JdbcStatementModel.Role;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.ExecutionEngine;
@@ -85,6 +86,16 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
       TableAnalysis tableAnalysis) {
+    return createTable(
+        originalTableName, tableBuilder, relDataType, tableAnalysis, Role.MATERIALIZATION);
+  }
+
+  protected JdbcEngineCreateTable createTable(
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      TableAnalysis tableAnalysis,
+      Role role) {
 
     if (!supports(EngineFeature.ACCESS_WITHOUT_PARTITION)) {
       var pk = tableBuilder.getPrimaryKey();
@@ -113,7 +124,12 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     tableBuilder.setConnectorOptions(connectorOptions);
 
     return new JdbcEngineCreateTable(
-        getConnectorTableName(tableBuilder), tableBuilder, relDataType, tableAnalysis);
+        getConnectorTableName(tableBuilder),
+        originalTableName,
+        role,
+        tableBuilder,
+        relDataType,
+        tableAnalysis);
   }
 
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {

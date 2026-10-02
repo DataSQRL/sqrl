@@ -1734,6 +1734,7 @@ END
     {
       "topicName" : "Customer",
       "tableName" : "Customer_3",
+      "logicalName" : "Customer",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -1745,6 +1746,7 @@ END
     {
       "topicName" : "CustomerSubscription",
       "tableName" : "CustomerSubscription_7",
+      "logicalName" : "CustomerSubscription",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -1756,6 +1758,7 @@ END
     {
       "topicName" : "Orders",
       "tableName" : "Orders",
+      "logicalName" : "Orders",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,

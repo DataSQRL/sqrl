@@ -18,10 +18,17 @@ package com.datasqrl.deployment.model;
 import java.util.List;
 import java.util.Map;
 
-/** A Kafka topic definition in a deployment file. */
+/**
+ * A Kafka topic definition in a deployment file.
+ *
+ * @param tableName the internal table id the planner assigned, e.g. {@code Orders_3}
+ * @param logicalName the SQRL table name substituted for {@code ${sqrl:table-name}} in the topic
+ *     template, {@code null} for topics that are not derived from a table
+ */
 public record KafkaNewTopicModel(
     String topicName,
     String tableName,
+    String logicalName,
     String format,
     int numPartitions,
     short replicationFactor,
@@ -29,6 +36,29 @@ public record KafkaNewTopicModel(
     List<String> messageKeys,
     String messageSchema,
     Map<String, String> config) {
+
+  public KafkaNewTopicModel(
+      String topicName,
+      String tableName,
+      String format,
+      int numPartitions,
+      short replicationFactor,
+      Type type,
+      List<String> messageKeys,
+      String messageSchema,
+      Map<String, String> config) {
+    this(
+        topicName,
+        tableName,
+        null,
+        format,
+        numPartitions,
+        replicationFactor,
+        type,
+        messageKeys,
+        messageSchema,
+        config);
+  }
 
   public KafkaNewTopicModel(
       String topicName, String tableName, int numPartitions, short replicationFactor) {

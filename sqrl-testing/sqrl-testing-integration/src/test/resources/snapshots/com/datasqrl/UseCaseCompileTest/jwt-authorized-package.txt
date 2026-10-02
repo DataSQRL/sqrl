@@ -282,6 +282,7 @@ END
     {
       "topicName" : "_Messages",
       "tableName" : "_Messages_3",
+      "logicalName" : "_Messages",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -293,6 +294,7 @@ END
     {
       "topicName" : "AuthInputData",
       "tableName" : "AuthInputData",
+      "logicalName" : "AuthInputData",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,

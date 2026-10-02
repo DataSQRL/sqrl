@@ -255,6 +255,7 @@ END
     {
       "topicName" : "kafka-mutation-SensorReadingMutation",
       "tableName" : "SensorReadingMutation",
+      "logicalName" : "SensorReadingMutation",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -312,7 +313,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "SensorReading",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "SensorReadingInput_2",
@@ -362,7 +365,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "SensorReadingInput",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "SensorReadingMutation_3",
@@ -412,7 +417,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "SensorReadingMutation",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "SensorReading",

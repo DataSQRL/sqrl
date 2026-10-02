@@ -388,7 +388,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Customer",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerWithEmail_2",
@@ -428,7 +430,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerWithEmail",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "DistinctCustomer_3",
@@ -470,7 +474,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "DistinctCustomer",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Product_4",
@@ -512,7 +518,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Product",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Customer",

@@ -15,6 +15,7 @@
  */
 package com.datasqrl.engine.database.relational;
 
+import com.datasqrl.deployment.model.JdbcStatementModel.Role;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.log.MutationEngine.MutationCreateTable;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -27,12 +28,18 @@ import org.apache.calcite.rel.type.RelDataType;
  * the plan method.
  */
 public record JdbcEngineCreateTable(
-    String tableName, FlinkTableBuilder table, RelDataType datatype, TableAnalysis tableAnalysis)
+    String tableName,
+    String logicalName,
+    Role role,
+    FlinkTableBuilder table,
+    RelDataType datatype,
+    TableAnalysis tableAnalysis)
     implements EngineCreateTable, MutationCreateTable {
 
   @Override
   public MutationCreateTable withValueType(RelDataType inputValueType) {
-    return new JdbcEngineCreateTable(tableName, table, inputValueType, tableAnalysis);
+    return new JdbcEngineCreateTable(
+        tableName, logicalName, role, table, inputValueType, tableAnalysis);
   }
 
   @Override

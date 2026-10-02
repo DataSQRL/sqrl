@@ -240,6 +240,7 @@ END
     {
       "topicName" : "HighTempAlert",
       "tableName" : "HighTempAlert_1",
+      "logicalName" : "HighTempAlert",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -251,6 +252,7 @@ END
     {
       "topicName" : "SensorReading",
       "tableName" : "SensorReading",
+      "logicalName" : "SensorReading",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,

@@ -231,6 +231,7 @@ END
     {
       "topicName" : "Deployments",
       "tableName" : "Deployments",
+      "logicalName" : "Deployments",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -242,6 +243,7 @@ END
     {
       "topicName" : "Projects",
       "tableName" : "Projects",
+      "logicalName" : "Projects",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
