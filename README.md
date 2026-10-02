@@ -1,7 +1,7 @@
 # DataSQRL: Agentic Data Engineering Harness
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/DataSQRL/sqrl/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/DataSQRL/sqrl/tree/main)
-[![Docs](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://datasqrl.github.io/sqrl)
+[![Docs](https://img.shields.io/badge/docs-available-brightgreen.svg)](http://docs.datasqrl.com)
 [![codecov](https://codecov.io/gh/datasqrl/sqrl/branch/main/graph/badge.svg)](https://codecov.io/gh/datasqrl/sqrl)
 [![License](https://img.shields.io/github/license/datasqrl/sqrl.svg)](LICENSE)
 [![Docker Image Version](https://img.shields.io/docker/v/datasqrl/cmd?sort=semver)](https://hub.docker.com/r/datasqrl/cmd/tags)

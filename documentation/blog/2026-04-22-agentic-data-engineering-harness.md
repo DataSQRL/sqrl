@@ -17,6 +17,8 @@ You can customize DataSQRL as the foundation of your agentic data platform. Our 
 
 <img src="/img/diagrams/agentic/harness_overview.png" alt="DataSQRL harness architecture showing coding agent with framework, validator, and simulator feedback loops >" width="50%"/>
 
+<!-- truncate -->
+
 ## Why a Data Engineering Harness?
 
 Coding agents are transforming software development. Tools like Claude Code, Copilot, and Codex can generate application code, write tests, and even refactor entire codebases. But data engineering presents unique challenges that general-purpose coding agents struggle to address.
@@ -271,7 +273,7 @@ By capturing and faithfully replaying records at their original timestamp, the s
 
 Simulation is important in agentic coding workflows because it allows the agent to execute and refine the implementation in a feedback loop that is executed locally and can simulate scenarios that only occur rarely in production.
 
-Read more about invoking the [simulator](/docs/compiler#test-command) and writing [reproducible test cases](/docs/howto/testing).
+Read more about invoking the [simulator](/docs/compiler#test-command) and writing reproducible test cases.
 
 ### Operations and Telemetry
 

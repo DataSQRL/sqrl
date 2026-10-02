@@ -37,10 +37,11 @@ const config: Config = {
   projectName: 'sqrl', // Usually your repo name.
 
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
-
   markdown: {
     mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
   },
 
   // Even if you don't use internationalization, you can use this field to set
@@ -57,6 +58,15 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
+          // Docusaurus defaults, plus the stdlib-docs submodule README whose relative links
+          // point into the flink-sql-runner repository rather than to doc pages
+          exclude: [
+            '**/_*.{js,jsx,ts,tsx,md,mdx}',
+            '**/_*/**',
+            '**/*.test.{js,jsx,ts,tsx}',
+            '**/__tests__/**',
+            'stdlib-docs/README.md',
+          ],
         },
         blog: {
           showReadingTime: true,

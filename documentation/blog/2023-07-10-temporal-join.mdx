@@ -21,12 +21,11 @@ Stream processing technologies like Apache Flink introduce a new type of data tr
 This article introduces the temporal join, compares it to the traditional inner join, explains when to use it, and why it is a secret superpower.
 
 Table of Contents:
-* [The Join: A Quick Review](#review)
-* [The Temporal Join: Linking Stream and State](#tempjoin)
-* [Temporal Join vs Inner Join](#tempinner)
-* [Why Temporal Joins are Fast and Efficient](#efficient)
-* [Temporal Joins Made Easy to Use](#easy)
-* [Summary](#summary)
+* [The Join: A Quick Review](/blog/temporal-join#review)
+* [The Temporal Join: Linking Stream and State](/blog/temporal-join#tempjoin)
+* [Temporal Join vs Inner Join](/blog/temporal-join#tempinner)
+* [Why Temporal Joins are Fast and Efficient](/blog/temporal-join#efficient)
+* [Summary](/blog/temporal-join#summary)
 
 <!--truncate-->
 
@@ -108,7 +107,7 @@ FROM SensorReading r JOIN Sensor FOR SYSTEM_TIME AS OF r.`timestamp` s
     ON r.sensorid = s.id GROUP BY s.machineid
 ```
 
-Pretty much the same query, just a different join type. Just a heads-up: the syntax for temporal joins in Flink SQL is more complex - we'll get to that [later](#easy).
+Pretty much the same query, just a different join type. Just a heads-up: the syntax for temporal joins in Flink SQL is more complex.
 
 As a temporal join, we are joining each sensor reading with the version of the sensor record at the time of the data stream. In other words, the join not only matches the sensor reading with the sensor record based on the id but also based on the timestamp of the reading to ensure it matches the right version of the sensor record. Pretty neat, right?
 
