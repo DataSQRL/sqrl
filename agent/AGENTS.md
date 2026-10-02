@@ -18,6 +18,7 @@ Use the smallest relevant combination of skills. Typical work proceeds by inspec
 | `implement-sqrl`          | Any `.sqrl` pipeline, transformation, aggregation, or serving logic.            |
 | `implement-udf`           | Java scalar, aggregate, or table UDFs when SQRL/SQL is insufficient.            |
 | `design-api`              | GraphQL, REST, MCP, authorization, and exposed API schemas.                     |
+| `test-sqrl`               | Adding or updating tests, snapshots, and test fixtures for a pipeline.          |
 
 ## Reference examples
 
@@ -45,4 +46,4 @@ Use the project configuration files named by the task, layering a shared package
 
 Verify every project or sub-project changed by the task. Do not report success from an unverified change: state the command and outcome, or explain what dependency prevents verification. Keep generated build artifacts out of source edits unless the task explicitly requests them.
 
-For DataSQRL concepts and CLI examples, start with [README_SQRL.md](README_SQRL.md).
+For CLI commands, options, and package configuration layering, see [CLI_REFERENCE.md](CLI_REFERENCE.md). For an overview of DataSQRL concepts, see [README_SQRL.md](README_SQRL.md).

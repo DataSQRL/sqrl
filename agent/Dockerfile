@@ -45,6 +45,7 @@ RUN mkdir -p /workspace /opt/agent /root/.pi/agent \
 
 COPY README.md /root/.pi/agent/README_SQRL.md
 COPY agent/AGENTS.md /root/.pi/agent/AGENTS.md
+COPY agent/CLI_REFERENCE.md /root/.pi/agent/CLI_REFERENCE.md
 COPY agent/skills/ /root/.pi/agent/skills/
 COPY --chmod=0755 agent/cmd.sh /opt/agent/cmd.sh
 COPY --chmod=0755 agent/entrypoint.sh /opt/agent/entrypoint.sh

@@ -31,7 +31,7 @@ SQRL inherits full Flink SQL grammar for
 * `USE ...`
 * `INSERT INTO`
 
-...with the caveat that SQRL currently tracks **Flink 2.2**; later features may not parse.
+...with the caveat that SQRL tracks **Flink 2** (see [compatibility](compatibility) for the exact version); features from newer Flink releases may not parse.
 
 Refer to the [Flink SQL documentation](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/dev/table/sql/overview/) for a detailed specification.
 
@@ -138,6 +138,8 @@ CREATE TABLE kafka_json_table (
   'format'    = 'flexible-json'
 );
 ```
+
+The `kafka-safe` connector is a DataSQRL-provided Kafka source connector that routes faulty messages to a dead-letter queue. See [connectors](connectors) for details.
 
 ## Definition Statements
 
@@ -377,10 +379,10 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **query_by_any**            | `query_by_any(col, ...)`                                                               | table          | generate interface with *optional* filter arguments for all listed columns                                                                                                                                                                                                                                                                                                                                                                                  |
 | **no_query**                | `no_query`                                                                             | table          | hide from interface                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | **insert**                  | `insert(type)`                                                                         | table          | controls the way how mutations will be written to their target sink. `type` ∈ `SINGLE` (default), `BATCH`, `TRANSACTION`                                                                                                                                                                                                                                                                                                                                    |
-| **ttl**                     | `ttl(duration)`                                                                        | table          | specifies how long the records for this table are retained in the underlying data system before it can be discarded. Expects a duration string like `5 week` with a unit between minute and week (e.g. `30 min`, `36 hours`, `14 days`, `2 weeks`). For range-partitioned tables, the partition width is derived from the duration and its unit (see the [postgres engine configuration](configuration-engine/postgres#partitioning)). Disabled by default. |
+| **ttl**                     | `ttl(duration)`                                                                        | table          | specifies how long the records for this table are retained in the underlying data system before it can be discarded. Expects a duration string with a unit between minute and day, e.g. `30 min`, `36 hours`, `14 days`. For range-partitioned tables, the partition width is derived from the duration and its unit (see the [postgres engine configuration](configuration-engine/postgres#partitioning)). Disabled by default. |
 | **cache**                   | `cache(duration)`                                                                      | table          | how long the results retrieved from this table can be cached on the server before they are refreshed. Expects a duration string like `10 seconds`. Disabled by default.                                                                                                                                                                                                                                                                                     |
 | **filtered_distinct_order** | flag                                                                                   | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                                                                                                                                                                                                                                                                                         |
-| **engine**                  | `enigne(engine_id)`                                                                    | table          | pin execution engine (`process`, `database`, `flink`, ...)                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **engine**                  | `engine(engine_id)`                                                                     | table          | pin execution engine (`process`, `database`, `flink`, ...). `exec` is a deprecated alias of `engine`                                                                                                                                                                                                                                                                                                                                                                                                |
 | **maintenance**             | `maintenance(type)`                                                                    | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                                                                                                                                                                                                                                                                                          |
 | **test**                    | `test` or `test(no_rows)`                                                              | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                                                                                                                                                                                                                                                                                                |
 | **workload**                | `workload`                                                                             | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -424,7 +426,7 @@ For repeatable end-to-end tests, keep connector definitions separate from the ma
 IMPORT connectors.source-{{variant}}.*;
 ```
 
-Set `variant` to `prod` in the production package and to `test` in a test package. The test source definitions should expose the same tables as production, but read static JSONL fixtures. Use fixed event timestamps, replace metadata and non-deterministic computed columns with ordinary fixture columns, and add a final record with a later timestamp when a streaming test must advance its watermark.
+Set `variant` to `prod` in the production package and to `test` in a test package. The test source definitions should expose the same tables as production, but read static JSONL fixtures. Use fixed event timestamps and replace metadata and non-deterministic computed columns with ordinary fixture columns. The test command drains the job before snapshotting, which advances all watermarks; set source idleness to `0 s` in the test package.
 
 The test command also executes GraphQL operations from the configured `test-folder`; table and GraphQL results share the `snapshot-folder`. Its first run creates snapshots, and later runs compare against them. Review and commit accepted snapshots, then run the command in CI. See the [`test-runner` configuration](configuration#test-runner-test-runner) for these folders, delays, checkpoints, and request headers.
 
@@ -473,7 +475,7 @@ The following produce compile time errors:
 * Overloaded functions (same name, different arg list) are **not** allowed.
 * Argument list problems (missing type, unused arg, unknown type).
 * `DISTINCT` must reference existing columns; `ORDER BY` column(s) must be monotonically increasing.
-* Basetable inference failure for relationships (see below).
+* Basetable inference failure for relationships (see [base tables](interface#base-tables)).
 * Invalid or malformed hints (unknown name, wrong delimiter).
 
 ---
@@ -485,7 +487,7 @@ The following produce compile time errors:
 | Construct        | Example                                                               |
 |------------------|-----------------------------------------------------------------------|
 | Import           | `IMPORT mypackage.sources AS mySources;`                              |
-| Internal table   | `CREATE TABLE Orders ( ... );`                                        |
+| Internal table   | `/*+ engine(kafka) */ CREATE TABLE Orders ( ... );`                   |
 | External table   | `CREATE TABLE kafka_table (...) WITH ('connector'='kafka');`          |
 | Table def.       | `BigOrders := SELECT * FROM Orders WHERE amount > 100;`               |
 | Distinct         | `Dedup := DISTINCT Events ON id ORDER BY ts DESC;`                    |
@@ -502,6 +504,4 @@ The following produce compile time errors:
 
 * Refer to the [Configuration documentation](configuration.md) for engine configuration.
 * See [Command documentation](compiler.md) for CLI usage of the compiler.
-* Follow the [Tutorials](intro/examples) for practical SQRL examples.
-
-For engine configuration, see **configuration.md**; for CLI usage, see **compiler.md**.
+* See the [Examples](intro/examples) for practical SQRL examples.

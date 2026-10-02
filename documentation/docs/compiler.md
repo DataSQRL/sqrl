@@ -2,8 +2,7 @@
 
 The DataSQRL command initializes, compiles, runs, and tests SQRL projects.
 
-You invoke the DataSQRL command in your terminal or command line.
-Choose your operating system below or use Docker which works on any machine that has Docker installed.
+You invoke the DataSQRL command through Docker, which works on any machine that has Docker installed.
 
 ## Installation
 
@@ -97,10 +96,12 @@ project.
 
 ### Example
 
-```bash
-mkdir my-project
+Run `add-func` inside the project created by the [`init` example](#example):
 
-docker run --rm -v $PWD/my-project:/workspace datasqrl/cmd add-func MyAwesomeFunction
+```bash
+cd my-project
+
+docker run --rm -v $PWD:/workspace datasqrl/cmd add-func MyAwesomeFunction
 ```
 
 This creates a new scalar function template in the `functions/` directory.
@@ -117,11 +118,21 @@ docker run --rm -v $PWD:/workspace datasqrl/cmd compile -h
 ```
 
 ```
-Usage: sqrl compile [-BhV] [-r=<projectRoot>] [-t=<targetFolder>]
-                    [<packageFiles>...]
+Usage: sqrl compile [-BhV] [-b=<buildFolder>] [-r=<projectRoot>]
+                    [-t=<targetFolder>] [<packageFiles>...]
 Compiles an SQRL project and produces all build artifacts.
       [<packageFiles>...]   Package configuration file(s) of the project.
                               Default: "package.json".
+  -b, --build=<buildFolder> Subfolder of "<project-root>/build" for build
+                              output. The value must be a relative path that
+                              remains within that build folder. For example,
+                              "--build development" writes to
+                              "<project-root>/build/development". If omitted,
+                              output is written directly to
+                              "<project-root>/build". This setting determines
+                              the default target folder when "--target" is
+                              omitted.
+
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
   -r, --project-root=<projectRoot>
@@ -129,28 +140,31 @@ Compiles an SQRL project and produces all build artifacts.
                               omitted, it is inferred from the package path(s),
                               falling back to "/workspace".
   -t, --target=<targetFolder>
-                            Target folder for deployment artifacts and plans.
-                              Must be a relative path.
-                            Default: "<project-root>/build/deploy".
+                            Folder for deployment artifacts and plans. The
+                              value must be a relative path that remains within
+                              "<project-root>". Unlike "--build", an explicit
+                              value is resolved directly from the project root:
+                              "--target artifacts" writes to
+                              "<project-root>/artifacts", independent of
+                              "--build". If omitted, the target is
+                              "<build-folder>/deploy". For example, "--build
+                              development" defaults the target to
+                              "<project-root>/build/development/deploy".
+
   -V, --version             Print version information and exit.
 ```
 
 ### Example
 
-```bash
-cd my-project
-
-# Defaults to package.json
-docker run --rm -v $PWD:/workspace datasqrl/cmd compile
-```
-
-Or with a specific package configuration file:
+The `init` command creates `my-project-prod-package.json` and `my-project-test-package.json`. Pass the package configuration file for the environment you want to compile:
 
 ```bash
 cd my-project
 
-docker run --rm -v $PWD:/workspace datasqrl/cmd compile package-prod.json
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile my-project-prod-package.json
 ```
+
+When you pass multiple package files, they are merged in order, with later files overriding earlier ones (see the [configuration documentation](configuration.md)).
 
 ### Output
 
@@ -168,11 +182,21 @@ docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace da
 ```
 
 ```
-Usage: sqrl run [-BhV] [-r=<projectRoot>] [-t=<targetFolder>]
-                [<packageFiles>...]
+Usage: sqrl run [-BhV] [-b=<buildFolder>] [-r=<projectRoot>]
+                [-t=<targetFolder>] [<packageFiles>...]
 Compiles, then runs a SQRL project in a lightweight, standalone environment.
       [<packageFiles>...]   Package configuration file(s) of the project.
                               Default: "package.json".
+  -b, --build=<buildFolder> Subfolder of "<project-root>/build" for build
+                              output. The value must be a relative path that
+                              remains within that build folder. For example,
+                              "--build development" writes to
+                              "<project-root>/build/development". If omitted,
+                              output is written directly to
+                              "<project-root>/build". This setting determines
+                              the default target folder when "--target" is
+                              omitted.
+
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
   -r, --project-root=<projectRoot>
@@ -180,9 +204,17 @@ Compiles, then runs a SQRL project in a lightweight, standalone environment.
                               omitted, it is inferred from the package path(s),
                               falling back to "/workspace".
   -t, --target=<targetFolder>
-                            Target folder for deployment artifacts and plans.
-                              Must be a relative path.
-                            Default: "<project-root>/build/deploy".
+                            Folder for deployment artifacts and plans. The
+                              value must be a relative path that remains within
+                              "<project-root>". Unlike "--build", an explicit
+                              value is resolved directly from the project root:
+                              "--target artifacts" writes to
+                              "<project-root>/artifacts", independent of
+                              "--build". If omitted, the target is
+                              "<build-folder>/deploy". For example, "--build
+                              development" defaults the target to
+                              "<project-root>/build/development/deploy".
+
   -V, --version             Print version information and exit.
 ```
 
@@ -198,7 +230,7 @@ These `run`-specific configuration options will be replaced if they are defined 
 ```bash
 cd my-project
 
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v $PWD:/workspace datasqrl/cmd run
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd run my-project-prod-package.json
 ```
 
 This compiles, then runs the SQRL project in the `my-project` folder,
@@ -213,7 +245,7 @@ The run command uses the following engines:
 * Iceberg + DuckDB as the analytic database engine
 * Redpanda as the log engine
   * The Redpanda cluster is accessible on port 9092 (via Kafka command line tooling)
-* Vertx as the server engine 
+* Vert.x as the server engine 
   * The GraphQL API is accessible at http://localhost:8888/v1/graphiql/
   * The Swagger UI for the REST API is accessible at http://localhost:8888/v1/swagger-ui
   * The MCP API is accessible at http://localhost:8888/v1/mcp/
@@ -232,7 +264,7 @@ This allows DataSQRL to map connectors correctly and also applies to [testing](#
 To preserve inserted data between runs, mount a directory for Redpanda to persist the data to:
 
 ```bash
-docker run -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v /mydata/project:/data/redpanda -v $PWD:/workspace datasqrl/cmd run my-package.json
+docker run -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v /mydata/project:/data/redpanda -v $PWD:/workspace datasqrl/cmd run my-project-prod-package.json
 ```
 
 The volume mount contains the data written to the log engine and persists it to the local `/mydata/project` directory
@@ -247,7 +279,7 @@ The run command is primarily used for local development and quick iteration cycl
 For large-scale deployments, we recommend that you run the generated pipeline in Kubernetes by extending our [Kubernetes setup](https://github.com/DataSQRL/sqrl-k8s).
 
 If you prefer a managed service, you can use [DataSQRL Cloud](https://www.datasqrl.com/) for automated and optimized deployments.
-Alternatively, you can deploy the generated deployment artifacts in the `build/plan` directory using available managed
+Alternatively, you can deploy the generated deployment artifacts in the `build/deploy/plan` directory using available managed
 services by your preferred cloud provider.
 
 ## Test Command
@@ -264,11 +296,21 @@ docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace da
 ```
 
 ```
-Usage: sqrl test [-BhV] [-r=<projectRoot>] [-t=<targetFolder>]
-                 [<packageFiles>...]
+Usage: sqrl test [-BhV] [-b=<buildFolder>] [-r=<projectRoot>]
+                 [-t=<targetFolder>] [<packageFiles>...]
 Compiles, then tests a SQRL project.
       [<packageFiles>...]   Package configuration file(s) of the project.
                               Default: "package.json".
+  -b, --build=<buildFolder> Subfolder of "<project-root>/build" for build
+                              output. The value must be a relative path that
+                              remains within that build folder. For example,
+                              "--build development" writes to
+                              "<project-root>/build/development". If omitted,
+                              output is written directly to
+                              "<project-root>/build". This setting determines
+                              the default target folder when "--target" is
+                              omitted.
+
   -B, --batch-output        Run in batch output mode (disables colored output).
   -h, --help                Show this help message and exit.
   -r, --project-root=<projectRoot>
@@ -276,9 +318,17 @@ Compiles, then tests a SQRL project.
                               omitted, it is inferred from the package path(s),
                               falling back to "/workspace".
   -t, --target=<targetFolder>
-                            Target folder for deployment artifacts and plans.
-                              Must be a relative path.
-                            Default: "<project-root>/build/deploy".
+                            Folder for deployment artifacts and plans. The
+                              value must be a relative path that remains within
+                              "<project-root>". Unlike "--build", an explicit
+                              value is resolved directly from the project root:
+                              "--target artifacts" writes to
+                              "<project-root>/artifacts", independent of
+                              "--build". If omitted, the target is
+                              "<build-folder>/deploy". For example, "--build
+                              development" defaults the target to
+                              "<project-root>/build/development/deploy".
+
   -V, --version             Print version information and exit.
 ```
 
@@ -291,7 +341,9 @@ These `test`-specific configuration options will be replaced if they are defined
 ### Example
 
 ```bash
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd test
+cd my-project
+
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd test my-project-test-package.json
 ```
 
 The Test Command related configuration can be adjusted via the [`test-runner`](configuration.md#test-runner-test-runner) configuration.
@@ -317,7 +369,7 @@ The `exec` command executes an already compiled SQRL project using its existing 
 This is useful when you want to run a previously compiled pipeline.
 
 ```bash
-run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd exec -h
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd exec -h
 ```
 
 :::warning
@@ -326,17 +378,32 @@ It only sets `execution.target` to `local` if it is missing to be able to deploy
 :::
 
 ```
-Usage: sqrl exec [-hV] [-r=<projectRoot>] [-t=<targetFolder>]
+Usage: sqrl exec [-hV] [-b=<buildFolder>] [-r=<projectRoot>] [-t=<targetFolder>]
 Executes an already compiled SQRL script using its existing build artifacts.
+  -b, --build=<buildFolder>
+                  Subfolder of "<project-root>/build" for build output. The
+                    value must be a relative path that remains within that
+                    build folder. For example, "--build development" writes to
+                    "<project-root>/build/development". If omitted, output is
+                    written directly to "<project-root>/build". This setting
+                    determines the default target folder when "--target" is
+                    omitted.
+
   -h, --help      Show this help message and exit.
   -r, --project-root=<projectRoot>
                   Project root folder. Must be a relative path. If omitted, it
                     is inferred from the package path(s), falling back to
                     "/workspace".
   -t, --target=<targetFolder>
-                  Target folder for deployment artifacts and plans. Must be a
-                    relative path.
-                  Default: "<project-root>/build/deploy".
+                  Folder for deployment artifacts and plans. The value must be
+                    a relative path that remains within "<project-root>".
+                    Unlike "--build", an explicit value is resolved directly
+                    from the project root: "--target artifacts" writes to
+                    "<project-root>/artifacts", independent of "--build". If
+                    omitted, the target is "<build-folder>/deploy". For
+                    example, "--build development" defaults the target to
+                    "<project-root>/build/development/deploy".
+
   -V, --version   Print version information and exit.
 ```
 

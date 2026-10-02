@@ -288,7 +288,7 @@ DataSQRL currently assumes production operation in Kubernetes or Docker and prov
 
 Data engineering is entering a new era of automation. Coding agents can now write SQL, configure pipelines, and deploy data systems. But without proper guardrails, they produce solutions that fail under the weight of production requirements.
 
-DataSQRL is the data engineering harness that ensures AI coding agents produce high-quality pipelines. DataSQRl encodes decades of data engineering knowledge into a structured framework that coding agents can leverage to build production-grade data systems.
+DataSQRL is the data engineering harness that ensures AI coding agents produce high-quality pipelines. DataSQRL encodes decades of data engineering knowledge into a structured framework that coding agents can leverage to build production-grade data systems.
 
 The harness provides three critical capabilities:
 

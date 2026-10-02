@@ -12,6 +12,7 @@ The image starts Pi in `/workspace`. Mount a project there, provide a model-prov
 | [`entrypoint.sh`](entrypoint.sh) | Starts interactive Pi and selects a provider from explicit settings or available API keys.                                |
 | [`cmd.sh`](cmd.sh)               | Runs DataSQRL CLI commands with fresh local engine state and large-data protection. Agents use it as `/opt/agent/cmd.sh`. |
 | [`AGENTS.md`](AGENTS.md)         | Always-loaded instructions: the working directory, skill-selection rules, and verification expectations.                  |
+| [`CLI_REFERENCE.md`](CLI_REFERENCE.md) | DataSQRL CLI commands, options, and package configuration layering, referenced from `AGENTS.md`.                    |
 | [`skills/`](skills/)             | On-demand DataSQRL knowledge loaded by Pi when a task matches a skill description.                                        |
 | `/opt/datasqrl-examples/`        | Optional read-only mount of custom or [datasqrl-examples](https://github.com/DataSQRL/datasqrl-examples) reference implementations, used by relevant skills when useful. |
 

@@ -165,10 +165,10 @@ For larger changes, describe them like a new pipeline and go through requirement
 **To your own infrastructure:** compile the deployment assets and deploy them to Kubernetes or managed cloud services:
 
 ```bash
-docker run --rm -v $PWD:/workspace datasqrl/cmd compile package.json
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile myproject-shared-package.json myproject-prod-package.json
 ```
 
-See the [compiler documentation](/docs/compiler) for details.
+Replace `myproject` with your project's name. Pass the shared base configuration first and the environment overlay second. Later files override earlier ones, as explained in the [configuration documentation](/docs/configuration). See the [compiler documentation](/docs/compiler) for details.
 
 **To DataSQRL Cloud:** ask your agent to deploy (`/datasqrl:deploy`). Deployment is always a separate request, never the tail end of an implementation run. It deploys a commit from GitHub, not your working tree, so commit and push first. You also need:
 
