@@ -187,8 +187,8 @@ const config: Config = {
       respectPrefersColorScheme: false,
     },
     metadata: [
-      {name: 'keywords', content: 'data, API, SQRL, DataSQRL, data product, data pipeline, database, streaming, real-time analytics'},
-      {name: 'description', content: 'DataSQRL is a compiler for building robust streaming data pipelines in minutes.'},
+      {name: 'keywords', content: 'data engineering harness, data engineering agent, coding agent, SQRL, DataSQRL, data pipeline, data product, data API, streaming, real-time analytics'},
+      {name: 'description', content: 'DataSQRL is an open-source data engineering harness for building data engineering agents designed around human control, correctness, and safety.'},
       {name: 'twitter:card', content: 'summary'},
       {name: 'twitter:site', content: '@DataSQRL'}
     ],

@@ -37,14 +37,20 @@ const sidebars = {
       label: '📖 Overview',
     },
     {
-      type: 'doc',
-      id: 'intro/getting-started',
+      type: 'category',
       label: '🚀 Getting Started',
-    },
-    {
-      type: 'doc',
-      id: 'intro/getting-started-no-key',
-      label: '🔑 Getting Started (No API Key)',
+      link: {
+        type: 'doc',
+        id: 'intro/getting-started',
+      },
+      collapsed: false,
+      items: [
+        {
+          type: 'doc',
+          id: 'intro/getting-started-no-key',
+          label: '🔑 Without an API Key',
+        },
+      ],
     },
     {
       type: 'category',

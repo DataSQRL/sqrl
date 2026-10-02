@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the documentation website for DataSQRL, built using Docusaurus 3.7.0. It contains comprehensive documentation, tutorials, blog posts, and community resources for the DataSQRL data streaming framework. The site is deployed to https://docs.datasqrl.com.
+This is the documentation website for DataSQRL, built using Docusaurus 3.7.0. It contains comprehensive documentation, tutorials, blog posts, and community resources for the DataSQRL data engineering harness. The site is deployed to https://docs.datasqrl.com.
 
 ## Essential Commands
 

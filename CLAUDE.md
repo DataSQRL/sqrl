@@ -4,9 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-DataSQRL is a development framework for incremental and real-time data processing applications.
-It compiles SQL-like scripts (SQRL) into complete data pipelines that integrate Kafka, Flink, PostgreSQL,
-Iceberg, GraphQL APIs, and LLM tooling. Built with Java 17 and Maven.
+DataSQRL is an open-source data engineering harness for building data engineering agents designed around
+human control, correctness, and safety. It extends coding agents with a SQL compiler, a validator, an
+event-time simulator, and skills. The compiler turns SQL-like scripts (SQRL) into complete data pipelines
+that integrate Kafka, Flink, PostgreSQL, Iceberg, GraphQL APIs, and LLM tooling. Built with Java 17 and Maven.
 
 ## External Dependencies
 
