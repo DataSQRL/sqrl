@@ -64,8 +64,8 @@ import org.apache.logging.log4j.core.config.Configurator;
 /**
  * The test runner executes the test against the running DataSQRL pipeline and snapshots the
  * results. Snapshotting means that the results of queries are written to files on the first run and
- * subsequently compared to prior snapshots. A test fails if a snapshot does not yet exist or is not
- * identical to the existing snapshot.
+ * subsequently compared to prior snapshots. New snapshots are verified with a second pipeline run;
+ * a test fails if that verification does not match or if an existing snapshot differs.
  *
  * <p>The test runner executes as follows: 1. Run the DataSQRL pipeline via {@link DatasqrlRun} 2.
  * Execute mutation queries against the API and snapshot results 3. Wait for the Flink job to finish
@@ -90,6 +90,11 @@ public class DatasqrlTest {
 
   @SneakyThrows
   public int run() {
+    return runInternal(true);
+  }
+
+  @SneakyThrows
+  private int runInternal(boolean rerunForNewSnapshots) {
     // 1. Init DatasqrlRun
     var run = DatasqrlRun.nonBlocking(planDir, sqrlConfig, flinkConfig, env);
 
@@ -122,11 +127,15 @@ public class DatasqrlTest {
     // 2. Run the DataSQRL pipeline
     var subscriptionClients = new ArrayList<SubscriptionClient>();
     try {
-      formatter.sectionHeader("Starting stream processor");
+      formatter.sectionHeader(
+          rerunForNewSnapshots
+              ? "Starting stream processor"
+              : "Starting stream processor (snapshot validation run)");
       var result = run.run();
       Thread.sleep(1000);
 
-      formatter.sectionHeader("Running Tests");
+      formatter.sectionHeader(
+          rerunForNewSnapshots ? "Running Tests" : "Running Tests (snapshot validation run)");
       outputManager.redirectStd();
       // 3. Execute subscription & mutation operations against the API and snapshot results
       if (testPlan != null) {
@@ -204,12 +213,21 @@ public class DatasqrlTest {
       outputManager.restoreStd();
     }
 
-    // 6. Print the test results on the command line
+    // 6. A new snapshot is only provisional: re-run the pipeline once to verify that it produces
+    // the same data.
+    if (rerunForNewSnapshots && containsNewSnapshots(testResults)) {
+      formatter.sectionHeader("Validating newly created snapshots");
+      formatter.info("Re-running the pipeline to verify the generated snapshots...");
+      return runInternal(false);
+    }
+
+    // 7. Print the test results on the command line
     printTestResults(testResults, snapshotDir, testDir);
     return testResults.stream().mapToInt(TestResult::exitCode).sum();
   }
 
-  void awaitJobTermination(Optional<JobClient> jobClient, int delaySec, int requiredCheckpoints) {
+  private void awaitJobTermination(
+      Optional<JobClient> jobClient, int delaySec, int requiredCheckpoints) {
     if (delaySec == -1) {
       if (flinkConfig.get(ExecutionOptions.RUNTIME_MODE) == RuntimeExecutionMode.BATCH) {
         try {
@@ -381,8 +399,17 @@ public class DatasqrlTest {
     return results;
   }
 
+  private String getRequiredEnv(String envVarName) {
+    return Objects.requireNonNull(
+        env.get(envVarName), "Missing environment variable: " + envVarName);
+  }
+
+  static boolean containsNewSnapshots(List<TestResult> testResults) {
+    return testResults.stream().anyMatch(TestResult.SnapshotCreate.class::isInstance);
+  }
+
   @SneakyThrows
-  private List<TestResult> executeAndSnapshotGraphqlQueries(
+  private static List<TestResult> executeAndSnapshotGraphqlQueries(
       List<TestPlan.GraphqlQuery> queries, Path snapshotDir, int mutationWait) {
     var testResults = new ArrayList<TestResult>();
 
@@ -402,12 +429,12 @@ public class DatasqrlTest {
     return testResults;
   }
 
-  private List<String> collectGraphqlQueryNames(List<TestPlan.GraphqlQuery> queries) {
+  private static List<String> collectGraphqlQueryNames(List<TestPlan.GraphqlQuery> queries) {
     return queries.stream().map(f -> f.getName() + SNAPSHOT_EXT).toList();
   }
 
   @SneakyThrows
-  private String executeQuery(TestPlan.GraphqlQuery query) {
+  private static String executeQuery(TestPlan.GraphqlQuery query) {
     var client = HttpClient.newHttpClient();
 
     var requestBuilder =
@@ -426,7 +453,7 @@ public class DatasqrlTest {
   }
 
   @SneakyThrows
-  private String decodeResponseBody(HttpResponse<byte[]> response) {
+  private static String decodeResponseBody(HttpResponse<byte[]> response) {
     var body = response.body();
     var encoding = response.headers().firstValue("Content-Encoding").orElse(null);
 
@@ -443,7 +470,7 @@ public class DatasqrlTest {
   }
 
   @SneakyThrows
-  private void snapshot(
+  private static void snapshot(
       Either<TestPlan.GraphqlQuery, String> test,
       Path snapshotDir,
       String rawJson,
@@ -479,7 +506,7 @@ public class DatasqrlTest {
     }
   }
 
-  private TestResult getNoRowsResult(String rawData, String name) {
+  private static TestResult getNoRowsResult(String rawData, String name) {
     try {
       var root = JsonUtils.MAPPER.readTree(rawData);
       var data = root.get("data");
@@ -492,17 +519,12 @@ public class DatasqrlTest {
     return new TestResult.NoSnapshotExpected(name, rawData);
   }
 
-  private String format(String rawData) {
+  private static String format(String rawData) {
     try {
       var data = JsonUtils.MAPPER.readValue(rawData, Object.class);
       return JsonUtils.MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(data);
     } catch (JsonProcessingException e) {
       return rawData;
     }
-  }
-
-  private String getRequiredEnv(String envVarName) {
-    return Objects.requireNonNull(
-        env.get(envVarName), "Missing environment variable: " + envVarName);
   }
 }

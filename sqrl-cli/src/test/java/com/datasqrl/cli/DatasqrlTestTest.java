@@ -30,6 +30,7 @@ import com.datasqrl.engine.database.relational.GenericJdbcStatement;
 import com.datasqrl.util.SqrlObjectMapper;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.flink.configuration.Configuration;
@@ -39,6 +40,25 @@ import org.junit.jupiter.api.io.TempDir;
 class DatasqrlTestTest {
 
   @TempDir private Path tempDir;
+
+  @Test
+  void containsNewSnapshots_whenSnapshotWasCreated_returnsTrue() {
+    assertThat(
+            DatasqrlTest.containsNewSnapshots(
+                List.of(
+                    new TestResult.SnapshotOk("existing"), new TestResult.SnapshotCreate("new"))))
+        .isTrue();
+  }
+
+  @Test
+  void containsNewSnapshots_whenNoSnapshotWasCreated_returnsFalse() {
+    assertThat(
+            DatasqrlTest.containsNewSnapshots(
+                List.of(
+                    new TestResult.SnapshotOk("existing"),
+                    new TestResult.SnapshotMismatch("changed", "old", "new"))))
+        .isFalse();
+  }
 
   @Test
   void run_whenPipelineFailsToStart_recordsFailureWithNonZeroExit() throws Exception {
