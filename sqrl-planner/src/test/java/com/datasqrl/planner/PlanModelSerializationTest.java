@@ -21,10 +21,12 @@ import com.datasqrl.deployment.model.FlinkPlanModel;
 import com.datasqrl.deployment.model.JdbcPlanModel;
 import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.deployment.model.JdbcStatementModel.Field;
+import com.datasqrl.deployment.model.JdbcStatementModel.Role;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.GenericJdbcStatement;
+import com.datasqrl.engine.database.relational.JdbcEngineCreateTable;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.log.kafka.KafkaNewTopic;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
@@ -87,6 +89,8 @@ class PlanModelSerializationTest {
     assertThat(table.partitionType()).isEqualTo(JdbcStatementModel.PartitionType.HASH);
     assertThat(table.numPartitions()).isEqualTo(4);
     assertThat(table.ttl()).isEqualTo(Duration.ofSeconds(30));
+    assertThat(table.logicalName()).isNull();
+    assertThat(table.role()).isNull();
 
     var viewModel = model.statements().get(1);
     assertThat(viewModel.name()).isEqualTo("orders_view");
@@ -131,8 +135,8 @@ class PlanModelSerializationTest {
 
   @Test
   void givenKafkaPhysicalPlan_whenMapped_thenReturnsWrappedTopicModel() {
-    var topic = new KafkaNewTopicModel("orders", "orders", 3, (short) 2);
-    var testRunnerTopic = new KafkaNewTopicModel("test-orders", "test-orders");
+    var topic = new KafkaNewTopicModel("orders", "orders", "orders", 3, (short) 2);
+    var testRunnerTopic = new KafkaNewTopicModel("test-orders", "test-orders", "test-orders");
     var plan =
         KafkaPhysicalPlan.builder()
             .topic(new KafkaNewTopic(topic))
@@ -158,5 +162,78 @@ class PlanModelSerializationTest {
     assertThat(List.copyOf(json.properties()))
         .extracting(Map.Entry::getKey)
         .containsExactly("topics", "testRunnerTopics");
+  }
+
+  @Test
+  void givenCreateTableFromEngineTable_whenMapped_thenCarriesLogicalNameAndRole() {
+    var engineTable =
+        new JdbcEngineCreateTable("sqrl_dev_orders", "Orders", Role.MUTATION, null, null, null);
+    var createTable =
+        new CreateTableJdbcStatement(
+            "sqrl_dev_orders",
+            null,
+            List.of(),
+            List.of("id"),
+            List.of(),
+            JdbcStatementModel.PartitionType.NONE,
+            0,
+            Duration.ZERO,
+            null,
+            engineTable,
+            statement -> "CREATE TABLE sqrl_dev_orders");
+    var plan = JdbcPhysicalPlan.builder().statement(createTable).tableIdMap(Map.of()).build();
+
+    var json = SqrlObjectMapper.INSTANCE.valueToTree(plan.toModel()).get("statements").get(0);
+
+    assertThat(json.get("name").asText()).isEqualTo("sqrl_dev_orders");
+    assertThat(json.get("logicalName").asText()).isEqualTo("Orders");
+    assertThat(json.get("role").asText()).isEqualTo("MUTATION");
+  }
+
+  @Test
+  void givenStatementJsonWithoutLogicalName_whenDeserialized_thenLogicalNameAndRoleAreNull()
+      throws Exception {
+    var model =
+        SqrlObjectMapper.INSTANCE.readValue(
+            """
+            {"statements": [{"name": "orders", "type": "TABLE", "sql": "CREATE TABLE orders"}]}
+            """,
+            JdbcPlanModel.class);
+
+    var statement = model.statements().get(0);
+    assertThat(statement.name()).isEqualTo("orders");
+    assertThat(statement.logicalName()).isNull();
+    assertThat(statement.role()).isNull();
+  }
+
+  @Test
+  void givenPrefixedKafkaTopic_whenSerialized_thenLogicalNameKeepsUnprefixedName() {
+    var topic =
+        new KafkaNewTopicModel(
+            "sqrl-mutation-Orders",
+            "Orders_2",
+            "Orders",
+            "flexible-json",
+            1,
+            (short) 1,
+            KafkaNewTopicModel.Type.MUTATION,
+            List.of(),
+            "",
+            Map.of());
+    var testRunnerTopic = new KafkaNewTopicModel("test-orders", "test-orders", "test-orders");
+    var plan =
+        KafkaPhysicalPlan.builder()
+            .topic(new KafkaNewTopic(topic))
+            .testRunnerTopic(new KafkaNewTopic(testRunnerTopic))
+            .build();
+
+    var json = SqrlObjectMapper.INSTANCE.valueToTree(plan.toModel());
+
+    var topicJson = json.get("topics").get(0);
+    assertThat(topicJson.get("tableName").asText()).isEqualTo("Orders_2");
+    assertThat(topicJson.get("logicalName").asText()).isEqualTo("Orders");
+    assertThat(topicJson.get("type").asText()).isEqualTo("MUTATION");
+    assertThat(json.get("testRunnerTopics").get(0).get("logicalName").asText())
+        .isEqualTo("test-orders");
   }
 }

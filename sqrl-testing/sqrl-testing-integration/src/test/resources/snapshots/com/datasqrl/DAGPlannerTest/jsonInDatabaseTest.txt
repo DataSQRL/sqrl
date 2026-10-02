@@ -423,7 +423,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Customer",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerStream_2",
@@ -463,7 +465,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerStream",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Customer",

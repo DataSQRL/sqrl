@@ -1119,6 +1119,7 @@ END
     {
       "topicName" : "kafka-Customer",
       "tableName" : "Customer_3",
+      "logicalName" : "Customer",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -1130,6 +1131,7 @@ END
     {
       "topicName" : "kafka-CustomerSubscription",
       "tableName" : "CustomerSubscription_7",
+      "logicalName" : "CustomerSubscription",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -1141,6 +1143,7 @@ END
     {
       "topicName" : "kafka-mutation-Orders",
       "tableName" : "Orders",
+      "logicalName" : "Orders",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -1188,7 +1191,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "AnotherCustomer",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Customer_2",
@@ -1228,7 +1233,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Customer",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerByMultipleTime_4",
@@ -1268,7 +1275,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerByMultipleTime",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerByTime2_5",
@@ -1307,7 +1316,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerByTime2",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerFilteredDistinct_6",
@@ -1346,7 +1357,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerFilteredDistinct",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerTimeWindow_9",
@@ -1379,7 +1392,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerTimeWindow",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "ExplicitDistinct_10",
@@ -1408,7 +1423,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "ExplicitDistinct",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "ExternalOrders_11",
@@ -1443,7 +1460,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "ExternalOrders",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "InvalidDistinct_12",
@@ -1472,7 +1491,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "InvalidDistinct",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Orders_13",
@@ -1499,7 +1520,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 129600.000000000
+      "ttl" : 129600.000000000,
+      "logicalName" : "Orders",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "SelectCustomers_14",
@@ -1540,7 +1563,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "SelectCustomers",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "TemporalJoin_15",
@@ -1590,7 +1615,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "TemporalJoin",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "UnnestOrders_16",
@@ -1644,7 +1671,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "UnnestOrders",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "AnotherCustomer",

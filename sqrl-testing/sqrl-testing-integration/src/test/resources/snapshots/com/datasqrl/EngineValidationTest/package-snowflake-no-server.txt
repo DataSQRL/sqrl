@@ -26,7 +26,9 @@ CREATE OR REPLACE ICEBERG TABLE Numbers2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG
           "partitionKey" : [ ],
           "partitionType" : "NONE",
           "numPartitions" : 0,
-          "ttl" : 0.0
+          "ttl" : 0.0,
+          "logicalName" : "Numbers",
+          "role" : "MATERIALIZATION"
         },
         {
           "name" : "Numbers2",
@@ -45,7 +47,9 @@ CREATE OR REPLACE ICEBERG TABLE Numbers2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG
           "partitionKey" : [ ],
           "partitionType" : "NONE",
           "numPartitions" : 0,
-          "ttl" : 0.0
+          "ttl" : 0.0,
+          "logicalName" : "Numbers2",
+          "role" : "MATERIALIZATION"
         }
       ],
       "standaloneExtensionStatements" : [ ]

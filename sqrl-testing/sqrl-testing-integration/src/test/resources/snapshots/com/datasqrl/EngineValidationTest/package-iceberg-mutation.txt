@@ -1,0 +1,210 @@
+>>>iceberg-duckdb-schema.sql
+CREATE TABLE IF NOT EXISTS "dev_ReadingTotals_1" ("sensorid" BIGINT NOT NULL, "total" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "dev_Readings_2" ("sensorid" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL);
+CREATE TABLE IF NOT EXISTS "dev_Readings" ("sensorid" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL)
+>>>iceberg-duckdb-views.sql
+CREATE OR REPLACE VIEW "ReadingTotals"("sensorid", "total") AS SELECT *
+FROM "iceberg_scan"('sqrl_iceberg_data/default_database/dev_ReadingTotals_1', ALLOW_MOVED_PATHS = TRUE);
+CREATE OR REPLACE VIEW "Readings"("sensorid", "temperature") AS SELECT *
+FROM "iceberg_scan"('sqrl_iceberg_data/default_database/dev_Readings_2', ALLOW_MOVED_PATHS = TRUE)
+>>>iceberg-schema.sql
+CREATE TABLE IF NOT EXISTS "dev_ReadingTotals_1" ("sensorid" BIGINT NOT NULL, "total" DOUBLE PRECISION NOT NULL, PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "dev_Readings_2" ("sensorid" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL);
+CREATE TABLE IF NOT EXISTS "dev_Readings" ("sensorid" BIGINT NOT NULL, "temperature" DOUBLE PRECISION NOT NULL)
+>>>iceberg.json
+{
+  "plans" : {
+    "" : {
+      "statements" : [
+        {
+          "name" : "dev_ReadingTotals_1",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"dev_ReadingTotals_1\" (\"sensorid\" BIGINT NOT NULL, \"total\" DOUBLE PRECISION NOT NULL, PRIMARY KEY (\"sensorid\"))",
+          "fields" : [
+            {
+              "name" : "sensorid",
+              "type" : "BIGINT",
+              "nullable" : false
+            },
+            {
+              "name" : "total",
+              "type" : "DOUBLE PRECISION",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [
+            "sensorid"
+          ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0,
+          "logicalName" : "ReadingTotals",
+          "role" : "MATERIALIZATION"
+        },
+        {
+          "name" : "dev_Readings_2",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"dev_Readings_2\" (\"sensorid\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL)",
+          "fields" : [
+            {
+              "name" : "sensorid",
+              "type" : "BIGINT",
+              "nullable" : false
+            },
+            {
+              "name" : "temperature",
+              "type" : "DOUBLE PRECISION",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [ ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0,
+          "logicalName" : "Readings",
+          "role" : "MATERIALIZATION"
+        },
+        {
+          "name" : "dev_Readings",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"dev_Readings\" (\"sensorid\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL)",
+          "fields" : [
+            {
+              "name" : "sensorid",
+              "type" : "BIGINT",
+              "nullable" : false
+            },
+            {
+              "name" : "temperature",
+              "type" : "DOUBLE PRECISION",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [ ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0,
+          "logicalName" : "Readings",
+          "role" : "MUTATION"
+        }
+      ],
+      "standaloneExtensionStatements" : [ ]
+    },
+    "duckdb" : {
+      "statements" : [
+        {
+          "name" : "dev_ReadingTotals_1",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"dev_ReadingTotals_1\" (\"sensorid\" BIGINT NOT NULL, \"total\" DOUBLE PRECISION NOT NULL, PRIMARY KEY (\"sensorid\"))",
+          "fields" : [
+            {
+              "name" : "sensorid",
+              "type" : "BIGINT",
+              "nullable" : false
+            },
+            {
+              "name" : "total",
+              "type" : "DOUBLE PRECISION",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [
+            "sensorid"
+          ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0,
+          "logicalName" : "ReadingTotals",
+          "role" : "MATERIALIZATION"
+        },
+        {
+          "name" : "dev_Readings_2",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"dev_Readings_2\" (\"sensorid\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL)",
+          "fields" : [
+            {
+              "name" : "sensorid",
+              "type" : "BIGINT",
+              "nullable" : false
+            },
+            {
+              "name" : "temperature",
+              "type" : "DOUBLE PRECISION",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [ ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0,
+          "logicalName" : "Readings",
+          "role" : "MATERIALIZATION"
+        },
+        {
+          "name" : "dev_Readings",
+          "type" : "TABLE",
+          "sql" : "CREATE TABLE IF NOT EXISTS \"dev_Readings\" (\"sensorid\" BIGINT NOT NULL, \"temperature\" DOUBLE PRECISION NOT NULL)",
+          "fields" : [
+            {
+              "name" : "sensorid",
+              "type" : "BIGINT",
+              "nullable" : false
+            },
+            {
+              "name" : "temperature",
+              "type" : "DOUBLE PRECISION",
+              "nullable" : false
+            }
+          ],
+          "primaryKey" : [ ],
+          "partitionKey" : [ ],
+          "partitionType" : "NONE",
+          "numPartitions" : 0,
+          "ttl" : 0.0,
+          "logicalName" : "Readings",
+          "role" : "MUTATION"
+        },
+        {
+          "name" : "ReadingTotals",
+          "type" : "VIEW",
+          "sql" : "CREATE OR REPLACE VIEW \"ReadingTotals\"(\"sensorid\", \"total\") AS SELECT *\nFROM \"iceberg_scan\"('sqrl_iceberg_data/default_database/dev_ReadingTotals_1', ALLOW_MOVED_PATHS = TRUE)",
+          "fields" : [
+            {
+              "name" : "sensorid",
+              "type" : "BIGINT",
+              "nullable" : false
+            },
+            {
+              "name" : "total",
+              "type" : "DOUBLE PRECISION",
+              "nullable" : false
+            }
+          ]
+        },
+        {
+          "name" : "Readings",
+          "type" : "VIEW",
+          "sql" : "CREATE OR REPLACE VIEW \"Readings\"(\"sensorid\", \"temperature\") AS SELECT *\nFROM \"iceberg_scan\"('sqrl_iceberg_data/default_database/dev_Readings_2', ALLOW_MOVED_PATHS = TRUE)",
+          "fields" : [
+            {
+              "name" : "sensorid",
+              "type" : "BIGINT",
+              "nullable" : false
+            },
+            {
+              "name" : "temperature",
+              "type" : "DOUBLE PRECISION",
+              "nullable" : false
+            }
+          ]
+        }
+      ],
+      "standaloneExtensionStatements" : [ ]
+    }
+  }
+}

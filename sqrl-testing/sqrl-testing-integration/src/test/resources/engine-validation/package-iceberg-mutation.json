@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "iceberg", "duckdb"],
+  "script": {
+    "main": "iceberg-mutation.sqrl"
+  },
+  "connectors": {
+    "iceberg": {
+      "catalog-table": "dev_${sqrl:table-id}"
+    }
+  }
+}

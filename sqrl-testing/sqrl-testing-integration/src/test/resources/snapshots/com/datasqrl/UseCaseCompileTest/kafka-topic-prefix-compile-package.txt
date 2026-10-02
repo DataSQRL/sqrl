@@ -1,0 +1,357 @@
+>>>inferred_schema.graphqls
+type Clicks {
+  userid: Long!
+  url: String!
+  event_time: DateTime!
+}
+
+input ClicksInput {
+  userid: Long!
+  url: String!
+}
+
+type ClicksPerUser {
+  userid: Long!
+  clicks: Long!
+}
+
+type ClicksResultOutput {
+  userid: Long!
+  url: String!
+  event_time: DateTime!
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Mutation {
+  Clicks(event: ClicksInput!): ClicksResultOutput!
+}
+
+type Query {
+  ClicksPerUser(limit: Int = 10, offset: Int = 0): [ClicksPerUser!]
+}
+
+type Subscription {
+  HomepageClick: Clicks
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Clicks
+ID:          default_catalog.default_database.Clicks
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+---
+Schema:
+ - userid: BIGINT NOT NULL
+ - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Clicks__base
+
+=== ClicksPerUser
+ID:          default_catalog.default_database.ClicksPerUser
+Type:        state
+Stage:       flink
+Primary key: userid
+Timestamp:   -
+Row count:   ~1e7
+---
+Schema:
+ - userid: BIGINT NOT NULL
+ - clicks: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.Clicks
+
+=== HomepageClick
+ID:          default_catalog.default_database.HomepageClick
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~2e7
+---
+Schema:
+ - userid: BIGINT NOT NULL
+ - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Clicks
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Clicks` (
+  `userid` BIGINT NOT NULL,
+  `url` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'acme-mutation-Clicks'
+);
+CREATE VIEW `ClicksPerUser`
+AS
+SELECT `userid`, COUNT(*) AS `clicks`
+FROM `Clicks`
+GROUP BY `userid`;
+CREATE VIEW `HomepageClick`
+AS
+SELECT *
+FROM `Clicks`
+WHERE `url` = '/';
+CREATE TABLE `ClicksPerUser_1` (
+  `userid` BIGINT NOT NULL,
+  `clicks` BIGINT NOT NULL,
+  PRIMARY KEY (`userid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'ClicksPerUser',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `HomepageClick_2` (
+  `userid` BIGINT NOT NULL,
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'acme-subscription-HomepageClick'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`ClicksPerUser_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`ClicksPerUser`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`HomepageClick_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`HomepageClick`
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "acme-subscription-HomepageClick",
+      "tableName" : "HomepageClick_2",
+      "logicalName" : "HomepageClick",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "acme-mutation-Clicks",
+      "tableName" : "Clicks",
+      "logicalName" : "Clicks",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "ClicksPerUser" ("userid" BIGINT NOT NULL, "clicks" BIGINT NOT NULL, PRIMARY KEY ("userid"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ClicksPerUser",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"ClicksPerUser\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "Clicks",
+          "returnList" : false,
+          "topic" : "acme-mutation-Clicks",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "HomepageClick",
+          "topic" : "acme-subscription-HomepageClick",
+          "sinkConfig" : { },
+          "equalityConditions" : { }
+        }
+      ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetClicksPerUser",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ClicksPerUser($limit: Int = 10, $offset: Int = 0) {\nClicksPerUser(limit: $limit, offset: $offset) {\nuserid\nclicks\n}\n\n}",
+            "queryName" : "ClicksPerUser",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ClicksPerUser{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "userid" : {
+                  "type" : "integer"
+                },
+                "clicks" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddClicks",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "userid" : {
+                  "type" : "integer"
+                },
+                "url" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "userid",
+                "url"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation Clicks($userid: Long!, $url: String!) {\nClicks(event: { userid: $userid, url: $url }) {\nuserid\nurl\nevent_time\n}\n\n}",
+            "queryName" : "Clicks",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/Clicks",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "userid" : {
+                "type" : "integer"
+              },
+              "url" : {
+                "type" : "string"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Clicks {\n  userid: Long!\n  url: String!\n  event_time: DateTime!\n}\n\ninput ClicksInput {\n  userid: Long!\n  url: String!\n}\n\ntype ClicksPerUser {\n  userid: Long!\n  clicks: Long!\n}\n\ntype ClicksResultOutput {\n  userid: Long!\n  url: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  Clicks(event: ClicksInput!): ClicksResultOutput!\n}\n\ntype Query {\n  ClicksPerUser(limit: Int = 10, offset: Int = 0): [ClicksPerUser!]\n}\n\ntype Subscription {\n  HomepageClick: Clicks\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
