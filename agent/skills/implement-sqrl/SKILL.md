@@ -12,7 +12,7 @@ This document focuses only on features **unique to SQRL**; when SQRL accepts Fli
 
 ## Reference Templates
 
-Review project examples in `/opt/sqrl_templates/README.md` before implementing new features to identify related projects and copy features from those reference implementations.
+Review project examples in `/opt/datasqrl-examples/README.md` before implementing new features to identify related projects and copy features from those reference implementations.
 
 ## Script Structure
 

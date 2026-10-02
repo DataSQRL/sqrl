@@ -131,13 +131,13 @@ You can test record filtering, data masking, and other types of authorization ba
 
 ### Generating Tokens
 
-Generate test tokens with [jwt.io](https://jwt.io/) or another JWT tool. For
-testing, the `HS256` (shared-secret) algorithm is simplest and is what these
-examples use. Do not assume a `jwt` command is available in the agent image.
+Test tokens are generated with the container's built-in **`jwt`** helper — a
+small, dependency-free CLI available on `PATH` inside the agent. For testing, the
+`HS256` (shared-secret) algorithm is simplest and is what these examples use.
 
 A single secret string is the signing key, and it relates to the config two ways:
 
-- The signing key configured in the JWT tool is the **raw** secret string.
+- **`--secret`** passed to `jwt encode` is the **raw** secret string.
 - **`buffer`** in the `vertx` config is that same secret, **Base64-encoded**
   (Vert.x Base64-decodes `buffer` back to the raw key). Encode it with `printf`
   — not `echo`, which appends a trailing newline that changes the key and makes
@@ -173,21 +173,20 @@ Set that encoded value as the `buffer` in the `package.json` `vertx` config sect
 }
 ```
 
-Then mint a token with the raw secret and claims shaped to the test's needs;
-`iss` and `aud` must match the `jwtOptions` configured above. In jwt.io, select
-`HS256`, enter the raw secret as the signing key, and use a payload such as:
+Then mint a token by passing the **raw** secret and the claims (shaped to your
+test's needs; `iss` / `aud` must match the `jwtOptions` configured above):
 
-```json
-{
-  "iss": "<jwt-issuer>",
-  "aud": ["<jwt-audience>"],
-  "exp": 9999999999,
-  "customerId": 6,
-  "roles": ["user"]
-}
+```sh
+jwt encode --secret 'mySuperSecretSignerStringThatIsLongEnough' --alg HS256 \
+  '{"iss": "<jwt-issuer>", "aud": ["<jwt-audience>"], "exp": 9999999999, "customerId": 6, "roles": ["user"]}'
 ```
 
-Use the same tool to inspect a token and verify its signature with the raw secret.
+Inspect or verify an existing token with `jwt decode` (pass `--secret` to also
+check the signature):
+
+```sh
+jwt decode --secret 'mySuperSecretSignerStringThatIsLongEnough' <token>
+```
 
 ### Default Test Runner Token
 

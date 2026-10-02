@@ -91,6 +91,7 @@ Use variables **only** for values that genuinely differ per deployment.
 
 **Event-Time Processing:**
 - **ALWAYS** define watermarks on external sources used for streaming projects. Prefer event-time; use processing time only for the file-based-source exception below.
+- **Internal tables carry no `WATERMARK` definition.** An internal table is a table with an engine hint like `/*+engine(kafka) */` and no `'connector'` option. DataSQRL manages that table and generates its watermark. Write a `WATERMARK` on such a table only when it is requested. Invoke the `/implement-sqrl` skill (CREATE TABLE internal vs external) for the full comparison.
 - Watermark timestamps must be monotonically increasing with some bounded out-of-orderedness. If no such timestamp exists on source data, define an additional column `ingestion_time AS now()` and watermark on it. This can be useful for file-based sources.
 - Define watermark: `WATERMARK FOR ts AS ts - INTERVAL '1' SECOND` where the interval is an upper limit of out-of-orderedness.
 - Add a primary key (`PRIMARY KEY (...) NOT ENFORCED`) and/or a partition key only if they genuinely apply to the data source/sink.
@@ -111,7 +112,7 @@ This rule selects the watermark of a production source. A test connector reads f
 
 **Kafka source watermarks:** `engines.kafka.use-source-watermark` and `use-transaction-source-watermark` apply only to mutation tables with a `timestamp` metadata column and require `kafka-safe` or `upsert-kafka-safe`. They generate `SOURCE_WATERMARK()`; use a normal table watermark for other connector sources.
 
-**Entity Data:** ingest entities as a stream of updates and deduplicate downstream with `DISTINCT` into versioned state. Invoke the `/implement-sqrl` skill (Deduplication).
+**Entity Data:** ingest entities as a stream of updates (append-only connector). Converting to versioned state is a downstream decision made per consumer: deduplicate with `DISTINCT` where a consumer needs a single version per entity, either the current one or the one valid at an event's timestamp in a temporal join, and read the `STREAM` where a consumer needs the changes themselves, such as a history view or an aggregation over every update. A source that already declares a `PRIMARY KEY` with upsert semantics is versioned state already, so it is read directly with no `DISTINCT`. Invoke the `/implement-sqrl` skill (DISTINCT operator) for the decision.
 
 ## Connector Definitions
 
@@ -149,33 +150,44 @@ A connector table takes its payload columns from a **base** through `LIKE`. Norm
 
 ### The event-time column
 
-The **event-time column the watermark is built on** is declared in the connector table. Its provenance differs per environment, sourced one of three ways:
+The **event-time column the watermark is built on** is declared in the connector table. Its provenance differs per environment.
+Cases (a) to (c) below are external tables, and each one declares its own watermark. Case (d) is an internal table, and DataSQRL generates its watermark.
 
 ```sql
--- schema table — physical payload columns only (no WATERMARK / METADATA / AS ...)
+-- schema table: physical payload columns only (no WATERMARK / METADATA / AS ...)
 CREATE TABLE _MyStream_schema (
   key_col   STRING NOT NULL,
   value_col DOUBLE NOT NULL
 );
 
--- (a) Kafka — event time comes from the record's metadata timestamp
-/*+engine(kafka) */
+-- (a) External Kafka: event time comes from the record's metadata timestamp
 CREATE TABLE MyStream (
   event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR event_time AS event_time - INTERVAL '1' SECOND
+) WITH (
+    'connector' = 'kafka-safe',
+    'topic' = 'my_stream_kafka_topic',
+    'properties.bootstrap.servers' = '${MY_KAFKA_BROKERS}',
+    'value.format' = 'flexible-json'
 ) LIKE _MyStream_schema;
 
--- (b) Filesystem — event time is a PHYSICAL column present in the data file
+-- (b) Filesystem: event time is a PHYSICAL column present in the data file
 CREATE TABLE MyStream (
   event_time TIMESTAMP_LTZ(3) NOT NULL,
   WATERMARK FOR event_time AS event_time - INTERVAL '1' SECOND
 ) WITH ('connector' = 'filesystem', ...) LIKE _MyStream_schema;
 
--- (c) File source with no usable event time — COMPUTED ingestion time
+-- (c) File source with no usable event time: COMPUTED ingestion time
 CREATE TABLE MyStream (
   ingest_time AS NOW(),
   WATERMARK FOR ingest_time AS ingest_time - INTERVAL '1' SECOND
 ) WITH ('connector' = 'filesystem', ...) LIKE _MyStream_schema;
+
+-- (d) Internal Kafka topic managed by DataSQRL: no connector and no WATERMARK
+/*+engine(kafka) */
+CREATE TABLE MyStream (
+  event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+) LIKE _MyStream_schema;
 ```
 
 ### Test connectors mirror production
