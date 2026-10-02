@@ -31,7 +31,7 @@ USER root
 # only instructions or skills change.
 COPY --from=node /usr/local /usr/local
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl git ripgrep \
+    && apt-get install -y --no-install-recommends ca-certificates curl git python3 ripgrep \
     && npm install -g --ignore-scripts "${PI_PACKAGE}" \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
@@ -48,6 +48,8 @@ COPY agent/AGENTS.md /root/.pi/agent/AGENTS.md
 COPY agent/skills/ /root/.pi/agent/skills/
 COPY --chmod=0755 agent/cmd.sh /opt/agent/cmd.sh
 COPY --chmod=0755 agent/entrypoint.sh /opt/agent/entrypoint.sh
+# HS256 test-token helper taught by the design-api skill.
+COPY --chmod=0755 agent/bin/jwt /usr/local/bin/jwt
 
 WORKDIR /workspace
 
