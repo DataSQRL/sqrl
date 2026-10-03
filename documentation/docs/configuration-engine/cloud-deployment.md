@@ -1,4 +1,4 @@
-# Cloud Deployment Configuration
+# DataSQRL Cloud Deployment Configuration
 
 Configures the cloud resources for each engine when deploying pipelines to DataSQRL Cloud. Deployment settings are configured under the `deployment` field within each engine's configuration.
 
@@ -249,29 +249,10 @@ The limit factor must be at least `max(1, request factor)`, otherwise the ceilin
 
 ### Task Slots Follow the Ceiling
 
-On a Flink task manager the slot count moves with the **ceiling**, not the request, because burst headroom with no subtasks to fill it buys nothing. Slots scale by the ceiling *relative to the size's own*: `slots x (taskmanager-cpu-limit-factor / the size's Max CPU Burst)`. A `medium` (2 slots, burst 1) at `taskmanager-cpu-limit-factor: 2` gets 4 slots; `dev`'s burst is already 2, so factor 2 leaves it at 1 slot and factor 4 gives it 2. Lowering `taskmanager-cpu-request-factor` leaves slots alone, which is how you keep the parallelism of a size while sharing its cores at steady state. The job manager runs no subtasks, so its factors never move slots or parallelism.
+On a Flink task manager the slot count moves with the **ceiling**, not the request, because burst headroom requires subtasks to fill it. Slots scale by the ceiling *relative to the size's own*: `slots x (taskmanager-cpu-limit-factor / the size's Max CPU Burst)`. A `medium` (2 slots, burst 1) at `taskmanager-cpu-limit-factor: 2` gets 4 slots; `dev`'s burst is already 2, so factor 2 leaves it at 1 slot and factor 4 gives it 2. Lowering `taskmanager-cpu-request-factor` leaves slots alone, which is how you keep the parallelism of a size while sharing its cores at steady state. The job manager runs no subtasks, so its factors never move slots or parallelism.
 
 Because slots move, so does parallelism (`instances x slots`), and `pipeline.max-parallelism` is baked into savepoints. Raising the limit factor on a running deployment is rejected when the new parallelism no longer divides the recorded `pipeline.max-parallelism`; the error lists the `taskmanager-count` values that do.
 
-:::warning Migrating from `cpu-limit`
-`taskmanager-cpu-limit` (Flink) and `cpu-limit` (PostgreSQL) are **deprecated but still accepted**; a later release removes them. Vert.x never had either key. A deployment that still sets one keeps deploying: the value is translated into the matching limit factor and logged as deprecated.
-
-| Old value                         | Translated to          |
-|:----------------------------------|:-----------------------|
-| `"2x"`                            | `cpu-limit-factor: 2`  |
-| `"6000m"` on a `medium` (2 vCPU)  | `cpu-limit-factor: 3`  |
-| `"6"` on a `medium`               | `cpu-limit-factor: 3`  |
-
-An absolute amount is divided by the size's own vCPU — `m` means millicores, a bare number means cores. The translation fails instead of deploying on `"unlimited"`, on a value that is not a number, on one that works out above 4, and when the old key is set alongside `cpu-request-factor` or `cpu-limit-factor`. Set one or the other.
-
-**The two keys do not mean the same thing.** `cpu-limit` stated the ceiling as a multiple of the **request**; `cpu-limit-factor` states it against the **size**. Those agree only while the request equals the size — which is exactly what a configuration written before `cpu-request-factor` existed does, so the translation is faithful today and diverges the moment you lower the request.
-
-**On a task manager the translation also moves task slots.** Slots follow the ceiling, so a deployment carrying `taskmanager-cpu-limit: "2x"` on a `medium` goes from 2 slots to 4 and doubles its parallelism — an upgrade whose new parallelism no longer divides the savepoint's `pipeline.max-parallelism` is rejected. Migrate deliberately rather than letting the translation move it for you.
-
-The `.cpu` qualifier still works but is **deprecated**. It is equivalent to setting *both* factors — `cpu-request-factor: 2` **and** a limit factor at twice the size's Max CPU Burst, so 2 for most sizes and 4 on a `dev` task manager. Setting `cpu-request-factor: 2` on its own is rejected on any size whose Max CPU Burst is below 2, because the ceiling would then sit below the request. `.cpu` cannot be combined with either factor.
-
-**Migrating `.cpu` on a task manager changes parallelism.** Because slots follow the ceiling, `.cpu` doubles the slots per task manager — `medium.cpu` runs 4 slots, not 2. Explicit factors do not undo that: a request factor of 2 forces a ceiling of at least 2, and the slots follow. What they add is the other half of the trade, which `.cpu` could never express — `taskmanager-cpu-request-factor: 0.25` with `taskmanager-cpu-limit-factor: 1` keeps `medium`'s 2 slots and shares its cores at steady state.
-:::
 
 ---
 

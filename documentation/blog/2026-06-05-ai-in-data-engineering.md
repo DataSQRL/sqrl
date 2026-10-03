@@ -16,6 +16,8 @@ AI is transforming data engineering. Coding agents can now generate SQL transfor
 
 How do we ensure that AI-generated data systems meet the rigorous **non-functional requirements** that production data platforms demand? This article presents our framework for integrating AI coding agents into data engineering workflows while maintaining data quality, reliability, governance, and trust.
 
+<!-- truncate -->
+
 ## The Scaling Challenge
 
 Organizations are targeting 3-5x productivity improvements through AI-assisted development. The velocity is real, but it creates an unsustainable burden on traditional data engineering practices:

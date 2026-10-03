@@ -386,7 +386,7 @@ Defines an internal table that is not exposed in the interface.
 ### `_` prefix vs. `/*+no_query*/` — different semantics, never interchangeable
 
 * **`_` prefix** — the object is **not part of the interface at all**: no endpoint, no generated type, unreachable from any client. This is what pipeline intermediates use (dedup, enrichment, filter and join steps).
-* **`/*+no_query*/`** — the object **is** part of the interface through relationship but it cannot be queryable direclty. Use it for a table clients reach only through a relationship from its parent.
+* **`/*+no_query*/`** — the object **is** part of the interface through relationship but it cannot be queryable directly. Use it for a table clients reach only through a relationship from its parent.
 
 ```sql
 /** Purchase order lines. Reached through the relationships below, never queried directly. */
@@ -439,7 +439,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **query_by_any**            | `query_by_any(col, ...)`                                                   | table          | generate interface with *optional* filter arguments for all listed columns                                                                                                         |
 | **no_query**                | `no_query`                                                                 | table          | prevent the table from being directly queryable but reachable through relationships and explicit functions (see *Interfaces*)                        |
 | **insert**                  | `insert(type)`                                                             | table          | controls the way how mutations will be written to their target sink. `type` ∈ `SINGLE` (default), `BATCH`, `TRANSACTION`                                                           |
-| **ttl**                     | `ttl(duration)`                                                            | table          | specifies how long the records for this table are retained in the underlying data system before it can be discarded. Expects a duration string like `5 week`. Disabled by default. |
+| **ttl**                     | `ttl(duration)`                                                            | table          | specifies how long the records for this table are retained in the underlying data system before it can be discarded. Expects a duration string with a unit between minute and day, e.g. `30 min`, `36 hours`, `14 days`. Disabled by default. |
 | **cache**                   | `cache(duration)`                                                          | table          | how long the results retrieved from this table can be cached on the server before they are refreshed. Expects a duration string like `10 seconds`. Disabled by default.            |
 | **filtered_distinct_order** | flag                                                                       | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                |
 | **engine**                  | `engine(engine_id)`                                                        | table          | pin execution engine (`process`, `database`, `flink`, ...)                                                                                                                         |

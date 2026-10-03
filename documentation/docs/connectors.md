@@ -43,7 +43,7 @@ DataSQRL currently supports loading schemas from:
 Assuming you have an Avro schema file `user.avsc` for a Kafka topic:
 
 ```sql
-CREATE TABLE User (
+CREATE TABLE Users (
   last_updated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
 ) WITH (
@@ -62,13 +62,14 @@ In this example:
 To automatically discover the schema of a JSONL or CSV file, add the filename in the `LIKE` clause.
 In addition to generating the table columns based on the inferred schema of the data, this also configures the `filesystem` connector to access the data.
 
-For example, suppose you have a `users.jsonl` file in the `connectors` directory, you can define the `User` table simply as:
+For example, suppose you have a `users.jsonl` file in the `connectors` directory, you can define the `Users` table simply as:
 
 ```sql
-CREATE TABLE User (
+CREATE TABLE Users (
   WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
 ) WITH (
-  'source.monitor-interval' = '10 sec', -- remove for batch processing
+  -- remove the monitor interval for batch processing
+  'source.monitor-interval' = '10 sec'
 ) LIKE 'users.jsonl';
 ```
 

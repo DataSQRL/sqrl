@@ -12,6 +12,7 @@ The image starts Pi in `/workspace`. Mount a project there, provide a model-prov
 | [`entrypoint.sh`](entrypoint.sh) | Starts interactive Pi and selects a provider from explicit settings or available API keys.                                |
 | [`cmd.sh`](cmd.sh)               | Runs DataSQRL CLI commands with fresh local engine state and large-data protection. Agents use it as `/opt/agent/cmd.sh`. |
 | [`AGENTS.md`](AGENTS.md)         | Always-loaded instructions: the working directory, skill-selection rules, and verification expectations.                  |
+| [`CLI_REFERENCE.md`](CLI_REFERENCE.md) | DataSQRL CLI commands, options, and package configuration layering, referenced from `AGENTS.md`.                    |
 | [`skills/`](skills/)             | On-demand DataSQRL knowledge loaded by Pi when a task matches a skill description.                                        |
 | `/opt/datasqrl-examples/`        | Optional read-only mount of custom or [datasqrl-examples](https://github.com/DataSQRL/datasqrl-examples) reference implementations, used by relevant skills when useful. |
 
@@ -112,3 +113,18 @@ docker run --rm --entrypoint bash my-data-agent -lc \
 ```
 
 Then start an interactive session against a disposable or representative project and ask the agent to inspect the project and run an appropriate DataSQRL command through `/opt/agent/cmd.sh`.
+
+## Validation and rules
+
+Skills and instructions guide the agent, but they do not guarantee that its output meets your standards. For that, put the agent in a feedback loop with deterministic validation:
+
+```
+agent ──> compiler / test ──> validation ──> agent
+```
+
+1. **Agent:** writes or changes the SQRL scripts, configuration, and tests.
+2. **Compiler and test:** `compile` checks syntax and semantics and produces the [compiler output](https://docs.datasqrl.com/docs/compiler-output). `test` runs the pipeline against fixtures and compares the results to snapshots.
+3. **Validation:** rules inspect the compiler output to verify your governance, security, and data quality standards. Because the output describes the data model, the pipeline DAG, and the physical plan of every engine in text and JSON, rules can be plain scripts or policy checks. For example, a rule can require documentation on every exposed table, forbid exposing columns tagged as PII through the API, require a watermark on every source, or reject regular joins with unbounded state.
+4. **Back to the agent:** compiler errors, test failures, and rule violations are returned to the agent as concrete, actionable feedback. The agent fixes the problem and the loop repeats until every check passes.
+
+Because the rules are deterministic, they apply the same standards on every iteration, regardless of the model or prompt. Run them from a skill or `AGENTS.md` instruction after each compile so the agent sees violations immediately, and run the same rules in CI as a final gate before deployment.

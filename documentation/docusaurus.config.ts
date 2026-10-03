@@ -22,7 +22,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'DataSQRL',
-  tagline: 'Data Streaming Framework',
+  tagline: 'Data Engineering Harness',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
@@ -37,10 +37,11 @@ const config: Config = {
   projectName: 'sqrl', // Usually your repo name.
 
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
-
   markdown: {
     mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
   },
 
   // Even if you don't use internationalization, you can use this field to set
@@ -57,6 +58,15 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
+          // Docusaurus defaults, plus the stdlib-docs submodule README whose relative links
+          // point into the flink-sql-runner repository rather than to doc pages
+          exclude: [
+            '**/_*.{js,jsx,ts,tsx,md,mdx}',
+            '**/_*/**',
+            '**/*.test.{js,jsx,ts,tsx}',
+            '**/__tests__/**',
+            'stdlib-docs/README.md',
+          ],
         },
         blog: {
           showReadingTime: true,
@@ -177,8 +187,8 @@ const config: Config = {
       respectPrefersColorScheme: false,
     },
     metadata: [
-      {name: 'keywords', content: 'data, API, SQRL, DataSQRL, data product, data pipeline, database, streaming, real-time analytics'},
-      {name: 'description', content: 'DataSQRL is a compiler for building robust streaming data pipelines in minutes.'},
+      {name: 'keywords', content: 'data engineering harness, data engineering agent, coding agent, SQRL, DataSQRL, data pipeline, data product, data API, streaming, real-time analytics'},
+      {name: 'description', content: 'DataSQRL is an open-source data engineering harness for building data engineering agents designed around human control, correctness, and safety.'},
       {name: 'twitter:card', content: 'summary'},
       {name: 'twitter:site', content: '@DataSQRL'}
     ],

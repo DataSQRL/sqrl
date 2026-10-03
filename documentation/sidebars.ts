@@ -37,9 +37,20 @@ const sidebars = {
       label: '📖 Overview',
     },
     {
-      type: 'doc',
-      id: 'intro/getting-started',
+      type: 'category',
       label: '🚀 Getting Started',
+      link: {
+        type: 'doc',
+        id: 'intro/getting-started',
+      },
+      collapsed: false,
+      items: [
+        {
+          type: 'doc',
+          id: 'intro/getting-started-no-key',
+          label: '🔑 Without an API Key',
+        },
+      ],
     },
     {
       type: 'category',
@@ -107,7 +118,7 @@ const sidebars = {
             {
               type: 'doc',
               id: 'configuration-engine/cloud-deployment',
-              label: 'Deployment Configuration',
+              label: 'Cloud Deployment',
             },
           ],
         },
@@ -132,9 +143,24 @@ const sidebars = {
           ],
         },
         {
-          type: 'doc',
-          id: 'compiler',
+          type: 'category',
           label: '🛠️ Compiler',
+          link: {
+            type: 'doc',
+            id: 'compiler',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'compiler-output',
+              label: 'Compiler Output',
+            },
+            {
+              type: 'doc',
+              id: 'deployment',
+              label: 'Deployment',
+            },
+          ],
         },
         {
           type: 'doc',

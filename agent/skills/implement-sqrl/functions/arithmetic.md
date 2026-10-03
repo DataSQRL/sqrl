@@ -39,7 +39,7 @@
 | `RAND()` | Returns a pseudorandom double value in the range [0.0, 1.0) |
 | `RAND(INT)` | Returns a pseudorandom double value in the range [0.0, 1.0) with an initial seed integer. Two RAND functions will return identical sequences of numbers if they have the same initial seed. |
 | `RAND_INTEGER(INT)` | Returns a pseudorandom integer value in the range [0, INT) |
-| `RAND_INTEGER(INT1, INT2)` | Returns a pseudorandom integer value in the range [0, INT2) with an initial seed INT1. Two RAND_INTGER functions will return idential sequences of numbers if they have the same initial seed and bound. |
+| `RAND_INTEGER(INT1, INT2)` | Returns a pseudorandom integer value in the range [0, INT2) with an initial seed INT1. Two RAND_INTGER functions will return identical sequences of numbers if they have the same initial seed and bound. |
 | `UUID()` | Returns an UUID (Universally Unique Identifier) string (e.g., "3d3c68f7-f608-473f-b60c-b0c44ad4cc4e") according to RFC 4122 type 4 (pseudo randomly generated) UUID. The UUID is generated using a cryptographically strong pseudo random number generator. |
 | `BIN(INT)` | Returns a string representation of INTEGER in binary format. Returns NULL if INTEGER is NULL. E.g., 4.bin() returns "100" and 12.bin() returns "1100". |
 | `HEX(numeric) HEX(string) ` | Returns a string representation of an integer NUMERIC value or a STRING in hex format. Returns NULL if the argument is NULL. E.g. a numeric 20 leads to "14", a numeric 100 leads to "64", a string "hello,world" leads to "68656C6C6F2C776F726C64". |

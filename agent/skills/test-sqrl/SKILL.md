@@ -54,7 +54,7 @@ query GetAllCustomers {
 `AddCustomer.graphql`:
 ```graphql
 mutation AddCustomer {
-  Customer(input: {customerid: 123, email: "test@example.com", name: "Test"}) {
+  Customer(event: {customerid: 123, email: "test@example.com", name: "Test"}) {
     customerid
   }
 }
