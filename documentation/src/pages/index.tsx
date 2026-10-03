@@ -327,7 +327,7 @@ Schema:
                   <table className={styles.table}>
                     <tbody>
                     <tr><td><strong>Skills</strong></td><td>How your team gathers requirements, plans, implements, tests, and deploys, plus domain and catalog knowledge</td></tr>
-                    <tr><td><strong>Validators &amp; policies</strong></td><td>Custom compiler rules for governance, security, and data quality</td></tr>
+                    <tr><td><strong>Validators &amp; policies</strong></td><td>Custom rules for governance, security, and data quality</td></tr>
                     <tr><td><strong>Functions &amp; connectors</strong></td><td>Your UDFs, sources, sinks, and formats</td></tr>
                     <tr><td><strong>Engines &amp; deployment</strong></td><td>Flink, Kafka, Postgres, Iceberg on Docker, Kubernetes, or cloud</td></tr>
                     <tr><td><strong>Coding agent</strong></td><td>Claude Code, Codex, OpenCode, Pi, etc: your choice</td></tr>

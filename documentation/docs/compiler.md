@@ -173,6 +173,8 @@ Upon successful compilation, the compiler writes:
 - Visual representation to `build/pipeline_visual.html` (open in browser to inspect the DAG)
 - Deployment artifacts to the target folder
 
+See [Compiler Output](compiler-output) to learn more about the files the compiler produces and how to use them to validate a pipeline or learn how to [deploy those files](deployment).
+
 ## Run Command
 
 The `run` command compiles and runs the generated data pipeline in Docker.
@@ -276,11 +278,7 @@ When you terminate (via `CTRL-C`) and re-run your SQRL project, it will replay p
 ### Deployment 
 
 The run command is primarily used for local development and quick iteration cycles. It supports small-scale deployments.
-For large-scale deployments, we recommend that you run the generated pipeline in Kubernetes by extending our [Kubernetes setup](https://github.com/DataSQRL/sqrl-k8s).
-
-If you prefer a managed service, you can use [DataSQRL Cloud](https://www.datasqrl.com/) for automated and optimized deployments.
-Alternatively, you can deploy the generated deployment artifacts in the `build/deploy/plan` directory using available managed
-services by your preferred cloud provider.
+Check out the [Deployments documentation](deployment) on how to manage production deployments.
 
 ## Test Command
 

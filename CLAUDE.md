@@ -13,8 +13,6 @@ that integrate Kafka, Flink, PostgreSQL, Iceberg, GraphQL APIs, and LLM tooling.
 
 The following repositories contain additional runtime components:
 * [Flink SQL Runner](https://github.com/DataSQRL/flink-sql-runner): Runs the Flink compiled plan and provides additional utilities for Flink
-* [SQRL K8s](https://github.com/DataSQRL/sqrl-k8s): A template for running DataSQRL pipelines in Kubernetes
-
 ## Essential Commands
 
 ### Build Commands

@@ -143,9 +143,24 @@ const sidebars = {
           ],
         },
         {
-          type: 'doc',
-          id: 'compiler',
+          type: 'category',
           label: '🛠️ Compiler',
+          link: {
+            type: 'doc',
+            id: 'compiler',
+          },
+          items: [
+            {
+              type: 'doc',
+              id: 'compiler-output',
+              label: 'Compiler Output',
+            },
+            {
+              type: 'doc',
+              id: 'deployment',
+              label: 'Deployment',
+            },
+          ],
         },
         {
           type: 'doc',
