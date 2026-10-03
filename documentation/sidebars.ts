@@ -118,7 +118,7 @@ const sidebars = {
             {
               type: 'doc',
               id: 'configuration-engine/cloud-deployment',
-              label: 'Deployment Configuration',
+              label: 'Cloud Deployment',
             },
           ],
         },
