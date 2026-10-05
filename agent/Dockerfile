@@ -23,7 +23,7 @@ ARG NODE_IMAGE=node:22-bookworm-slim
 FROM ${NODE_IMAGE} AS node
 FROM ${SQRL_IMAGE}
 
-ARG PI_PACKAGE=@earendil-works/pi-coding-agent@0.87.1
+ARG PI_PACKAGE=@earendil-works/pi-coding-agent@1.0.3
 
 USER root
 
