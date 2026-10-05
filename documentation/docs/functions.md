@@ -87,7 +87,7 @@ Import and use the function in your SQRL script:
 ```sql
 IMPORT usrlib.MyScalarFunction;
 
-Result := SELECT MyScalarFunction(2, 3) AS sum;
+Result := SELECT MyScalarFunction(2, 3) AS total;
 ```
 
 #### Dependencies

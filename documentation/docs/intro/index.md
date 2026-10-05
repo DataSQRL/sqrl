@@ -9,7 +9,7 @@ DataSQRL is an open-source **data engineering harness** for building data engine
 1. **The agent writes SQL.** The whole pipeline, from ingest to transform to store to serve, is expressed in [SQRL](../sqrl-language): SQL extended with stream processing and API definitions. It stays readable enough for a human to review.
 2. **The compiler validates and generates.** DataSQRL checks the logical plan (schemas, keys, timestamps, table types) and the physical plan (engine capabilities, type mappings). It then generates every deployment asset from one model: Flink plans, Kafka topics, Postgres and Iceberg schemas, and GraphQL, REST, and MCP APIs.
 3. **The simulator tests.** Pipelines run locally with timestamp-accurate event replay, so time-dependent behavior becomes a deterministic test.
-4. **You review and deploy.** Compile outputs such as the pipeline DAG and lineage support human review and automated policy checks. The artifacts run on open-source infrastructure you operate yourself.
+4. **You review and deploy.** [Compilation outputs](../compilation-output) such as the pipeline DAG and lineage support human review and automated policy checks. The artifacts run on open-source infrastructure you operate yourself.
 
 For the full design, read the [harness architecture](/blog/agentic-data-engineering-harness).
 
@@ -24,9 +24,10 @@ For the full design, read the [harness architecture](/blog/agentic-data-engineer
 | Read and review the SQL an agent produces | [SQRL Language](../sqrl-language) and [Streaming Concepts](concepts) |
 | Connect my data sources and sinks | [Connectors](../connectors) |
 | Shape the APIs and data products | [Interface](../interface) |
-| Choose engines and deploy | [Configuration](../configuration) and [Deployment Configuration](../configuration-engine/cloud-deployment) |
+| Choose engines and deploy | [Configuration](../configuration) and [Deployment](../deployment): DataSQRL Cloud, managed cloud services, or Kubernetes |
 | Add custom logic | [Functions](../functions): the built-in library and your own UDFs |
 | Compile, test, and run from the command line | [Compiler](../compiler) |
+| Inspect and validate what the compiler produces | [Compilation Output](../compilation-output) |
 | Customize or extend the harness itself | [How DataSQRL Works](../deepdive) |
 
 ## Documentation Map
@@ -42,7 +43,7 @@ For the full design, read the [harness architecture](/blog/agentic-data-engineer
 - [Interface](../interface): generated GraphQL, REST, and MCP APIs and data product tables, and how to customize them
 - [Configuration](../configuration): engines, connectors, dependencies, and compiler options in `package.json`, with a page for each engine ([Flink](../configuration-engine/flink), [Kafka](../configuration-engine/kafka), [Postgres](../configuration-engine/postgres), [Iceberg](../configuration-engine/iceberg), [Iceberg query engines](../configuration-engine/iceberg-query), [Vert.x](../configuration-engine/vertx)) and the [default configuration](../configuration-default)
 - [Functions](../functions): [system](../functions-system-generated) and [library](../functions-library-generated) functions, plus custom functions
-- [Compiler](../compiler): the `compile`, `test`, and `run` commands and what each one produces
+- [Compiler](../compiler): the `compile`, `test`, and `run` commands, the [compilation output](../compilation-output) they produce for review and validation, and how to [deploy](../deployment) it
 - [Streaming Concepts](concepts): time, watermarks, and other stream processing basics
 
 **Advanced**

@@ -16,6 +16,8 @@ unlisted: true
 DataSQRL is an open-source data automation framework that provides guardrails and feedback for AI coding agents to develop and operate data pipelines, data products, and data APIs autonomously.
 You can customize DataSQRL as the foundation of your self-driving data platform. Our goal is to develop DataSQRL into a comprehensive world model for data platform automation.
 
+<!-- truncate -->
+
 ## Why DataSQRL?
 
 To understand *why you need DataSQRL*, let's start with the obvious question: **Aren’t LLM-based coding agents good enough?**
@@ -270,7 +272,7 @@ By capturing and faithfully replaying records at their original timestamp, the s
 
 Simulation is important in agentic coding workflows because it allows the agent to execute and refine the implementation in a feedback loop that is executed locally and can simulate scenarios that only occur rarely in production.
 
-Read more about invoking the [simulator](/docs/compiler#test-command) and writing [reproducible test cases](/docs/howto/testing).
+Read more about invoking the [simulator](/docs/compiler#test-command) and writing reproducible test cases.
 
 ### Operations and Telemetry
 
@@ -296,5 +298,5 @@ To try out DataSQRL:
 
 1. [Build a project from scratch with DataSQRL](/docs/intro/getting-started) to see how the components of DataSQRL work
 2. [Look at example projects](https://github.com/DataSQRL/datasqrl-examples) and run/modify them locally.
-3. [Read the documentation](docs/intro/index)
+3. [Read the documentation](/docs/intro)
 4. [Check out the open-source project on GitHub](https://github.com/DataSQRL/sqrl)

@@ -2,6 +2,6 @@ The sort order for the DISTINCT expression is not a timestamp order which can re
 
 If possible, try to use the timestamp column of the table as the sort order. This allows the stream engine to process the deduplication more efficiently.
 
-For imported tables, the timestamp column is defined in `table.json` configuration file. See: https://www.datasqrl.com/sqrl/connectors/#table-configuration
+For tables defined with `CREATE TABLE`, the timestamp column is the column with the `WATERMARK` specification. See: https://docs.datasqrl.com/docs/connectors
 
 For other tables, the timestamp column is inferred based on the source tables.

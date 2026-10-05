@@ -6,29 +6,46 @@ import TabItem from '@theme/TabItem';
 ## Basic DataSQRL Agent
 
 The basic DataSQRL agent runs as a Docker image on your local machine. It wraps the Pi coding agent with the DataSQRL framework, an `AGENTS.md` file, and skills.
-All you need is a recent version of [Docker](https://www.docker.com/products/docker-desktop/) and an API key from the LLM provider you'd like to use.
+All you need is a recent version of [Docker](https://www.docker.com/products/docker-desktop/) and an API key from the LLM provider you'd like to use. If you don't have an API key or want to see how the agent works step-by-step, [follow this tutorial](getting-started-no-key) instead.
 
 <Tabs groupId="os">
 <TabItem value="macos" label="macOS" default>
 
 ```bash
-docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/core-agent
+docker run -it --rm --detach-keys="ctrl-],ctrl-]" \
+  -e ANTHROPIC_API_KEY \
+  -e TERM \
+  -e COLORTERM \
+  -v "$PWD":/workspace \
+  -w /workspace \
+  datasqrl/core-agent
 ```
 
 </TabItem>
 <TabItem value="windows" label="Windows">
 
-Run in PowerShell:
-
 ```powershell
-docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "${PWD}:/workspace" -w /workspace datasqrl/core-agent
+# Run in PowerShell
+docker run -it --rm --detach-keys="ctrl-],ctrl-]" `
+  -e ANTHROPIC_API_KEY `
+  -e TERM `
+  -e COLORTERM `
+  -v "${PWD}:/workspace" `
+  -w /workspace `
+  datasqrl/core-agent
 ```
 
 </TabItem>
 <TabItem value="linux" label="Linux">
 
 ```bash
-docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/core-agent
+docker run -it --rm --detach-keys="ctrl-],ctrl-]" \
+  -e ANTHROPIC_API_KEY \
+  -e TERM \
+  -e COLORTERM \
+  -v "$PWD":/workspace \
+  -w /workspace \
+  datasqrl/core-agent
 ```
 
 </TabItem>
@@ -165,10 +182,10 @@ For larger changes, describe them like a new pipeline and go through requirement
 **To your own infrastructure:** compile the deployment assets and deploy them to Kubernetes or managed cloud services:
 
 ```bash
-docker run --rm -v $PWD:/workspace datasqrl/cmd compile package.json
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile myproject-shared-package.json myproject-prod-package.json
 ```
 
-See the [compiler documentation](/docs/compiler) for details.
+Replace `myproject` with your project's name. Pass the shared base configuration first and the environment overlay second. Later files override earlier ones, as explained in the [configuration documentation](/docs/configuration). See the [compiler documentation](/docs/compiler) for details.
 
 **To DataSQRL Cloud:** ask your agent to deploy (`/datasqrl:deploy`). Deployment is always a separate request, never the tail end of an implementation run. It deploys a commit from GitHub, not your working tree, so commit and push first. You also need:
 

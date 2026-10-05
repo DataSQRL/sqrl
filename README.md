@@ -1,7 +1,7 @@
 # DataSQRL: Agentic Data Engineering Harness
 
 [![CircleCI](https://dl.circleci.com/status-badge/img/gh/DataSQRL/sqrl/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/DataSQRL/sqrl/tree/main)
-[![Docs](https://img.shields.io/badge/docs-available-brightgreen.svg)](https://datasqrl.github.io/sqrl)
+[![Docs](https://img.shields.io/badge/docs-available-brightgreen.svg)](http://docs.datasqrl.com)
 [![codecov](https://codecov.io/gh/datasqrl/sqrl/branch/main/graph/badge.svg)](https://codecov.io/gh/datasqrl/sqrl)
 [![License](https://img.shields.io/github/license/datasqrl/sqrl.svg)](LICENSE)
 [![Docker Image Version](https://img.shields.io/docker/v/datasqrl/cmd?sort=semver)](https://hub.docker.com/r/datasqrl/cmd/tags)
@@ -49,13 +49,13 @@ Before anything is deployed, the compiler analyzes the whole data flow, and it w
 
 Every data organization has its own conventions, domain vocabulary, compliance requirements, and target infrastructure. DataSQRL is a **toolkit** you use to build an agent that honors those.
 
-| Layer                      | What you customize                                                                                                                                               |
-|----------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Skills**                 | How your team gathers requirements, plans, implements, tests, and deploys. Includes domain knowledge and data catalog context.                                   |
-| **Validators & policies**  | Custom compiler rules for governance, security, and data quality standards.                                                                                      |
-| **Functions & connectors** | Your UDFs, source and sink connectors, and data formats.                                                                                                         |
+| Layer                      | What you customize                                                                                                                                              |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Skills**                 | How your team gathers requirements, plans, implements, tests, and deploys. Includes domain knowledge and data catalog context.                                  |
+| **Validators & policies**  | Custom rules for governance, security, and data quality standards.                                                                                      |
+| **Functions & connectors** | Your UDFs, source and sink connectors, and data formats.                                                                                                        |
 | **Engines & deployment**   | Your target infrastructure: Flink, Kafka, Postgres, Iceberg, and more, on Docker, Kubernetes, or managed cloud services. Extendable to the technologies you use. |
-| **Coding agent**           | Your choice: Claude Code, Codex, OpenCode, Pi, etc.                                                                                                              |
+| **Coding agent**           | Your choice: Claude Code, Codex, OpenCode, Pi, etc.                                                                                                             |
 
 Packaged into **one Docker container** which contains the data engineering agent that your teams, CI pipelines, and platforms can call.
 
@@ -87,7 +87,7 @@ Then tell the agent what you need in plain English:
 
 You get SQL scripts with tests that you can read, run, and verify.
 
-For planning, iterative refinement, and deployment workflows, install the advanced DataSQRL agent as a plugin for Claude Code, Codex, Cursor, or GitHub Copilot. The [Getting Started guide](https://docs.datasqrl.com/docs/intro/getting-started) covers both agents in detail.
+For planning, iterative refinement, and deployment workflows, install the [advanced DataSQRL agent](https://github.com/DataSQRL/datasqrl-plugin) as a plugin for Claude Code, Codex, Cursor, or GitHub Copilot. The [Getting Started guide](https://docs.datasqrl.com/docs/intro/getting-started) covers both agents in detail.
 
 ## Next steps
 - [Getting Started tutorial](https://docs.datasqrl.com/docs/intro/getting-started)
