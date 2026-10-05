@@ -16,7 +16,6 @@
 package com.datasqrl.container.testing;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -59,26 +58,26 @@ public class SqrlTestContainerIT {
 
   @Test
   @SneakyThrows
-  void givenAvroPackage_whenTestCommandExecuted_thenSnapshotsValidateSuccessfully() {
+  void
+      givenAvroPackageWithoutSnapshots_whenTestCommandExecuted_thenSnapshotsValidateSuccessfully() {
     var snapshots = sqrl.getTestDir().resolve("snapshots-tmp");
     FileUtils.deleteDirectory(snapshots.toFile());
 
-    // Assert that the test command throws a RuntimeException and capture the exception
-    ContainerError exception =
-        (ContainerError)
-            assertThatThrownBy(() -> sqrl.sqrlCmd("test package-no-snapshots.json".split(" ")))
-                .isInstanceOf(ContainerError.class)
-                .hasMessageContaining("SQRL compilation failed")
-                .actual();
+    try {
+      var result = sqrl.sqrlCmd("test package-no-snapshots.json".split(" "));
+      var logs = result.logs();
+      log.info("Container logs:\n{}", logs);
 
-    var logs = exception.getLogs();
-    log.info("Container logs:\n{}", logs);
-
-    // Assert that the logs contain the expected error messages
-    assertThat(logs).contains("Snapshot created for test:");
-
-    SqrlContainerExtension.assertOwner(snapshots, logs);
-    FileUtils.deleteDirectory(snapshots.toFile());
+      assertThat(logs)
+          .contains("Validating newly created snapshots")
+          .contains("Starting stream processor (snapshot validation run)")
+          .contains("BUILD SUCCESS");
+      assertThat(snapshots.resolve("MySchema.snapshot")).isRegularFile();
+      assertThat(snapshots.resolve("MySchemaQuery.snapshot")).isRegularFile();
+      SqrlContainerExtension.assertOwner(snapshots, logs);
+    } finally {
+      FileUtils.deleteDirectory(snapshots.toFile());
+    }
   }
 
   @Test
