@@ -32,7 +32,7 @@ SQLMesh parses SQL and adds features like column-level lineage, but it also targ
 
 ## How does DataSQRL compare to streaming databases like Materialize, RisingWave, or ksqlDB?
 
-Streaming databases run incremental SQL inside a single system. DataSQRL is a compiler and harness that spans several systems. It splits a pipeline across a stream processor, a log, a database or table format, and an API server, depending on what each part needs. It also adds the pieces an agent needs to produce correct pipelines: validation, event-time replay tests, and inspectable compile output. The engine architecture is extensible, so a streaming database could serve as an engine in a DataSQRL pipeline. But DataSQRL empowers you to combine the technologies you already trust to solve most of your data problems instead of having to adopt yet another database.
+Streaming databases run incremental SQL inside a single system. DataSQRL is a compiler and harness that spans several systems. It splits a pipeline across a stream processor, a log, a database or table format, and an API server, depending on what each part needs. It also adds the pieces an agent needs to produce correct pipelines: validation, event-time replay tests, and inspectable compilation output. The engine architecture is extensible, so a streaming database could serve as an engine in a DataSQRL pipeline. But DataSQRL empowers you to combine the technologies you already trust to solve most of your data problems instead of having to adopt yet another database.
 
 ## Does DataSQRL replace Airflow, Dagster, Fivetran, or Airbyte?
 

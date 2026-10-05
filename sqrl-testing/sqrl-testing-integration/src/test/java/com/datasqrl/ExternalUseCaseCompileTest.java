@@ -34,6 +34,5 @@ public class ExternalUseCaseCompileTest {
         Path.of("/path/to/package"),
         UseCaseTestHelper.defaultBuildDirFilter(),
         UseCaseTestHelper.defaultPlanDirFilter());
-    System.out.println("Done");
   }
 }

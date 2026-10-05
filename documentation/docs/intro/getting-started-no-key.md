@@ -97,7 +97,8 @@ The first time a new test runs, it creates a snapshot. Subsequent runs validate 
 A correct implementation might look like:
 
 ```sql
-TotalMessages := SELECT COUNT(*) as num_messages, MAX(message_time) as latest_timestamp
+TotalMessages := SELECT COUNT(*)          AS num_messages, 
+                        MAX(message_time) AS latest_timestamp
                  FROM Messages LIMIT 1;
 ```
 
@@ -169,7 +170,7 @@ You've seen how DataSQRL provides the feedback loop that coding agents need to b
 As shown in the [main Getting Started tutorial](getting-started), you can extend the DataSQRL harness to build custom agents that can complete many data engineering tasks with high quality and according to your organization's rules and guidelines.
 
 Next:
-- **[Full Documentation](/docs/intro)**: Complete reference and language spec
+- **[Full Documentation](/docs/intro)**: Explore guides to DataSQRL's concepts, tools, configuration, and deployment
 - **[Tutorials](examples)**: Learn by building more complex pipelines
 - **[Example Projects](https://github.com/DataSQRL/datasqrl-examples)**: See real-world patterns in action
 

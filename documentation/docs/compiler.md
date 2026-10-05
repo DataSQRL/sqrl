@@ -173,7 +173,7 @@ Upon successful compilation, the compiler writes:
 - Visual representation to `build/pipeline_visual.html` (open in browser to inspect the DAG)
 - Deployment artifacts to the target folder
 
-See [Compiler Output](compiler-output) to learn more about the files the compiler produces and how to use them to validate a pipeline or learn how to [deploy those files](deployment).
+See [Compilation Output](compilation-output) to learn more about the files the compiler produces and how to use them to validate a pipeline or learn how to [deploy those files](deployment).
 
 ## Run Command
 

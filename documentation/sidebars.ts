@@ -152,8 +152,8 @@ const sidebars = {
           items: [
             {
               type: 'doc',
-              id: 'compiler-output',
-              label: 'Compiler Output',
+              id: 'compilation-output',
+              label: 'Compilation Output',
             },
             {
               type: 'doc',

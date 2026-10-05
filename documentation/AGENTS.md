@@ -1,10 +1,10 @@
-# CLAUDE.md
+# SQRL Doc Site
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents (e.g., Claude Code, Codex) when working with code in this repository.
 
 ## Project Overview
 
-This is the documentation website for DataSQRL, built using Docusaurus 3.7.0. It contains comprehensive documentation, tutorials, blog posts, and community resources for the DataSQRL data engineering harness. The site is deployed to https://docs.datasqrl.com.
+This is the documentation website for DataSQRL, built using Docusaurus 3.x.y. It contains comprehensive documentation, tutorials, blog posts, and community resources for the DataSQRL data engineering harness. The site is deployed to https://docs.datasqrl.com.
 
 ## Essential Commands
 

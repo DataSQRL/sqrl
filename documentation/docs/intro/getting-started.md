@@ -12,23 +12,40 @@ All you need is a recent version of [Docker](https://www.docker.com/products/doc
 <TabItem value="macos" label="macOS" default>
 
 ```bash
-docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/core-agent
+docker run -it --rm --detach-keys="ctrl-],ctrl-]" \
+  -e ANTHROPIC_API_KEY \
+  -e TERM \
+  -e COLORTERM \
+  -v "$PWD":/workspace \
+  -w /workspace \
+  datasqrl/core-agent
 ```
 
 </TabItem>
 <TabItem value="windows" label="Windows">
 
-Run in PowerShell:
-
 ```powershell
-docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "${PWD}:/workspace" -w /workspace datasqrl/core-agent
+# Run in PowerShell
+docker run -it --rm --detach-keys="ctrl-],ctrl-]" `
+  -e ANTHROPIC_API_KEY `
+  -e TERM `
+  -e COLORTERM `
+  -v "${PWD}:/workspace" `
+  -w /workspace `
+  datasqrl/core-agent
 ```
 
 </TabItem>
 <TabItem value="linux" label="Linux">
 
 ```bash
-docker run -e ANTHROPIC_API_KEY -it --rm --detach-keys="ctrl-],ctrl-]" -e TERM -e COLORTERM -v "$PWD":/workspace -w /workspace datasqrl/core-agent
+docker run -it --rm --detach-keys="ctrl-],ctrl-]" \
+  -e ANTHROPIC_API_KEY \
+  -e TERM \
+  -e COLORTERM \
+  -v "$PWD":/workspace \
+  -w /workspace \
+  datasqrl/core-agent
 ```
 
 </TabItem>

@@ -1,6 +1,6 @@
 # Deployment
 
-The [compiler](compiler) generates all deployment assets for a pipeline in `build/deploy/plan`: Flink plans, Kafka topic definitions, database schemas, and the API server model (see [Compiler Output](compiler-output)). This page gives an overview of how to deploy those assets to production.
+The [compiler](compiler) generates all deployment assets for a pipeline in `build/deploy/plan`: Flink plans, Kafka topic definitions, database schemas, and the API server model (see [Compilation Output](compilation-output)). This page gives an overview of how to deploy those assets to production.
 
 :::tip DataSQRL Cloud
 The easiest way to deploy is [DataSQRL Cloud](https://www.datasqrl.com). It deploys your pipeline directly from your GitHub repository and supports the deployment options in your `package.json` configuration, such as instance sizes and replica counts (see [Cloud Deployment Configuration](configuration-engine/cloud-deployment)). DataSQRL Cloud is currently in closed beta. [Apply for access](https://www.datasqrl.com) to try it.

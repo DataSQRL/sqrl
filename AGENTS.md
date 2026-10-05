@@ -1,6 +1,6 @@
-# CLAUDE.md
+# DataSQRL
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents (e.g., Claude Code, Codex) when working with code in this repository.
 
 ## Project Overview
 
