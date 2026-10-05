@@ -42,20 +42,30 @@ class DatasqrlTestTest {
   @TempDir private Path tempDir;
 
   @Test
-  void containsNewSnapshots_whenSnapshotWasCreated_returnsTrue() {
+  void requiresSnapshotValidation_whenSnapshotsWereCreatedAndAllOtherSnapshotsMatch_returnsTrue() {
     assertThat(
-            DatasqrlTest.containsNewSnapshots(
+            DatasqrlTest.requiresSnapshotValidation(
                 List.of(
                     new TestResult.SnapshotOk("existing"), new TestResult.SnapshotCreate("new"))))
         .isTrue();
   }
 
   @Test
-  void containsNewSnapshots_whenNoSnapshotWasCreated_returnsFalse() {
+  void requiresSnapshotValidation_whenNoSnapshotWasCreated_returnsFalse() {
     assertThat(
-            DatasqrlTest.containsNewSnapshots(
+            DatasqrlTest.requiresSnapshotValidation(
                 List.of(
                     new TestResult.SnapshotOk("existing"),
+                    new TestResult.SnapshotMismatch("changed", "old", "new"))))
+        .isFalse();
+  }
+
+  @Test
+  void requiresSnapshotValidation_whenExistingSnapshotMismatches_returnsFalse() {
+    assertThat(
+            DatasqrlTest.requiresSnapshotValidation(
+                List.of(
+                    new TestResult.SnapshotCreate("new"),
                     new TestResult.SnapshotMismatch("changed", "old", "new"))))
         .isFalse();
   }

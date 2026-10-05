@@ -216,7 +216,7 @@ public class DatasqrlTest {
 
     // 6. A new snapshot is only provisional: re-run the pipeline once to verify that it produces
     // the same data.
-    if (rerunForNewSnapshots && containsNewSnapshots(testResults)) {
+    if (rerunForNewSnapshots && requiresSnapshotValidation(testResults)) {
       formatter.sectionHeader("Validating newly created snapshots");
       formatter.info("Resetting the test environment.");
       resetTestEnvironment();
@@ -412,8 +412,13 @@ public class DatasqrlTest {
     CmdUtils.resetKafka(planDir, env);
   }
 
-  static boolean containsNewSnapshots(List<TestResult> testResults) {
-    return testResults.stream().anyMatch(TestResult.SnapshotCreate.class::isInstance);
+  static boolean requiresSnapshotValidation(List<TestResult> testResults) {
+    return testResults.stream().anyMatch(TestResult.SnapshotCreate.class::isInstance)
+        && testResults.stream()
+            .allMatch(
+                result ->
+                    result instanceof TestResult.SnapshotOk
+                        || result instanceof TestResult.SnapshotCreate);
   }
 
   @SneakyThrows
