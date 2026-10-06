@@ -31,7 +31,7 @@ Flink has one JobManager and one or more identically sized TaskManagers.
 
 `taskmanager-disk-size-gb` independently overrides the default local-NVMe allocation. It must be positive and no greater than 4000 GiB. Treat it as a hard scheduling requirement: an unavailable requested disk size leaves the pod Pending.
 
-TaskManager size qualifiers do not apply to `dev`:
+Size qualifiers apply to every size, including `dev`:
 
 | Qualifier | Effect | Use for |
 |---|---|---|
@@ -92,9 +92,9 @@ Postgres has one primary and zero or more same-sized read replicas.
 
 | Size | CPU | Memory | Default disk | Connections |
 |---|---:|---:|---:|---:|
-| `dev` | 0.5 | 4 GiB | 10 GB | 100 |
-| `small` | 1 | 8 GiB | 128 GB | 100 |
-| `medium` | 2 | 16 GiB | 256 GB | 200 |
+| `dev` | 0.5 | 2 GiB | 10 GB | 100 |
+| `small` | 1 | 4 GiB | 128 GB | 100 |
+| `medium` | 2 | 8 GiB | 256 GB | 200 |
 | `large` | 4 | 16 GiB | 512 GB | 300 |
 | `xlarge` | 8 | 32 GiB | 1 TB | 600 |
 
@@ -115,12 +115,13 @@ Postgres has one primary and zero or more same-sized read replicas.
 }
 ```
 
-| Size | CPU | Memory | NVMe | Pg pool size |
-|---|---:|---:|---:|---:|
-| `dev` | 0.5 | 2 GiB | — | 5 |
-| `small` | 1 | 4 GiB | 55 GB | 5 |
-| `medium` | 2 | 8 GiB | 110 GB | 10 |
-| `large` | 4 | 16 GiB | 220 GB | 15 |
+| Size | CPU | Memory | Pg pool size |
+|---|---:|---:|---:|
+| `dev` | 0.25 | 1 GiB | 5 |
+| `small` | 0.5 | 2 GiB | 5 |
+| `medium` | 1 | 4 GiB | 10 |
+| `large` | 2 | 8 GiB | 15 |
+| `xlarge` | 4 | 16 GiB | 20 |
 
 `instance-count` must be positive. The `.disk` qualifier enables local NVMe when needed.
 

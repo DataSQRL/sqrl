@@ -83,7 +83,7 @@ DuckDB is a vectorized query engine that reads Iceberg tables directly. It runs 
 
 
 
-Set `memory-limit` when DuckDB runs next to Flink on the same instance and both compete for memory. Read the `.mem-headroom` size qualifier in [cloud-deployment.md](cloud-deployment.md) for that case.
+Set `memory-limit` when DuckDB runs next to Flink on the same instance and both compete for memory. Read the `.mem-headroom-Nx` size qualifiers in [cloud-deployment.md](cloud-deployment.md) for that case.
 
 ## Shallow Query Engines
 
