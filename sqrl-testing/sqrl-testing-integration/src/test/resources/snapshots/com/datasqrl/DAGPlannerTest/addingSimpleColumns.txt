@@ -258,7 +258,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "FilteredOrders",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "OrderIds_2",
@@ -288,7 +290,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "OrderIds",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Orders_3",
@@ -323,7 +327,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Orders",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "FilteredOrders",

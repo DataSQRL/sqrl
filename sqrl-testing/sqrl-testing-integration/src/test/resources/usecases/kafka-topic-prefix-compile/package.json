@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "script": {
+    "main": "clicks.sqrl"
+  },
+  "connectors": {
+    "kafka": {
+      "topic": "acme-subscription-${sqrl:table-name}"
+    },
+    "kafka-mutation": {
+      "topic": "acme-mutation-${sqrl:table-name}"
+    }
+  }
+}

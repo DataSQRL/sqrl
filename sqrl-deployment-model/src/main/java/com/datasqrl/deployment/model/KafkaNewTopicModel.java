@@ -18,10 +18,17 @@ package com.datasqrl.deployment.model;
 import java.util.List;
 import java.util.Map;
 
-/** A Kafka topic definition in a deployment file. */
+/**
+ * A Kafka topic definition in a deployment file.
+ *
+ * @param tableName the internal table id the planner assigned, e.g. {@code Orders_3}
+ * @param logicalName the SQRL table name substituted for {@code ${sqrl:table-name}} in the topic
+ *     template
+ */
 public record KafkaNewTopicModel(
     String topicName,
     String tableName,
+    String logicalName,
     String format,
     int numPartitions,
     short replicationFactor,
@@ -31,10 +38,15 @@ public record KafkaNewTopicModel(
     Map<String, String> config) {
 
   public KafkaNewTopicModel(
-      String topicName, String tableName, int numPartitions, short replicationFactor) {
+      String topicName,
+      String tableName,
+      String logicalName,
+      int numPartitions,
+      short replicationFactor) {
     this(
         topicName,
         tableName,
+        logicalName,
         null,
         numPartitions,
         replicationFactor,
@@ -44,8 +56,8 @@ public record KafkaNewTopicModel(
         Map.of());
   }
 
-  public KafkaNewTopicModel(String topicName, String tableName) {
-    this(topicName, tableName, 1, (short) 1);
+  public KafkaNewTopicModel(String topicName, String tableName, String logicalName) {
+    this(topicName, tableName, logicalName, 1, (short) 1);
   }
 
   public enum Type {

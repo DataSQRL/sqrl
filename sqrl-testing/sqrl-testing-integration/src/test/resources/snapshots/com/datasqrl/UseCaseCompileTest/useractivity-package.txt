@@ -240,6 +240,7 @@ END
     {
       "topicName" : "UsageAlert",
       "tableName" : "UsageAlert_3",
+      "logicalName" : "UsageAlert",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -251,6 +252,7 @@ END
     {
       "topicName" : "UserTokens",
       "tableName" : "UserTokens",
+      "logicalName" : "UserTokens",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,

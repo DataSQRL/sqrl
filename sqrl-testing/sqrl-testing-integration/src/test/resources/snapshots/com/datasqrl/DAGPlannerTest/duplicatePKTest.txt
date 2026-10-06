@@ -199,6 +199,7 @@ END
     {
       "topicName" : "kafka-mutation-SimpleInput",
       "tableName" : "SimpleInput",
+      "logicalName" : "SimpleInput",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -250,7 +251,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "InputDistinct",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "_Input_2",
@@ -284,7 +287,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "_Input",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "JoinTable",

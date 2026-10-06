@@ -212,6 +212,7 @@ END
     {
       "topicName" : "kafka-mutation-NestedCustomers",
       "tableName" : "NestedCustomers",
+      "logicalName" : "NestedCustomers",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -257,7 +258,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerData",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "NestedCustomers_2",
@@ -286,7 +289,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "NestedCustomers",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Orders_3",
@@ -321,7 +326,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Orders",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerData",

@@ -20,6 +20,7 @@ import static com.datasqrl.engine.EngineFeature.STANDARD_TABLE_FORMAT;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
+import com.datasqrl.deployment.model.JdbcStatementModel.Role;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.engine.database.AnalyticDatabaseEngine;
@@ -105,7 +106,7 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine
         TableAnalysis.buildPlaceholder()
             .type(tableBuilder.getPrimaryKey().isPresent() ? TableType.STATE : TableType.STREAM)
             .build();
-    return createTable(stage, originalTableName, tableBuilder, relDataType, tableAnalysis);
+    return createTable(originalTableName, tableBuilder, relDataType, tableAnalysis, Role.MUTATION);
   }
 
   @Override

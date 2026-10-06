@@ -255,7 +255,13 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     tableBuilder.setConnectorOptions(connectorConfig);
     String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     return new Table(
-        topicName, tableBuilder.getTableName(), format, messageKey, relDataType, topicConfig);
+        topicName,
+        tableBuilder.getTableName(),
+        originalTableName,
+        format,
+        messageKey,
+        relDataType,
+        topicConfig);
   }
 
   @Override
@@ -347,7 +353,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
     var testRunnerTopics =
         testRunnerConfig.getCreateTopics().stream()
-            .map(topicName -> new KafkaNewTopic(new KafkaNewTopicModel(topicName, topicName)))
+            .map(
+                topicName ->
+                    new KafkaNewTopic(new KafkaNewTopicModel(topicName, topicName, topicName)))
             .toList();
 
     return new KafkaPhysicalPlan(topics, testRunnerTopics);
@@ -394,6 +402,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         new KafkaNewTopicModel(
             table.topicName(),
             table.tableName(),
+            table.logicalName(),
             table.format(),
             numPartitions,
             replicationFactor,
@@ -406,6 +415,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   public record Table(
       String topicName,
       String tableName,
+      String logicalName,
       String format,
       List<String> messageKeys,
       RelDataType valueType,
@@ -414,7 +424,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
     @Override
     public MutationCreateTable withValueType(RelDataType inputValueType) {
-      return new Table(topicName, tableName, format, messageKeys, inputValueType, config);
+      return new Table(
+          topicName, tableName, logicalName, format, messageKeys, inputValueType, config);
     }
 
     @Override

@@ -257,6 +257,7 @@ END
     {
       "topicName" : "SensorReadingSubscription",
       "tableName" : "SensorReadingSubscription_4",
+      "logicalName" : "SensorReadingSubscription",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -268,6 +269,7 @@ END
     {
       "topicName" : "SensorReading",
       "tableName" : "SensorReading",
+      "logicalName" : "SensorReading",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
