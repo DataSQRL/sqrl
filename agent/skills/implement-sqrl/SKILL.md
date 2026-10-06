@@ -273,7 +273,9 @@ EXPORT _LatestCustomerUpdate TO Customer;
 ```
 
 Step 2 is required.
-Flink rejects an `EXPORT` into a table with a `PRIMARY KEY` when the exported query is not unique on that key, with the error `The query has an upsert key that differs from the primary key of the sink table`.
+It keeps the latest version of each key by `event_time`, and makes the cleaned key the upsert key of the exported query.
+An `EXPORT` into a table declared with `CREATE TABLE` gets no generated `ON CONFLICT` clause, so when the upsert key of the exported query differs from the `PRIMARY KEY` of that table, Flink rejects the `EXPORT` with the error `The query has an upsert key that differs from the primary key of the sink table`.
+A view that only cleans and filters a source without a key has no upsert key at all, so exporting it directly fails with this error. Export the `DISTINCT` table instead.
 
 **Reading keys that arrive dirty.** When the writer is outside this project, for example an external client that calls a mutation endpoint, the pipeline cannot clean the key before it is stored.
 Clean it in the first table after the mutation instead:
