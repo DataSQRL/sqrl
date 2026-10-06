@@ -232,7 +232,7 @@ DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
 
 ### Primary key columns
 
-A table gets a primary key from a `PRIMARY KEY` in its `CREATE TABLE`, or from a `DISTINCT ... ON` or `GROUP BY` on the key columns. Such a table has the type `VERSIONED_STATE` or `STATE` (see *Type System*).
+A table gets a primary key from a `PRIMARY KEY` in its `CREATE TABLE`, or from a `DISTINCT ... ON` or `GROUP BY` on the key columns. Such a table has the type `VERSIONED_STATE` or `STATE` (see [Type System](#type-system)).
 
 Clean the primary key columns before the first table that has that primary key, and select them unchanged in every table that reads from that table, directly or through other tables.
 For example, when `Customer` has the primary key `customer_id`, a later table selects `customer_id`, and never `TRIM(customer_id) AS customer_id`.
