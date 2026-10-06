@@ -98,9 +98,11 @@ import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.FunctionKind;
 import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.functions.bridging.BridgingSqlFunction;
 import org.apache.flink.table.planner.functions.sql.SqlWindowTableFunction;
 import org.apache.flink.table.planner.plan.schema.TableSourceTable;
+import org.apache.flink.table.types.logical.utils.LogicalTypeCasts;
 
 /**
  * Analyses a view to produce a {@link ViewAnalysis} which includes the {@link TableAnalysis} that
@@ -228,8 +230,10 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     Optional<PrimaryKeyHint> pkHint = hints.getHint(PrimaryKeyHint.class);
     if (pkHint.isPresent()) {
       // The hint only declares the key for SQRL, it does not make it unique for Flink
+      var pkHintIndexes = pkHint.get().getColumnIndexes();
       if (analysis.getType().isState()
-          && !analysis.primaryKey.coveredBy(Set.copyOf(pkHint.get().getColumnIndexes()))) {
+          && (!analysis.primaryKey.coveredBy(Set.copyOf(pkHintIndexes))
+              || hasNonInjectiveCast(analysis.relNode, pkHintIndexes))) {
         errors.warn(
             ErrorCode.PRIMARY_KEY_NOT_UNIQUE,
             "Primary key %s of table [%s] is not unique, the primary_key hint does not deduplicate",
@@ -609,6 +613,34 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .primaryKey(pk)
             .hasNowFilter(hasNowFilter)
             .build());
+  }
+
+  /**
+   * SQRL maps the primary key through any CAST, but Flink only keeps a unique key through an
+   * injective CAST. A lossy CAST (e.g. BIGINT to INT) can turn distinct keys into the same value
+   * and hides the key from Flink.
+   */
+  private static boolean hasNonInjectiveCast(RelNode relNode, List<Integer> columns) {
+    if (relNode instanceof LogicalSort sort) {
+      relNode = sort.getInput();
+    }
+    if (!(relNode instanceof LogicalProject project)) {
+      return false;
+    }
+    return columns.stream()
+        .map(project.getProjects()::get)
+        .anyMatch(SQRLLogicalPlanAnalyzer::isNonInjectiveCast);
+  }
+
+  private static boolean isNonInjectiveCast(RexNode rexNode) {
+    if (!rexNode.isA(SqlKind.CAST)) {
+      return false;
+    }
+    var operand = ((RexCall) rexNode).getOperands().get(0);
+    return !LogicalTypeCasts.supportsInjectiveCast(
+            FlinkTypeFactory.toLogicalType(operand.getType()),
+            FlinkTypeFactory.toLogicalType(rexNode.getType()))
+        || isNonInjectiveCast(operand);
   }
 
   /**
