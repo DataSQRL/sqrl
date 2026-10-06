@@ -237,7 +237,7 @@ A table gets a primary key from a `PRIMARY KEY` in its `CREATE TABLE`, or from a
 Clean the primary key columns before the first table that has that primary key, and select them unchanged in every table that reads from that table, directly or through other tables.
 For example, when `Customer` has the primary key `customer_id`, a later table selects `customer_id`, and never `TRIM(customer_id) AS customer_id`.
 
-A function on a key column in such a later table (`TRIM`, `LOWER`, `REGEXP_REPLACE`, `CAST`, `NULLIF`) hides the key from the Flink planner. A function can turn two different keys into the same value, so the planner treats the result as a normal column, not as a key. Every join that reads the later table stores each full row in its state and finds a row by comparing all of its columns (`NoUniqueKey`), instead of finding it by its key. This state grows with the data, and every update becomes slower.
+A function on a key column in such a later table (`TRIM`, `LOWER`, `REGEXP_REPLACE`, `CAST`, `NULLIF`) hides the key from the Flink planner. A function can turn two different keys into the same value, so the planner treats the result as a normal column, not as a key. Every join that reads the later table stores each full row in its state and finds a row by comparing all of its columns (`NoUniqueKey`), instead of finding it by its key. This makes the state larger and every update slower.
 Columns that are not part of the key can be cleaned in any table.
 
 These rules apply to entity data (see the `/manage-connector` skill, Entity Data), where each new record replaces the previous version of the same entity, such as a customer or an account.
@@ -308,7 +308,8 @@ When an external source's keys always arrive clean, read its key unchanged and s
 Clean the key in a view, as shown above, and not inside the `CREATE TABLE`.
 Flink accepts a `PRIMARY KEY` only on physical columns, so a computed column such as `customer_id AS TRIM(raw_customer_id)` cannot be the key.
 
-When the compiler asks for a `/*+primary_key(...)*/` hint on a table whose key column comes from a function, use `DISTINCT ... ON` the cleaned key instead, because the hint does not make the column unique.
+The `/*+primary_key(...)*/` hint does not fix this: it declares the key for DataSQRL, but does not deduplicate the data and is not visible to Flink.
+When the hint is placed on a state table whose rows the query does not keep unique on the hinted columns, the compiler warns with `PRIMARY_KEY_NOT_UNIQUE`. Do not ignore this warning: replace the hint with `DISTINCT ... ON` the cleaned key.
 
 ### Function definition
 
@@ -526,7 +527,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 
 | Hint                        | Form                                                                       | Applies to     | Effect                                                                                                                                                                             |
 |-----------------------------|----------------------------------------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare PK when optimiser cannot infer                                                                                                                                             |
+| **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare PK when optimiser cannot infer; does not deduplicate (see Primary key columns)                                                                                             |
 | **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | override automatic index selection. `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`; `DESC` is supported only for `BTREE` and `PBTREE`. <br />`index` *alone* disables all automatic indexes |
 | **partition_key**           | `partition_key(col, ...)`                                                  | table          | define partition columns for sinks that support partitioning                                                                                                                       |
 | **vector_dim**              | `vector_dim(col, 1536)`                                                    | table          | declare fixed vector length. This is required when using vector indexes.                                                                                                           |

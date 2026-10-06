@@ -1,0 +1,9 @@
+IMPORT ecommerceTs.customer;
+
+CustomerLatest := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;
+
+/*+primary_key(email) */
+CustomerByEmail := SELECT LOWER(email) AS email, name FROM CustomerLatest;
+
+/*+primary_key(customerid) */
+CustomerNames := SELECT customerid, name FROM CustomerLatest;

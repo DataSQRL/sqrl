@@ -227,6 +227,15 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     // See if the primary key is being explicitly set:
     Optional<PrimaryKeyHint> pkHint = hints.getHint(PrimaryKeyHint.class);
     if (pkHint.isPresent()) {
+      // The hint only declares the key for SQRL, it does not make it unique for Flink
+      if (analysis.getType().isState()
+          && !analysis.primaryKey.coveredBy(Set.copyOf(pkHint.get().getColumnIndexes()))) {
+        errors.warn(
+            ErrorCode.PRIMARY_KEY_NOT_UNIQUE,
+            "Primary key %s of table [%s] is not unique, the primary_key hint does not deduplicate",
+            pkHint.get().getColumnNames(),
+            viewName);
+      }
       analysis =
           analysis.toBuilder()
               .primaryKey(PrimaryKeyMap.of(pkHint.get().getColumnIndexes()))
