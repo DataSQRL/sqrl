@@ -86,7 +86,9 @@ Each task manager gets local NVMe space for RocksDB state, batch spill files and
 
 Raise it when a job needs more local disk than its CPU/memory size implies — batch jobs in particular spill shuffle and sort data to local disk far beyond their memory footprint, and a task manager that exceeds its allocation is evicted mid-job.
 
-The value is in GiB, must be positive, and is capped at 4000. It is a **hard scheduling requirement**: a task manager asking for more disk than any available node offers stays `Pending` instead of falling back to a smaller node.
+The value is in GiB and must be positive, or `-1` for unlimited. A positive value is a **hard scheduling requirement**: a task manager asking for more disk than any available node offers stays `Pending` instead of falling back to a smaller node.
+
+`-1` reserves no disk at all: the task manager schedules on any node with CPU and memory to spare and is never evicted for its disk usage. The trade-off is that it shares the node's disk with every other pod there, so a job that fills it can get unrelated deployments on the same node evicted.
 
 ### Job Manager Sizes
 
