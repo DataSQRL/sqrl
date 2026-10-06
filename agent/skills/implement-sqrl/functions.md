@@ -25,7 +25,7 @@ System functions can be used without import.
 **SQRL System Functions:**
 * [jsonb](functions/jsonb.md): Binary JSON functions for efficient semi-structured data handling (to_jsonb, jsonb_extract, jsonb_object, jsonb_array).
 * [vector](functions/vector.md): Vector operations for embeddings including cosine_similarity, euclidean_distance, and vector conversion.
-* [text](functions/text.md): Text formatting and full-text search functions.
+* [text](functions/text.md): Text formatting, splitting, and full-text search functions.
 
 
 ## Function Libraries

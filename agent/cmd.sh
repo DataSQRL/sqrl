@@ -105,7 +105,7 @@ rm -rf /data/redpanda 2>/dev/null || true
     pg_ctl reload -D /data/postgres 2>/dev/null || true
 ) &
 
-/opt/sqrl/entrypoint.sh "$@"
-EXIT_CODE=$?
+EXIT_CODE=0
+/opt/sqrl/entrypoint.sh "$@" || EXIT_CODE=$?
 echo "COMPILE_DONE: exit_code=$EXIT_CODE"
 exit $EXIT_CODE

@@ -16,6 +16,7 @@
 package com.datasqrl.planner.tables;
 
 import com.datasqrl.io.tables.TableType;
+import com.google.common.collect.ImmutableMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -37,17 +38,20 @@ public record FlinkConnectorConfigWrapper(Map<String, String> options, Optional<
   public static final String KEY_FORMAT_KEY = "key.format";
 
   public static Map<String, TableType> CONNECTOR_TYPE_MAP =
-      Map.of(
-          "kafka", TableType.STREAM,
-          "kafka-safe", TableType.STREAM,
-          "file", TableType.STREAM,
-          "iceberg", TableType.STREAM,
-          "filesystem", TableType.STREAM,
-          "upsert-kafka", TableType.VERSIONED_STATE,
-          "upsert-kafka-safe", TableType.VERSIONED_STATE,
-          "jdbc", TableType.LOOKUP,
-          "jdbc-sqrl", TableType.LOOKUP,
-          "postgres-cdc", TableType.VERSIONED_STATE);
+      ImmutableMap.<String, TableType>builder()
+          .put("kafka", TableType.STREAM)
+          .put("kafka-safe", TableType.STREAM)
+          .put("file", TableType.STREAM)
+          .put("iceberg", TableType.STREAM)
+          .put("filesystem", TableType.STREAM)
+          .put("upsert-kafka", TableType.VERSIONED_STATE)
+          .put("upsert-kafka-safe", TableType.VERSIONED_STATE)
+          .put("jdbc", TableType.LOOKUP)
+          .put("jdbc-sqrl", TableType.LOOKUP)
+          .put("postgres-cdc", TableType.VERSIONED_STATE)
+          .put("mysql-cdc", TableType.VERSIONED_STATE)
+          .put("sqlserver-cdc", TableType.VERSIONED_STATE)
+          .build();
 
   public static Map<String, String> CATALOG_CONNECTOR_MAP =
       Map.of("org.apache.iceberg.flink.FlinkCatalog", "iceberg");

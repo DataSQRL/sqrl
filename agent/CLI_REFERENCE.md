@@ -53,7 +53,7 @@ Compiles the project and writes `build/pipeline_explain.txt`, `build/pipeline_vi
 
 ### test
 
-Compiles and runs the pipeline in simulation, drains the Flink job, executes the GraphQL tests and `/*+ test */` tables, and compares the results against the snapshots. New tests create a snapshot and fail on the first run.
+Compiles and runs the pipeline in simulation, drains the Flink job, executes the GraphQL tests and `/*+ test */` tables, and compares the results against the snapshots. New tests create a snapshot; if no other test failed, the pipeline is reset and re-run in the same invocation to verify the new snapshots, and the test passes if the results match.
 
 ```bash
 /opt/agent/cmd.sh test -r . myproject-shared-package.json myproject-test-package.json

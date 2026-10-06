@@ -25,6 +25,4 @@ Since Iceberg is not a standalone data system but a data format, the configurati
 
 - Iceberg serves as a storage format, not a query engine
 - Must be combined with [compatible query engine(s)](iceberg-query.md)
-- Provides schema evolution capabilities for long-running pipelines
-- Supports time travel queries for historical data analysis
 - Optimized for large-scale analytical workloads

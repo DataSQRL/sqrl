@@ -127,7 +127,7 @@ You can use environment variables in the OAuth configuration:
 
 ## Testing Authorization
 
-You can test record filtering, data masking, and other types of authorization based data access control with DataSQRL's automated test runner via the [`test` command](../compiler#test-command).
+You can test record filtering, data masking, and other types of authorization based data access control with DataSQRL's automated test runner via the `test` command (see the `/test-sqrl` skill).
 
 ### Generating Tokens
 

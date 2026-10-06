@@ -6,7 +6,7 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 
 | Key                                | Type        | Default  | Description                                                             |
 |------------------------------------|-------------|----------|-------------------------------------------------------------------------|
-| `retention`                        | **string**  | `null`   | Topic retention time (e.g., "7d", "24h") or indefinite when `null`      |
+| `retention`                        | **string** or **null** | `null`   | Topic retention time (e.g., "7d", "24h"); `null` or `"-1"` retains data indefinitely |
 | `watermark`                        | **string**  | `"0 ms"` | Watermark delay for event time processing                               |
 | `transaction-watermark`            | **string**  | `"0 ms"` | Watermark delay for event time processing when transactions are enabled |
 | `use-source-watermark`             | **boolean** | `false`  | Use Flink's `SOURCE_WATERMARK()` for non-transactional Kafka tables     |

@@ -292,12 +292,12 @@ Put test-runner settings in a test overlay when using base/overlay packages. For
     "mutation-delay-sec": 0,
     "required-checkpoints": 1,
     "create-topics": ["input-topic"],
-    "headers": { "Authorization": "Bearer ${TEST_TOKEN}" }
+    "headers": { "Authorization": "Bearer <test-token>" }
   }
 }
 ```
 
-Defaults are `./snapshots`, `./tests`, `true`, `30`, `0`, and `0` respectively for the first six fields. `create-topics` and `headers` are optional, non-empty values.
+Defaults are `./snapshots`, `./tests`, `true`, `30`, `0`, and `0` respectively for the first six fields. `create-topics` and `headers` are optional, non-empty values. Header values are sent literally: environment placeholders such as `${TEST_TOKEN}` are not resolved in `test-runner`, so put a test-only token in the test package (or in per-query `.properties` header files).
 
 ## Connector Templates (`connectors`)
 
