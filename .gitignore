@@ -35,6 +35,8 @@ buildNumber.properties
 ## Gradle
 ##############################
 bin/
+# Track the agent's helper scripts.
+!agent/bin/
 build/
 .gradle
 .gradletasknamecache

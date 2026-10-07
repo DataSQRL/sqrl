@@ -81,6 +81,10 @@ DuckDB is a vectorized query engine that reads Iceberg tables directly. It runs 
 - Perfect for prototyping before deploying to cloud query engines like Snowflake
 - Lightweight alternative to larger analytical databases
 
+
+
+Set `memory-limit` when DuckDB runs next to Flink on the same instance and both compete for memory. Read the `.mem-headroom-Nx` size qualifiers in [cloud-deployment.md](cloud-deployment.md) for that case.
+
 ## Shallow Query Engines
 
 Shallow query engines generate engine-specific Iceberg table definitions and query SQL, but are not integrated with the DataSQRL server. They cannot execute generated API queries

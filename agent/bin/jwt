@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+#
+# Copyright © 2021 DataSQRL (contact@datasqrl.com)
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+"""Minimal, dependency-free JWT helper for the coding agent.
+
+It is pure Python (stdlib only), so it runs identically on amd64 and arm64.
+
+It intentionally implements only the subset the agent needs to test JWT-secured
+DataSQRL / Vert.x APIs: symmetric **HS256** signing (see
+agent/skills/design-api/authorization.md). The CLI mirrors `jwt-cli` for the
+form used in the skills:
+
+    jwt encode --secret <SECRET> --alg HS256 '<claims-json>'
+    jwt decode <TOKEN>
+
+Keying note: the HMAC key is the raw UTF-8 bytes of --secret. In the DataSQRL
+package config the same key is stored base64-encoded in
+`jwtAuth.pubSecKeys[].buffer` (i.e. buffer == base64(secret)); Vert.x decodes
+`buffer` back to those raw bytes, so `--secret` here must be the *un-encoded*
+secret string.
+"""
+
+import argparse
+import base64
+import hashlib
+import hmac
+import json
+import sys
+import time
+from typing import NoReturn
+
+
+def _b64url_encode(raw: bytes) -> str:
+    return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+
+def _b64url_decode(segment: str) -> bytes:
+    padding = "=" * (-len(segment) % 4)
+    return base64.urlsafe_b64decode(segment + padding)
+
+
+def _die(message: str) -> NoReturn:
+    print(f"jwt: {message}", file=sys.stderr)
+    raise SystemExit(2)
+
+
+def _sign(signing_input: bytes, secret: str) -> bytes:
+    return hmac.new(secret.encode("utf-8"), signing_input, hashlib.sha256).digest()
+
+
+def _parse_payload_pairs(pairs: list[str]) -> dict:
+    """Parse repeated `-P key=value` flags. Values are JSON-decoded when possible
+    (so `-P customerId=6` yields an int, `-P roles=["user"]` yields a list),
+    otherwise kept as a plain string."""
+    claims: dict = {}
+    for pair in pairs:
+        if "=" not in pair:
+            _die(f"invalid --payload '{pair}' (expected key=value)")
+        key, _, value = pair.partition("=")
+        try:
+            claims[key] = json.loads(value)
+        except json.JSONDecodeError:
+            claims[key] = value
+    return claims
+
+
+def cmd_encode(args: argparse.Namespace) -> int:
+    if args.alg.upper() != "HS256":
+        _die(
+            f"algorithm '{args.alg}' is not supported; this helper signs HS256 only. "
+            "For asymmetric algorithms, sign with your own key material (e.g. openssl)."
+        )
+    if not args.secret:
+        _die("--secret is required for encode")
+
+    claims: dict = {}
+    if args.json_claims:
+        try:
+            parsed = json.loads(args.json_claims)
+        except json.JSONDecodeError as exc:
+            _die(f"claims argument is not valid JSON: {exc}")
+        if not isinstance(parsed, dict):
+            _die("claims JSON must be an object")
+        claims.update(parsed)
+
+    claims.update(_parse_payload_pairs(args.payload))
+    for flag, key in (("iss", "iss"), ("sub", "sub"), ("aud", "aud")):
+        value = getattr(args, flag)
+        if value is not None:
+            claims[key] = value
+    if args.exp is not None:
+        claims["exp"] = args.exp
+    claims.setdefault("iat", int(time.time()))
+
+    header = {"typ": "JWT", "alg": "HS256"}
+    header_b64 = _b64url_encode(json.dumps(header, separators=(",", ":")).encode("utf-8"))
+    payload_b64 = _b64url_encode(json.dumps(claims, separators=(",", ":")).encode("utf-8"))
+    signing_input = f"{header_b64}.{payload_b64}".encode("ascii")
+    signature_b64 = _b64url_encode(_sign(signing_input, args.secret))
+    print(f"{header_b64}.{payload_b64}.{signature_b64}")
+    return 0
+
+
+def cmd_decode(args: argparse.Namespace) -> int:
+    parts = args.token.split(".")
+    if len(parts) != 3:
+        _die("token must have three dot-separated segments")
+    header_b64, payload_b64, signature_b64 = parts
+    try:
+        header = json.loads(_b64url_decode(header_b64))
+        payload = json.loads(_b64url_decode(payload_b64))
+    except (ValueError, json.JSONDecodeError) as exc:
+        _die(f"could not decode token: {exc}")
+
+    print(json.dumps({"header": header, "payload": payload}, indent=2))
+
+    if args.secret:
+        expected = _b64url_encode(
+            _sign(f"{header_b64}.{payload_b64}".encode("ascii"), args.secret)
+        )
+        if hmac.compare_digest(expected, signature_b64):
+            print("signature: valid", file=sys.stderr)
+        else:
+            print("signature: INVALID", file=sys.stderr)
+            return 1
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="jwt",
+        description="Minimal HS256 JWT encode/decode helper (jwt-cli subset).",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    enc = sub.add_parser("encode", help="Create an HS256 JWT")
+    enc.add_argument("json_claims", nargs="?", help="Claims as a JSON object string")
+    enc.add_argument("-S", "--secret", help="Signing secret (raw string; HMAC key)")
+    enc.add_argument("-A", "--alg", default="HS256", help="Algorithm (HS256 only)")
+    enc.add_argument(
+        "-P", "--payload", action="append", default=[], metavar="KEY=VALUE",
+        help="Add a claim; value is JSON-parsed when possible (repeatable)",
+    )
+    enc.add_argument("-e", "--exp", type=int, help="Set the exp claim (unix seconds)")
+    enc.add_argument("--iss", help="Set the iss claim")
+    enc.add_argument("--sub", help="Set the sub claim")
+    enc.add_argument("--aud", help="Set the aud claim")
+    enc.set_defaults(func=cmd_encode)
+
+    dec = sub.add_parser("decode", help="Decode (and optionally verify) a JWT")
+    dec.add_argument("token", help="The JWT to decode")
+    dec.add_argument("-S", "--secret", help="If given, verify the HS256 signature")
+    dec.set_defaults(func=cmd_decode)
+
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
+    return int(args.func(args))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
