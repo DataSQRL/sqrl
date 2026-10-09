@@ -111,3 +111,17 @@ Redshift generates Amazon Redshift SQL definitions for Iceberg tables. Enable it
 
 When configured, generated view names are qualified as `database.schema.view`. Setting only `view-schema` qualifies views as `schema.view` in the current database.
 Setting `view-database` without `view-schema` uses Redshift's `public` schema.
+
+### Trino (`trino`)
+
+Trino generates Trino SQL definitions for Iceberg tables. Enable it by adding `"trino"` to `enabled-engines`.
+
+#### Configuration Options
+
+| Key            | Type       | Default  | Description                                                |
+|----------------|------------|----------|------------------------------------------------------------|
+| `view-catalog` | **string** | -        | Catalog that contains generated views                      |
+| `view-schema`  | **string** | `public` | Schema that contains generated views when a catalog is set |
+
+When configured, generated view names are qualified as `catalog.schema.view`. Setting only `view-schema` qualifies views as `schema.view` in the current catalog.
+Setting `view-catalog` without `view-schema` uses Trino's `public` schema.

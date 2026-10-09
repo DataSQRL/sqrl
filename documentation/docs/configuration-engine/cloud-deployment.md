@@ -1,4 +1,4 @@
-# Cloud Deployment Configuration
+# DataSQRL Cloud Deployment Configuration
 
 Configures the cloud resources for each engine when deploying pipelines to DataSQRL Cloud. Deployment settings are configured under the `deployment` field within each engine's configuration.
 
@@ -42,9 +42,10 @@ Apache Flink deployments consist of 1 job manager and a configurable number of i
   "engines": {
     "flink": {
       "deployment": {
-        "jobmanager-size": "small",   // Job manager instance size (see table below)
-        "taskmanager-size": "medium", // Task manager instance size (see table below)
-        "taskmanager-count": 2        // Number of task managers (positive integer)
+        "jobmanager-size": "small",    // Job manager instance size (see table below)
+        "taskmanager-size": "medium",  // Task manager instance size (see table below)
+        "taskmanager-count": 2,        // Number of task managers (positive integer)
+        "taskmanager-disk-size-gb": 400 // NVMe space per task manager (see "Task Manager Disk" below)
       }
     }
   }
@@ -53,53 +54,50 @@ Apache Flink deployments consist of 1 job manager and a configurable number of i
 
 ### Task Manager Sizes
 
-| Name | CPU | Task Slots | Memory (GiB) | NVMe Space | Max CPU Burst |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| dev | 0.5 | 1 | 2 | 20GB | 2 |
-| small | 1 | 1 | 4 | 55GB | 1 |
-| medium | 2 | 2 | 8 | 110GB | 1 |
-| large | 4 | 4 | 16 | 220GB | 1 |
-| xlarge | 8 | 8 | 32 | 440GB | 1 |
+| Name    | CPU | Task Slots | Memory (GiB) | NVMe Space | Max CPU Burst |
+|:--------|:----|:-----------|:-------------|:-----------|:--------------|
+| dev     | 0.5 | 1          | 2            | 20GB       | 2             |
+| small   | 1   | 1          | 4            | 55GB       | 1             |
+| medium  | 2   | 2          | 8            | 110GB      | 1             |
+| large   | 4   | 4          | 16           | 220GB      | 1             |
+| xlarge  | 8   | 8          | 32           | 440GB      | 1             |
+| xxlarge | 16  | 16         | 64           | 880GB      | 1             |
 
 The `dev` size is intended for development and testing with small amounts of data.
 
-#### Size Qualifiers
+"Max CPU Burst" is the size's own limit factor — the CPU ceiling it gets when [`taskmanager-cpu-limit-factor`](#cpu-request-and-limit-factors) is not set. `taskmanager-size` also accepts [size qualifiers](#size-qualifiers), as in `medium.mem-4x`.
 
-Task manager sizes support qualifiers for specialized workloads. Qualifiers are grouped into memory-oriented and CPU-oriented variants:
+#### Task Manager Disk
 
-* **`.mem-Nx`** scales the pod memory by `N` and gives Flink **proportionally more** memory (Flink heap+managed grows with `N`). Use for state-heavy jobs.
-* **`.mem-headroom-Nx`** scales the pod memory by `N` but keeps Flink's allocation at the **baseline** memory; the extra memory is reserved for sidecar / native consumers (e.g., DuckDB, JNI libs, page cache).
-* **`.cpu`** doubles CPU with the same memory.
+Each task manager gets local NVMe space for RocksDB state, batch spill files and any other Flink-local data. It defaults to the "NVMe Space" column of the selected size, and `taskmanager-disk-size-gb` overrides that default independently of the size:
 
-| Qualifier | Pod memory | Flink heap+managed | Typical use |
-| :--- | :--- | :--- | :--- |
-| `.cpu` | base | base × 0.80 | CPU-intensive jobs |
-| `.mem` / `.mem-2x` | base × 2 | base × 1.6 | State-heavy jobs |
-| `.mem-4x` | base × 4 | base × 3.2 | Large state |
-| `.mem-8x` | base × 8 | base × 6.4 | Very large state |
-| `.mem-headroom-2x` | base × 2 | base × 1 | Sidecars / native memory consumers |
-| `.mem-headroom-4x` | base × 4 | base × 1 | Larger sidecar headroom |
-| `.mem-headroom-8x` | base × 8 | base × 1 | Maximum sidecar headroom (e.g. DuckDB) |
+```json
+{
+  "engines": {
+    "flink": {
+      "deployment": {
+        "taskmanager-size": "small",     // 55GB of NVMe by default
+        "taskmanager-disk-size-gb": 400  // ...raised to 400GB
+      }
+    }
+  }
+}
+```
 
-Examples:
+Raise it when a job needs more local disk than its CPU/memory size implies — batch jobs in particular spill shuffle and sort data to local disk far beyond their memory footprint, and a task manager that exceeds its allocation is evicted mid-job.
 
-* `medium.mem-4x` → pod 32 GB / Flink heap+managed ≈ 25.6 GB.
-* `xlarge.mem-headroom-8x` → pod 256 GB / Flink heap+managed = 32 GB (baseline) / 224 GB headroom.
-
-`.mem` is an alias for `.mem-2x`. The legacy `.mem-headroom` qualifier (triple memory, Flink stays at baseline) is **deprecated** — use `.mem-headroom-Nx` instead.
-
-Size qualifiers do not apply to the `dev` instance.
+The value is in GiB, must be positive, and is capped at 4000. It is a **hard scheduling requirement**: a task manager asking for more disk than any available node offers stays `Pending` instead of falling back to a smaller node.
 
 ### Job Manager Sizes
 
-| Name | SubTasks | CPU | Memory (GiB) |
-| :--- | :--- | :--- | :--- |
-| dev | &lt;100 | 0.5 | 1 |
-| small | 100-800 | 0.5 | 2 |
-| medium | 800-2000 | 1 | 4 |
-| large | &gt;2000 | 2 | 8 |
+| Name   | SubTasks | CPU | Max CPU Burst | Memory (GiB) |
+|:-------|:---------|:----|:--------------|:-------------|
+| dev    | &lt;100  | 0.5 | 2             | 1            |
+| small  | 100-800  | 0.5 | 2             | 2            |
+| medium | 801-2000 | 1   | 2             | 4            |
+| large  | &gt;2000 | 2   | 2             | 8            |
 
-Choose the job manager size based on the number of subtasks in your Flink job.
+Choose the job manager size based on the number of subtasks in your Flink job. `jobmanager-size` takes a bare size name without [size qualifiers](#size-qualifiers); its CPU request and ceiling move with [`jobmanager-cpu-request-factor` and `jobmanager-cpu-limit-factor`](#cpu-request-and-limit-factors).
 
 ---
 
@@ -113,6 +111,7 @@ PostgreSQL deployments consist of one primary instance and a configurable number
     "postgres": {
       "deployment": {
         "instance-size": "medium",      // Instance size (see table below)
+        "cpu-limit-factor": 3,          // CPU ceiling (see "CPU Request and Limit Factors")
         "replica-count": 1,             // Number of read replicas (0 or larger)
         "disk-size-gb": 256,            // Disk size in GB (1 or larger)
         "auto-expand-percentage": 0.2,  // Auto-expand threshold (0 to disable, must be < 1)
@@ -125,17 +124,19 @@ PostgreSQL deployments consist of one primary instance and a configurable number
 }
 ```
 
-### Instance Sizes
+### Database Instance Sizes
 
-| Name | CPU | Memory (GiB) | Default Disk | Max CPU Burst | Max Connections |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| dev | 0.5 | 4 | 10GB | 1.5 | 100 |
-| small | 1 | 8 | 128GB | 1 | 100 |
-| medium | 2 | 16 | 256GB | 1 | 200 |
-| large | 4 | 16 | 512GB | 1 | 300 |
-| xlarge | 8 | 32 | 1TB | 1 | 600 |
+| Name   | CPU | Memory (GiB) | Default Disk | Max CPU Burst | Max Connections |
+|:-------|:----|:-------------|:-------------|:--------------|:----------------|
+| dev    | 0.5 | 2            | 10GB         | 1.5           | 100             |
+| small  | 1   | 4            | 128GB        | 1             | 100             |
+| medium | 2   | 8            | 256GB        | 1             | 200             |
+| large  | 4   | 16           | 512GB        | 1             | 300             |
+| xlarge | 8   | 32           | 1TB          | 1             | 600             |
 
 The `dev` size is intended for development and testing with small amounts of data.
+
+`instance-size` accepts [size qualifiers](#size-qualifiers), which is how a database asks for memory without the cores the size would otherwise bring: `small.mem-4x` is 1 CPU with 16 GiB, the memory of `large` at a quarter of its CPU request. `max_connections` and the default disk size always stay at the base size's values.
 
 ---
 
@@ -149,23 +150,109 @@ Vert.x API server deployments consist of a configurable number of identically si
     "vertx": {
       "deployment": {
         "instance-size": "small",  // Instance size (see table below)
-        "instance-count": 2        // Number of server instances (positive integer)
+        "instance-count": 2,       // Number of server instances (positive integer)
+        "cpu-limit-factor": 4      // CPU ceiling (see "CPU Request and Limit Factors")
       }
     }
   }
 }
 ```
 
-### Instance Sizes
+### Server Instance Sizes
 
-| Name | CPU | Memory (GiB) | NVMe Space | Max CPU Burst | Pg Pool Size |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| dev | 0.5 | 2 | - | 1.25 | 5 |
-| small | 1 | 4 | 55GB | 1 | 5 |
-| medium | 2 | 8 | 110GB | 1 | 10 |
-| large | 4 | 16 | 220GB | 1 | 15 |
+| Name   | CPU  | Memory (GiB) | Max CPU Burst | Pg Pool Size |
+|:-------|:-----|:-------------|:--------------|:-------------|
+| dev    | 0.25 | 1            | 1.25          | 5            |
+| small  | 0.5  | 2            | 1             | 5            |
+| medium | 1    | 4            | 1             | 10           |
+| large  | 2    | 8            | 1             | 15           |
+| xlarge | 4    | 16           | 1             | 20           |
 
-The `dev` size is intended for development and testing with small amounts of data. The `.disk` qualifier enables NVMe storage for instances that require local disk access.
+The `dev` size is intended for development and testing with small amounts of data.
+
+`instance-size` accepts [size qualifiers](#size-qualifiers): `dev.mem-2x` is 0.25 CPU with 2 GiB, `small`'s memory at half its CPU request. Each tier is half the one above it, so a server that only holds connections open is not forced onto a core it will not use.
+
+---
+
+## Size Qualifiers
+
+A size name can carry qualifiers, written after it and separated by dots — `medium.mem-4x`. A memory qualifier scales the **pod's memory** and nothing else: CPU, `max_connections` and the default disk size all stay at the base size's values. The one exception is `.cpu`, which moves CPU rather than memory and is **deprecated** — the [CPU factors](#cpu-request-and-limit-factors) say the same thing precisely.
+
+| Setting                                     | Qualifiers                                          |
+|:--------------------------------------------|:----------------------------------------------------|
+| `engines.flink.deployment.taskmanager-size` | `.mem-Nx`, `.mem-headroom-Nx`, `.cpu` (deprecated)  |
+| `engines.postgres.deployment.instance-size` | `.mem-Nx`, `.mem-headroom-Nx`, `.cpu` (deprecated)  |
+| `engines.vertx.deployment.instance-size`    | `.mem-Nx`, `.mem-headroom-Nx`, `.cpu` (deprecated)  |
+| `engines.flink.deployment.jobmanager-size`  | none — a bare size name                              |
+
+| Qualifier          | Pod memory | Flink heap+managed | Typical use                            |
+|:-------------------|:-----------|:-------------------|:---------------------------------------|
+| `.mem` / `.mem-2x` | base × 2   | base × 1.8         | State-heavy jobs                       |
+| `.mem-4x`          | base × 4   | base × 3.6         | Large state                            |
+| `.mem-8x`          | base × 8   | base × 7.2         | Very large state                       |
+| `.mem-headroom-2x` | base × 2   | base × 1           | Sidecars / native memory consumers     |
+| `.mem-headroom-4x` | base × 4   | base × 1           | Larger sidecar headroom                |
+| `.mem-headroom-8x` | base × 8   | base × 1           | Maximum sidecar headroom (e.g. DuckDB) |
+
+The "Flink heap+managed" column applies to task managers only. `.mem-Nx` gives Flink **proportionally more** memory, while `.mem-headroom-Nx` keeps Flink's allocation at the **baseline** and reserves the extra for sidecar and native consumers (DuckDB, JNI buffers, page cache). For PostgreSQL and Vert.x a qualifier simply scales the memory request and limit.
+
+Examples:
+
+* `medium.mem-4x` → pod 32 GB / Flink heap+managed ≈ 28.8 GB.
+* `xlarge.mem-headroom-8x` → pod 256 GB / Flink heap+managed = 32 GB (baseline) / 224 GB headroom.
+
+At most one memory qualifier may be named; naming two is rejected rather than letting the last one win. `general` is accepted and means "no qualifier". Qualifiers apply to every size including `dev`: `dev.mem-2x` is a `dev` task manager (0.5 CPU, one task slot) with `small`'s 4 GB of memory.
+
+`.mem` is an alias for `.mem-2x`. The legacy `.mem-headroom` qualifier (triple memory, Flink stays at baseline) is **deprecated** — use `.mem-headroom-Nx` instead. For `.cpu`, see the migration note below.
+
+---
+
+## CPU Request and Limit Factors
+
+Sizes fix CPU and memory together at 4 GiB per core (the job manager's `dev`, at 2 GiB, is the one exception), so a component sized for its memory carries more CPU request than it needs. Two factors move the request and the ceiling independently, and **both are multiples of the vCPU the size already carries** — not of each other:
+
+| Engine             | Request                          | Ceiling                        |
+|:-------------------|:---------------------------------|:-------------------------------|
+| Flink task manager | `taskmanager-cpu-request-factor` | `taskmanager-cpu-limit-factor` |
+| Flink job manager  | `jobmanager-cpu-request-factor`  | `jobmanager-cpu-limit-factor`  |
+| PostgreSQL         | `cpu-request-factor`             | `cpu-limit-factor`             |
+| Vert.x             | `cpu-request-factor`             | `cpu-limit-factor`             |
+
+| Setting        | Range                    | Default                        | Effect                        |
+|:---------------|:-------------------------|:-------------------------------|:------------------------------|
+| request factor | greater than 0, at most 4 | `1`                           | `request = size vCPU x factor` |
+| limit factor   | greater than 0, at most 4 | the size's "Max CPU Burst"     | `limit = size vCPU x factor`   |
+
+For a `medium` task manager (2 vCPU):
+
+| Factors | Request | Limit | Meaning |
+|:--------|:--------|:------|:--------|
+| request `0.25`, limit `1` | 0.5 | 2 | share cores at steady state, keep the full ceiling |
+| request `1`, limit `2`    | 2   | 4 | reserve the size, burst to double |
+| request `0.25`, limit `4` | 0.5 | 8 | reserve little, burst hard |
+
+```json
+{
+  "engines": {
+    "flink": {
+      "deployment": {
+        "taskmanager-size": "medium",
+        "taskmanager-cpu-request-factor": 0.25,  // request 0.5 cores
+        "taskmanager-cpu-limit-factor": 1        // ceiling stays at 2 cores
+      }
+    }
+  }
+}
+```
+
+The limit factor must be at least `max(1, request factor)`, otherwise the ceiling would fall below the request and Kubernetes rejects the pod; the deployment fails with a message naming both settings. Any ceiling above the request makes the pod Burstable rather than Guaranteed, which lowers its eviction priority under node pressure; a request factor below 1 reserves less than the size and shares cores with neighbours at steady state.
+
+### Task Slots Follow the Ceiling
+
+On a Flink task manager the slot count moves with the **ceiling**, not the request, because burst headroom requires subtasks to fill it. Slots scale by the ceiling *relative to the size's own*: `slots x (taskmanager-cpu-limit-factor / the size's Max CPU Burst)`. A `medium` (2 slots, burst 1) at `taskmanager-cpu-limit-factor: 2` gets 4 slots; `dev`'s burst is already 2, so factor 2 leaves it at 1 slot and factor 4 gives it 2. Lowering `taskmanager-cpu-request-factor` leaves slots alone, which is how you keep the parallelism of a size while sharing its cores at steady state. The job manager runs no subtasks, so its factors never move slots or parallelism.
+
+Because slots move, so does parallelism (`instances x slots`), and `pipeline.max-parallelism` is baked into savepoints. Raising the limit factor on a running deployment is rejected when the new parallelism no longer divides the recorded `pipeline.max-parallelism`; the error lists the `taskmanager-count` values that do.
+
 
 ---
 
@@ -173,11 +260,11 @@ The `dev` size is intended for development and testing with small amounts of dat
 
 Pins a component's pods onto dedicated nodes. Each engine's `deployment` accepts a list of dedicated-node names. Each name is a **hard requirement**: if no matching node is available, the pod stays `Pending` — it never falls back to a shared node.
 
-| Engine | Field(s) |
-| :--- | :--- |
-| Flink | `taskmanager-dedicated-nodes`, `jobmanager-dedicated-nodes` |
-| PostgreSQL | `dedicated-nodes` |
-| Vert.x | `dedicated-nodes` |
+| Engine     | Field(s)                                                    |
+|:-----------|:------------------------------------------------------------|
+| Flink      | `taskmanager-dedicated-nodes`, `jobmanager-dedicated-nodes` |
+| PostgreSQL | `dedicated-nodes`                                           |
+| Vert.x     | `dedicated-nodes`                                           |
 
 ```json
 {
@@ -237,11 +324,11 @@ The label name and taint key must both equal the dedicated-nodes name. These nod
 
 Protects a component's pods from **voluntary** autoscaler disruption (node consolidation / scale-down). When `true`, the pods are annotated so the cluster autoscaler will not evict or consolidate them. Use it for long-running, stateful, or hard-to-reschedule workloads — for example a Flink catch-up that reprocesses the whole backlog, or the PostgreSQL primary during bootstrap.
 
-| Engine | Field | Default |
-| :--- | :--- | :--- |
-| Flink | `do-not-disrupt` | `false` |
-| PostgreSQL | `do-not-disrupt` | `true` |
-| Vert.x | `do-not-disrupt` | `false` |
+| Engine     | Field            | Default |
+|:-----------|:-----------------|:--------|
+| Flink      | `do-not-disrupt` | `false` |
+| PostgreSQL | `do-not-disrupt` | `true`  |
+| Vert.x     | `do-not-disrupt` | `false` |
 
 ```json
 {
@@ -257,13 +344,62 @@ Protects a component's pods from **voluntary** autoscaler disruption (node conso
 
 ---
 
+## Schedule (`schedule`)
+
+Runs a pipeline as a **scheduled batch job**: the Flink cluster is created at each fire time, runs the job to completion, and is torn down again. Flink only; absent by default.
+
+| Engine | Field      | Default |
+|:-------|:-----------|:--------|
+| Flink  | `schedule` | absent  |
+
+Without a `schedule`, what the deployment does is decided by `execution.runtime-mode` alone: a `STREAMING` pipeline (the default) runs continuously, while a `BATCH` pipeline runs once and then stays dormant until it is deployed again.
+
+```json
+{
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.runtime-mode": "BATCH"   // required: a schedule only takes effect for batch jobs
+      },
+      "deployment": {
+        "schedule": {
+          "cron": "0 3 * * *",              // daily at 03:00
+          "timezone": "America/New_York"
+        }
+      }
+    }
+  }
+}
+```
+
+Both fields are required when `schedule` is present:
+
+* `cron`: a 5-field UNIX cron expression — `minute hour day-of-month month day-of-week`. There is no seconds field, so the shortest interval is one minute.
+* `timezone`: an [IANA timezone](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) name, for example `UTC` or `America/New_York`. Fire times are computed in that zone, so a schedule follows the zone's daylight-saving shifts instead of a fixed UTC offset.
+
+Both are validated before anything is deployed: an unparseable cron expression or an unknown timezone fails the deployment with an error naming the offending value.
+
+`"execution.runtime-mode": "BATCH"` is required for the schedule to take effect. A streaming job never finishes, so it never releases the cluster and no fire time is ever reached.
+
+### Run Cycle
+
+A scheduled deployment alternates between running and dormant:
+
+1. **Run** — at the fire time the Flink cluster is created and the batch job processes the data currently available in its sources.
+2. **Sleep** — when the job reaches a terminal state the Flink cluster is removed, and the deployment reports as dormant. The database and the API stay up and keep serving the results of the last run; no Flink resources are consumed between runs.
+3. **Wake** — the next fire time is computed from the moment the run ended, and the cluster is recreated then.
+
+Because the next fire time is derived from the end of the previous run, runs never overlap. A run that takes longer than its interval pushes the following fire times out; occurrences that pass while the job is still running are skipped, not queued.
+
+---
+
 ## Create Indexes (`create-indexes`)
 
 Controls whether the PostgreSQL table indexes are created for the deployment. Defaults to `true`. PostgreSQL only.
 
-| Engine | Field | Default |
-| :--- | :--- | :--- |
-| PostgreSQL | `create-indexes` | `true` |
+| Engine     | Field            | Default |
+|:-----------|:-----------------|:--------|
+| PostgreSQL | `create-indexes` | `true`  |
 
 Set it to `false` to bootstrap the database **tables-only**, skipping all index creation. This is intended for a catch-up profile that reprocesses a large backlog: writing to un-indexed tables drains the backlog faster. The indexes are then built when the deployment is upgraded back to a steady-state profile (where `create-indexes` returns to its `true` default), so a catch-up deployment must be followed by such an upgrade before it serves production query traffic.
 
@@ -283,13 +419,13 @@ Set it to `false` to bootstrap the database **tables-only**, skipping all index 
 
 Controls whether PostgreSQL data-page checksums are enabled for the database. Defaults to `true` (the PostgreSQL 18 default). PostgreSQL only.
 
-| Engine | Field | Default |
-| :--- | :--- | :--- |
-| PostgreSQL | `data-checksums` | `true` |
+| Engine     | Field            | Default |
+|:-----------|:-----------------|:--------|
+| PostgreSQL | `data-checksums` | `true`  |
 
 This is an initdb-time setting applied when the database is first created — it is **immutable** and cannot be changed on later deployments or upgrades. Set it to `false` only when the write-throughput cost of checksums matters more than corruption detection, and only for a database that will keep that setting for its lifetime.
 
-```json5
+```json
 {
   "engines": {
     "postgres": {
@@ -305,9 +441,9 @@ This is an initdb-time setting applied when the database is first created — it
 
 Extra PostgreSQL server parameters, merged into the database's `postgresql.parameters`. Any key here overrides the built-in default for that parameter. PostgreSQL only; empty by default.
 
-| Engine | Field | Default |
-| :--- | :--- | :--- |
-| PostgreSQL | `parameters` | `{}` |
+| Engine     | Field        | Default |
+|:-----------|:-------------|:--------|
+| PostgreSQL | `parameters` | `{}`    |
 
 Typically used in a catch-up profile that trades durability for ingest throughput while reprocessing a large backlog — for example a larger `shared_buffers`/`max_wal_size` together with `synchronous_commit: off`. Set these only in the catch-up profile: on the steady-state upgrade any parameter not listed here reverts to its default.
 
@@ -327,3 +463,4 @@ Typically used in a catch-up profile that trades durability for ingest throughpu
 }
 ```
 
+For deployments with [partitioned tables](postgres.md#partitioning), `pg_partman_bgw.interval` (seconds between pg_partman background-worker maintenance runs, default `3600`) can also be overridden here. The `pg_partman_bgw.dbname` and `pg_partman_bgw.role` settings are managed by the platform and cannot be overridden.

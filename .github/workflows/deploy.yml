@@ -1,10 +1,19 @@
 name: Deploy Docusaurus to GitHub Pages
 
+# The site is always built from main, which also builds every major version from its latest
+# release branch and serves the latest one at the root (see documentation/scripts/build-versioned-site.sh). Pushes to a release branch
+# therefore redeploy the whole site so documentation fixes on that branch get published.
 on:
   push:
     branches:
       - main
       - docsUpdate
+      - 'release-*'
+  workflow_dispatch:
+
+concurrency:
+  group: docs-deploy
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -13,11 +22,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.ref_name == 'docsUpdate' && 'docsUpdate' || github.event.repository.default_branch }}
           persist-credentials: false # we will use a deploy token instead
           submodules: false
 
-      - name: Init STDLIB Docs submodule
-        run: |
       - name: Init submodules and sparse checkout
         run: |
           git submodule update --init --depth 1
@@ -27,18 +35,16 @@ jobs:
           git checkout main
           git pull --ff-only origin main
 
+      - name: Fetch release branches
+        run: git fetch --no-tags --depth 1 origin '+refs/heads/release-*:refs/remotes/origin/release-*'
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 22
 
-      - name: Install dependencies
-        working-directory: documentation
-        run: npm install
-
-      - name: Build Docusaurus site
-        working-directory: documentation
-        run: npm run build
+      - name: Build versioned Docusaurus site
+        run: documentation/scripts/build-versioned-site.sh
 
       - name: Create CNAME file
         run: echo 'docs.datasqrl.com' > documentation/build/CNAME

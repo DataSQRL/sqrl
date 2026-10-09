@@ -14,8 +14,6 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 | `num-partitions`                   | **integer** | `1`      | Number of partitions for generated Kafka topics                         |
 | `replication-factor`               | **integer** | `3`      | Replication factor for generated Kafka topics                           |
 
-Additional custom Kafka settings can be added under the `config` section.
-
 ## Example Configuration
 
 ```json
@@ -28,10 +26,7 @@ Additional custom Kafka settings can be added under the `config` section.
       "use-source-watermark": true,
       "use-transaction-source-watermark": true,
       "num-partitions": 4,
-      "replication-factor": 3,
-      "config": {
-        "auto.offset.reset": "earliest"
-      }
+      "replication-factor": 3
     }
   }
 }
@@ -46,7 +41,7 @@ Additional custom Kafka settings can be added under the `config` section.
 - Watermarks are used for handling late-arriving events in stream processing
 - Source watermarks apply only to mutation tables with a `timestamp` metadata column. When enabled,
   they generate `WATERMARK FOR <timestamp-column> AS SOURCE_WATERMARK()` instead of using the
-  corresponding watermark delay. It is only supported by our `kafka-safe` and `upsert-kafka-safe` conenctors.
+  corresponding watermark delay. It is only supported by our `kafka-safe` and `upsert-kafka-safe` connectors.
 - Kafka serves as the messaging backbone between different engines in the pipeline
 
 <!--EXTENDED-->

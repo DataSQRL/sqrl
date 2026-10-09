@@ -20,16 +20,52 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
+const siteUrl = 'https://docs.datasqrl.com';
+
+// Versioning: the latest major version is served at the root, `main` under `/main/` and older major
+// versions under `/vX/`. Release versions are built from the latest `release-X.Y` branch of their
+// major. These variables are set by `scripts/build-versioned-site.sh`; without them a plain
+// unversioned site is built (e.g. for local development and PR checks).
+const baseUrl = process.env.DOCS_BASE_URL ?? '/';
+const versionLabel = process.env.DOCS_VERSION_LABEL;
+// One of `latest`, `main` or `older`
+const versionKind = process.env.DOCS_VERSION_KIND;
+const latestLabel = process.env.DOCS_LATEST_LABEL;
+const versions: {label: string; path: string}[] = JSON.parse(process.env.DOCS_VERSIONS ?? '[]');
+// The blog is published with the version served at the root, the other versions link to it
+const blogLink = baseUrl === '/' ? {to: '/blog'} : {href: `${siteUrl}/blog`, target: '_self'};
+
+const latestLink = `<a href="/">Go to the latest release (${latestLabel})</a>.`;
+const announcementContent = {
+  main: `You are viewing the documentation of the unreleased <code>main</code> branch, which may describe features that are not released yet. ${latestLink}`,
+  older: `You are viewing the documentation of DataSQRL ${versionLabel}, which is not the latest release. ${latestLink}`,
+}[versionKind ?? ''];
+
+const versionDropdown =
+  versions.length > 1
+    ? [
+        {
+          type: 'dropdown',
+          label: versionLabel ?? 'Version',
+          position: 'right',
+          items: versions.map((v) => ({
+            // Raw HTML links, so the paths are not prefixed with this build's baseUrl
+            type: 'html',
+            value: `<a class="dropdown__link" href="${v.path}">${v.label}</a>`,
+          })),
+        },
+      ]
+    : [];
+
 const config: Config = {
   title: 'DataSQRL',
-  tagline: 'Data Streaming Framework',
+  tagline: 'Data Engineering Harness',
   favicon: 'img/favicon.ico',
 
   // Set the production url of your site here
-  url: 'https://docs.datasqrl.com',
+  url: siteUrl,
   // Set the /<baseUrl>/ pathname under which your site is served
-  // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '/',
+  baseUrl,
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -37,10 +73,11 @@ const config: Config = {
   projectName: 'sqrl', // Usually your repo name.
 
   onBrokenLinks: 'warn',
-  onBrokenMarkdownLinks: 'warn',
-
   markdown: {
     mermaid: true,
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
   },
 
   // Even if you don't use internationalization, you can use this field to set
@@ -57,6 +94,15 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
+          // Docusaurus defaults, plus the stdlib-docs submodule README whose relative links
+          // point into the flink-sql-runner repository rather than to doc pages
+          exclude: [
+            '**/_*.{js,jsx,ts,tsx,md,mdx}',
+            '**/_*/**',
+            '**/*.test.{js,jsx,ts,tsx}',
+            '**/__tests__/**',
+            'stdlib-docs/README.md',
+          ],
         },
         blog: {
           showReadingTime: true,
@@ -113,8 +159,9 @@ const config: Config = {
           position: 'left',
           label: 'Documentation',
         },
-        {to: '/blog', label: 'Releases & Updates', position: 'left'},
+        {...blogLink, label: 'Releases & Updates', position: 'left'},
         {to: '/community', label: 'Community', position: 'left'},
+        ...versionDropdown,
         {
           href: 'https://github.com/DataSQRL/sqrl',
           label: 'GitHub',
@@ -122,6 +169,16 @@ const config: Config = {
         },
       ],
     },
+    ...(announcementContent && {
+      announcementBar: {
+        id: `version-${versionLabel}`,
+        content: announcementContent,
+        // Theme aware colors, defined in custom.css
+        backgroundColor: 'var(--docs-version-banner-background)',
+        textColor: 'var(--docs-version-banner-color)',
+        isCloseable: false,
+      },
+    }),
     footer: {
       style: 'dark',
       links: [
@@ -146,8 +203,8 @@ const config: Config = {
               href: 'https://github.com/DataSQRL/sqrl/discussions',
             },
             {
+              ...blogLink,
               label: 'Updates',
-              href: '/blog',
             }
           ],
         },
@@ -177,8 +234,8 @@ const config: Config = {
       respectPrefersColorScheme: false,
     },
     metadata: [
-      {name: 'keywords', content: 'data, API, SQRL, DataSQRL, data product, data pipeline, database, streaming, real-time analytics'},
-      {name: 'description', content: 'DataSQRL is a compiler for building robust streaming data pipelines in minutes.'},
+      {name: 'keywords', content: 'data engineering harness, data engineering agent, coding agent, SQRL, DataSQRL, data pipeline, data product, data API, streaming, real-time analytics'},
+      {name: 'description', content: 'DataSQRL is an open-source data engineering harness for building data engineering agents designed around human control, correctness, and safety.'},
       {name: 'twitter:card', content: 'summary'},
       {name: 'twitter:site', content: '@DataSQRL'}
     ],

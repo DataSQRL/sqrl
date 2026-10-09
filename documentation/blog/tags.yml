@@ -48,3 +48,13 @@ Flink:
   label: Flink
   permalink: /flink
   description: Apache Flink related posts
+
+agentic:
+  label: Agentic
+  permalink: /agentic
+  description: Posts about AI coding agents and agentic data engineering
+
+data-engineering:
+  label: Data Engineering
+  permalink: /data-engineering
+  description: Posts about data engineering practices
