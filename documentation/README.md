@@ -65,3 +65,26 @@ npm run clear       # clear the Docusaurus cache when the dev server misbehaves
 
 The site is deployed automatically through CI/CD.
 Create a PR against either the `docsUpdate` branch or `main`.
+
+## Versioning
+
+The site is versioned by major version, and each release version is built from the latest
+`release-X.Y` branch of its major:
+
+| Version              | Path      | Banner                       |
+|----------------------|-----------|------------------------------|
+| Latest major release | `/`       | none                         |
+| `main`               | `/main/`  | unreleased documentation     |
+| Older major releases | `/vX/`    | not the latest release       |
+
+The blog is always taken from `main` and published at `/blog`. Without any release branch, `main`
+is served at `/` without a version dropdown. Release branches must contain the versioning support
+(`scripts/build-versioned-site.sh` and the environment variables read by `docusaurus.config.ts`),
+which is the case from `release-0.11` on.
+
+Documentation fixes for a released major go to its latest release branch; a push there redeploys
+the site. To build the versioned site locally (with the `release-*` branches fetched):
+
+```bash
+REMOTE=upstream scripts/build-versioned-site.sh
+```

@@ -68,6 +68,10 @@
   --active-link-color: var(--ifm-color-primary); /* Orange color for the active link */
   --active-link-bg-color: var(--ifm-color-secondary-lightest); /* Lightest orange background for active link */
 
+  /* Version banner (announcement bar) */
+  --docs-version-banner-background: #DDE8F3;
+  --docs-version-banner-color: #1D3557;
+
 }
 
 html[data-theme='dark'] {
@@ -113,6 +117,10 @@ html[data-theme='dark'] {
   --ifm-code-background: #2c3640;
   --ifm-code-color: #e0e0e0;
   --ifm-pre-background: #2a323c;
+
+  /* Version banner (announcement bar) */
+  --docs-version-banner-background: #2E3F50;
+  --docs-version-banner-color: #e0e6eb;
 }
 
 
