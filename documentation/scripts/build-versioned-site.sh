@@ -128,13 +128,10 @@ done
 
 # Assemble the site, starting with the version served at the root
 rm -rf "${OUT_DIR}"
+mv "${WORK_DIR}/sites/$([ -n "${latest_branch}" ] && echo "${latest_label}" || echo main)" "${OUT_DIR}"
 for site in "${WORK_DIR}/sites/"*; do
-  label="$(basename "${site}")"
-  if [ "$(path_of "${label}")" = "/" ]; then
-    mv "${site}" "${OUT_DIR}"
-  fi
-done
-for site in "${WORK_DIR}/sites/"*; do
+  # Without release versions, the root site was the only one
+  [ -e "${site}" ] || continue
   label="$(basename "${site}")"
   target="${OUT_DIR}$(path_of "${label}")"
   mv "${site}" "${target%/}"
