@@ -52,7 +52,7 @@ For secure APIs with JWT authentication:
 ```
 
 As these config fields will be mapped to Vert.x Java POJOs, the name of the key fields are very important.
-For `pubSecKeys`, it is also possible to use different algorithms, thet requires the key in a different (mostly PEM) format.
+For `pubSecKeys`, it is also possible to use different algorithms, that requires the key in a different (mostly PEM) format.
 For example, for `ES256`, this would look something like this:
 ```json
 {

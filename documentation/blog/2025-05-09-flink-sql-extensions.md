@@ -24,6 +24,7 @@ In fact, it only takes a few extensions to FlinkSQL to build entire data applica
 ## Building Data APIs with FlinkSQL
 
 ```sql
+/*+ engine(kafka) */
 CREATE TABLE UserTokens (
 userid BIGINT NOT NULL,
 tokens BIGINT NOT NULL,
@@ -36,8 +37,8 @@ count(tokens) as total_requests
 FROM UserTokens GROUP BY userid;
 
 UserTokensByTime(userid BIGINT NOT NULL, fromTime TIMESTAMP NOT NULL, toTime TIMESTAMP NOT NULL):=
-                SELECT * FROM UserTokens WHERE userid = :userid,
-                request_time >= :fromTime AND request_time < :toTime ORDER BY request_time DESC;
+                SELECT * FROM UserTokens WHERE userid = :userid
+                AND request_time >= :fromTime AND request_time < :toTime ORDER BY request_time DESC;
 
 UsageAlert := SUBSCRIBE SELECT * FROM UserTokens WHERE tokens > 100000;
 ```
@@ -55,10 +56,10 @@ We can also explicitly define query endpoints with arguments through SQL table f
 And last, the `SUBSCRIBE` keyword in front of the query defines a subscription endpoint for requests exceeding a certain token count which get pushed to clients in real-time.
 
 Voila, we just build ourselves a complete GraphQL API with mutation, query, and subscription endpoints.
-Run the above script with DataSQRL to see the result:
+Run the above script with DataSQRL to see the result. Save it as `usertokens.sqrl` next to a `usertokens-package.json` file that sets `script.main` to `usertokens.sqrl` (see the [configuration documentation](/docs/configuration)), then run:
 
 ```bash
-docker run -it --rm -p 8888:8888 -v $PWD:/build datasqrl/cmd run usertokens.sqrl
+docker run -it --rm -p 8888:8888 -v $PWD:/workspace datasqrl/cmd run usertokens-package.json
 ```
 
 ## Relationships for Complex Data Structures

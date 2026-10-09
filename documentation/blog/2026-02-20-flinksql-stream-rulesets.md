@@ -20,6 +20,8 @@ However, developing streaming applications differs fundamentally from traditiona
 
 While Flink SQL provides mechanisms to express this concisely—using views and statement sets—in practice, this often results in duplicate processing in the generated job graph.
 
+<!-- truncate -->
+
 ## The Core Problem: Why Duplication Happens
 
 In Flink SQL, each sink maps to its own relational tree. These trees are:
