@@ -242,11 +242,11 @@ DataSQRL's automated testing via the [`test` command](compiler#test-command) exe
 
 1. All subscription queries are registered
 2. Mutations are executed sequentially in alphabetical order of filename. The test runner waits the configured `mutation-delay-sec` between mutations. Results are written as snapshots to the snapshot folder.
-3. The test runner waits until the configured timeout.
+3. The test runner waits for the pipeline to process the data (see `delay-sec` and `required-checkpoints` in the test-runner configuration).
 4. Queries are executed and results written as snapshots.
 5. All subscription results are sorted and written as snapshots.
 
-If a snapshot already exists, results are compared and the test fails if they are unequal.
+If a snapshot already exists, results are compared and the test fails if they are unequal. If a snapshot does not exist yet, it is created and, provided no other test failed, verified by re-running the pipeline in the same test invocation.
 
 The test runner uses the configured `headers` for accessing the API. To test authentication and authorization with different access tokens, create a properties file with the same name as the GraphQL file to configure header properties per query.
 

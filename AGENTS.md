@@ -79,38 +79,23 @@ docker run -it --rm -p 8888:8888 -p 8081:8081 -p 9092:9092 -v $PWD:/build datasq
 docker run --rm -v $PWD:/build datasqrl/cmd:latest compile example.sqrl
 ```
 
-## Architecture Overview
+## Module Overview
 
-This is a multi-module Maven project with the following key components:
+Multi-module Maven project (versions live in the root `pom.xml` properties, not here):
 
-### Core Modules
-
-**sqrl-planner/** - The compiler core that parses SQRL scripts, creates computation DAGs, optimizes them, and produces deployment artifacts. Built on Apache Calcite and Flink's parser.
-
-**sqrl-server/** - GraphQL API server implementation that translates GraphQL queries, mutations, and subscriptions into database calls:
-- `sqrl-server-core/` - Core interfaces and models (GraphQL schema, execution coordinates)
-- `sqrl-server-vertx-base/` - Full Vert.x implementation with database clients and Kafka integration
-- `sqrl-server-vertx/` - Standalone deployment module with Docker support
-
-**sqrl-tools/** - Command-line tools and utilities:
-- `sqrl-cli/` - Main CLI interface (entry point: `com.datasqrl.cli.DatasqrlCli`)
-- `sqrl-config/` - Configuration file handling
-- `sqrl-packager/` - Dependency resolution and build preparation
-- `sqrl-run/` - Pipeline execution
-- `sqrl-test/` - Test execution
-- `sqrl-discovery/` - Automatic schema discovery
-
-**sqrl-testing/** - Integration tests and end-to-end pipeline testing with comprehensive test suites.
-
-### Technology Stack
-- **Java 17** with Maven build system
-- **Apache Flink 1.19.2** for stream processing
-- **Apache Calcite 1.27.0** for SQL parsing and optimization
-- **Vert.x 5.0.0** for API server
-- **GraphQL Java 19.2** for API generation
-- **Apache Kafka 3.4.0** for streaming
-- **PostgreSQL 42.7.7** for storage
-- **JUnit 5** with Testcontainers for testing
+- **sqrl-planner/** - Compiler core: parses SQRL scripts, builds and optimizes the computation DAG, and produces deployment artifacts. Built on Apache Calcite and Flink's parser.
+- **sqrl-cli/** - CLI (`com.datasqrl.cli.DatasqrlCli`) with the `init`, `add-func`, `compile`, `test`, `run`, and `exec` commands, plus the packager/preprocessors (incl. JBang UDFs) and local process management for `run`/`test`.
+- **sqrl-discovery/** - Automatic schema discovery for data files.
+- **sqrl-deployment-model/** - Shared model classes for the compiled deployment plan (Flink, JDBC, Kafka).
+- **sqrl-server/** - GraphQL/REST/MCP API server:
+  - `sqrl-server-core/` - Core interfaces and models (GraphQL schema, execution coordinates)
+  - `sqrl-server-vertx-base/` - Vert.x implementation with database clients, auth, and Kafka integration
+  - `sqrl-server-vertx/` - Standalone server deployment (`com.datasqrl.server.SqrlLauncher`)
+- **sqrl-testing/** - Integration and end-to-end tests:
+  - `sqrl-testing-integration/` - Compiler and pipeline integration tests, including snapshot tests
+  - `sqrl-testing-container/` - Docker image end-to-end tests
+- **agent/** - DataSQRL data engineering agent image and its skills
+- **documentation/** - User documentation site
 
 ## Development Workflow
 
@@ -132,19 +117,6 @@ All dependency versions should be centralized as properties in the root pom.xml 
 - **Use consistent property naming**: `<libraryname.version>X.Y.Z</libraryname.version>`
 - **All existing hardcoded versions must be migrated** to use centralized properties immediately
 - **Plugin versions must also follow this pattern** - Add plugin version properties to root POM
-
-**Examples of Existing Properties**:
-```xml
-<properties>
-  <jackson.version>2.19.1</jackson.version>
-  <vertx.version>5.0.1</vertx.version>
-  <kafka.version>3.4.0</kafka.version>
-  <flink.version>1.19.3</flink.version>
-  <httpcomponents.version>4.5.14</httpcomponents.version>
-  <jjwt.version>0.12.6</jjwt.version>
-  <testcontainers.version>1.21.3</testcontainers.version>
-</properties>
-```
 
 **Child Module Usage**:
 ```xml
@@ -194,13 +166,6 @@ A `!` after the type denotes a breaking change (e.g., `feat!: Remove legacy auth
 
 Note: The linter skips Dependabot PRs automatically.
 
-## Key Configuration
-
-- **Main POM**: `/pom.xml` - All dependencies and build configuration
-- **Package Config**: `package.json` - DataSQRL build manifests  
-- **Docker**: Multiple Dockerfiles for different components
-- **Logging**: Log4j2 configuration across modules
-
 ## Testing Philosophy
 
 - **Integration Testing**: Uses Testcontainers for PostgreSQL, Kafka, and other services
@@ -209,20 +174,6 @@ Note: The linter skips Dependabot PRs automatically.
 - **Coverage Requirement**: Minimum 70% instruction coverage with JaCoCo
 - **Test Naming**: All new test methods must follow the `given_when_then` pattern (e.g., `givenValidConfig_whenParseConfiguration_thenReturnsExpectedResult`)
 - **Test Assertions**: Use AssertJ (`org.assertj.core.api.Assertions`) for all test assertions. Avoid JUnit's `org.junit.jupiter.api.Assertions` in favor of AssertJ's more fluent and readable API
-
-### Container Testing
-
-Container tests in `sqrl-testing-container` validate the end-to-end functionality of DataSQRL Docker images:
-
-- **Purpose**: Test the complete Docker image deployment including compilation and server startup
-- **Requirements**: Docker must be running and DataSQRL images must be built (`datasqrl/cmd:local`, `datasqrl/sqrl-server:local`)
-- **Test Structure**: Tests use JUnit extension `SqrlContainerExtension` and `PostgresContainerExtension` which provide container management utilities
-- **Available Endpoints**: 
-  - `/graphql` - Main GraphQL API endpoint
-  - `/health` - Health check endpoint (returns 204 No Content when healthy)
-  - `/metrics` - Prometheus metrics endpoint (availability depends on configuration)
-- **Common Patterns**: Compile SQRL script → Start server container → Execute HTTP requests → Validate responses
-- **Test Data**: Uses test cases from `sqrl-testing-integration/src/test/resources/usecases/`
 
 ## Code Style Guidelines
 
@@ -273,46 +224,8 @@ If TestContainers can't find Docker on Mac:
 sudo ln -s $HOME/.docker/run/docker.sock /var/run/docker.sock
 ```
 
-### Flink Memory Issues
-If tests fail due to Flink memory issues, uncomment the configuration line in `ExecutionEnvironmentFactory.java`.
-
-## Entry Points
-
-### CLI and Commands
-- **CLI Main**: `com.datasqrl.cli.DatasqrlCli`
-- **Primary Commands**: `compile`, `run`, `test`, `execute`
-- **GraphQL API**: Auto-generated from SQRL scripts, served at `http://localhost:8888/graphiql/`
-
-### Server Entry Points
-- **Server Main**: `com.datasqrl.server.SqrlLauncher` - Main class for standalone deployment
-- **Main Verticle**: `com.datasqrl.server.GraphQLServerVerticle` - Main Verticle that configures the GraphQL server
-
-### Core Server Classes
-- **RootGraphqlModel**: Central model class encapsulating GraphQL schema and execution coordinates
-- **GraphQLEngineBuilder**: Builds GraphQL engine by wiring schema, resolvers, and custom scalars
-- **QueryExecutionContext**: Context for query execution
-
-## Server Architecture Details
-
-### Key Design Patterns
-- **Visitor Pattern**: Extensively used for processing GraphQL model (`RootVisitor`, `QueryCoordVisitor`, `SchemaVisitor`)
-- **Reactive Architecture**: Built on Vert.x event loop with CompletableFuture for async operations
-- **Schema-First**: GraphQL schema loaded from `server-model.json` at runtime with pre-compiled execution paths
-
-### Runtime Model
-The server operates on a compiled model where the DataSQRL compiler generates `server-model.json` containing all GraphQL execution metadata. The server loads this at startup and creates optimized execution paths - no runtime SQL generation occurs.
-
-### Database Abstraction
-Multi-database support through `SqlClient` interface:
-- PostgreSQL: Native Vert.x client with pipelining
-- DuckDB: JDBC-based connection
-- Snowflake: JDBC-based connection with specialized configuration
-
-### Server Configuration Files
-- `server-model.json`: Runtime GraphQL model and execution coordinates
-- `server-config.json`: Server configuration (ports, database connections)
-- `snowflake-config.json`: Optional Snowflake-specific configuration
-- `log4j2.properties`: Logging configuration
+## Server Runtime Model
+The server loads the compiler-generated `server-model.json` at startup; no SQL is generated at runtime, so GraphQL schema changes require recompiling.
 
 ## JBang UDF Files
 
@@ -320,16 +233,4 @@ JBang-based user-defined functions (UDFs) are detected by the `JBangPreprocessor
 
 - JBang UDF files **must** start with `///usr/bin/env jbang "$0" "$@" ; exit $?` as their first line
 - `.java` files without the shebang are ignored by the preprocessor, even if they extend a Flink UDF class
-- `//DEPS` for Flink is **not required** — Flink dependencies are provided automatically via classpath
-- Declaring Flink `//DEPS` (e.g., `//DEPS org.apache.flink:...`) will cause a build error
-
-## Important Development Notes
-
-### Module Dependencies
-Always check existing dependencies in `pom.xml` files before adding new libraries. The project uses specific versions of Vert.x, GraphQL-Java, and database drivers.
-
-### Database Operations
-All database operations are asynchronous and non-blocking. Use the appropriate `SqlClient` implementation for the target database system.
-
-### GraphQL Schema Modifications
-Schema changes require regenerating the `server-model.json` file through the DataSQRL compiler. The server does not support runtime schema modifications.
+- Flink dependencies are **not** on JBang's classpath: every JBang UDF must declare `//DEPS org.apache.flink:flink-table-common:<flink.version>` (see `documentation/docs/functions.md`)

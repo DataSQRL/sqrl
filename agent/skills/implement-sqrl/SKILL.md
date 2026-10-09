@@ -538,7 +538,9 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **ttl**                     | `ttl(duration)`                                                            | table          | specifies how long the records for this table are retained in the underlying data system before it can be discarded. Expects a duration string with a unit between minute and day, e.g. `30 min`, `36 hours`, `14 days`. Disabled by default. |
 | **cache**                   | `cache(duration)`                                                          | table          | how long the results retrieved from this table can be cached on the server before they are refreshed. Expects a duration string like `10 seconds`. Disabled by default.            |
 | **filtered_distinct_order** | flag                                                                       | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                |
-| **engine**                  | `engine(engine_id)`                                                        | table          | pin execution engine (`process`, `database`, `flink`, ...)                                                                                                                         |
+| **engine**                  | `engine(engine_id)`                                                        | table          | pin execution engine (`process`, `database`, `flink`, ...). `exec` is a deprecated alias of `engine`                                                                                                                         |
+| **maintenance**             | `maintenance(type)`                                                        | table          | table maintenance for engines that support it. `type` ∈ `NONE`, `REGULAR`; `REGULAR` on an Iceberg table adds the `iceberg-maintenance` connector options |
+| **row_count**               | `row_count(count)` or `row_count(col, ..., count)`                         | table          | estimated total row count (e.g. `1e6`), or the number of distinct values for the listed column combination. Used for query optimization |
 | **test**                    | `test` or `test(no_rows)`                                                  | table          | marks test case, only executed with `test` command.                                                                                                       |
 | **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                    |
 
@@ -558,8 +560,6 @@ For choosing between `query_by_all` (required filter arguments) and `query_by_an
 
 **`query_by_all` / `query_by_any` need a queryable table.** They generate interface filter arguments, so they are meaningless on a `_`-prefixed table.
 
-**`no_query` on a `VERSIONED_STATE` (DISTINCT) tables used as temporal-join sources is illegal:**
-`/*+no_query*/` makes the table unqueryable, which breaks `FOR SYSTEM_TIME AS OF` temporal join lookups. Never apply `no_query` to a table that is referenced in a temporal join.
 
 ### Testing
 
@@ -598,11 +598,10 @@ If you wish to start with those, you need to explicitly write them out and read 
 - Use Flink time window aggregation when requirements specify time intervals (e.g. "aggregate x by day")
 
 ```sql
-SensorAvg := SELECT sensorid, 
-  TUMBLE_START(event_time, INTERVAL '1' HOUR) AS time_hour,
+SensorAvg := SELECT sensorid, window_start AS time_hour,
   AVG(temperature) AS avg_temp
-FROM SensorReading
-GROUP BY sensorid, TUMBLE(event_time, INTERVAL '1' HOUR);
+FROM TUMBLE(TABLE SensorReading, DESCRIPTOR(event_time), INTERVAL '1' HOUR)
+GROUP BY sensorid, window_start, window_end;
 ```
 
 ## Comments & Doc-strings

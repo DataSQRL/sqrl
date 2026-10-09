@@ -21,14 +21,14 @@ Specifically, entity data is often ingested as a stream of updates. To re-create
 
 ## LIKE Clause for Schema Loading
 
-DataSQRL supports automatic schema loading from external schema files using the `LIKE` clause. This feature eliminates the need to manually define column definitions when the schema already exists in a supported format.
+DataSQRL supports automatic schema loading from external schema files using the `LIKE` clause. The file name is an identifier, so quote it with backticks, not single quotes. This feature eliminates the need to manually define column definitions when the schema already exists in a supported format.
 
 ```sql
 CREATE TABLE MyTable (
   ...
 ) WITH (
   ...
-) LIKE 'mytable.avsc';
+) LIKE `mytable.avsc`;
 ```
 
 The `LIKE` clause:
@@ -49,11 +49,11 @@ CREATE TABLE Users (
 ) WITH (
   'connector' = 'kafka',
   ...
-) LIKE 'user.avsc';
+) LIKE `user.avsc`;
 ```
 
 In this example:
-- The `LIKE 'user.avsc'` clause loads all column definitions from the Avro schema
+- The ``LIKE `user.avsc` `` clause loads all column definitions from the Avro schema
 - You add **metadata columns** (like `last_updated`) and **watermark specifications**
 - The **connector configuration** remains in the `WITH` clause as usual
 
@@ -70,7 +70,7 @@ CREATE TABLE Users (
 ) WITH (
   -- remove the monitor interval for batch processing
   'source.monitor-interval' = '10 sec'
-) LIKE 'users.jsonl';
+) LIKE `users.jsonl`;
 ```
 
 This syntax is useful when building DataSQRL projects from data files since it eliminates the manual schema creation.

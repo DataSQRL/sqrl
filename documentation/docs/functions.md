@@ -16,7 +16,7 @@ System functions are always available and do not need to be imported. Take a loo
 SQRL includes [standard libraries](functions-library-generated) that can be imported into a SQRL script as follows:
 
 ```sql
-IMPORT stdlib.math;
+IMPORT stdlib.math.*;
 ```
 Imports all functions from the `math` library into the script. Replace `math` with the library you wish to import.
 

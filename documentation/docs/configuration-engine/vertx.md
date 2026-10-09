@@ -21,6 +21,39 @@ Eclipse Vert.x is a reactive server framework that serves as the GraphQL API ser
 }
 ```
 
+## Server Configuration Overrides
+
+The compiler generates the full server configuration from a built-in template and deep-merges `engines.vertx.config` over it, so any server setting can be overridden, not just authentication. Nested objects are merged key by key, while arrays replace the default array. Commonly overridden settings:
+
+| Key | Notes |
+|-----|-------|
+| `httpServerOptions.port` | HTTP port (default `8888`). Keep `8888` for the `test` command, whose test runner connects to that port |
+| `corsHandlerOptions` | CORS policy. Defaults allow all origins; restrict `allowedOrigin`/`allowedOrigins` in production |
+| `poolOptions.maxSize` | PostgreSQL connection pool size |
+| `servletConfig` | Endpoint paths (`graphQLEndpoint`, `restEndpoint`, `mcpEndpoint`, `graphiQLEndpoint`), prefixed with the API version, e.g. `/v1/graphql` |
+| `publicGraphQLEndpointEnabled` | Set to `false` to disable the public GraphQL endpoint; REST and MCP endpoints keep working |
+| `onlyConfiguredGraphQLOperations` | Set to `true` to only accept the predefined API operations instead of arbitrary GraphQL queries |
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "config": {
+        "corsHandlerOptions": {
+          "allowedOrigin": "https://app.example.com",
+          "allowCredentials": true
+        },
+        "poolOptions": {
+          "maxSize": 16
+        }
+      }
+    }
+  }
+}
+```
+
+For all settings and their defaults, see the [server configuration template](https://github.com/DataSQRL/sqrl/blob/main/sqrl-cli/src/main/resources/templates/server-config.json) or the generated `vertx-config.json` in your build output (`build/deploy/plan`), which contains the effective configuration with your overrides applied.
+
 ## JWT Authentication Configuration
 
 For secure APIs with JWT authentication:
@@ -182,7 +215,7 @@ If MCP clients authenticate on behalf of users, create a **Regular Web Applicati
 Set `site` and `authorizationServerUrl` to your Auth0 tenant URL.
 
 :::warning
-The tenant URL always ends with a trailing slash. This must match exactly because Auth0 includes the slash in the `iss` claim of every JWT it issues.
+The Auth0 tenant URL ends with a trailing slash, and Auth0 uses it with the slash as the issuer identifier. Keep the slash in `authorizationServerUrl` so the authorization server advertised to MCP clients matches Auth0's issuer exactly. For `site`, the slash is optional: the server removes it before fetching the OIDC discovery document.
 :::
 
 ```json
@@ -252,9 +285,9 @@ The `audience` field is **required** for Auth0 client credentials requests. With
 
 #### Auth0-specific Notes
 
-- **Trailing slash on issuer** — Auth0's issuer is always `https://<tenant>.auth0.com/` (with the slash). The value in `site` must match the `iss` claim in Auth0 JWTs exactly; a missing slash causes validation failures.
-- **Audience claim** — Auth0 JWTs include an `aud` claim set to the API identifier you configured. The DataSQRL server validates this automatically via OIDC discovery.
-- **JWKS endpoint** — Auth0 publishes signing keys at `https://<tenant>.auth0.com/.well-known/jwks.json`. The server fetches these automatically from the OIDC discovery document (`/.well-known/openid-configuration`) and rotates them without restart.
+- **Trailing slash on issuer** — Auth0's issuer is always `https://<tenant>.auth0.com/` (with the slash). Use that exact value for `authorizationServerUrl`.
+- **Issuer and audience claims** — With `oauthConfig`, the server only verifies the token signature against the tenant's signing keys; it does not check the `iss` or `aud` claims. Any valid token issued by the tenant is accepted, including tokens issued for other APIs of the same tenant.
+- **JWKS endpoint** — Auth0 publishes signing keys at `https://<tenant>.auth0.com/.well-known/jwks.json`. The server discovers them from the OIDC discovery document (`/.well-known/openid-configuration`) and fetches them once at startup. Restart the server after Auth0 rotates its signing keys.
 - **Custom domains** — If your Auth0 tenant uses a custom domain (e.g. `https://auth.example.com/`), use that URL as both `site` and `authorizationServerUrl`.
 
 ## Cloud Deployment

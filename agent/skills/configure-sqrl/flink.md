@@ -17,6 +17,8 @@
 }
 ```
 
+In STREAMING mode, DataSQRL sets `execution.checkpointing.interval: 30 s`, `execution.checkpointing.min-pause: 20 s`, and `table.exec.source.idle-timeout: 1 s` unless the package configuration sets them explicitly.
+
 Frequently configured options:
 * `execution.runtime-mode`: `BATCH` or `STREAMING` which controls how the pipeline is executed.
 * `taskmanager.memory.network.max`: How much memory to assign to the network buffers.
@@ -33,7 +35,7 @@ Frequently configured options:
 | `table.optimizer.agg-phase-strategy` | `AUTO` | `TWO_PHASE`, `ONE_PHASE` | Forces two-phase (partial + final) aggregation for better parallelism                                         |
 | `table.optimizer.distinct-agg.split.enabled` | `false` | `true` | Splits `COUNT(DISTINCT ...)` into two phases to avoid data skew                                               |
 | `table.optimizer.join-reorder-enabled` | `false` | `true` | Lets the optimizer reorder joins based on table statistics for better plans                                   |
-| `table.exec.source.idle-timeout` | `1 s`; `0 s` (disabled) for `test` | `30s`, `60s` | Marks idle sources so watermarks can advance when some partitions go quiet                                    |
+| `table.exec.source.idle-timeout` | `1 s` in STREAMING mode (set by DataSQRL); `0 s` (disabled) for `test` | `30s`, `60s` | Marks idle sources so watermarks can advance when some partitions go quiet                                    |
 | `table.exec.sink.not-null-enforcer` | `ERROR` | `DROP` | Controls whether null-constraint violations throw errors or silently drop rows                                |
 | `table.exec.sink.upsert-materialize` | `AUTO` | `NONE`, `FORCED` | Controls materialization of upsert streams before writing to non-upsert sinks                                 |
 | `table.optimizer.reuse-sub-plan-enabled` | `true` | `false` | Disabling can help when shared sub-plans cause unexpected state sharing                                       |
@@ -41,7 +43,7 @@ Frequently configured options:
 | `table.exec.async-lookup.buffer-capacity` | `100` | `10` – `1000` | Max number of in-flight async lookup requests for async lookup joins                                          |
 | `table.exec.async-lookup.timeout` | `3 min` | `30s`, `1min` | Timeout for each async lookup request before it fails                                                         |
 | `table.exec.resource.default-parallelism` | `-1` (inherit) | `4`, `8`, `16` | Sets operator-level default parallelism for table/SQL jobs                                                    |
-| `table.dynamic-table-options.enabled` | `false` | `true` | Enables per-query connector option overrides via SQL hints (`/*+ OPTIONS(...) */`)                            |
+| `table.dynamic-table-options.enabled` | `true` | `false` | Allows per-query connector option overrides via SQL hints (`/*+ OPTIONS(...) */`)                             |
 | `table.optimizer.multiple-input-enabled` | `true` | `false` | Controls chaining of multiple operators into a single task for reduced overhead                               |
 | `table.exec.rank.topn-cache-size` | `10000` | `1000` – `100000` | Cache size for TopN operator; larger cache reduces state reads but uses more heap                             |
 | `table.optimizer.bushy-join-reorder-threshold` | `12` | `4` – `20` | Max number of joins considered for bushy tree reordering                                                      |
@@ -52,17 +54,17 @@ Frequently configured options:
 | Configuration Key | Default | Common Values / Range | How to Configure |
 |---|---|---|---|
 | `execution.runtime-mode` | `STREAMING` | `BATCH` | Switched for bounded DataStream batch jobs |
-| `execution.checkpointing.interval` | (none) | `30s`, `1min`, `5min` | Must be set to enable checkpointing; the single most common required config |
+| `execution.checkpointing.interval` | `30 s` in STREAMING mode (set by DataSQRL) | `1min`, `5min` | Checkpoint frequency; trades recovery time and end-to-end latency of transactional sinks against checkpoint overhead |
 | `execution.checkpointing.mode` | `EXACTLY_ONCE` | `AT_LEAST_ONCE` | Relaxed for higher throughput when exactly-once isn't required |
 | `execution.checkpointing.timeout` | `10min` | `2min` – `30min` | Increased when checkpoints are slow due to large state or slow storage |
 | `execution.checkpointing.unaligned.enabled` | `false` | `true` | Enabled to speed up checkpointing under heavy backpressure |
-| `execution.checkpointing.min-pause` | `0ms` | `10s` – `1min` | Prevents checkpoint storms by enforcing a gap between checkpoints |
+| `execution.checkpointing.min-pause` | `20 s` in STREAMING mode (set by DataSQRL) | `10s` – `1min` | Prevents checkpoint storms by enforcing a gap between checkpoints |
 | `execution.checkpointing.max-concurrent-checkpoints` | `1` | `1` | Rarely increased; relevant when unaligned checkpoints are disabled |
 | `execution.checkpointing.tolerable-failed-checkpoints` | `0` | `3` – `5` | Prevents job failure from transient checkpoint issues |
 | `taskmanager.memory.process.size` | (none) | `2gb` – `16gb` | Primary memory sizing knob for containerized deployments |
 | `taskmanager.memory.managed.fraction` | `0.4` | `0.3` – `0.6` | Adjusted when RocksDB needs more or less managed memory |
 | `taskmanager.memory.network.fraction` | `0.1` | `0.05` – `0.2` | Increased for jobs with high shuffle/network traffic |
-| `taskmanager.memory.network.max` | `infinite` | `1gb`, `2gb`, `4gb` | Upper bound on network memory; set explicitly to cap buffer memory usage |
+| `taskmanager.memory.network.max` | `infinite`; `800m` for `run` | `1gb`, `2gb`, `4gb` | Upper bound on network memory; set explicitly to cap buffer memory usage |
 | `jobmanager.memory.process.size` | (none) | `1gb` – `4gb` | Required sizing for containerized JobManager deployments |
 | `parallelism.default` | `1` | `4` – `256` | Sets job-wide default parallelism |
 | `pipeline.auto-watermark-interval` | `200ms` | `500ms`, `1s`, `5s` | Increased to reduce watermark overhead in high-throughput jobs |
