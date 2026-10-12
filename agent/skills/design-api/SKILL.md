@@ -35,7 +35,7 @@ DataSQRL generates APIs from SQRL scripts with support for **GraphQL**, **REST**
 ```sql
 Customer := SELECT customerId, email, name FROM RawCustomer WHERE email IS NOT NULL;
 ```
-Maps to GraphQL query `Customer: [Customer!]!` with type containing the three fields.
+Maps to GraphQL query `Customer(limit: Int = 10, offset: Int = 0): [Customer!]` with type containing the three fields. Every query that returns multiple rows gets `limit`/`offset` pagination arguments; the `limit` default is the table's own `LIMIT` if it has one, otherwise `compiler.api.default-limit` (10).
 
 **Schema Customization (preserving object-relationship mapping):**
 - Change cardinalities, scalar types, mutation argument names, field types
@@ -95,7 +95,7 @@ Table functions are exposed as separate query endpoints in the API.
 CustomerByIdRange(fromId BIGINT NOT NULL, toId BIGINT NOT NULL) := SELECT * FROM Customer WHERE customerId >= :fromId AND customerId < :toId ORDER BY customerId;
 ```
 
-This definition maps to query endpoint `CustomerByIdRange(fromId: Long!, toId: Long!): [Customer!]`.
+This definition maps to query endpoint `CustomerByIdRange(fromId: Long!, toId: Long!, limit: Int = 10, offset: Int = 0): [Customer!]`.
 
 ### Authentication & Authorization
 

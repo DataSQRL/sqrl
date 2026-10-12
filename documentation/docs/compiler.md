@@ -68,12 +68,10 @@ Initializes an empty SQRL project.
 ### Example
 
 ```bash
-mkdir my-project
-
-docker run --rm -v $PWD/my-project:/workspace datasqrl/cmd init stream my-project
+docker run --rm -v $PWD:/workspace datasqrl/cmd init stream my-project
 ```
 
-This creates a new streaming project named `my-project` with the default configuration and directory structure.
+This creates a new streaming project in the `my-project` subdirectory of the mounted directory, with the `my-project.sqrl` script, `my-project-prod-package.json` and `my-project-test-package.json` package configurations, source definitions and test data in `connectors/`, and an initial test snapshot in `snapshots/`.
 
 ## Add-Func Command
 
@@ -285,7 +283,9 @@ Check out the [Deployments documentation](deployment) on how to manage productio
 The `test` command compiles and runs the data pipeline, then executes the provided test API queries and API endpoints
 for all tables annotated with `/*+ test */` to snapshot the results.
 
-When you first run the test command or add additional test cases, it will create the snapshots and fail.
+When you first run the test command or add additional test cases, it creates the missing snapshots. If all other
+tests pass, the test command then resets the environment and runs the pipeline a second time to verify that the new
+snapshots are reproducible: the test succeeds if the second run produces identical results, else it fails.
 All subsequent runs of the test command compare the results to the previously snapshotted results and succeed
 if the results are identical, else fail.
 

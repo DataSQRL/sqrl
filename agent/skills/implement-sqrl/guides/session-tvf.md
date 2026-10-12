@@ -18,7 +18,7 @@ SELECT
   window_end,
   window_time,
   COUNT(*) AS event_count
-FROM TABLE(SESSION(TABLE events, DESCRIPTOR(ts_ltz), INTERVAL '30' MINUTES))
+FROM SESSION(TABLE events, DESCRIPTOR(ts_ltz), INTERVAL '30' MINUTES)
 GROUP BY user_id, window_start, window_end, window_time;
 
 -- Correct: Include PARTITION BY
@@ -28,10 +28,10 @@ SELECT
   window_end,
   window_time,
   COUNT(*) AS event_count
-FROM TABLE(SESSION(
+FROM SESSION(
   TABLE events PARTITION BY user_id,  -- Required!
   DESCRIPTOR(ts_ltz),
-  INTERVAL '30' MINUTES))
+  INTERVAL '30' MINUTES)
 GROUP BY user_id, window_start, window_end, window_time;
 ```
 
@@ -52,9 +52,9 @@ SELECT
   window_end,
   window_time,
   COUNT(*) AS event_count
-FROM TABLE(SESSION(
+FROM SESSION(
   TABLE _EventsWithKey PARTITION BY partition_key,
   DESCRIPTOR(ts_ltz),
-  INTERVAL '30' MINUTES))
+  INTERVAL '30' MINUTES)
 GROUP BY partition_key, window_start, window_end, window_time;
 ```

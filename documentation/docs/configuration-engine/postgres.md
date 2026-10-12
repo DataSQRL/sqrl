@@ -18,9 +18,7 @@ No mandatory configuration keys are required. Physical DDL (tables, indexes, vie
   "engines": {
     "postgres": {
       "partition-ttl-divisor": 100,
-      "config": {
-        // Optional PostgreSQL-specific settings
-      }
+      "partition-premake": 4
     }
   }
 }

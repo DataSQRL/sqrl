@@ -12,12 +12,13 @@ DuckDB is a vectorized database query engine that excels at analytical queries a
 
 #### Configuration Options
 
-| Key                    | Type        | Default          | Description                                                                    |
-|------------------------|-------------|------------------|--------------------------------------------------------------------------------|
-| `url`                  | **string**  | `"jdbc:duckdb:"` | Full JDBC URL for the database connection                                      |
-| `memory-limit`         | **string**  | -                | Sets DuckDB's `memory_limit`, for example `"8GB"`                              |
-| `use-disk-cache`       | **boolean** | `false`          | Install and load `cache_httpfs` extension                                      |
-| `use-version-guessing` | **boolean** | `false`          | Sets `unsafe_enable_version_guessing` flag to be able to read uncommitted data |
+| Key                            | Type        | Default          | Description                                                                                                                                                                                                                                                                                                                                            |
+|--------------------------------|-------------|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `url`                          | **string**  | `"jdbc:duckdb:"` | Full JDBC URL for the database connection                                                                                                                                                                                                                                                                                                              |
+| `memory-limit`                 | **string**  | -                | Sets DuckDB's `memory_limit`, for example `"8GB"`                                                                                                                                                                                                                                                                                                      |
+| `use-disk-cache`               | **boolean** | `false`          | Loads the `cache_httpfs` extension (requires `DUCKDB_EXTENSIONS_DIR`, see below)                                                                                                                                                                                                                                                                       |
+| `use-version-guessing`         | **boolean** | `false`          | Sets `unsafe_enable_version_guessing` flag to be able to read uncommitted data (requires `DUCKDB_EXTENSIONS_DIR`, see below)                                                                                                                                                                                                                           |
+| `scan-cte-cardinality-divisor` | **integer** | `1`              | Controls when a query that scans the same Iceberg table multiple times reads it once into a shared CTE. The scan is shared when the number of scans exceeds `max((log2(row count) - 20) / divisor, 1)`; a larger divisor shares scans more eagerly. Requires a known row count (estimated or set via the `row_count` hint). Must be a positive integer |
 
 #### Example Configuration
 
@@ -33,6 +34,10 @@ DuckDB is a vectorized database query engine that excels at analytical queries a
   }
 }
 ```
+
+:::note
+The DataSQRL server only loads DuckDB extensions (`iceberg`, `httpfs`, and `cache_httpfs`) and applies `use-version-guessing` when the `DUCKDB_EXTENSIONS_DIR` environment variable points to a directory with the preinstalled extensions. The official `datasqrl/cmd` and `datasqrl/sqrl-server` Docker images set it. When running the server elsewhere without it, the server logs a warning and silently skips these settings.
+:::
 
 #### Usage Notes
 

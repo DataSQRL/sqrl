@@ -207,7 +207,7 @@ IMPORT root.data_catalog.sources;
 ## Test-Runner (`test-runner`)
 
 Configures how the DataSQRL test runner executes tests.
-For streaming pipelines, use `required-checkpoints` to set a reliable time-interval for creating snapshots. Otherwise, configure a wall-clock delay via `delay-sec`.
+For streaming pipelines, set `delay-sec` to `-1` so the test runner waits until all Flink operators are idle and the `required-checkpoints` have completed before taking snapshots. Otherwise, `delay-sec` is a wall-clock upper bound on how long to wait for the job to finish.
 
 ```json
 {
@@ -215,7 +215,7 @@ For streaming pipelines, use `required-checkpoints` to set a reliable time-inter
     "snapshot-folder": "snapshots/myproject/", // Snapshots output directory (default: "./snapshots")
     "test-folder": "api/tests/",               // Directory containing test GraphQL queries (default: "./tests")
     "use-inferred-schema": true,               // Use inferred GraphQL schema when true, else use the one configured at "script.graphql" (default: true)
-    "delay-sec": 30,                           // Wait between data-load and taking snapshot in sec. Set -1 to disable (default: 30)
+    "delay-sec": 30,                           // Max wait in sec for the job to finish before taking snapshots; ends early when the job terminates. -1 = wait until all operators are idle and required-checkpoints completed (streaming) or until the job completes (batch) (default: 30)
     "mutation-delay-sec": 0,                   // Pause(s) between mutation queries (default: 0)
     "required-checkpoints": 0,                 // Minimum completed Flink checkpoints before taking snapshots (requires delay-sec = -1)
     "create-topics": ["topic1", "topic2"],     // Kafka topics to create before tests start
