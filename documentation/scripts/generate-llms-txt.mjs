@@ -216,6 +216,16 @@ function toMarkdown(doc, version, docsById) {
     if (/^(import\s.*\sfrom\s|import\s+['"]|export\s+(default|const|let|function)\b)/.test(line)) {
       continue;
     }
+    // Tabs: keep the content of every tab, introduced by its label
+    if (/^\s*(<Tabs\b[^>]*>|<\/Tabs>|<\/TabItem>)\s*$/.test(line)) {
+      continue;
+    }
+    const tabItem = line.match(/^\s*<TabItem\b([^>]*)>\s*$/);
+    if (tabItem) {
+      const attribute = (name) => tabItem[1].match(new RegExp(`\\s${name}=["']([^"']*)["']`))?.[1];
+      emit(`**${attribute('label') ?? attribute('value')}:**`);
+      continue;
+    }
     emit(transformInline(line, doc, version, docsById));
   }
   return `${out.join('\n').replace(/<!--[\s\S]*?-->/g, '').replace(/\n{3,}/g, '\n\n').trim()}\n`;
@@ -236,6 +246,11 @@ function transformInline(line, doc, version, docsById) {
       const url = bang ? resolveUrl(target, doc) : resolveLink(target, doc, version, docsById);
       return `${bang}[${text}](${url}${title})`;
     });
+  // Fail on MDX components that are not converted, rather than publishing them as Markdown
+  const component = transformed.match(/<\/?[A-Z][\w.]*(\s[^>]*)?\/?>/);
+  if (component) {
+    throw new Error(`Unsupported MDX component ${component[0]} in docs page '${doc.id}'`);
+  }
   return transformed.replace(/\u0000(\d+)\u0000/g, (_, index) => code[Number(index)]);
 }
 
