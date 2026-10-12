@@ -1,8 +1,8 @@
 name: Deploy Docusaurus to GitHub Pages
 
-# The site is always built from main, which also builds every major version from its latest
-# release branch and serves the latest one at the root (see documentation/scripts/build-versioned-site.sh). Pushes to a release branch
-# therefore redeploy the whole site so documentation fixes on that branch get published.
+# The site is always built from main. The docs are versioned, taking the docs of each major version
+# from its latest release branch (see documentation/scripts/prepare-versioned-docs.sh). Pushes to a
+# release branch therefore redeploy the site so documentation fixes on that branch get published.
 on:
   push:
     branches:
@@ -43,8 +43,16 @@ jobs:
         with:
           node-version: 22
 
-      - name: Build versioned Docusaurus site
-        run: documentation/scripts/build-versioned-site.sh
+      - name: Prepare versioned docs
+        run: documentation/scripts/prepare-versioned-docs.sh
+
+      - name: Install dependencies
+        working-directory: documentation
+        run: npm ci
+
+      - name: Build Docusaurus site
+        working-directory: documentation
+        run: npm run build
 
       - name: Create CNAME file
         run: echo 'docs.datasqrl.com' > documentation/build/CNAME
