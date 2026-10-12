@@ -1,0 +1,138 @@
+# Default DataSQRL `package.json` Configuration
+
+The following is the [default configuration file](https://raw.githubusercontent.com/DataSQRL/sqrl/refs/heads/main/sqrl-planner/src/main/resources/default-package.json) that user provided configuration files are merged on top of. It provides the default values for all configuration options.
+
+```json
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "compiler": {
+    "logger": "print",
+    "compile-flink-plan": true,
+    "extended-scalar-types": true,
+    "predicate-pushdown-rules": "LIMITED_RULES_NO_SOURCE",
+    "cost-model": "DEFAULT",
+    "explain": {
+      "sql": false,
+      "logical": false,
+      "physical": false,
+      "sorted": true
+    },
+    "api": {
+      "protocols": ["GRAPHQL", "REST", "MCP"],
+      "endpoints": "FULL",
+      "add-prefix": true,
+      "max-result-depth": 3,
+      "default-limit": 10,
+      "paginated-results": false
+    }
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.runtime-mode": "STREAMING",
+        "security.delegation.tokens.enabled": false,
+        "state.backend.type": "rocksdb"
+      }
+    },
+    "duckdb": {
+      "url": "jdbc:duckdb:",
+      "scan-cte-cardinality-divisor": 1
+    },
+    "postgres": {
+      "partition-ttl-divisor": 100,
+      "partition-premake": 4
+    },
+    "kafka": {
+      "retention": null,
+      "use-source-watermark": false,
+      "use-transaction-source-watermark": false,
+      "watermark": "0 ms",
+      "transaction-watermark": "0 ms",
+      "num-partitions": 1,
+      "replication-factor": 3
+    }
+  },
+  "connectors": {
+    "kafka-mutation": {
+      "connector": "kafka-safe",
+      "format": "flexible-json",
+      "flexible-json.timestamp-format.standard": "ISO-8601",
+      "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
+      "properties.group.id": "${KAFKA_GROUP_ID}",
+      "properties.auto.offset.reset": "earliest",
+      "properties.compression.type": "zstd",
+      "topic": "${sqrl:table-name}"
+    },
+    "kafka": {
+      "connector": "kafka-safe",
+      "format": "flexible-json",
+      "flexible-json.timestamp-format.standard": "ISO-8601",
+      "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
+      "properties.group.id": "${KAFKA_GROUP_ID}",
+      "properties.compression.type": "zstd",
+      "topic": "${sqrl:table-name}"
+    },
+    "iceberg": {
+      "connector": "iceberg",
+      "catalog-name": "default_catalog",
+      "catalog-table": "${sqrl:table-name}",
+      "warehouse": "sqrl_iceberg_data",
+      "format-version": 2,
+      "write.distribution-mode": "hash",
+      "commit.retry.num-retries": "20",
+      "commit.retry.min-wait-ms": "100",
+      "commit.retry.max-wait-ms": "5000"
+    },
+    "iceberg-maintenance": {
+      "compaction.enabled": "true",
+      "write.metadata.delete-after-commit.enabled": "true",
+      "write.metadata.previous-versions-max": "10",
+      "history.expire.max-snapshot-age-ms": "86400000"
+    },
+    "postgres": {
+      "connector": "jdbc-sqrl",
+      "username": "${POSTGRES_USERNAME}",
+      "password": "${POSTGRES_PASSWORD}",
+      "url": "jdbc:postgresql://${POSTGRES_AUTHORITY}",
+      "driver": "org.postgresql.Driver",
+      "table-name": "${sqrl:table-name}"
+    },
+    "print": {
+      "connector": "print",
+      "print-identifier": "${sqrl:table-name}"
+    }
+  },
+  "test-runner": {
+    "snapshot-folder": "./snapshots",
+    "test-folder": "./tests",
+    "use-inferred-schema": true,
+    "delay-sec": 30,
+    "mutation-delay-sec": 0,
+    "required-checkpoints": 0
+  }
+}
+```
+
+## Connector Template Variables
+
+The connector templates configured under `connectors` can use environment variables and SQRL-specific variables for dynamic configuration.
+
+### Environment Variables
+
+See [Environment Variables](https://docs.datasqrl.com/docs/main/configuration.md#environment-variables-var) for supported placeholder syntax and resolution behavior.
+
+### SQRL Variables
+
+SQRL-specific variables start with a `sqrl:` prefix and are used for templating inside connector configuration options.
+The proper syntax look like `${sqrl:<identifier>}`.
+
+Supported identifiers:
+- `table-name`: the name of the table as defined in the SQRL script
+- `table-id`: the unique name the compiler generates for the table's sink, which appends a counter to the table name (for example, `Orders_1`)
+
+These are typically used within connector templates to inject table-specific or context-aware configuration values.
+
+> **Warning**
+>
+> Unresolved `${sqrl:*}` placeholders raise a validation error.
