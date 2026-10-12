@@ -56,7 +56,7 @@ public class SqrlStatementParser {
   public static final String COMMENT_REGEX = "(/\\*)+?[\\w\\W]*?(\\*/)";
   public static final String BEGINNING_COMMENT = "^((" + COMMENT_REGEX + ")|(\\s*))*";
   public static final String IMPORT_EXPORT_REGEX =
-      BEGINNING_COMMENT + "(?<fullmatch>import|export)";
+      BEGINNING_COMMENT + "(?<fullmatch>import|export)(?=\\s)";
   public static final String SQRL_DEFINITION_REGEX =
       BEGINNING_COMMENT
           + "(?<fullmatch>(?<tablename>"
@@ -178,7 +178,7 @@ public class SqrlStatementParser {
         return new SqrlImportStatement(packageIdentifier, alias, comment);
       } else if (directive.equalsIgnoreCase("export")) {
         var subMatcher = EXPORT_PARSER.matcher(body);
-        checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
+        checkFatal(subMatcher.find(), ErrorCode.INVALID_EXPORT, "Could not parse EXPORT statement");
         var packageIdentifier = parseNamePath(subMatcher, "package", statement);
         var tableName = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing package path");
