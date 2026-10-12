@@ -65,8 +65,8 @@
   --ifm-pre-background: #f0f0f0;
 
   --hover-bg-color: var(--ifm-color-primary-lightest); /* Light blue background on hover */
-  --active-link-color: var(--ifm-color-primary); /* Orange color for the active link */
-  --active-link-bg-color: var(--ifm-color-secondary-lightest); /* Lightest orange background for active link */
+  --active-link-color: var(--ifm-color-primary); /* Blue color for the active link */
+  --active-link-bg-color: var(--ifm-color-secondary-lightest); /* Lightest purple background for active link */
 
 }
 
