@@ -8,6 +8,7 @@
     "prestart": "npm run generate-docs",
     "build": "docusaurus build",
     "prebuild": "npm run generate-docs",
+    "postbuild": "npm run generate-llms-txt",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "predeploy": "npm run generate-docs",
@@ -16,7 +17,8 @@
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc",
-    "generate-docs": "node scripts/generate-function-docs.js"
+    "generate-docs": "node scripts/generate-function-docs.js",
+    "generate-llms-txt": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-llms-txt.mjs build"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
@@ -49,6 +51,6 @@
     ]
   },
   "engines": {
-    "node": ">=22.0"
+    "node": ">=22.18"
   }
 }

@@ -47,3 +47,5 @@ Use the project configuration files named by the task, layering a shared package
 Verify every project or sub-project changed by the task. Do not report success from an unverified change: state the command and outcome, or explain what dependency prevents verification. Keep generated build artifacts out of source edits unless the task explicitly requests them.
 
 For CLI commands, options, and package configuration layering, see [CLI_REFERENCE.md](CLI_REFERENCE.md). For an overview of DataSQRL concepts, see [README_SQRL.md](README_SQRL.md).
+
+The complete DataSQRL documentation matching this image is in [docs/llms-full.txt](docs/llms-full.txt), one page per `# ` heading with its `Source:` URL. It is large: search it with `rg` for the configuration option, connector, function, or error you need instead of reading it whole. Skills take precedence where they are more specific.
