@@ -9,7 +9,7 @@ Key facts for working with DataSQRL:
 - Configuration files are deep-merged in the order given on the command line, on top of the default configuration.
 - System functions are always available; library functions must be imported with `IMPORT stdlib.<library>.<function>;`.
 
-This is the documentation of DataSQRL v0, the latest release.
+This is the documentation of DataSQRL v0.11, the latest release.
 
 ---
 
