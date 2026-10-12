@@ -502,10 +502,10 @@ If you wish to start with those, you need to explicitly write them out and read 
 - Use Flink time window aggregation when requirements specify time intervals (e.g. "aggregate x by day")
 
 ```sql
-SensorAvg := SELECT sensorid, window_start AS time_hour,
+SensorAvg := SELECT sensorid, window_time AS time_hour,
   AVG(temperature) AS avg_temp
 FROM TUMBLE(TABLE SensorReading, DESCRIPTOR(event_time), INTERVAL '1' HOUR)
-GROUP BY sensorid, window_start, window_end;
+GROUP BY sensorid, window_start, window_end, window_time;
 ```
 
 ## Comments & Doc-strings

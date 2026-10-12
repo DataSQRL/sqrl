@@ -28,4 +28,4 @@
 | `MAP_VALUES(map)` | Returns the values of the map as array. No order guaranteed. |
 | `MAP_ENTRIES(map)` | Returns an array of all entries in the given map. No order guaranteed. |
 | `MAP_FROM_ARRAYS(array_of_keys, array_of_values)` | Returns a map created from an arrays of keys and values. Note that the lengths of two arrays should be the same. |
-| `SPLIT(string, delimiter)` | Returns an array of substrings by splitting the input string based on the given delimiter. If the delimiter is not found in the string, the original string is returned as the only element in the array. If the delimiter is empty, every character in the string is split. If the string or delimiter is null, a null value is returned. If the delimiter is found at the beginning or end of the string, or there are contiguous delimiters, then an empty string is added to the array. |
+| `SPLIT(string, delimiter)` | Splits a string into an array. DataSQRL's `split` replaces Flink's `SPLIT`; see [text functions](text.md) for its behavior, including delimiter escaping and the differences when executed by PostgreSQL. |

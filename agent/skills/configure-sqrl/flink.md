@@ -37,7 +37,7 @@ Frequently configured options:
 | `table.optimizer.join-reorder-enabled` | `false` | `true` | Lets the optimizer reorder joins based on table statistics for better plans                                   |
 | `table.exec.source.idle-timeout` | `1 s` in STREAMING mode (set by DataSQRL); `0 s` (disabled) for `test` | `30s`, `60s` | Marks idle sources so watermarks can advance when some partitions go quiet                                    |
 | `table.exec.sink.not-null-enforcer` | `ERROR` | `DROP` | Controls whether null-constraint violations throw errors or silently drop rows                                |
-| `table.exec.sink.upsert-materialize` | `AUTO` | `NONE`, `FORCED` | Controls materialization of upsert streams before writing to non-upsert sinks                                 |
+| `table.exec.sink.upsert-materialize` | `AUTO` | `NONE`, `FORCE` | Controls materialization of upsert streams before writing to non-upsert sinks                                 |
 | `table.optimizer.reuse-sub-plan-enabled` | `true` | `false` | Disabling can help when shared sub-plans cause unexpected state sharing                                       |
 | `table.optimizer.reuse-source-enabled` | `true` | `false` | Controls whether identical source scans are shared across the plan                                            |
 | `table.exec.async-lookup.buffer-capacity` | `100` | `10` – `1000` | Max number of in-flight async lookup requests for async lookup joins                                          |

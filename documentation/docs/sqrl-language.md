@@ -439,7 +439,9 @@ The test command also executes GraphQL operations from the configured `test-fold
 NEXT_BATCH;
 ```
 
-For SQRL pipelines where the data processing is in batch (i.e. `"execution.runtime-mode": "BATCH"` in the [Flink configuration](configuration-engine/flink)) and Flink is the only enabled engine (`"enabled-engines": ["flink"]`; compilation fails otherwise), use the `NEXT_BATCH` statement to break the data processing into multiple sub-batches that are executed sequentially, proceeding with the next sub-batch only if the previous one succeeded.
+For SQRL pipelines where the data processing is in batch (i.e. `"execution.runtime-mode": "BATCH"` in the [Flink configuration](configuration-engine/flink)), use the `NEXT_BATCH` statement to break the data processing into multiple sub-batches that are executed sequentially, proceeding with the next sub-batch only if the previous one succeeded.
+
+A script that uses `NEXT_BATCH` only compiles when Flink is the only enabled engine (`"enabled-engines": ["flink"]`). This restriction applies to `NEXT_BATCH` only; batch pipelines without it can enable other engines.
 
 The batch allocation only applies to `EXPORT .. TO ..` statements. All interfaces are computed in the last batch.
 
