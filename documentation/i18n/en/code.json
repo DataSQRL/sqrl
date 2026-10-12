@@ -1,0 +1,18 @@
+{
+  "theme.docs.versions.unreleasedVersionLabel": {
+    "message": "This is the documentation of the unreleased {versionLabel} branch, which may describe features that are not released yet.",
+    "description": "The label used to tell the user that he's browsing an unreleased doc version"
+  },
+  "theme.docs.versions.unmaintainedVersionLabel": {
+    "message": "This is the documentation of {siteTitle} {versionLabel}, which is not the latest release.",
+    "description": "The label used to tell the user that he's browsing an unmaintained doc version"
+  },
+  "theme.docs.versions.latestVersionSuggestionLabel": {
+    "message": "For the documentation of the latest release, see {latestVersionLink} ({versionLabel}).",
+    "description": "The label used to tell the user to check the latest version"
+  },
+  "theme.docs.versions.latestVersionLinkLabel": {
+    "message": "the latest version",
+    "description": "The label used for the latest version suggestion link label"
+  }
+}

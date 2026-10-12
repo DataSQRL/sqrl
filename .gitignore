@@ -111,6 +111,11 @@ node_modules/
 .docusaurus
 .cache-loader
 
+# Docs versions, prepared from the release branches during deployment
+documentation/versioned_docs/
+documentation/versioned_sidebars/
+documentation/versions.json
+
 # Misc
 .env.local
 .env.development.local
