@@ -5,7 +5,7 @@ It is deployed to https://docs.datasqrl.com.
 
 ## Prerequisites
 
-- **Node.js 22 or newer** (see the `engines` field in `package.json`) and npm.
+- **Node.js 22.18 or newer** (see the `engines` field in `package.json`) and npm.
   If you use [nvm](https://github.com/nvm-sh/nvm), run `nvm install 22 && nvm use 22`.
 - The `docs/stdlib-docs` git submodule, which provides the function definitions the docs are
   generated from. Initialize it once from the repository root:
@@ -53,6 +53,19 @@ content hosting service. To preview the production build locally:
 ```bash
 npm run serve
 ```
+
+After the site build, `npm run build` runs `npm run generate-llms-txt`, which generates
+agent-friendly docs ([llms.txt](https://llmstxt.org)) into `build/` from the docs sources, in
+sidebar order, for every docs version:
+
+- `llms.txt`: index of the docs pages with a short description of each, starting with the curated
+  introduction in `scripts/llms-intro.md`. The root `/llms.txt` is the one of the default version.
+- `llms-full.txt`: all docs pages in a single Markdown file. The agent image bundles the one of
+  its own docs (see `agent/Dockerfile`).
+- `<page>.md`: each docs page as plain Markdown, next to its HTML page.
+
+The generated files are not committed, so they always match the docs. Pages must be listed in
+`sidebars.ts` to be included.
 
 Other useful commands:
 

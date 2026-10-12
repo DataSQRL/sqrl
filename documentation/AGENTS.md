@@ -110,6 +110,7 @@ The site uses Docusaurus's classic theme with:
 - Documentation: Edit files in `docs/` directory
 - Blog posts: Add new `.md` or `.mdx` files to `blog/` directory
 - Navigation: Update `sidebars.ts` for documentation structure
+- Agent-friendly docs: `llms.txt`, `llms-full.txt`, and a Markdown version of each docs page are generated at build time by `scripts/generate-llms-txt.mjs` from the docs pages listed in `sidebars.ts`. Keep the curated introduction in `scripts/llms-intro.md` accurate when core concepts or CLI commands change
 - Homepage: Modify `src/pages/index.tsx` and related components
 
 ### Common Issues

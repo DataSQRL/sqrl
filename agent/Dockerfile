@@ -21,6 +21,28 @@ ARG SQRL_IMAGE=datasqrl/cmd:dev
 ARG NODE_IMAGE=node:22-bookworm-slim
 
 FROM ${NODE_IMAGE} AS node
+
+# Generates the documentation of this checkout as a single Markdown file (llms-full.txt, see
+# documentation/scripts/generate-llms-txt.mjs). Requires the stdlib-docs submodule:
+# git submodule update --init documentation/docs/stdlib-docs
+FROM node AS docs
+# Path of these docs on docs.datasqrl.com: `main` for the unreleased docs
+ARG DOCS_VERSION_PATH=main
+WORKDIR /documentation
+COPY documentation/package-lock.json /tmp/package-lock.json
+# The function docs generator is the only one with a dependency, install it at its locked version
+RUN npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund \
+      "js-yaml@$(node -p 'require("/tmp/package-lock.json").packages["node_modules/js-yaml"].version')"
+COPY documentation/docs/ docs/
+COPY documentation/sidebars.ts ./
+COPY documentation/scripts/ scripts/
+RUN test -f docs/stdlib-docs/stdlib-docs/system-functions.yml \
+      || { echo "Missing function docs, run: git submodule update --init documentation/docs/stdlib-docs" >&2; exit 1; } \
+    && node scripts/generate-function-docs.js \
+    && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-llms-txt.mjs /out \
+      --current-path "${DOCS_VERSION_PATH}" \
+    && cp "/out/docs${DOCS_VERSION_PATH:+/${DOCS_VERSION_PATH}}/llms-full.txt" /llms-full.txt
+
 FROM ${SQRL_IMAGE}
 
 ARG PI_PACKAGE=@earendil-works/pi-coding-agent@1.0.3
@@ -47,6 +69,7 @@ COPY README.md /root/.pi/agent/README_SQRL.md
 COPY agent/AGENTS.md /root/.pi/agent/AGENTS.md
 COPY agent/CLI_REFERENCE.md /root/.pi/agent/CLI_REFERENCE.md
 COPY agent/skills/ /root/.pi/agent/skills/
+COPY --from=docs /llms-full.txt /root/.pi/agent/docs/llms-full.txt
 COPY --chmod=0755 agent/cmd.sh /opt/agent/cmd.sh
 COPY --chmod=0755 agent/entrypoint.sh /opt/agent/entrypoint.sh
 # HS256 test-token helper taught by the design-api skill.

@@ -15,15 +15,19 @@ The image starts Pi in `/workspace`. Mount a project there, provide a model-prov
 | [`AGENTS.md`](AGENTS.md)         | Always-loaded instructions: the working directory, skill-selection rules, and verification expectations.                  |
 | [`CLI_REFERENCE.md`](CLI_REFERENCE.md) | DataSQRL CLI commands, options, and package configuration layering, referenced from `AGENTS.md`.                    |
 | [`skills/`](skills/)             | On-demand DataSQRL knowledge loaded by Pi when a task matches a skill description.                                        |
+| `docs/llms-full.txt`             | The complete DataSQRL documentation of the checkout as one Markdown file, generated during the image build and referenced from `AGENTS.md`. |
 | `/opt/datasqrl-examples/`        | Optional read-only mount of custom or [datasqrl-examples](https://github.com/DataSQRL/datasqrl-examples) reference implementations, used by relevant skills when useful. |
 
 ## Build and start
 
-Build from the repository root:
+Build from the repository root, with the `stdlib-docs` submodule initialized so the bundled documentation includes the function reference:
 
 ```bash
+git submodule update --init documentation/docs/stdlib-docs
 docker build -t core-agent -f agent/Dockerfile .
 ```
+
+The image bundles the documentation of the checkout as `docs/llms-full.txt`, linking to the unreleased `main` docs on docs.datasqrl.com. When building from a release branch, set `--build-arg DOCS_VERSION_PATH=` (empty) for the latest release, or `vX` for an older major, so the links point to that version's docs.
 
 Start the agent in a project directory. Pi uses the provider key from the environment and opens an interactive terminal session:
 
