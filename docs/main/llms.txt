@@ -59,4 +59,4 @@ This is the documentation of the unreleased `main` branch of DataSQRL. The docum
 
 - [Full documentation](https://docs.datasqrl.com/docs/main/llms-full.txt): all of the above pages in a single file
 - [Blog](https://docs.datasqrl.com/blog): articles on the design of DataSQRL and its harness for data engineering agents
-- [DataSQRL v0 documentation](https://docs.datasqrl.com/docs/llms.txt)
+- [DataSQRL v0.11 documentation](https://docs.datasqrl.com/docs/llms.txt)
