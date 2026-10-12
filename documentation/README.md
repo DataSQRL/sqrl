@@ -68,23 +68,26 @@ Create a PR against either the `docsUpdate` branch or `main`.
 
 ## Versioning
 
-The site is versioned by major version, and each release version is built from the latest
-`release-X.Y` branch of its major:
+Only the docs (`/docs`) are versioned, by major version. The docs of each released major are taken
+from its latest `release-X.Y` branch, everything else (homepage, blog, community) always comes from
+`main`:
 
-| Version              | Path      | Banner                       |
-|----------------------|-----------|------------------------------|
-| Latest major release | `/`       | none                         |
-| `main`               | `/main/`  | unreleased documentation     |
-| Older major releases | `/vX/`    | not the latest release       |
+| Docs version         | Path          | Banner                 |
+|----------------------|---------------|------------------------|
+| Latest major release | `/docs/`      | none                   |
+| `main`               | `/docs/main/` | unreleased version     |
+| Older major releases | `/docs/vX/`   | not the latest release |
 
-The blog is always taken from `main` and published at `/blog`. Without any release branch, `main`
-is served at `/` without a version dropdown. Release branches must contain the versioning support
-(`scripts/build-versioned-site.sh` and the environment variables read by `docusaurus.config.ts`),
-which is the case from `release-0.11` on.
+The version picker is at the top of the docs sidebar. During deployment,
+`scripts/prepare-versioned-docs.sh` snapshots the docs of the release branches into
+`versioned_docs/`, `versioned_sidebars/` and `versions.json`; these are generated and not
+committed. Without them, as with `npm start`, the docs are unversioned.
 
 Documentation fixes for a released major go to its latest release branch; a push there redeploys
 the site. To build the versioned site locally (with the `release-*` branches fetched):
 
 ```bash
-REMOTE=upstream scripts/build-versioned-site.sh
+REMOTE=upstream scripts/prepare-versioned-docs.sh
+npm run build
+npm run serve
 ```
