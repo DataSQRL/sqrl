@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.03733110.css">
-<script src="/assets/js/runtime~main.a825b8ab.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.80bb8660.js" defer="defer"></script>
 <script src="/assets/js/main.572ad8b0.js" defer="defer"></script>
 </head>
 <body>
@@ -145,11 +145,11 @@ The top-level <code>script.graphql</code> and <code>script.operations</code> are
 <ol>
 <li class="">All subscription queries are registered</li>
 <li class="">Mutations are executed sequentially in alphabetical order of filename. The test runner waits the configured <code>mutation-delay-sec</code> between mutations. Results are written as snapshots to the snapshot folder.</li>
-<li class="">The test runner waits until the configured timeout.</li>
+<li class="">The test runner waits for the pipeline to process the data (see <code>delay-sec</code> and <code>required-checkpoints</code> in the test-runner configuration).</li>
 <li class="">Queries are executed and results written as snapshots.</li>
 <li class="">All subscription results are sorted and written as snapshots.</li>
 </ol>
-<p>If a snapshot already exists, results are compared and the test fails if they are unequal.</p>
+<p>If a snapshot already exists, results are compared and the test fails if they are unequal. If a snapshot does not exist yet, it is created and, provided no other test failed, verified by re-running the pipeline in the same test invocation.</p>
 <p>The test runner uses the configured <code>headers</code> for accessing the API. To test authentication and authorization with different access tokens, create a properties file with the same name as the GraphQL file to configure header properties per query.</p>
 <p>For example, if your test folder contains <code>myquery.graphql</code> you can configure custom headers for this query in <code>myquery.properties</code>:</p>
 <div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token plain">Authorization: Bearer XYZ</span><br></div></code></pre></div></div>
