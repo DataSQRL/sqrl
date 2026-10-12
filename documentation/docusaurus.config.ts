@@ -24,8 +24,9 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 // Versioning: only the docs are versioned. `scripts/prepare-versioned-docs.sh` snapshots the docs of
 // the latest release branch of each major version into versioned_docs/ and lists them in
-// versions.json (newest first). The latest release is the default version at /docs/, `main` is
-// served at /docs/main/ and older releases at /docs/vX/. Without versions.json (e.g. for local
+// versions.json (newest first), or of each minor version before 1.0 (e.g. `v0.11`). The latest
+// release is the default version at /docs/, `main` is served at /docs/main/ and older releases at
+// /docs/vX/ (dots replaced by dashes, e.g. /docs/v0-11/). Without versions.json (e.g. for local
 // development and PR checks), the docs are unversioned.
 const versionsFile = path.join(__dirname, 'versions.json');
 const releaseVersions: string[] = fs.existsSync(versionsFile)
@@ -40,7 +41,9 @@ const docsVersioning =
           ...Object.fromEntries(
             releaseVersions.map((version, index) => [
               version,
-              {label: version, banner: index === 0 ? ('none' as const) : ('unmaintained' as const)},
+              index === 0
+                ? {label: version, banner: 'none' as const}
+                : {label: version, path: version.replaceAll('.', '-'), banner: 'unmaintained' as const},
             ]),
           ),
         },

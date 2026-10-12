@@ -58,8 +58,9 @@ async function loadVersions(currentPath) {
         'utf8',
       ),
     ),
-    // The latest release is the default version served at /docs/
-    path: index === 0 ? '' : name,
+    // The latest release is the default version served at /docs/, the others at their name with
+    // dots replaced by dashes (as in docusaurus.config.ts)
+    path: index === 0 ? '' : name.replaceAll('.', '-'),
   }));
   // The default version comes first
   return [...released, current].map((version) => ({

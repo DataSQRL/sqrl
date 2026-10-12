@@ -81,15 +81,16 @@ Create a PR against either the `docsUpdate` branch or `main`.
 
 ## Versioning
 
-Only the docs (`/docs`) are versioned, by major version. The docs of each released major are taken
-from its latest `release-X.Y` branch, everything else (homepage, blog, community) always comes from
-`main`:
+Only the docs (`/docs`) are versioned, by major version. The docs of each released major (`vX`) are
+taken from its latest `release-X.Y` branch. Before 1.0, each minor release (`v0.Y`) is a version of
+its own, taken from its `release-0.Y` branch, starting with 0.11. Everything else (homepage, blog,
+community) always comes from `main`:
 
-| Docs version         | Path          | Banner                 |
-|----------------------|---------------|------------------------|
-| Latest major release | `/docs/`      | none                   |
-| `main`               | `/docs/main/` | unreleased version     |
-| Older major releases | `/docs/vX/`   | not the latest release |
+| Docs version   | Path                          | Banner                 |
+|----------------|-------------------------------|------------------------|
+| Latest release | `/docs/`                      | none                   |
+| `main`         | `/docs/main/`                 | unreleased version     |
+| Older releases | `/docs/vX/` (or `/docs/v0-Y/`) | not the latest release |
 
 The version picker is at the top of the docs sidebar. During deployment,
 `scripts/prepare-versioned-docs.sh` snapshots the docs of the release branches into

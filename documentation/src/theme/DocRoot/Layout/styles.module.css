@@ -1,0 +1,27 @@
+/**
+ * Copyright © 2021 DataSQRL (contact@datasqrl.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/* Keep the docs sidebar in place while scrolling: fixed to the viewport instead of sticky within the
+   docs layout, which lets the footer push it up. It shrinks above the footer instead, by the footer
+   overlap set by the layout wrapper. */
+@media (min-width: 997px) {
+  :global(.theme-doc-sidebar-container) > div:first-child {
+    position: fixed;
+    top: 0;
+    width: inherit;
+    height: calc(100vh - var(--docs-footer-overlap, 0px));
+    max-height: none;
+  }
+}
