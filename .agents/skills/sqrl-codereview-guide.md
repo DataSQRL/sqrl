@@ -54,7 +54,7 @@ A change is **user impacting** if it changes anything a DataSQRL user or the Dat
 
 Purely internal changes (refactorings, test-only changes, CI/build changes, dependency bumps without behavior change) are **not** user-impacting and need no docs or skill updates.
 
-For every user impacting change, verify that **both** the documentation and the agent skills are updated. Use the following mapping to find the places that should change:
+For every user impacting change, verify that **both** the documentation and the agent skills are updated. The only exception is behavior that exists solely in the DataSQRL agent image (`agent/`, e.g. checks in `agent/cmd.sh`) and is not part of the compiler, CLI, or server: such changes are not covered by the user documentation and require only an agent skill update. These are the rows marked "- (agent only)" below. Use the following mapping to find the places that should change:
 
 | Change area                               | Documentation (`documentation/docs`)                                                 | Agent skills (`agent/skills`)                                                            |
 |-------------------------------------------|--------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------|
@@ -68,7 +68,7 @@ For every user impacting change, verify that **both** the documentation and the 
 | CLI commands and flags                    | `compiler.md`, `intro/getting-started*.md`                                           | `init-sqrl/`, `test-sqrl/`, any skill invoking the changed command                       |
 | Testing behavior                          | `compiler.md`                                                                        | `test-sqrl/SKILL.md`                                                                     |
 | Compilation output, deployment            | `compilation-output.md`, `deployment.md`, `configuration-engine/cloud-deployment.md` | `configure-sqrl/cloud-deployment.md`                                                     |
-| Large data file handling                  | -                                                                                    | `handle-large-data-files/SKILL.md`                                                       |
+| Agent large data file blocking            | - (agent only)                                                                       | `handle-large-data-files/SKILL.md`                                                       |
 | Version upgrades (Flink, etc.)            | `compatibility.md`                                                                   | any skill referencing the version (e.g. `//DEPS` in `implement-udf`)                     |
 
 The mapping is a starting point, not an exhaustive list. Search `documentation/docs` and `agent/skills` for the names of changed options, commands, functions, or error codes to find every affected location.
