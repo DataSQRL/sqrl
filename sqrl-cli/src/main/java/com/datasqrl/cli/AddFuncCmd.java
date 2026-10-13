@@ -25,6 +25,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
+import org.apache.flink.runtime.util.EnvironmentInformation;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -39,6 +40,7 @@ public class AddFuncCmd extends BaseCmd {
 
   private static final String FN_TEMPLATE_DIR = "templates/functions";
   private static final String FN_NAME_PLACEHOLDER = "__fnname__";
+  private static final String FLINK_VERSION_PLACEHOLDER = "__flinkversion__";
   private static final String AGGREGATE_UDF_TEMPLATE = FN_TEMPLATE_DIR + "/aggregate.java";
   private static final String SCALAR_UDF_TEMPLATE = FN_TEMPLATE_DIR + "/scalar.java";
 
@@ -67,7 +69,10 @@ public class AddFuncCmd extends BaseCmd {
       var targetPath = targetRoot.get().resolve("functions").resolve(fnName + ".java");
       Files.createDirectories(targetPath.getParent());
 
-      var content = IOUtils.toString(is, UTF_8).replaceAll(FN_NAME_PLACEHOLDER, fnName);
+      var content =
+          IOUtils.toString(is, UTF_8)
+              .replace(FN_NAME_PLACEHOLDER, fnName)
+              .replace(FLINK_VERSION_PLACEHOLDER, EnvironmentInformation.getVersion());
       Files.writeString(targetPath, content, StandardOpenOption.CREATE_NEW);
     }
   }

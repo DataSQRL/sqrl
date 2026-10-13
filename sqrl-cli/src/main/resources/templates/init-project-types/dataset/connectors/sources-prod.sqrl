@@ -1,0 +1,13 @@
+-- Reads the messages from an existing Iceberg table. Point the catalog options to your lakehouse.
+CREATE TABLE Messages (
+    uuid STRING NOT NULL,
+    message STRING NOT NULL,
+    message_time TIMESTAMP_LTZ(3) NOT NULL
+) WITH (
+    'connector' = 'iceberg',
+    'catalog-type' = 'hadoop',
+    'catalog-name' = 'default_catalog',
+    'warehouse' = 'sqrl_iceberg_data',
+    'catalog-table' = 'messages',
+    'format-version' = '2'
+);

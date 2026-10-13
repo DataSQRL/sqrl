@@ -26,6 +26,7 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
@@ -43,6 +44,7 @@ import picocli.CommandLine.Parameters;
 public class InitCmd extends BaseCmd {
 
   private static final String INIT_PROJECT_DIR = "templates/init-project";
+  private static final String INIT_PROJECT_TYPES_DIR = "templates/init-project-types";
   private static final String PROJECT_NAME_PLACEHOLDER = "__projectname__";
 
   private final MustacheFactory mustacheFactory = new DefaultMustacheFactory();
@@ -72,16 +74,16 @@ public class InitCmd extends BaseCmd {
 
   @SneakyThrows
   void initProject(Supplier<Path> targetRoot) {
-    var resources = ResourceUtils.listResourceFiles(INIT_PROJECT_DIR);
+    var resources = collectTemplateResources();
 
     var variables = loadVariables(projectType);
     variables.put(
         "exec-mode",
         batch ? RuntimeExecutionMode.BATCH.name() : RuntimeExecutionMode.STREAMING.name());
 
-    for (var resource : resources) {
-      try (var is = ResourceUtils.getResourceAsStream(resource)) {
-        var targetPath = getTargetPath(targetRoot.get(), resource);
+    for (var entry : resources.entrySet()) {
+      try (var is = ResourceUtils.getResourceAsStream(entry.getValue())) {
+        var targetPath = getTargetPath(targetRoot.get(), entry.getKey());
         var fileName = targetPath.getFileName().toString();
 
         Files.createDirectories(targetPath.getParent());
@@ -94,6 +96,29 @@ public class InitCmd extends BaseCmd {
         }
       }
     }
+  }
+
+  /**
+   * Collects the common project template files, overridden by the project type specific ones.
+   *
+   * @return template resource paths, keyed by their path relative to the project root
+   */
+  private Map<String, String> collectTemplateResources() {
+    var resources = new LinkedHashMap<String, String>();
+    ResourceUtils.listResourceFiles(INIT_PROJECT_DIR)
+        .forEach(res -> resources.put(relativize(INIT_PROJECT_DIR, res), res));
+
+    var typeDir = INIT_PROJECT_TYPES_DIR + '/' + projectType.name().toLowerCase();
+    if (getClass().getClassLoader().getResource(typeDir) != null) {
+      ResourceUtils.listResourceFiles(typeDir)
+          .forEach(res -> resources.put(relativize(typeDir, res), res));
+    }
+
+    return resources;
+  }
+
+  private static String relativize(String baseDir, String resourcePath) {
+    return resourcePath.substring(baseDir.length()).replaceFirst("^/", "");
   }
 
   @SneakyThrows
@@ -125,14 +150,8 @@ public class InitCmd extends BaseCmd {
     return propsMap;
   }
 
-  private Path getTargetPath(Path targetRoot, String resourcePath) {
-    var subProjectPath =
-        resourcePath
-            .replace(INIT_PROJECT_DIR, "")
-            .replace(PROJECT_NAME_PLACEHOLDER, projectName)
-            .replaceFirst("^/", ""); // Strip leading slash
-
-    return targetRoot.resolve(subProjectPath);
+  private Path getTargetPath(Path targetRoot, String relativePath) {
+    return targetRoot.resolve(relativePath.replace(PROJECT_NAME_PLACEHOLDER, projectName));
   }
 
   public enum ProjectType {

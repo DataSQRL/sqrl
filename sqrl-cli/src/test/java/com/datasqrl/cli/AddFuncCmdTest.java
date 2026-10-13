@@ -146,4 +146,28 @@ class AddFuncCmdTest {
         .contains(UDF_NAME + ".Accumulator")
         .contains("public void accumulate(");
   }
+
+  @ParameterizedTest
+  @ValueSource(booleans = {true, false})
+  void givenAnyUdfType_whenAddUdf_thenDeclaresFlinkTableCommonDependency(boolean aggregate)
+      throws IOException {
+    // Given
+    addFuncCmd.aggregate = aggregate;
+
+    // When
+    addFuncCmd.addUdf(() -> tempDir);
+
+    // Then
+    var udfFile = tempDir.resolve("functions").resolve(UDF_NAME + ".java");
+    var lines = Files.readAllLines(udfFile);
+
+    assertThat(lines.get(0)).startsWith("///usr/bin/env jbang");
+    assertThat(lines)
+        .anySatisfy(
+            line ->
+                assertThat(line)
+                    .matches(
+                        "//DEPS org\\.apache\\.flink:flink-table-common:\\d+\\.\\d+\\.\\d+.*"));
+    assertThat(String.join("\n", lines)).doesNotContain("__flinkversion__").doesNotContain("${");
+  }
 }
