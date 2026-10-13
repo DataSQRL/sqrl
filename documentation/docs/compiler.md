@@ -173,6 +173,14 @@ Upon successful compilation, the compiler writes:
 
 See [Compilation Output](compilation-output) to learn more about the files the compiler produces and how to use them to validate a pipeline or learn how to [deploy those files](deployment).
 
+### Errors
+
+The compiler reports all errors of a script in one run, each with its position, so you can fix them together. Compilation fails if there is any error.
+
+To avoid knock-on errors, the compiler skips statements that depend on a failed statement:
+- A statement that uses a table whose definition failed is skipped.
+- After a `USE` statement fails, the rest of the script is skipped, since it would run in another catalog or database.
+
 ## Run Command
 
 The `run` command compiles and runs the generated data pipeline in Docker.

@@ -56,10 +56,12 @@ public class Packager {
   private final PackageJson config;
   private final FilePreprocessingPipeline preprocessingPipeline;
   private final MainScript mainScript;
+  private final SourceFiles sourceFiles;
 
   public void preprocess(ErrorCollector errors) {
     // Validate main script
     config.getScriptConfig().getMainScript();
+    sourceFiles.clearBuildFiles();
     try {
       cleanDir(workspacePaths.buildDir());
       cleanDir(workspacePaths.workspaceDir().resolve(SqrlConstants.DEFAULT_ICEBERG_WAREHOUSE_DIR));

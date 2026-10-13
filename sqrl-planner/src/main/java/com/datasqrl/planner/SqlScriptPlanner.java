@@ -34,6 +34,7 @@ import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.SchemaConversionResult;
@@ -111,12 +112,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
@@ -158,6 +161,9 @@ public class SqlScriptPlanner {
 
   private final ErrorCollector errorCollector;
 
+  /** Tables that failed to plan, whose dependent statements are skipped */
+  private final FailedTables failedTables = new FailedTables();
+
   /** Used to assemble the full script with imports as a string */
   @Getter private final SqlScriptWriter completeScript;
 
@@ -174,6 +180,9 @@ public class SqlScriptPlanner {
 
   /** Manages the context of the script that is processed, adjusted for imports */
   private ScriptContext scriptContext;
+
+  /** Notified of the planned statements, tables and queries, e.g. for a language server */
+  @Setter private PlannerListener listener = PlannerListener.NONE;
 
   public SqlScriptPlanner(
       ErrorCollector errorCollector,
@@ -231,57 +240,86 @@ public class SqlScriptPlanner {
       Sqrl2FlinkSQLTranslator sqrlEnv) {
 
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
-    var statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
+    var parsedScript = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
+    sqrlEnv.setListener(listener);
     var statementStack = new ArrayList<StackableStatement>();
+    // Statements that failed to parse are skipped, the rest are still planned to report all errors
+    CollectedException firstError = parsedScript.firstError().orElse(null);
 
-    for (ParsedStatement sourceStmt : statements) {
+    for (ParsedStatement sourceStmt : parsedScript.statements()) {
       var statement = sourceStmt.statement();
       var lineErrors = scriptErrors.atFile(statement.getFileLocation());
       var sqlStatement = statement.get();
 
+      if (failedTables.isContextFailed() || failedTables.isReferencedBy(sourceStmt.source())) {
+        // Its errors would only be knock-on errors of a failed table or USE statement, which is
+        // already reported
+        failedTables.recordSkipped(sqlStatement, sourceStmt.source(), failedTableNamespace());
+        continue;
+      }
+      var failuresBefore = failedTables.size();
+
+      listener.statementStarted(sourceStmt, lineErrors.getLocation());
       try {
-        planStatement(sqlStatement, statementStack, inheritedHints, sqrlEnv, lineErrors);
+        try {
+          planStatement(sqlStatement, statementStack, inheritedHints, sqrlEnv, lineErrors);
+
+        } catch (CollectedException | CancellationException e) {
+          // Already reported, or a listener stopped planning, e.g. for an outdated check
+          throw e;
+
+        } catch (NoLocationStatementParserException e) {
+          FileLocation location;
+          if (sqlStatement instanceof SqrlStatement sqrlStmt) {
+            location = sqrlStmt.getDefaultLocation();
+          } else {
+            location = statement.getFileLocation();
+          }
+
+          throw lineErrors.handle(new StatementParserException(location, e));
+
+        } catch (Throwable e) {
+          // Map errors from the Flink parser/planner by adjusting the line numbers
+          var converted = ParsePosUtil.convertFlinkParserException(e);
+          if (converted.isPresent()) {
+            var msgLocation = converted.get();
+            scriptErrors
+                .atFile(
+                    statement
+                        .getFileLocation()
+                        .add(sqlStatement.mapSqlLocation(msgLocation.location())))
+                .fatal("%s", msgLocation.message());
+          }
+          if (e instanceof ValidationException) {
+            if (e.getCause() != null && e.getCause() != e) {
+              e = e.getCause();
+            }
+          }
+
+          // Print stack trace for unknown exceptions
+          if (e.getMessage() == null
+              || e instanceof IllegalStateException
+              || e instanceof NullPointerException) {
+            e.printStackTrace();
+          }
+          // Use registered error handlers
+          throw lineErrors.handle(e);
+        }
 
       } catch (CollectedException e) {
-        throw e;
-
-      } catch (NoLocationStatementParserException e) {
-        FileLocation location;
-        if (sqlStatement instanceof SqrlStatement sqrlStmt) {
-          location = sqrlStmt.getDefaultLocation();
-        } else {
-          location = statement.getFileLocation();
+        // The error is already in the collector: keep planning the remaining statements so that
+        // all errors are reported, and fail with the first one after the loop
+        failedTables.recordFailure(
+            sqlStatement,
+            sourceStmt.source(),
+            failedTables.size() > failuresBefore,
+            failedTableNamespace());
+        if (firstError == null) {
+          firstError = e;
         }
-
-        throw lineErrors.handle(new StatementParserException(location, e));
-
-      } catch (Throwable e) {
-        // Map errors from the Flink parser/planner by adjusting the line numbers
-        var converted = ParsePosUtil.convertFlinkParserException(e);
-        if (converted.isPresent()) {
-          var msgLocation = converted.get();
-          e.printStackTrace();
-          scriptErrors
-              .atFile(
-                  statement
-                      .getFileLocation()
-                      .add(sqlStatement.mapSqlLocation(msgLocation.location())))
-              .fatal(msgLocation.message());
-        }
-        if (e instanceof ValidationException) {
-          if (e.getCause() != null && e.getCause() != e) {
-            e = e.getCause();
-          }
-        }
-
-        // Print stack trace for unknown exceptions
-        if (e.getMessage() == null
-            || e instanceof IllegalStateException
-            || e instanceof NullPointerException) {
-          e.printStackTrace();
-        }
-        // Use registered error handlers
-        throw lineErrors.handle(e);
+        continue;
+      } finally {
+        listener.statementFinished();
       }
 
       if (!(sqlStatement instanceof SqrlImportStatement)) {
@@ -299,6 +337,10 @@ public class SqlScriptPlanner {
       } else {
         statementStack = new ArrayList<>();
       }
+    }
+
+    if (firstError != null) {
+      throw firstError;
     }
   }
 
@@ -332,7 +374,9 @@ public class SqlScriptPlanner {
               getMutationBuilder(hintsAndDocs),
               scriptContext.mainModuleLoader().getSchemaLoader(),
               hintsAndDocs)
-          .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+          .ifPresent(
+              tableAnalysis ->
+                  addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv, errors.getLocation()));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
       var tablePath = sqrlDef.getPath();
@@ -354,9 +398,10 @@ public class SqlScriptPlanner {
             tblNodeOpt.isPresent() && tblNodeOpt.get() instanceof TableNode,
             "Could not find table [%s] but located the stack",
             tablePath);
-        ((SqrlAddColumnStatement) sqrlDef)
-            .setColumnNames(
-                ((TableNode) tblNodeOpt.get()).getAnalysis().getRowType().getFieldNames());
+        var parentTable = ((TableNode) tblNodeOpt.get()).getAnalysis();
+        ((SqrlAddColumnStatement) sqrlDef).setColumnNames(parentTable.getRowType().getFieldNames());
+        listener.tableReferenced(
+            parentTable.getObjectIdentifier(), sqrlDef.getTableName().map(NamePath::popLast));
       }
 
       var isHidden =
@@ -424,6 +469,8 @@ public class SqlScriptPlanner {
               parentNode.get().getClass());
           identifier = scriptContext.toIdentifier(tablePath.toString());
           parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
+          listener.tableReferenced(
+              parentTbl.getObjectIdentifier(), sqrlDef.getTableName().map(NamePath::popLast));
           checkFatal(
               parentTbl.getOptionalBaseTable().isEmpty(),
               ErrorCode.BASETABLE_ONLY_ERROR,
@@ -520,6 +567,7 @@ public class SqlScriptPlanner {
             "Function or relationship [%s] already exists in catalog",
             tablePath);
         addFunctionToDag(fn, hintsAndDocs);
+        listener.functionDefined(fn, errors.getLocation());
         if (!fn.getVisibility().isAccessOnly()) {
           sqrlEnv.registerSqrlTableFunction(fn);
         }
@@ -532,7 +580,8 @@ public class SqlScriptPlanner {
               hintsAndDocs,
               visibility,
               false,
-              sqrlEnv);
+              sqrlEnv,
+              errors.getLocation());
         }
       }
     } else if (stmt instanceof SqrlNextBatch) {
@@ -556,7 +605,8 @@ public class SqlScriptPlanner {
             hintsAndDocs,
             visibility,
             false,
-            sqrlEnv);
+            sqrlEnv,
+            errors.getLocation());
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv
             .createTable(
@@ -564,7 +614,9 @@ public class SqlScriptPlanner {
                 getMutationBuilder(hintsAndDocs),
                 scriptContext.mainModuleLoader().getSchemaLoader(),
                 hintsAndDocs)
-            .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+            .ifPresent(
+                tableAnalysis ->
+                    addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv, errors.getLocation()));
       } else if (node instanceof RichSqlInsert insert) {
         addInsert(insert, hintsAndDocs, sqrlEnv, errors);
       } else if (node instanceof SqlAlterTable || node instanceof SqlAlterView) {
@@ -733,9 +785,13 @@ public class SqlScriptPlanner {
    *
    * @param tableAnalysis
    * @param sqrlEnv
+   * @param location where the table is defined
    */
   private void addSourceToDag(
-      TableAnalysis tableAnalysis, HintsAndDoc hintsAndDoc, Sqrl2FlinkSQLTranslator sqrlEnv) {
+      TableAnalysis tableAnalysis,
+      HintsAndDoc hintsAndDoc,
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorLocation location) {
     Preconditions.checkArgument(tableAnalysis.getFromTables().size() == 1);
     var source = (TableAnalysis) tableAnalysis.getFromTables().get(0);
     Preconditions.checkArgument(source.isSourceOrSink());
@@ -748,7 +804,7 @@ public class SqlScriptPlanner {
             false,
             true,
             isHidden);
-    addTableToDag(tableAnalysis, hintsAndDoc, visibility, true, sqrlEnv);
+    addTableToDag(tableAnalysis, hintsAndDoc, visibility, true, sqrlEnv, location);
   }
 
   /**
@@ -759,13 +815,15 @@ public class SqlScriptPlanner {
    * @param hintsAndDoc
    * @param visibility
    * @param sqrlEnv
+   * @param location where the table is defined
    */
   private void addTableToDag(
       TableAnalysis tableAnalysis,
       HintsAndDoc hintsAndDoc,
       AccessVisibility visibility,
       boolean isSource,
-      Sqrl2FlinkSQLTranslator sqrlEnv) {
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorLocation location) {
     // Sources must be processed by the stream stage
     var availableStages =
         isSource ? List.of(streamStage) : determineStages(tableStages, hintsAndDoc.hints());
@@ -776,6 +834,7 @@ public class SqlScriptPlanner {
                 ? getSourceSinkStageAnalysis()
                 : getStageAnalysis(tableAnalysis, availableStages));
     dagBuilder.add(tableNode);
+    listener.tableDefined(tableAnalysis, location);
 
     // Figure out if and what type of access function we should add for this table
     var queryByHint = hintsAndDoc.hints().getQueryByHint();
@@ -932,10 +991,11 @@ public class SqlScriptPlanner {
                 getMutationBuilder(importedHintsAndDoc),
                 importedHintsAndDoc);
         importedHintsAndDoc.hints().updateColumnNamesHints(tableAnalysis::getField);
-        addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
+        addSourceToDag(
+            tableAnalysis, importedHintsAndDoc, sqrlEnv, flinkTable.errorCollector().getLocation());
         completeScript.append(tableAnalysis.getOriginalSql());
       } catch (Throwable e) {
-        throw flinkTable.errorCollector.handle(e);
+        throw handleTableError(flinkTable.errorCollector, e);
       }
     } else if (nsObject instanceof FlinkUdfNsObject fnsObject) {
       Preconditions.checkArgument(
@@ -963,17 +1023,49 @@ public class SqlScriptPlanner {
           hintsAndDoc.hints().isEmpty()
               ? Optional.<PlannerHints>empty()
               : Optional.of(hintsAndDoc.hints());
-      planMain(scriptObject.getScript(), hints, sqrlEnv);
-
-      if (priorContext.hasDifferentDatabase(scriptContext)) {
-        // Switch it back
-        var stmts = sqrlEnv.setDatabase(priorContext.databaseName(), true);
-        completeScript.append(stmts);
+      var contextFailed = failedTables.isContextFailed();
+      try {
+        planMain(scriptObject.getScript(), hints, sqrlEnv);
+      } finally {
+        // Restore the context even on errors, since planning continues with the next statement
+        if (!scriptObject.isInline()) {
+          // The script used catalogs and databases of its own, unlike one that is imported inline
+          failedTables.restoreContextFailed(contextFailed);
+        }
+        if (priorContext.hasDifferentDatabase(scriptContext)) {
+          // Switch it back
+          var stmts = sqrlEnv.setDatabase(priorContext.databaseName(), true);
+          completeScript.append(stmts);
+        }
+        scriptContext = priorContext;
       }
-      scriptContext = priorContext;
     } else {
       throw new UnsupportedOperationException("Unexpected object imported: " + nsObject);
     }
+  }
+
+  /** The namespace of the tables of the script that is planned, null for the main script. */
+  private String failedTableNamespace() {
+    return scriptContext.isRootContext() ? null : scriptContext.databaseName();
+  }
+
+  /**
+   * Handles an error for a table that is defined in another file, mapping the position of Flink
+   * errors to the location of the table definition in that file.
+   */
+  private static RuntimeException handleTableError(ErrorCollector errors, Throwable e) {
+    if (e instanceof CollectedException collected) {
+      return collected;
+    }
+    var converted = ParsePosUtil.convertFlinkParserException(e);
+    if (converted.isEmpty()) {
+      return errors.handle(e);
+    }
+    var location = errors.getLocation();
+    var base = location.hasFile() ? location.getFileLocation() : FileLocation.START;
+    return errors
+        .atFile(base.add(converted.get().location()))
+        .exception("%s", converted.get().message());
   }
 
   /** Provides connector settings for CREATE TABLE statements managed by a configured engine. */
@@ -1053,6 +1145,8 @@ public class SqlScriptPlanner {
                         "Could not find table: %s",
                         tablePath.toString()))
             .unwrap(TableNode.class);
+    listener.tableReferenced(
+        inputNode.getAnalysis().getObjectIdentifier(), exportStmt.getTableIdentifier());
 
     // Set a unique id for the exported table
     Function<String, String> tableNameModifier =
@@ -1176,7 +1270,7 @@ public class SqlScriptPlanner {
                 Optional.of(tableId),
                 addTableResult.tableAnalysis().getSourceSinkTable());
       } catch (Throwable e) {
-        throw flinkTable.errorCollector.handle(e);
+        throw handleTableError(flinkTable.errorCollector, e);
       }
       if (exportSchemaRef.get() != null) {
         FlinkTableBuilder tblBuilder = FlinkTableBuilder.toBuilder(addTableResult.createdTable());
@@ -1196,6 +1290,13 @@ public class SqlScriptPlanner {
     var sinkTableId = sqrlEnv.getInsertTarget(insert);
     var sinkTable = sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId);
     errors.checkFatal(sinkTable != null, "Could not find INSERT target table: %s", sinkTableId);
+    var target = (SqlIdentifier) insert.getTargetTableID();
+    var targetPosition = target.getParserPosition();
+    listener.tableReferenced(
+        sinkTable.getObjectIdentifier(),
+        new ParsedObject<>(
+            NamePath.of(target.names.toArray(String[]::new)),
+            new FileLocation(targetPosition.getLineNum(), targetPosition.getColumnNum())));
 
     var inputTable =
         sqrlEnv.analyzeInsertQuery(

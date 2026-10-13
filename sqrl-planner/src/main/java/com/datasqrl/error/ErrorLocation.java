@@ -16,6 +16,7 @@
 package com.datasqrl.error;
 
 import java.io.Serializable;
+import java.util.Optional;
 import lombok.NonNull;
 
 public interface ErrorLocation extends Serializable {
@@ -52,6 +53,11 @@ public interface ErrorLocation extends Serializable {
   ErrorLocation withSourceMap(SourceMap map);
 
   SourceMap getSourceMap();
+
+  /** The absolute path of the file this location refers to, if known. */
+  default Optional<String> getSourcePath() {
+    return Optional.ofNullable(getSourceMap()).map(SourceMap::getSourcePath);
+  }
 
   ErrorLocation append(@NonNull ErrorLocation other);
 
