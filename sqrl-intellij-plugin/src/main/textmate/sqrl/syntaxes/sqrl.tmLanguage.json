@@ -1,0 +1,227 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "SQRL",
+  "scopeName": "source.sqrl",
+  "fileTypes": [
+    "sqrl"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#import"
+    },
+    {
+      "include": "#export"
+    },
+    {
+      "include": "#definition"
+    },
+    {
+      "include": "#expressions"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.documentation.sqrl",
+          "begin": "/\\*\\*(?!/)",
+          "end": "\\*/"
+        },
+        {
+          "name": "meta.hint.sqrl",
+          "begin": "(/\\*\\+)",
+          "end": "(\\*/)",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.hint.begin.sqrl"
+            }
+          },
+          "endCaptures": {
+            "1": {
+              "name": "punctuation.definition.hint.end.sqrl"
+            }
+          },
+          "patterns": [
+            {
+              "begin": "\\(",
+              "end": "\\)",
+              "patterns": [
+                {
+                  "name": "variable.parameter.hint.sqrl",
+                  "match": "[^,)\\s]+"
+                }
+              ]
+            },
+            {
+              "name": "storage.type.annotation.hint.sqrl",
+              "match": "[A-Za-z_]\\w*"
+            }
+          ]
+        },
+        {
+          "name": "comment.block.sqrl",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.double-dash.sqrl",
+          "match": "--.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.single.sqrl",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.sqrl",
+              "match": "''"
+            },
+            {
+              "include": "#template"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.other.backtick.sqrl",
+          "begin": "`",
+          "end": "`"
+        }
+      ]
+    },
+    "template": {
+      "name": "variable.other.template.sqrl",
+      "match": "\\{\\{[^}]*\\}\\}"
+    },
+    "import": {
+      "match": "(?i)^\\s*(import)\\s+((?:[\\w.`*$-]|\\{\\{[^}]*\\}\\})+)(?:\\s+(as)\\s+((?:[A-Za-z_][\\w$]*|`[^`]*`)))?",
+      "captures": {
+        "1": {
+          "name": "keyword.control.import.sqrl"
+        },
+        "2": {
+          "name": "entity.name.namespace.sqrl",
+          "patterns": [
+            {
+              "include": "#template"
+            }
+          ]
+        },
+        "3": {
+          "name": "keyword.control.import.sqrl"
+        },
+        "4": {
+          "name": "entity.name.type.sqrl"
+        }
+      }
+    },
+    "export": {
+      "match": "(?i)^\\s*(export)\\s+((?:[A-Za-z_][\\w$]*|`[^`]*`)(?:\\.(?:[A-Za-z_][\\w$]*|`[^`]*`))*)\\s+(to)\\s+((?:[\\w.`*$-]|\\{\\{[^}]*\\}\\})+)",
+      "captures": {
+        "1": {
+          "name": "keyword.control.export.sqrl"
+        },
+        "2": {
+          "name": "entity.name.type.sqrl"
+        },
+        "3": {
+          "name": "keyword.control.export.sqrl"
+        },
+        "4": {
+          "name": "entity.name.namespace.sqrl",
+          "patterns": [
+            {
+              "include": "#template"
+            }
+          ]
+        }
+      }
+    },
+    "definition": {
+      "patterns": [
+        {
+          "comment": "A table function or relationship, e.g. Orders.items(limit INT) :=",
+          "match": "(?i)^\\s*((?:[A-Za-z_][\\w$]*|`[^`]*`)(?:\\.(?:[A-Za-z_][\\w$]*|`[^`]*`))*)(?=\\s*\\(.*\\)\\s*(?:returns\\b.*)?:=)",
+          "captures": {
+            "1": {
+              "name": "entity.name.function.sqrl"
+            }
+          }
+        },
+        {
+          "comment": "A table or column, e.g. Orders := or Orders.total :=",
+          "match": "^\\s*((?:[A-Za-z_][\\w$]*|`[^`]*`)(?:\\.(?:[A-Za-z_][\\w$]*|`[^`]*`))*)(?=\\s*:=)",
+          "captures": {
+            "1": {
+              "name": "entity.name.type.sqrl"
+            }
+          }
+        }
+      ]
+    },
+    "expressions": {
+      "patterns": [
+        {
+          "include": "#template"
+        },
+        {
+          "name": "keyword.operator.assignment.sqrl",
+          "match": ":="
+        },
+        {
+          "name": "variable.parameter.sqrl",
+          "match": "(?<![\\w:]):[A-Za-z_]\\w*"
+        },
+        {
+          "name": "variable.language.this.sqrl",
+          "match": "\\bthis\\b(?=\\s*\\.)"
+        },
+        {
+          "name": "constant.language.sqrl",
+          "match": "(?i)\\b(?:true|false|null|unknown)\\b"
+        },
+        {
+          "name": "keyword.other.sqrl",
+          "match": "(?i)\\b(?:import|export|subscribe|next_batch|returns|to)\\b"
+        },
+        {
+          "name": "storage.type.sqrl",
+          "match": "(?i)\\b(?:tinyint|smallint|int|integer|bigint|float|double|precision|real|decimal|dec|numeric|boolean|char|character|varchar|string|binary|varbinary|bytes|date|time|timestamp|timestamp_ltz|array|map|multiset|row|raw|variant)\\b"
+        },
+        {
+          "name": "keyword.other.sqrl",
+          "match": "(?i)\\b(?:select|from|where|group|by|having|order|limit|offset|fetch|first|next|rows|only|union|intersect|except|minus|all|distinct|as|on|using|join|inner|left|right|full|outer|cross|natural|lateral|and|or|not|in|is|like|ilike|similar|between|exists|case|when|then|else|end|with|recursive|values|insert|into|overwrite|update|set|delete|create|temporary|table|view|function|catalog|database|if|drop|alter|rename|primary|key|enforced|watermark|for|system_time|of|interval|partition|partitioned|over|window|range|unbounded|preceding|following|current|asc|desc|nulls|last|cast|try_cast|escape|descriptor|unnest|ordinality|match_recognize|measures|pattern|define|within|comment|metadata|virtual|including|excluding|generated|language|show|describe|explain|use|load|module|filter|any|some|at|local|zone|default|unique|constraint|year|month|day|hour|minute|second|week|quarter|millisecond|microsecond)\\b"
+        },
+        {
+          "name": "support.function.sqrl",
+          "match": "\\b[A-Za-z_][\\w$]*(?=\\s*\\()"
+        },
+        {
+          "name": "constant.numeric.sqrl",
+          "match": "(?<![\\w$])(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][-+]?\\d+)?\\b"
+        },
+        {
+          "name": "keyword.operator.sqrl",
+          "match": "<>|!=|<=|>=|\\|\\||[=<>+\\-*/%]"
+        },
+        {
+          "name": "punctuation.terminator.statement.sqrl",
+          "match": ";"
+        },
+        {
+          "name": "punctuation.separator.comma.sqrl",
+          "match": ","
+        }
+      ]
+    }
+  }
+}

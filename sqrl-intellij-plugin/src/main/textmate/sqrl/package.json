@@ -1,0 +1,28 @@
+{
+  "name": "sqrl",
+  "displayName": "SQRL",
+  "description": "Syntax highlighting for DataSQRL scripts",
+  "version": "0.1.0",
+  "contributes": {
+    "languages": [
+      {
+        "id": "sqrl",
+        "aliases": [
+          "SQRL",
+          "sqrl"
+        ],
+        "extensions": [
+          ".sqrl"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "sqrl",
+        "scopeName": "source.sqrl",
+        "path": "./syntaxes/sqrl.tmLanguage.json"
+      }
+    ]
+  }
+}

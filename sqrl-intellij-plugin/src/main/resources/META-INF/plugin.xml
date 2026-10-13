@@ -1,0 +1,62 @@
+<!--
+
+    Copyright © 2021 DataSQRL (contact@datasqrl.com)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<idea-plugin>
+  <id>com.datasqrl</id>
+  <name>DataSQRL</name>
+  <vendor url="https://www.datasqrl.com" email="contact@datasqrl.com">DataSQRL</vendor>
+
+  <description><![CDATA[
+    Support for <a href="https://www.datasqrl.com">DataSQRL</a> scripts (<code>.sqrl</code>), from the
+    SQRL compiler:
+    <ul>
+      <li>errors and warnings as you type, also of package files and GraphQL schemas</li>
+      <li>completion, documentation and validation of package files with their JSON schema</li>
+      <li>syntax highlighting, and the coloring of tables, functions, relationships and columns</li>
+      <li>completion of tables, columns, functions, imports, hints and template variables</li>
+      <li>documentation of tables, columns and functions, the signatures of functions as you type
+        their arguments, and the types of computed columns inline</li>
+      <li>go to definition, go to symbol, find usages, and highlighting of usages</li>
+      <li>renaming of tables, functions and relationships, also in the GraphQL schema</li>
+      <li>quick fixes for common errors</li>
+      <li>running the tests of a project from above its test tables</li>
+      <li>the structure of scripts</li>
+      <li>the choice of the package file of a script, when several name it as their main script, in
+        the DataSQRL item of the language services in the status bar</li>
+    </ul>
+    The compiler runs in the Docker image of the DataSQRL CLI, or from its jar, which can be set in
+    Settings | Languages &amp; Frameworks | DataSQRL.
+  ]]></description>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.lsp</depends>
+  <depends>org.jetbrains.plugins.textmate</depends>
+  <depends>com.intellij.modules.json</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.lsp.integrationProvider implementation="com.datasqrl.intellij.SqrlLspIntegrationProvider"/>
+    <textmate.bundleProvider implementation="com.datasqrl.intellij.SqrlTextMateBundleProvider"/>
+    <applicationConfigurable parentId="language"
+                             id="com.datasqrl.settings"
+                             displayName="DataSQRL"
+                             instance="com.datasqrl.intellij.SqrlConfigurable"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="com.datasqrl.intellij.SqrlPackageSchemaProviderFactory"/>
+  </extensions>
+</idea-plugin>
