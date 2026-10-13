@@ -65,6 +65,26 @@ class SqrlStatementParserTest {
   }
 
   @Test
+  void givenDefinitionsMissingDelimiter_whenParseCreateTables_thenTablesAreParsed() {
+    var script =
+        """
+        CREATE TABLE Orders (id INT) WITH ('connector' = 'datagen');
+        A := SELECT 1
+        B := SELECT 2;
+        """;
+    var errors = ErrorCollector.root();
+
+    var tables = parser.parseCreateTables(script, errors);
+
+    assertThat(tables)
+        .singleElement()
+        .satisfies(
+            table ->
+                assertThat(table.statement().get()).isInstanceOf(SqrlCreateTableStatement.class));
+    assertThat(errors.hasErrors()).isFalse();
+  }
+
+  @Test
   void givenDefinitionThatFailsToParse_whenParseScript_thenItsSourceIsKept() {
     var script =
         """
