@@ -563,9 +563,9 @@ DataSQRL creates the database indexes for the tables that the API queries. The d
 
 The compiler (automatic index selection) picks the indexes from the filters of `WHERE` clauses (in table functions, relationships and `query_by_*` arguments), from `JOIN ... ON` conditions, and from the first `ORDER BY` column of a query with a `LIMIT`.
 
-Note: the compiler does not look inside a subquery in a `WHERE` clause, such as `EXISTS (...)` or `IN (SELECT ...)`. Add an `index` hint to the table that the subquery reads. Put the columns that the subquery compares with a parameter first, then the columns that it compares with the outer query.
+Note: the compiler does not pick indexes for the filters inside a subquery in a `WHERE` clause, such as `EXISTS (...)` or `IN (SELECT ...)`. Check the compiled plan (see Checking the indexes). If the table that the subquery reads is large and has no index for the subquery's filter, add an `index` hint. The hint replaces the automatic selection for that table, so also list the indexes that its other served queries need. Put the columns that the subquery compares with a parameter first, then the columns that it compares with the outer query.
 
-Example: the API returns the orders of all customers who own a given account. The subquery filters `AccountOwners` on `account_id` (compared with the parameter) and on `customer_id` (compared with the outer query), so the hint indexes these two columns in that order:
+Example: the API returns the orders of all customers who own a given account. `AccountOwners` is large, and the compiled plan has no index for the subquery's filter. The subquery filters `AccountOwners` on `account_id` (compared with the parameter) and on `customer_id` (compared with the outer query), so the hint indexes these two columns in that order:
 
 ```sql
 /*+index(BTREE, account_id, customer_id) */
