@@ -42,14 +42,8 @@ jobs:
         with:
           submodules: false
 
-      - name: Init submodules and sparse checkout
-        run: |
-          git submodule update --init --depth 1
-          cd documentation/docs/stdlib-docs
-          git sparse-checkout init --cone
-          git sparse-checkout set stdlib-docs
-          git checkout main
-          git pull --ff-only origin main
+      - name: Checkout stdlib-docs at the Flink SQL Runner version
+        run: documentation/scripts/checkout-stdlib-docs.sh
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
