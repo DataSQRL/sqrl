@@ -14,7 +14,34 @@ The SQRL language server brings the DataSQRL compiler into your editor. It is th
 - The outline of a script
 - Code lenses above test tables that run the tests of the project
 
-## Setting Up an Editor
+## IntelliJ IDEA
+
+The DataSQRL plugin for IntelliJ IDEA 2026.1 and later starts the language server for the files of DataSQRL projects, and adds:
+- Syntax highlighting of scripts
+- Completion, documentation, and validation of package files with their JSON schema
+- Running the tests of a project from the code lenses above its test tables, in the Run tool window
+- The choice of the package files of a script, when several name it as their main script, in the DataSQRL item of the language services in the status bar
+
+### Installation
+
+Build the plugin in the `sqrl-intellij-plugin` directory of the [DataSQRL repository](https://github.com/DataSQRL/sqrl), which needs JDK 21.
+Pass the version of DataSQRL that you use, so that the plugin starts the Docker image of that version by default:
+
+```bash
+./gradlew buildPlugin -PsqrlVersion=<version>
+```
+
+Then install `build/distributions/sqrl-intellij-plugin-<version>.zip` with **Settings | Plugins | ⚙ | Install Plugin from Disk…**.
+
+### Configuration
+
+In **Settings | Languages & Frameworks | DataSQRL**, choose how the plugin starts the language server:
+- **Docker image of the CLI**, the default, which needs Docker. The image defaults to the version of DataSQRL that the plugin was built for.
+- **Jar of the CLI**, see [From the Jar](#from-the-jar). The Java executable defaults to the one of `JAVA_HOME`, else the runtime of the IDE, which may be too new for the CLI. On Windows, the plugin starts the language server only from the jar.
+
+Tests always run in the Docker image, which has the services that tests need, e.g. Kafka and Postgres. With the jar setting, the image runs the configured jar.
+
+## Other Editors
 
 Configure your editor to start the language server for the files of DataSQRL projects:
 - SQRL scripts (`.sqrl`), with the language ID `sqrl`
