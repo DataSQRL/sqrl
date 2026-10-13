@@ -69,14 +69,14 @@ mvn -P dev initialize
 
 ### Docker Commands
 ```bash
-# Build DataSQRL CLI Docker image
-docker build -t datasqrl/datasqrl-cmd .
+# Build DataSQRL CLI Docker image (requires the shaded sqrl-cli/target/sqrl-cli.jar from `mvn package`)
+docker build --build-arg IMG_REPO=ghcr.io/datasqrl -t datasqrl/cmd sqrl-cli
 
 # Run example pipeline
-docker run -it --rm -p 8888:8888 -p 8081:8081 -p 9092:9092 -v $PWD:/build datasqrl/cmd:latest run example.sqrl
+docker run -it --rm -p 8888:8888 -p 8081:8081 -p 9092:9092 -v "$PWD":/workspace datasqrl/cmd:latest run package.json
 
 # Compile SQRL to deployment artifacts
-docker run --rm -v $PWD:/build datasqrl/cmd:latest compile example.sqrl
+docker run --rm -v "$PWD":/workspace datasqrl/cmd:latest compile package.json
 ```
 
 ## Module Overview
