@@ -17,6 +17,7 @@ executors:
       image: ubuntu-2404:current
       resource_class: large
     environment:
+      # Deliberately non-UTC, to surface time zone handling bugs
       TZ: America/Los_Angeles
 
 commands:
