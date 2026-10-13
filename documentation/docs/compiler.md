@@ -34,6 +34,8 @@ Commands:
               environment.
   exec      Executes an already compiled SQRL script using its existing build
               artifacts.
+  lsp       Runs the SQRL language server for editors, communicating over stdin
+              and stdout.
 ```
 
 :::warning
@@ -420,3 +422,14 @@ cd my-project
 
 docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd exec
 ```
+
+## LSP Command
+
+The `lsp` command runs the SQRL language server, which brings the compiler into your editor: errors as you type, completion, documentation, go to definition, renaming, and more.
+Editors start it and communicate with it over stdin and stdout with the Language Server Protocol, so you don't run it yourself.
+
+```bash
+docker run --interactive --rm --tmpfs /workspace -v $PWD:$PWD datasqrl/cmd lsp
+```
+
+See [Editor Support](editors) for what the language server does and how to set up your editor.

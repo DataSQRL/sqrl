@@ -155,6 +155,7 @@
     <kafka.version>3.9.1</kafka.version>
     <log4j.version>2.26.1</log4j.version>
     <lombok.version>1.18.48</lombok.version>
+    <lsp4j.version>1.0.0</lsp4j.version>
     <mcp-sdk.version>2.0.1</mcp-sdk.version>
     <micrometer.version>1.17.1</micrometer.version>
     <mockito.version>4.8.0</mockito.version>
@@ -361,6 +362,11 @@
         <groupId>info.picocli</groupId>
         <artifactId>picocli</artifactId>
         <version>${picocli.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.eclipse.lsp4j</groupId>
+        <artifactId>org.eclipse.lsp4j</artifactId>
+        <version>${lsp4j.version}</version>
       </dependency>
       <dependency>
         <groupId>com.esotericsoftware.kryo</groupId>
