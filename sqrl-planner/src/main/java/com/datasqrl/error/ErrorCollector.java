@@ -119,7 +119,10 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
   }
 
   public ErrorCollector withScript(Optional<Path> file, String scriptContent) {
-    return withScript(file.map(p -> p.getFileName().toString()).orElse("undefined"), scriptContent);
+    var filename = file.map(p -> p.getFileName().toString()).orElse("undefined");
+    var sourcePath = file.map(p -> p.toAbsolutePath().normalize().toString()).orElse(null);
+    return withLocation(ErrorPrefix.SCRIPT.resolve(filename))
+        .withSource(new SourceMapImpl(scriptContent, sourcePath));
   }
 
   public ErrorCollector withScript(String filename, String scriptContent) {

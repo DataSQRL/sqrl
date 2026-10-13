@@ -76,6 +76,11 @@ public class SqrlDistinctStatement extends SqrlDefinition {
     this.remaining = remaining;
   }
 
+  /** The name of the table that is deduplicated, with its location in the statement. */
+  public ParsedObject<NamePath> getFrom() {
+    return from;
+  }
+
   /**
    * Maps locations in the rewritten SQL back to the ON columns or the ORDER BY clause of the
    * original statement, and all other locations to the FROM table.

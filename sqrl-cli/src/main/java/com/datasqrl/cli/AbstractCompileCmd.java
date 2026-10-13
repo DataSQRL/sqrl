@@ -19,8 +19,8 @@ import static com.datasqrl.config.SqrlConstants.PACKAGE_JSON;
 
 import com.datasqrl.cli.output.OutputFormatter;
 import com.datasqrl.compile.CompilationProcess;
+import com.datasqrl.compile.CompilerContexts;
 import com.datasqrl.compile.TestPlan;
-import com.datasqrl.config.ExecutionEnginesHolder;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engine.PhysicalPlan;
@@ -31,7 +31,6 @@ import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.DirectoryUtils;
 import com.datasqrl.util.FlinkCompileException;
-import com.datasqrl.util.SqrlInjector;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
@@ -40,7 +39,6 @@ import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 @Slf4j
 public abstract class AbstractCompileCmd extends BasePackageConfCmd {
@@ -89,21 +87,11 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
     var sqrlConfig = initPackageJson(errors);
     DirectoryUtils.prepareTargetDirectory(getTargetDir());
 
-    try (var springCtx = new AnnotationConfigApplicationContext()) {
-      springCtx.registerBean(ErrorCollector.class, () -> errors);
-      springCtx.registerBean("workspaceDir", Path.class, () -> cli.workspaceDir);
-      springCtx.registerBean("projectRoot", Path.class, this::getProjectRoot);
-      springCtx.registerBean("buildBaseDir", Path.class, this::getBuildBaseDir);
-      springCtx.registerBean("buildDir", Path.class, this::getBuildDir);
-      springCtx.registerBean("targetDir", Path.class, this::getTargetDir);
-      springCtx.registerBean(PackageJson.class, () -> sqrlConfig);
-      springCtx.registerBean(ExecutionGoal.class, this::getGoal);
-      springCtx.registerBean("internalTestExec", Boolean.class, () -> cli.internalTestExec);
-      springCtx.register(SqrlInjector.class);
-      springCtx.refresh();
-
-      var engineHolder = springCtx.getBean(ExecutionEnginesHolder.class);
-      engineHolder.initEnabledEngines();
+    var dirs =
+        new CompilerContexts.Directories(
+            cli.workspaceDir, getProjectRoot(), getBuildBaseDir(), getBuildDir(), getTargetDir());
+    try (var springCtx =
+        CompilerContexts.create(errors, dirs, sqrlConfig, getGoal(), cli.internalTestExec)) {
 
       if (getGoal() == ExecutionGoal.COMPILE) {
         formatter.phaseStart("Processing dependencies");

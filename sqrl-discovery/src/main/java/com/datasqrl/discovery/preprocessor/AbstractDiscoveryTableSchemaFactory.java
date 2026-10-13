@@ -29,6 +29,10 @@ import com.datasqrl.io.schema.flexible.input.SchemaAdjustmentSettings;
 import com.datasqrl.util.FileCompression;
 import com.datasqrl.util.FilenameAnalyzer;
 import com.datasqrl.util.ServiceLoaderDiscovery;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.hash.Hashing;
+import com.google.common.io.MoreFiles;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -45,6 +49,10 @@ public abstract class AbstractDiscoveryTableSchemaFactory implements TableSchema
   // fixme: @Ferenc, this and the UDF path should be in a central static variable so they are
   // defined once and used everywhere
   public static final String DATA_PATH = "DATA_PATH";
+
+  /** Record statistics by reader, compression and file content hash. */
+  private static final Cache<String, Optional<SourceTableStatistics>> STATISTICS_CACHE =
+      CacheBuilder.newBuilder().maximumSize(64).build();
 
   @Override
   public SchemaConversionResult convert(
@@ -71,22 +79,13 @@ public abstract class AbstractDiscoveryTableSchemaFactory implements TableSchema
         fileComponents.compression());
 
     // 2. Compute table statistics from file records
-    Optional<SourceTableStatistics> statistics;
-    try (var io = compressionOpt.get().decompress(new FileInputStream(location.toFile()))) {
-      var dataflow = readerOpt.get().read(io);
-      statistics =
-          dataflow
-              .flatMap(this::getTableStatistics)
-              .reduce(
-                  (base, add) -> {
-                    base.merge(add);
-                    return base;
-                  });
-
-    } catch (IOException e) {
-      throw localErrors.exception(
-          "Could not infer schema of file [%s] due to IO error: %s", location, e);
-    }
+    var statistics =
+        computeStatistics(
+            location,
+            fileComponents.compression(),
+            compressionOpt.get(),
+            readerOpt.get(),
+            localErrors);
     localErrors.checkFatal(
         statistics.isPresent() && statistics.get().getCount() > 0,
         "Could not infer schema for data file [%s] because it contained no valid records",
@@ -106,6 +105,55 @@ public abstract class AbstractDiscoveryTableSchemaFactory implements TableSchema
     options.put("path", "${" + DATA_PATH + "}/" + location.getFileName().toString());
 
     return new SchemaConversionResult(rowType, options);
+  }
+
+  /**
+   * Computes the statistics of all records in the file. Since that reads the whole file, the
+   * statistics are cached by file content for compilers that run repeatedly in the same JVM (e.g. a
+   * language server). The schema is still generated from them on every call, so its warnings are
+   * reported every time.
+   */
+  private Optional<SourceTableStatistics> computeStatistics(
+      Path location,
+      String compressionName,
+      FileCompression.CompressionIO compression,
+      RecordReader reader,
+      ErrorCollector errors) {
+    String key;
+    try {
+      key =
+          reader.getClass().getName()
+              + '|'
+              + compressionName
+              + '|'
+              + MoreFiles.asByteSource(location).hash(Hashing.murmur3_128());
+    } catch (IOException e) {
+      throw errors.exception(
+          "Could not infer schema of file [%s] due to IO error: %s", location, e);
+    }
+    var cached = STATISTICS_CACHE.getIfPresent(key);
+    if (cached != null) {
+      return cached;
+    }
+
+    Optional<SourceTableStatistics> statistics;
+    try (var io = compression.decompress(new FileInputStream(location.toFile()))) {
+      var dataflow = reader.read(io);
+      statistics =
+          dataflow
+              .flatMap(this::getTableStatistics)
+              .reduce(
+                  (base, add) -> {
+                    base.merge(add);
+                    return base;
+                  });
+
+    } catch (IOException e) {
+      throw errors.exception(
+          "Could not infer schema of file [%s] due to IO error: %s", location, e);
+    }
+    STATISTICS_CACHE.put(key, statistics);
+    return statistics;
   }
 
   private Stream<SourceTableStatistics> getTableStatistics(Map<String, Object> data) {
