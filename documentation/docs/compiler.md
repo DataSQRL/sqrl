@@ -210,6 +210,16 @@ Upon successful compilation, the compiler writes:
 
 See [Compilation Output](compilation-output) to learn more about the files the compiler produces and how to use them to validate a pipeline or learn how to [deploy those files](deployment).
 
+### Errors
+
+The compiler reports all errors of a script in one run, each with its position, so you can fix them together. Compilation fails if there is any error.
+
+To avoid knock-on errors, the compiler does not report the errors that only follow from a failed statement:
+- If a table, column or function is not found because its definition failed, that error is not reported. The other errors of the statement are still reported.
+- If the package of an `IMPORT package.*` cannot be loaded, no table or function is reported as not found, since the compiler cannot tell which ones the package has. If only some of its tables fail, the others are still imported.
+- A statement that adds a column to, exports or inserts into a table whose definition failed is skipped.
+- After a `USE` statement fails, the rest of the script is skipped, since it would run in another catalog or database.
+
 ## Run Command
 
 The `run` command compiles and runs the generated data pipeline in Docker.

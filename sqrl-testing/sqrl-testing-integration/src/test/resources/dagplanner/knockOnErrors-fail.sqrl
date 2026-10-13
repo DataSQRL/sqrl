@@ -1,0 +1,40 @@
+IMPORT ecommerceTs.orders;
+-- Fails because of the typo
+IMPORT ecomerceTs.customer;
+IMPORT knockOnErrors.sources;
+-- Alerts fails, but Payments is still imported
+IMPORT knockOnStar.*;
+
+-- The knock-on errors of the failed import are not reported, also of a statement that uses one
+-- that failed because of it
+CustomerOrders := SELECT o.id, c.name FROM Orders o JOIN Customer c ON o.customerid = c.customerid;
+CustomerOrderCount := SELECT name, COUNT(*) AS num FROM CustomerOrders GROUP BY name;
+
+-- A column that is named like the failed import is not confused with it, so its error is reported
+OrderCustomers := SELECT customerid AS customer, missing_column FROM Orders;
+
+-- The knock-on errors of a column that failed are not reported, and the next column still
+-- directly follows its table
+OrderTotals := SELECT id, customerid FROM Orders;
+OrderTotals.total := id * missing_factor;
+OrderTotals.half := id / 2;
+BigOrders := SELECT * FROM OrderTotals WHERE total > 10;
+
+-- A column must directly follow its table, also if a statement in between failed
+OrderIdList := SELECT id FROM Orders;
+FailedInBetween := SELECT missing_between FROM Orders;
+OrderIdList.doubled := id * 2;
+
+-- The knock-on errors of a table that failed to parse are not reported
+OrderIds := DISTINCT Orders ON id;
+OrderIdCount := SELECT COUNT(*) AS num FROM OrderIds;
+
+-- The knock-on errors of a table of an imported script that failed are not reported
+ImportedNames := SELECT * FROM sources.CustomerNames;
+
+-- Only the knock-on errors of the table of the package that failed are not reported
+AlertCount := SELECT COUNT(*) AS num FROM Alerts;
+PaymentAmounts := SELECT id, missing_amount FROM Payments;
+
+-- The other errors are reported
+MistypedOrders := SELECT * FROM Ordrs;
