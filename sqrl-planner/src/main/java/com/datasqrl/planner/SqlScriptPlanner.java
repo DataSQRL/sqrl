@@ -260,13 +260,12 @@ public class SqlScriptPlanner {
         var converted = ParsePosUtil.convertFlinkParserException(e);
         if (converted.isPresent()) {
           var msgLocation = converted.get();
-          e.printStackTrace();
           scriptErrors
               .atFile(
                   statement
                       .getFileLocation()
                       .add(sqlStatement.mapSqlLocation(msgLocation.location())))
-              .fatal(msgLocation.message());
+              .fatal("%s", msgLocation.message());
         }
         if (e instanceof ValidationException) {
           if (e.getCause() != null && e.getCause() != e) {
@@ -935,7 +934,7 @@ public class SqlScriptPlanner {
         addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());
       } catch (Throwable e) {
-        throw flinkTable.errorCollector.handle(e);
+        throw handleTableError(flinkTable.errorCollector, e);
       }
     } else if (nsObject instanceof FlinkUdfNsObject fnsObject) {
       Preconditions.checkArgument(
@@ -974,6 +973,25 @@ public class SqlScriptPlanner {
     } else {
       throw new UnsupportedOperationException("Unexpected object imported: " + nsObject);
     }
+  }
+
+  /**
+   * Handles an error for a table that is defined in another file, mapping the position of Flink
+   * errors to the location of the table definition in that file.
+   */
+  private static RuntimeException handleTableError(ErrorCollector errors, Throwable e) {
+    if (e instanceof CollectedException collected) {
+      return collected;
+    }
+    var converted = ParsePosUtil.convertFlinkParserException(e);
+    if (converted.isEmpty()) {
+      return errors.handle(e);
+    }
+    var location = errors.getLocation();
+    var base = location.hasFile() ? location.getFileLocation() : FileLocation.START;
+    return errors
+        .atFile(base.add(converted.get().location()))
+        .exception("%s", converted.get().message());
   }
 
   /** Provides connector settings for CREATE TABLE statements managed by a configured engine. */
@@ -1176,7 +1194,7 @@ public class SqlScriptPlanner {
                 Optional.of(tableId),
                 addTableResult.tableAnalysis().getSourceSinkTable());
       } catch (Throwable e) {
-        throw flinkTable.errorCollector.handle(e);
+        throw handleTableError(flinkTable.errorCollector, e);
       }
       if (exportSchemaRef.get() != null) {
         FlinkTableBuilder tblBuilder = FlinkTableBuilder.toBuilder(addTableResult.createdTable());

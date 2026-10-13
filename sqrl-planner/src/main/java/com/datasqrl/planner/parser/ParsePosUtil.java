@@ -22,6 +22,7 @@ import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.flink.sql.parser.error.SqlValidateException;
+import org.apache.flink.table.api.ValidationException;
 
 /**
  * Utility for mapping Flink/Calcite parser and planner errors to DataSQRL errors. This means
@@ -56,8 +57,26 @@ public class ParsePosUtil {
       var message = removeLineNumbersFromMessage(calciteException.getMessage());
       return Optional.of(new MessageLocation(location, message));
     }
+    // Some Flink validation errors (e.g. for CREATE TABLE) only have the position in the message
+    for (var cause = e;
+        cause != null;
+        cause = cause.getCause() == cause ? null : cause.getCause()) {
+      if (cause instanceof ValidationException && cause.getMessage() != null) {
+        var matcher = LINE_COLUMN.matcher(cause.getMessage());
+        if (matcher.find() && Integer.parseInt(matcher.group(1)) > 0) {
+          var location =
+              new FileLocation(
+                  Integer.parseInt(matcher.group(1)), Integer.parseInt(matcher.group(2)));
+          var message = removeLineNumbersFromMessage(cause.getMessage()).trim();
+          return Optional.of(new MessageLocation(location, message));
+        }
+      }
+    }
     return Optional.empty();
   }
+
+  private static final Pattern LINE_COLUMN =
+      Pattern.compile("\\bline (\\d+), column (\\d+)", Pattern.CASE_INSENSITIVE);
 
   private static final Pattern LINE_NUM_AT =
       Pattern.compile("at line \\d*, column \\d*[:\\s]?", Pattern.CASE_INSENSITIVE);
