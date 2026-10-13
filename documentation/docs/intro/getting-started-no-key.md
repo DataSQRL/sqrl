@@ -30,6 +30,7 @@ Create a new data project with the `init` command in an empty folder:
 
 ```bash
 docker run --rm -v $PWD:/workspace datasqrl/cmd init api messenger
+cd messenger
 ```
 (Use `${PWD}` in Powershell on Windows)
 

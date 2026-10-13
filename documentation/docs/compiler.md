@@ -68,12 +68,10 @@ Initializes an empty SQRL project.
 ### Example
 
 ```bash
-mkdir my-project
-
-docker run --rm -v $PWD/my-project:/workspace datasqrl/cmd init stream my-project
+docker run --rm -v $PWD:/workspace datasqrl/cmd init stream my-project
 ```
 
-This creates a new streaming project named `my-project` with the default configuration and directory structure.
+This creates a new streaming project in the `my-project` subdirectory of the mounted directory, with the `my-project.sqrl` script, `my-project-prod-package.json` and `my-project-test-package.json` package configurations, source definitions and test data in `connectors/`, and an initial test snapshot in `snapshots/`.
 
 ## Add-Func Command
 

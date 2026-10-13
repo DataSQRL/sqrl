@@ -40,7 +40,7 @@ function generateLibraryFunctionRow(func, categoryName) {
     const description = func.description || '';
     const identifier = func.identifier || '';
     const requirement = func.requirement || '';
-    const importStatement = `IMPORT ${categoryName}.${identifier};`;
+    const importStatement = `IMPORT stdlib.${categoryName}.${identifier};`;
     
     return `| \`${name}\` | ${description} | \`${importStatement}\` | ${requirement} |`;
 }
