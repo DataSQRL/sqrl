@@ -18,6 +18,7 @@ package com.datasqrl.util;
 import static com.datasqrl.packager.preprocess.JBangPreprocessor.JBANG_FILE_SHA256;
 
 import com.datasqrl.packager.preprocess.JBangPreprocessor.JBangFileInfo;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -38,6 +39,8 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
+import org.apache.commons.exec.PumpStreamHandler;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 @Slf4j
@@ -80,9 +83,21 @@ public class JBangRunner {
 
     cmdLine.addArgument(jBangFiles.getFirst().file().toString());
 
+    // Capture JBang output (incl. javac errors), so it can be surfaced on failure
+    var output = new ByteArrayOutputStream();
     var executor = DefaultExecutor.builder().get();
     executor.setExitValue(0);
-    executor.execute(cmdLine);
+    executor.setStreamHandler(new PumpStreamHandler(output));
+    try {
+      executor.execute(cmdLine);
+    } catch (ExecuteException e) {
+      throw new ExecuteException(
+          "JBang export failed with exit code %d:%n%s"
+              .formatted(e.getExitValue(), output.toString(StandardCharsets.UTF_8).strip()),
+          e.getExitValue(),
+          e);
+    }
+    log.debug("JBang export output:\n{}", output.toString(StandardCharsets.UTF_8));
 
     try {
       rebuildFatJar(targetFile, List.copyOf(jBangFiles));

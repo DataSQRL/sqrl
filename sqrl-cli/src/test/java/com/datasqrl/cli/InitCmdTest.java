@@ -119,4 +119,37 @@ class InitCmdTest {
         break;
     }
   }
+
+  @ParameterizedTest
+  @EnumSource(ProjectType.class)
+  void givenProjectType_whenInitProject_thenCreatesTypeSpecificProdSourcesAndScript(
+      ProjectType type) throws IOException {
+    // Given
+    initCmd.projectType = type;
+
+    // When
+    initCmd.initProject(() -> tempDir);
+
+    // Then
+    var prodSources = Files.readString(tempDir.resolve("connectors").resolve("sources-prod.sqrl"));
+    var script = Files.readString(tempDir.resolve(PROJECT_NAME + ".sqrl"));
+
+    assertThat(prodSources).contains("CREATE TABLE Messages");
+    assertThat(script).contains("IMPORT connectors.sources-{{source-type}}.*;");
+
+    switch (type) {
+      case STREAM:
+        assertThat(prodSources).startsWith("/*+ engine(kafka) */");
+        assertThat(script).contains("EXPORT HelloWorld TO log.HelloWorld;");
+        break;
+      case DATASET:
+        assertThat(prodSources).contains("'connector' = 'iceberg'");
+        assertThat(script).doesNotContain("EXPORT");
+        break;
+      case API:
+        assertThat(prodSources).startsWith("/*+ engine(kafka) */");
+        assertThat(script).doesNotContain("EXPORT");
+        break;
+    }
+  }
 }

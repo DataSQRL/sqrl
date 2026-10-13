@@ -101,12 +101,12 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
       createUdfManifests(allClassNames, JBANG_JAR_NAME, ctx);
 
     } catch (ExecuteException e) {
-      log.warn("JBang export failed with exit code: {}", e.getExitValue());
-      return;
+      throw errorCollector.exception(
+          "Failed to build JBang UDF(s) %s. %s", allClassNames, e.getMessage());
 
     } catch (IOException e) {
-      log.warn("Failed to execute JBang export", e);
-      return;
+      throw errorCollector.exception(
+          "Failed to execute JBang export for UDF(s) %s: %s", allClassNames, e.getMessage());
     }
 
     try {
