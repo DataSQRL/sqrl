@@ -20,6 +20,7 @@ import com.google.common.base.CharMatcher;
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -46,12 +47,45 @@ public final class SqlScriptStatementSplitter {
   private static final char NO_QUOTE = '\0';
 
   /**
+   * A line starting a SQRL definition (e.g. {@code Name :=} or {@code Name(arg INT) :=}). Outside
+   * of parentheses, {@code :=} is not valid SQL, so such a line starts a new statement. Inside
+   * them, it can be a named argument of a function in the SQL of a database, e.g. {@code p_id :=
+   * :id}.
+   */
+  private static final Pattern DEFINITION_START =
+      Pattern.compile(
+          "^\\s*[\\w`][\\w.`*-]*\\s*(\\(.*\\))?\\s*(RETURNS\\s*\\(.*\\)\\s*)?:=",
+          Pattern.CASE_INSENSITIVE);
+
+  /**
+   * A statement that is missing its terminating {@code ;}.
+   *
+   * @param statementStart the location of the statement in the script
+   * @param delimiterLocation the location where the {@code ;} is missing
+   */
+  public record MissingDelimiter(FileLocation statementStart, FileLocation delimiterLocation) {}
+
+  /**
    * Parses SQL statements from a script.
    *
    * @param script The SQL script content.
    * @return A list of individual SQL statements.
    */
   public static List<ParsedObject<String>> splitStatements(String script) {
+    return splitStatements(script, new ArrayList<>());
+  }
+
+  /**
+   * Parses SQL statements from a script. A statement that is not terminated by {@code ;} before the
+   * next SQRL definition starts is split off as a separate statement and reported in {@code
+   * missingDelimiters}, so that a single missing {@code ;} does not merge two statements.
+   *
+   * @param script The SQL script content.
+   * @param missingDelimiters Collects the statements that are missing their {@code ;}.
+   * @return A list of individual SQL statements.
+   */
+  public static List<ParsedObject<String>> splitStatements(
+      String script, List<MissingDelimiter> missingDelimiters) {
     if (script.isBlank()) {
       throw new StatementParserException("Script is empty");
     }
@@ -67,11 +101,46 @@ public final class SqlScriptStatementSplitter {
     var inPreservedBlockComment = false;
     var statementTerminated = false;
     var statementContainsSql = false;
+    // Where the last line with SQL of the current statement ends
+    FileLocation sqlEnd = null;
+    // Comment-only lines at the end of the current statement (e.g. hints) belong to the next
+    // statement if the current one is split off
+    var trailingCommentStart = -1;
+    var trailingCommentLineNo = 0;
+    // The parentheses that are open in the current statement, outside of quotes and comments
+    var parenthesesDepth = 0;
     for (var line : formatted.split(LINE_DELIMITER)) {
       lineNo++;
 
+      var lineStartsOutsideQuoteOrComment = openQuote == NO_QUOTE && !inPreservedBlockComment;
       var parsedLine = parseLine(line, openQuote, inPreservedBlockComment);
       var rawLine = parsedLine.line();
+
+      if (current != null
+          && statementContainsSql
+          && lineStartsOutsideQuoteOrComment
+          && parenthesesDepth <= 0
+          && DEFINITION_START.matcher(rawLine).find()) {
+        var splitAt = trailingCommentStart >= 0 ? trailingCommentStart : current.length();
+        var nextStatement = current.substring(splitAt);
+        current.setLength(splitAt);
+        var statementStart = new FileLocation(statementLineNo, 1);
+        statements.add(
+            new ParsedObject<>(
+                addStatementDelimiter(CharMatcher.whitespace().trimTrailingFrom(current))
+                    + LINE_DELIMITER,
+                statementStart));
+        missingDelimiters.add(new MissingDelimiter(statementStart, sqlEnd));
+
+        current = nextStatement.isEmpty() ? null : new StringBuilder(nextStatement);
+        statementLineNo = trailingCommentLineNo;
+        statementTerminated = false;
+        statementContainsSql = false;
+        trailingCommentStart = -1;
+        parenthesesDepth = 0;
+      }
+
+      parenthesesDepth += parsedLine.parenthesesDelta();
       openQuote = parsedLine.openQuote();
       inPreservedBlockComment = parsedLine.inPreservedBlockComment();
       statementTerminated |= parsedLine.endsWithStatementDelimiter();
@@ -88,6 +157,16 @@ public final class SqlScriptStatementSplitter {
         current = new StringBuilder();
       }
 
+      if (parsedLine.containsSql()) {
+        sqlEnd =
+            new FileLocation(
+                lineNo, CharMatcher.whitespace().trimTrailingFrom(rawLine).length() + 1);
+        trailingCommentStart = -1;
+      } else if (trailingCommentStart < 0 && statementContainsSql) {
+        trailingCommentStart = current.length();
+        trailingCommentLineNo = lineNo;
+      }
+
       current.append(rawLine);
       current.append(LINE_DELIMITER);
 
@@ -98,6 +177,8 @@ public final class SqlScriptStatementSplitter {
         current = null;
         statementTerminated = false;
         statementContainsSql = false;
+        trailingCommentStart = -1;
+        parenthesesDepth = 0;
       }
     }
 
@@ -176,6 +257,7 @@ public final class SqlScriptStatementSplitter {
       String line, char openQuote, boolean inPreservedBlockComment) {
     var parsed = new StringBuilder();
     var lastSignificantCharacter = '\0';
+    var parenthesesDelta = 0;
 
     for (var i = 0; i < line.length(); i++) {
       if (inPreservedBlockComment) {
@@ -214,6 +296,10 @@ public final class SqlScriptStatementSplitter {
       parsed.append(ch);
       if (ch == SINGLE_QUOTE || ch == BACKTICK || ch == DOUBLE_QUOTE) {
         openQuote = ch;
+      } else if (ch == '(') {
+        parenthesesDelta++;
+      } else if (ch == ')') {
+        parenthesesDelta--;
       }
       if (!Character.isWhitespace(ch)) {
         lastSignificantCharacter = ch;
@@ -225,7 +311,8 @@ public final class SqlScriptStatementSplitter {
         openQuote,
         inPreservedBlockComment,
         lastSignificantCharacter == STATEMENT_DELIMITER.charAt(0),
-        lastSignificantCharacter != '\0');
+        lastSignificantCharacter != '\0',
+        parenthesesDelta);
   }
 
   private static boolean startsLineComment(String line, int pos) {
@@ -240,10 +327,17 @@ public final class SqlScriptStatementSplitter {
     return line.charAt(pos) == '*' && pos + 1 < line.length() && line.charAt(pos + 1) == '/';
   }
 
+  /**
+   * A line without its line comment, and the state after it.
+   *
+   * @param parenthesesDelta how many more parentheses the line opens than it closes, outside of
+   *     quotes and comments
+   */
   private record ParsedLine(
       String line,
       char openQuote,
       boolean inPreservedBlockComment,
       boolean endsWithStatementDelimiter,
-      boolean containsSql) {}
+      boolean containsSql,
+      int parenthesesDelta) {}
 }

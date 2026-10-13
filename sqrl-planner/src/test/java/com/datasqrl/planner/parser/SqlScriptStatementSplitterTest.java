@@ -18,6 +18,7 @@ package com.datasqrl.planner.parser;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 
 class SqlScriptStatementSplitterTest {
@@ -433,8 +434,10 @@ class SqlScriptStatementSplitterTest {
     assertThat(statements)
         .extracting(ParsedObject::get)
         .containsExactly(
-            "PassThrough RETURNS (customerid BIGINT) := SELECT customerid FROM \"Customer\" AS \"it's\";\n",
-            "PassThroughBacktick RETURNS (customerid BIGINT) := SELECT customerid FROM \"Customer\" AS \"a`b\";\n",
+            "PassThrough RETURNS (customerid BIGINT) := SELECT customerid FROM \"Customer\" AS"
+                + " \"it's\";\n",
+            "PassThroughBacktick RETURNS (customerid BIGINT) := SELECT customerid FROM \"Customer\""
+                + " AS \"a`b\";\n",
             "AfterAlias := SELECT customerid FROM Customer;\n");
   }
 
@@ -478,5 +481,77 @@ class SqlScriptStatementSplitterTest {
     assertThat(statements)
         .extracting(ParsedObject::getFileLocation)
         .containsExactly(new FileLocation(1, 1), new FileLocation(2, 1));
+  }
+
+  @Test
+  void givenMissingDelimiterBeforeDefinition_whenSplitStatements_thenSplitsAndReportsIt() {
+    var script =
+        """
+        A := SELECT * FROM T -- no semicolon
+
+        /*+test */
+        B := SELECT * FROM A;
+        """;
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements)
+        .extracting(ParsedObject::get)
+        .containsExactly("A := SELECT * FROM T;\n", "/*+test */\nB := SELECT * FROM A;\n");
+    assertThat(statements)
+        .extracting(ParsedObject::getFileLocation)
+        .containsExactly(new FileLocation(1, 1), new FileLocation(3, 1));
+    assertThat(missingDelimiters)
+        .containsExactly(
+            new SqlScriptStatementSplitter.MissingDelimiter(
+                new FileLocation(1, 1), new FileLocation(1, 21)));
+  }
+
+  @Test
+  void givenDefinitionStartInMultilineStringLiteral_whenSplitStatements_thenDoesNotSplit() {
+    var script =
+        """
+        A := SELECT 'first line
+        B := not a definition' AS val FROM T;
+        """;
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements).hasSize(1);
+    assertThat(missingDelimiters).isEmpty();
+  }
+
+  @Test
+  void givenNamedArgumentOnItsOwnLine_whenSplitStatements_thenDoesNotSplit() {
+    // A database function with a named argument in the SQL of a pass-through function
+    var script =
+        """
+        /*+exec(postgres) */
+        Recent(id BIGINT) RETURNS (id BIGINT) := SELECT * FROM recent_rows(
+            p_id := :id);
+        """;
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements).hasSize(1);
+    assertThat(missingDelimiters).isEmpty();
+  }
+
+  @Test
+  void givenDefinitionAfterTerminatedStatement_whenSplitStatements_thenReportsNoMissingDelimiter() {
+    var script =
+        """
+        A := SELECT * FROM T;
+        B(x INT) := SELECT * FROM A WHERE id = :x;
+        """;
+    var missingDelimiters = new ArrayList<SqlScriptStatementSplitter.MissingDelimiter>();
+
+    var statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
+
+    assertThat(statements).hasSize(2);
+    assertThat(missingDelimiters).isEmpty();
   }
 }
