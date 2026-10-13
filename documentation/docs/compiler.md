@@ -67,7 +67,7 @@ Initializes an empty SQRL project.
 
 ### Example
 
-```bash
+```bash docs-test=init-add-func
 docker run --rm -v $PWD:/workspace datasqrl/cmd init stream my-project
 ```
 
@@ -96,13 +96,14 @@ project.
 
 Run `add-func` inside the project created by the [`init` example](#example):
 
-```bash
+```bash docs-test=init-add-func
 cd my-project
 
 docker run --rm -v $PWD:/workspace datasqrl/cmd add-func MyAwesomeFunction
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile my-project-test-package.json
 ```
 
-This creates a new scalar function template in the `functions/` directory.
+This creates a new scalar function template in the `functions/` directory, which the `compile` command builds with JBang.
 Use `--aggregate` to create an aggregate function instead.
 
 ## Compile Command

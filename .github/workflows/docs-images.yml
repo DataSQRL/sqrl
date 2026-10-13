@@ -1,0 +1,33 @@
+name: Documented images
+
+# Verifies that every DataSQRL image referenced in the README and docs can be pulled
+# anonymously, the way a first-time user would pull it.
+on:
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'agent/README.md'
+      - 'documentation/docs/**'
+      - 'documentation/src/pages/**'
+      - 'documentation/scripts/docs-test/**'
+      - '.github/workflows/docs-images.yml'
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Check that documented images can be pulled anonymously
+        run: documentation/scripts/docs-test/check-doc-images.sh
