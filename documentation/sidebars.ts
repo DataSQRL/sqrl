@@ -160,6 +160,11 @@ const sidebars = {
               id: 'deployment',
               label: 'Deployment',
             },
+            {
+              type: 'doc',
+              id: 'editors',
+              label: 'Editor Support',
+            },
           ],
         },
         {
