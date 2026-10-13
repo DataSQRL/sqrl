@@ -25,6 +25,7 @@ import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.IncludeConfig;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.FilePreprocessingPipeline;
+import com.datasqrl.packager.SourceFiles;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -65,7 +66,8 @@ class SqrlPreprocessorTest {
             tempDir.resolve("lib"),
             tempDir.resolve("data"),
             Optional.empty(),
-            ErrorCollector.root());
+            ErrorCollector.root(),
+            new SourceFiles());
 
     underTest = new SqrlPreprocessor(packageJson, ErrorCollector.root());
   }

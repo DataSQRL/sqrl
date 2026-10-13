@@ -24,6 +24,11 @@ public interface SourceMap extends Serializable {
 
   String getRange(FileRange range);
 
+  /** The absolute path of the file the source was read from, or null if unknown. */
+  default String getSourcePath() {
+    return null;
+  }
+
   public class EmptySourceMap implements SourceMap {
 
     @Override

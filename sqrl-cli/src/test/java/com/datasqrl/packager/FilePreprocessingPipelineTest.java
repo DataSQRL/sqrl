@@ -44,7 +44,8 @@ class FilePreprocessingPipelineTest {
         new FilePreprocessingPipeline(
             new WorkspacePaths(tempDir, buildDir, buildDir.resolve("deploy"), projectDir),
             buildDir,
-            Set.of());
+            Set.of(),
+            new SourceFiles());
 
     pipeline.run(projectDir, ErrorCollector.root());
 
