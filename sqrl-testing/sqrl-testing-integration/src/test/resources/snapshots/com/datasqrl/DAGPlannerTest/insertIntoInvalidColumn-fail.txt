@@ -1,7 +1,20 @@
-[FATAL]  Column 'missing_column' not found in any table
+[FATAL] [MISSING_FIELD] Column 'missing_column' not found in any table
 in script:insertIntoInvalidColumn-fail.sqrl [9:5]:
 INSERT INTO CustomerIds
 SELECT
     missing_column
 ----^
+A query references a column that does not exist in any of the tables it selects from.
+
+Erroneous code example:
+```sql
+ValidCustomer := SELECT customerid, email_address FROM Customer WHERE email_address IS NOT NULL;
+```
+
+Check the spelling of the column and that it is defined in the referenced table. When joining tables, qualify the column with the alias of the table that defines it:
+```sql
+ValidCustomer := SELECT customerid, email FROM Customer WHERE email IS NOT NULL;
+```
+
+See https://docs.datasqrl.com/docs/main/errors#missing_field
 

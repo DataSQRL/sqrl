@@ -32,7 +32,6 @@ type OffsetPageInfo {
   firstEventTime: DateTime
   lastEventTime: DateTime
 }
-
 in script:comprehensiveTest-fail-paged-wrong-pagination-type.graphqls [6:1]:
 scalar Long
 

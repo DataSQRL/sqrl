@@ -24,12 +24,15 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.deployment.model.JdbcPlanModel;
 import com.datasqrl.deployment.model.KafkaPlanModel;
 import com.datasqrl.deployment.model.MutationDatabaseModel;
+import com.datasqrl.error.CollectedException;
+import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.error.ResourceFileUtil;
 import com.datasqrl.planner.util.NonSecretEnvVarResolver;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
@@ -207,7 +211,12 @@ public final class ConfigLoaderUtils {
     }
 
     messages.forEach(
-        vm -> collector.fatal("%s at location [%s]", vm.getMessage(), vm.getInstanceLocation()));
+        vm ->
+            collector.fatal(
+                ErrorCode.CONFIG_EXCEPTION,
+                "%s at location [%s]",
+                vm.getMessage(),
+                vm.getInstanceLocation()));
 
     return false;
   }
@@ -333,23 +342,50 @@ public final class ConfigLoaderUtils {
     // Convert, validate, and add files
     for (Path file : files) {
       var json = convertFileToObjectNode(errors, Either.Left(file), true);
-      valid &= isValidJson(errors, json, PACKAGE_SCHEMA_PATH);
+      var fileErrors = errors.withConfig(file.toString());
+      valid &= isValidJson(fileErrors, json, PACKAGE_SCHEMA_PATH);
+      valid &= isSupportedVersion(fileErrors, json);
       userEngineConfigs.addAll(getConfiguredEngineNames(json));
       jsons.add(json);
     }
 
     if (!valid) {
-      throw errors.exception(
-          errors
-              .getErrors()
-              .combineMessages(
-                  ErrorMessage.Severity.FATAL, "Failed to load package configuration:\n\n", "\n"));
+      throw configurationFailed(errors);
     }
 
     // Merge all collected JSON into one object
     var merged = MAPPER.createObjectNode();
     jsons.forEach(node -> JsonUtils.merge(merged, node));
     return SqrlConfig.loadResolvedConfig(errors, merged, null, userEngineConfigs);
+  }
+
+  /**
+   * Fails the configuration loading without adding another error, as the individual errors are
+   * already collected (and printed).
+   */
+  public static CollectedException configurationFailed(ErrorCollector errors) {
+    return CollectedException.withTrimmedStackTrace(
+        new IllegalArgumentException(
+            errors
+                .getErrors()
+                .combineMessages(
+                    ErrorMessage.Severity.FATAL,
+                    "Failed to load package configuration:\n\n",
+                    "\n")));
+  }
+
+  private static boolean isSupportedVersion(ErrorCollector errors, JsonNode json) {
+    var version = json.get(SqrlConfig.VERSION_KEY);
+    if (version == null || "1".equals(version.asText())) {
+      return true;
+    }
+    errors
+        .abortOnFatal(false)
+        .fatal(
+            ErrorCode.CONFIG_EXCEPTION,
+            "Unsupported configuration version [%s], the supported version is: 1",
+            version.asText());
+    return false;
   }
 
   private static Set<String> getConfiguredEngineNames(JsonNode json) {
@@ -366,10 +402,22 @@ public final class ConfigLoaderUtils {
         Files.isDirectory(planDir), "Failed to load Flink config, plan dir does not exist.");
   }
 
+  // Jackson's source description in nested locations, e.g. "[Source: ...; line: 1, column: 29]"
+  private static final Pattern JSON_SOURCE = Pattern.compile("\\[Source: [^;]*; ([^\\]]*)\\]");
+
   private static ObjectNode convertFileToObjectNode(
       ErrorCollector errors, Either<Path, URL> file, boolean resolveEnvVars) {
     var filename = file.isLeft() ? file.left().toString() : file.right().toString();
     var localErr = errors.withConfig(filename);
+
+    if (filename.endsWith(".sqrl")) {
+      throw localErr.exception(
+          ErrorCode.CONFIG_EXCEPTION,
+          "Expected a package configuration (e.g. package.json), but got the SQRL script [%s]."
+              + " Pass the package configuration instead, which references the script in"
+              + " 'script.main'.",
+          filename);
+    }
 
     try {
       JsonNode jsonNode;
@@ -384,10 +432,26 @@ public final class ConfigLoaderUtils {
         resolveConnectorEnvVars(jsonNode.get("connectors"), resolver);
       }
 
-      return (ObjectNode) jsonNode;
+      if (!(jsonNode instanceof ObjectNode objectNode)) {
+        throw localErr.exception(
+            ErrorCode.CONFIG_EXCEPTION,
+            "The configuration file [%s] must contain a JSON object",
+            filename);
+      }
+      return objectNode;
+
+    } catch (JsonProcessingException e) {
+      var location = e.getLocation();
+      throw localErr.exception(
+          ErrorCode.CONFIG_EXCEPTION,
+          "Invalid JSON at line %d, column %d: %s",
+          location == null ? 0 : location.getLineNr(),
+          location == null ? 0 : location.getColumnNr(),
+          JSON_SOURCE.matcher(e.getOriginalMessage()).replaceAll("$1"));
 
     } catch (IOException e) {
-      throw localErr.exception("Could not parse JSON file [%s]: %s", file, e.toString());
+      throw localErr.exception(
+          ErrorCode.CONFIG_EXCEPTION, "Could not read configuration file [%s]: %s", filename, e);
     }
   }
 

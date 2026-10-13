@@ -1,14 +1,27 @@
-[FATAL] Column expression must directly follow the definition of table [Orders]
+[FATAL] [INVALID_SQRL_ADD_COLUMN] Column expression must directly follow the definition of table [Orders]
 in script:plannerError-add-column-fail.sqrl [2:1]:
 IMPORT ecommerceTs.orders;
 Orders.col1 := (id + customerid)/2;
 ^
-Adding a column to an existing table requires that the table is defined immediately
-prior to the column definition. 
-Adding multiple columns in a row is supported.
-Adding columns to imported or created tables is not supported.
+A column-addition statement does not directly follow the definition of the table it extends.
 
-Example definition of an additional column on a previously defined `Customer` table:
+`TableName.new_col := expression;` must appear immediately after the `TableName := ...` definition (or after other column additions to the same table). Columns cannot be added to tables created with `CREATE TABLE` or imported from another script.
+
+Erroneous code example:
+```sql
+EnrichedOrders := SELECT id, customerid, amount, tax FROM Orders;
+LargeOrders := SELECT * FROM Orders WHERE amount > 100;
+EnrichedOrders.total := amount + tax;
 ```
-Customers.full_name := CONCAT(first_name, last_name);
+
+Move the column addition directly below the table definition:
+```sql
+EnrichedOrders := SELECT id, customerid, amount, tax FROM Orders;
+EnrichedOrders.total := amount + tax;
+LargeOrders := SELECT * FROM Orders WHERE amount > 100;
 ```
+
+To add a column to a created or imported table, define a new table instead, e.g. `OrdersWithTotal := SELECT *, amount + tax AS total FROM Orders;`.
+
+See https://docs.datasqrl.com/docs/main/errors#invalid_sqrl_add_column
+

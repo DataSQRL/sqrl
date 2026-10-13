@@ -19,7 +19,6 @@ import static com.datasqrl.util.ConfigLoaderUtils.MAPPER;
 
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -88,11 +87,7 @@ public class SqrlConfig {
           new SqrlConfig(errors, config, SqrlConstants.PACKAGE_JSON, ""), userEngineConfigurations);
     }
 
-    throw errors.exception(
-        errors
-            .getErrors()
-            .combineMessages(
-                ErrorMessage.Severity.FATAL, "Failed to load package configuration:\n\n", "\n"));
+    throw ConfigLoaderUtils.configurationFailed(errors);
   }
 
   /** Create a new empty configuration with given version. */

@@ -1,5 +1,21 @@
-The rowtime column is used to advance the watermark and for time-based operations. When it is null, the watermark does not advance and the record can be ignored for time-based operations, leading to unexpected output and performance issues.
+The rowtime (event time) column of the table is nullable.
 
-Ensure that the rowtime column always has a value by filtering or setting a default. If that is the case but the compiler doesn't recognize it, explicitly cast it in the table definition.
-For example:
-`rowTime AS COALESCE(TO_TIMESTAMP_LTZ(lastUpdated, 0), TIMESTAMP '1970-01-01 00:00:00.000')`
+The rowtime column advances the watermark and drives time-based operations. Records with a null rowtime do not advance the watermark and can be dropped by time-based operations, which leads to unexpected results and performance issues.
+
+Erroneous code example:
+```sql
+CREATE TABLE Clicks (
+  url STRING,
+  event_time TIMESTAMP_LTZ(3),
+  WATERMARK FOR event_time AS event_time - INTERVAL '1' SECOND
+) WITH ( ... );
+```
+
+Declare the rowtime column `NOT NULL`, or make sure it always has a value by filtering or by setting a default for computed columns, e.g. `event_time AS COALESCE(TO_TIMESTAMP_LTZ(ts_millis, 3), TO_TIMESTAMP_LTZ(0, 3))`:
+```sql
+CREATE TABLE Clicks (
+  url STRING,
+  event_time TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR event_time AS event_time - INTERVAL '1' SECOND
+) WITH ( ... );
+```

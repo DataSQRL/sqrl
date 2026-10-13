@@ -27,6 +27,7 @@ import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorPrinter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +38,8 @@ import org.apache.flink.configuration.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class ConfigLoaderUtilsTest {
 
@@ -537,6 +540,75 @@ class ConfigLoaderUtilsTest {
     // Then
     assertThat(result).isPresent();
     assertThat(result.get().statements()).isEmpty();
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"\"2\"", "2"})
+  @SneakyThrows
+  void givenUnsupportedVersion_whenLoadingUnresolvedConfig_thenReportsVersionErrorOnce(
+      String version) {
+    var packageFile = tempDir.resolve("package.json");
+    Files.writeString(packageFile, "{\"version\": %s}".formatted(version));
+
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadUnresolvedConfig(errors, List.of(packageFile)))
+        .isInstanceOf(CollectedException.class);
+
+    var printed = ErrorPrinter.prettyPrint(errors);
+    assertThat(printed)
+        .contains("[FATAL] [CONFIG_EXCEPTION] Unsupported configuration version [2]")
+        .contains("in config:" + packageFile);
+    assertThat(printed.split("Unsupported configuration version", -1)).hasSize(2);
+  }
+
+  @Test
+  @SneakyThrows
+  void givenInvalidJson_whenLoadingUnresolvedConfig_thenReportsLineAndColumn() {
+    var packageFile = tempDir.resolve("package.json");
+    Files.writeString(packageFile, "{\n  \"version\": 1,\n}");
+
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadUnresolvedConfig(errors, List.of(packageFile)))
+        .isInstanceOf(CollectedException.class);
+
+    assertThat(ErrorPrinter.prettyPrint(errors))
+        .contains("[CONFIG_EXCEPTION] Invalid JSON at line 3, column 1")
+        .doesNotContain("Left(")
+        .doesNotContain("JsonParseException");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenJsonArray_whenLoadingUnresolvedConfig_thenReportsExpectedObject() {
+    var packageFile = tempDir.resolve("package.json");
+    Files.writeString(packageFile, "[]");
+
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadUnresolvedConfig(errors, List.of(packageFile)))
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("must contain a JSON object");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenSqrlScript_whenLoadingUnresolvedConfig_thenExplainsPackageConfigIsExpected() {
+    var script = tempDir.resolve("myproject.sqrl");
+    Files.writeString(script, "IMPORT connectors.sources.*;");
+
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadUnresolvedConfig(errors, List.of(script)))
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("Expected a package configuration")
+        .hasMessageContaining("script.main");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenSchemaViolation_whenLoadingUnresolvedConfig_thenReportsEachErrorOnce() {
+    var packageFile = tempDir.resolve("package.json");
+    Files.writeString(packageFile, "{\"enabled-engines\": \"flink\"}");
+
+    assertThatThrownBy(() -> ConfigLoaderUtils.loadUnresolvedConfig(errors, List.of(packageFile)))
+        .isInstanceOf(CollectedException.class);
+
+    var printed = ErrorPrinter.prettyPrint(errors);
+    assertThat(printed).contains("[CONFIG_EXCEPTION]").doesNotContain("Failed to load package");
   }
 
   @SneakyThrows

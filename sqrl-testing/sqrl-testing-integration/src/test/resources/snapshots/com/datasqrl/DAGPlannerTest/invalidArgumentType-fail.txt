@@ -1,4 +1,4 @@
-[FATAL]  Unknown identifier 'BIGIT'
+[FATAL] Unknown identifier 'BIGIT'
 in script:invalidArgumentType-fail.sqrl [2:15]:
 IMPORT ecommerceTs.orders;
 OrdersById(id BIGIT, otherid BIGINT) := SELECT * FROM Orders WHERE :id = id AND id = :otherid;

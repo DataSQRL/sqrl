@@ -17,7 +17,7 @@
     "write-translations": "docusaurus write-translations",
     "write-heading-ids": "docusaurus write-heading-ids",
     "typecheck": "tsc",
-    "generate-docs": "node scripts/generate-function-docs.js",
+    "generate-docs": "node scripts/generate-function-docs.js && node scripts/generate-error-docs.js",
     "generate-llms-txt": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-llms-txt.mjs build"
   },
   "dependencies": {

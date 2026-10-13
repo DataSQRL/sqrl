@@ -1,4 +1,4 @@
-[FATAL]  Unknown identifier 'INTT'
+[FATAL] Unknown identifier 'INTT'
 in script:parserError-arguments-fail.sqrl [5:19]:
 CustomerQuery(id BIGINT,
              arg2 STRING,

@@ -71,7 +71,7 @@ public class ParsePosUtil {
     message = matcher.replaceAll("");
     matcher = LINE_NUM_FROMTO.matcher(message);
     message = matcher.replaceAll("");
-    return message;
+    return message.strip();
   }
 
   public record MessageLocation(FileLocation location, String message) {}

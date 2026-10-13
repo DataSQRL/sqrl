@@ -86,6 +86,12 @@ public class SqrlStatementParser {
       Pattern.compile(IMPORT_EXPORT_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
   private static final Pattern SQRL_DEFINITION =
       Pattern.compile(SQRL_DEFINITION_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+  // Leading comments and hints, then `Name = SELECT|WITH|DISTINCT|SUBSCRIBE`
+  private static final Pattern ASSIGNMENT_INSTEAD_OF_DEFINITION =
+      Pattern.compile(
+          "^(?:\\s|--[^\\n]*\\n|/\\*.*?\\*/)*[\\w.`]+\\s*=\\s*(?:SELECT|WITH|DISTINCT|SUBSCRIBE)\\b",
+          Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
   private static final Pattern CREATE_TABLE =
       Pattern.compile(CREATE_TABLE_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
@@ -182,7 +188,7 @@ public class SqrlStatementParser {
         var packageIdentifier = parseNamePath(subMatcher, "package", statement);
         var tableName = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing package path");
-        checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing table");
+        checkFatal(tableName.isPresent(), ErrorCode.INVALID_EXPORT, "Missing table");
         return new SqrlExportStatement(tableName, packageIdentifier, comment);
       } else {
         // This should not happen
@@ -319,6 +325,12 @@ public class SqrlStatementParser {
     if (nextBatch.find()) {
       return new SqrlNextBatch(new ParsedObject<>(statement, FileLocation.START));
     }
+
+    // Common mistake: '=' instead of ':=' in a table definition, which Flink can't make sense of
+    checkFatal(
+        !ASSIGNMENT_INSTEAD_OF_DEFINITION.matcher(statement).find(),
+        ErrorCode.INVALID_SQRL_DEFINITION,
+        "Table definitions use ':=' instead of '=', e.g. 'MyTable := SELECT ...'");
 
     // #5: If none of the regex match, we assume it's a Flink SQL statement
     return new FlinkSQLStatement(new ParsedObject<>(statement, FileLocation.START));

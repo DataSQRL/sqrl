@@ -1,4 +1,4 @@
-[WARN] Primary key [email] of table [CustomerByEmail] is not unique, the primary_key hint does not deduplicate
+[WARN] [PRIMARY_KEY_NOT_UNIQUE] Primary key [email] of table [CustomerByEmail] is not unique, the primary_key hint does not deduplicate
 in script:primaryKeyHintNotUnique-warn.sqrl [5:1]:
 CustomerLatest := DISTINCT Customer ON customerid ORDER BY `timestamp` DESC;
 
@@ -28,7 +28,9 @@ CleanCustomer := DISTINCT _CleanCustomer ON customer_id ORDER BY event_time DESC
 Better yet, clean the key before the first table that has it as primary key, and select it
 unchanged in every later table.
 
-[WARN] Primary key [customerid] of table [CustomerNarrowed] is not unique, the primary_key hint does not deduplicate
+See https://docs.datasqrl.com/docs/main/errors#primary_key_not_unique
+
+[WARN] [PRIMARY_KEY_NOT_UNIQUE] Primary key [customerid] of table [CustomerNarrowed] is not unique, the primary_key hint does not deduplicate
 in script:primaryKeyHintNotUnique-warn.sqrl [11:1]:
 CustomerNames := SELECT customerid, name FROM CustomerLatest;
 
@@ -57,4 +59,6 @@ CleanCustomer := DISTINCT _CleanCustomer ON customer_id ORDER BY event_time DESC
 
 Better yet, clean the key before the first table that has it as primary key, and select it
 unchanged in every later table.
+
+See https://docs.datasqrl.com/docs/main/errors#primary_key_not_unique
 

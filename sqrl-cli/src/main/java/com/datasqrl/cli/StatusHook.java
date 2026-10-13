@@ -16,6 +16,7 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorTraces;
 import lombok.Getter;
 
 public interface StatusHook {
@@ -37,7 +38,8 @@ public interface StatusHook {
 
         @Override
         public void onFailure(Throwable e, ErrorCollector errors) {
-          e.printStackTrace();
+          // The error itself is printed by the command, the stack trace only helps debugging
+          ErrorTraces.report(e);
           failed = true;
         }
 

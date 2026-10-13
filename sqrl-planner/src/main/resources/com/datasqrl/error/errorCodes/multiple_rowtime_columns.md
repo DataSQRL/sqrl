@@ -1,14 +1,16 @@
-This table has multiple ROWTIME columns, which makes the authoritative timestamp for its records ambiguous.
-This can cause confusion for downstream users and unexpected data processing results.
+The table has more than one ROWTIME (event time) column, which makes the authoritative timestamp of its records ambiguous.
 
-Keep the authoritative ROWTIME column unchanged and `CAST` all other ROWTIME columns to regular timestamps.
-For example, to retain `col_b` as ROWTIME while keeping `col_a` as a regular timestamp:
-```
-CAST(col_a AS TIMESTAMP_LTZ(3)) AS regular_timestamp,
-col_b AS event_time
+Erroneous code example:
+```sql
+OrderCustomer := SELECT o.id, o.order_time, c.updated_at
+                 FROM Orders o JOIN Customer c ON o.customerid = c.customerid;
 ```
 
-For non-temporal joins, the authoritative timestamp is usually the latest event time from all joined tables:
-```
-GREATEST(t1.eventTime, t2.eventTime) AS eventTime
+Keep one ROWTIME column and `CAST` all others to regular timestamps. For regular joins, the authoritative timestamp is usually the latest event time of the joined tables:
+```sql
+OrderCustomer := SELECT o.id,
+                        CAST(o.order_time AS TIMESTAMP_LTZ(3)) AS order_time,
+                        CAST(c.updated_at AS TIMESTAMP_LTZ(3)) AS updated_at,
+                        GREATEST(o.order_time, c.updated_at) AS event_time
+                 FROM Orders o JOIN Customer c ON o.customerid = c.customerid;
 ```

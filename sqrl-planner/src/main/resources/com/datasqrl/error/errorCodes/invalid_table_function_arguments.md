@@ -1,9 +1,13 @@
-Invalid table function arguments provided.
+The arguments of a function or relationship definition are invalid.
 
-Table function arguments are defined like columns in a CREATE TABLE statement: the argument name followed by the argument type with multiple arguments separated by a comma `,`.
-Inside the query body, arguments are referenced by name prefixed with a colon `:`.
+Arguments are declared like columns in `CREATE TABLE` (name, type, optional `NOT NULL` or `METADATA FROM '...'`) and referenced in the query as `:name`. Every referenced argument must be declared, and a relationship must be defined on a previously defined table.
 
-For example:
+Erroneous code example:
+```sql
+CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :mail;
 ```
-MyTableFunction(argument INT, arg2 STRING NOT NULL) := SELECT * FROM MyTable WHERE col1 = :arg2 AND col2 > :argument
+
+Reference only declared arguments:
+```sql
+CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
 ```

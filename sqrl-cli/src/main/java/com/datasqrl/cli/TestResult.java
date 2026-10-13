@@ -16,6 +16,7 @@
 package com.datasqrl.cli;
 
 import com.datasqrl.cli.output.OutputFormatter;
+import com.datasqrl.error.ErrorTraces;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -218,7 +219,7 @@ public abstract class TestResult {
         if (rootCause.getMessage() != null) {
           formatter.error(rootCause.getMessage());
         }
-        cause.printStackTrace();
+        ErrorTraces.report(cause);
       }
     }
   }

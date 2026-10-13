@@ -157,6 +157,11 @@ const sidebars = {
             },
             {
               type: 'doc',
+              id: 'errors-generated',
+              label: 'Error Reference',
+            },
+            {
+              type: 'doc',
               id: 'deployment',
               label: 'Deployment',
             },

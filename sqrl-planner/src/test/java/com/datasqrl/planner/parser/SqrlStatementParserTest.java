@@ -16,6 +16,7 @@
 package com.datasqrl.planner.parser;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -60,5 +61,26 @@ class SqrlStatementParserTest {
     var parsed = parser.parseStatement("EXPORT\n  Datapoints TO mypkg.sink;");
 
     assertThat(parsed).isInstanceOf(SqrlExportStatement.class);
+  }
+
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "HelloWorld = SELECT * FROM Messages;",
+        "/*+ test */\nHelloWorld = SELECT * FROM Messages;",
+        "-- comment\nHelloWorld=DISTINCT Messages ON uuid ORDER BY message_time DESC;"
+      })
+  void givenAssignmentInsteadOfDefinition_whenParseStatement_thenSuggestsDefinitionOperator(
+      String statement) {
+    assertThatThrownBy(() -> parser.parseStatement(statement))
+        .isInstanceOf(StatementParserException.class)
+        .hasMessageContaining("':='");
+  }
+
+  @Test
+  void givenFlinkSqlWithEquals_whenParseStatement_thenIsFlinkStatement() {
+    var parsed = parser.parseStatement("SET 'table.local-time-zone' = 'UTC';");
+
+    assertThat(parsed).isInstanceOf(FlinkSQLStatement.class);
   }
 }

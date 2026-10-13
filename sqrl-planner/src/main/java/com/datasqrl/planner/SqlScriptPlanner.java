@@ -35,6 +35,7 @@ import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.error.ErrorTraces;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
@@ -260,13 +261,19 @@ public class SqlScriptPlanner {
         var converted = ParsePosUtil.convertFlinkParserException(e);
         if (converted.isPresent()) {
           var msgLocation = converted.get();
-          e.printStackTrace();
+          ErrorTraces.report(e);
+          var hint =
+              ErrorHints.explain(
+                  msgLocation.message(),
+                  sourceStmt.source(),
+                  msgLocation.location().line(),
+                  sqrlEnv.getCatalogManager());
           scriptErrors
               .atFile(
                   statement
                       .getFileLocation()
                       .add(sqlStatement.mapSqlLocation(msgLocation.location())))
-              .fatal(msgLocation.message());
+              .fatal(hint.label(), "%s", hint.message());
         }
         if (e instanceof ValidationException) {
           if (e.getCause() != null && e.getCause() != e) {

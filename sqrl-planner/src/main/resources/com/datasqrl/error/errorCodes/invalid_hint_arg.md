@@ -1,7 +1,19 @@
-Invalid SQL hint argument provided.
+A hint argument contains invalid characters.
 
-Hint arguments may only contain column names separated by commas.
-Column names may contain letters, numbers, underscores, or be wrapped in backticks.
+Hint arguments may only contain names, numbers, and spaces, separated by commas. Column names may be wrapped in backticks, but must not be quoted or qualified with a table name or alias.
 
-Do not qualify column names with table names, aliases, namespaces, or paths.
-For example, use `id` instead of `Customer.id` or `customer.id`.
+Erroneous code example:
+```sql
+/*+ primary_key(c.customerid) */
+CustomerTotals := SELECT c.customerid, SUM(o.amount) AS total
+                  FROM Customer c JOIN Orders o ON c.customerid = o.customerid
+                  GROUP BY c.customerid;
+```
+
+Reference the column by its name in the query result:
+```sql
+/*+ primary_key(customerid) */
+CustomerTotals := SELECT c.customerid, SUM(o.amount) AS total
+                  FROM Customer c JOIN Orders o ON c.customerid = o.customerid
+                  GROUP BY c.customerid;
+```

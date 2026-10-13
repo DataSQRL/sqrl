@@ -1,9 +1,11 @@
-Could not find field when trying to resolve expression.
+A query references a column that does not exist in any of the tables it selects from.
 
 Erroneous code example:
-```
-IMPORT ecommerce-data.Orders;
-Orders.x := SELECT missingField FROM @;
+```sql
+ValidCustomer := SELECT customerid, email_address FROM Customer WHERE email_address IS NOT NULL;
 ```
 
-Assure the column name exists.
+Check the spelling of the column and that it is defined in the referenced table. When joining tables, qualify the column with the alias of the table that defines it:
+```sql
+ValidCustomer := SELECT customerid, email FROM Customer WHERE email IS NOT NULL;
+```

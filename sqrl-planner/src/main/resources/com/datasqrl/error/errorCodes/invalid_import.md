@@ -1,23 +1,17 @@
-Invalid IMPORT statement.
+The `IMPORT` statement could not be parsed or resolved.
 
-To import all tables from another script inline and reference it directly, use:
-```
-IMPORT ecommerce-data.*;
-```
-To import all tables from another script in their own namespace, use:
-```
-IMPORT ecommerce-data;
-```
-To import all tables from another script with a custom namespace, use:
-```
-IMPORT ecommerce-data AS catalog;
+Imports reference another SQRL script by a `.` separated path relative to the current script (e.g. `connectors.sources` maps to `./connectors/sources.sqrl`). An `AS` alias must be a single name.
+
+Erroneous code example:
+```sql
+IMPORT connectors.sources.Click AS events.Click;
 ```
 
-To import from a shared script into your main script, simply use its defined name:
+Use one of the supported forms:
+```sql
+IMPORT connectors.sources.*;                    -- inline all statements of the script
+IMPORT connectors.sources AS src;               -- tables available as src.Click
+IMPORT connectors.sources.Click AS ClickEvents; -- a single table
 ```
-IMPORT shared-catalog;
-```
-To import from a shared script into a submodule script, use the `root` prefix:
-```
-IMPORT root.shared-catalog;
-```
+
+When the importing script is in a subdirectory, namespaces configured under `script.include` in `package.json` need the `root` prefix, e.g. `IMPORT root.data_catalog.sources;`.

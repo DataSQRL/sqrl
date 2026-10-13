@@ -36,9 +36,12 @@ RUN npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fun
 COPY documentation/docs/ docs/
 COPY documentation/sidebars.ts ./
 COPY documentation/scripts/ scripts/
+# The error reference is generated from the error code descriptions of the compiler
+COPY sqrl-planner/src/main/resources/com/datasqrl/error/errorCodes/ /sqrl-planner/src/main/resources/com/datasqrl/error/errorCodes/
 RUN test -f docs/stdlib-docs/stdlib-docs/system-functions.yml \
       || { echo "Missing function docs, run: git submodule update --init documentation/docs/stdlib-docs" >&2; exit 1; } \
     && node scripts/generate-function-docs.js \
+    && node scripts/generate-error-docs.js \
     && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-llms-txt.mjs /out \
       --current-path "${DOCS_VERSION_PATH}" \
     && cp "/out/docs${DOCS_VERSION_PATH:+/${DOCS_VERSION_PATH}}/llms-full.txt" /llms-full.txt

@@ -31,8 +31,31 @@ public class ErrorPrinter {
     return errors.stream().map(ErrorPrinter::prettyPrint).collect(Collectors.joining("\n"));
   }
 
+  private static final String ERROR_REFERENCE_URL = "https://docs.datasqrl.com/docs/%serrors#%s";
+
   public static String getHead(ErrorMessage errorMessage) {
-    return "[%s] %s\n".formatted(errorMessage.getSeverity(), errorMessage.getMessage());
+    var label = errorMessage.getErrorLabel();
+    var message = shortenParserMessage(errorMessage.getMessage());
+    if (label == null || label == ErrorLabel.GENERIC) {
+      return "[%s] %s\n".formatted(errorMessage.getSeverity(), message);
+    }
+    return "[%s] [%s] %s\n".formatted(errorMessage.getSeverity(), label.getLabel(), message);
+  }
+
+  /** Drops the (often very long) list of expected tokens from parser messages. */
+  public static String shortenParserMessage(String message) {
+    if (message == null) {
+      return null;
+    }
+    var idx = message.indexOf("\nWas expecting");
+    return idx > 0 ? message.substring(0, idx).strip() : message.strip();
+  }
+
+  /** Link to the error code in the Error Reference of the docs version that matches the CLI. */
+  public static String getErrorReferenceUrl(ErrorLabel label) {
+    var version = ErrorPrinter.class.getPackage().getImplementationVersion();
+    var docsVersion = version == null || version.endsWith("-SNAPSHOT") ? "main/" : "";
+    return ERROR_REFERENCE_URL.formatted(docsVersion, label.getLabel().toLowerCase());
   }
 
   public static String prettyPrint(ErrorMessage errorMessage) {
@@ -114,7 +137,7 @@ public class ErrorPrinter {
       if (addSeparator) {
         result = "--\n" + result;
       }
-      return result;
+      return result.stripTrailing() + "\n\nSee " + getErrorReferenceUrl(label) + "\n";
     } else {
       return "";
     }
