@@ -1017,6 +1017,8 @@
                 <exclude>bin/**</exclude>
                 <exclude>documentation/**/index_features_list.txt</exclude>
                 <exclude>documentation/docs/stdlib-docs/**</exclude>
+                <!-- The first line of a help file of Neovim is its title -->
+                <exclude>sqrl-nvim-plugin/doc/**</exclude>
               </excludes>
             </licenseSet>
           </licenseSets>

@@ -1,0 +1,145 @@
+*sqrl.txt*  DataSQRL scripts, with the SQRL language server
+
+==============================================================================
+CONTENTS                                                       *sqrl-contents*
+
+  1. Introduction ............................................ |sqrl-intro|
+  2. Installation ..................................... |sqrl-installation|
+  3. Configuration ........................................ |sqrl-setup|
+  4. Features .......................................... |sqrl-features|
+  5. Highlighting .................................... |sqrl-highlighting|
+  6. Troubleshooting ............................. |sqrl-troubleshooting|
+
+==============================================================================
+1. INTRODUCTION                                                   *sqrl-intro*
+
+Support for DataSQRL scripts (`.sqrl`): syntax highlighting, and the SQRL
+language server of the DataSQRL CLI (`sqrl lsp`), which checks the projects
+of open scripts with the compiler as they are edited.
+
+Requirements:
+- Neovim 0.11 or later
+- Docker, to start the server in the Docker image of the CLI, or Java 17 or
+  later and the jar of the CLI
+
+==============================================================================
+2. INSTALLATION                                            *sqrl-installation*
+
+The plugin is the `sqrl-nvim-plugin` directory of the DataSQRL repository,
+which is added to the 'runtimepath'. With lazy.nvim: >lua
+
+  {
+    'DataSQRL/sqrl',
+    ft = { 'sqrl', 'json', 'graphql' },
+    config = function(plugin)
+      vim.opt.runtimepath:append(plugin.dir .. '/sqrl-nvim-plugin')
+      require('sqrl').setup()
+    end,
+  }
+<
+From a clone of the repository: >lua
+
+  vim.opt.runtimepath:append('/path/to/sqrl/sqrl-nvim-plugin')
+  require('sqrl').setup()
+<
+==============================================================================
+3. CONFIGURATION                                                  *sqrl-setup*
+
+                                                                *sqrl.setup()*
+sqrl.setup({opts})
+    Configures the server and enables it with |vim.lsp.enable()|. All
+    options are optional: >lua
+
+  require('sqrl').setup({
+    -- The command that starts the server, instead of `jar` or Docker
+    cmd = nil,
+    -- The jar of the CLI, sqrl-cli.jar, to start the server with Java
+    jar = nil,
+    -- The Java executable for `jar`, by default of JAVA_HOME or on the PATH
+    java = nil,
+    -- The Docker executable and the image of the CLI, by default
+    docker = 'docker',
+    docker_image = 'datasqrl/cmd:latest',
+    -- The settings of the server
+    settings = {
+      -- Package files of every project, if they are named the same in all
+      -- projects; by default, package files are found by their content
+      packageFiles = { 'package.json' },
+      -- How long to wait after an edit before checking
+      checkDelayMillis = 300,
+      -- Whether to compile on save, which also validates the GraphQL API
+      fullCompileOnSave = true,
+    },
+    -- Whether to show the types of computed columns
+    inlay_hints = true,
+    -- Whether to complete as you type with the built-in completion,
+    -- see |lsp-completion|; leave it off with a completion plugin
+    completion = false,
+    -- Whether to show the code lenses that run the tests above test tables
+    codelens = true,
+  })
+<
+The server is configured as `sqrl` for |vim.lsp.config()|, so other options
+of the client can be set there as well, e.g. `on_attach`.
+
+The server starts for:
+- scripts (`.sqrl`)
+- package files of DataSQRL, i.e. JSON files with `package` in their name and
+  sections of DataSQRL, but not the `package.json` of npm
+- GraphQL schemas and operations of DataSQRL projects
+
+One server serves all projects of a git repository, since projects can
+include each other's files, and Docker only mounts that directory.
+
+==============================================================================
+4. FEATURES                                                    *sqrl-features*
+
+The server provides, with the default mappings of Neovim |lsp-defaults|:
+- errors and warnings of the compiler, also in package files and GraphQL
+  schemas, with quick fixes |gra|
+- hover documentation of tables, columns and functions |K|
+- completion of tables, columns, functions, imports, hints and the variables
+  of templates, see |lsp-completion| or use a completion plugin
+- function signatures while their arguments are typed |i_CTRL-S|
+- go to definition |CTRL-]|, references |grr|, highlights of references,
+  the outline of scripts |gO|, and workspace symbols
+- renaming of tables, functions and relationships |grn|, also in the GraphQL
+  schema and operations, which the server asks to confirm
+- the types of computed columns as inlay hints |lsp-inlay_hint|
+- semantic highlighting of tables, functions, relationships, columns and
+  databases |lsp-semantic-highlight|
+- a code lens above each test table, i.e. one with the `test` hint, that runs
+  the tests of the project with `sqrl test` in a terminal: run it with
+  |vim.lsp.codelens.run()| on its line, see |lsp-codelens|. Tests run in the
+  Docker image of the CLI, which has the services that they need, e.g. Kafka
+  and Postgres; with `jar`, that jar runs in the image. With `cmd`, that
+  command runs them, with `test` instead of `lsp`
+
+`:checkhealth sqrl` shows whether the server can be started, and the servers
+that run. In Neovim 0.12, `:lsp restart sqrl` restarts them, e.g. after the
+CLI was updated.
+
+==============================================================================
+5. HIGHLIGHTING                                            *sqrl-highlighting*
+
+Scripts are highlighted with the syntax groups `sqrlKeyword`, `sqrlType`,
+`sqrlDefinition`, `sqrlFunctionDefinition`, `sqrlPath`, `sqrlTemplate`,
+`sqrlHint`, `sqrlHintName`, `sqrlString` and others, which link to the
+standard groups, see |group-name|.
+
+The server colors names by what they are, with the groups
+`@lsp.type.class.sqrl` (tables), `@lsp.type.function.sqrl` (table
+functions), `@lsp.type.method.sqrl` (relationships), `@lsp.type.property.sqrl`
+(columns) and `@lsp.type.namespace.sqrl` (databases), and
+`@lsp.mod.declaration` for definitions.
+
+==============================================================================
+6. TROUBLESHOOTING                                      *sqrl-troubleshooting*
+
+- `:checkhealth sqrl` checks the Docker image, or the jar and Java.
+- The server logs to its standard error, which Neovim writes to the log of
+  the LSP client, see |lsp-log|.
+- The Docker image of the CLI has `sqrl lsp` since the release that added it;
+  with an older image, set `jar` to a jar of a newer CLI.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
