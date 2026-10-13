@@ -499,15 +499,9 @@ jobs:
               circleci step halt
             fi
       - run:
-          name: Init stdlib-docs submodule
-          command: |
-            # The core-agent image bundles the generated docs, which include the function docs
-            git submodule update --init --depth 1 documentation/docs/stdlib-docs
-            cd documentation/docs/stdlib-docs
-            git sparse-checkout init --cone
-            git sparse-checkout set stdlib-docs
-            git checkout main
-            git pull --ff-only origin main
+          name: Checkout stdlib-docs at the Flink SQL Runner version
+          # The core-agent image bundles the generated docs, which include the function docs
+          command: documentation/scripts/checkout-stdlib-docs.sh
       - restore_cache:
           keys:
             - m2-{{ checksum "pom.xml" }}

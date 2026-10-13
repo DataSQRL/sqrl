@@ -66,9 +66,8 @@ for branch in ${release_branches}; do
   echo "Preparing docs ${version} from ${branch}"
 
   git -C "${REPO_DIR}" worktree add --detach "${wt}" "${REMOTE}/${branch}"
-  # Use the stdlib docs pinned by the release branch
-  git -C "${wt}" submodule update --init --depth 1 documentation/docs/stdlib-docs
-  git -C "${wt}/documentation/docs/stdlib-docs" sparse-checkout set --cone stdlib-docs
+  # Use the stdlib docs of the Flink SQL Runner version of the release branch
+  "${DOCS_DIR}/scripts/checkout-stdlib-docs.sh" "${wt}"
 
   # Let Docusaurus snapshot the release branch's docs and sidebars as a version
   (
