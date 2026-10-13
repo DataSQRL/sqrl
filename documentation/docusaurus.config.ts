@@ -66,7 +66,7 @@ const config: Config = {
   organizationName: 'datasqrl', // Usually your GitHub org/user name.
   projectName: 'sqrl', // Usually your repo name.
 
-  onBrokenLinks: 'warn',
+  onBrokenLinks: 'throw',
   markdown: {
     mermaid: true,
     hooks: {
@@ -88,14 +88,14 @@ const config: Config = {
       {
         docs: {
           sidebarPath: './sidebars.ts',
-          // Docusaurus defaults, plus the stdlib-docs submodule README whose relative links
-          // point into the flink-sql-runner repository rather than to doc pages
+          // Docusaurus defaults, plus the root files of the stdlib-docs submodule (README, CLAUDE,
+          // CONTRIBUTING, etc.), which are flink-sql-runner repository files rather than doc pages
           exclude: [
             '**/_*.{js,jsx,ts,tsx,md,mdx}',
             '**/_*/**',
             '**/*.test.{js,jsx,ts,tsx}',
             '**/__tests__/**',
-            'stdlib-docs/README.md',
+            'stdlib-docs/*.md',
           ],
           ...docsVersioning,
         },

@@ -574,6 +574,31 @@ jobs:
             build_and_push sqrl-server sqrl-server/sqrl-server-vertx/Dockerfile sqrl-server/sqrl-server-vertx --build-arg IMG_REPO=ghcr.io/datasqrl --build-arg DUCKDB_EXTENSIONS_TAG=$DUCKDB_EXTENSIONS_TAG
             build_and_push core-agent  agent/Dockerfile                         .                             --build-arg SQRL_IMAGE=$REGISTRY/cmd:$TAG_SUFFIX
 
+  docs-test:
+    # Runs the documented first-run commands verbatim against the image built for this change
+    executor: default-machine
+    steps:
+      - checkout
+      - determine-version
+      - run:
+          name: Login to registries
+          command: |
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_USER" --password-stdin
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+      - run:
+          name: Run documented commands
+          command: |
+            IMAGE="$REGISTRY/cmd:$TAG_SUFFIX"
+            if ! docker manifest inspect "$IMAGE" > /dev/null 2>&1; then
+              echo "No $IMAGE was published for this build (e.g. documentation-only change), using datasqrl/cmd:dev"
+              IMAGE=datasqrl/cmd:dev
+            fi
+            docker pull --quiet "$IMAGE"
+            python3 documentation/scripts/docs-test/run_doc_commands.py \
+              --image "datasqrl/cmd=$IMAGE" \
+              documentation/docs/intro/getting-started-no-key.md \
+              documentation/docs/compiler.md
+
   docker-build-duckdb-extensions:
     machine:
       image: ubuntu-2404:current
@@ -748,6 +773,10 @@ workflows:
             - download-maven-dependencies
             - docker-build-duckdb-extensions
             - docker-build-base-image
+      - docs-test:
+          <<: *job-defaults
+          requires:
+            - build-images
       - deploy:
           <<: *job-defaults
           requires:
