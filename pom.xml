@@ -1021,6 +1021,7 @@
                 <exclude>**/m2e-target/**</exclude>
                 <exclude>bin/**</exclude>
                 <exclude>documentation/**/index_features_list.txt</exclude>
+                <exclude>documentation/docs/stdlib-docs/**</exclude>
               </excludes>
             </licenseSet>
           </licenseSets>
