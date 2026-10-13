@@ -203,6 +203,7 @@ Enabled engines are configured under the `engines` field. Engine settings that h
 Important rules:
 * An enabled engine with **no** entry under `engines` runs on its defaults. Add a setting only when a requirement, a connector, or the engine's reference file calls for it.
 * Keep `engines` entries aligned with `enabled-engines`. SQRL removes a configuration for a disabled engine and warns when that configuration came from a user package; delete it yourself when pruning the engine.
+* Compulsory Slow-query logging (required with `vertx`): Every project that enables `vertx` must enable slow-query logging. Read [Slow-Query Logging](vertx.md#slow-query-logging) in vertx.md, then set `engines.vertx.config.graphQLTailSampleTracingConfig` in the shared base config with thresholds you chose for this API.
 
 ### Deployment (`engines.<engine>.deployment`)
 

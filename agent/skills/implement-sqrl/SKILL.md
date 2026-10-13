@@ -528,7 +528,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | Hint                        | Form                                                                       | Applies to     | Effect                                                                                                                                                                             |
 |-----------------------------|----------------------------------------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare PK when optimiser cannot infer; does not deduplicate (see Primary key columns)                                                                                             |
-| **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | override automatic index selection. `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`; `DESC` is supported only for `BTREE` and `PBTREE`. <br />`index` *alone* disables all automatic indexes |
+| **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | replaces automatic index selection for this table (see Indexes for API queries). `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`; `DESC` is supported only for `BTREE` and `PBTREE`. <br />`index` *alone* disables all automatic indexes |
 | **partition_key**           | `partition_key(col, ...)`                                                  | table          | define partition columns for sinks that support partitioning                                                                                                                       |
 | **vector_dim**              | `vector_dim(col, 1536)`                                                    | table          | declare fixed vector length. This is required when using vector indexes.                                                                                                           |
 | **query_by_all**            | `query_by_all(col, ...)`                                                   | table          | generate interface with *required* filter arguments for all listed columns                                                                                                         |
@@ -552,6 +552,39 @@ SensorTempByHour := SELECT ... ;
 ```
 
 For choosing between `query_by_all` (required filter arguments) and `query_by_any` (optional filter arguments) when designing table access, invoke the `/design-api` skill (Table Hints for Table Access).
+
+### Indexes for API queries
+
+DataSQRL creates the database indexes for the tables that the API queries. The database (Postgres) can use an index only when the filtered column stands alone in the comparison, so prefer to write every filter of a served query in the following form:
+
+- Compare the bare column: `customer_id = :customerId`.
+- Do a type conversion or a derived value in the table definition, before the table is written: prefer `CAST(c.customer_id AS STRING) AS customer_id` in the table definition, then filter on `customer_id = :customerId`. A function on the column in the filter, such as `CAST(customer_id AS STRING) = :customerId` or `LOWER(email) = :email`, makes the database read the whole table. 
+- Put arithmetic on the parameter side: `day_index = :day - 1`.
+
+The compiler (automatic index selection) picks the indexes from the filters of `WHERE` clauses (in table functions, relationships and `query_by_*` arguments), from `JOIN ... ON` conditions, and from the first `ORDER BY` column of a query with a `LIMIT`.
+
+Note: the compiler does not look inside a subquery in a `WHERE` clause, such as `EXISTS (...)` or `IN (SELECT ...)`. Add an `index` hint to the table that the subquery reads. Put the columns that the subquery compares with a parameter first, then the columns that it compares with the outer query.
+
+Example: the API returns the orders of all customers who own a given account. The subquery filters `AccountOwners` on `account_id` (compared with the parameter) and on `customer_id` (compared with the outer query), so the hint indexes these two columns in that order:
+
+```sql
+/*+index(BTREE, account_id, customer_id) */
+AccountOwners := SELECT account_id, customer_id FROM ... ;
+
+OrdersByAccount(accountId STRING) := SELECT * FROM Orders c
+WHERE EXISTS (SELECT 1 FROM AccountOwners o
+              WHERE o.account_id = :accountId AND o.customer_id = c.customer_id);
+```
+
+An `index` hint replaces the automatic index selection for its whole table: the compiler then creates only the hinted indexes and the primary key. List every index that the table needs in the hint.
+
+**Checking the indexes.** After a compile, check each served query that filters a large table. Judge the table size from the requirements and the source data.
+
+1. Find the SQL of the query in `deploy/plan/vertx.json`, and the `CREATE INDEX` statements of the table in `deploy/plan/postgres.json`. The primary key also counts as an index.
+2. Compare the columns that the `WHERE` clause compares, including those in subqueries, with the leading columns of the indexes.
+3. If no index fits, rewrite the filter into the form at the start of this section, or add an `index` hint. If no index can serve the filter, denormalize: compute the value in Flink and store it as a column of the served table.
+
+**Fixing a slow query.** An issue or a slow-query log names a slow query by its API field, such as `/OrdersByCustomer`, which is the name of the SQRL table or table function. Check that query with the steps above, then run the tests.
 
 
 ### Constraints and mutual exclusions
