@@ -16,12 +16,21 @@
 package com.datasqrl.error;
 
 import com.datasqrl.error.ErrorLocation.FileRange;
+import lombok.AllArgsConstructor;
 import lombok.Value;
 
 @Value
+@AllArgsConstructor
 public class SourceMapImpl implements SourceMap {
 
   String source;
+
+  /** The absolute path of the file the source was read from, if known. */
+  String sourcePath;
+
+  public SourceMapImpl(String source) {
+    this(source, null);
+  }
 
   @Override
   public String getRange(FileRange range) {

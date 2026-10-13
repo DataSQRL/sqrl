@@ -61,7 +61,7 @@ public class SqrlPreprocessor implements Preprocessor {
     }
 
     try {
-      var content = Files.readString(file);
+      var content = ctx.sourceFiles().read(file);
       var mustache =
           MUSTACHE_FACTORY.compile(new StringReader(content), file.getFileName().toString());
 
@@ -70,6 +70,7 @@ public class SqrlPreprocessor implements Preprocessor {
 
       var target = ctx.createNewBuildFile(file);
       Files.writeString(target, writer.toString());
+      ctx.sourceFiles().recordBuildFile(target, file);
 
     } catch (Exception e) {
       throw new IllegalStateException("Failed to resolve template in SQRL file: " + file, e);
