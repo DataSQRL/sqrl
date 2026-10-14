@@ -92,7 +92,7 @@ Result := SELECT MyScalarFunction(2, 3) AS total;
 
 #### Dependencies
 
-Declare dependencies with JBang's `//DEPS` directives. At the moment JBang does not support provided dependencies, so every JBang UDF must declare `flink-table-common` explicitly.
+Declare dependencies with JBang's `//DEPS` directives. At the moment JBang does not support provided dependencies, so every JBang UDF must declare `flink-table-common` explicitly. The [`add-func` command](https://docs.datasqrl.com/docs/main/compiler.md#add-func-command) generates UDFs that already declare it.
 Use the Flink version supported by the DataSQRL release:
 
 ```java
