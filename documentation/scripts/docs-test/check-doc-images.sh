@@ -27,10 +27,23 @@ if [ "$#" -eq 0 ]; then
   set -- "$ROOT/README.md" "$ROOT/documentation/docs" "$ROOT/documentation/src/pages" "$ROOT/agent/README.md"
 fi
 
+# Files that mention DataSQRL images, without the root files of the stdlib-docs submodule
+# (README, RELEASE, etc. of the Flink SQL Runner repository), which the docs site excludes too
+FILES=()
+while IFS= read -r file; do
+  FILES+=("$file")
+done < <(grep -rlE --include='*.md' --include='*.mdx' --include='*.tsx' 'datasqrl/' "$@" \
+  | grep -vE '/documentation/docs/stdlib-docs/[^/]+$' || true)
+
+if [ "${#FILES[@]}" -eq 0 ]; then
+  echo "No documented images found"
+  exit 0
+fi
+
 # Match e.g. datasqrl/cmd, datasqrl/cmd:0.11.6, ghcr.io/datasqrl/adv-agent:latest. Stop before
 # path-like continuations (datasqrl/sqrl/tree/...) and skip GitHub URLs.
-IMAGES=$(grep -rhoE --include='*.md' --include='*.mdx' --include='*.tsx' \
-    '(^|[^/.[:alnum:]])(ghcr\.io/)?datasqrl/[a-z0-9][a-z0-9._-]*(:[A-Za-z0-9._-]+)?([^/[:alnum:]]|$)' "$@" \
+IMAGES=$(grep -hoE \
+    '(^|[^/.[:alnum:]])(ghcr\.io/)?datasqrl/[a-z0-9][a-z0-9._-]*(:[A-Za-z0-9._-]+)?([^/[:alnum:]]|$)' "${FILES[@]}" \
   | grep -oE '(ghcr\.io/)?datasqrl/[a-z0-9][a-z0-9._-]*(:[A-Za-z0-9._-]+)?' \
   | sed -E 's/[.]+$//' \
   | awk '/:/ { print; next } { print $0 ":latest" }' \
@@ -85,7 +98,7 @@ if [ "${#failed[@]}" -gt 0 ]; then
   echo "These documented images cannot be pulled anonymously:" >&2
   for image in "${failed[@]}"; do
     echo "  $image" >&2
-    grep -rnF --include='*.md' --include='*.mdx' --include='*.tsx' "${image%:latest}" "$@" \
+    grep -HnF "${image%:latest}" "${FILES[@]}" \
       | sed 's/^/    /' >&2 || true
   done
   exit 1

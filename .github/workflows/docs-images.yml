@@ -10,6 +10,7 @@ on:
       - 'documentation/docs/**'
       - 'documentation/src/pages/**'
       - 'documentation/scripts/docs-test/**'
+      - 'documentation/scripts/checkout-stdlib-docs.sh'
       - '.github/workflows/docs-images.yml'
   push:
     branches:
@@ -28,6 +29,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+
+      # The stdlib docs are part of the published docs, check them out like the docs build does
+      - name: Checkout stdlib-docs at the Flink SQL Runner version
+        run: documentation/scripts/checkout-stdlib-docs.sh
 
       - name: Check that documented images can be pulled anonymously
         run: documentation/scripts/docs-test/check-doc-images.sh
