@@ -39,6 +39,20 @@ IMAGES=$(grep -rhoE --include='*.md' --include='*.mdx' --include='*.tsx' \
 # Repositories under github.com/DataSQRL that are not images
 NOT_IMAGES='^datasqrl/(sqrl|datasqrl-examples|datasqrl-plugin|flink-sql-runner):latest$'
 
+# Documented images that are not released yet. They are reported, but don't fail the check.
+# Remove an entry once the image is released, the check reports when that is the case.
+UNRELEASED_IMAGES=(
+  datasqrl/core-agent:latest # published with the next release
+)
+
+is_unreleased() {
+  local image
+  for image in "${UNRELEASED_IMAGES[@]}"; do
+    [ "$image" = "$1" ] && return 0
+  done
+  return 1
+}
+
 # Use an empty Docker config, so no stored credentials are used
 DOCKER_CONFIG="$(mktemp -d)"
 export DOCKER_CONFIG
@@ -46,6 +60,7 @@ trap 'rm -rf "$DOCKER_CONFIG"' EXIT
 
 failed=()
 checked=0
+pending=0
 for image in $IMAGES; do
   if [[ "$image" =~ $NOT_IMAGES ]]; then
     continue
@@ -53,6 +68,12 @@ for image in $IMAGES; do
   checked=$((checked + 1))
   if docker manifest inspect "$image" > /dev/null 2>&1; then
     echo "OK      $image"
+    if is_unreleased "$image"; then
+      echo "NOTICE  $image is released now, remove it from UNRELEASED_IMAGES in $0"
+    fi
+  elif is_unreleased "$image"; then
+    echo "PENDING $image (not released yet)"
+    pending=$((pending + 1))
   else
     echo "MISSING $image"
     failed+=("$image")
@@ -71,4 +92,4 @@ if [ "${#failed[@]}" -gt 0 ]; then
 fi
 
 echo
-echo "All $checked documented images can be pulled anonymously"
+echo "All $((checked - pending)) released documented images can be pulled anonymously ($pending not released yet)"
