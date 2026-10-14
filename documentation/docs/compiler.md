@@ -48,7 +48,7 @@ See the [configuration documentation](configuration.md) for more details.
 
 ### Time Zone
 
-The DataSQRL images run in UTC (`TZ=UTC`).
+The `datasqrl/cmd` image, and the agent images built on it, run in UTC (`TZ=UTC`).
 The `run` and `test` commands execute the pipeline inside the container, so time-zone-dependent operations use UTC by default.
 That includes casting a `TIMESTAMP_LTZ` to a string or a `TIMESTAMP`, and parsing timestamps without an offset.
 Flink's session time zone (`table.local-time-zone`) defaults to the system time zone, so it is UTC as well.
