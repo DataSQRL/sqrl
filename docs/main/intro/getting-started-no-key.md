@@ -20,7 +20,7 @@ If you don't already have Docker:
 
 Verify Docker is working:
 
-```bash
+```bash docs-test=no-key
 docker --version
 ```
 
@@ -28,12 +28,13 @@ docker --version
 
 Create a new data project with the `init` command in an empty folder:
 
-```bash
+```bash docs-test=no-key
 docker run --rm -v $PWD:/workspace datasqrl/cmd init api messenger
+cd messenger
 ```
 (Use `${PWD}` in Powershell on Windows)
 
-This creates a data API project called `messenger` for processing posted messages with sample data sources and a processing script called `messenger.sqrl`.
+This creates a data API project in the `messenger` folder for processing posted messages with sample data sources and a processing script called `messenger.sqrl`.
 
 The engines executing the pipeline are defined in the `package.json` files:
 ![Initial Pipeline Architecture](https://docs.datasqrl.com/img/diagrams/getting_started_diagram1.png)
@@ -42,7 +43,7 @@ The engines executing the pipeline are defined in the `package.json` files:
 
 Execute the SQRL project:
 
-```bash
+```bash docs-test=no-key docs-test-background=http://localhost:8888/v1/graphiql/
 docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd run messenger-prod-package.json
 ```
 
@@ -82,7 +83,7 @@ Now instruct your coding agent to extend `messenger.sqrl`. For example:
 
 The agent should modify `messenger.sqrl` and iterate using the test command:
 
-```bash
+```bash docs-test=no-key
 docker run -it --rm -v $PWD:/workspace datasqrl/cmd test messenger-test-package.json
 ```
 
@@ -143,7 +144,7 @@ The subscription tab should show the message pushed through in real-time.
 ## Compile for Deployment
 
 Build deployment artifacts:
-```bash
+```bash docs-test=no-key
 docker run --rm -v $PWD:/workspace datasqrl/cmd compile messenger-prod-package.json
 ```
 
