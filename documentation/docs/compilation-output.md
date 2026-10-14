@@ -90,6 +90,11 @@ The `build/deploy/flink` folder contains the data files that sources read locall
 | `iceberg-duckdb-schema.sql`, `iceberg-duckdb-views.sql` | Table and view definitions for the query engine that reads the Iceberg tables, such as DuckDB. |
 | `iceberg.json`                                          | The plans for the Iceberg tables and their query engines.                                      |
 
+`iceberg.json` contains the plan for the Iceberg tables under the empty key `""` and one plan per query engine under the engine name, such as `duckdb` or `trino`. Each plan in `iceberg.json` and `postgres.json` lists its statements with `name`, `type`, `sql`, and `fields`:
+
+- **Table statements** have `logicalName`, the SQRL table name, and `role`, which is `MUTATION` for tables written by API mutations or `MATERIALIZATION` for tables the pipeline computes. A mutation table and its materialization can share a `logicalName`, but their `name` is unique.
+- **View statements** have `referencedTables`, the names of the table statements the view reads, sorted and without duplicates. Each entry is the `name` of a table statement in the same file, which is the physical table name. Deployment tools use the list to create a view after its tables, or to register the view's tables with a catalog, such as AWS Glue. The list is empty for a view that reads no tables, and the field is absent for views defined by pass-through SQL, because the compiler does not analyze that SQL.
+
 ### Vert.x Server
 
 | File                           | Contents                                                                                                                                                           |

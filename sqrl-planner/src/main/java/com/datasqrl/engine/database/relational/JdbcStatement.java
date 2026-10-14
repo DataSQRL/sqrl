@@ -38,4 +38,10 @@ public interface JdbcStatement {
   default JdbcEngineCreateTable getEngineTable() {
     return null;
   }
+
+  /** For views, the names of the tables the view reads - null when unknown */
+  @JsonIgnore
+  default List<String> getReferencedTables() {
+    return null;
+  }
 }

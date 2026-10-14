@@ -103,7 +103,8 @@ public record JdbcPhysicalPlan(
           createTable.getNumPartitions(),
           createTable.getTtl(),
           logicalName,
-          role);
+          role,
+          statement.getReferencedTables());
     }
     return new JdbcStatementModel(
         statement.getName(),
@@ -117,7 +118,8 @@ public record JdbcPhysicalPlan(
         null,
         null,
         logicalName,
-        role);
+        role,
+        statement.getReferencedTables());
   }
 
   private static String toSql(List<JdbcStatement> statements) {
