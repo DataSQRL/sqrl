@@ -228,6 +228,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "FilteredOrders_1"
       ]
     },
     {
@@ -255,6 +258,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_2"
       ]
     },
     {

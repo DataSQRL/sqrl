@@ -421,6 +421,9 @@ END
           "type" : "INTEGER",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "MachineReading_1"
       ]
     },
     {
@@ -443,6 +446,9 @@ END
           "type" : "FLOAT",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "MachineTempByHour_2"
       ]
     },
     {
@@ -465,6 +471,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Sensors_3"
       ]
     }
   ],

@@ -114,7 +114,8 @@ END
           "type" : "JSONB",
           "nullable" : false
         }
-      ]
+      ],
+      "referencedTables" : [ ]
     },
     {
       "name" : "MyTable",
@@ -126,6 +127,9 @@ END
           "type" : "INTEGER",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "MyTable_1"
       ]
     }
   ],

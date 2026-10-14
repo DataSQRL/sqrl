@@ -314,6 +314,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_1"
       ]
     },
     {

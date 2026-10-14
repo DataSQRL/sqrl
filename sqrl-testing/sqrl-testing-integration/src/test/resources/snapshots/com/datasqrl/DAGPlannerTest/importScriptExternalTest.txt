@@ -324,6 +324,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerAggregate1_1"
       ]
     },
     {
@@ -341,6 +344,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerAggregate2_2"
       ]
     }
   ],

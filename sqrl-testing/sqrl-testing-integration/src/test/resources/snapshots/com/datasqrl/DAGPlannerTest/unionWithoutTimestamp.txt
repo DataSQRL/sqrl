@@ -388,6 +388,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CombinedState_1"
       ]
     },
     {
@@ -400,6 +403,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CombinedStream_2"
       ]
     },
     {
@@ -432,6 +438,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_3"
       ]
     },
     {
@@ -464,6 +473,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Orders_4"
       ]
     }
   ],

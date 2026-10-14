@@ -353,6 +353,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "OrderMetrics_1"
       ]
     },
     {
@@ -380,6 +383,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "OrderUpdates_2"
       ]
     },
     {
@@ -407,6 +413,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_3"
       ]
     }
   ],

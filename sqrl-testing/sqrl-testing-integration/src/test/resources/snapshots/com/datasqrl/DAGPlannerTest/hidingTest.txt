@@ -446,6 +446,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "AnotherCustomer_1"
       ]
     },
     {
@@ -478,6 +481,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_2"
       ]
     },
     {
@@ -495,6 +501,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "FinalCustomer_3"
       ]
     }
   ],

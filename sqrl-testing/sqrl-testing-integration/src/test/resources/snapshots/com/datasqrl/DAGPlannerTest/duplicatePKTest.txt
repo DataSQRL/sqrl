@@ -326,6 +326,10 @@ END
           "type" : "TEXT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "InputDistinct_1",
+        "_Input_2"
       ]
     },
     {

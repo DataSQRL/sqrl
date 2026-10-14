@@ -255,6 +255,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "SensorReading_1"
       ]
     },
     {
@@ -277,6 +280,9 @@ END
           "type" : "DOUBLE PRECISION",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "SensorTempByHour_2"
       ]
     }
   ],

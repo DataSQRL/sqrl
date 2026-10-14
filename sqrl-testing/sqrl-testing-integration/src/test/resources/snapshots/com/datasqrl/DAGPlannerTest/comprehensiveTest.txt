@@ -1695,6 +1695,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "AnotherCustomer_1"
       ]
     },
     {
@@ -1727,6 +1730,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_2"
       ]
     },
     {
@@ -1759,6 +1765,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerByMultipleTime_4"
       ]
     },
     {
@@ -1791,6 +1800,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerByTime2_5"
       ]
     },
     {
@@ -1823,6 +1835,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerFilteredDistinct_6"
       ]
     },
     {
@@ -1848,6 +1863,9 @@ END
           "nullable" : false,
           "description" : "Number of unique emails for all customers per minute"
         }
+      ],
+      "referencedTables" : [
+        "CustomerTimeWindow_9"
       ]
     },
     {
@@ -1870,6 +1888,9 @@ END
           "type" : "TEXT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "ExplicitDistinct_10"
       ]
     },
     {
@@ -1897,6 +1918,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "ExternalOrders_11"
       ]
     },
     {
@@ -1919,6 +1943,9 @@ END
           "type" : "TEXT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "InvalidDistinct_12"
       ]
     },
     {
@@ -1956,6 +1983,10 @@ END
           "type" : "TEXT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "ExplicitDistinct_10",
+        "ExternalOrders_11"
       ]
     },
     {
@@ -1976,6 +2007,9 @@ END
           "nullable" : true,
           "description" : "The amount ordered"
         }
+      ],
+      "referencedTables" : [
+        "Orders_13"
       ]
     },
     {
@@ -2009,6 +2043,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "SelectCustomers_14"
       ]
     },
     {
@@ -2051,6 +2088,9 @@ END
           "type" : "TEXT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "TemporalJoin_15"
       ]
     },
     {
@@ -2093,6 +2133,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "UnnestOrders_16"
       ]
     },
     {
