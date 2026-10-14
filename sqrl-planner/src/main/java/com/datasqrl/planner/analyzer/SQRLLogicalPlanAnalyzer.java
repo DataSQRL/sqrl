@@ -173,11 +173,21 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
     this.errors = errors;
   }
 
+  /**
+   * The analysis of a view.
+   *
+   * @param relNode the plan of the view, rewritten by the analysis
+   * @param relBuilder a builder positioned on the rewritten plan
+   * @param tableAnalysis the analysis of the table that the view defines
+   * @param hasMostRecentDistinct whether the view deduplicates by the most recent row time
+   * @param originalRelnode the plan that was analyzed
+   */
   public record ViewAnalysis(
       RelNode relNode,
       RelBuilder relBuilder,
       TableAnalysis.TableAnalysisBuilder tableAnalysis,
-      boolean hasMostRecentDistinct) {}
+      boolean hasMostRecentDistinct,
+      RelNode originalRelnode) {}
 
   public ViewAnalysis analyze(HintsAndDoc hintsAndDoc) {
     originalRelnode.accept(this);
@@ -308,7 +318,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .tableStatistic(tableStatistic)
             .errors(errors);
 
-    return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis, hasMostRecentDistinct);
+    return new ViewAnalysis(
+        analysis.relNode, relBuilder, tableAnalysis, hasMostRecentDistinct, originalRelnode);
   }
 
   /**
