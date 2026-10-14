@@ -74,6 +74,35 @@ npm run typecheck   # TypeScript type checking
 npm run clear       # clear the Docusaurus cache when the dev server misbehaves
 ```
 
+The build fails on broken links (`onBrokenLinks: 'throw'`).
+
+## Testing documented commands
+
+CI runs documented commands verbatim, so the docs cannot drift from the product. Opt a `bash`
+code block in by adding a `docs-test=<suite>` attribute, which is not rendered:
+
+````md
+```bash docs-test=no-key
+docker run --rm -v $PWD:/workspace datasqrl/cmd init api messenger
+cd messenger
+```
+````
+
+Blocks of a suite run in document order in a fresh directory, and a `cd` carries over to the
+next block. Long-running commands declare a readiness URL with
+`docs-test-background=<url>` and are stopped once the URL responds. The CircleCI `docs-test`
+job runs the suites against the image built for the change. Add new files to that job.
+
+To run the suites locally against a given image:
+
+```bash
+python3 scripts/docs-test/run_doc_commands.py --image datasqrl/cmd=datasqrl/cmd:dev \
+  docs/intro/getting-started-no-key.md docs/compiler.md
+```
+
+The `Documented images` workflow (`scripts/docs-test/check-doc-images.sh`) verifies that every
+image referenced in the README and docs can be pulled anonymously.
+
 ## Deployment
 
 The site is deployed automatically through CI/CD.
