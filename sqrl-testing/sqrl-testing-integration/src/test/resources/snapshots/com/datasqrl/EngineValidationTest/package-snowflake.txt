@@ -109,12 +109,16 @@ CREATE OR REPLACE ICEBERG TABLE Numbers2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG
         {
           "name" : "Numbers",
           "type" : "TABLE",
-          "sql" : "CREATE OR REPLACE ICEBERG TABLE Numbers EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers'"
+          "sql" : "CREATE OR REPLACE ICEBERG TABLE Numbers EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers'",
+          "logicalName" : "Numbers",
+          "role" : "MATERIALIZATION"
         },
         {
           "name" : "Numbers2",
           "type" : "TABLE",
-          "sql" : "CREATE OR REPLACE ICEBERG TABLE Numbers2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers2'"
+          "sql" : "CREATE OR REPLACE ICEBERG TABLE Numbers2 EXTERNAL_VOLUME = 'MyNewVolume' CATALOG = 'MyCatalog' CATALOG_TABLE_NAME = 'Numbers2'",
+          "logicalName" : "Numbers2",
+          "role" : "MATERIALIZATION"
         }
       ],
       "standaloneExtensionStatements" : [ ]

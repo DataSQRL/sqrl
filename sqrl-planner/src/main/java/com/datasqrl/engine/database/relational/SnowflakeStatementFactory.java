@@ -43,7 +43,8 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
   @Override
   public JdbcStatement createTable(JdbcEngineCreateTable createTable) {
     var tableName = createTable.tableName();
-    return new GenericJdbcStatement(tableName, Type.TABLE, getSnowflakeCreateTable(tableName));
+    return new GenericJdbcStatement(
+        tableName, Type.TABLE, getSnowflakeCreateTable(tableName), null, null, null, createTable);
   }
 
   public String getSnowflakeCreateTable(String tableName) {

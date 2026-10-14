@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -87,8 +86,11 @@ public record JdbcPhysicalPlan(
                         new JdbcStatementModel.Field(
                             field.name(), field.type(), field.nullable(), field.description()))
                 .toList();
+    var engineTable = statement.getEngineTable();
+    var logicalName = engineTable == null ? null : engineTable.logicalName();
+    var role =
+        engineTable == null ? null : JdbcStatementModel.Role.valueOf(engineTable.role().name());
     if (statement instanceof CreateTableJdbcStatement createTable) {
-      var engineTable = Optional.ofNullable(createTable.getEngineTable());
       return new JdbcStatementModel(
           statement.getName(),
           statement.getType(),
@@ -100,15 +102,22 @@ public record JdbcPhysicalPlan(
           createTable.getPartitionType(),
           createTable.getNumPartitions(),
           createTable.getTtl(),
-          engineTable.map(JdbcEngineCreateTable::logicalName).orElse(null),
-          engineTable.map(JdbcEngineCreateTable::role).orElse(null));
+          logicalName,
+          role);
     }
     return new JdbcStatementModel(
         statement.getName(),
         statement.getType(),
         statement.getSql(),
         statement.getDescription(),
-        fields);
+        fields,
+        null,
+        null,
+        null,
+        null,
+        null,
+        logicalName,
+        role);
   }
 
   private static String toSql(List<JdbcStatement> statements) {

@@ -49,8 +49,21 @@ public class GenericJdbcStatement implements JdbcStatement {
   /** The datatype converted to a list of Field. It's null if there is no dataType. */
   List<Field> fields;
 
+  /** The engine table for TABLE statements - nullable and not set when deserialized */
+  @JsonIgnore JdbcEngineCreateTable engineTable;
+
   public GenericJdbcStatement(String name, Type type, String sql) {
     this(name, type, sql, null, null);
+  }
+
+  public GenericJdbcStatement(
+      String name,
+      Type type,
+      String sql,
+      String description,
+      RelDataType dataType,
+      List<Field> fields) {
+    this(name, type, sql, description, dataType, fields, null);
   }
 
   @JsonCreator

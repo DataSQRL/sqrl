@@ -24,7 +24,8 @@ import java.util.List;
  * A rendered statement in a JDBC deployment file.
  *
  * @param logicalName for tables, the SQRL table name substituted for {@code ${sqrl:table-name}} in
- *     the connector's table name template
+ *     the connector's table name template; not unique, a mutation table and its materialization
+ *     share it, so key on {@code (logicalName, role)}
  * @param role for tables, whether the table stores a mutation or a table the pipeline materializes
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -45,7 +46,33 @@ public record JdbcStatementModel(
 
   public JdbcStatementModel(
       String name, Type type, String sql, String description, List<Field> fields) {
-    this(name, type, sql, description, fields, null, null, null, null, null, null, null);
+    this(name, type, sql, description, fields, null, null, null, null, null);
+  }
+
+  public JdbcStatementModel(
+      String name,
+      Type type,
+      String sql,
+      String description,
+      List<Field> fields,
+      List<String> primaryKey,
+      List<String> partitionKey,
+      PartitionType partitionType,
+      Integer numPartitions,
+      Duration ttl) {
+    this(
+        name,
+        type,
+        sql,
+        description,
+        fields,
+        primaryKey,
+        partitionKey,
+        partitionType,
+        numPartitions,
+        ttl,
+        null,
+        null);
   }
 
   public enum Type {

@@ -15,6 +15,8 @@
  */
 package com.datasqrl.deployment.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
 import java.util.Map;
 
@@ -23,8 +25,10 @@ import java.util.Map;
  *
  * @param tableName the internal table id the planner assigned, e.g. {@code Orders_3}
  * @param logicalName the SQRL table name substituted for {@code ${sqrl:table-name}} in the topic
- *     template
+ *     template; null for topics no SQRL table backs, such as test-runner topics
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record KafkaNewTopicModel(
     String topicName,
     String tableName,
@@ -36,6 +40,29 @@ public record KafkaNewTopicModel(
     List<String> messageKeys,
     String messageSchema,
     Map<String, String> config) {
+
+  public KafkaNewTopicModel(
+      String topicName,
+      String tableName,
+      String format,
+      int numPartitions,
+      short replicationFactor,
+      Type type,
+      List<String> messageKeys,
+      String messageSchema,
+      Map<String, String> config) {
+    this(
+        topicName,
+        tableName,
+        null,
+        format,
+        numPartitions,
+        replicationFactor,
+        type,
+        messageKeys,
+        messageSchema,
+        config);
+  }
 
   public KafkaNewTopicModel(
       String topicName,
@@ -56,8 +83,13 @@ public record KafkaNewTopicModel(
         Map.of());
   }
 
-  public KafkaNewTopicModel(String topicName, String tableName, String logicalName) {
-    this(topicName, tableName, logicalName, 1, (short) 1);
+  public KafkaNewTopicModel(
+      String topicName, String tableName, int numPartitions, short replicationFactor) {
+    this(topicName, tableName, null, numPartitions, replicationFactor);
+  }
+
+  public KafkaNewTopicModel(String topicName, String tableName) {
+    this(topicName, tableName, 1, (short) 1);
   }
 
   public enum Type {

@@ -15,7 +15,6 @@
  */
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.deployment.model.JdbcStatementModel.Role;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.log.MutationEngine.MutationCreateTable;
 import com.datasqrl.planner.analyzer.TableAnalysis;
@@ -35,6 +34,15 @@ public record JdbcEngineCreateTable(
     RelDataType datatype,
     TableAnalysis tableAnalysis)
     implements EngineCreateTable, MutationCreateTable {
+
+  public enum Role {
+    MUTATION,
+    MATERIALIZATION
+  }
+
+  public JdbcEngineCreateTable withRole(Role role) {
+    return new JdbcEngineCreateTable(tableName, logicalName, role, table, datatype, tableAnalysis);
+  }
 
   @Override
   public MutationCreateTable withValueType(RelDataType inputValueType) {
