@@ -6,7 +6,11 @@ modes: [planning, implementation, setup, question]
 
 Follow these steps to initialize a DataSQRL project:
 1. When an available examples directory contains a useful starting point, review its `README.md` and relevant projects. Treat its contents as optional reference material, not required templates.
-2. Adapt relevant example files into the working directory only when they fit the task. Don't overwrite existing files.
+2. Adapt relevant example files into the working directory only when they fit the task. Don't overwrite existing files. If no example fits, scaffold the project with `/opt/agent/cmd.sh init <type> <name>` instead (it creates the `<name>/` folder; see `CLI_REFERENCE.md`). Pick the type by the pipeline's output:
+   * `api`: data served through a GraphQL API (Flink, PostgreSQL, Kafka, Vert.x). The production source `connectors/sources-prod.sqrl` is an internal Kafka table (`/*+ engine(kafka) */`), exposed as a mutation.
+   * `stream`: results written to Kafka topics (Flink, Kafka). The production source is an internal Kafka table, and the script exports its result with `EXPORT HelloWorld TO log.HelloWorld;`. Without an API, only exported tables are written anywhere: export each result the user needs, and the script must have at least one `EXPORT` to compile.
+   * `dataset`: results written to Iceberg and queried through DuckDB (Flink, Iceberg, DuckDB). The production source is an existing Iceberg table (`'connector' = 'iceberg'`): set its catalog options (`catalog-type`, `catalog-name`, `warehouse`, `catalog-table`) to the user's lakehouse.
+   * The test package of every type reads the sample data in `connectors/test-data/` and compiles and tests out of the box. Replace the `Messages` sources and the sample data with the real sources (step 4).
 3. Review provided source/sink table definitions in sub-folders to identify the sqrl files that define the sources and sinks required for the implementation. If the requirements reference a provided data catalog, include that catalog and delete copied connectors unless the requirements specifically ask to create additional sources/sinks outside the catalog.
 4. Update copied files to match user requirements by:
    * **ALWAYS** invoke the relevant skill before updating or implementing anything

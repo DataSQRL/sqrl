@@ -12,6 +12,7 @@ Only implement a UDF if the functionality cannot be implemented with existing Fl
 Follow these steps:
 - From the project root directory, initialize function with `/opt/agent/cmd.sh add-func <function-name>` to create a scalar UDF. Append `--aggregate` to create an aggregate function.
 - New function implementation is added in the `functions/` folder with the name `<function-name>.java`
+- The generated file declares `//DEPS org.apache.flink:flink-table-common:<version>` with the compiler's Flink version. Keep this line: the UDF does not compile without it.
 - Import into SQRL script with `IMPORT functions.<function-name>` or `IMPORT functions.*` for all functions. `functions/` sits at the project root, so from a script in a **subfolder** use the reserved `root` prefix — `IMPORT root.functions.<function-name>` — since SQRL relative dot-paths cannot climb upward. (Inside an included project, keep the import relative so it travels with the copied files.)
 
 ## Edit UDF
@@ -19,6 +20,7 @@ Follow these steps:
 Follow these steps:
 - Edit the `.java` file in the `functions/` folder
 - Try to use standard java libraries
-- Use JBANG `//DEPS` to include dependencies
+- Use JBANG `//DEPS` to include dependencies, next to the generated `flink-table-common` one
+- `compile`, `test` and `run` build the UDFs with JBang. A build failure stops the command with `[FATAL] Failed to build JBang UDF(s) [...]` followed by the javac output: fix the reported file and line before anything else
 - Implement tests for the function in the `main` method
 - Execute the `main` method after each edit to ensure function compiles and works correctly

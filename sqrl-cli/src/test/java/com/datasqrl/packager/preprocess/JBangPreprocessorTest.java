@@ -16,6 +16,7 @@
 package com.datasqrl.packager.preprocess;
 
 import static com.datasqrl.packager.preprocess.JBangPreprocessor.JBANG_FILE_SHA256;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
@@ -261,25 +262,30 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void given_jbangExportFails_when_process_then_logsWarningButContinues() throws IOException {
+  void givenJbangExportFails_whenComplete_thenThrowsFatalErrorWithJbangOutput() throws IOException {
     var javaFile = createJavaFile("FailingUDF.java", validScalarFunctionContent());
-    doThrow(new ExecuteException("JBang failed", 1)).when(jBangRunner).exportFatJar(any(), any());
+    doThrow(new ExecuteException("error: package org.apache.flink does not exist", 1))
+        .when(jBangRunner)
+        .exportFatJar(any(), any());
 
     underTest.process(javaFile, context);
-    underTest.complete();
+
+    assertThatThrownBy(() -> underTest.complete())
+        .hasMessageContaining("Failed to build JBang UDF(s)")
+        .hasMessageContaining("error: package org.apache.flink does not exist");
 
     verifyExportedFiles(javaFile);
     verify(context, never()).createNewBuildFile(any());
   }
 
   @Test
-  void given_ioExceptionDuringExport_when_process_then_logsWarningButContinues()
-      throws IOException {
+  void givenIoExceptionDuringExport_whenComplete_thenThrowsFatalError() throws IOException {
     var javaFile = createJavaFile("IOFailUDF.java", validScalarFunctionContent());
     doThrow(new IOException("IO failure")).when(jBangRunner).exportFatJar(any(), any());
 
     underTest.process(javaFile, context);
-    underTest.complete();
+
+    assertThatThrownBy(() -> underTest.complete()).hasMessageContaining("IO failure");
 
     verifyExportedFiles(javaFile);
     verify(context, never()).createNewBuildFile(any());

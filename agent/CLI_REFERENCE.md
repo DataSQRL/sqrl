@@ -29,7 +29,7 @@ Always pass the base first and the overlay second. The CLI default (`package.jso
 
 ### init
 
-Creates a new project with `<name>.sqrl`, `<name>-prod-package.json`, and `<name>-test-package.json`. `<type>` is `stream`, `dataset`, or `api`; `--batch` selects Flink batch mode.
+Creates a new project in the `<name>/` folder with `<name>.sqrl`, `<name>-prod-package.json`, and `<name>-test-package.json`. `<type>` is `stream`, `dataset`, or `api`; `--batch` selects Flink batch mode. The production sources depend on the type: an internal Kafka table for `api` and `stream` (`stream` also exports its result to a Kafka topic), and an existing Iceberg table for `dataset`. See the `init-sqrl` skill.
 
 ```bash
 /opt/agent/cmd.sh init api myproject

@@ -1,0 +1,8 @@
+IMPORT connectors.sources-{{source-type}}.*;
+
+HelloWorld := SELECT * FROM Messages ORDER BY message_time DESC;
+
+EXPORT HelloWorld TO log.HelloWorld;
+
+/*+ test */
+HelloWorldTest := SELECT COUNT(*) AS message_count FROM HelloWorld;
