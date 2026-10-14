@@ -172,6 +172,24 @@ The `dev` size is intended for development and testing with small amounts of dat
 
 `instance-size` accepts [size qualifiers](#size-qualifiers): `dev.mem-2x` is 0.25 CPU with 2 GiB, `small`'s memory at half its CPU request. Each tier is half the one above it, so a server that only holds connections open is not forced onto a core it will not use.
 
+### JVM Defaults
+
+The `datasqrl/sqrl-server` image starts the server JVM with these flags:
+
+| Flag                          | Effect |
+|:------------------------------|:-------|
+| `-XX:+ExitOnOutOfMemoryError` | The process exits on the first `OutOfMemoryError` instead of running on in an unreliable state, so the container is restarted. |
+| `-XX:MaxRAMPercentage=75`     | The maximum heap is 75% of the container memory limit (the JVM default is 25%). For example, a `small` instance (2 GiB) gets a 1.5 GiB heap. |
+
+The remaining 25% is left for metaspace, thread stacks, direct buffers (Netty, Kafka clients) and other native memory.
+
+Additional JVM options can be passed through the `SQRL_JVM_ARGS` environment variable. They are placed after the defaults, so they take precedence:
+
+* `-XX:MaxRAMPercentage=<n>` replaces the 75% default, and an explicit `-Xmx` overrides the percentage entirely.
+* `-XX:-ExitOnOutOfMemoryError` keeps the JVM running after an out-of-memory error. This is not recommended: after an OOM, threads may have died silently and the server can keep failing requests without being restarted.
+
+If a server keeps restarting because of out-of-memory errors, give it more memory with a larger `instance-size` or a `.mem-Nx` [qualifier](#size-qualifiers) rather than turning off the exit.
+
 ---
 
 ## Size Qualifiers
