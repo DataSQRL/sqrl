@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 # Verifies that every DataSQRL Docker image referenced in the given files (default: README
 # and current docs) can be pulled anonymously, the way a first-time user would.
 #
