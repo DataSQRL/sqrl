@@ -194,6 +194,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   private final FlinkInsertConflictPlanner insertConflictPlanner;
   private final FlinkSqlNodePlanner flinkSqlNodePlanner;
   private final RelationAliasExpander relationAliasExpander;
+  private final ViewPlans viewPlans;
 
   @Getter private final Set<String> createdDatabases = new LinkedHashSet<>();
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
@@ -252,6 +253,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             insertConflictPlanner.getConflictProgram());
     this.tEnv.getConfig().setPlannerConfig(plannerConfigBuilder.build());
     this.catalogManager = tEnv.getCatalogManager();
+    this.viewPlans = new ViewPlans(catalogManager);
 
     execFnFactory = new FlinkExecFunctionFactory(tEnv.getConfig());
     relDataTypeParser = new RelDataTypeParser(this);
@@ -413,6 +415,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    * @return
    */
   public FlinkPhysicalPlan compileFlinkPlan() {
+    viewPlans.restoreViews();
     var execute = planBuilder.getExecuteStatements();
 
     if (executionMode != RuntimeExecutionMode.BATCH && execute.size() > 1) {
@@ -627,6 +630,10 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     final var query = removeSort(originalQuery);
     var removedSort = originalQuery != query;
     final var rewrittenViewDef = updateViewQuery(query, viewDef);
+    if (rewrittenViewDef instanceof SqlAlterViewAs alterView) {
+      viewPlans.forget(
+          catalogManager.qualifyIdentifier(UnresolvedIdentifier.of(alterView.getFullName())));
+    }
     // Add the view to Flink using the rewritten SqlNode from stage 1.
     var op = executeSqlNode(rewrittenViewDef);
     ObjectIdentifier identifier;
@@ -648,6 +655,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     var tableAnalysis =
         viewAnalysis.tableAnalysis().objectIdentifier(identifier).originalSql(originalSql).build();
     tableLookup.registerTable(tableAnalysis);
+    // The analyzed plan is the query of the view without its top-level sort, as Flink expands it
+    viewPlans.reuse(identifier, viewAnalysis.originalRelnode());
 
     return tableAnalysis;
   }
