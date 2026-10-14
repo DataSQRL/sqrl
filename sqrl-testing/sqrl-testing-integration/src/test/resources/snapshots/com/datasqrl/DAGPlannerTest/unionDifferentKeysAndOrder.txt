@@ -191,7 +191,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CombinedStream",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "source_a_2",
@@ -215,7 +217,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "source_a",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "source_b_3",
@@ -239,7 +243,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "source_b",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CombinedStream",

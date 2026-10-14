@@ -124,7 +124,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Output",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Output",

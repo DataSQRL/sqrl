@@ -17,6 +17,7 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.deployment.model.JdbcStatementModel.Field;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
 
@@ -32,4 +33,9 @@ public interface JdbcStatement {
   String getDescription();
 
   List<Field> getFields();
+
+  @JsonIgnore
+  default JdbcEngineCreateTable getEngineTable() {
+    return null;
+  }
 }

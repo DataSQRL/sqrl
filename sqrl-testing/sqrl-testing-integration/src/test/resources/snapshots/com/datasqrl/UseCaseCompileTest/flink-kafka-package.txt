@@ -318,6 +318,7 @@ END
     {
       "topicName" : "ApplicationStatus",
       "tableName" : "ApplicationStatus_1",
+      "logicalName" : "ApplicationStatus",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,

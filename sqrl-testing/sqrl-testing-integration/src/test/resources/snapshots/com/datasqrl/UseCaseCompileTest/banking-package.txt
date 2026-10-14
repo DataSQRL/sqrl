@@ -762,6 +762,7 @@ END
     {
       "topicName" : "ApplicationAlert",
       "tableName" : "ApplicationAlert_2",
+      "logicalName" : "ApplicationAlert",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -773,6 +774,7 @@ END
     {
       "topicName" : "AddChatMessage",
       "tableName" : "AddChatMessage",
+      "logicalName" : "AddChatMessage",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -784,6 +786,7 @@ END
     {
       "topicName" : "ApplicationUpdates",
       "tableName" : "ApplicationUpdates",
+      "logicalName" : "ApplicationUpdates",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,

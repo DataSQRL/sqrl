@@ -72,6 +72,7 @@ END
     {
       "topicName" : "LogData",
       "tableName" : "LogData_1",
+      "logicalName" : "LogData",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,

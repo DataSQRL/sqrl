@@ -196,7 +196,9 @@ END
       ],
       "partitionType" : "RANGE",
       "numPartitions" : 1,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "_OrderEntries",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "OrderEntryJoin",

@@ -86,6 +86,10 @@ public record JdbcPhysicalPlan(
                         new JdbcStatementModel.Field(
                             field.name(), field.type(), field.nullable(), field.description()))
                 .toList();
+    var engineTable = statement.getEngineTable();
+    var logicalName = engineTable == null ? null : engineTable.logicalName();
+    var role =
+        engineTable == null ? null : JdbcStatementModel.Role.valueOf(engineTable.role().name());
     if (statement instanceof CreateTableJdbcStatement createTable) {
       return new JdbcStatementModel(
           statement.getName(),
@@ -97,14 +101,23 @@ public record JdbcPhysicalPlan(
           createTable.getPartitionKey(),
           createTable.getPartitionType(),
           createTable.getNumPartitions(),
-          createTable.getTtl());
+          createTable.getTtl(),
+          logicalName,
+          role);
     }
     return new JdbcStatementModel(
         statement.getName(),
         statement.getType(),
         statement.getSql(),
         statement.getDescription(),
-        fields);
+        fields,
+        null,
+        null,
+        null,
+        null,
+        null,
+        logicalName,
+        role);
   }
 
   private static String toSql(List<JdbcStatement> statements) {
