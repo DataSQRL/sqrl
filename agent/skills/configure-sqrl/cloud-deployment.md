@@ -125,6 +125,8 @@ Postgres has one primary and zero or more same-sized read replicas.
 
 `instance-count` must be positive. The `.disk` qualifier enables local NVMe when needed.
 
+The `datasqrl/sqrl-server` image starts the JVM with `-XX:+ExitOnOutOfMemoryError` and `-XX:MaxRAMPercentage=75`: an out-of-memory error exits the process so the container restarts, and the heap is capped at 75% of the container memory limit (1.5 GiB on `small`). JVM options in the `SQRL_JVM_ARGS` environment variable come after these defaults and override them: `-XX:MaxRAMPercentage=<n>` or `-Xmx` changes the heap, and `-XX:-ExitOnOutOfMemoryError` disables the exit (not recommended). When a server restarts repeatedly from out-of-memory errors, raise `instance-size` or add a `.mem-Nx` qualifier instead of disabling the exit.
+
 ## Dedicated nodes and disruption protection
 
 Dedicated-node names are hard scheduling requirements: the workload remains Pending if no matching node exists. Use `taskmanager-dedicated-nodes` and `jobmanager-dedicated-nodes` for Flink, or `dedicated-nodes` for Postgres and Vert.x. Each name requires the cluster operator to label matching nodes `<name>=true` and taint them with `<name>=true:NoSchedule`.
