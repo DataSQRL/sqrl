@@ -94,6 +94,8 @@ Provide test input through sources that suit the behavior under test and fit the
 
 Before taking snapshots, the `test` command drains the Flink job, which advances all watermarks to the end, so fixtures do not need dummy sentinel records to close windows or temporal joins. Do not set `table.exec.source.idle-timeout` to more than 0 seconds in the test package, since the test runner disables idleness. If a base package sets it, override it with `"0 s"` in the test overlay. With idleness enabled, the drain can drop the last events behind chained temporal joins.
 
+The `test` command runs in UTC, so snapshots show `TIMESTAMP_LTZ` values and time-zone-dependent results (e.g. casting a `TIMESTAMP_LTZ` to a string) in UTC. Write fixture timestamps with an explicit offset (e.g. `2025-10-13T12:11:26.575Z`) so they are independent of the time zone. When the logic depends on a different session time zone, set `table.local-time-zone` in the Flink configuration of the package (`/configure-sqrl` skill) instead of changing the container's `TZ`.
+
 ## Authentication Testing
 
 Configure custom headers per query using `.properties` file (same name as `.graphql` file):
