@@ -220,6 +220,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "_OrderEntries_1"
       ]
     },
     {

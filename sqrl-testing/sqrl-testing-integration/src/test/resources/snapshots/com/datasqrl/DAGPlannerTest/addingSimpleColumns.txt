@@ -366,6 +366,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "FilteredOrders_1"
       ]
     },
     {
@@ -388,6 +391,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "OrderIds_2"
       ]
     },
     {
@@ -415,6 +421,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_3"
       ]
     }
   ],

@@ -262,6 +262,9 @@ END
           "type" : "TEXT",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "CombinedStream_1"
       ]
     },
     {
@@ -279,6 +282,9 @@ END
           "type" : "TEXT",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "source_a_2"
       ]
     },
     {
@@ -296,6 +302,9 @@ END
           "type" : "TEXT",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "source_b_3"
       ]
     }
   ],

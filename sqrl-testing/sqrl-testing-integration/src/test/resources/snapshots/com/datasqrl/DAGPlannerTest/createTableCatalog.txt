@@ -143,6 +143,9 @@ END
           "type" : "INTEGER",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Output_1"
       ]
     }
   ],

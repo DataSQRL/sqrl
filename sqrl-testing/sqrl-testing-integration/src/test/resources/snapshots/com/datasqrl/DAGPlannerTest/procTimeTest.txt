@@ -399,6 +399,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1"
       ]
     },
     {
@@ -456,6 +459,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerOrdersJoin_2"
       ]
     },
     {
@@ -488,6 +494,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Orders_3"
       ]
     }
   ],

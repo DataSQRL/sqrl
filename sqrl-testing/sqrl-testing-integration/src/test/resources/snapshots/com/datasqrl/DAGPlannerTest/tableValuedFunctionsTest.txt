@@ -637,6 +637,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1"
       ]
     },
     {
@@ -659,6 +662,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerCumulate_2"
       ]
     },
     {
@@ -686,6 +692,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerHop_3"
       ]
     },
     {
@@ -718,6 +727,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerSession_4"
       ]
     },
     {
@@ -740,6 +752,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerTumble_5"
       ]
     },
     {
@@ -787,6 +802,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "StreamJoin_6"
       ]
     }
   ],

@@ -208,6 +208,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_1"
       ]
     },
     {
@@ -220,6 +223,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "ProductId_2"
       ]
     }
   ],

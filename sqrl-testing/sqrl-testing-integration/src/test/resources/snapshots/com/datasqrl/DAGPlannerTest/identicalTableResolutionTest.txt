@@ -346,6 +346,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_1"
       ]
     },
     {
@@ -373,6 +376,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "SelectOrders1_2"
       ]
     },
     {
@@ -400,6 +406,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "SelectOrders2_3"
       ]
     }
   ],

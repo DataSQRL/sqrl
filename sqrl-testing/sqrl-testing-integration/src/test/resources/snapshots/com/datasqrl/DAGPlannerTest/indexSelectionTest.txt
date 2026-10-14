@@ -471,6 +471,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1"
       ]
     },
     {

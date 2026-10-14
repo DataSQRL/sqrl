@@ -267,6 +267,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "OrderAgg1_1"
       ]
     },
     {
@@ -279,6 +282,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "OrderAgg2_2"
       ]
     },
     {
@@ -306,6 +312,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_3"
       ]
     }
   ],

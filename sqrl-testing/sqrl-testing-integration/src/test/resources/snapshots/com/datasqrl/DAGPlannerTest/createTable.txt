@@ -367,6 +367,9 @@ END
           "type" : "INTEGER",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "MachineReading_1"
       ]
     },
     {
@@ -389,6 +392,9 @@ END
           "type" : "FLOAT",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "MachineTempByHour_2"
       ]
     }
   ],

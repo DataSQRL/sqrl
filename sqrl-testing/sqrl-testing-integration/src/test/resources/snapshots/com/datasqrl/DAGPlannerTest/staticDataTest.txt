@@ -1440,6 +1440,9 @@ END
           "type" : "INTEGER",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Numbers_1"
       ]
     },
     {
@@ -1452,6 +1455,9 @@ END
           "type" : "INTEGER",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Numbers2_2"
       ]
     },
     {
@@ -1464,6 +1470,9 @@ END
           "type" : "INTEGER",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "NumbersLarge_3"
       ]
     },
     {
@@ -1481,6 +1490,10 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Numbers_1",
+        "Orders_4"
       ]
     },
     {
@@ -1498,6 +1511,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Orders_4"
       ]
     },
     {
@@ -1520,6 +1536,9 @@ END
           "type" : "INTEGER",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Orders_4"
       ]
     },
     {
@@ -1542,6 +1561,9 @@ END
           "type" : "INTEGER",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Orders_4"
       ]
     },
     {
@@ -1569,6 +1591,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_4"
       ]
     }
   ],

@@ -940,6 +940,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1"
       ]
     },
     {
@@ -972,6 +975,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerByMultiple_2"
       ]
     },
     {
@@ -1004,6 +1010,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerByMultipleTime_3"
       ]
     },
     {
@@ -1036,6 +1045,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerByTime_4"
       ]
     },
     {
@@ -1068,6 +1080,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerByTime2_5"
       ]
     },
     {
@@ -1100,6 +1115,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerByTimeAsc_6"
       ]
     },
     {
@@ -1132,6 +1150,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerByUpdated_7"
       ]
     },
     {
@@ -1164,6 +1185,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerByUpdatedAsc_8"
       ]
     },
     {
@@ -1186,6 +1210,9 @@ END
           "type" : "TEXT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "ExplicitDistinct_9"
       ]
     }
   ],

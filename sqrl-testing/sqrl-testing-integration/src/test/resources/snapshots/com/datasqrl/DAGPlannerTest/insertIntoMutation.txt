@@ -395,6 +395,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1"
       ]
     },
     {
@@ -412,6 +415,9 @@ END
           "type" : "BIGINT",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "CustomerCount_2"
       ]
     },
     {
@@ -444,6 +450,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerForApi_3"
       ]
     }
   ],

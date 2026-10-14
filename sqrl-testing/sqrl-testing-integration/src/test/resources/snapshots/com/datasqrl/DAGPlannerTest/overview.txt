@@ -823,6 +823,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1"
       ]
     },
     {
@@ -855,6 +858,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerImport_2"
       ]
     },
     {
@@ -887,6 +893,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "LargeOrders_3"
       ]
     },
     {
@@ -914,6 +923,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_5"
       ]
     },
     {
@@ -946,6 +958,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "SimpleOrders_6"
       ]
     },
     {
@@ -983,6 +998,9 @@ END
           "type" : "DOUBLE PRECISION",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "UnnestOrders_8"
       ]
     },
     {

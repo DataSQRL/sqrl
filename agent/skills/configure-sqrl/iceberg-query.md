@@ -195,3 +195,14 @@ For a production deployment queried only through Trino, with no API:
   }
 }
 ```
+
+## Generated Views in the Deployment Plan
+
+`build/deploy/plan/iceberg.json` holds the Iceberg tables under the `""` key and one plan per query engine under the engine name, such as `"trino"` or `"sparksql"`. A view has the same `name` in every query engine plan, with engine-specific `sql`.
+
+Each `VIEW` statement lists the tables it reads in `referencedTables`: the `name`s of `TABLE` statements under `""`, which are the physical Iceberg table names.
+
+- Create a view only after every table in its `referencedTables` exists.
+- When one catalog view carries SQL for several engines, such as an AWS Glue view with Athena (Trino) and Spark SQL definitions, register `referencedTables` as the view's base tables. Glue rejects the view when the list does not match the tables in its SQL.
+- Match tables by `name`, not by `logicalName`. A mutation table and its materialization share a `logicalName`, and views usually read the materialization.
+- `referencedTables` is absent for views defined by pass-through SQL, because the compiler does not analyze that SQL. Determine their tables from the view `sql` before registering them with a catalog that needs base tables.
