@@ -46,6 +46,30 @@ Commands:
 > Note that most commands accept package configuration files as arguments to configure all aspects of the project.
 > See the [configuration documentation](https://docs.datasqrl.com/docs/main/configuration.md) for more details.
 
+### Time Zone
+
+The `datasqrl/cmd` image, and the agent images built on it, run in UTC (`TZ=UTC`).
+The `run` and `test` commands execute the pipeline inside the container, so time-zone-dependent operations use UTC by default.
+That includes casting a `TIMESTAMP_LTZ` to a string or a `TIMESTAMP`, and parsing timestamps without an offset.
+Flink's session time zone (`table.local-time-zone`) defaults to the system time zone, so it is UTC as well.
+
+To use another session time zone, set it in the Flink configuration of the package, which applies wherever the pipeline runs:
+
+```json
+{
+  "engines": {
+    "flink": {
+      "config": {
+        "table.local-time-zone": "America/Los_Angeles"
+      }
+    }
+  }
+}
+```
+
+You can also change the time zone of the container, e.g. `docker run -e TZ=America/Los_Angeles ...`.
+Prefer `table.local-time-zone`: `TZ` changes the time zone of the whole JVM and the bundled services, and only applies to that container.
+
 ## Init Command
 
 The `init` command creates a new SQRL project with the necessary files and directory structure.
