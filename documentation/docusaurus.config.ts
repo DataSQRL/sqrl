@@ -121,6 +121,19 @@ const config: Config = {
     ],
   ],
 
+  plugins: [
+    [
+      '@docusaurus/plugin-client-redirects',
+      {
+        // Retired landing pages
+        redirects: [
+          {from: '/flink', to: '/'},
+          {from: '/ai', to: '/'},
+        ],
+      },
+    ],
+  ],
+
   themes: [
     [
       "@easyops-cn/docusaurus-search-local",

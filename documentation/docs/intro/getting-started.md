@@ -122,7 +122,7 @@ git clone https://github.com/DataSQRL/datasqrl-plugin
 ./datasqrl-plugin/install-skills.sh /path/to/your/repo
 ```
 
-This copies the skills into `.github/skills/` and `.agents/skills/`. The skills call `codeagent.sh` by name, so it must be on your `PATH`. The installer tells you how to set that up.
+This copies the skills into `.github/skills/` and `.agents/skills/`. The skills call `datasqrl-agent.sh` by name, so it must be on your `PATH`. The installer tells you how to set that up.
 
 </TabItem>
 </Tabs>

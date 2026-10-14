@@ -128,7 +128,7 @@ agent ──> compile / test ──> validation ──> agent
 ```
 
 1. **Agent:** writes or changes the SQRL scripts, configuration, and tests.
-2. **Compile and test:** `compile` checks syntax and semantics and produces the [compiler output](https://docs.datasqrl.com/docs/compiler-output). `test` runs the pipeline against fixtures and compares the results to snapshots.
+2. **Compile and test:** `compile` checks syntax and semantics and produces the [compiler output](https://docs.datasqrl.com/docs/compilation-output). `test` runs the pipeline against fixtures and compares the results to snapshots.
 3. **Validation:** rules inspect the compiler output to verify your governance, security, and data quality standards. Because the output describes the data model, the pipeline DAG, and the physical plan of every engine in text and JSON, rules can be plain scripts or policy checks. For example, a rule can require documentation on every exposed table, forbid exposing columns tagged as PII through the API, require a watermark on every source, or reject regular joins with unbounded state.
 4. **Back to the agent:** compiler errors, test failures, and rule violations are returned to the agent as concrete, actionable feedback. The agent fixes the problem and the loop repeats until every check passes.
 
