@@ -248,7 +248,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "AfterAlias",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "AfterPassThrough_2",
@@ -277,7 +279,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "AfterPassThrough",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Apostrophe_3",
@@ -306,7 +310,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Apostrophe",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Customer_4",
@@ -346,7 +352,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Customer",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "AfterAlias",

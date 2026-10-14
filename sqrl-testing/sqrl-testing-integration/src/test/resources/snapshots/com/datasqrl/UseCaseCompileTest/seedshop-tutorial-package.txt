@@ -765,6 +765,7 @@ END
     {
       "topicName" : "CustomerPromotion",
       "tableName" : "CustomerPromotion_1",
+      "logicalName" : "CustomerPromotion",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,

@@ -32,7 +32,9 @@ CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL)
           "partitionKey" : [ ],
           "partitionType" : "NONE",
           "numPartitions" : 0,
-          "ttl" : 0.0
+          "ttl" : 0.0,
+          "logicalName" : "Numbers",
+          "role" : "MATERIALIZATION"
         },
         {
           "name" : "Numbers2",
@@ -51,7 +53,9 @@ CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL)
           "partitionKey" : [ ],
           "partitionType" : "NONE",
           "numPartitions" : 0,
-          "ttl" : 0.0
+          "ttl" : 0.0,
+          "logicalName" : "Numbers2",
+          "role" : "MATERIALIZATION"
         }
       ],
       "standaloneExtensionStatements" : [ ]
@@ -75,7 +79,9 @@ CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL)
           "partitionKey" : [ ],
           "partitionType" : "NONE",
           "numPartitions" : 0,
-          "ttl" : 0.0
+          "ttl" : 0.0,
+          "logicalName" : "Numbers",
+          "role" : "MATERIALIZATION"
         },
         {
           "name" : "Numbers2",
@@ -94,7 +100,9 @@ CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL)
           "partitionKey" : [ ],
           "partitionType" : "NONE",
           "numPartitions" : 0,
-          "ttl" : 0.0
+          "ttl" : 0.0,
+          "logicalName" : "Numbers2",
+          "role" : "MATERIALIZATION"
         }
       ],
       "standaloneExtensionStatements" : [ ]
@@ -118,7 +126,9 @@ CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL)
           "partitionKey" : [ ],
           "partitionType" : "NONE",
           "numPartitions" : 0,
-          "ttl" : 0.0
+          "ttl" : 0.0,
+          "logicalName" : "Numbers",
+          "role" : "MATERIALIZATION"
         },
         {
           "name" : "Numbers2",
@@ -137,7 +147,9 @@ CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL)
           "partitionKey" : [ ],
           "partitionType" : "NONE",
           "numPartitions" : 0,
-          "ttl" : 0.0
+          "ttl" : 0.0,
+          "logicalName" : "Numbers2",
+          "role" : "MATERIALIZATION"
         }
       ],
       "standaloneExtensionStatements" : [ ]
@@ -161,7 +173,9 @@ CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL)
           "partitionKey" : [ ],
           "partitionType" : "NONE",
           "numPartitions" : 0,
-          "ttl" : 0.0
+          "ttl" : 0.0,
+          "logicalName" : "Numbers",
+          "role" : "MATERIALIZATION"
         },
         {
           "name" : "Numbers2",
@@ -180,7 +194,9 @@ CREATE TABLE IF NOT EXISTS "Numbers2" ("id" INTEGER NOT NULL)
           "partitionKey" : [ ],
           "partitionType" : "NONE",
           "numPartitions" : 0,
-          "ttl" : 0.0
+          "ttl" : 0.0,
+          "logicalName" : "Numbers2",
+          "role" : "MATERIALIZATION"
         }
       ],
       "standaloneExtensionStatements" : [ ]

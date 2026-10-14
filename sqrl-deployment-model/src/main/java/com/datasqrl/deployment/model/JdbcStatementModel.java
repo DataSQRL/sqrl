@@ -20,7 +20,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Duration;
 import java.util.List;
 
-/** A rendered statement in a JDBC deployment file. */
+/**
+ * A rendered statement in a JDBC deployment file.
+ *
+ * @param logicalName for tables, the SQRL table name substituted for {@code ${sqrl:table-name}} in
+ *     the connector's table name template; not unique, a mutation table and its materialization
+ *     share it, so key on {@code (logicalName, role)}
+ * @param role for tables, whether the table stores a mutation or a table the pipeline materializes
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record JdbcStatementModel(
@@ -33,11 +40,39 @@ public record JdbcStatementModel(
     List<String> partitionKey,
     PartitionType partitionType,
     Integer numPartitions,
-    Duration ttl) {
+    Duration ttl,
+    String logicalName,
+    Role role) {
 
   public JdbcStatementModel(
       String name, Type type, String sql, String description, List<Field> fields) {
     this(name, type, sql, description, fields, null, null, null, null, null);
+  }
+
+  public JdbcStatementModel(
+      String name,
+      Type type,
+      String sql,
+      String description,
+      List<Field> fields,
+      List<String> primaryKey,
+      List<String> partitionKey,
+      PartitionType partitionType,
+      Integer numPartitions,
+      Duration ttl) {
+    this(
+        name,
+        type,
+        sql,
+        description,
+        fields,
+        primaryKey,
+        partitionKey,
+        partitionType,
+        numPartitions,
+        ttl,
+        null,
+        null);
   }
 
   public enum Type {
@@ -46,6 +81,11 @@ public record JdbcStatementModel(
     QUERY,
     INDEX,
     EXTENSION
+  }
+
+  public enum Role {
+    MUTATION,
+    MATERIALIZATION
   }
 
   public enum PartitionType {

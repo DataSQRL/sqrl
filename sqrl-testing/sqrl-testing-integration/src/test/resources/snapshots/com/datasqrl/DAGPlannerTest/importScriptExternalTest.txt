@@ -279,7 +279,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerAggregate1",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerAggregate2_2",
@@ -303,7 +305,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerAggregate2",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerAggregate1",

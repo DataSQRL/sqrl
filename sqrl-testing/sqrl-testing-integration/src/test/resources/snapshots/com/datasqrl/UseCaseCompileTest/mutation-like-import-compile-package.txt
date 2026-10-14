@@ -125,6 +125,7 @@ END
     {
       "topicName" : "Foo_raw",
       "tableName" : "Foo_raw",
+      "logicalName" : "Foo_raw",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,

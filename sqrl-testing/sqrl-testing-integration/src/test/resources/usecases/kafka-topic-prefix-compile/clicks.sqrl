@@ -1,0 +1,10 @@
+/*+engine(kafka), no_query */
+CREATE TABLE Clicks (
+  userid BIGINT NOT NULL,
+  url STRING NOT NULL,
+  event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+ClicksPerUser := SELECT userid, COUNT(*) AS clicks FROM Clicks GROUP BY userid;
+
+HomepageClick := SUBSCRIBE SELECT * FROM Clicks WHERE url = '/';

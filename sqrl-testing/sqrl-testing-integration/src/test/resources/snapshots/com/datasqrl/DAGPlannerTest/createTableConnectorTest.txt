@@ -189,7 +189,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "SensorReading",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "SensorTempByHour_2",
@@ -219,7 +221,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "SensorTempByHour",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "SensorReading",

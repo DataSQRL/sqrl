@@ -172,7 +172,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Customer",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerEmailCopies_2",
@@ -201,7 +203,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerEmailCopies",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Customer",

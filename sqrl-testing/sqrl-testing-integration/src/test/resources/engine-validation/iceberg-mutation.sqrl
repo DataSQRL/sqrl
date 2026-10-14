@@ -1,0 +1,7 @@
+/*+engine(iceberg) */
+CREATE TABLE Readings (
+  sensorid BIGINT NOT NULL,
+  temperature DOUBLE NOT NULL
+);
+
+ReadingTotals := SELECT sensorid, SUM(temperature) AS total FROM Readings GROUP BY sensorid;

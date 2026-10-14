@@ -105,7 +105,8 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine
         TableAnalysis.buildPlaceholder()
             .type(tableBuilder.getPrimaryKey().isPresent() ? TableType.STATE : TableType.STREAM)
             .build();
-    return createTable(stage, originalTableName, tableBuilder, relDataType, tableAnalysis);
+    return createTable(stage, originalTableName, tableBuilder, relDataType, tableAnalysis)
+        .withRole(JdbcEngineCreateTable.Role.MUTATION);
   }
 
   @Override

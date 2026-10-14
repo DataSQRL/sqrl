@@ -99,7 +99,7 @@ class ViewStatementIdentifierTest {
                 "sqrl",
                 "catalog-table",
                 "deployment_orders"));
-    var table = new JdbcEngineCreateTable("FlinkOrders", tableBuilder, null, null);
+    var table = new JdbcEngineCreateTable("FlinkOrders", null, null, tableBuilder, null, null);
     var factory = new RedshiftStatementFactory(engineConfig);
 
     assertThat(factory.getTableNameMapping(Map.of("FlinkOrders", table)).get("FlinkOrders").names)
@@ -116,7 +116,7 @@ class ViewStatementIdentifierTest {
                 "catalog-name", "hadoop_catalog",
                 "catalog-database", "sqrl",
                 "catalog-table", "deployment_orders"));
-    var table = new JdbcEngineCreateTable("FlinkOrders", tableBuilder, null, null);
+    var table = new JdbcEngineCreateTable("FlinkOrders", null, null, tableBuilder, null, null);
     var factory = new RedshiftStatementFactory(engineConfig);
 
     assertThat(factory.getTableNameMapping(Map.of("FlinkOrders", table)).get("FlinkOrders").names)

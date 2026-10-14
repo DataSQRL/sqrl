@@ -338,7 +338,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "MyOrdersIndexBtree",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "MyOrdersIndexHash_2",
@@ -373,7 +375,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "MyOrdersIndexHash",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "MyOrdersNoHint_3",
@@ -408,7 +412,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "MyOrdersNoHint",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "MyOrdersNoIndex_4",
@@ -443,7 +449,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "MyOrdersNoIndex",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "MyOrdersTwoIndex_5",
@@ -478,7 +486,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "MyOrdersTwoIndex",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "MyOrdersIndexBtree",

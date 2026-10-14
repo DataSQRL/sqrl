@@ -1347,7 +1347,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Numbers",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Numbers2_2",
@@ -1366,7 +1368,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Numbers2",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "NumbersLarge_3",
@@ -1385,7 +1389,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "NumbersLarge",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Orders_4",
@@ -1420,7 +1426,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Orders",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Numbers",

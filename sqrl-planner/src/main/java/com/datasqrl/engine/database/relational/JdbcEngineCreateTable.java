@@ -27,12 +27,27 @@ import org.apache.calcite.rel.type.RelDataType;
  * the plan method.
  */
 public record JdbcEngineCreateTable(
-    String tableName, FlinkTableBuilder table, RelDataType datatype, TableAnalysis tableAnalysis)
+    String tableName,
+    String logicalName,
+    Role role,
+    FlinkTableBuilder table,
+    RelDataType datatype,
+    TableAnalysis tableAnalysis)
     implements EngineCreateTable, MutationCreateTable {
+
+  public enum Role {
+    MUTATION,
+    MATERIALIZATION
+  }
+
+  public JdbcEngineCreateTable withRole(Role role) {
+    return new JdbcEngineCreateTable(tableName, logicalName, role, table, datatype, tableAnalysis);
+  }
 
   @Override
   public MutationCreateTable withValueType(RelDataType inputValueType) {
-    return new JdbcEngineCreateTable(tableName, table, inputValueType, tableAnalysis);
+    return new JdbcEngineCreateTable(
+        tableName, logicalName, role, table, inputValueType, tableAnalysis);
   }
 
   @Override

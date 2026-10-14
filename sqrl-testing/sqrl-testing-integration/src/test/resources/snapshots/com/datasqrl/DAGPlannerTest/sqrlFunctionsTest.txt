@@ -114,7 +114,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "MyTable",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "MyTable2_2",
@@ -138,7 +140,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "MyTable2",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "MyTable",

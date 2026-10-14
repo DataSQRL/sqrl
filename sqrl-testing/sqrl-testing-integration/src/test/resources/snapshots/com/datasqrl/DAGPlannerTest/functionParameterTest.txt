@@ -206,6 +206,7 @@ END
     {
       "topicName" : "kafka-CustomerByNothing",
       "tableName" : "CustomerByNothing_2",
+      "logicalName" : "CustomerByNothing",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -258,7 +259,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Customer",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Customer",

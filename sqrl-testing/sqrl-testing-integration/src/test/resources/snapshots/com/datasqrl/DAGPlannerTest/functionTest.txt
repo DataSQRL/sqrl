@@ -157,7 +157,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "FunctionCalls",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Product_2",
@@ -199,7 +201,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Product",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "FunctionCalls",

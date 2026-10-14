@@ -611,7 +611,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Customer",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerStream_2",
@@ -651,7 +653,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerStream",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "ObjComplex_3",
@@ -675,7 +679,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "ObjComplex",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "jsonArrayAggTable_4",
@@ -699,7 +705,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "jsonArrayAggTable",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "jsonArrayTable_5",
@@ -723,7 +731,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "jsonArrayTable",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "jsonConcatTable_6",
@@ -747,7 +757,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "jsonConcatTable",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "jsonExistsTable_7",
@@ -771,7 +783,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "jsonExistsTable",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "jsonExtractTable_8",
@@ -795,7 +809,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "jsonExtractTable",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "jsonObjectAggTable_9",
@@ -819,7 +835,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "jsonObjectAggTable",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "jsonQueryTable_10",
@@ -843,7 +861,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "jsonQueryTable",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "jsonToStringTable_11",
@@ -867,7 +887,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "jsonToStringTable",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "toJsonTable_12",
@@ -891,7 +913,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "toJsonTable",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Customer",

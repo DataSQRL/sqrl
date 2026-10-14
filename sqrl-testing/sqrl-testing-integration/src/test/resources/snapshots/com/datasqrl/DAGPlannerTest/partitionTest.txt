@@ -247,7 +247,9 @@ END
       ],
       "partitionType" : "RANGE",
       "numPartitions" : 1,
-      "ttl" : 172800.000000000
+      "ttl" : 172800.000000000,
+      "logicalName" : "OrderMetrics",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "OrderUpdates_2",
@@ -284,7 +286,9 @@ END
       ],
       "partitionType" : "RANGE",
       "numPartitions" : 1,
-      "ttl" : 2592000.000000000
+      "ttl" : 2592000.000000000,
+      "logicalName" : "OrderUpdates",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Orders_3",
@@ -320,7 +324,9 @@ END
       ],
       "partitionType" : "HASH",
       "numPartitions" : 1,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Orders",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "OrderMetrics",

@@ -207,6 +207,7 @@ CREATE TABLE IF NOT EXISTS "SinkTable" ("userid" INTEGER NOT NULL, "total_tokens
     {
       "topicName" : "InputTable",
       "tableName" : "KafkaInput",
+      "logicalName" : "InputTable",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,

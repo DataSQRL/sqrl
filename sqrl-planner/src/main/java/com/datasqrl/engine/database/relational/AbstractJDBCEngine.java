@@ -113,7 +113,12 @@ public abstract class AbstractJDBCEngine extends ExecutionEngine.Base implements
     tableBuilder.setConnectorOptions(connectorOptions);
 
     return new JdbcEngineCreateTable(
-        getConnectorTableName(tableBuilder), tableBuilder, relDataType, tableAnalysis);
+        getConnectorTableName(tableBuilder),
+        originalTableName,
+        JdbcEngineCreateTable.Role.MATERIALIZATION,
+        tableBuilder,
+        relDataType,
+        tableAnalysis);
   }
 
   public EnginePhysicalPlan plan(MaterializationStagePlan stagePlan) {

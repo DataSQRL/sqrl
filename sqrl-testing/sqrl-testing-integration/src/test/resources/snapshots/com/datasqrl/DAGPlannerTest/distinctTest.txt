@@ -586,7 +586,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "Customer",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerByMultiple_2",
@@ -626,7 +628,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerByMultiple",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerByMultipleTime_3",
@@ -666,7 +670,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerByMultipleTime",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerByTime_4",
@@ -705,7 +711,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerByTime",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerByTime2_5",
@@ -744,7 +752,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerByTime2",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerByTimeAsc_6",
@@ -783,7 +793,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerByTimeAsc",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerByUpdated_7",
@@ -822,7 +834,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerByUpdated",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "CustomerByUpdatedAsc_8",
@@ -861,7 +875,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "CustomerByUpdatedAsc",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "ExplicitDistinct_9",
@@ -890,7 +906,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "ExplicitDistinct",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "Customer",

@@ -234,6 +234,7 @@ END
     {
       "topicName" : "kafka-mutation-_SensorReading",
       "tableName" : "_SensorReading",
+      "logicalName" : "_SensorReading",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -245,6 +246,7 @@ END
     {
       "topicName" : "kafka-mutation-_Sensors",
       "tableName" : "_Sensors",
+      "logicalName" : "_Sensors",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -300,7 +302,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "MachineReading",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "MachineTempByHour_2",
@@ -334,7 +338,9 @@ END
       "partitionKey" : [ ],
       "partitionType" : "NONE",
       "numPartitions" : 0,
-      "ttl" : 0.0
+      "ttl" : 0.0,
+      "logicalName" : "MachineTempByHour",
+      "role" : "MATERIALIZATION"
     },
     {
       "name" : "MachineReading",
