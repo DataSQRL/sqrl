@@ -104,6 +104,7 @@ class PlanModelSerializationTest {
     assertThat(viewModel.partitionType()).isNull();
     assertThat(viewModel.numPartitions()).isNull();
     assertThat(viewModel.ttl()).isNull();
+    assertThat(viewModel.referencedTables()).isNull();
 
     assertThat(model.standaloneExtensionStatements())
         .containsExactly(
@@ -113,6 +114,27 @@ class PlanModelSerializationTest {
                 "CREATE EXTENSION pg_cron",
                 "scheduler",
                 List.of()));
+  }
+
+  @Test
+  void givenViewWithReferencedTables_whenMapped_thenModelListsTables() {
+    var view =
+        new GenericJdbcStatement(
+            "BigOrders",
+            Type.VIEW,
+            "CREATE VIEW BigOrders",
+            null,
+            null,
+            List.of(),
+            null,
+            List.of("dev_customerspend_1", "dev_orders_2"));
+    var plan = JdbcPhysicalPlan.builder().statement(view).tableIdMap(Map.of()).build();
+
+    var viewModel = plan.toModel().statements().get(0);
+
+    assertThat(viewModel.referencedTables()).containsExactly("dev_customerspend_1", "dev_orders_2");
+    assertThat(viewModel.logicalName()).isNull();
+    assertThat(viewModel.role()).isNull();
   }
 
   @Test
@@ -248,7 +270,8 @@ class PlanModelSerializationTest {
             null,
             null,
             null,
-            engineTable);
+            engineTable,
+            null);
     var plan = JdbcPhysicalPlan.builder().statement(table).tableIdMap(Map.of()).build();
 
     var model = plan.toModel().statements().get(0);

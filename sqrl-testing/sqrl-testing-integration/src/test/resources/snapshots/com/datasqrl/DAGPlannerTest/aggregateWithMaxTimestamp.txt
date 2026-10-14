@@ -520,6 +520,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "OrderAgg1_1"
       ]
     },
     {
@@ -542,6 +545,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "OrderAgg2_2"
       ]
     },
     {
@@ -559,6 +565,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "OrderAgg3_3"
       ]
     },
     {
@@ -581,6 +590,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "OrderAgg4_4"
       ]
     },
     {
@@ -608,6 +620,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_5"
       ]
     },
     {
@@ -635,6 +650,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "OrdersState_6"
       ]
     }
   ],

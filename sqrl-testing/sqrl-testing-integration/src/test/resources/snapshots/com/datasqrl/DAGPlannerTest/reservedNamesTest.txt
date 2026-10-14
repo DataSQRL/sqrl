@@ -242,6 +242,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Order_1"
       ]
     },
     {
@@ -274,6 +277,9 @@ END
           "type" : "TEXT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Where_2"
       ]
     },
     {

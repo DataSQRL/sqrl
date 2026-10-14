@@ -254,6 +254,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_1"
       ]
     },
     {
@@ -271,6 +274,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "SpecialOrderSummary_2"
       ]
     },
     {
@@ -288,6 +294,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Orders_1"
       ]
     }
   ],

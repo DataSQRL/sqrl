@@ -537,6 +537,10 @@ END
           "type" : "INTEGER",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "_SensorReading_3",
+        "_Sensors_4"
       ]
     },
     {
@@ -564,6 +568,10 @@ END
           "type" : "INTEGER",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "_SensorReading_3",
+        "_Sensors_4"
       ]
     },
     {
@@ -591,6 +599,9 @@ END
           "type" : "INTEGER",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "MachineReading_1"
       ]
     },
     {
@@ -613,6 +624,9 @@ END
           "type" : "FLOAT",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "MachineTempByHour_2"
       ]
     }
   ],

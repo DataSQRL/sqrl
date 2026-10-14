@@ -159,6 +159,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "MyTable_1"
       ]
     },
     {
@@ -176,6 +179,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "MyTable2_2"
       ]
     }
   ],

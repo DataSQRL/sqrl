@@ -237,6 +237,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Category_1"
       ]
     },
     {
@@ -264,6 +267,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CategoryDistinct_2"
       ]
     }
   ],

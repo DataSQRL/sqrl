@@ -184,6 +184,9 @@ CREATE TABLE IF NOT EXISTS "dev_Readings" ("sensorid" BIGINT NOT NULL, "temperat
               "type" : "DOUBLE PRECISION",
               "nullable" : false
             }
+          ],
+          "referencedTables" : [
+            "dev_ReadingTotals_1"
           ]
         },
         {
@@ -201,6 +204,9 @@ CREATE TABLE IF NOT EXISTS "dev_Readings" ("sensorid" BIGINT NOT NULL, "temperat
               "type" : "DOUBLE PRECISION",
               "nullable" : false
             }
+          ],
+          "referencedTables" : [
+            "dev_Readings_2"
           ]
         }
       ],

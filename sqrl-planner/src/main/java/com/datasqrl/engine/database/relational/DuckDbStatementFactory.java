@@ -93,6 +93,8 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
   public QueryResult createQuery(
       Query query, boolean withView, Map<String, JdbcEngineCreateTable> tableIdMap) {
 
+    // Collect tables before the scans are replaced with iceberg_scan calls
+    var referencedTables = getReferencedTables(query.relNode(), tableIdMap);
     var ctes = materializedScanCtePlanner.getMaterializedScanCtes(query.relNode(), tableIdMap);
     if (ctes.isEmpty()) {
       var replaced = query.relNode().accept(new IcebergTableScanRewriter(tableIdMap, Set.of()));
@@ -101,6 +103,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
           replaced,
           true,
           getTableNameMapping(tableIdMap),
+          referencedTables,
           query.function().getDocumentation());
     }
 
@@ -132,6 +135,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
         query.relNode().getRowType(),
         true,
         "WITH %s %s".formatted(cteSql, querySql),
+        referencedTables,
         query.function().getDocumentation());
   }
 

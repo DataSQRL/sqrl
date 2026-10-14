@@ -220,6 +220,9 @@ END
           "type" : "TEXT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "FunctionCalls_1"
       ]
     },
     {
@@ -252,6 +255,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Product_2"
       ]
     }
   ],

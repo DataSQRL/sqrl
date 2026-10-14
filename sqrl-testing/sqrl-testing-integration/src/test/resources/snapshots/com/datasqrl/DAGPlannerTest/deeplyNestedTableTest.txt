@@ -114,6 +114,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "NestedCustomers_1"
       ]
     }
   ],

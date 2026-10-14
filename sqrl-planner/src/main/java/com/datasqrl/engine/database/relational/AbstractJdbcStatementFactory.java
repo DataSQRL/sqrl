@@ -16,6 +16,7 @@
 package com.datasqrl.engine.database.relational;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkState;
 
 import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.OperatorRuleTransformer;
@@ -46,22 +47,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import org.apache.calcite.rel.RelHomogeneousShuttle;
 import org.apache.calcite.rel.RelNode;
+import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.rex.RexCall;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
+import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlNode;
 import org.apache.calcite.sql.parser.SqlParserPos;
 import org.apache.calcite.sql.pretty.SqlPrettyWriter;
+import org.apache.calcite.util.Util;
 import org.apache.flink.table.planner.plan.schema.RawRelDataType;
 
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
@@ -102,7 +108,19 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         query.relNode(),
         withView,
         getTableNameMapping(tableIdMap),
+        withView ? getReferencedTables(query.relNode(), tableIdMap) : null,
         query.function().getDocumentation());
+  }
+
+  /**
+   * Returns the sorted names of the tables that the query reads, including tables read in
+   * sub-queries.
+   */
+  protected static List<String> getReferencedTables(
+      RelNode relNode, Map<String, JdbcEngineCreateTable> tableIdMap) {
+    var collector = new ReferencedTablesCollector(tableIdMap);
+    relNode.accept(collector);
+    return List.copyOf(collector.tableNames);
   }
 
   protected Map<String, SqlIdentifier> getTableNameMapping(
@@ -151,6 +169,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       RelNode relNode,
       boolean withView,
       Map<String, SqlIdentifier> tableNameMapping,
+      List<String> referencedTables,
       Documented.Documentation documentation) {
     var rewrittenRelNode = dialectCallConverter.convert(relNode);
     var sqlNode = sqlConverters.convert(rewrittenRelNode, tableNameMapping);
@@ -160,7 +179,9 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
     JdbcStatement view = null;
     if (withView) {
-      view = getViewStatement(viewName, relNode.getRowType(), sqlNode, documentation);
+      view =
+          getViewStatement(
+              viewName, relNode.getRowType(), sqlNode, referencedTables, documentation);
     }
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
   }
@@ -176,6 +197,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       RelDataType rowType,
       boolean withView,
       String sql,
+      List<String> referencedTables,
       Documented.Documentation documentation) {
     var qBuilder = ExecutableJdbcReadQuery.builder();
     qBuilder.sql(sql);
@@ -184,7 +206,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     if (withView) {
       var viewSql = getCreateViewDdlFactory().createView(viewName, rowType.getFieldNames(), sql);
 
-      view = createViewStatement(viewName, rowType, viewSql, documentation);
+      view = createViewStatement(viewName, rowType, viewSql, referencedTables, documentation);
     }
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
   }
@@ -323,6 +345,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       String viewName,
       RelDataType rowType,
       SqlNode sqlNode,
+      List<String> referencedTables,
       Documented.Documentation documentation) {
     var viewDdlFactory = getCreateViewDdlFactory();
     var viewNameIdentifier = viewDdlFactory.getViewIdentifier(viewName);
@@ -330,13 +353,14 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         viewDdlFactory.createView(
             viewNameIdentifier, rowType.getFieldNames(), sqlConverters.convert(sqlNode));
 
-    return createViewStatement(viewName, rowType, viewSql, documentation);
+    return createViewStatement(viewName, rowType, viewSql, referencedTables, documentation);
   }
 
   private JdbcStatement createViewStatement(
       String viewName,
       RelDataType rowType,
       String viewSql,
+      List<String> referencedTables,
       Documented.Documentation documentation) {
 
     return new GenericJdbcStatement(
@@ -344,6 +368,36 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         Type.VIEW,
         viewSql,
         documentation.getDocString(null),
-        getColumns(rowType.getFieldList(), PlannerHints.EMPTY, documentation));
+        null,
+        getColumns(rowType.getFieldList(), PlannerHints.EMPTY, documentation),
+        null,
+        referencedTables);
+  }
+
+  @RequiredArgsConstructor
+  private static class ReferencedTablesCollector extends RelHomogeneousShuttle {
+
+    private final Map<String, JdbcEngineCreateTable> tableIdMap;
+    private final Set<String> tableNames = new TreeSet<>();
+    private final RexShuttle subQueryShuttle =
+        new RexShuttle() {
+          @Override
+          public RexNode visitSubQuery(RexSubQuery subQuery) {
+            subQuery.rel.accept(ReferencedTablesCollector.this);
+            return super.visitSubQuery(subQuery);
+          }
+        };
+
+    @Override
+    public RelNode visit(RelNode other) {
+      if (other instanceof TableScan scan) {
+        var tableId = Util.last(scan.getTable().getQualifiedName());
+        var createTable = tableIdMap.get(tableId);
+        checkState(createTable != null, "Query reads unknown table: %s", tableId);
+        tableNames.add(createTable.tableName());
+      }
+      other.accept(subQueryShuttle);
+      return super.visit(other);
+    }
   }
 }

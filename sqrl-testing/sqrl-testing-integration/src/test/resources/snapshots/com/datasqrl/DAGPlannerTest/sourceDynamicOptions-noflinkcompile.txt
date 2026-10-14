@@ -120,6 +120,9 @@ END
           "type" : "INTEGER",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Records_1"
       ]
     },
     {
@@ -132,6 +135,9 @@ END
           "type" : "INTEGER",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Records_1"
       ]
     }
   ],

@@ -52,6 +52,9 @@ public class GenericJdbcStatement implements JdbcStatement {
   /** The engine table for TABLE statements - nullable and not set when deserialized */
   @JsonIgnore JdbcEngineCreateTable engineTable;
 
+  /** For VIEW statements, the names of the tables the view reads - nullable */
+  @JsonIgnore List<String> referencedTables;
+
   public GenericJdbcStatement(String name, Type type, String sql) {
     this(name, type, sql, null, null);
   }
@@ -63,7 +66,7 @@ public class GenericJdbcStatement implements JdbcStatement {
       String description,
       RelDataType dataType,
       List<Field> fields) {
-    this(name, type, sql, description, dataType, fields, null);
+    this(name, type, sql, description, dataType, fields, null, null);
   }
 
   @JsonCreator

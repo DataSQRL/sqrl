@@ -625,6 +625,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1"
       ]
     },
     {
@@ -647,6 +650,10 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1",
+        "Orders_3"
       ]
     },
     {
@@ -674,6 +681,10 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1",
+        "Orders_3"
       ]
     },
     {
@@ -706,6 +717,10 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1",
+        "Orders_3"
       ]
     },
     {
@@ -728,6 +743,10 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1",
+        "Orders_3"
       ]
     },
     {
@@ -750,6 +769,9 @@ END
           "type" : "BIGINT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "OrderCustomerLeftExcludedTimeBound_2"
       ]
     },
     {
@@ -782,6 +804,10 @@ END
           "type" : "BIGINT",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Customer_1",
+        "Orders_3"
       ]
     },
     {
@@ -804,6 +830,10 @@ END
           "type" : "TEXT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1",
+        "Orders_3"
       ]
     },
     {
@@ -831,6 +861,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_3"
       ]
     },
     {
@@ -858,6 +891,9 @@ END
           "type" : "TIMESTAMP WITHOUT TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "VerifyStream_4"
       ]
     },
     {

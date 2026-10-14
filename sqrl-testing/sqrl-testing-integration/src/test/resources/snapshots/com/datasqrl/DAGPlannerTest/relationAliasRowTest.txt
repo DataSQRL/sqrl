@@ -925,6 +925,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "CteCustomerRow_1"
       ]
     },
     {
@@ -943,6 +946,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "CteDefinitionRow_2"
       ]
     },
     {
@@ -975,6 +981,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_3"
       ]
     },
     {
@@ -993,6 +1002,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "CustomerBare_4"
       ]
     },
     {
@@ -1011,6 +1023,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "CustomerRow_5"
       ]
     },
     {
@@ -1024,6 +1039,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "NestedCustomerRow_6"
       ]
     },
     {
@@ -1047,6 +1065,10 @@ END
           "type" : "JSONB",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_3",
+        "Orders_7"
       ]
     },
     {
@@ -1074,6 +1096,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "Orders_7"
       ]
     },
     {
@@ -1092,6 +1117,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "ReservedAliasRow_8"
       ]
     },
     {
@@ -1109,6 +1137,9 @@ END
           "type" : "TEXT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Shadowed_9"
       ]
     },
     {
@@ -1127,6 +1158,9 @@ END
           "type" : "TEXT",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "ShadowedAlias_10"
       ]
     }
   ],

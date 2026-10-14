@@ -552,6 +552,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Customer_1"
       ]
     },
     {
@@ -584,6 +587,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "CustomerWithEmail_2"
       ]
     },
     {
@@ -619,6 +625,9 @@ END
           "nullable" : false,
           "description" : "When the customer was last updated"
         }
+      ],
+      "referencedTables" : [
+        "DistinctCustomer_3"
       ]
     },
     {
@@ -651,6 +660,9 @@ END
           "type" : "TIMESTAMP WITH TIME ZONE",
           "nullable" : false
         }
+      ],
+      "referencedTables" : [
+        "Product_4"
       ]
     },
     {

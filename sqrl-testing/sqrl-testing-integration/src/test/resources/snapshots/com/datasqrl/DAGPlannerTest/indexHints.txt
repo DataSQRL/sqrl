@@ -515,6 +515,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "MyOrdersIndexBtree_1"
       ]
     },
     {
@@ -542,6 +545,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "MyOrdersIndexHash_2"
       ]
     },
     {
@@ -569,6 +575,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "MyOrdersNoHint_3"
       ]
     },
     {
@@ -596,6 +605,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "MyOrdersNoIndex_4"
       ]
     },
     {
@@ -623,6 +635,9 @@ END
           "type" : "JSONB",
           "nullable" : true
         }
+      ],
+      "referencedTables" : [
+        "MyOrdersTwoIndex_5"
       ]
     },
     {

@@ -27,6 +27,8 @@ import java.util.List;
  *     the connector's table name template; not unique, a mutation table and its materialization
  *     share it, so key on {@code (logicalName, role)}
  * @param role for tables, whether the table stores a mutation or a table the pipeline materializes
+ * @param referencedTables for views, the sorted names of the {@code TABLE} statements the view
+ *     reads; not set when the compiler cannot determine them, such as for pass-through views
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -42,7 +44,8 @@ public record JdbcStatementModel(
     Integer numPartitions,
     Duration ttl,
     String logicalName,
-    Role role) {
+    Role role,
+    List<String> referencedTables) {
 
   public JdbcStatementModel(
       String name, Type type, String sql, String description, List<Field> fields) {
@@ -72,6 +75,35 @@ public record JdbcStatementModel(
         numPartitions,
         ttl,
         null,
+        null);
+  }
+
+  public JdbcStatementModel(
+      String name,
+      Type type,
+      String sql,
+      String description,
+      List<Field> fields,
+      List<String> primaryKey,
+      List<String> partitionKey,
+      PartitionType partitionType,
+      Integer numPartitions,
+      Duration ttl,
+      String logicalName,
+      Role role) {
+    this(
+        name,
+        type,
+        sql,
+        description,
+        fields,
+        primaryKey,
+        partitionKey,
+        partitionType,
+        numPartitions,
+        ttl,
+        logicalName,
+        role,
         null);
   }
 
