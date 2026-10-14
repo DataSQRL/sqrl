@@ -73,6 +73,14 @@ docker run --rm -v $PWD:/workspace datasqrl/cmd init stream my-project
 
 This creates a new streaming project in the `my-project` subdirectory of the mounted directory, with the `my-project.sqrl` script, `my-project-prod-package.json` and `my-project-test-package.json` package configurations, source definitions and test data in `connectors/`, and an initial test snapshot in `snapshots/`.
 
+The test package reads the sample data in `connectors/test-data/`, so the project compiles and tests out of the box. The production package depends on the project type:
+
+| Type      | Production engines             | Production source (`connectors/sources-prod.sqrl`)                                                          | Output                                                                     |
+|-----------|--------------------------------|-------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------|
+| `stream`  | Flink, Kafka                   | Internal Kafka table (`/*+ engine(kafka) */`)                                                               | `HelloWorld` is written to a Kafka topic (`EXPORT HelloWorld TO log.HelloWorld;`) |
+| `dataset` | Flink, Iceberg, DuckDB         | Existing Iceberg table (`'connector' = 'iceberg'`). Point the catalog options to your lakehouse.            | `HelloWorld` is written to Iceberg and queried through DuckDB              |
+| `api`     | Flink, PostgreSQL, Kafka, Vert.x | Internal Kafka table (`/*+ engine(kafka) */`), exposed as a GraphQL mutation                              | `HelloWorld` is served by the GraphQL API                                  |
+
 ## Add-Func Command
 
 The `add-func` command adds a new user-defined function (UDF) to an existing SQRL project.
@@ -104,6 +112,10 @@ docker run --rm -v $PWD:/workspace datasqrl/cmd add-func MyAwesomeFunction
 
 This creates a new scalar function template in the `functions/` directory.
 Use `--aggregate` to create an aggregate function instead.
+
+The template is a [JBang UDF](functions#jbang-scripts) that already declares `//DEPS org.apache.flink:flink-table-common:<version>` with the Flink version of the CLI.
+Keep this line and declare additional dependencies with further `//DEPS` lines.
+The `compile`, `test` and `run` commands build the functions with JBang. If a function doesn't compile, the command fails with a `[FATAL] Failed to build JBang UDF(s)` error that includes the compiler output.
 
 ## Compile Command
 
