@@ -1,0 +1,3745 @@
+# DataSQRL Documentation
+
+> DataSQRL is an open-source data engineering harness for building data engineering agents designed around human control, correctness, and safety. It extends coding agents with a SQL compiler, a validator, an event-time simulator, and skills. The compiler turns SQRL scripts into complete data pipelines that integrate Kafka, Flink, PostgreSQL, Iceberg, and GraphQL, REST, and MCP APIs.
+
+Key facts for working with DataSQRL:
+
+- A project is one or more `.sqrl` scripts plus `*package.json` configuration files. SQRL is Flink SQL extended with `IMPORT`/`EXPORT` statements, table functions, relationships, and hints; the SQRL Language page documents only what differs from Flink SQL.
+- The DataSQRL CLI is distributed as the `datasqrl/cmd` Docker image with the `compile`, `test`, and `run` commands. `compile` validates the script and generates every deployment asset, `test` runs the pipeline and the test queries and compares their results to snapshots, and `run` compiles and runs the pipeline locally in Docker.
+- Configuration files are deep-merged in the order given on the command line, on top of the default configuration.
+- System functions are always available; library functions must be imported with `IMPORT stdlib.<library>.<function>;`.
+
+This is the documentation of DataSQRL v0.11, an older release. The documentation of the latest release is at https://docs.datasqrl.com/llms.txt.
+
+---
+
+# DataSQRL Documentation
+
+Source: https://docs.datasqrl.com/docs/v0-11/intro
+
+DataSQRL is an open-source **data engineering harness** that provides guardrails and feedback for AI coding agents to build reliable data pipelines, data APIs (REST, MCP, GraphQL), and data products.
+
+DataSQRL ensures coding agents meet the **non-functional requirements** of production data systems: data quality, scalability, governance, and reliability. It provides deep-inspection of SQL, relational validators, and deterministic event-replay simulation to guide agent-generated code through iterative feedback loops.
+
+## Why a Data Engineering Harness?
+
+Coding agents can generate SQL queries that produce correct results on test data. But will those queries perform at scale? Handle late-arriving events correctly? Maintain data quality when upstream schemas change? Provide lineage tracking and meet compliance requirements?
+
+These non-functional requirements, data quality, scalability, governance, reliability, cost efficiency, distinguish data engineering from general software development. General-purpose coding agents aren't equipped to handle them consistently.
+
+A data engineering harness provides the guardrails, feedback loops, and domain-specific constraints that coding agents need. Without a harness, you get pipelines that work in demos but fail in production. With a harness, you get pipelines that embody data engineering best practices.
+
+[Learn more about the harness architecture](https://docs.datasqrl.com/blog/agentic-data-engineering-harness) and the design choices behind DataSQRL.
+
+## Key Capabilities
+
+DataSQRL provides three capabilities that coding agents need to produce production-grade data systems:
+
+### 1. Conceptual Framework
+
+DataSQRL extends SQL to a comprehensive framework for data platforms. SQL provides the ideal foundation because it offers a mathematical foundation (relational algebra), deep introspection through its declarative nature, deterministic validation and optimization, human readability, and strong support from modern LLMs.
+
+The framework separates **logical** and **physical** layers:
+- **Logical Layer**: Expresses *what* data transformations are needed using SQRL (SQL extended with stream processing semantics)
+- **Physical Layer**: Represents *how* data gets processed through engine assignment and configuration
+
+This separation lets agents reason about business logic while the harness handles infrastructure complexity.
+
+![DataSQRL Framework Overview](https://docs.datasqrl.com/img/diagrams/automation_overview.png)
+
+### 2. Comprehensive Validation
+
+DataSQRL validates at every level. From syntax and schema validation through physical plan verification to deployment asset generation:
+
+- **Logical Validation**: Syntax, schema consistency, data flow semantics, timestamp propagation, primary key inference
+- **Physical Validation**: Engine capability matching, data type mapping, topological constraint satisfaction
+- **Deployment Validation**: Generated artifacts (Flink plans, Postgres schemas, GraphQL models) guaranteed consistent with logical definitions
+
+The validation system provides comprehensive context and suggested fixes, producing better results than agents reasoning about errors independently.
+
+### 3. Real-World Feedback
+
+Static validation catches many issues but can't substitute for execution feedback. DataSQRL provides:
+
+- **Simulation**: Execute pipelines locally in Docker with timestamp-accurate event replay for deterministic, reproducible testing
+- **Production Telemetry**: Hooks for correlating runtime observations back to source code for autonomous troubleshooting
+
+Since the entire pipeline is defined in SQL, it remains humanly readable and easy to verify. DataSQRL produces detailed execution plans, data lineage graphs, and optimization reports—enabling both automated analysis by agents and manual inspection by engineers.
+
+## Quick Start
+
+Check out the [**Getting Started**](https://docs.datasqrl.com/docs/v0-11/intro/getting-started.md) guide to build a data pipeline with DataSQRL and see how the test-driven feedback loop guides coding agents toward correct solutions.
+
+Explore the [DataSQRL Examples](https://docs.datasqrl.com/docs/v0-11/intro/examples.md) for real-world patterns and how to setup an automated data platform with DataSQRL.
+
+## DataSQRL Components
+
+### 1. [SQRL Language](https://docs.datasqrl.com/docs/v0-11/sqrl-language.md)
+SQRL extends Flink SQL to capture the complete logical layer of data pipelines:
+- **IMPORT/EXPORT** statements for connecting data systems
+- **Table functions and relationships** for API endpoint definitions
+- **Hints** to control pipeline structure and execution
+- **Subscription syntax** for real-time data streaming
+- **Stream/state semantics** for temporal data processing
+
+### 2. [Interface Design](https://docs.datasqrl.com/docs/v0-11/interface.md)
+DataSQRL automatically generates interfaces from your SQRL script for multiple protocols:
+- **Data Products** as database/data lake views and tables
+- **GraphQL APIs** with queries, mutations, and subscriptions
+- **REST endpoints** with GET/POST operations
+- **MCP tools/resources** for AI agent integration
+- **Schema customization** and operation control
+
+### 3. [Configuration](https://docs.datasqrl.com/docs/v0-11/configuration.md)
+JSON configuration defines the physical layer, *how* the pipeline gets executed:
+- **Engines**: Data technologies (Flink, Postgres, Kafka, Iceberg, etc.)
+- **Connectors**: Templates for data sources and sinks
+- **Dependencies**: External data packages and libraries
+- **Compiler options**: Optimization and deployment settings
+
+### 4. [Compiler](https://docs.datasqrl.com/docs/v0-11/compiler.md)
+The DataSQRL compiler implements validation and simulation:
+- **Transpiles** SQRL scripts into deployment assets
+- **Validates** logical and physical plans against data engineering constraints
+- **Optimizes** data processing DAGs across multiple engines
+- **Simulates** pipeline execution with deterministic event replay
+
+## Documentation Guide
+
+### Getting Started
+- [**Getting Started**](https://docs.datasqrl.com/docs/v0-11/intro/getting-started.md) - Build a pipeline with the test-driven feedback loop
+- [**Examples**](https://docs.datasqrl.com/docs/v0-11/intro/examples.md) - Practical examples for specific use cases
+
+### Core Documentation
+- [**SQRL Language**](https://docs.datasqrl.com/docs/v0-11/sqrl-language.md) - Complete language specification and syntax
+- [**Interface Design**](https://docs.datasqrl.com/docs/v0-11/interface.md) - API generation and data product interfaces
+- [**Configuration**](https://docs.datasqrl.com/docs/v0-11/configuration.md) - Engine setup and project configuration
+- [**Compiler**](https://docs.datasqrl.com/docs/v0-11/compiler.md) - Command-line interface and compilation options
+- [**Functions**](https://docs.datasqrl.com/docs/v0-11/functions.md) - Built-in functions and custom function libraries
+
+### Integration & Deployment
+- [**Connectors**](https://docs.datasqrl.com/docs/v0-11/connectors.md) - Ingest from and export to external systems
+- [**Concepts**](https://docs.datasqrl.com/docs/v0-11/intro/concepts.md) - Key concepts in stream processing (time, watermarks, etc.)
+- [**How-To Guides**](https://docs.datasqrl.com/docs/category/-how-to) - Best practices and implementation patterns
+
+### Advanced Topics
+- [**Developer Documentation**](https://docs.datasqrl.com/docs/v0-11/deepdive.md) - Internal architecture and advanced customization
+- [**Compatibility**](https://docs.datasqrl.com/docs/v0-11/compatibility.md) - Version compatibility and migration guides
+
+## Use Cases
+
+DataSQRL enables AI-assisted automation of:
+- **Data Pipelines**: Processing data in realtime or batch with production-grade reliability
+- **Data APIs**: Serving processed data through REST, GraphQL, or MCP APIs
+- **Data Lakehouse**: Producing Apache Iceberg tables with catalog and schema management
+
+## Community & Support
+
+DataSQRL is open source and community-driven:
+
+- **Issues**: [GitHub Issues](https://github.com/DataSQRL/sqrl/issues)
+- **Community**: [GitHub Discussions](https://github.com/DataSQRL/sqrl/discussions/)
+
+We welcome feedback, bug reports, and contributions to build a data engineering harness that enables safe, reliable automation of data platforms.
+
+
+---
+
+# Getting Started with DataSQRL
+
+Source: https://docs.datasqrl.com/docs/v0-11/intro/getting-started
+
+The easiest way to understand how DataSQRL provides guardrails and feedback for AI coding agents is to build a data pipeline. We'll create a messenger pipeline, then let a coding agent extend it using DataSQRL's test-driven feedback loop.
+
+## Prerequisites
+
+You'll need:
+
+- **Docker** installed and running
+- A terminal (macOS/Linux: Terminal, Windows: PowerShell or WSL)
+- A coding agent (Claude Code, Codex, Gemini CLI, Copilot, or similar)
+
+### Install Docker
+
+If you don't already have Docker:
+
+- **macOS**: [Download Docker Desktop for Mac](https://www.docker.com/products/docker-desktop/)
+- **Windows**: [Download Docker Desktop for Windows](https://www.docker.com/products/docker-desktop/)
+- **Linux**: Use your package manager (e.g., `sudo apt install docker.io`)
+
+Verify Docker is working:
+
+```bash
+docker --version
+```
+
+## Create New Project
+
+Create a new data project with the `init` command in an empty folder:
+
+```bash
+docker run --rm -v $PWD:/workspace datasqrl/cmd init api messenger
+```
+(Use `${PWD}` in Powershell on Windows)
+
+This creates a data API project called `messenger` with sample data sources and a processing script called `messenger.sqrl`.
+
+The engines executing the pipeline are defined in the `package.json` files:
+![Initial Pipeline Architecture](https://docs.datasqrl.com/img/diagrams/getting_started_diagram1.png)
+
+## Run the Pipeline
+
+Execute the SQRL project:
+
+```bash
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd run messenger-prod-package.json
+```
+
+Access the GraphQL API at [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/).
+
+Add a message:
+```graphql
+mutation {
+    Messages(event: {message: "Hello World"}) {
+        message_time
+    }
+}
+```
+
+Query messages:
+```graphql
+{
+    Messages {
+        uuid
+        message
+        message_time
+    }
+}
+```
+
+Terminate with `CTRL-C`.
+
+## Let Agents Extend the Pipeline
+
+Now instruct your coding agent to extend `messenger.sqrl`. For example:
+
+> "Add an endpoint that returns the total message count and the timestamp of the most recent message. Include test coverage."
+
+The agent should modify `messenger.sqrl` and iterate using the test command:
+
+```bash
+docker run -it --rm -v $PWD:/workspace datasqrl/cmd test messenger-test-package.json
+```
+
+This feedback loop is how DataSQRL guides agents toward correct solutions. The test command:
+- Compiles the SQRL script and validates semantics
+- Runs the pipeline in simulation with timestamp-accurate event replay
+- Compares results against snapshot expectations
+
+The first time a new test runs, it creates a snapshot. Subsequent runs validate against that snapshot. When tests fail, the compiler provides actionable error messages that help agents refine their solution.
+
+A correct implementation might look like:
+
+```sql
+TotalMessages := SELECT COUNT(*) as num_messages, MAX(message_time) as latest_timestamp
+                 FROM Messages LIMIT 1;
+```
+
+## Add Real-Time Subscriptions
+
+Ask your agent to add a subscription for error messages:
+
+> "Add a subscription that pushes messages containing the word 'error' to consumers in real-time."
+
+The agent should add something like:
+
+```sql
+AlertMessages := SUBSCRIBE SELECT * FROM Messages WHERE LOWER(message) LIKE '%error%';
+```
+
+Run the production version to test subscriptions:
+```bash
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd run messenger-prod-package.json
+```
+
+In GraphiQL, start a subscription:
+```graphql
+subscription {
+    AlertMessages {
+        uuid
+        message
+        message_time
+    }
+}
+```
+
+In a new browser tab, add an error message:
+```graphql
+mutation {
+    Messages(event: {message: "I found an ERROR! Oh no"}) {
+        message_time
+    }
+}
+```
+
+The subscription tab should show the message pushed through in real-time.
+
+## Improving Agent Performance
+
+Agent performance improves significantly when they understand DataSQRL's capabilities. Point your agent to:
+
+- **[SQRL Language Reference](https://docs.datasqrl.com/docs/v0-11/sqrl-language.md)**: Stream processing semantics, temporal joins, windowed aggregations, and SQRL-specific syntax
+- **[Configuration Guide](https://docs.datasqrl.com/docs/v0-11/configuration.md)**: Package configuration, engine selection, and deployment options
+
+For more complex projects, consider creating a custom instructions file that includes relevant documentation snippets. Agents that understand SQRL patterns like CDC deduplication, temporal enrichment joins, and subscription syntax produce better results with fewer iterations.
+
+## Compile for Deployment
+
+Build deployment artifacts:
+```bash
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile messenger-prod-package.json
+```
+
+The `build/deploy/plan` directory contains:
+- Flink compiled plans
+- Kafka topic definitions
+- PostgreSQL schemas and views
+- Server queries and GraphQL models
+
+The `build` directory also includes files useful for inspection and verification:
+- `pipeline_visual.html`: Visual representation of the pipeline DAG
+- `pipeline_explain.txt`: Textual DAG representation for coding agents
+- `inferred_schema.graphqls`: Generated GraphQL schema
+
+![DataSQRL Pipeline Visualization](https://docs.datasqrl.com/img/screenshots/dag_messenger.png)
+
+Click nodes in the visualization to inspect schema, logical plan, and physical plan details. The deployment artifacts support human validation of pipeline correctness and quality. You can use them to build an ensemble of judges to provide automatic validation of compliance, governance, and reliability requirements.
+
+## Next Steps
+
+You've seen how DataSQRL provides the feedback loop that coding agents need to build production-grade data pipelines. The test command validates agent-generated code, the compiler provides actionable errors, and the simulator ensures real-world correctness.
+
+Next:
+- **[Full Documentation](https://docs.datasqrl.com/docs/v0-11/intro.md)**: Complete reference and language spec
+- **[Tutorials](https://docs.datasqrl.com/docs/v0-11/intro/examples.md)**: Learn by building more complex pipelines
+- **[Example Projects](https://github.com/DataSQRL/datasqrl-examples)**: See real-world patterns in action
+
+## Troubleshooting
+
+- **Ports already in use**: Check if 8888 or 8081 is being used by another app
+- **Agent not understanding SQRL**: Share the [SQRL Language Reference](https://docs.datasqrl.com/docs/v0-11/sqrl-language.md) with your agent
+- **Test failures**: Review the error output—DataSQRL provides specific guidance on what to fix
+
+
+---
+
+# SQRL Language Specification
+
+Source: https://docs.datasqrl.com/docs/v0-11/sqrl-language
+
+SQRL is an extension of Flink SQL that adds support for table functions and convenience syntax to build reactive data processing and serving applications.  
+The “R” in **SQRL** stands for *Reactive* and *Relationships*.
+
+This document focuses only on features **unique to SQRL**; when SQRL accepts Flink SQL verbatim we simply refer to the [upstream spec](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/dev/table/sql/overview/).
+
+## Script Structure
+
+A SQRL script is an **ordered list** of statements separated by semicolons (`;`).  
+Only one statement is allowed per line, but a statement may span multiple lines.
+
+Typical order of statements:
+
+```text
+IMPORT ...            -- import from other SQRL scripts
+CREATE TABLE ...      -- define internal & external sources
+MyTable := SELECT ... -- define tables or functions (with hints)
+EXPORT MyTable TO ... -- write table data to sinks
+```
+
+At compile time the statements form a *directed-acyclic graph* (DAG).  
+Each node is then assigned to an enabled execution engine according to the optimizer, and the compiler generates the data processing code for that engine.
+
+## Flink SQL
+
+SQRL inherits full Flink SQL grammar for
+
+* `CREATE {TABLE | VIEW | FUNCTION | CATALOG | DATABASE}`
+* `SELECT` queries inside any of the above
+* `USE ...`
+* `INSERT INTO`
+
+...with the caveat that SQRL currently tracks **Flink 2.2**; later features may not parse.
+
+Refer to the [Flink SQL documentation](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/dev/table/sql/overview/) for a detailed specification.
+
+> **Warning**
+>
+> Be aware that `CREATE CATALOG` statements are only supported in separate scripts, that are NOT imported inline.
+> To learn more about how `IMPORT` works, see [IMPORT Statement](#import-statement).
+
+## Type System
+In SQRL, every table and function has a type based on how the table represents data.
+The type determines the semantic validity of queries against tables and how data is processed by different engines.
+
+SQRL assigns one of the following types to tables based on the definition:
+- **STREAM**: Represents a stream of immutable records with an assigned timestamp (often referred to as the "event time"). Streams are append-only. Stream tables represent events or actions over time.
+- **VERSIONED_STATE**: Contains records with a natural primary key and a timestamp, tracking changes over time to each record, thereby creating a change-stream.
+- **STATE**: Similar to VERSIONED_STATE but without tracking the history of changes. Each record is uniquely identified by its natural primary key.
+- **LOOKUP**: Supports lookup operations using a primary key against external data systems but does not allow further processing of the data.
+- **STATIC**: For data that does not change over time, such as constants.
+
+The table type determines what operators a table supports and how those operators are applied.
+
+## IMPORT Statement
+
+```
+IMPORT qualifiedPath.*;                          -- 1. wildcard
+IMPORT qualifiedPath (AS identifier)?;           -- 2. other namespace
+IMPORT qualifiedPath.tableName (AS identifier)?; -- 3. individual table
+```
+
+Imports another SQRL script or a table declared in one into the current script. The `qualifiedPath` is a `.` separated path that maps to the local file system relative to the current script, e.g. `IMPORT my.custom.script` maps to the relative path `./my/custom/script.sqrl`.
+
+1. Imports that end in `.*` are imported inline which means that the statement from that script are executed verbatim in the current script.
+2. Whole-script imports will be available within a namespace that's equal to the name of the script or the optional `AS` identifier.
+3. Individual table imports are available directly under the table name or the optional `AS` identifier.
+
+Examples:
+* `IMPORT my.custom.script.*`: All table definitions from the script are imported inline and can be referenced directly as `MyTable` in `FROM` clauses.
+* `IMPORT my.custom.script`: Tables are imported into the `script` namespace and can be referenced as `script.MyTable`
+* `IMPORT my.custom.script AS myNamespace`: Tables are imported into the `myNamespace` namespace and can be referenced as `myNamespace.MyTable`
+* `IMPORT connectors.sources.Click`: Imports the `Click` table declared in `./connectors/sources.sqrl` and makes it available as `Click`.
+* `IMPORT connectors.sources.Click AS ClickEvents`: Imports the same table and makes it available as `ClickEvents`.
+
+Individual table imports select a `CREATE TABLE` statement from a SQRL script. The referenced
+table can be either a [connector-backed external table](#create-table-internal-vs-external) or an
+engine-managed internal table with an `engine(...)` hint. Other SQRL definitions in the referenced
+script are not imported; import the complete script inline or as a namespace when they are needed.
+
+For example, an individual import can use an engine-managed Kafka source:
+
+```sql title="connectors/sources.sqrl"
+/*+ engine(kafka) */
+CREATE TABLE CustomerEvents (
+  customer_id BIGINT NOT NULL,
+  full_name STRING,
+  `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+```
+
+```sql title="pipeline.sqrl"
+IMPORT connectors.sources.CustomerEvents;
+```
+
+## CREATE TABLE (Internal vs External)
+
+SQRL understands the complete Flink SQL `CREATE TABLE` syntax, but distinguishes between **internal** and **external** source tables.
+External source tables are standard Flink SQL tables with a `connector` table option that connect to an external data source (e.g. database or Kafka cluster).
+Internal tables are managed by an SQRL engine selected through an `engine(...)` hint. They may include engine-specific options in `WITH (...)`, but do not specify a `connector` option.
+
+> **Important**
+>
+> Internal tables support `kafka` and `iceberg` engines.
+
+| Feature                    | Internal source (managed by SQRL)                               | External Source (connector)  |
+|----------------------------|-----------------------------------------------------------------|------------------------------|
+| Connector option           | **omitted**                                                     | **required**                 |
+| Other `WITH (...)` options | Optional engine-specific options                                | Connector configuration      |
+| Engine hint                | **required**                                                    | Not used to select connector |
+| Metadata columns           | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner | Passed through               |
+| Watermark spec             | **generated**                                                   | **required**                 |
+| Primary key                | *Unenforced* upsert semantics                                   | Same as Flink                |
+
+### Internal Example
+
+```sql
+/*+ engine(kafka) */
+CREATE TABLE Customer (
+  customerid BIGINT,
+  email      STRING,
+  _uuid      STRING NOT NULL METADATA FROM 'uuid',
+  ts         TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  PRIMARY KEY (customerid) NOT ENFORCED
+);
+```
+
+### External Example
+
+```sql
+CREATE TABLE kafka_json_table (
+  user_id INT,
+  name    STRING
+) WITH (
+  'connector' = 'kafka-safe',
+  'topic'     = 'users',
+  'format'    = 'flexible-json'
+);
+```
+
+## Definition Statements
+
+### Table Definition
+
+```
+TableName := SELECT ... ;
+```
+
+Equivalent to a `CREATE VIEW` in SQL.
+
+```sql
+ValidCustomer := SELECT * FROM Customer WHERE customerid > 0 AND email IS NOT NULL;
+```
+
+### DISTINCT Operator
+
+```
+DistinctTbl := DISTINCT SourceTbl
+               ON pk_col [, ...]
+               ORDER BY ts_col [ASC|DESC] [NULLS LAST] ;
+```
+
+* Deduplicates a **STREAM** of changelog data into a **VERSIONED_STATE** table.
+* Hint `/*+filtered_distinct_order*/` (see [hints](#hints)) may precede the statement to push filters before deduplication for optimization.
+
+```sql
+DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
+```
+
+### Function Definition
+
+```
+FuncName(arg1 TYPE [NOT NULL] [, ...]) :=
+  SELECT ... WHERE col = :arg1 ;
+```
+
+Arguments are referenced with `:name` in the `SELECT` query. Argument definitions are identical to column definitions in `CREATE TABLE` statements.
+
+```sql
+CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
+```
+
+#### Accessing JWT Payload
+
+To access the JWT payload included in the Authorization HTTP header, you can use the `METADATA` expression within the
+function definition. The JWT payload is available via the auth object, and nested fields can be accessed directly.
+In the example below, the JWT payload contains a val field, which is an integer.
+
+```sql
+AuthFilter(mySecretId BIGINT NOT NULL METADATA FROM 'auth.val') :=
+  SELECT c.* 
+  FROM Customer c 
+  WHERE c.customerId = :mySecretId;
+```
+
+### Relationship Definition
+
+```
+ParentTable.RelName(arg TYPE, ...) :=
+  SELECT ...
+  FROM Child c
+  WHERE this.id = c.parentId
+  [AND c.col = :arg ...] ;
+```
+
+`this.` is the alias for the parent table to reference columns from the parent row.
+
+```sql
+Customer.highValueOrders(minAmount BIGINT) := SELECT * FROM Orders o WHERE o.customerid = this.id AND o.amount > :minAmount;
+```
+
+### Column-addition Statement
+
+```
+TableName.new_col := expression;
+```
+
+Must appear **immediately after** the table definition it extends, and may reference previously added columns of the same table. Cannot be applied after `CREATE TABLE` statements.
+
+### Relation Alias As ROW
+
+A relation alias may be used by itself in a `SELECT` list to produce a `ROW` value that holds all
+columns of that relation:
+
+```sql
+OrderWithCustomer := SELECT o.id, c AS customer
+                     FROM Orders o JOIN Customer c ON o.customerid = c.customerid;
+```
+
+The `customer` field is a nested structure with the column names and types of `Customer`, which the
+API exposes as a nested object. A column of the same name takes precedence over the relation alias.
+
+### Passthrough Definitions
+
+Passthrough definitions allow you to bypass SQRL's analysis and translation, passing SQL queries directly to the underlying database engine.
+This serves as a "backdoor" for SQL constructs that SQRL does not yet support natively.
+
+Passthrough table, function, or relationship definition have a `RETURNS` clause in their signature that defines the result type of the query.
+
+```
+TableName RETURNS (column TYPE [NOT NULL], ...) := 
+  SELECT raw_sql_query;
+```
+
+> **Important**
+>
+> - SQL must be written in the exact syntax of the target database engine
+> - SQRL will not validate, parse, or optimize the query
+> - Only use when SQRL lacks native support for the required functionality
+> - Return type must be explicitly declared using the `RETURNS` clause
+> - Passthrough queries must be assigned to a database engine for execution
+
+The following defines a relationship definition with a recursive CTE that is passed through to the
+database engine for execution.
+Use `this` to reference parent fields in a relationship definition or `:name` to reference function
+arguments as in standard definitions. The only thing that changes is that adding a `RETURNS` declaration
+bypasses the SQRL analysis, optimization, and query rewriting.
+
+```sql
+Employees.allReports RETURNS (employeeid BIGINT NOT NULL, name STRING NOT NULL, level INT NOT NULL) :=
+  WITH RECURSIVE employee_hierarchy AS (
+    SELECT r.employeeid, r.managerid, 1 as level
+    FROM "Reporting" r
+    WHERE r.managerid = this.employeeid
+    
+    UNION ALL
+    
+    SELECT r.employeeid, r.managerid, eh.level + 1 as level
+    FROM "Reporting" r
+    INNER JOIN employee_hierarchy eh ON r.managerid = eh.employeeid
+  )
+  SELECT e.employeeid, e.name, eh.level
+  FROM employee_hierarchy eh
+  JOIN "Employees" e ON eh.employeeid = e.employeeid
+  ORDER BY eh.level, e.employeeid;
+```
+
+## Interfaces
+
+The tables and functions defined in a SQRL script are exposed through an interface.
+The term "interface" is used generically to describe a means by which a client, user, or external system can access the processed data.
+The interface depends on the [configured engines](https://docs.datasqrl.com/docs/v0-11/configuration.md#engines-enabled-engines): API endpoints for servers, queries and views for databases, and topics for logs.
+An interface is a sink in the data processing DAG that's defined by a SQRL script.
+
+How a table or function is exposed in the interface depends on the access type. The access type is one of the following:
+
+| Access type         | How to declare                                        | Surface                                     |
+|---------------------|-------------------------------------------------------|---------------------------------------------|
+| **Query** (default) | no modifier                                           | GraphQL query / SQL view / log topic (pull) |
+| **Subscription**    | prefix body with `SUBSCRIBE`                          | GraphQL subscription / push topic           |
+| **None**            | object name starts with `_` *or* `/*+no_query*/` hint | not exposed                                 |
+
+Example:
+
+```sql
+HighTempAlert := SUBSCRIBE
+                 SELECT * FROM SensorReading WHERE temperature > 50;
+```
+Defines a subscription endpoint that is exposed as a GraphQL subscription or Kafka topic depending on engine configuration.
+
+```sql
+HighTemperatures := SELECT * FROM SensorReading WHERE temperature > 50;
+```
+Defines a query table that is exposed as a query in the API or view in the database.
+
+```sql
+HighTemperatures(temp BIGINT NOT NULL) := SELECT * FROM SensorReading WHERE temperature > :temp;
+```
+Defines a query function that is exposed as a parametrized query in the API.
+
+```sql
+_HighTemps := SELECT * FROM SensorReading WHERE temperature > 50;
+```
+Defines an internal table that is not exposed in the interface.
+
+### CREATE TABLE
+
+CREATE TABLE statements that define an [internal data source](#create-table-internal-vs-external) are exposed as topics in the log, or GraphQL mutations in the server.
+The input type is defined by mapping all column types to native data types of the interface schema. Computed and metadata columns are not included in the input type since those are computed on insert.
+
+## EXPORT Statement
+
+```
+EXPORT source_identifier TO sinkPath.QualifiedName ;
+```
+
+* `sinkPath` maps to a connector table definition when present, or one of the **built-in** sinks:
+  * `print.*` – stdout
+  * `logger.*` – uses configured logger
+  * `log.*` – topic in configured log engine
+
+```sql
+EXPORT CustomerTimeWindow TO print.TimeWindow;
+EXPORT MyAlerts           TO log.AlertStream;
+```
+
+An export can also target an individual table declared in another SQRL script. The final path segment names the table and the preceding segments identify the script:
+
+```sql
+EXPORT CustomerSubset TO connectors.sinks.CustomerExport;
+```
+
+This resolves `CustomerExport` from `./connectors/sinks.sqrl`. The target must either be an [external table](#create-table-internal-vs-external) with a `connector` option or an engine-managed internal table with an `engine(...)` hint.
+
+For example, an individual export can use an Iceberg table managed by the configured Iceberg engine. Engine-specific table options are preserved when SQRL generates the connector configuration:
+
+```sql title="tables/iceberg.sqrl"
+/*+ engine(iceberg), maintenance(regular) */
+CREATE TABLE CustomerExport (
+  customer_id BIGINT NOT NULL,
+  total_orders BIGINT NOT NULL,
+  `timestamp` TIMESTAMP_LTZ(3)
+) WITH (
+  'write.distribution-mode' = 'none'
+);
+```
+
+```sql title="pipeline.sqrl"
+EXPORT CustomerTotals TO tables.iceberg.CustomerExport;
+```
+
+The generated table is used only as the export target. Unlike a regular internal `CREATE TABLE` source, it is not exposed as a GraphQL mutation.
+
+## Hints
+
+Hints live in a `/*+ ... */` comment placed **immediately before** the definition they apply to.
+
+| Hint                        | Form                                                                       | Applies to     | Effect                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+|-----------------------------|----------------------------------------------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare PK when optimiser cannot infer                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **index**                   | `index(type, col, ...)` <br/> Multiple `index(...)` can be comma-separated | table          | override automatic index selection. `type` ∈ `HASH`, `BTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`. <br />`index` *alone* disables all automatic indexes                                                                                                                                                                                                                                                                                                |
+| **partition_key**           | `partition_key(col, ...)`                                                  | table          | define partition columns for sinks that support partitioning                                                                                                                                                                                                                                                                                                                                                                                                |
+| **vector_dim**              | `vector_dim(col, 1536)`                                                    | table          | declare fixed vector length. This is required when using vector indexes.                                                                                                                                                                                                                                                                                                                                                                                    |
+| **query_by_all**            | `query_by_all(col, ...)`                                                   | table          | generate interface with *required* filter arguments for all listed columns                                                                                                                                                                                                                                                                                                                                                                                  |
+| **query_by_any**            | `query_by_any(col, ...)`                                                   | table          | generate interface with *optional* filter arguments for all listed columns                                                                                                                                                                                                                                                                                                                                                                                  |
+| **no_query**                | `no_query`                                                                 | table          | hide from interface                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **insert**                  | `insert(type)`                                                             | table          | controls the way how mutations will be written to their target sink. `type` ∈ `SINGLE` (default), `BATCH`, `TRANSACTION`                                                                                                                                                                                                                                                                                                                                    |
+| **ttl**                     | `ttl(duration)`                                                            | table          | specifies how long the records for this table are retained in the underlying data system before it can be discarded. Expects a duration string like `5 week` with a unit between minute and week (e.g. `30 min`, `36 hours`, `14 days`, `2 weeks`). For range-partitioned tables, the partition width is derived from the duration and its unit (see the [postgres engine configuration](https://docs.datasqrl.com/docs/v0-11/configuration-engine/postgres.md#partitioning)). Disabled by default. |
+| **cache**                   | `cache(duration)`                                                          | table          | how long the results retrieved from this table can be cached on the server before they are refreshed. Expects a duration string like `10 seconds`. Disabled by default.                                                                                                                                                                                                                                                                                     |
+| **filtered_distinct_order** | flag                                                                       | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **engine**                  | `enigne(engine_id)`                                                        | table          | pin execution engine (`process`, `database`, `flink`, ...)                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **maintenance**             | `maintenance(type)`                                                        | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                                                                                                                                                                                                                                                                                          |
+| **test**                    | `test` or `test(no_rows)`                                                  | table          | marks test case, only executed with [`test` command](https://docs.datasqrl.com/docs/v0-11/compiler.md#test-command).                                                                                                                                                                                                                                                                                                                                                                                |
+| **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                                                                                                                                                                                                                                                                                             |
+| **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                  | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                                                                                                                                                                                                                                                                                            |
+
+This example configures a primary key and vector index for the `SensorTempByHour` table:
+
+```sql
+/*+primary_key(sensorid, time_hour), index(VECTOR_COSINE, embedding) */
+SensorTempByHour := SELECT ... ;
+```
+
+### Testing
+
+Add test cases to SQRL scripts with the `/*+ test */` hint in front of a table definition:
+
+```sql
+/*+ test */
+InvalidCustomers := SELECT * FROM Customer WHERE name = '' OR email IS NULL ORDER BY customerid;
+```
+
+Test-annotated tables are only executed when running the [`test` command](https://docs.datasqrl.com/docs/v0-11/compiler.md#test-command) and otherwise ignored.
+DataSQRL queries all test tables at the end of the test and snapshots the results in the [configured](https://docs.datasqrl.com/docs/v0-11/configuration.md) `snapshot-folder`.
+
+Use `/*+ test(no_rows) */` to assert that a test table returns no rows. These tests will succeed without generating snapshots.
+
+> **Warning**
+>
+> Ensure that test tables have a well-defined order and that only predictable columns are selected for the results are stable between test runs.
+
+---
+## NEXT_BATCH
+
+```sql
+NEXT_BATCH;
+```
+
+For SQRL pipelines where the data processing is in batch (i.e. `"execution.runtime-mode": "BATCH"` in the [Flink configuration](https://docs.datasqrl.com/docs/v0-11/configuration-engine/flink.md)), use the `NEXT_BATCH` statement to break the data processing into multiple sub-batches that are executed sequentially, proceeding with the next sub-batch only if the previous one succeeded.
+
+The batch allocation only applies to `EXPORT .. TO ..` statements. All interfaces are computed in the last batch.
+
+In the following example, the `NEXT_BATCH` guarantees that the `PreprocessedData` is written completely to the sink before processing continues in the next sub-batch.
+
+```sql
+PreprocessedData := SELECT ...;
+EXPORT PreprocessedData TO PreprocessorSink;
+NEXT_BATCH;
+...continue processing...
+```
+
+> **Warning**
+>
+> Sub-batches are executed stand-alone, meaning each sub-batch reads the data from source and not from the intermediate results of the previous sub-batch.
+> If you wish to start with those, you need to explicitly write them out and read them.
+
+---
+
+## Comments & Doc-strings
+
+* `--` single-line comment
+* `/* ... */` multi-line comment
+* `/** ... */` **doc-string**: attached to the next definition and propagated to generated API docs.
+
+---
+
+## Validation Rules
+
+The following produce compile time errors:
+
+* Duplicate identifiers (tables, functions, relationships).
+* Overloaded functions (same name, different arg list) are **not** allowed.
+* Argument list problems (missing type, unused arg, unknown type).
+* `DISTINCT` must reference existing columns; `ORDER BY` column(s) must be monotonically increasing.
+* Basetable inference failure for relationships (see below).
+* Invalid or malformed hints (unknown name, wrong delimiter).
+
+---
+
+## Cheat Sheet
+
+| Construct        | Example                                                               |
+|------------------|-----------------------------------------------------------------------|
+| Import           | `IMPORT mypackage.sources AS mySources;`                              |
+| Internal table   | `CREATE TABLE Orders ( ... );`                                        |
+| External table   | `CREATE TABLE kafka_table (...) WITH ('connector'='kafka');`          |
+| Table def.       | `BigOrders := SELECT * FROM Orders WHERE amount > 100;`               |
+| Distinct         | `Dedup := DISTINCT Events ON id ORDER BY ts DESC;`                    |
+| Function         | `OrdersById(id BIGINT) := SELECT * FROM Orders WHERE id = :id;`       |
+| Relationship     | `Customer.orders := SELECT * FROM Orders WHERE this.id = customerid;` |
+| Column add       | `Orders.total := quantity * price;`                                   |
+| Passthrough func | `Func(id BIGINT) RETURNS (col INT) := SELECT raw_sql WHERE id = :id;` |
+| Subscription     | `Alerts := SUBSCRIBE SELECT * FROM Dedup WHERE level='WARN';`         |
+| Export           | `EXPORT Alerts TO logger.Warnings;`                                   |
+| Hint             | `/*+index(hash,id)*/`                                                 |
+
+## More Information
+
+* Refer to the [Configuration documentation](https://docs.datasqrl.com/docs/v0-11/configuration.md) for engine configuration.
+* See [Command documentation](https://docs.datasqrl.com/docs/v0-11/compiler.md) for CLI usage of the compiler.
+* Read the [How-to guides](https://docs.datasqrl.com/docs/v0-11/category/-how-to) for best-practices and implementation guidance.
+* Follow the [Tutorials](https://docs.datasqrl.com/docs/v0-11/intro/examples.md) for practical SQRL examples.
+
+For engine configuration, see **configuration.md**; for CLI usage, see **compiler.md**.
+
+
+---
+
+# Connecting External Data Sources and Sinks
+
+Source: https://docs.datasqrl.com/docs/v0-11/connectors
+
+Use `CREATE TABLE` statements to connect external data sources and sinks with your SQRL script using the `WITH` clause to provide connector configuration.
+
+DataSQRL uses Apache Flink connectors and formats. To find a connector for your data system, use:
+
+* **[The Official Apache Flink connectors](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/connectors/table/overview/)** for Kafka, Filesystem, Kinesis, and many more.
+* **DataSQRL provided connectors**
+  * **[Safe Kafka Source Connectors](https://github.com/DataSQRL/flink-sql-runner?tab=readme-ov-file#dead-letter-queue-support-for-kafka-sources)** which support dead-letter queues for faulty messages.
+* **[Apache Flink CDC connectors](https://nightlies.apache.org/flink/flink-cdc-docs-release-3.5/docs/connectors/flink-sources/overview/)** for Postgres, MySQL, Oracle, SqlServer, and other databases.
+
+## Connector Management
+
+The best practice for managing connectors in your DataSQRL project is to place all `CREATE TABLE` statements for one data source in a single `.sqrl` file inside the `connectors` folder. This provides a modular structure for sources and sinks that supports reusability and replacing connectors for testing or different environments. [Import](https://docs.datasqrl.com/docs/v0-11/sqrl-language.md#import-statement) those connector files into your main script.
+
+We **strongly encourage** the use of event-time processing and ensuring that all sources are configured with a proper watermark. While processing-time is supported, only event-time ensures consistent data processing and sane, reproducible results.
+
+When ingesting data from external data sources it is important to note the [type of table](https://docs.datasqrl.com/docs/v0-11/sqrl-language.md#type-system) you are creating: an append-only `STREAM` (e.g. with the `filesystem` connector), `VERSIONED_STATE` retraction stream (e.g. with the `upsert-kafka` connector), or a `LOOKUP` table (e.g. with the `jdbc` connector). The table type determines what operations a table supports and how it should be processed.
+
+Specifically, entity data is often ingested as a stream of updates. To re-create the underlying entity `VERSIONED_STATE` table, use the `DISTINCT` statement with the entity's primary key.
+
+## LIKE Clause for Schema Loading
+
+DataSQRL supports automatic schema loading from external schema files using the `LIKE` clause. This feature eliminates the need to manually define column definitions when the schema already exists in a supported format.
+
+```sql
+CREATE TABLE MyTable (
+  ...
+) WITH (
+  ...
+) LIKE 'mytable.avsc';
+```
+
+The `LIKE` clause:
+- **Automatically populates** column definitions from the referenced schema file
+- **Maintains schema consistency** between your data pipeline and external systems
+- **Reduces maintenance overhead** by eliminating manual schema translations
+- **Supports relative paths** to schema files in your project structure
+
+DataSQRL currently supports loading schemas from:
+- **Avro schema files** (`.avsc`)
+
+Assuming you have an Avro schema file `user.avsc` for a Kafka topic:
+
+```sql
+CREATE TABLE User (
+  last_updated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'kafka',
+  ...
+) LIKE 'user.avsc';
+```
+
+In this example:
+- The `LIKE 'user.avsc'` clause loads all column definitions from the Avro schema
+- You add **metadata columns** (like `last_updated`) and **watermark specifications**
+- The **connector configuration** remains in the `WITH` clause as usual
+
+### Inferring Schema from Data Files
+
+To automatically discover the schema of a JSONL or CSV file, add the filename in the `LIKE` clause.
+In addition to generating the table columns based on the inferred schema of the data, this also configures the `filesystem` connector to access the data.
+
+For example, suppose you have a `users.jsonl` file in the `connectors` directory, you can define the `User` table simply as:
+
+```sql
+CREATE TABLE User (
+  WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
+) WITH (
+  'source.monitor-interval' = '10 sec', -- remove for batch processing
+) LIKE 'users.jsonl';
+```
+
+This syntax is useful when building DataSQRL projects from data files since it eliminates the manual schema creation.
+
+
+---
+
+# Designing the Interface
+
+Source: https://docs.datasqrl.com/docs/v0-11/interface
+
+Based on the SQRL script, DataSQRL generates the interface for the compiled data pipeline. DataSQRL supports the following interfaces:
+
+* Data Product (Data Lake Views and Database Views)
+* GraphQL (Mutations, Queries, and Subscriptions)
+* MCP (Tooling and Resources)
+* REST (GET and POST)
+
+For data products, DataSQRL generates view definitions as deployment assets in `build/deploy/plan` which can be queried directly.
+
+The last three are APIs that can be invoked programmatically. Every compiled API model uses the GraphQL execution model.
+The `protocols` [compiler configuration](https://docs.datasqrl.com/docs/v0-11/configuration.md#compiler-compiler) controls which public API protocols the server exposes.
+
+## Data Products
+
+For data products, each visible table defined in the SQRL script is exposed as a view or physical table depending on the pipeline optimization. The mapping between visible tables in the SQRL script and exposed tables in the interface is 1-to-1.
+
+We recommend generating unique table names for the physical tables by configuring a table-name suffix in the [connector configuration](https://docs.datasqrl.com/docs/v0-11/configuration-default.md), e.g. by configuring the `table-name` for `postgres` or the `catalog-table` for `iceberg` to `${sqrl:table-name}_MY_SUFFIX` . This separates views from physical tables to provide modularity and support updates without impacting downstream consumers. 
+
+## APIs
+
+When a server engine is configured, the tables, relationships, and functions defined in a SQRL script map to API endpoints exposed by the server.
+DataSQRL builds an object-relationship model from the tables and relationships between them. Tables are mapped to objects with each scalar column as a field. Fields that are nested rows are mapped to child objects with field name as the parent-to-child relationship. Relationships defined between tables are mapped to relationships between the corresponding objects.
+
+### GraphQL
+
+DataSQRL uses the GraphQL data model as the base model for all API access to data because there is a natural 1-to-1 mapping between the object-relationship model of a SQRL project and GraphQL schema:
+Each object maps to a type or input and each relationship maps to a relationship field on the respective types.
+
+#### Model-to-Schema Mapping
+
+Specifically, tables and functions are exposed as query endpoints of the same name and argument signature (i.e. the argument names and types match).
+Tables/functions defined with the `SUBSCRIBE` keyword are exposed as subscriptions.
+Internal table sources are exposed as mutations with the input type identical to the columns in the table excluding computed columns.
+
+In addition, the result type of the endpoint matches the schema of the table or function. That means, each field of the result type matches a column or relationship on the table/function by name and the field type is compatible.
+The field type is compatible with the column/relationship type iff:
+* For scalar or collection types there is a native mapping from one type system to the other
+* For structured types (i.e. nested or relationship), the mapping applies recursively.
+
+#### Base Tables
+
+To avoid generating multiple redundant result types in the API interface, the compiler infers the base table for each defined table and function.
+
+The base table for a defined table or function is the right-most table in the relational tree of the SELECT query from the definition body if and only if that table type is equal to the defined table type. If no such table exists, the base table is the table itself.
+
+The result type for a table or function is the result type generated for that table's base table.
+Hidden columns, i.e. columns where the name starts with an underscore `_`, are not included in the generated result type.
+
+#### Schema Generation
+
+If no GraphQL schema is configured, the compiler infers one from the SQRL script and writes it to `build/inferred_schema.graphqls`.
+
+To provide and customize a schema for the default `v1` API, configure its path as `script.graphql` in [`package.json`](https://docs.datasqrl.com/docs/v0-11/configuration.md#source-files-script).
+To serve multiple API versions, configure each version under `script.api`. Each version must define a GraphQL `schema`, GraphQL `operations`, or an `openapi` compatibility specification. When a version does not define a schema, the compiler infers its GraphQL schema from the SQRL script. See [API Versioning](https://docs.datasqrl.com/docs/v0-11/configuration.md#api-versioning).
+
+A useful customization workflow is to compile without a configured schema, copy `build/inferred_schema.graphqls` into the project (for example, `api/schema.v1.graphqls`), then configure that file as the API schema.
+
+#### Schema Customization
+
+If a GraphQL schema is defined, the compiler maps the object-relationship model onto the provided schema. You can write your own GraphQL schema or modify the generated GraphQL schema to control the exposed interface. Any modifications must preserve the mapping to the object-relationship model described above.
+
+You can customize the GraphQL schema by:
+* Changing field cardinalities (e.g. `[Person]!` to `Person!`)
+* Changing scalar types (e.g. `Long` to `Int`)
+* Changing the argument name for mutations (e.g. `event` to `payload`)
+* Changing the type of fields to compatible types (e.g. `Person` to `SpecificPerson`)
+* Adding enums
+* Adding interfaces and structuring types with interfaces
+
+> **Warning**
+>
+> The compiler raises errors when the provided GraphQL schema is not compatible with the object-relationship model.
+
+#### Pagination
+
+Every generated query endpoint takes `limit` and `offset` arguments to page through the result (`limit` defaults to the configured `default-limit`). By default the endpoint returns the rows directly and the client tracks the offsets itself.
+
+Set `paginated-results` to `true` in the [`api` compiler configuration](https://docs.datasqrl.com/docs/v0-11/configuration.md#compiler-compiler) to get pagination metadata alongside the rows. The generated schema then wraps every multi-row query result in a page type:
+
+```graphql
+type PersonPage {
+  results: [Person!]
+  pagination: OffsetPageInfo
+}
+
+type OffsetPageInfo {
+  pageSize: Int!
+  currentPage: Int!
+  totalRecords: Long!
+  totalPages: Int!
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  nextOffset: Int
+  prevOffset: Int
+  firstEventTime: DateTime
+  lastEventTime: DateTime
+}
+```
+
+A query then selects the rows and the metadata it needs:
+
+```graphql
+query GetPeople {
+  Person(limit: 10, offset: 20) {
+    results { name email }
+    pagination { currentPage hasNextPage nextOffset }
+  }
+}
+```
+
+`firstEventTime` and `lastEventTime` are the earliest and latest event time of the *entire* result set, not of the returned page. They are `null` when the query result has no event time (rowtime) column.
+
+If you provide your own GraphQL schema, pagination is opt-in per query: give the query a result type with exactly two fields — a list of the result type, and a field of type `OffsetPageInfo` — and declare `OffsetPageInfo` exactly as shown above. The field names of the wrapper type are up to you. The compiler validates that:
+* the `OffsetPageInfo` type is declared and matches the definition above
+* the paginated query declares both a `limit` and an `offset` argument
+* the query returns multiple rows (i.e. it is not restricted to a single row) and is a query, not a subscription
+
+The server computes only the metadata a request actually selects, so paginated queries cost no more than unpaginated ones unless you ask for more:
+* `pageSize`, `currentPage`, `hasPreviousPage`, and `prevOffset` are derived from the request arguments and cost nothing.
+* `hasNextPage` and `nextOffset` make the query fetch one extra row, which is discarded before the results are returned. Without a `limit` argument the page holds every remaining row and `hasNextPage` is `false`.
+* `firstEventTime` and `lastEventTime` run a second `MIN`/`MAX` query over the event time column. The compiler adds an index on that column for paginated queries.
+* `totalRecords` and `totalPages` run a `COUNT(*)` over the entire result set, ignoring `limit`/`offset`.
+
+Selecting event times and totals together costs a single combined aggregate query, not two, so a request never makes more than one extra round trip.
+
+> **Warning**
+>
+> `totalRecords` and `totalPages` are expensive: the `COUNT(*)` behind them cannot be answered from the page the request asked for and generally requires a full table scan, which gets slower as the table grows. Select them only when the client really needs an exact total, and prefer `hasNextPage`/`nextOffset` for plain "is there more?" paging.
+
+#### Authoritative Model
+
+DataSQRL uses the GraphQL schema as the authoritative model for all API protocols. It is the foundation for operations, endpoints, and access patterns.
+This simplifies the conceptual model and server execution since any API operation maps to a GraphQL query which is executed by a centralized and optimized GraphQL engine.
+
+The GraphQL query execution engine sits at the core of the DataSQRL server engine and executes all requests even if the GraphQL API is not exposed. This ensures uniform execution of all requests and a shared authentication and authorization mechanism for security.
+
+The `compiler.api.protocols` setting controls the public API surface for every compiled version:
+
+* Include `GRAPHQL` to expose the versioned GraphQL HTTP and WebSocket endpoint, and GraphiQL when it is enabled in the server configuration.
+* Include `REST` and/or `MCP` to expose operations through those protocols.
+* Omit `GRAPHQL` to make a REST-only, MCP-only, or REST-and-MCP-only server. The GraphQL execution engine remains internal and executes those bridge requests, but no GraphQL HTTP, WebSocket, or GraphiQL route is registered.
+
+The default includes all three protocols.
+
+```mermaid
+flowchart TD
+    A[Incoming Request] --> B[HTTP + Authentication]
+    B --> C[Router]
+    
+    C --> D[GraphQL]
+    C --> E[REST]
+    C --> F[MCP]
+    
+    F --> G[Operations]
+    E --> G
+    D --> H[GraphQL Query Engine]
+    G --> H
+    
+    subgraph Server
+        B
+        C
+        D
+        E
+        F
+        G
+        H
+    end
+```
+
+### MCP and REST
+
+DataSQRL exposes MCP and REST endpoints by converting GraphQL operations. With the default `compiler.api.endpoints: "FULL"`, it also generates one operation for each query and mutation field in the GraphQL schema.
+
+* Generated queries are mapped to GET REST endpoints under `rest/queries`; generated mutations are mapped to POST REST endpoints under `rest/mutations`. For generated result sets, DataSQRL follows relationship fields up to the configured `max-result-depth` without loops.
+* When `add-prefix` is enabled (the default), generated query and mutation operations are named with `Get` and `Add` prefixes respectively. MCP exposes eligible generated operations as tools.
+
+For complete control over the exposed MCP tools and resources as well as REST endpoints, define named GraphQL queries or mutations in one or more `.graphql` files configured under `script.operations` (or a version's `script.api.<version>.operations`) in [`package.json`](https://docs.datasqrl.com/docs/v0-11/configuration.md#source-files-script).
+
+The GraphQL file defining the operations contains named queries or mutations.
+The name of the operation is the name of the MCP tool and REST endpoint and must be unique.
+
+Apply the `@api` directive to an operation to control how it is exposed:
+* `rest`: `NONE`, `GET`, or `POST` to configure the HTTP method or not expose as REST endpoint.
+* `mcp`: `NONE`, `TOOL`, or `RESOURCE` to configure how the query is exposed in MCP.
+* `uri`: AN RFC 6570 template to configure the REST path and MCP resource path. Any operation arguments that are not defined in the uri template are considered part of the payload for REST (and the method must be POST).
+
+```graphql
+""" Returns up to 10 people for a given age """
+query GetPersonByAge($age: Int!) @api(rest: GET, mcp: TOOL, uri: "/queries/personByAge/{age}") {
+    Person(age: $age, limit: 10, offset: 0) {
+        name
+        email
+    }
+}
+```
+
+This defines an operation `GetPersonByAge` which is the name of the MCP tool and REST endpoint with the path `/queries/personByAge/{age}` using GET method.
+
+The doc strings for the operations are used in the API and tooling documentation.
+
+By default, DataSQRL adds explicit operations to the generated ones. Set `compiler.api.endpoints` to `OPS_ONLY` in the [`package.json`](https://docs.datasqrl.com/docs/v0-11/configuration.md) to omit generated MCP and REST operations and restrict a public GraphQL endpoint to explicitly defined named operations. The server executes its stored operation definition, so clients cannot alter its selection set. Whether the GraphQL endpoint is publicly available is controlled independently by whether `compiler.api.protocols` includes `GRAPHQL`.
+
+### OpenAPI
+
+OpenAPI describes the REST API derived from GraphQL operations. It is not a second API definition.
+For every compiled API version, DataSQRL generates an OpenAPI 3 document from operations that expose a REST endpoint.
+The document describes the REST endpoints only, including their paths, parameters, request bodies, and response schemas.
+
+The generated specification is packaged as `build/deploy/plan/vertx-<version>-openapi.json`.
+With the default Vert.x server configuration and at least one REST operation, it is served at `/v1/openapi` and Swagger UI is served at `/v1/swagger-ui`.
+Set `engines.vertx.config.openApiConfig.enabled` to `false` to disable those runtime documentation endpoints.
+The same configuration can customize the documentation endpoints and metadata, including `endpoint`, `uiEndpoint`, `title`, `description`, `version`, contact details, and license details.
+Compilation still generates the specification artifact.
+
+### GraphQL and OpenAPI Configuration
+
+GraphQL defines each API version, and OpenAPI is generated from that version's REST operations.
+The configuration determines which GraphQL schema is used and whether compilation checks the generated OpenAPI specification for backward compatibility.
+
+The `script.api.<version>.openapi` field points to a previously generated OpenAPI document for that compatibility check.
+It is not used as the served specification and does not define or customize the API.
+
+To customize the API, update the GraphQL schema or the GraphQL operations that define the endpoints, as described above.
+
+| `package.json` configuration                                      | GraphQL schema              | OpenAPI behavior                                                                                                       |
+|-------------------------------------------------------------------|-----------------------------|------------------------------------------------------------------------------------------------------------------------|
+| Neither `script.graphql` nor `script.api`                         | Inferred as `v1`            | A `v1` OpenAPI artifact is generated; no compatibility check runs.                                                     |
+| `script.graphql`                                                  | Configured as `v1`          | A `v1` OpenAPI artifact is generated; no compatibility check runs.                                                     |
+| `script.api.<version>.schema`                                     | Configured for each version | An OpenAPI artifact is generated for each version.                                                                     |
+| `script.api.<version>.schema` and `.openapi`                      | Configured for each version | The generated specification is compared with the configured prior document; compilation fails on incompatible changes. |
+| `script.api.<version>.operations` without `.schema` or `.openapi` | Inferred for that version   | An OpenAPI artifact is generated; no compatibility check runs.                                                         |
+| `script.api.<version>.openapi` without `.schema`                  | Inferred for that version   | The generated specification is compared with the configured prior document; compilation fails on incompatible changes. |
+
+Use the versioned `script.api` form when you need OpenAPI compatibility checks. When `script.api` is present, it defines the API versions to compile and serve.
+The top-level `script.graphql` and `script.operations` are not used for those versions.
+
+### Testing
+
+DataSQRL's automated testing via the [`test` command](https://docs.datasqrl.com/docs/v0-11/compiler.md#test-command) executes all GraphQL queries inside the [configured](https://docs.datasqrl.com/docs/v0-11/configuration.md) `test-folder` and snapshots the returned results. Queries are executed in this order:
+
+1. All subscription queries are registered
+2. Mutations are executed sequentially in alphabetical order of filename. The test runner waits the configured `mutation-delay-sec` between mutations. Results are written as snapshots to the snapshot folder.
+3. The test runner waits until the configured timeout.
+4. Queries are executed and results written as snapshots.
+5. All subscription results are sorted and written as snapshots.
+
+If a snapshot already exists, results are compared and the test fails if they are unequal.
+
+The test runner uses the configured `headers` for accessing the API. To test authentication and authorization with different access tokens, create a properties file with the same name as the GraphQL file to configure header properties per query.
+
+For example, if your test folder contains `myquery.graphql` you can configure custom headers for this query in `myquery.properties`:
+```text
+Authorization: Bearer XYZ
+```
+
+By default, tests use the inferred schema, even when a custom schema is configured. Set `test-runner.use-inferred-schema` to `false` in [`package.json`](https://docs.datasqrl.com/docs/v0-11/configuration.md) to test against the configured schema instead.
+
+
+---
+
+# DataSQRL Configuration (`package.json` file)
+
+Source: https://docs.datasqrl.com/docs/v0-11/configuration
+
+DataSQRL projects are configured with one or more `*package.json` files which are merged in the order they are provided to the [DataSQRL command](https://docs.datasqrl.com/docs/v0-11/compiler.md) – latter files override fields in earlier ones, objects are *deep-merged*, and array values are replaced wholesale. User provided configuration files are merged on top of the [default `package.json`](https://docs.datasqrl.com/docs/v0-11/configuration-default.md). 
+
+The `version` field specifies the version of the configuration file which is currently `1`.
+
+---
+
+## Engines (`enabled-engines`)
+
+The engines that the pipeline compiles to.
+
+```json
+{
+  "enabled-engines": ["flink", "postgres", "kafka", "vertx"]
+}
+```
+
+DataSQRL supports the following engines:
+* **[flink](https://docs.datasqrl.com/docs/v0-11/configuration-engine/flink.md)**: Apache Flink is a streaming and batch data processor
+* **[postgres](https://docs.datasqrl.com/docs/v0-11/configuration-engine/postgres.md)**: PostgreSQL is a realtime database
+* **[kafka](https://docs.datasqrl.com/docs/v0-11/configuration-engine/kafka.md)**: Apache Kafka is a streaming data platform (i.e. log engine)
+* **[iceberg](https://docs.datasqrl.com/docs/v0-11/configuration-engine/iceberg.md)**: Apache Iceberg is an analytic database format. Iceberg must be paired with a query engine for data access
+* **[Iceberg query engines](https://docs.datasqrl.com/docs/v0-11/configuration-engine/iceberg-query.md)**: DuckDB, Snowflake, Spark SQL, Redshift, and Trino provide query access to Iceberg tables.
+* **[vertx](https://docs.datasqrl.com/docs/v0-11/configuration-engine/vertx.md)**: Eclipse Vert.x is a reactive server framework
+
+Guidelines for choosing the enabled engines in a pipeline:
+* Always choose one data processor (i.e. "flink")
+* Choose a log engine (i.e. "kafka") to produce data streams
+* Choose a database engine (realtime or analytic) to produce data that can be queried
+* Choose a server engine (i.e. "vertx") to produce data APIs (e.g. GraphQL, REST, MCP)
+* Choose a log engine (i.e. "kafka") to support data ingestion or subscriptions in the API
+* If picking an analytic table format as the database, also choose one or more compatible query engines.
+* Choose at most one log or server engine, but choosing multiple database engines is supported.
+* When choosing a query engine that operates in the cloud (e.g. snowflake), substitute for a locally executable query engine (i.e. "duckdb") for testing and running the pipeline locally.
+
+The individual engines are configured under the **`engines`** field. The following example configures a Flink-specific setting:
+
+```json
+{
+  "engines": {
+    "flink": {
+      "config": {
+        "table.exec.source.idle-timeout": "10s"
+      }
+    }
+  }
+}
+```
+
+Refer to the engine configuration documentation for more information on how to configure individual engines.
+
+## Source Files (`script`)
+
+Configures the main SQRL script to compile, exposed APIs, and template values.
+
+Optionally, it can also take a mutation database JSON generated during every compilation, and if it's kept and included in the config,
+SQRL will check backward compatibility during compile making sure that mutation schemas will not get overwritten by mistake.
+
+The `config` JSON object is passed to the Mustache templating engine to substitute template variable occurrences (e.g. `{{excludedTenant}}`) before the script is compiled.
+
+```json
+{
+  "script": {
+    "main": "my-project.sqrl",                         // Main SQRL script for pipeline
+    "graphql": "api/schema.v1.graphqls",               // GraphQL schema defines the API
+    "operations": ["api/operations-v1/myop1.graphql"], // List of GraphQL queries that define operations which are exposed as API endpoints
+    "database": "my-mutation-database.json",           // Check backward compatibility for mutation schema during compilation
+    "config": {                                        // Arbitrary JSON object used by the mustache templating engine to instantiate SQRL files
+      "excludedTenant": 123,
+      "filters": [
+        { "field": "total_amount", "isNull": false },
+        { "field": "coupon_code", "isNull": true }
+      ]
+    }
+  }
+}
+```
+
+The example `script.config` above could be used to instantiate the following table definition in SQRL:
+```sql
+MyTable :=
+    SELECT o.*
+      FROM Orders AS o
+      WHERE o.tenant_id <> {{excludedTenant}}
+        {{#filters}}
+        AND o.{{field}} IS {{^isNull}}NOT{{/isNull}} NULL
+        {{/filters}}
+      ORDER BY o.tenant_id DESC;
+```
+
+The final SQRL statement after the template variables got resolved will look like:
+```sql
+MyTable := 
+    SELECT o.*
+      FROM Orders AS o
+      WHERE o.tenant_id <> 123
+        AND o.total_amount IS NOT NULL
+        AND o.coupon_code IS NULL
+      ORDER BY o.tenant_id DESC;
+```
+
+### API Versioning
+
+The top-level `script.graphql` and `script.operations` fields configure a single API at version `v1`.
+To serve multiple API versions concurrently, configure them under `script.api` instead.
+API version names must start with `v` followed by a number, such as `v1` or `v2`. Each version must define a GraphQL `schema`, GraphQL `operations`, or an `openapi` compatibility specification. When a version does not define a schema, DataSQRL infers its GraphQL schema from the SQRL script.
+
+DataSQRL serves each API version with its version as an endpoint prefix. With the default server configuration, the `v1` endpoints include `/v1/graphql`, `/v1/rest`, and `/v1/mcp`.
+
+Use either the top-level fields or `script.api`. When `script.api` is configured, it defines the APIs that DataSQRL compiles and serves.
+
+```json
+{
+  "script": {
+    "main": "my-project.sqrl",
+    "api": {
+      "v1": {
+        "schema": "api/schema.v1.graphqls",
+        "operations": ["api/operations-v1/myop1.graphql"],
+        "openapi": "api/openapi-v1.json"
+      },
+      "v2": {
+        "schema": "api/schema.v2.graphqls",
+        "operations": ["api/operations-v2/myop1.graphql"]
+      }
+    }
+  }
+}
+```
+
+DataSQRL generates an OpenAPI specification for every API version. Set the optional `openapi` field to a previously generated specification to check backward compatibility during compilation.
+Compilation fails if the generated specification contains backward-incompatible changes.
+
+### Include Other Sources
+
+When multiple SQRL projects rely on the same logic or data catalog definitions, duplicating them would create unnecessary maintenance work.
+Instead, include and reuse other SQRL projects with the `include` config. Each `include` key is the namespace used to import the included project's modules.
+The required `package` value is the path to the included project's package JSON file, relative to the current project root.
+DataSQRL uses the package file's parent directory as the include root and loads the SQRL files in that directory and its subdirectories.
+Each `include` entry can define `config` overrides for the included project's `script.config` template values.
+
+```json
+{
+  "script": {
+    "main": "main.sqrl",                            // Main SQRL script for pipeline
+    "include": {                                    // Include SQRL scripts from other projects
+      "data_catalog": {                             // Namespace used in SQRL IMPORT statements
+        "package": "../other-project/package.json", // Included project's package file
+        "config": { ... }                           // Optional Mustache template overrides for the included script(s)
+      }
+    }
+  }
+}
+```
+
+> **Note**
+>
+> Include namespaces support underscores. Prefer `_` as a separator, such as `data_catalog` instead of `data-catalog`, because dashes can have a different meaning in SQL.
+
+#### Include Example
+
+Let's modify the `MyTable` example above to include the `Orders` table from a data catalog defined in another project.
+First, define the package JSON accordingly:
+```json
+{
+  "script": {
+    "main": "my-project.sqrl",
+    "config": {
+      "excludedTenant": 123,
+      "filters": [
+        { "field": "total_amount", "isNull": false },
+        { "field": "coupon_code", "isNull": true }
+      ]
+    },
+    "include": {
+      "data_catalog": {
+        "package": "../other-project/other-project-shared-package.json"
+      }
+    }
+  }
+}
+```
+
+Then `my-project.sqrl` can import the data catalog sources:
+```sql
+IMPORT data_catalog.sources AS ctl;
+
+MyTable :=
+    SELECT o.*
+      FROM ctl.Orders AS o
+      WHERE o.tenant_id <> {{excludedTenant}}
+        {{#filters}}
+        AND o.{{field}} IS {{^isNull}}NOT{{/isNull}} NULL
+        {{/filters}}
+      ORDER BY o.tenant_id DESC;
+```
+
+> **Important**
+>
+> When a SQRL script is in a subdirectory, e.g. `./my-module/module-script.sqrl`, use the `root` prefix to import an included namespace.
+> With the example above that would mean:
+> ```sql
+> IMPORT root.data_catalog.sources;
+> ```
+
+## Test-Runner (`test-runner`)
+
+Configures how the DataSQRL test runner executes tests.
+For streaming pipelines, use `required-checkpoints` to set a reliable time-interval for creating snapshots. Otherwise, configure a wall-clock delay via `delay-sec`.
+
+```json
+{
+  "test-runner": {
+    "snapshot-folder": "snapshots/myproject/", // Snapshots output directory (default: "./snapshots")
+    "test-folder": "api/tests/",               // Directory containing test GraphQL queries (default: "./tests")
+    "use-inferred-schema": true,               // Use inferred GraphQL schema when true, else use the one configured at "script.graphql" (default: true)
+    "delay-sec": 30,                           // Wait between data-load and taking snapshot in sec. Set -1 to disable (default: 30)
+    "mutation-delay-sec": 0,                   // Pause(s) between mutation queries (default: 0)
+    "required-checkpoints": 0,                 // Minimum completed Flink checkpoints before taking snapshots (requires delay-sec = -1)
+    "create-topics": ["topic1", "topic2"],     // Kafka topics to create before tests start
+    "headers": {                               // Any HTTP headers to add during the test execution. For example, JWT auth header
+      "Authorization": "Bearer token"
+    }
+  }
+}
+```
+
+## Compiler (`compiler`)
+
+Configuration options that control the compiler, such as where logging output is produced, how the pipeline plan is written out, what cost model to use determine data processing step to engine allocation, and what protocols are exposed in the API.
+
+```json
+{
+  "compiler": {
+    "logger": "print",             // "print" | "none"
+    "extended-scalar-types": true, // support extended scalar types in generated GraphQL
+    "compile-flink-plan": true,    // produce a Flink physical plans (not supported in batch)
+    "cost-model": "DEFAULT",       // cost model to use for DAG optimization ("DEFAULT" | "READ" | "WRITE")
+    "predicate-pushdown-rules": "LIMITED_RULES_NO_SOURCE", // configures the optimizer rules
+
+    "explain": {                   // controls what and how the compiler writes pipeline plans to build/pipeline_*
+      "sql":      false,          // include SQL code in the plan
+      "logical":  false,           // include the logical plan for each table
+      "physical": false,          // include the physical plan for each table
+      "sorted":   true           // ensure deterministic ordering (mostly for tests)
+    },
+
+    "api": {
+      "protocols": [               // public protocols exposed by the server
+        "GRAPHQL",
+        "REST",
+        "MCP"
+      ],
+      "endpoints": "FULL",         // endpoint strategy: "FULL", "GRAPHQL", or "OPS_ONLY" (explicit operations only)
+      "add-prefix": true,          // add an operation-type prefix to function names to ensure uniqueness
+      "max-result-depth": 3,       // maximum depth of graph traversal when generating operations from a schema
+      "default-limit": 10,         // default query result limit
+      "paginated-results": false   // wrap generated query results in a page with pagination metadata
+    }
+  }
+}
+```
+
+`compiler.api.protocols` controls which public API routes are registered. The default enables `GRAPHQL`, `REST`, and `MCP`. Omitting `GRAPHQL` removes the versioned GraphQL HTTP, WebSocket, and GraphiQL routes while retaining the internal GraphQL execution engine used by REST and MCP. `REST` and `MCP` only register endpoints for operations that support those protocols.
+
+`compiler.api.endpoints` controls operation generation and GraphQL flexibility. `FULL` generates operations from every query and mutation, `GRAPHQL` keeps the GraphQL endpoint flexible but exposes only explicitly defined REST and MCP operations, and `OPS_ONLY` accepts only explicitly defined named operations through a public GraphQL endpoint.
+
+### Optimizer Configuration
+
+Limit predicate pushdown to improve subgraph elimination and reduce the size of the physical computation graph by setting `predicate-pushdown-rules` to:
+- `DEFAULT`: uses the default optimizer rules of the Flink engine
+- `LIMITED_RULES_NO_SOURCE`: strips downstream predicate-pushdown related rules to maximize subgraph elimination
+- `LIMITED_RULES`: additionally strips table source pushdown rules
+This setting only applies for Flink streaming when `compile-flink-plan` is enabled.
+
+## Connector Templates (`connectors`)
+
+Connector templates are used to configure how the engines in the pipeline connect to each other for data exchange. The connector templates use Flink SQL connector configuration options which are mapped to the configuration for each engine.
+
+The [default connector configuration](https://docs.datasqrl.com/docs/v0-11/configuration-default.md) works for most local use cases without adjustments.
+Refer to the individual engine configuration for connector configuration options related to that engine.
+
+## Environment Variables (`${VAR}`)
+
+Environment variables can be referenced with two placeholder types:
+
+- `${VAR_NAME}` references a non-secret environment variable, for example `${POSTGRES_HOST}`. DataSQRL treats this syntax as non-secret, even if the variable name contains words like `PASSWORD` or `TOKEN`.
+- `${{VAR_NAME}}` references a secret environment variable, for example `${{POSTGRES_PASSWORD}}`. Secret placeholders are not resolved during compile and are converted to `${VAR_NAME}` in generated artifacts so the actual value is resolved only when the pipeline runs.
+
+DataSQRL resolves environment variables at two different times:
+
+- During `sqrl compile`, DataSQRL resolves available, non-secret environment variables in user-provided `package.json` [connector configuration](https://docs.datasqrl.com/docs/v0-11/configuration-default.md) and in Flink `CREATE TABLE ... WITH (...)` options in SQRL scripts.
+- If a `${VAR_NAME}` placeholder is not available during `sqrl compile`, it is left unchanged in the generated build artifacts so it can still be supplied later.
+- During `sqrl run` or `sqrl test`, DataSQRL first compiles the project with the same compile-time rules, then launches the generated artifacts, and resolves remaining `${VAR_NAME}` placeholders defined anywhere in the SQRL scripts from the runtime environment.
+- If a required runtime placeholder is still unresolved when the generated artifact is launched, the run fails with an error identifying the missing variable.
+
+Compile-time values are written into the generated artifacts under `build/` and `build/deploy/`. Use the secret placeholder syntax for values that must not be resolved or written during compile.
+
+
+---
+
+# Flink Engine Configuration
+
+Source: https://docs.datasqrl.com/docs/v0-11/configuration-engine/flink
+
+Apache Flink is a streaming and batch data processor that serves as the core data processing engine in DataSQRL pipelines.
+
+## Configuration Options
+
+| Key          | Type       | Default   | Notes                                                                                              |
+|--------------|------------|-----------|----------------------------------------------------------------------------------------------------| 
+| `config`     | **object** | see below | Copied verbatim into the generated Flink SQL job (e.g. `"table.exec.source.idle-timeout": "5 s"`). |
+
+Frequently configured options include:
+
+* `execution.runtime-mode`: `BATCH` or `STREAMING`
+* `table.exec.source.idle-timeout`: Timeout for idle sources so watermark can advance.
+* `table.exec.mini-batch.*`: For more efficient execution in STREAMING mode by processing in small batches.
+
+Refer to the [Flink Documentation](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/dev/table/config/) for all Flink configuration options.
+
+## Example Configuration
+
+```json
+{
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.runtime-mode": "STREAMING",
+        "rest.port": 8081,
+        "state.backend.type": "rocksdb",
+        "table.exec.resource.default-parallelism": 1,
+        "taskmanager.memory.network.max": "800m"
+      }
+    }
+  }
+}
+```
+
+## Cloud Deployment
+
+For cloud deployment configuration (instance sizes, task manager counts, scheduling), see [Cloud Deployment Configuration](https://docs.datasqrl.com/docs/v0-11/configuration-engine/cloud-deployment.md#flink-enginesflinkdeployment).
+
+
+---
+
+# Kafka Engine Configuration
+
+Source: https://docs.datasqrl.com/docs/v0-11/configuration-engine/kafka
+
+Apache Kafka is a streaming data platform that serves as the log engine in DataSQRL pipelines for handling data streams and event logs.
+
+## Configuration Options
+
+| Key                                | Type        | Default  | Description                                                             |
+|------------------------------------|-------------|----------|-------------------------------------------------------------------------|
+| `retention`                        | **string**  | `null`   | Topic retention time (e.g., "7d", "24h") or indefinite when `null`      |
+| `watermark`                        | **string**  | `"0 ms"` | Watermark delay for event time processing                               |
+| `transaction-watermark`            | **string**  | `"0 ms"` | Watermark delay for event time processing when transactions are enabled |
+| `use-source-watermark`             | **boolean** | `false`  | Use Flink's `SOURCE_WATERMARK()` for non-transactional Kafka tables     |
+| `use-transaction-source-watermark` | **boolean** | `false`  | Use Flink's `SOURCE_WATERMARK()` for transactional Kafka tables         |
+| `num-partitions`                   | **integer** | `1`      | Number of partitions for generated Kafka topics                         |
+| `replication-factor`               | **integer** | `3`      | Replication factor for generated Kafka topics                           |
+
+Additional custom Kafka settings can be added under the `config` section.
+
+## Example Configuration
+
+```json
+{
+  "engines": {
+    "kafka": {
+      "retention": "14d",
+      "watermark": "2 sec",
+      "transaction-watermark": "10 sec",
+      "use-source-watermark": true,
+      "use-transaction-source-watermark": true,
+      "num-partitions": 4,
+      "replication-factor": 3,
+      "config": {
+        "auto.offset.reset": "earliest"
+      }
+    }
+  }
+}
+```
+
+## Usage Notes
+
+- Kafka topics are automatically created based on your SQRL table definitions
+- Topic configurations are generated during the compilation process
+- Retention settings control how long data is stored in Kafka topics
+- Ensure `replication-factor` does not exceed the number of brokers in the target Kafka cluster
+- Watermarks are used for handling late-arriving events in stream processing
+- Source watermarks apply only to mutation tables with a `timestamp` metadata column. When enabled,
+  they generate `WATERMARK FOR <timestamp-column> AS SOURCE_WATERMARK()` instead of using the
+  corresponding watermark delay. It is only supported by our `kafka-safe` and `upsert-kafka-safe` conenctors.
+- Kafka serves as the messaging backbone between different engines in the pipeline
+
+### Internal Environment Variables
+
+When running pipelines with the DataSQRL `run` command, the following environment variables are used
+in the configuration:
+
+* `KAFKA_BOOTSTRAP_SERVERS`
+* `KAFKA_GROUP_ID`
+
+
+---
+
+# Vert.x Engine Configuration
+
+Source: https://docs.datasqrl.com/docs/v0-11/configuration-engine/vertx
+
+Eclipse Vert.x is a reactive server framework that serves as the GraphQL API server, routing queries to the backing database/log engines.
+
+## Configuration Options
+
+| Key        | Type      | Default | Notes                                                    |
+|------------|-----------|---------|----------------------------------------------------------|
+| `authKind` | **array** | `[]`    | List of auth methods: `"JWT"`, `"OAUTH"`, or both        |
+| `config`   | **object**| see below| Vert.x-specific configuration including auth settings   |
+
+## Basic Configuration
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "authKind": []
+    }
+  }
+}
+```
+
+## JWT Authentication Configuration
+
+For secure APIs with JWT authentication:
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "authKind": ["JWT"],
+      "config": {
+        "jwtAuth": {
+          "pubSecKeys": [
+            {
+              "algorithm": "HS256",
+              "buffer": "<signer-secret>" // Base64 encoded signer secret string
+            }
+          ],
+          "jwtOptions": {
+            "issuer": "<jwt-issuer>",
+            "audience": ["<jwt-audience>"],
+            "expiresInSeconds": 3600,
+            "leeway": 30
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+As these config fields will be mapped to Vert.x Java POJOs, the name of the key fields are very important.
+For `pubSecKeys`, it is also possible to use different algorithms, thet requires the key in a different (mostly PEM) format.
+For example, for `ES256`, this would look something like this:
+```json
+{
+  "pubSecKeys": [
+    {
+      "algorithm": "ES256",
+      "buffer": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhk...restOfBase64...\n-----END PUBLIC KEY-----"
+    }
+  ]
+}
+```
+
+## OAuth 2.0 Authentication Configuration
+
+For OAuth 2.0 authentication with providers like Auth0 or Keycloak, use the `oauthConfig` section.
+This enables MCP (Model Context Protocol) clients like Claude Code to authenticate using OAuth.
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "authKind": ["OAUTH"],
+      "config": {
+        "oauthConfig": {
+          "oauth2Options": {
+            "site": "https://your-tenant.auth0.com/",
+            "clientId": "your-client-id"
+          },
+          "authorizationServerUrl": "https://your-tenant.auth0.com/",
+          "scopesSupported": ["mcp:tools", "mcp:resources"]
+        }
+      }
+    }
+  }
+}
+```
+
+### Combined JWT and OAuth Authentication
+
+You can enable both authentication methods simultaneously:
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "authKind": ["JWT", "OAUTH"],
+      "config": {
+        "jwtAuth": { ... },
+        "oauthConfig": { ... }
+      }
+    }
+  }
+}
+```
+
+### OAuthConfig Structure
+
+The `oauthConfig` object combines Vert.x's [OAuth2Options](https://vertx.io/docs/apidocs/io/vertx/ext/auth/oauth2/OAuth2Options.html) with discovery metadata:
+
+| Key                      | Type       | Required | Description                                                   |
+|--------------------------|------------|----------|---------------------------------------------------------------|
+| `oauth2Options`          | **object** | Yes      | Vert.x OAuth2Options for authentication                       |
+| `authorizationServerUrl` | **string** | No       | External authorization server URL for discovery               |
+| `scopesSupported`        | **array**  | No       | Scopes advertised (default: `["mcp:tools", "mcp:resources"]`) |
+| `resource`               | **string** | No       | Override resource identifier in discovery metadata            |
+
+### OAuth2Options Configuration
+
+The `oauth2Options` object uses Vert.x's OAuth2Options class:
+
+| Key        | Type       | Required | Description                                           |
+|------------|------------|----------|-------------------------------------------------------|
+| `site`     | **string** | Yes      | OAuth issuer URL (e.g., `https://tenant.auth0.com`)   |
+| `clientId` | **string** | No       | OAuth client ID (defaults to `datasqrl-mcp`)          |
+
+### OAuth Discovery Endpoint
+
+When OAuth is configured, the server exposes a discovery endpoint at `/.well-known/oauth-protected-resource` per RFC 9728.
+This enables MCP clients to discover the authorization server and scopes.
+
+### Environment Variable Support
+
+You can use environment variables in the OAuth configuration:
+
+```json
+{
+  "oauthConfig": {
+    "oauth2Options": {
+      "site": "${AUTH0_ISSUER}"
+    },
+    "authorizationServerUrl": "${AUTH0_EXTERNAL_URL}"
+  }
+}
+```
+
+### OAuth 2.0 with Auth0
+
+[Auth0](https://auth0.com) is a managed identity platform that works as a drop-in OAuth 2.0 / OIDC provider for DataSQRL.
+Because Auth0 is a public cloud service, the issuer URL is reachable from both inside your Docker/Kubernetes network and from MCP clients—no internal vs. external URL distinction is needed.
+
+#### Auth0 Setup
+
+**1. Create an API (Resource Server)**
+
+In the Auth0 dashboard go to **Applications → APIs → Create API** and fill in:
+
+| Field       | Value                                               |
+|-------------|-----------------------------------------------------|
+| Name        | A descriptive name, e.g. `My MCP Server`            |
+| Identifier  | The audience URI, e.g. `https://my-mcp-server/`     |
+
+Enable **RBAC** if you want scope-based access control, then add custom scopes such as `mcp:tools` and `mcp:resources` in the **Permissions** tab.
+
+**2. Create a Machine-to-Machine Application**
+
+Go to **Applications → Applications → Create Application**, choose **Machine to Machine Applications**, and authorize it against the API you just created.
+Grant the scopes that MCP clients should receive.
+
+Copy the **Client ID** and **Client Secret** — you will need them to request tokens.
+
+**3. (Optional) Create a Regular Web App for user-facing auth**
+
+If MCP clients authenticate on behalf of users, create a **Regular Web Application** instead and register your callback URL under **Allowed Callback URLs**.
+
+#### DataSQRL Configuration
+
+Set `site` and `authorizationServerUrl` to your Auth0 tenant URL.
+
+> **Warning**
+>
+> The tenant URL always ends with a trailing slash. This must match exactly because Auth0 includes the slash in the `iss` claim of every JWT it issues.
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "authKind": ["OAUTH"],
+      "config": {
+        "oauthConfig": {
+          "oauth2Options": {
+            "site": "https://<your-tenant>.auth0.com/"
+          },
+          "authorizationServerUrl": "https://<your-tenant>.auth0.com/",
+          "scopesSupported": ["mcp:tools", "mcp:resources"]
+        }
+      }
+    }
+  }
+}
+```
+
+Using environment variables (recommended so credentials stay out of source control):
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "authKind": ["OAUTH"],
+      "config": {
+        "oauthConfig": {
+          "oauth2Options": {
+            "site": "${AUTH0_ISSUER}"
+          },
+          "authorizationServerUrl": "${AUTH0_EXTERNAL_URL}"
+        }
+      }
+    }
+  }
+}
+```
+
+Then pass the variables at compile and server startup time:
+
+```bash
+AUTH0_ISSUER=https://<your-tenant>.auth0.com/
+AUTH0_EXTERNAL_URL=https://<your-tenant>.auth0.com/
+```
+
+Because Auth0 is a public cloud service, both variables point to the same URL.
+
+#### Obtaining a Token (Client Credentials / M2M)
+
+For server-to-server access use the **client credentials** grant:
+
+```bash
+curl -s -X POST https://<your-tenant>.auth0.com/oauth/token \
+  -H "Content-Type: application/json" \
+  -d '{
+    "grant_type":    "client_credentials",
+    "client_id":     "<CLIENT_ID>",
+    "client_secret": "<CLIENT_SECRET>",
+    "audience":      "https://my-mcp-server/"
+  }'
+```
+
+The `audience` field is **required** for Auth0 client credentials requests. Without it, Auth0 returns an opaque token rather than a JWT, which the DataSQRL server cannot validate.
+
+#### Auth0-specific Notes
+
+- **Trailing slash on issuer** — Auth0's issuer is always `https://<tenant>.auth0.com/` (with the slash). The value in `site` must match the `iss` claim in Auth0 JWTs exactly; a missing slash causes validation failures.
+- **Audience claim** — Auth0 JWTs include an `aud` claim set to the API identifier you configured. The DataSQRL server validates this automatically via OIDC discovery.
+- **JWKS endpoint** — Auth0 publishes signing keys at `https://<tenant>.auth0.com/.well-known/jwks.json`. The server fetches these automatically from the OIDC discovery document (`/.well-known/openid-configuration`) and rotates them without restart.
+- **Custom domains** — If your Auth0 tenant uses a custom domain (e.g. `https://auth.example.com/`), use that URL as both `site` and `authorizationServerUrl`.
+
+## Cloud Deployment
+
+For cloud deployment configuration (instance sizes, instance counts), see [Cloud Deployment Configuration](https://docs.datasqrl.com/docs/v0-11/configuration-engine/cloud-deployment.md#vertx-enginesvertxdeployment).
+
+
+---
+
+# PostgreSQL Engine Configuration
+
+Source: https://docs.datasqrl.com/docs/v0-11/configuration-engine/postgres
+
+PostgreSQL is a realtime database that stores the materialized views and tables generated by your DataSQRL pipeline for low-latency querying.
+
+## Configuration Options
+
+No mandatory configuration keys are required. Physical DDL (tables, indexes, views) is produced automatically by the DataSQRL compiler.
+
+| Key                     | Type        | Default | Description                                                                                                    |
+|-------------------------|-------------|---------|----------------------------------------------------------------------------------------------------------------|
+| `partition-ttl-divisor` | **integer** | `100`   | Controls the number of partitions for range-partitioned tables with a TTL (see [Partitioning](#partitioning)). |
+| `partition-premake`     | **integer** | `4`     | Number of future partitions pg_partman pre-creates ahead of the current one (`p_premake`).                     |
+
+## Basic Configuration
+
+```json
+{
+  "engines": {
+    "postgres": {
+      "partition-ttl-divisor": 100,
+      "config": {
+        // Optional PostgreSQL-specific settings
+      }
+    }
+  }
+}
+```
+
+## Partitioning
+
+Tables annotated with `partition_key` on a timestamp column and a `ttl` hint are range-partitioned with pg_partman, and expired partitions are dropped automatically. The partition width is derived from the TTL:
+
+- The TTL duration divided by `partition-ttl-divisor` caps the number of partitions.
+- The unit the TTL is declared with sets the minimum width: `ttl(14 days)` never produces partitions smaller than 1 day, while `ttl(336 hours)` allows hourly partitions.
+- The result is snapped down to the closest calendar-aligned width from: 15 min, 30 min, 1, 2, 4, 6, 8, 12 hours, 1, 2, 4 days, 1, 2, 4, 8, 12 weeks.
+
+For example, `ttl(14 days)` with the default divisor produces 1-day partitions.
+
+At setup time, pg_partman pre-creates the historical partitions covering the full TTL window (via `p_start_partition`), so replayed or late-arriving data within the retention period lands in a dated partition rather than the DEFAULT partition. The `partition-premake` key controls how many future partitions are created ahead of the current one.
+
+## Cloud Deployment
+
+For cloud deployment configuration (instance sizes, replica counts), see [Cloud Deployment Configuration](https://docs.datasqrl.com/docs/v0-11/configuration-engine/cloud-deployment.md#postgresql-enginespostgresdeployment).
+
+## Conflict Handling
+
+When a generated PostgreSQL table receives a row that conflicts with an existing row on a primary key or unique constraint,
+DataSQRL chooses one of the following conflict handling strategies:
+
+| Strategy         | PostgreSQL behavior                                                                 | Description                                                                                                                                                                                                                      |
+|------------------|-------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Update           | `ON CONFLICT (...) DO UPDATE SET ...`                                               | The existing row is overwritten with the incoming row.                                                                                                                                                                           |
+| Timestamp update | `ON CONFLICT (...) DO UPDATE SET ... WHERE incoming timestamp > existing timestamp` | The existing row is overwritten only when the incoming row has a newer timestamp than the existing row. Otherwise, the conflicting insert is silently skipped, which prevents out-of-order events from rolling back newer state. |
+| Ignore           | `ON CONFLICT (...) DO NOTHING`                                                      | The existing row is kept, and the conflicting insert is silently skipped.                                                                                                                                                        |
+
+DataSQRL applies these strategies automatically based on the generated [table type](https://docs.datasqrl.com/docs/v0-11/sqrl-language.md#type-system):
+
+- `STATE` tables use timestamp update with the appropriate timestamp column.
+- `STREAM` tables use ignore.
+- Other PostgreSQL tables use update.
+
+## Usage Notes
+
+- Database schema is automatically generated from your SQRL script
+- Tables, indexes, and views are created based on the compiled data pipeline
+- Connection parameters are typically provided via environment variables
+- The engine handles both real-time data ingestion and query serving
+- Optimized for low-latency reads of materialized data
+- Read replicas improve query performance and provide redundancy
+
+### Internal Environment Variables
+
+When running pipelines with the DataSQRL `run` command, the following environment variables are used
+in the configuration:
+
+* `POSTGRES_VERSION`
+* `POSTGRES_HOST`
+* `POSTGRES_PORT`
+* `POSTGRES_DATABASE`
+* `POSTGRES_AUTHORITY`
+* `POSTGRES_JDBC_URL`
+* `POSTGRES_USERNAME`
+* `POSTGRES_PASSWORD`
+
+
+---
+
+# Iceberg Engine Configuration
+
+Source: https://docs.datasqrl.com/docs/v0-11/configuration-engine/iceberg
+
+Apache Iceberg is an analytic database format that provides ACID transactions, schema evolution, and time travel capabilities for large analytic datasets.
+
+## Configuration Options
+
+Iceberg is used as a *table-format* engine and must be paired with an [Iceberg query engine](https://docs.datasqrl.com/docs/v0-11/configuration-engine/iceberg-query.md) for query access.
+
+## Basic Configuration
+
+Since Iceberg is not a standalone data system but a data format, the configuration for Iceberg is managed through the shared `iceberg` connector:
+
+```json
+{
+  "connectors": {
+    "iceberg": {
+      "warehouse": "iceberg-data",      // path the Iceberg table data is written to
+      "catalog-name": "default_catalog" // the name of the catalog
+    }
+  }
+}
+```
+
+## Usage Notes
+
+- Iceberg serves as a storage format, not a query engine
+- Must be combined with [compatible query engine(s)](https://docs.datasqrl.com/docs/v0-11/configuration-engine/iceberg-query.md)
+- Provides schema evolution capabilities for long-running pipelines
+- Supports time travel queries for historical data analysis
+- Optimized for large-scale analytical workloads
+
+
+---
+
+# Iceberg Query Engine Configurations
+
+Source: https://docs.datasqrl.com/docs/v0-11/configuration-engine/iceberg-query
+
+Apache Iceberg stores analytic data but does not execute queries. Enable an Iceberg query engine alongside `iceberg` to create and query Iceberg tables.
+
+## Full Query Engines
+
+Full query engines are integrated with the DataSQRL server and can execute generated API queries against Iceberg tables.
+
+### DuckDB (`duckdb`)
+
+DuckDB is a vectorized database query engine that excels at analytical queries and can read Iceberg tables efficiently.
+
+#### Configuration Options
+
+| Key                    | Type        | Default          | Description                                                                    |
+|------------------------|-------------|------------------|--------------------------------------------------------------------------------|
+| `url`                  | **string**  | `"jdbc:duckdb:"` | Full JDBC URL for the database connection                                      |
+| `memory-limit`         | **string**  | -                | Sets DuckDB's `memory_limit`, for example `"8GB"`                              |
+| `use-disk-cache`       | **boolean** | `false`          | Install and load `cache_httpfs` extension                                      |
+| `use-version-guessing` | **boolean** | `false`          | Sets `unsafe_enable_version_guessing` flag to be able to read uncommitted data |
+
+#### Example Configuration
+
+```json
+{
+  "engines": {
+    "duckdb": {
+      "url": "jdbc:duckdb:",
+      "memory-limit": "4GB",
+      "use-disk-cache": true,
+      "use-version-guessing": true
+    }
+  }
+}
+```
+
+#### Usage Notes
+
+- Ideal for local development and testing of analytical workloads
+- Excellent performance on analytical queries with vectorized execution
+- Can read Iceberg tables directly without additional infrastructure
+- Supports both in-memory and persistent database modes
+- Perfect for prototyping before deploying to cloud query engines like Snowflake
+- Lightweight alternative to larger analytical databases
+
+## Shallow Query Engines
+
+Shallow query engines generate engine-specific Iceberg table definitions and query SQL, but are not integrated with the DataSQRL server.
+They cannot execute generated API queries. When an API server is enabled, pair a shallow query engine with the full DuckDB query engine.
+
+### Snowflake (`snowflake`)
+
+Snowflake is a cloud-based analytic database query engine that can read Iceberg tables and provide enterprise-scale analytical capabilities.
+
+#### Configuration Options
+
+| Key               | Type       | Default | Description                         |
+|-------------------|------------|---------|-------------------------------------|
+| `catalog-name`    | **string** | -       | Glue catalog name for metadata      |
+| `external-volume` | **string** | -       | Snowflake external volume name      |
+| `url`             | **string** | -       | Full JDBC URL including auth params |
+
+#### Example Configuration
+
+```json
+{
+  "engines": {
+    "snowflake": {
+      "catalog-name": "my-glue-catalog",
+      "external-volume": "my-external-volume",
+      "url": "jdbc:snowflake://account.snowflakecomputing.com/?user=username&password=password&warehouse=warehouse&db=database&schema=schema"
+    }
+  }
+}
+```
+
+#### Usage Notes
+
+- Requires all three configuration parameters
+- Designed for large-scale analytical workloads in the cloud
+- Integrates with AWS Glue for metadata management
+- Uses external volumes for accessing Iceberg data
+- Authentication parameters should be included in the JDBC URL
+- For local development, consider using DuckDB as a substitute
+- Provides enterprise features like data sharing and governance
+
+### Spark SQL (`sparksql`)
+
+Spark SQL generates Spark SQL definitions for Iceberg tables. Enable it by adding `"sparksql"` to `enabled-engines`.
+
+#### Configuration Options
+
+| Key             | Type       | Default   | Description                                                  |
+|-----------------|------------|-----------|--------------------------------------------------------------|
+| `view-catalog`  | **string** | -         | Catalog that contains generated views                        |
+| `view-database` | **string** | `default` | Database that contains generated views when a catalog is set |
+
+When configured, generated view names are qualified as `catalog.database.view`. Setting only `view-database` qualifies views as `database.view` in the current catalog.
+Setting `view-catalog` without `view-database` uses Spark SQL's `default` database.
+
+### Redshift (`redshift`)
+
+Redshift generates Amazon Redshift SQL definitions for Iceberg tables. Enable it by adding `"redshift"` to `enabled-engines`.
+
+#### Configuration Options
+
+| Key             | Type       | Default  | Description                                                   |
+|-----------------|------------|----------|---------------------------------------------------------------|
+| `view-database` | **string** | -        | Database that contains generated views                        |
+| `view-schema`   | **string** | `public` | Schema that contains generated views when a database is set   |
+
+When configured, generated view names are qualified as `database.schema.view`. Setting only `view-schema` qualifies views as `schema.view` in the current database.
+Setting `view-database` without `view-schema` uses Redshift's `public` schema.
+
+
+---
+
+# Default DataSQRL `package.json` Configuration
+
+Source: https://docs.datasqrl.com/docs/v0-11/configuration-default
+
+The following is the [default configuration file](https://raw.githubusercontent.com/DataSQRL/sqrl/refs/heads/main/sqrl-planner/src/main/resources/default-package.json) that user provided configuration files are merged on top of. It provides the default values for all configuration options.
+
+```json
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "compiler": {
+    "logger": "print",
+    "compile-flink-plan": true,
+    "extended-scalar-types": true,
+    "predicate-pushdown-rules": "LIMITED_RULES_NO_SOURCE",
+    "cost-model": "DEFAULT",
+    "explain": {
+      "sql": false,
+      "logical": false,
+      "physical": false,
+      "sorted": true
+    },
+    "api": {
+      "protocols": ["GRAPHQL", "REST", "MCP"],
+      "endpoints": "FULL",
+      "add-prefix": true,
+      "max-result-depth": 3,
+      "default-limit": 10,
+      "paginated-results": false
+    }
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "execution.runtime-mode": "STREAMING",
+        "security.delegation.tokens.enabled": false,
+        "state.backend.type": "rocksdb",
+        "table.exec.sink.require-on-conflict": false
+      }
+    },
+    "duckdb": {
+      "url": "jdbc:duckdb:",
+      "scan-cte-cardinality-divisor": 1
+    },
+    "postgres": {
+      "partition-ttl-divisor": 100,
+      "partition-premake": 4
+    },
+    "kafka": {
+      "retention": null,
+      "use-source-watermark": false,
+      "use-transaction-source-watermark": false,
+      "watermark": "0 ms",
+      "transaction-watermark": "0 ms",
+      "num-partitions": 1,
+      "replication-factor": 3
+    }
+  },
+  "connectors": {
+    "kafka-mutation": {
+      "connector": "kafka-safe",
+      "format": "flexible-json",
+      "flexible-json.timestamp-format.standard": "ISO-8601",
+      "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
+      "properties.group.id": "${KAFKA_GROUP_ID}",
+      "properties.auto.offset.reset": "earliest",
+      "properties.compression.type": "zstd",
+      "topic": "${sqrl:table-name}"
+    },
+    "kafka": {
+      "connector": "kafka-safe",
+      "format": "flexible-json",
+      "flexible-json.timestamp-format.standard": "ISO-8601",
+      "properties.bootstrap.servers": "${KAFKA_BOOTSTRAP_SERVERS}",
+      "properties.group.id": "${KAFKA_GROUP_ID}",
+      "properties.compression.type": "zstd",
+      "topic": "${sqrl:table-name}"
+    },
+    "iceberg": {
+      "connector": "iceberg",
+      "catalog-name": "default_catalog",
+      "catalog-table": "${sqrl:table-name}",
+      "warehouse": "sqrl_iceberg_data",
+      "format-version": 2,
+      "write.distribution-mode": "hash",
+      "commit.retry.num-retries": "20",
+      "commit.retry.min-wait-ms": "100",
+      "commit.retry.max-wait-ms": "5000"
+    },
+    "iceberg-maintenance": {
+      "compaction.enabled": "true",
+      "write.metadata.delete-after-commit.enabled": "true",
+      "write.metadata.previous-versions-max": "10",
+      "history.expire.max-snapshot-age-ms": "86400000"
+    },
+    "postgres": {
+      "connector": "jdbc-sqrl",
+      "username": "${POSTGRES_USERNAME}",
+      "password": "${POSTGRES_PASSWORD}",
+      "url": "jdbc:postgresql://${POSTGRES_AUTHORITY}",
+      "driver": "org.postgresql.Driver",
+      "table-name": "${sqrl:table-name}"
+    },
+    "print": {
+      "connector": "print",
+      "print-identifier": "${sqrl:table-name}"
+    }
+  },
+  "test-runner": {
+    "snapshot-folder": "./snapshots",
+    "test-folder": "./tests",
+    "use-inferred-schema": true,
+    "delay-sec": 30,
+    "mutation-delay-sec": 0,
+    "required-checkpoints": 0
+  }
+}
+```
+
+## Connector Template Variables
+
+The connector templates configured under `connectors` can use environment variables and SQRL-specific variables for dynamic configuration.
+
+### Environment Variables
+
+See [Environment Variables](https://docs.datasqrl.com/docs/v0-11/configuration.md#environment-variables-var) for supported placeholder syntax and resolution behavior.
+
+### SQRL Variables
+
+SQRL-specific variables start with a `sqrl:` prefix and are used for templating inside connector configuration options.
+The proper syntax look like `${sqrl:<identifier>}`.
+
+Supported identifiers include:
+- `table-name`
+- `original-table-name`
+- `filename`
+- `format`
+- `kafka-key`
+
+These are typically used within connector templates to inject table-specific or context-aware configuration values.
+
+> **Warning**
+>
+> Unresolved `${sqrl:*}` placeholders raise a validation error.
+
+
+---
+
+# Cloud Deployment Configuration
+
+Source: https://docs.datasqrl.com/docs/v0-11/configuration-engine/cloud-deployment
+
+Configures the cloud resources for each engine when deploying pipelines to DataSQRL Cloud. Deployment settings are configured under the `deployment` field within each engine's configuration.
+
+```json
+{
+  "engines": {
+    "flink": {
+      "deployment": {
+        "jobmanager-size": "small",
+        "taskmanager-size": "large.mem",
+        "taskmanager-count": 1
+      },
+      "config": {
+        "execution.checkpointing.interval": "180s"
+      }
+    },
+    "postgres": {
+      "deployment": {
+        "instance-size": "medium",
+        "replica-count": 1
+      }
+    },
+    "vertx": {
+      "deployment": {
+        "instance-size": "small",
+        "instance-count": 1
+      }
+    }
+  }
+}
+```
+
+---
+
+## Flink (`engines.flink.deployment`)
+
+Apache Flink deployments consist of 1 job manager and a configurable number of identically sized task managers.
+
+```json
+{
+  "engines": {
+    "flink": {
+      "deployment": {
+        "jobmanager-size": "small",   // Job manager instance size (see table below)
+        "taskmanager-size": "medium", // Task manager instance size (see table below)
+        "taskmanager-count": 2        // Number of task managers (positive integer)
+      }
+    }
+  }
+}
+```
+
+### Task Manager Sizes
+
+| Name | CPU | Task Slots | Memory (GiB) | NVMe Space | Max CPU Burst |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| dev | 0.5 | 1 | 2 | 20GB | 2 |
+| small | 1 | 1 | 4 | 55GB | 1 |
+| medium | 2 | 2 | 8 | 110GB | 1 |
+| large | 4 | 4 | 16 | 220GB | 1 |
+| xlarge | 8 | 8 | 32 | 440GB | 1 |
+
+The `dev` size is intended for development and testing with small amounts of data.
+
+#### Size Qualifiers
+
+Task manager sizes support qualifiers for specialized workloads. Qualifiers are grouped into memory-oriented and CPU-oriented variants:
+
+* **`.mem-Nx`** scales the pod memory by `N` and gives Flink **proportionally more** memory (Flink heap+managed grows with `N`). Use for state-heavy jobs.
+* **`.mem-headroom-Nx`** scales the pod memory by `N` but keeps Flink's allocation at the **baseline** memory; the extra memory is reserved for sidecar / native consumers (e.g., DuckDB, JNI libs, page cache).
+* **`.cpu`** doubles CPU with the same memory.
+
+| Qualifier | Pod memory | Flink heap+managed | Typical use |
+| :--- | :--- | :--- | :--- |
+| `.cpu` | base | base × 0.80 | CPU-intensive jobs |
+| `.mem` / `.mem-2x` | base × 2 | base × 1.6 | State-heavy jobs |
+| `.mem-4x` | base × 4 | base × 3.2 | Large state |
+| `.mem-8x` | base × 8 | base × 6.4 | Very large state |
+| `.mem-headroom-2x` | base × 2 | base × 1 | Sidecars / native memory consumers |
+| `.mem-headroom-4x` | base × 4 | base × 1 | Larger sidecar headroom |
+| `.mem-headroom-8x` | base × 8 | base × 1 | Maximum sidecar headroom (e.g. DuckDB) |
+
+Examples:
+
+* `medium.mem-4x` → pod 32 GB / Flink heap+managed ≈ 25.6 GB.
+* `xlarge.mem-headroom-8x` → pod 256 GB / Flink heap+managed = 32 GB (baseline) / 224 GB headroom.
+
+`.mem` is an alias for `.mem-2x`. The legacy `.mem-headroom` qualifier (triple memory, Flink stays at baseline) is **deprecated** — use `.mem-headroom-Nx` instead.
+
+Size qualifiers do not apply to the `dev` instance.
+
+### Job Manager Sizes
+
+| Name | SubTasks | CPU | Memory (GiB) |
+| :--- | :--- | :--- | :--- |
+| dev | &lt;100 | 0.5 | 1 |
+| small | 100-800 | 0.5 | 2 |
+| medium | 800-2000 | 1 | 4 |
+| large | &gt;2000 | 2 | 8 |
+
+Choose the job manager size based on the number of subtasks in your Flink job.
+
+---
+
+## PostgreSQL (`engines.postgres.deployment`)
+
+PostgreSQL deployments consist of one primary instance and a configurable number of read replicas, all using the same instance size.
+
+```json
+{
+  "engines": {
+    "postgres": {
+      "deployment": {
+        "instance-size": "medium",      // Instance size (see table below)
+        "replica-count": 1,             // Number of read replicas (0 or larger)
+        "disk-size-gb": 256,            // Disk size in GB (1 or larger)
+        "auto-expand-percentage": 0.2,  // Auto-expand threshold (0 to disable, must be < 1)
+        "create-indexes": true,         // Whether to create table indexes (see "Create Indexes" below)
+        "data-checksums": true,         // Whether data-page checksums are enabled (see "Data Checksums" below)
+        "parameters": {}                // Extra postgresql.parameters (see "Parameters" below)
+      }
+    }
+  }
+}
+```
+
+### Instance Sizes
+
+| Name | CPU | Memory (GiB) | Default Disk | Max CPU Burst | Max Connections |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| dev | 0.5 | 4 | 10GB | 1.5 | 100 |
+| small | 1 | 8 | 128GB | 1 | 100 |
+| medium | 2 | 16 | 256GB | 1 | 200 |
+| large | 4 | 16 | 512GB | 1 | 300 |
+| xlarge | 8 | 32 | 1TB | 1 | 600 |
+
+The `dev` size is intended for development and testing with small amounts of data.
+
+---
+
+## Vert.x (`engines.vertx.deployment`)
+
+Vert.x API server deployments consist of a configurable number of identically sized server instances.
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "deployment": {
+        "instance-size": "small",  // Instance size (see table below)
+        "instance-count": 2        // Number of server instances (positive integer)
+      }
+    }
+  }
+}
+```
+
+### Instance Sizes
+
+| Name | CPU | Memory (GiB) | NVMe Space | Max CPU Burst | Pg Pool Size |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| dev | 0.5 | 2 | - | 1.25 | 5 |
+| small | 1 | 4 | 55GB | 1 | 5 |
+| medium | 2 | 8 | 110GB | 1 | 10 |
+| large | 4 | 16 | 220GB | 1 | 15 |
+
+The `dev` size is intended for development and testing with small amounts of data. The `.disk` qualifier enables NVMe storage for instances that require local disk access.
+
+---
+
+## Dedicated Nodes (`*-dedicated-nodes`)
+
+Pins a component's pods onto dedicated nodes. Each engine's `deployment` accepts a list of dedicated-node names. Each name is a **hard requirement**: if no matching node is available, the pod stays `Pending` — it never falls back to a shared node.
+
+| Engine | Field(s) |
+| :--- | :--- |
+| Flink | `taskmanager-dedicated-nodes`, `jobmanager-dedicated-nodes` |
+| PostgreSQL | `dedicated-nodes` |
+| Vert.x | `dedicated-nodes` |
+
+```json
+{
+  "engines": {
+    "flink": {
+      "deployment": {
+        "taskmanager-size": "medium.mem",
+        "taskmanager-count": 6,
+        "taskmanager-dedicated-nodes": [ "nvme" ]   // TaskManagers MUST run on the "nvme" dedicated nodes
+      }
+    }
+  }
+}
+```
+
+For each name `N` in the list, the pod is given:
+
+* a **node selector** requiring the node label `N=true` (the pin), and
+* a **toleration** for taint key `N` (so it is allowed onto the dedicated, tainted nodes).
+
+The cluster side is an infrastructure concern: the dedicated nodes for `N` must be labeled `N=true` **and** tainted `N=<value>:NoSchedule`. The taint keeps everything that does not request `N` off those nodes; the matching label + toleration place the requesting pods on them. This gives both *pinning* (the workload runs there) and *isolation* (nothing else does).
+
+Multiple names are combined with AND — the pod requires a node carrying all of them.
+
+### Provisioning the dedicated nodes (cluster side)
+
+Dedicated nodes are provisioned by the cluster operator, not by the pipeline. The contract is simple: the nodes for `N` must carry the **label** `N=true` and the **taint** `N=true:NoSchedule`. The label provides the pin (pods requesting `N` land here); the taint provides the isolation (everything that does not request `N` is kept off).
+
+On a [Karpenter](https://karpenter.sh/)-managed cluster (e.g. Amazon EKS), create a `NodePool`. For a group named `nvme` backed by local-NVMe instances:
+
+```yaml
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: nvme
+spec:
+  template:
+    metadata:
+      labels:
+        nvme: "true"            # selected by pods requesting dedicated nodes "nvme"
+    spec:
+      taints:
+        - key: nvme             # repels everything that does not tolerate "nvme"
+          value: "true"
+          effect: NoSchedule
+      requirements:
+        - { key: node.kubernetes.io/instance-type, operator: In, values: [ i7i.2xlarge ] }
+        - { key: karpenter.sh/capacity-type, operator: In, values: [ on-demand ] }
+      # nodeClassRef, arch/os, disruption budgets and limits as appropriate for your cluster
+```
+
+The label name and taint key must both equal the dedicated-nodes name. These nodes must also carry any standard scheduling labels your platform applies to workload nodes, so the deployment's base node selection still resolves.
+
+---
+
+## Do Not Disrupt (`do-not-disrupt`)
+
+Protects a component's pods from **voluntary** autoscaler disruption (node consolidation / scale-down). When `true`, the pods are annotated so the cluster autoscaler will not evict or consolidate them. Use it for long-running, stateful, or hard-to-reschedule workloads — for example a Flink catch-up that reprocesses the whole backlog, or the PostgreSQL primary during bootstrap.
+
+| Engine | Field | Default |
+| :--- | :--- | :--- |
+| Flink | `do-not-disrupt` | `false` |
+| PostgreSQL | `do-not-disrupt` | `true` |
+| Vert.x | `do-not-disrupt` | `false` |
+
+```json
+{
+  "engines": {
+    "flink": {
+      "deployment": {
+        "do-not-disrupt": true   // keep TaskManagers/JobManager from being consolidated mid-run
+      }
+    }
+  }
+}
+```
+
+---
+
+## Create Indexes (`create-indexes`)
+
+Controls whether the PostgreSQL table indexes are created for the deployment. Defaults to `true`. PostgreSQL only.
+
+| Engine | Field | Default |
+| :--- | :--- | :--- |
+| PostgreSQL | `create-indexes` | `true` |
+
+Set it to `false` to bootstrap the database **tables-only**, skipping all index creation. This is intended for a catch-up profile that reprocesses a large backlog: writing to un-indexed tables drains the backlog faster. The indexes are then built when the deployment is upgraded back to a steady-state profile (where `create-indexes` returns to its `true` default), so a catch-up deployment must be followed by such an upgrade before it serves production query traffic.
+
+```json
+{
+  "engines": {
+    "postgres": {
+      "deployment": {
+        "create-indexes": false   // tables-only bootstrap for fast backlog draining; build indexes on the steady-state upgrade
+      }
+    }
+  }
+}
+```
+
+## Data Checksums (`data-checksums`)
+
+Controls whether PostgreSQL data-page checksums are enabled for the database. Defaults to `true` (the PostgreSQL 18 default). PostgreSQL only.
+
+| Engine | Field | Default |
+| :--- | :--- | :--- |
+| PostgreSQL | `data-checksums` | `true` |
+
+This is an initdb-time setting applied when the database is first created — it is **immutable** and cannot be changed on later deployments or upgrades. Set it to `false` only when the write-throughput cost of checksums matters more than corruption detection, and only for a database that will keep that setting for its lifetime.
+
+```json5
+{
+  "engines": {
+    "postgres": {
+      "deployment": {
+        "data-checksums": false   // disable data-page checksums; applied at initial bootstrap only, immutable afterwards
+      }
+    }
+  }
+}
+```
+
+## Parameters (`parameters`)
+
+Extra PostgreSQL server parameters, merged into the database's `postgresql.parameters`. Any key here overrides the built-in default for that parameter. PostgreSQL only; empty by default.
+
+| Engine | Field | Default |
+| :--- | :--- | :--- |
+| PostgreSQL | `parameters` | `{}` |
+
+Typically used in a catch-up profile that trades durability for ingest throughput while reprocessing a large backlog — for example a larger `shared_buffers`/`max_wal_size` together with `synchronous_commit: off`. Set these only in the catch-up profile: on the steady-state upgrade any parameter not listed here reverts to its default.
+
+```json
+{
+  "engines": {
+    "postgres": {
+      "deployment": {
+        "parameters": {
+          "shared_buffers": "8GB",        // override the default (256MB)
+          "max_wal_size": "32GB",
+          "synchronous_commit": "off"     // faster backfill, durability trade-off
+        }
+      }
+    }
+  }
+}
+```
+
+
+---
+
+# Functions
+
+Source: https://docs.datasqrl.com/docs/v0-11/functions
+
+## System Functions
+
+SQRL supports all of [Flink's built-in system functions](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/dev/table/functions/systemfunctions/).
+
+SQRL adds [system functions](https://docs.datasqrl.com/docs/v0-11/functions-system-generated.md) with support for:
+* a binary JSON type (JSONB) to represent semi-structured data efficiently.
+* a vector type to represent embeddings.
+* text manipulation and full text search.
+
+System functions are always available and do not need to be imported. Take a look at the [full list of SQRL system function](https://docs.datasqrl.com/docs/v0-11/functions-system-generated.md).
+
+## Function Libraries
+
+SQRL includes [standard libraries](https://docs.datasqrl.com/docs/v0-11/functions-library-generated.md) that can be imported into a SQRL script as follows:
+
+```sql
+IMPORT stdlib.math;
+```
+Imports all functions from the `math` library into the script. Replace `math` with the library you wish to import.
+
+```sql
+IMPORT stdlib.math.hypot AS hypotenuse;
+```
+Imports a single function `hypot` from the `math` library under the name `hypotenuse`. The renaming with `AS` is optional and is omitted when you want to use the original name.
+
+Check out the [full list of function libraries](https://docs.datasqrl.com/docs/v0-11/functions-library-generated.md).
+
+## User Defined Functions
+
+Users can define custom functions and import them into a SQRL script. 
+
+### Java
+
+To create a new function package, first create a sub-folder `myjavafunction` in the directory of the script where you want to import the functions.
+Inside that package, create a java project which implements a [Flink function](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/dev/table/functions/udfs/).
+Annotate the function with `@AutoService` and the Flink function that it extends so the function can be discovered by the compiler.
+
+Compile the java project into a jar file and import it into the SQRL script via:
+```sql
+IMPORT myjavafunction.target.MyScalarFunction;
+```
+
+Check out this [complete example](https://github.com/DataSQRL/datasqrl-examples/tree/main/user-defined-function).
+
+### JavaScript
+
+Support for JavaScript functions is currently being implemented and is targeted for the 0.7 release.
+
+### Python
+
+Support for Python functions is currently being implemented and is targeted for the 0.7 release.
+
+
+---
+
+# System Functions
+
+Source: https://docs.datasqrl.com/docs/v0-11/functions-system-generated
+
+DataSQRL provides built-in system functions that are available in all SQRL scripts. These functions are grouped by functionality and provide essential operations for data processing, JSON manipulation, vector operations, and text processing.
+
+## Jsonb Functions
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `to_jsonb` | Parses a JSON string or Flink object (e.g., `Row`, `Row[]`) into a JSON object. | `to_jsonb('{"name":"Alice"}') → JSON object` |
+| `jsonb_to_string` | Serializes a JSON object into a JSON string. | `jsonb_to_string(to_jsonb('{"a":1}')) → '{"a":1}'` |
+| `jsonb_object` | Constructs a JSON object from key-value pairs. Keys must be strings. | `jsonb_object('a', 1, 'b', 2) → {"a":1,"b":2}` |
+| `jsonb_array` | Constructs a JSON array from multiple values or JSON objects. | `jsonb_array(1, 'a', to_jsonb('{"b":2}')) → [1,"a",{"b":2}]` |
+| `jsonb_extract` | Extracts a value from a JSON object using a JSONPath expression. Optionally specify default value. | `jsonb_extract(to_jsonb('{"a":1}'), '$.a') → 1` |
+| `jsonb_query` | Executes a JSONPath query on a JSON object and returns the result as a JSON string. | `jsonb_query(to_jsonb('{"a":[1,2]}'), '$.a') → '[1,2]'` |
+| `jsonb_exists` | Returns `TRUE` if a JSONPath exists within a JSON object. | `jsonb_exists(to_jsonb('{"a":1}'), '$.a') → TRUE` |
+| `jsonb_concat` | Merges two JSON objects. If keys overlap, the second object's values are used. | `jsonb_concat(to_jsonb('{"a":1}'), to_jsonb('{"b":2}')) → {"a":1,"b":2}` |
+| `jsonb_array_agg` | Aggregate function that accumulates values into a JSON array. | `SELECT jsonb_array_agg(col) FROM tbl` |
+| `jsonb_object_agg` | Aggregate function that accumulates key-value pairs into a JSON object. | `SELECT jsonb_object_agg(key_col, val_col) FROM tbl` |
+
+## Vector Functions
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `cosine_similarity` | Computes cosine similarity between two vectors. | `cosine_similarity(vec1, vec2)` |
+| `cosine_distance` | Computes cosine distance between two vectors (1 - cosine similarity). | `cosine_distance(vec1, vec2)` |
+| `euclidean_distance` | Computes the Euclidean distance between two vectors. | `euclidean_distance(vec1, vec2)` |
+| `double_to_vector` | Converts a `DOUBLE[]` array into a `VECTOR`. | `double_to_vector([1.0, 2.0, 3.0])` |
+| `vector_to_double` | Converts a `VECTOR` into a `DOUBLE[]` array. | `vector_to_double(vec)` |
+| `center` | Computes the centroid (average) of a collection of vectors. Aggregate function. | `SELECT center(vecCol) FROM vectors` |
+
+## Text Functions
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `format(String, String...)` | A function that formats text based on a format string and variable number of arguments. It uses Java's `String.format` method internally. If the input text is `null`, it returns `null`. | `format("Hello %s!", "World") returns "Hello World!"` |
+| `text_search(String, String...)` | Evaluates a query against multiple text fields and returns a score based on the frequency of query words in the texts. It tokenizes both the query and the texts, and scores based on the proportion of query words found in the text. | `text_search("hello", "hello world") returns 1.0` |
+
+
+---
+
+# Library Functions
+
+Source: https://docs.datasqrl.com/docs/v0-11/functions-library-generated
+
+DataSQRL provides extended library functions that can be imported into your SQRL scripts. These functions offer specialized capabilities for mathematical operations, data processing, AI integration, and external system connectivity.
+
+Library functions must be imported into the SQRL script via one of the following `IMPORT` statements:
+
+```sql
+IMPORT stdlib.library-name.*; --imports all functions in the library
+IMPORT stdlib.library-name.function-name; --imports a single function by name
+IMPORT stdlib.library-name.function-name AS myName; --imports a single function under a given name
+```
+## Math Functions
+
+| Function | Description | Import     | Requirements |
+|----------|-------------|------------|--------------|
+| `cbrt(double)` | Calculates the cube root of a number. For example, `cbrt(27.0)` returns `3.0`, which is the cube root of 27.0. | `IMPORT math.cbrt;` |  |
+| `copy_sign(double, double)` | Returns the first argument with the sign of the second argument. For example, `copy_sign(2.0, -3.0)` returns `-2.0`. | `IMPORT math.copy_sign;` |  |
+| `expm1(double)` | Calculates e^x - 1 with better precision for small values. For example, `expm1(0.0)` returns `0.0`, as `e^0 - 1 = 0`. | `IMPORT math.expm1;` |  |
+| `hypot(double, double)` | Computes sqrt(x² + y²) without intermediate overflow or underflow. For example, `hypot(3.0, 4.0)` returns `5.0`, which is the hypotenuse of a 3-4-5 triangle. | `IMPORT math.hypot;` |  |
+| `log1p(double)` | Computes the natural logarithm of 1 + x (log(1 + x)) accurately for small x. For example, `log1p(0.0)` returns `0.0` as `log(1 + 0) = 0`. | `IMPORT math.log1p;` |  |
+| `next_after(double, double)` | Returns the next floating-point number towards the direction of the second argument. For example, `next_after(1.0, 2.0)` returns the next representable number after 1.0. | `IMPORT math.next_after;` |  |
+| `scalb(double, bigint)` | Multiplies a floating-point number by 2 raised to the power of an integer. For example, `scalb(1.0, 3)` returns `8.0` as `1.0 * 2^3 = 8.0`. | `IMPORT math.scalb;` |  |
+| `ulp(double)` | Returns the size of the unit in the last place (ULP) of the argument. For example, `ulp(1.0)` returns the ULP of 1.0. | `IMPORT math.ulp;` |  |
+| `binomial_distribution(bigint, double, bigint)` | Calculates the probability of obtaining a number of successes in a fixed number of trials for a binomial distribution. For example, `binomial_distribution(10, 0.5, 5)` returns the probability of 5 successes out of 10 trials with a 50% success rate. | `IMPORT math.binomial_distribution;` |  |
+| `exponential_distribution(double, double)` | Evaluates the probability density or cumulative distribution of an exponential distribution. For example, `exponential_distribution(1.0, 2.0)` returns the exponential distribution's probability for a given rate and time. | `IMPORT math.exponential_distribution;` |  |
+| `normal_distribution(double, double, double)` | Evaluates the cumulative distribution function for a normal (Gaussian) distribution. For example, `normal_distribution(0.0, 1.0, 1.0)` returns the probability for a standard normal distribution with mean 0 and standard deviation 1. | `IMPORT math.normal_distribution;` |  |
+| `poisson_distribution(double, bigint)` | Evaluates the probability mass function of a Poisson-distributed random variable. For example, `poisson_distribution(1.0, 5)` returns the probability of observing 5 events when the average event rate is 1.0. | `IMPORT math.poisson_distribution;` |  |
+
+## Iceberg Functions
+
+| Function | Description | Import     | Requirements |
+|----------|-------------|------------|--------------|
+| `read_partition_sizes(String warehouse, String catalogType, String catalogName, String databaseName, String tableName)` | Calculates the total size on disk in bytes for each partition in an Iceberg table. | `IMPORT iceberg.read_partition_sizes;` |  |
+| `delete_duplicated_data(String warehouse, String catalogType, String catalogName, String databaseName, String tableName, Long maxTimeBucket, Map[Map[String, String], Integer] partitionSet)` | Deletes duplicated data from an Iceberg table based on partition specifications and time bucket constraints. | `IMPORT iceberg.delete_duplicated_data;` |  |
+
+## Openai Functions
+
+| Function | Description | Import     | Requirements |
+|----------|-------------|------------|--------------|
+| `completions(String prompt, String model_name)` | Generates a completion for the given prompt using the specified OpenAI model. For example, `completions('What is AI?', 'gpt-6-luna')` returns a possible response to the prompt. | `IMPORT openai.completions;` | Set OPENAI_API_KEY environment variable |
+| `completions(String prompt, String model_name, Integer maxOutputTokens)` | Generates a completion for the given prompt using the specified OpenAI model, with an upper limit on the number of output tokens. For example, `completions('What is AI?', 'gpt-6-luna', 100)` returns a possible response to the prompt, limited to 100 characters. | `IMPORT openai.completions;` | Set OPENAI_API_KEY environment variable |
+| `completions(String prompt, String model_name, Integer maxOutputTokens, Double temperature)` | Generates a completion for the given prompt using the specified OpenAI model, with an upper limit on the number of output tokens and a specified temperature. With GPT-6 Luna, use the overload that also accepts reasoningEffort and set it to `none`. | `IMPORT openai.completions;` | Set OPENAI_API_KEY environment variable |
+| `completions(String prompt, String model_name, Integer maxOutputTokens, Double temperature, Double topP)` | Generates a completion for the given prompt using the specified OpenAI model, with an upper limit on the number of output tokens, a specified temperature, and a specified top-p value. With GPT-6 Luna, use the overload that also accepts reasoningEffort and set it to `none`. | `IMPORT openai.completions;` | Set OPENAI_API_KEY environment variable |
+| `completions(String prompt, String model_name, Integer maxOutputTokens, Double temperature, Double topP, String reasoningEffort)` | Generates a completion with a reasoning-effort setting. For GPT-6 Luna custom sampling requires reasoningEffort to be `none`; for example, `completions('What is AI?', 'gpt-6-luna', 100, 0.5, 1.0, 'none')`. | `IMPORT openai.completions;` | Set OPENAI_API_KEY environment variable |
+| `extract_json(String prompt, String model_name)` | Extracts JSON data from the given prompt using the specified OpenAI model. For example, `extract_json('What is AI?', 'gpt-6-luna')` returns any relevant JSON data for the prompt. | `IMPORT openai.extract_json;` | Set OPENAI_API_KEY environment variable |
+| `extract_json(String prompt, String model_name, Double temperature)` | Extracts JSON data from the given prompt using the specified OpenAI model and a specified temperature. With GPT-6 Luna, use the overload that also accepts a JSON schema and reasoningEffort, and set reasoningEffort to `none`. | `IMPORT openai.extract_json;` | Set OPENAI_API_KEY environment variable |
+| `extract_json(String prompt, String model_name, Double temperature, Double topP)` | Extracts JSON data from the given prompt using the specified OpenAI model, with a specified temperature and top-p value. With GPT-6 Luna, use the overload that also accepts a JSON schema and reasoningEffort, and set reasoningEffort to `none`. | `IMPORT openai.extract_json;` | Set OPENAI_API_KEY environment variable |
+| `extract_json(String prompt, String model_name, Double temperature, Double topP, String jsonSchema, String reasoningEffort)` | Extracts JSON data with an optional JSON schema and reasoning-effort setting. For models that support custom sampling in non-reasoning mode, set reasoningEffort to `none`. | `IMPORT openai.extract_json;` | Set OPENAI_API_KEY environment variable |
+| `vector_embed(String text, String model_name)` | Embeds the given text into a vector using the specified OpenAI model. For example, `vector_embed('What is AI?', 'text-embedding-ada-002')` returns a vector representation of the text. | `IMPORT openai.vector_embed;` | Set OPENAI_API_KEY environment variable |
+
+
+---
+
+# DataSQRL Command
+
+Source: https://docs.datasqrl.com/docs/v0-11/compiler
+
+The DataSQRL command initializes, compiles, runs, and tests SQRL projects.
+
+You invoke the DataSQRL command in your terminal or command line.
+Choose your operating system below or use Docker which works on any machine that has Docker installed.
+
+## Installation
+
+Always pull the latest Docker image to ensure you have the most recent updates:
+
+```bash
+docker pull datasqrl/cmd:latest
+```
+
+## Command Overview
+
+The DataSQRL CLI provides the following commands:
+
+```bash
+docker run --rm -v $PWD:/workspace datasqrl/cmd -h
+```
+
+```
+Usage: sqrl [-hV] [COMMAND]
+  -h, --help      Show this help message and exit.
+  -V, --version   Print version information and exit.
+Commands:
+  init      Initializes an empty SQRL project.
+  add-func  Adds a new function definition into the 'functions' folder of an
+              existing project.
+  compile   Compiles an SQRL project and produces all build artifacts.
+  test      Compiles, then tests a SQRL project.
+  run       Compiles, then runs a SQRL project in a lightweight, standalone
+              environment.
+  exec      Executes an already compiled SQRL script using its existing build
+              artifacts.
+```
+
+> **Warning**
+>
+> You need to mount the current directory (`$PWD` or `${PWD}` on Windows with Powershell) to the `/workspace`
+> directory for file access in Docker.
+
+> **Info**
+>
+> Note that most commands accept package configuration files as arguments to configure all aspects of the project.
+> See the [configuration documentation](https://docs.datasqrl.com/docs/v0-11/configuration.md) for more details.
+
+## Init Command
+
+The `init` command creates a new SQRL project with the necessary files and directory structure.
+
+```bash
+docker run --rm -v $PWD/<project-folder>:/workspace datasqrl/cmd init -h
+```
+
+```
+Usage: sqrl init [-hV] [--batch] <projectType> <projectName>
+Initializes an empty SQRL project.
+      <projectType>   Project type. Valid values: STREAM, DATASET, API.
+      <projectName>   Project name — used as the base name for both the SQRL
+                        script and the package configuration files.
+      --batch         Use BATCH mode in Flink.
+  -h, --help          Show this help message and exit.
+  -V, --version       Print version information and exit.
+```
+
+### Example
+
+```bash
+mkdir my-project
+
+docker run --rm -v $PWD/my-project:/workspace datasqrl/cmd init stream my-project
+```
+
+This creates a new streaming project named `my-project` with the default configuration and directory structure.
+
+## Add-Func Command
+
+The `add-func` command adds a new user-defined function (UDF) to an existing SQRL project.
+
+```bash
+docker run --rm -v $PWD/<project-folder>:/workspace datasqrl/cmd add-func -h
+```
+
+```
+Usage: sqrl add-func [-hV] [--aggregate] <fnName>
+Adds a new function definition into the 'functions' folder of an existing
+project.
+      <fnName>      Name of the function.
+      --aggregate   Adds an aggregate function instead of the default scalar
+                      one.
+  -h, --help        Show this help message and exit.
+  -V, --version     Print version information and exit.
+```
+
+### Example
+
+```bash
+mkdir my-project
+
+docker run --rm -v $PWD/my-project:/workspace datasqrl/cmd add-func MyAwesomeFunction
+```
+
+This creates a new scalar function template in the `functions/` directory.
+Use `--aggregate` to create an aggregate function instead.
+
+## Compile Command
+
+The `compile` command processes a SQRL project into a deployable data pipeline.
+It stages all files needed by the compiler in the `build` directory and outputs the created deployment
+artifacts for all engines in the target folder (defaults to `build/deploy`).
+
+```bash
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile -h
+```
+
+```
+Usage: sqrl compile [-BhV] [-r=<projectRoot>] [-t=<targetFolder>]
+                    [<packageFiles>...]
+Compiles an SQRL project and produces all build artifacts.
+      [<packageFiles>...]   Package configuration file(s) of the project.
+                              Default: "package.json".
+  -B, --batch-output        Run in batch output mode (disables colored output).
+  -h, --help                Show this help message and exit.
+  -r, --project-root=<projectRoot>
+                            Project root folder. Must be a relative path. If
+                              omitted, it is inferred from the package path(s),
+                              falling back to "/workspace".
+  -t, --target=<targetFolder>
+                            Target folder for deployment artifacts and plans.
+                              Must be a relative path.
+                            Default: "<project-root>/build/deploy".
+  -V, --version             Print version information and exit.
+```
+
+### Example
+
+```bash
+cd my-project
+
+# Defaults to package.json
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile
+```
+
+Or with a specific package configuration file:
+
+```bash
+cd my-project
+
+docker run --rm -v $PWD:/workspace datasqrl/cmd compile package-prod.json
+```
+
+### Output
+
+Upon successful compilation, the compiler writes:
+- Data processing DAG to `build/pipeline_explain.txt`
+- Visual representation to `build/pipeline_visual.html` (open in browser to inspect the DAG)
+- Deployment artifacts to the target folder
+
+## Run Command
+
+The `run` command compiles and runs the generated data pipeline in Docker.
+
+```bash
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd run -h
+```
+
+```
+Usage: sqrl run [-BhV] [-r=<projectRoot>] [-t=<targetFolder>]
+                [<packageFiles>...]
+Compiles, then runs a SQRL project in a lightweight, standalone environment.
+      [<packageFiles>...]   Package configuration file(s) of the project.
+                              Default: "package.json".
+  -B, --batch-output        Run in batch output mode (disables colored output).
+  -h, --help                Show this help message and exit.
+  -r, --project-root=<projectRoot>
+                            Project root folder. Must be a relative path. If
+                              omitted, it is inferred from the package path(s),
+                              falling back to "/workspace".
+  -t, --target=<targetFolder>
+                            Target folder for deployment artifacts and plans.
+                              Must be a relative path.
+                            Default: "<project-root>/build/deploy".
+  -V, --version             Print version information and exit.
+```
+
+> **Info**
+>
+> Note the additional port mappings to access the individual data systems that are running the pipeline.
+> Additionally, `run` loads [configuration settings](https://raw.githubusercontent.com/DataSQRL/sqrl/refs/heads/main/sqrl-planner/src/main/resources/default-run-package.json)
+> that are applicable exclusively during runtime.
+> These `run`-specific configuration options will be replaced if they are defined in any custom package configuration file.
+
+### Example
+
+```bash
+cd my-project
+
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v $PWD:/workspace datasqrl/cmd run
+```
+
+This compiles, then runs the SQRL project in the `my-project` folder,
+exposing the Flink UI on port 8081, the Vert.x server on port 8888, and Redpanda on port 9092. 
+
+### Engines
+
+The run command uses the following engines:
+* Flink as the stream engine
+  * The Flink cluster is accessible through the WebUI at http://localhost:8081/
+* PostgreSQL as the transactional database engine
+* Iceberg + DuckDB as the analytic database engine
+* Redpanda as the log engine
+  * The Redpanda cluster is accessible on port 9092 (via Kafka command line tooling)
+* Vertx as the server engine 
+  * The GraphQL API is accessible at http://localhost:8888/v1/graphiql/
+  * The Swagger UI for the REST API is accessible at http://localhost:8888/v1/swagger-ui
+  * The MCP API is accessible at http://localhost:8888/v1/mcp/
+
+### Data Access
+
+DataSQRL runs up the data systems listed above and maps your local directories for data access.
+To access this data in your DataSQRL jobs during local execution use:
+* `${KAFKA_BOOTSTRAP_SERVERS}` to connect to the Redpanda Kafka cluster
+* `${DATA_PATH}/` to reference `.jsonl` or `.csv` data in your project
+
+This allows DataSQRL to map connectors correctly and also applies to [testing](#test-command).
+
+### Data Persistence
+
+To preserve inserted data between runs, mount a directory for Redpanda to persist the data to:
+
+```bash
+docker run -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v /mydata/project:/data/redpanda -v $PWD:/workspace datasqrl/cmd run my-package.json
+```
+
+The volume mount contains the data written to the log engine and persists it to the local `/mydata/project` directory
+where you want to store the data (adjust as needed and make sure the directory exists).
+
+When you terminate (via `CTRL-C`) and re-run your SQRL project, it will replay prior data.
+
+### Deployment 
+
+The run command is primarily used for local development and quick iteration cycles. It supports small-scale deployments.
+For large-scale deployments, we recommend that you run the generated pipeline in Kubernetes by extending our [Kubernetes setup](https://github.com/DataSQRL/sqrl-k8s).
+
+If you prefer a managed service, you can use [DataSQRL Cloud](https://www.datasqrl.com/) for automated and optimized deployments.
+Alternatively, you can deploy the generated deployment artifacts in the `build/plan` directory using available managed
+services by your preferred cloud provider.
+
+## Test Command
+
+The `test` command compiles and runs the data pipeline, then executes the provided test API queries and API endpoints
+for all tables annotated with `/*+ test */` to snapshot the results.
+
+When you first run the test command or add additional test cases, it will create the snapshots and fail.
+All subsequent runs of the test command compare the results to the previously snapshotted results and succeed
+if the results are identical, else fail.
+
+```bash
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd test -h
+```
+
+```
+Usage: sqrl test [-BhV] [-r=<projectRoot>] [-t=<targetFolder>]
+                 [<packageFiles>...]
+Compiles, then tests a SQRL project.
+      [<packageFiles>...]   Package configuration file(s) of the project.
+                              Default: "package.json".
+  -B, --batch-output        Run in batch output mode (disables colored output).
+  -h, --help                Show this help message and exit.
+  -r, --project-root=<projectRoot>
+                            Project root folder. Must be a relative path. If
+                              omitted, it is inferred from the package path(s),
+                              falling back to "/workspace".
+  -t, --target=<targetFolder>
+                            Target folder for deployment artifacts and plans.
+                              Must be a relative path.
+                            Default: "<project-root>/build/deploy".
+  -V, --version             Print version information and exit.
+```
+
+> **Info**
+>
+> Like `run`, `test` loads the `run`-specific configuration settings. It also loads [configuration settings](https://raw.githubusercontent.com/DataSQRL/sqrl/refs/heads/main/sqrl-planner/src/main/resources/default-test-package.json)
+> that are applicable exclusively during tests, which disable Flink source idleness: the test drains the Flink job before taking snapshots, and idle sources can make the drain drop the last events behind chained temporal joins.
+> These `test`-specific configuration options will be replaced if they are defined in any custom package configuration file.
+
+### Example
+
+```bash
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd test
+```
+
+The Test Command related configuration can be adjusted via the [`test-runner`](https://docs.datasqrl.com/docs/v0-11/configuration.md#test-runner-test-runner) configuration.
+The `tests` directory contains GraphQL queries that are executed against the API of the generated data pipeline. 
+
+### Test Execution Overview
+
+Subscriptions are registered first. This ensures that any incoming data events are captured as soon as they occur.
+
+Next, mutations are executed in alphabetical order. This controlled ordering allows predictable state changes during testing.
+
+Queries are executed after all mutations have been applied. This step retrieves the system state resulting from the preceding operations.
+
+Once all queries complete, the subscriptions are terminated and the data collected during their active phase is assembled into snapshots.
+
+> **Warning**
+>
+> Subscriptions can only be tested in conjunction with mutations at this time.
+
+## Exec Command
+
+The `exec` command executes an already compiled SQRL project using its existing build artifacts, without recompiling.
+This is useful when you want to run a previously compiled pipeline.
+
+```bash
+run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd exec -h
+```
+
+> **Warning**
+>
+> Be aware that `exec` does not apply all run-specific Flink configuration that we previously described at [run command](#run-command).
+> It only sets `execution.target` to `local` if it is missing to be able to deploy, but other than that takes the configuration from the given `targetFolder` as is.
+
+```
+Usage: sqrl exec [-hV] [-r=<projectRoot>] [-t=<targetFolder>]
+Executes an already compiled SQRL script using its existing build artifacts.
+  -h, --help      Show this help message and exit.
+  -r, --project-root=<projectRoot>
+                  Project root folder. Must be a relative path. If omitted, it
+                    is inferred from the package path(s), falling back to
+                    "/workspace".
+  -t, --target=<targetFolder>
+                  Target folder for deployment artifacts and plans. Must be a
+                    relative path.
+                  Default: "<project-root>/build/deploy".
+  -V, --version   Print version information and exit.
+```
+
+### Example
+
+```bash
+cd my-project
+
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd exec
+```
+
+
+---
+
+# Key DataSQRL Concepts
+
+Source: https://docs.datasqrl.com/docs/v0-11/intro/concepts
+
+This document explains some of the key concepts in streaming data processing.
+
+## Time Handling
+
+Time is the most important concept in DataSQRL because it determines how data streams are processed.
+
+For stream processing, it is useful to think of time as a timeline that stretches from the past through the present
+and into the future. The blue line in the picture below visualizes a timeline.
+
+![SQRL Timeline](https://docs.datasqrl.com/img/docs/timeline.svg)
+
+The blue vertical bar on the timeline represents the present. The present moment continuously advances on the timeline.
+
+Each stream record processed by the system (shown as grey circles) is associated with a point on the timeline
+before the present. We call this point in time the **event time** of a stream record.
+The event time can be the time when an event occurred, a metric was observed, or a change happened.
+It is a fixed point in time on the timeline and it must be older than the present.
+
+However, records may come in out of order. Or we might be processing records for multiple different systems
+(or different partitions of the same system) and hence the records can have different event time.
+
+To synchronize the disparate event times, we need another concept: the watermark. The watermark is shown as the orange
+line on the timeline and it provides a simple but powerful guarantee: there will be no more records older than the watermark.
+Hence, the watermark is always smaller than the present. It may be significantly older.
+The watermark allows the streaming processor to make progress in time, because it is guaranteed to not encounter
+older records than the watermark which would require it to revise previously computed data.
+
+That's why it is important to carefully define the watermark. In most cases, the watermark is defined relative
+to records that have been received, for instance setting the watermark to 5 minutes older than the newest
+record's event time. This is called a bounded out-of-orderedness watermark, which means that while we cannot guarantee
+that records arrive in order we can guarantee that the out of order records will be at most 5 minutes older.
+
+Watermarks play a key role in synchronizing data across joins, closing time windows, and combining streams.
+
+In DataSQRL, you define the watermark for external sources.
+For tables exposed as mutations in the API, DataSQRL handles the watermarks for you.
+
+
+---
+
+# DataSQRL Examples
+
+Source: https://docs.datasqrl.com/docs/v0-11/intro/examples
+
+These examples demonstrate how AI coding agents use DataSQRL to build production-grade data products from data catalog definitions. In practical implementations, an autonomous data platform maintains a central data catalog that agents reference to build data products, data pipelines, and data APIs.
+
+## Commerce Example
+
+A retail commerce scenario with customer orders, products, and inventory data.
+
+- **[Data Catalog](https://github.com/datasqrl-colab/datasqrl-workshop-catalog)**: Defines the data sources, schemas, and connectors for the commerce domain
+- **[Sample Data Products](https://github.com/datasqrl-colab/datasqrl-workshop-sample)**: AI-generated data pipelines and APIs built from the catalog
+
+## Finance Example
+
+A banking scenario with accounts, transactions, and customer data.
+
+- **[Data Catalog](https://github.com/datasqrl-colab/finance-data-catalog-demo)**: Defines the data sources, schemas, and connectors for the finance domain
+- **[Sample Data Products](https://github.com/datasqrl-colab/finance-demo)**: AI-generated data pipelines and APIs built from the catalog
+
+## How It Works
+
+Each example follows the same pattern:
+
+1. **Data Catalog**: Defines available data sources with schemas, connectors, and sample data for testing
+2. **Agent Implementation**: A coding agent uses the catalog to build data products, iterating with DataSQRL's test command until tests pass
+3. **Deployment Artifacts**: DataSQRL compiles the SQRL scripts into production-ready Flink plans, Kafka topics, Postgres schemas, and GraphQL APIs
+
+These examples show how DataSQRL's feedback loop guides agents toward correct, production-grade implementations.
+
+
+---
+
+# Project Structure
+
+Source: https://docs.datasqrl.com/docs/v0-11/howto/project-structure
+
+A DataSQRL project is structured as follows where `{name}` is the project name.
+
+```
+├── {name}.sqrl                         # Contains the main data processing logic
+├── {name}-[run/test/prod]-package.json # Configuration files for running locally, testing, and deploying the project
+├── {name}-connectors/                  # Contains source and sink table definitions, shared connector logic, schemas, and data files
+│   └── sources-[run/test/prod].sqrl    # Contains the source table definitions, split by variant or environment
+├── snapshots/                          # Contains the snapshot data for tests
+│   └── {name}/                         # One directory per project
+├── {name}-api/                         # Contains the API schema and operation definitions for the project
+│   ├── schema.v1.graphqls              # GraphQL schema definition
+│   ├── tests/                          # Contains GraphQL test queries as .graphql files
+│   └── operations-v1/                  # Contains any operation definitions as .graphql files
+└── README.md                           # Explain the project(s) and structure
+```
+
+A project has one or more `package.json` configuration files to configure the compiled pipeline for different environments: running locally, testing, and one or more deployment environments.
+The targeted environment is used in the name, e.g. `run`, `test`, `qa`, `prod`, etc.
+
+The `package.json` file is the authoritative source that defines the main SQRL script and (optional) GraphQL schema and operations.
+It also configures snapshot and test directories. Always consult the `package.json` files for the relative file paths to the project source files.
+
+For advanced project or when multiple projects share one directory, the structure may include:
+```
+├── [shared/authentication]-package.json # Config file that is shared across projects
+├── tests/                               # Folder that contains test code to separate it from the main logic
+│   └── {test-name}.sqrl                 # This file is included inline in the main script
+├── functions/                           # User defined functions
+└── shared.sqrl                          # SQRL script that's shared across projects
+```
+
+
+---
+
+# Enriching Data Streams
+
+Source: https://docs.datasqrl.com/docs/v0-11/howto/stream-enrichment
+
+A common requirement in stream processing is to enrich a **STREAM** of events with dimensional data in a time-consistent manner.
+This pattern is particularly useful when you need to join real-time events with slowly changing dimensional data while maintaining temporal consistency.
+
+## Use Case: Transaction Enrichment
+
+Suppose we want to enrich transaction events with the account balance that was valid **at the time of the transaction**.
+This ensures we get consistent, point-in-time data for analysis.
+
+## Defining Source Tables
+
+First, define your data sources.
+These can be internal tables (managed by DataSQRL) or external tables with connector configuration:
+
+```sql
+-- Transaction events stream (STREAM type)
+/*+ engine(kafka) */
+CREATE TABLE Transaction (
+    `txid` BIGINT NOT NULL,
+    `accountid` BIGINT NOT NULL,
+    `amount` DECIMAL(10,2) NOT NULL,
+    `timestamp` TIMESTAMP_LTZ(3) NOT NULL,
+    WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+);
+
+-- Account balance updates stream (STREAM type)
+/*+ engine(kafka) */
+CREATE TABLE AccountBalanceUpdates (
+    `accountid` BIGINT NOT NULL,
+    `balance` DECIMAL(15,2) NOT NULL,
+    `lastUpdated` TIMESTAMP_LTZ(3) NOT NULL,
+    WATERMARK FOR `lastUpdated` AS `lastUpdated` - INTERVAL '0.001' SECOND
+);
+```
+
+## Creating a Versioned State Table
+
+The `Transaction` table is a **STREAM** of immutable transaction events. The `AccountBalanceUpdates` table is also a **STREAM** representing changes to account balances over time.
+
+To perform temporal joins, we need to convert the balance updates stream into a **VERSIONED_STATE** table that tracks the current and historical values for each account:
+
+```sql
+AccountBalance := DISTINCT AccountBalanceUpdates ON accountid ORDER BY lastUpdated DESC;
+```
+
+This `DISTINCT` operation:
+- Converts the append-only stream into a **VERSIONED_STATE** table
+- Deduplicates on the `accountid` primary key  
+- Orders by `lastUpdated DESC` to ensure the most recent balance is kept for each account
+- Maintains the version history for temporal lookups
+
+## Temporal Join for Stream Enrichment
+
+Now we can perform a temporal join to enrich each transaction with the account balance that was valid at the transaction timestamp:
+
+```sql
+EnrichedTransaction := SELECT t.*, a.balance, a.lastUpdated as balance_timestamp
+                       FROM Transaction t
+                       JOIN AccountBalance FOR SYSTEM_TIME AS OF t.`timestamp` AS a 
+                       ON a.accountid = t.accountid;
+```
+
+The `FOR SYSTEM_TIME AS OF` syntax ensures that:
+- Each transaction gets the account balance that was valid at `t.timestamp`
+- If no balance record exists at that time, the join returns no result for that transaction
+- The join is temporally consistent and deterministic
+
+## Key Benefits
+
+This approach provides:
+
+1. **Temporal Consistency**: Each transaction is enriched with the balance that existed at transaction time
+2. **Late Data Handling**: The watermark configuration allows for slightly out-of-order events
+3. **Efficient Processing**: The VERSIONED_STATE table enables fast temporal lookups
+4. **Scalability**: The pattern works with high-volume streams and frequent balance updates
+
+## Variations
+
+For different requirements, you might adjust the pattern:
+
+- **Left Join**: Use `LEFT JOIN` to include transactions even when no balance is available
+- **Multiple Dimensions**: Join with multiple VERSIONED_STATE tables for comprehensive enrichment  
+- **Window-based Enrichment**: Combine with time windows for aggregated enrichment data
+
+
+---
+
+# Templating
+
+Source: https://docs.datasqrl.com/docs/v0-11/howto/templating
+
+DataSQRL uses the Mustache templating engine to substitute configuration variables in SQRL scripts, making them reusable and configurable without modifying the code.
+
+## How It Works
+
+Variables in your SQRL script are wrapped in double curly braces `{{variableName}}`.
+When DataSQRL compiles the script, it replaces these placeholders with values defined in the `script.config` section of your [`package.json`](https://docs.datasqrl.com/docs/v0-11/configuration.md) configuration file.
+
+## Example
+
+### Configuration File (package.json)
+
+```json
+{
+  "version": "1",
+  "script": {
+    "main": "query.sqrl",
+    "config": {
+      "tableName": "Users",
+      "idColumn": "user_id",
+      "timestampColumn": "created_at",
+      "minAge": 18
+    }
+  }
+}
+```
+
+### SQRL Script (query.sqrl)
+
+```sql
+IMPORT tables.{{tableName}};
+
+FilteredUsers :=
+SELECT {{idColumn}},
+       name,
+       {{timestampColumn}}
+FROM {{tableName}}
+WHERE age >= {{minAge}};
+```
+
+### After Substitution
+
+When DataSQRL processes this script, it replaces all `{{variableName}}` placeholders:
+
+```sql
+IMPORT tables.Users;
+
+FilteredUsers :=
+SELECT user_id,
+       name,
+       created_at
+FROM Users
+WHERE age >= 18;
+```
+
+## Benefits
+
+1. **Reusability**: The same SQRL script can work with different tables and columns by changing the config
+2. **Maintainability**: Configuration is centralized in one place (package.json)
+3. **Type Safety**: You can specify types like `partitionColType: "bigint"` and use them in the script
+4. **Environment-Specific**: Easy to have different configs for dev, test, and production
+
+## Special Variables
+
+DataSQRL also provides built-in variables:
+- `${DEPLOYMENT_ID}`: Unique identifier for each deployment
+- `${DEPLOYMENT_TIMESTAMP}`: Timestamp when the job was deployed
+
+These are substituted at deployment time and are useful for tracking and versioning.
+
+
+---
+
+# Testing Authorization
+
+Source: https://docs.datasqrl.com/docs/v0-11/howto/testing-authorization
+
+You can test record filtering, data masking, and other types of authorization based data access control with DataSQRL's automated test runner via the [`test` command](https://docs.datasqrl.com/docs/v0-11/compiler.md#test-command).
+
+## Generating Tokens
+
+To generate test tokens, one of the most straightforward ways would be to use the **JWT Encoder** functionality of https://jwt.io.
+The **Payload: Data** can be shaped to our testing needs.
+For testing purposes, using the `HS256` algorithm probably should be completely fine.
+Then, we only need to define a long enough signer secret string on the website.
+
+The only manual step that is required in case of `HS265` is to apply Base64 encoding to your given secret, for example:
+```sh
+echo -n mySuperSecretSignerStringThatIsLongEnough | base64
+```
+
+And then we need to set the encoded secret as the `buffer` in the `package.json` file `vertx` config section:
+
+```json
+{
+  ...
+  "engines" : {
+    "vertx" : {
+      "authKind": ["JWT"],
+      "config": {
+        "jwtAuth": {
+          "pubSecKeys": [
+            {
+              "algorithm": "HS256",
+              "buffer": "bXlTdXBlclNlY3JldFNpZ25lclN0cmluZ1RoYXRJc0xvbmdFbm91Z2gK"
+            }
+          ],
+          ...
+        }
+      }
+    }
+  },
+  ...
+}
+```
+
+## Default Test Runner Token
+
+We can set one token directly to the `test-runner` configuration that the deployed test server will pick up by default.
+Any valid HTTP headers can be defined in `headers` if necessary, but in this context the important one is `Authorization`.
+These headers will be added to any request that will be executed during the test.
+
+```json
+{
+  "test-runner": {
+    "headers": {
+      "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJteS10ZXN0LWlzc3VlciIsImF1ZCI6WyJteS10ZXN0LWF1ZGllbmNlIl0sImV4cCI6OTk5OTk5OTk5OSwidmFsIjoxfQ.cvgte5Lfhrsr2OPoRM9ecJbxehBQzwHaghANY6MvhqE"
+    }
+  }
+}
+```
+
+## Additional Tests
+
+To be able to test different scenarios, it is mandatory to be able to provide different tokens that simulate them.
+To achieve this, we can define any new test case under the project's `test-folder`, the test execution will pick them up and also compare it with their respective snapshots.
+A custom JWT test case will require two files, which share the same name that will function as the name of the test case:
+* A `.graphql` file that should define a query, mutation, or subscription.
+* A `.properties` file if the test case requires a different token than the one defined in `test-runner
+
+A sample test case structure with three different test cases looks like the below file tree.
+
+```
+├── tests/
+│   ├── mutationWithSameToken.graphql
+│   ├── subscriptionWithSameToken.graphql
+│   ├── differentUserQuery.graphql
+│   ├── differentUserQuery.properties
+│   ...
+```
+
+The content of the `.properties` override the applied `headers` tor the matching `.graphql` requests, making it possible to define different scenarios.
+A simple JWT override header properties file would look like this:
+
+```properties
+Authorization: Bearer <test-specific-jwt>
+```
+
+
+---
+
+# Testing
+
+Source: https://docs.datasqrl.com/docs/v0-11/howto/testing
+
+DataSQRL's automated test runner can execute two types of tests via the [`test` command](https://docs.datasqrl.com/docs/v0-11/compiler.md#test-command):
+
+1. Test tables annotated with the `/*+ test */` hint
+2. GraphQL operations in the `test-folder` configured under the `test-runner` in the [`package.json`](https://docs.datasqrl.com/docs/v0-11/configuration.md).
+
+You can combine both types of tests. Snapshot results are written to the same `snapshot-folder` for both.
+
+## Empty Result Tests
+
+Use `/*+ test(no_rows) */` for test tables that should return no rows. This is useful for asserting that invalid, filtered, or rejected data does not appear in a derived table.
+
+```sql
+/*+ test(no_rows) */
+NoInvalidOrders := SELECT * FROM Orders WHERE status = 'INVALID';
+```
+
+The test runner executes the generated GraphQL query for the test table and passes only when the field with the same name returns an empty result.
+DataSQRL does not create or compare a snapshot file for `no_rows` tests.
+If the query returns rows, the test fails and prints the actual GraphQL response so you can inspect the unexpected data.
+
+The `test` hint supports `no_rows` as its only argument. Use `/*+ test */` for normal snapshot tests and `/*+ test(no_rows) */` for empty-result assertions.
+
+## Modularizing Sources
+
+To separate test data from the real-world data sources of the pipeline, move all `CREATE TABLE` statements into a `connectors/source-prod.sqrl` file which gets imported into the main SQRL script with:
+
+```sql
+IMPORT connectors.source-{{variant}}.*; -- or you can import into a separate namespace and adjust references
+```
+
+Note, that `{{variant}}` is a template variable that is used to switch out the source definition and needs to be defined in the [`package.json`](https://docs.datasqrl.com/docs/v0-11/configuration.md):
+```json
+{
+  "script": {
+    "main": "my-project.sqrl",                         
+    "config": { 
+      "variant": "prod"
+    }
+  }
+}
+```
+
+## Creating Test Configuration
+
+With the sources modularized out, create a separate test configuration (e.g. `my_project-test-package.json`) for the project:
+```json
+{
+  "script": {
+    "main": "my-project.sqrl",                         
+    "config": { 
+      "variant": "test"
+    }
+  }
+}
+```
+
+## Test Data Sources
+
+Now, create a new sqrl script for the test data sources `connectors/source-test.sqrl` which defines the same tables as the production sources but using static test data in `.jsonl` files.
+Generate a JSONL file for each table and place it in the `connectors/test-data` folder. Then define the tables based on the originals:
+
+```sql
+CREATE TABLE MyTable (
+    -- ...same columns as original source but replacing METADATA and non-deterministic columns regular columns and data ...
+    WATERMARK FOR `my_timestamp` AS `my_timestamp` - INTERVAL '0.001' SECOND
+) WITH (
+    'connector' = 'filesystem',
+    'format' = 'flexible-json',
+    'path' = '${DATA_PATH}/my_table.jsonl',
+    'source.monitor-interval' = '10s' -- remove for batch sources
+);
+```
+
+Refer to the [connectors documentation](https://docs.datasqrl.com/docs/v0-11/connectors.md) for more information on how to source table connectors.
+
+Guidelines for generating test data:
+* Generate realistic test data that covers the relationship/joins that you want to test
+* Make sure the test data covers common failure scenarios and edge cases
+* Set a static event timestamp on test data so that test execution is deterministic
+* If the original `CREATE TABLE` definition used `METADATA` columns, convert those to regular columns and add static test data
+* If the original `CREATE TABLE` definition used non-deterministic computed columns (e.g. `NOW()`), convert those to regular columns and add static test data.
+* To advance the watermark during test execution, add a dummy record at the end with an event timestamp that is much larger than all test records' timestamps to ensure the watermark advances enough to close windows and flush out all events. 
+
+## API Tests
+
+Optionally, define GraphQL mutations, subscriptions, and queries in `.graphql` files inside the configured `test-folder` for `test-runner`.
+Those queries must be valid queries against the GraphQL schema for the compiled pipeline.
+
+## Run Tests Locally
+
+Use the [`test` command](https://docs.datasqrl.com/docs/v0-11/compiler.md#test-command) to execute the tests.
+The first time you run snapshot tests, snapshots are created in the configured `snapshot-folder`. Validate that those snapshots are correct.
+Subsequent executions of the test compare snapshots and fail if they are unequal.
+Empty-result tests declared with `/*+ test(no_rows) */` do not generate snapshots. They fail only when their query returns rows.
+
+## Automate Testing
+
+Check the snapshots into the version control system alongside the code and configure your build or CI/CD tool to run the tests automatically.
+
+## Update Tests
+
+As you encounter production issues or discover failures during manual testing, convert those scenarios to test data and execute them as part of your test suite to avoid regressions.
+By setting the event timestamp explicitly, you can precisely recreate a failure scenario and replay it deterministically.
+
+
+---
+
+# Deep Dive: How DataSQRL Works
+
+Source: https://docs.datasqrl.com/docs/v0-11/deepdive
+
+The DataSQRL `compile` executes the following steps:
+
+1. **Read Configuration**: Read and combine all package.json configuration files to initialize the configuration for the compiler
+2. **Build Project**: The [packager](#packager) builds the project structure in `build/` directory.
+3. **Parse Scripts**: The [parser](#parser) reads the main SQRL script in the `build/` directory and resolves all `IMPORT` and `EXPORT` statements locally against the folder structure in the `build` directory.
+4. **Create Logical Plans**: The [parser](#parser) converts all statements to logical plans. Most of the work is delegated to the Flink SQL parser and Apache Calcite. The parser detects the language elements SQRL adds and converts them.
+5. **Analyze Logical Plans**: The [logical plan analyzer](#logical-plan-analyzer) validates each statement and extract information needed for planning.
+6. **Build DAG**: The [DAG Planner](#dag-planner) combines all logical statement plans into a processing DAG that defines the flow of data from sources to sinks.
+7. **Optimize DAG**: The [DAG Planner](#dag-planner) optimizes the DAG and assigns each statement to an [engine](#architecture) for execution.
+8. **Generate Physical Plans**: The [Physical Planner](#physical-planner) generates deployment assets for each engine and connector configuration to move data between engines.
+9. **Write Deployment Artifacts**: The deployment artifacts are written to the `build/deploy` folder with the engine plans in `build/deploy/plan`.
+
+The DataSQRL `run` command executes all compilation steps above and:
+1. **Launch**: Launches all engines in docker
+2. **Deploy**: Deploys the deployment assets to the engines, e.g. installs the database schema, passes the GraphQL execution plan to Vert.x, creates topics in RedPanda, and executes the compiled plan in Flink.
+3. **Runs**: Runs and monitors the engines as they execute the pipeline.
+
+The running data pipeline and the individual engines running each component are accessible locally via the mapped ports.
+
+The DataSQRL `test` command executes all compilation and run steps above and:
+1. **Subscriptions**: Installs subscription queries to listen for test results (if any)
+2. **Mutations**: Runs the mutation queries against the API in order (if any) and snapshots the results.
+3. **Await**: Waits for the configured interval, number of checkpoints, or Flink job completion based on configuration.
+4. **Queries**: Runs the queries against the API to snapshot the results.
+5. **Snapshots**: Snapshots all subscription results in string order.
+
+## Architecture
+
+DataSQRL supports a pluggable engine architecture. A data pipeline or microservice
+consists of multiple stages and each stage is executed by an engine.
+For example, a data pipeline may consist of a stream processing, storage, and
+serving stage which are executed by Apache Flink, PostgreSQL, and Vert.x, respectively.
+
+DataSQRL supports the following types of stages:
+
+* Stream Processing: For processing data as it is ingested
+  * [Apache Flink](https://flink.apache.org/)  
+* Log: For moving data between stages reliably
+  * [Apache Kafka](https://kafka.apache.org/)
+  * [RedPanda](https://redpanda.com/)
+  * Apache Kafka-compatible (e.g. [Azure EventHub](https://azure.microsoft.com/en-us/services/event-hubs/))
+* Database: For storage and querying data
+  * [PostgreSQL](https://www.postgresql.org/) 
+  * [Apache Iceberg](https://iceberg.apache.org/)
+  * [Yugabyte](https://www.yugabyte.com/)
+  * [DuckDB](https://duckdb.org/)
+  * [Snowflake](https://www.snowflake.com/)
+  * PostgreSQL wire compatible (e.g. [CockroachDB](https://www.cockroachlabs.com/))
+* Server: For returning data through an API upon request
+  * [Vert.x](https://vertx.io/)
+  * [GraphQL Java](https://www.graphql-java.com/)
+* Cache: For caching data on the server (coming soon)
+
+Currently, DataSQRL is closely tied to Flink as the stream processing engine.
+The other engines are modular, making it simple to add additional engines.
+
+A data pipeline topology is a sequence of stages. A pipeline topology may contain
+multiple stages of the same type (e.g. two different database stages).
+An engine is what executes the deployment assets for a given stage.
+For example, the Flink SQL generated by the compiler as part of the deployment assets for the "stream" stage is
+executed by the Flink engine.
+
+The pipeline topology as well as other compiler configuration options are
+specified in a json configuration file typically called `package.json`.
+The [configuration documentation](https://docs.datasqrl.com/docs/v0-11/configuration.md) lists all the configuration options.
+
+## Planner Components
+
+The planner parses a SQRL script, i.e. a sequence of SQL statements, analyzes
+the statements, constructs a data processing DAG, optimizes the DAG, and finally
+produces deployment assets for the engines executing the data processing steps.
+
+The planner consists of the following components.
+
+### Packager
+
+The Packager populates the `build/` directory with scripts and folders based on the local folder structure and the dependency mapping defined in the configuration file. 
+
+As part of this process, the packager executes all registered Preprocessors which prepare local data or copy elements into the build directory.
+
+In addition, the packager executes the following special purpose preprocessors:
+
+* The Discovery preprocessor analyzes any `.csv` or `.jsonl` file in the local directory tree, determines the schema, and creates a table configuration.
+* The UDF preprocessor extracts UDF definitions from provided jar files.
+* The static data preprocessors copies `.csv` and `.jsonl` files into a consolidated data directory for Flink to read at runtime. This requires that filenames for static data files are unique.
+
+Preprocessors are internal to DataSQRL and can be extended within the framework.
+
+### Parser
+
+The parser is the first stage of the compiler. The parser parses the
+SQRL script into a logical plan by pre-processing any SQRL specific syntax and then
+passing the result to the Flink SQL parser to produces a logical plan.
+
+The parser resolves imports against the build directory using module loaders
+that retrieve dependencies. It maintains a schema of all defined tables
+in a SQRL script.
+
+The transpiler is build on top of Apache Calcite by way of Flink SQL for all SQL handling.
+It prepares the statements that are analyzed and planned by the planner.
+
+### Logical Plan Analyzer
+
+The logical plan analyzer is the second stage of the compiler. It takes the
+logical plan produced by the transpiler for each table or function
+defined in the SQRL script and analyzes the logical plan to extract a TableAnalysis
+that contains information needed by the planner.
+
+1. It keeps track of important metadata like timestamps, primary keys, sort orders, etc
+2. It analyzes the SQL to identify potential issues, semantic inconsistencies, or optimization potential and produces warnings or notices.
+3. It extracts cost information for the optimizer.
+
+### DAG Planner
+
+The DAG planner takes all the individual table and function definitions and assembles them into
+a data processing DAG (directed acyclic graph). It prunes the DAG and rewrites the DAG before optimizing the
+DAG to assign each node (i.e. table or function) to a stage in the pipeline.
+
+The optimizer uses a cost model and is constrained to produce only viable
+pipelines.
+
+At the end of the DAG planning process, each table or function defined in the SQRL script
+is assigned to a stage in the pipeline.
+
+### Physical Planner
+
+All the tables in a given stage are then passed to the stage engine's physical
+planner which produces the physical plan for the engine that has been
+configured to execute that stage.
+
+The physical plan assets produced depend on the engine:
+* Apache Flink: A Flink SQL script and compiled plan which contains the generated connector configuration
+* Postgres: A SQL schema for the tables and index structure as well as a set of SQL view and query definitions.
+* Kafka: A list of topics with configuration
+* GraphQL: A GraphQL schema and query execution plan
+
+Physical planning can contain additional optimization such as selecting optimal index
+structures for database tables.
+
+An important step in generating the physical plan is generating the connector configuration between engines.
+When two adjacent nodes in the DAG are assigned to different engines for execution,
+we consider this a "cut" in the DAG since it cuts the DAG into multiple sub-graphs -- one for each engine.
+To move data between engines at the cut points (i.e. the edges that connect the respective nodes), a connection needs to be established.
+
+Connector configuration is generated for the stream processing engine (Apache Flink)
+and the server engine (Vert.x) to connect to the database, filesystem, streaming platform, etc.
+The connector configuration is determined by the physical planner based on the logical plan analysis above
+and instantiated in connector templates that are configured in the [configuration file](https://docs.datasqrl.com/docs/v0-11/configuration.md).
+
+The physical planner is also responsible for generating the API schemas (e.g. GraphQL schema)
+for the exposed API if the pipeline contains a server engine. Optionally, the user may
+provide the API schema in which case the physical planner validates the schema and maps it
+to the SQRL script.
+
+The physical plans are then written out as deployment artifacts to the `build/deploy`
+directory.
+
+
+---
+
+# Version Compatibility
+
+Source: https://docs.datasqrl.com/docs/v0-11/compatibility
+
+DataSQRL builds on top of Flink and the Flink connector ecosystem.
+
+| DataSQRL | Flink SQL | Flink Runtime                | Postgres             | pgvector | Iceberg                    | Kafka                  |  
+|----------|-----------|------------------------------|----------------------|----------|----------------------------|------------------------|
+| 0.6.x    | 1.19.x    | 1.19+ <br /> 1.19.1+2 tested | 13+ <br /> 14 tested | 0.8.0    | 1.9+ <br /> 1.9.0 tested   | 3+ <br /> 3.4.0 tested |
+| 0.7.x    | 1.19.x    | 1.19+ <br /> 1.19.2+3 tested | 15+ <br /> 17 tested | 0.8.0    | 1.9+ <br /> 1.9.0 tested   | 3+ <br /> 3.4.0 tested |
+| 0.8.x    | 1.19.x    | 1.19+ <br /> 1.19.3 tested   | 15+ <br /> 17 tested | 0.8.0    | 1.9+ <br /> 1.9.2 tested   | 3+ <br /> 3.4.0 tested |
+| 0.9.x    | 2.2.x     | 2.2+ <br /> 2.2.0 tested     | 17+ <br /> 17 tested | 0.8.0    | 1.10+ <br /> 1.10.0 tested | 3+ <br /> 3.9.1 tested |
+| 0.10.x   | 2.2.x     | 2.2+ <br /> 2.2.1 tested     | 17+ <br /> 18 tested | 0.8.0    | 1.10+ <br /> 1.11.0 tested | 3+ <br /> 4.2.0 tested |

@@ -21,14 +21,14 @@ Specifically, entity data is often ingested as a stream of updates. To re-create
 
 ## LIKE Clause for Schema Loading
 
-DataSQRL supports automatic schema loading from external schema files using the `LIKE` clause. This feature eliminates the need to manually define column definitions when the schema already exists in a supported format.
+DataSQRL supports automatic schema loading from external schema files using the `LIKE` clause. The file name is an identifier, so quote it with backticks, not single quotes. This feature eliminates the need to manually define column definitions when the schema already exists in a supported format.
 
 ```sql
 CREATE TABLE MyTable (
   ...
 ) WITH (
   ...
-) LIKE 'mytable.avsc';
+) LIKE `mytable.avsc`;
 ```
 
 The `LIKE` clause:
@@ -43,17 +43,17 @@ DataSQRL currently supports loading schemas from:
 Assuming you have an Avro schema file `user.avsc` for a Kafka topic:
 
 ```sql
-CREATE TABLE User (
+CREATE TABLE Users (
   last_updated TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
 ) WITH (
   'connector' = 'kafka',
   ...
-) LIKE 'user.avsc';
+) LIKE `user.avsc`;
 ```
 
 In this example:
-- The `LIKE 'user.avsc'` clause loads all column definitions from the Avro schema
+- The ``LIKE `user.avsc` `` clause loads all column definitions from the Avro schema
 - You add **metadata columns** (like `last_updated`) and **watermark specifications**
 - The **connector configuration** remains in the `WITH` clause as usual
 
@@ -62,14 +62,15 @@ In this example:
 To automatically discover the schema of a JSONL or CSV file, add the filename in the `LIKE` clause.
 In addition to generating the table columns based on the inferred schema of the data, this also configures the `filesystem` connector to access the data.
 
-For example, suppose you have a `users.jsonl` file in the `connectors` directory, you can define the `User` table simply as:
+For example, suppose you have a `users.jsonl` file in the `connectors` directory, you can define the `Users` table simply as:
 
 ```sql
-CREATE TABLE User (
+CREATE TABLE Users (
   WATERMARK FOR last_updated AS last_updated - INTERVAL '1' SECOND
 ) WITH (
-  'source.monitor-interval' = '10 sec', -- remove for batch processing
-) LIKE 'users.jsonl';
+  -- remove the monitor interval for batch processing
+  'source.monitor-interval' = '10 sec'
+) LIKE `users.jsonl`;
 ```
 
 This syntax is useful when building DataSQRL projects from data files since it eliminates the manual schema creation.

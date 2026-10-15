@@ -32,8 +32,7 @@ The following is the [default configuration file](https://raw.githubusercontent.
       "config": {
         "execution.runtime-mode": "STREAMING",
         "security.delegation.tokens.enabled": false,
-        "state.backend.type": "rocksdb",
-        "table.exec.sink.require-on-conflict": false
+        "state.backend.type": "rocksdb"
       }
     },
     "duckdb": {
@@ -128,12 +127,9 @@ See [Environment Variables](https://docs.datasqrl.com/docs/configuration.md#envi
 SQRL-specific variables start with a `sqrl:` prefix and are used for templating inside connector configuration options.
 The proper syntax look like `${sqrl:<identifier>}`.
 
-Supported identifiers include:
-- `table-name`
-- `original-table-name`
-- `filename`
-- `format`
-- `kafka-key`
+Supported identifiers:
+- `table-name`: the name of the table as defined in the SQRL script
+- `table-id`: the unique name the compiler generates for the table's sink, which appends a counter to the table name (for example, `Orders_1`)
 
 These are typically used within connector templates to inject table-specific or context-aware configuration values.
 
