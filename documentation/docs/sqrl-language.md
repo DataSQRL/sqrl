@@ -3,7 +3,7 @@
 SQRL is an extension of Flink SQL that adds support for table functions and convenience syntax to build reactive data processing and serving applications.  
 The “R” in **SQRL** stands for *Reactive* and *Relationships*.
 
-This document focuses only on features **unique to SQRL**; when SQRL accepts Flink SQL verbatim we simply refer to the [upstream spec](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/sql/overview/).
+This document focuses only on features **unique to SQRL**; when SQRL accepts Flink SQL verbatim we simply refer to the [upstream spec](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/dev/table/sql/overview/).
 
 ## Script Structure
 
@@ -33,7 +33,7 @@ SQRL inherits full Flink SQL grammar for
 
 ...with the caveat that SQRL currently tracks **Flink 2.2**; later features may not parse.
 
-Refer to the [Flink SQL documentation](https://nightlies.apache.org/flink/flink-docs-release-2.2/docs/dev/table/sql/overview/) for a detailed specification.
+Refer to the [Flink SQL documentation](https://nightlies.apache.org/flink/flink-docs-release-2.3/docs/dev/table/sql/overview/) for a detailed specification.
 
 :::warning
 Be aware that `CREATE CATALOG` statements are only supported in separate scripts, that are NOT imported inline.
