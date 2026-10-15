@@ -32,7 +32,8 @@ The following is the [default configuration file](https://raw.githubusercontent.
       "config": {
         "execution.runtime-mode": "STREAMING",
         "security.delegation.tokens.enabled": false,
-        "state.backend.type": "rocksdb"
+        "state.backend.type": "rocksdb",
+        "table.exec.sink.require-on-conflict": false
       }
     },
     "duckdb": {
