@@ -574,8 +574,6 @@ Note: the compiler picks no index for a filter inside a subquery in a `WHERE` cl
 1. Rewrite the subquery as a `JOIN`, with the subquery's table first. Do this only when the join adds no duplicate rows: after the subquery's filter, its table has at most one matching row for each row of the outer table, for example because its primary key consists of the filter and join columns.
 2. When a join cannot replace the subquery, because it would add duplicate rows or the subquery is part of an `OR`, keep the subquery and add an `index` hint to the subquery's table: the columns that the subquery compares with a parameter first, then the columns that it compares with the outer query. Also hint the outer table's column that the subquery compares with, but only when the subquery is not part of an `OR`. Inside an `OR`, the database runs the subquery once and reads the whole outer table, with or without that index.
 
-If the table to change comes from an included project (`script.include`), the hint and the type conversion belong in that project. Make the change there if that is not read-only, report it to its owners when it is read-only.
-
 Example: the API returns the orders of all customers who own a given account.
 
 ```sql
@@ -596,6 +594,8 @@ Orders := SELECT ... ;
 ```
 
 An `index` hint replaces the automatic index selection for its whole table: the compiler then creates only the hinted indexes and the primary key. List every index that the table needs in the hint.
+
+If the table comes from an included project (`script.include`), the `index` hint belongs in that project. If you cannot change that project, report it to its owners.
 
 **Checking the indexes.** After a compile, check each served query that filters a large table. Judge the table size from the requirements and the source data.
 
