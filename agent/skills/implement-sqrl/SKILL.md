@@ -558,10 +558,16 @@ For choosing between `query_by_all` (required filter arguments) and `query_by_an
 DataSQRL creates the database indexes for the tables that the API queries. The database (Postgres) can use an index only when the filtered column stands alone in the comparison, so prefer to write every filter of a served query in the following form:
 
 - Compare the bare column: `customer_id = :customerId`.
-- Do a type conversion or a derived value in the table definition, before the table is written: prefer `CAST(c.customer_id AS STRING) AS customer_id` in the table definition, then filter on `customer_id = :customerId`. A function on the column in the filter, such as `CAST(customer_id AS STRING) = :customerId` or `LOWER(email) = :email`, makes the database read the whole table. 
+- Do a type conversion or a derived value in a table that Flink computes, then filter on the result: add `/*+engine(flink) */` to the table, select `CAST(c.customer_id AS STRING) AS customer_id` in it, and filter on `customer_id = :customerId`. A table that runs in the database (an `engine(database)` hint, or the planner's choice) is copied into the served query, so its `CAST` ends up in the filter again. A function on the column in the filter, such as `CAST(customer_id AS STRING) = :customerId` or `LOWER(email) = :email`, makes the database read the whole table.
 - Put arithmetic on the parameter side: `day_index = :day - 1`.
 
-The compiler (automatic index selection) picks the indexes from the filters of `WHERE` clauses (in table functions, relationships and `query_by_*` arguments), from `JOIN ... ON` conditions, and from the first `ORDER BY` column of a query with a `LIMIT`.
+The compiler (automatic index selection) picks the indexes from these parts of the served queries:
+
+- The filters of `WHERE` clauses, in table functions, relationships and `query_by_*` arguments.
+- Table order in the `FROM` clause matters for `JOIN ... ON` conditions: only the table on the right side of the `JOIN` gets an index from the join condition. The columns of the left table become parameters, and the left table gets no index from the join. List the table that the `WHERE` clause filters with a parameter first:
+  - `FROM Orders c JOIN AccountOwners o ON o.customer_id = c.customer_id WHERE o.account_id = :accountId` gives an index only to `AccountOwners` (`account_id, customer_id`), and the database reads all of `Orders`.
+  - `FROM AccountOwners o JOIN Orders c ON c.customer_id = o.customer_id WHERE o.account_id = :accountId` gives an index to both tables: `AccountOwners` (`account_id`) and `Orders` (`customer_id`).
+- The first `ORDER BY` column, only when the query has no `WHERE` filter and a literal `LIMIT` of 10000 at most. For example, in `WHERE customer_id = :cid ORDER BY amount DESC LIMIT 10`, only `customer_id` gets an index.
 
 Note: the compiler does not pick indexes for the filters inside a subquery in a `WHERE` clause, such as `EXISTS (...)` or `IN (SELECT ...)`. Check the compiled plan (see Checking the indexes). If the table that the subquery reads is large and has no index for the subquery's filter, add an `index` hint. The hint replaces the automatic selection for that table, so also list the indexes that its other served queries need. Put the columns that the subquery compares with a parameter first, then the columns that it compares with the outer query.
 
@@ -581,10 +587,11 @@ An `index` hint replaces the automatic index selection for its whole table: the 
 **Checking the indexes.** After a compile, check each served query that filters a large table. Judge the table size from the requirements and the source data.
 
 1. Find the SQL of the query in `deploy/plan/vertx.json`, and the `CREATE INDEX` statements of the table in `deploy/plan/postgres.json`. The primary key also counts as an index.
-2. Compare the columns that the `WHERE` clause compares, including those in subqueries, with the leading columns of the indexes.
-3. If no index fits, rewrite the filter into the form at the start of this section, or add an `index` hint. If no index can serve the filter, denormalize: compute the value in Flink and store it as a column of the served table.
+2. Compare the columns that the query compares with a parameter or with another table, in the `WHERE` clause, in `JOIN ... ON` conditions and in subqueries, with the leading columns of the indexes. In a correlated subquery, the column of the outer table counts too: in the `EXISTS` example above, `Orders.customer_id` gets no index.
+3. Make sure that each of these columns stands alone in the SQL. The compiler also creates an index for `day_index + 1 = $1`, but the database cannot use it for that filter.
+4. If no index fits, rewrite the filter into the form at the start of this section, or add an `index` hint. If no index can serve the filter, denormalize: compute the value in Flink and store it as a column of the served table.
 
-**Fixing a slow query.** An issue or a slow-query log names a slow query by its API field, such as `/OrdersByCustomer`, which is the name of the SQRL table or table function. Check that query with the steps above, then run the tests.
+**Fixing a slow query.** An issue or a slow-query log names a slow query by its API field. A top-level path, such as `/OrdersByCustomer`, is the name of the SQRL table or table function. A nested path, such as `/Customers[0]/orders`, names the relationship `orders` of `Customers`. A client alias replaces the field name in the path. Check that query with the steps above, then run the tests.
 
 
 ### Constraints and mutual exclusions
