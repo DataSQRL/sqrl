@@ -77,7 +77,7 @@ Make an educated guess for each threshold from how the API is used. The values i
 - If the requirements state a latency target for the API, use that target. Otherwise, start from the consumer of the API: 1000 to 2000 ms for user interfaces and dashboards, 2000 to 5000 ms for service-to-service calls.
 - Look for heavy queries, such as a large aggregate. If their latency is much higher than that of the other queries, give each one its own entry in `thresholds`, keyed by its field (`Query.<Field>` for a table or table function, `<Type>.<field>` for a relationship). As a request uses the lowest threshold among its fields, the entry applies only when a request runs that field alone. Any other field in the same request, including a nested relationship field without its own entry, brings the lower threshold back.
 
-- Keep every threshold below the client request timeout and below `poolOptions.connectionTimeout` (30 seconds by default). The log then reports slow queries before clients start to fail.
+- Keep every threshold well below the client request timeout. The server writes the log line after a request ends, and it does not stop the request. A threshold below the timeout logs the requests that are slow but still succeed.
 
 ## JWT Authentication
 
