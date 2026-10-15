@@ -13,12 +13,11 @@ This is the documentation of DataSQRL v0.11, the latest release.
 
 ## Overview
 
-- [DataSQRL Documentation](https://docs.datasqrl.com/docs/intro.md): DataSQRL is an open-source data engineering harness for building data engineering agents designed around human control, correctness, and safety.
+- [DataSQRL Documentation](https://docs.datasqrl.com/docs/intro.md): DataSQRL is an open-source data engineering harness that provides guardrails and feedback for AI coding agents to build reliable data pipelines, data APIs (REST, MCP, GraphQL), and data products.
 
 ## Getting Started
 
-- [Getting Started with DataSQRL](https://docs.datasqrl.com/docs/intro/getting-started.md): The basic DataSQRL agent runs as a Docker image on your local machine.
-- [Getting Started with DataSQRL](https://docs.datasqrl.com/docs/intro/getting-started-no-key.md): This tutorial demonstrates how the DataSQRL data engineering harness works without an LLM API key.
+- [Getting Started with DataSQRL](https://docs.datasqrl.com/docs/intro/getting-started.md): The easiest way to understand how DataSQRL provides guardrails and feedback for AI coding agents is to build a data pipeline.
 
 ## Core Concepts
 
@@ -33,26 +32,28 @@ This is the documentation of DataSQRL v0.11, the latest release.
 - [Iceberg Engine Configuration](https://docs.datasqrl.com/docs/configuration-engine/iceberg.md): Apache Iceberg is an analytic database format that provides ACID transactions, schema evolution, and time travel capabilities for large analytic datasets.
 - [Iceberg Query Engine Configurations](https://docs.datasqrl.com/docs/configuration-engine/iceberg-query.md): Apache Iceberg stores analytic data but does not execute queries.
 - [Default DataSQRL `package.json` Configuration](https://docs.datasqrl.com/docs/configuration-default.md): The following is the default configuration file that user provided configuration files are merged on top of.
-- [DataSQRL Cloud Deployment Configuration](https://docs.datasqrl.com/docs/configuration-engine/cloud-deployment.md): Configures the cloud resources for each engine when deploying pipelines to DataSQRL Cloud.
-- [Functions](https://docs.datasqrl.com/docs/functions.md): DataSQRL supports all of Flink's built-in system functions.
+- [Cloud Deployment Configuration](https://docs.datasqrl.com/docs/configuration-engine/cloud-deployment.md): Configures the cloud resources for each engine when deploying pipelines to DataSQRL Cloud.
+- [Functions](https://docs.datasqrl.com/docs/functions.md): SQRL supports all of Flink's built-in system functions.
 - [System Functions](https://docs.datasqrl.com/docs/functions-system-generated.md): DataSQRL provides built-in system functions that are available in all SQRL scripts.
 - [Library Functions](https://docs.datasqrl.com/docs/functions-library-generated.md): DataSQRL provides extended library functions that can be imported into your SQRL scripts.
 - [DataSQRL Command](https://docs.datasqrl.com/docs/compiler.md): The DataSQRL command initializes, compiles, runs, and tests SQRL projects.
-- [Compilation Output](https://docs.datasqrl.com/docs/compilation-output.md): The `compile` command writes two kinds of output.
-- [Deployment](https://docs.datasqrl.com/docs/deployment.md): The compiler generates all deployment assets for a pipeline in `build/deploy/plan`: Flink plans, Kafka topic definitions, database schemas, and the API server model (see Compilation Output).
 - [Key DataSQRL Concepts](https://docs.datasqrl.com/docs/intro/concepts.md): This document explains some of the key concepts in streaming data processing.
 
 ## Examples
 
-- [Examples Gallery](https://docs.datasqrl.com/docs/intro/examples.md): A gallery of what you can build with the DataSQRL data engineering harness, from a data product suite for a retail bank to small, self-contained pipelines across a range of use cases.
+- [DataSQRL Examples](https://docs.datasqrl.com/docs/intro/examples.md): These examples demonstrate how AI coding agents use DataSQRL to build production-grade data products from data catalog definitions.
 
-## FAQ
+## How To
 
-- [Frequently Asked Questions](https://docs.datasqrl.com/docs/intro/faq.md): Claude Code, Codex, and similar agents write plausible data pipeline code, but data engineering has failure modes that general-purpose coding agents miss and that pass code review.
+- [Project Structure](https://docs.datasqrl.com/docs/howto/project-structure.md): A DataSQRL project is structured as follows where `{name}` is the project name.
+- [Enriching Data Streams](https://docs.datasqrl.com/docs/howto/stream-enrichment.md): A common requirement in stream processing is to enrich a STREAM of events with dimensional data in a time-consistent manner.
+- [Templating](https://docs.datasqrl.com/docs/howto/templating.md): DataSQRL uses the Mustache templating engine to substitute configuration variables in SQRL scripts, making them reusable and configurable without modifying the code.
+- [Testing Authorization](https://docs.datasqrl.com/docs/howto/testing-authorization.md): You can test record filtering, data masking, and other types of authorization based data access control with DataSQRL's automated test runner via the `test` command.
+- [Testing](https://docs.datasqrl.com/docs/howto/testing.md): DataSQRL's automated test runner can execute two types of tests via the `test` command
 
 ## Advanced
 
-- [Deep Dive: How DataSQRL Works](https://docs.datasqrl.com/docs/deepdive.md): The DataSQRL `compile` command executes the following steps
+- [Deep Dive: How DataSQRL Works](https://docs.datasqrl.com/docs/deepdive.md): The DataSQRL `compile` executes the following steps
 - [Version Compatibility](https://docs.datasqrl.com/docs/compatibility.md): DataSQRL builds on top of Flink and the Flink connector ecosystem.
 
 ## Optional

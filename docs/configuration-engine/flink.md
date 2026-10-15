@@ -33,3 +33,7 @@ Refer to the [Flink Documentation](https://nightlies.apache.org/flink/flink-docs
   }
 }
 ```
+
+## Cloud Deployment
+
+For cloud deployment configuration (instance sizes, task manager counts, scheduling), see [Cloud Deployment Configuration](https://docs.datasqrl.com/docs/configuration-engine/cloud-deployment.md#flink-enginesflinkdeployment).
