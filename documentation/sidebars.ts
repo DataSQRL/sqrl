@@ -37,20 +37,9 @@ const sidebars = {
       label: '📖 Overview',
     },
     {
-      type: 'category',
+      type: 'doc',
+      id: 'intro/getting-started',
       label: '🚀 Getting Started',
-      link: {
-        type: 'doc',
-        id: 'intro/getting-started',
-      },
-      collapsed: false,
-      items: [
-        {
-          type: 'doc',
-          id: 'intro/getting-started-no-key',
-          label: '🔑 Without an API Key',
-        },
-      ],
     },
     {
       type: 'category',
@@ -118,7 +107,7 @@ const sidebars = {
             {
               type: 'doc',
               id: 'configuration-engine/cloud-deployment',
-              label: 'Cloud Deployment',
+              label: 'Deployment Configuration',
             },
           ],
         },
@@ -143,24 +132,9 @@ const sidebars = {
           ],
         },
         {
-          type: 'category',
+          type: 'doc',
+          id: 'compiler',
           label: '🛠️ Compiler',
-          link: {
-            type: 'doc',
-            id: 'compiler',
-          },
-          items: [
-            {
-              type: 'doc',
-              id: 'compilation-output',
-              label: 'Compilation Output',
-            },
-            {
-              type: 'doc',
-              id: 'deployment',
-              label: 'Deployment',
-            },
-          ],
         },
         {
           type: 'doc',
@@ -175,9 +149,34 @@ const sidebars = {
       label: '🎓 Examples',
     },
     {
-      type: 'doc',
-      id: 'intro/faq',
-      label: '❓ FAQ',
+      type: 'category',
+      label: '📘 How To',
+      link: {
+        type: 'generated-index',
+        description: 'Practical guides for developing data pipelines with DataSQRL to be used as skills or context for coding agents.',
+      },
+      items: [
+        {
+          type: 'doc',
+          id: 'howto/project-structure',
+        },
+        {
+          type: 'doc',
+          id: 'howto/stream-enrichment',
+        },
+        {
+          type: 'doc',
+          id: 'howto/templating',
+        },
+        {
+          type: 'doc',
+          id: 'howto/testing-authorization',
+        },
+        {
+          type: 'doc',
+          id: 'howto/testing',
+        },
+      ],
     },
     {
       type: 'category',
