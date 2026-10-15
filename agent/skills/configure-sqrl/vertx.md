@@ -38,6 +38,47 @@ The compiler generates the full server configuration from a built-in template an
 
 For all settings and their effective values, compile the project and read the generated `deploy/plan/vertx-config.json` under the build directory (`build/` normally or `build/<sub-project>/` when compiling with `-b`). It contains the full server configuration with the overrides from `engines.vertx.config` applied.
 
+## Slow-Query Logging
+
+Enable slow-query logging in every project that enables `vertx`. The server then logs each API request that takes longer than its threshold or that fails. A request's threshold is the lowest threshold among the fields it runs. A slow query then appears in the logs, not only as a client timeout.
+
+Put the block in the base config, so every deployed environment has it:
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "config": {
+        "graphQLTailSampleTracingConfig": {
+          "enabled": true,
+          "defaultThresholdMs": 2000
+        }
+      }
+    }
+  }
+}
+```
+
+All keys go under `engines.vertx.config.graphQLTailSampleTracingConfig`:
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `enabled` | `false` | Turns the logging on |
+| `defaultThresholdMs` | `60000` | The threshold for fields without an entry in `thresholds` |
+| `thresholds` | `{}` | A threshold for requests that run this field, keyed `Type.field`, e.g. `{"Query.OrdersByCustomer": 5000}` or `{"Customers.orders": 5000}`. A request uses the lowest threshold among the fields it runs |
+| `alwaysLogErrors` | `true` | Also logs failed requests, such as a timeout while waiting for a database connection |
+| `maxLoggedTracesPerMinute` | `60` | Limits the log volume during an incident |
+| `maxFieldTraces` | `50` | Maximum number of query timings in one log line |
+
+### Choosing the threshold
+
+Make an educated guess for each threshold from how the API is used. The values in the example are a starting point, not a default to copy.
+
+- If the requirements state a latency target for the API, use that target. Otherwise, start from the consumer of the API: 1000 to 2000 ms for user interfaces and dashboards, 2000 to 5000 ms for service-to-service calls.
+- Look for heavy queries, such as a large aggregate. If their latency is much higher than that of the other queries, give each one its own entry in `thresholds`, keyed by its field (`Query.<Field>` for a table or table function, `<Type>.<field>` for a relationship). As a request uses the lowest threshold among its fields, the entry applies only when a request runs that field alone. Any other field in the same request, including a nested relationship field without its own entry, brings the lower threshold back.
+
+- Keep every threshold well below the client request timeout. The server writes the log line after a request ends, and it does not stop the request. A threshold below the timeout logs the requests that are slow but still succeed.
+
 ## JWT Authentication
 
 Set `authKind` to include `JWT` and provide a `jwtAuth` object. Its field names map to Vert.x Java POJOs and are case-sensitive.
