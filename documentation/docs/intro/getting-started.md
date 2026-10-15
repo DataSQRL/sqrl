@@ -140,8 +140,8 @@ The subscription tab should show the message pushed through in real-time.
 
 Agent performance improves significantly when they understand DataSQRL's capabilities. Point your agent to:
 
-- **[SQRL Language Reference](/docs/sqrl-language)**: Stream processing semantics, temporal joins, windowed aggregations, and SQRL-specific syntax
-- **[Configuration Guide](/docs/configuration)**: Package configuration, engine selection, and deployment options
+- **[SQRL Language Reference](/docs/v0-11/sqrl-language)**: Stream processing semantics, temporal joins, windowed aggregations, and SQRL-specific syntax
+- **[Configuration Guide](/docs/v0-11/configuration)**: Package configuration, engine selection, and deployment options
 
 For more complex projects, consider creating a custom instructions file that includes relevant documentation snippets. Agents that understand SQRL patterns like CDC deduplication, temporal enrichment joins, and subscription syntax produce better results with fewer iterations.
 
@@ -172,12 +172,12 @@ Click nodes in the visualization to inspect schema, logical plan, and physical p
 You've seen how DataSQRL provides the feedback loop that coding agents need to build production-grade data pipelines. The test command validates agent-generated code, the compiler provides actionable errors, and the simulator ensures real-world correctness.
 
 Next:
-- **[Full Documentation](/docs/intro)**: Complete reference and language spec
+- **[Full Documentation](/docs/v0-11/intro)**: Complete reference and language spec
 - **[Tutorials](examples)**: Learn by building more complex pipelines
 - **[Example Projects](https://github.com/DataSQRL/datasqrl-examples)**: See real-world patterns in action
 
 ## Troubleshooting
 
 - **Ports already in use**: Check if 8888 or 8081 is being used by another app
-- **Agent not understanding SQRL**: Share the [SQRL Language Reference](/docs/sqrl-language) with your agent
+- **Agent not understanding SQRL**: Share the [SQRL Language Reference](/docs/v0-11/sqrl-language) with your agent
 - **Test failures**: Review the error output—DataSQRL provides specific guidance on what to fix
