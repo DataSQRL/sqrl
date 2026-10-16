@@ -30,13 +30,14 @@ docker --version
 Create a new data project with the `init` command in an empty folder:
 
 ```bash
-docker run --rm --user "$(id -u):$(id -g)" -v $PWD:/workspace datasqrl/cmd:0.11.7 init api messenger
+docker run --rm -v $PWD:/workspace datasqrl/cmd:0.11.7 init api messenger
 cd messenger
 ```
-(Use `${PWD}` in Powershell on Windows and leave out the `--user` option)
+(Use `${PWD}` in Powershell on Windows)
+
+On Linux, add `--user "$(id -u):$(id -g)"` to the `init` command, so that you own the generated files. Otherwise Docker creates them as `root`, and you can't edit them.
 
 This creates a data API project in the `messenger` folder with sample data sources and a processing script called `messenger.sqrl`. Run all of the following commands from the `messenger` folder.
-The `--user` option makes you the owner of the generated files. Without it, Docker on Linux creates them as `root`, and you can't edit them.
 
 In DataSQRL 0.11, `init` generates the production source without the engine hint that internal `CREATE TABLE` statements require, so running the production package fails with `Mutation engine hint "/*+ engine(...) */" is required for internal CREATE TABLE statements`.
 Add the `/*+ engine(kafka) */` hint to the top of `connectors/sources-prod.sqrl`, so that the file reads:
