@@ -7,10 +7,10 @@ Choose your operating system below or use Docker which works on any machine that
 
 ## Installation
 
-Always pull the latest Docker image to ensure you have the most recent updates:
+Pull the Docker image of the latest 0.11 release, which these docs describe. The `latest` tag points to a newer DataSQRL release.
 
 ```bash
-docker pull datasqrl/cmd:latest
+docker pull datasqrl/cmd:0.11.7
 ```
 
 ## Command Overview
@@ -18,7 +18,7 @@ docker pull datasqrl/cmd:latest
 The DataSQRL CLI provides the following commands:
 
 ```bash
-docker run --rm -v $PWD:/workspace datasqrl/cmd -h
+docker run --rm -v $PWD:/workspace datasqrl/cmd:0.11.7 -h
 ```
 
 ```
@@ -52,7 +52,7 @@ Commands:
 The `init` command creates a new SQRL project with the necessary files and directory structure.
 
 ```bash
-docker run --rm -v $PWD/<project-folder>:/workspace datasqrl/cmd init -h
+docker run --rm -v $PWD/<project-folder>:/workspace datasqrl/cmd:0.11.7 init -h
 ```
 
 ```
@@ -69,19 +69,46 @@ Initializes an empty SQRL project.
 ### Example
 
 ```bash
-mkdir my-project
-
-docker run --rm -v $PWD/my-project:/workspace datasqrl/cmd init stream my-project
+docker run --rm -v $PWD:/workspace datasqrl/cmd:0.11.7 init stream my-project
+cd my-project
 ```
 
-This creates a new streaming project named `my-project` with the default configuration and directory structure.
+On Linux, add `--user "$(id -u):$(id -g)"` to the `init` command, so that you own the generated files. Otherwise Docker creates them as `root`, and you can't edit them.
+
+This creates a new streaming project in the `my-project` subdirectory of the mounted directory, with the `my-project.sqrl` script, `my-project-prod-package.json` and `my-project-test-package.json` package configurations, source definitions and test data in `connectors/`, and an initial test snapshot in `snapshots/`.
+Run the other commands from the `my-project` folder.
+
+The test package reads the sample data in `connectors/test-data/`, so the project compiles and tests out of the box.
+In DataSQRL 0.11, the production package doesn't compile as generated: the production source in `connectors/sources-prod.sqrl` lacks the engine hint that internal `CREATE TABLE` statements require, and compiling fails with `Mutation engine hint "/*+ engine(...) */" is required for internal CREATE TABLE statements`.
+Before you compile or run the production package, make the following changes for the project type:
+
+| Type      | Production engines               | Required changes                                                                                                                                                                                                                                                          |
+|-----------|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `api`     | Flink, PostgreSQL, Kafka, Vert.x | Add the `/*+ engine(kafka) */` hint above `CREATE TABLE Messages` in `connectors/sources-prod.sqrl`. The GraphQL API exposes the table as a mutation.                                                                                                                     |
+| `stream`  | Flink, Kafka                     | Add the `/*+ engine(kafka) */` hint above `CREATE TABLE Messages` in `connectors/sources-prod.sqrl`, and add `EXPORT HelloWorld TO log.HelloWorld;` to `my-project.sqrl` to write the result to a Kafka topic. Without an API, the script must export at least one table. |
+| `dataset` | Flink, Iceberg, DuckDB           | Replace the contents of `connectors/sources-prod.sqrl` with an existing Iceberg table, as shown below, and point the catalog options to your lakehouse.                                                                                                                   |
+
+```sql
+CREATE TABLE Messages (
+    uuid STRING NOT NULL,
+    message STRING NOT NULL,
+    message_time TIMESTAMP_LTZ(3) NOT NULL
+) WITH (
+    'connector' = 'iceberg',
+    'catalog-type' = 'hadoop',
+    'catalog-name' = 'default_catalog',
+    'warehouse' = 'sqrl_iceberg_data',
+    'catalog-table' = 'messages',
+    'format-version' = '2'
+);
+```
 
 ## Add-Func Command
 
 The `add-func` command adds a new user-defined function (UDF) to an existing SQRL project.
 
 ```bash
-docker run --rm -v $PWD/<project-folder>:/workspace datasqrl/cmd add-func -h
+docker run --rm -v $PWD/<project-folder>:/workspace datasqrl/cmd:0.11.7 add-func -h
 ```
 
 ```
@@ -100,7 +127,7 @@ project.
 ```bash
 mkdir my-project
 
-docker run --rm -v $PWD/my-project:/workspace datasqrl/cmd add-func MyAwesomeFunction
+docker run --rm -v $PWD/my-project:/workspace datasqrl/cmd:0.11.7 add-func MyAwesomeFunction
 ```
 
 This creates a new scalar function template in the `functions/` directory.
@@ -113,7 +140,7 @@ It stages all files needed by the compiler in the `build` directory and outputs 
 artifacts for all engines in the target folder (defaults to `build/deploy`).
 
 ```bash
-docker run --rm -v $PWD:/workspace datasqrl/cmd compile -h
+docker run --rm -v $PWD:/workspace datasqrl/cmd:0.11.7 compile -h
 ```
 
 ```
@@ -141,7 +168,7 @@ Compiles an SQRL project and produces all build artifacts.
 cd my-project
 
 # Defaults to package.json
-docker run --rm -v $PWD:/workspace datasqrl/cmd compile
+docker run --rm -v $PWD:/workspace datasqrl/cmd:0.11.7 compile
 ```
 
 Or with a specific package configuration file:
@@ -149,7 +176,7 @@ Or with a specific package configuration file:
 ```bash
 cd my-project
 
-docker run --rm -v $PWD:/workspace datasqrl/cmd compile package-prod.json
+docker run --rm -v $PWD:/workspace datasqrl/cmd:0.11.7 compile package-prod.json
 ```
 
 ### Output
@@ -164,7 +191,7 @@ Upon successful compilation, the compiler writes:
 The `run` command compiles and runs the generated data pipeline in Docker.
 
 ```bash
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd run -h
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd:0.11.7 run -h
 ```
 
 ```
@@ -198,7 +225,7 @@ Compiles, then runs a SQRL project in a lightweight, standalone environment.
 ```bash
 cd my-project
 
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v $PWD:/workspace datasqrl/cmd run
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v $PWD:/workspace datasqrl/cmd:0.11.7 run
 ```
 
 This compiles, then runs the SQRL project in the `my-project` folder,
@@ -232,7 +259,7 @@ This allows DataSQRL to map connectors correctly and also applies to [testing](#
 To preserve inserted data between runs, mount a directory for Redpanda to persist the data to:
 
 ```bash
-docker run -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v /mydata/project:/data/redpanda -v $PWD:/workspace datasqrl/cmd run my-package.json
+docker run -it -p 8081:8081 -p 8888:8888 -p 9092:9092 --rm -v /mydata/project:/data/redpanda -v $PWD:/workspace datasqrl/cmd:0.11.7 run my-package.json
 ```
 
 The volume mount contains the data written to the log engine and persists it to the local `/mydata/project` directory
@@ -259,7 +286,7 @@ All subsequent runs of the test command compare the results to the previously sn
 if the results are identical, else fail.
 
 ```bash
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd test -h
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd:0.11.7 test -h
 ```
 
 ```
@@ -290,7 +317,7 @@ Compiles, then tests a SQRL project.
 ### Example
 
 ```bash
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd test
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd:0.11.7 test
 ```
 
 The Test Command related configuration can be adjusted via the [`test-runner`](https://docs.datasqrl.com/docs/v0-11/configuration.md#test-runner-test-runner) configuration.
@@ -316,7 +343,7 @@ The `exec` command executes an already compiled SQRL project using its existing 
 This is useful when you want to run a previously compiled pipeline.
 
 ```bash
-run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd exec -h
+run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd:0.11.7 exec -h
 ```
 
 > **Warning**
@@ -344,5 +371,5 @@ Executes an already compiled SQRL script using its existing build artifacts.
 ```bash
 cd my-project
 
-docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd exec
+docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd:0.11.7 exec
 ```
