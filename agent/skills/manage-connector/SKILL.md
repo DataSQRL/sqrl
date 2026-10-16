@@ -54,7 +54,7 @@ Popular formats:
 * [flexible-json and json](formats/json.md): JSON-line format. Prefer `flexible-json` since it supports nested-json in export and is otherwise identical to `json`.
 * [avro](formats/avro.md): Avro format.
 * [avro-confluent](formats/avro-confluent.md): Avro with Confluent schema registry.
-* [csv](formats/csv.md): Delimited file format. Best for **test data** — Flink's CSV support is limited; prefer parquet/avro/flexible-json for production where practical.
+* [csv and flexible-csv](formats/csv.md): Delimited file format. Use `flexible-csv` for file sources with a header row. Best for **test data** — Flink's CSV support is limited; prefer parquet/avro/flexible-json for production where practical.
 * [parquet](formats/parquet.md): Apache Parquet columnar format.
 * [raw](formats/raw.md): Raw byte-based format for single column values.
 * [protobuf](formats/protobuf.md): Protocol Buffers format.
@@ -223,11 +223,11 @@ CREATE TABLE User (
 - Add metadata columns and watermarks separately
 - The file name after `LIKE` is an identifier, so it must be **backtick-quoted** (`` LIKE `user.avsc` ``, `` LIKE `testdata/customers.jsonl` ``). Single quotes (`LIKE 'user.avsc'`) are a parse error.
 
-**From JSONL or CSV data files:** `` LIKE `data.jsonl` `` or `` LIKE `data.csv` `` infers the columns and configures a filesystem source. Add a `WATERMARK` in the table definition and set `'source.monitor-interval'` only when the source must continuously discover files; omit it for bounded reads.
+**From JSONL or CSV data files:** `` LIKE `data.jsonl` `` or `` LIKE `data.csv` `` infers the columns and configures a filesystem source (discovery reads the first line as the column names, so the file needs a header row; the generated `flexible-csv` source skips that line — see [formats/csv.md](formats/csv.md)). Add a `WATERMARK` in the table definition and set `'source.monitor-interval'` only when the source must continuously discover files; omit it for bounded reads.
 
 ## Connector Preferences
 
 - Use Kafka for data sources with millisecond to seconds latency requirements, Apache Iceberg otherwise.
 - Use `kafka-safe` instead of `kafka` for error handling with dead-letter queues (and `upsert-kafka-safe` instead of `upsert-kafka`)
 - Use `flexible-json` instead of `json` to support nested json
-- Prefer CSV for test data only (Flink's CSV support is limited); for production sources prefer `parquet`, `avro`, or `flexible-json` where practical. On any CSV source set `'csv.ignore-parse-errors' = 'true'` to survive ragged/user-provided rows — see [formats/csv.md](formats/csv.md)
+- Prefer CSV for test data only (Flink's CSV support is limited); for production sources prefer `parquet`, `avro`, or `flexible-json` where practical. On any CSV source set `'csv.ignore-parse-errors' = 'true'` (`'flexible-csv.ignore-parse-errors'` for `flexible-csv`) to survive ragged/user-provided rows — see [formats/csv.md](formats/csv.md)
