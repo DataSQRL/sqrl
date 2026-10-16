@@ -30,11 +30,28 @@ docker --version
 Create a new data project with the `init` command in an empty folder:
 
 ```bash
-docker run --rm -v $PWD:/workspace datasqrl/cmd init api messenger
+docker run --rm -v $PWD:/workspace datasqrl/cmd:0.11.7 init api messenger
+cd messenger
 ```
 (Use `${PWD}` in Powershell on Windows)
 
-This creates a data API project called `messenger` with sample data sources and a processing script called `messenger.sqrl`.
+On Linux, add `--user "$(id -u):$(id -g)"` to the `init` command, so that you own the generated files. Otherwise Docker creates them as `root`, and you can't edit them.
+
+This creates a data API project in the `messenger` folder with sample data sources and a processing script called `messenger.sqrl`. Run all of the following commands from the `messenger` folder.
+
+In DataSQRL 0.11, `init` generates the production source without the engine hint that internal `CREATE TABLE` statements require, so running the production package fails with `Mutation engine hint "/*+ engine(...) */" is required for internal CREATE TABLE statements`.
+Add the `/*+ engine(kafka) */` hint to the top of `connectors/sources-prod.sqrl`, so that the file reads:
+
+```sql
+/*+ engine(kafka) */
+CREATE TABLE Messages (
+    uuid STRING NOT NULL METADATA FROM 'uuid',
+    message STRING NOT NULL,
+    message_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+```
+
+The hint stores the `Messages` table in Kafka, and the GraphQL API exposes it as the `Messages` mutation you use below.
 
 The engines executing the pipeline are defined in the `package.json` files:
 ![Initial Pipeline Architecture](/img/diagrams/getting_started_diagram1.png)
@@ -44,7 +61,7 @@ The engines executing the pipeline are defined in the `package.json` files:
 Execute the SQRL project:
 
 ```bash
-docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd run messenger-prod-package.json
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd:0.11.7 run messenger-prod-package.json
 ```
 
 Access the GraphQL API at [http://localhost:8888/v1/graphiql/](http://localhost:8888/v1/graphiql/).
@@ -80,7 +97,7 @@ Now instruct your coding agent to extend `messenger.sqrl`. For example:
 The agent should modify `messenger.sqrl` and iterate using the test command:
 
 ```bash
-docker run -it --rm -v $PWD:/workspace datasqrl/cmd test messenger-test-package.json
+docker run -it --rm -v $PWD:/workspace datasqrl/cmd:0.11.7 test messenger-test-package.json
 ```
 
 This feedback loop is how DataSQRL guides agents toward correct solutions. The test command:
@@ -111,7 +128,7 @@ AlertMessages := SUBSCRIBE SELECT * FROM Messages WHERE LOWER(message) LIKE '%er
 
 Run the production version to test subscriptions:
 ```bash
-docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd run messenger-prod-package.json
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v $PWD:/workspace datasqrl/cmd:0.11.7 run messenger-prod-package.json
 ```
 
 In GraphiQL, start a subscription:
@@ -149,7 +166,7 @@ For more complex projects, consider creating a custom instructions file that inc
 
 Build deployment artifacts:
 ```bash
-docker run --rm -v $PWD:/workspace datasqrl/cmd compile messenger-prod-package.json
+docker run --rm -v $PWD:/workspace datasqrl/cmd:0.11.7 compile messenger-prod-package.json
 ```
 
 The `build/deploy/plan` directory contains:
