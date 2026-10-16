@@ -1,8 +1,38 @@
 # CSV Format
 
-`format = 'csv'`
+`'format' = 'csv'` or `'format' = 'flexible-csv'`
+
+## Header rows: use `flexible-csv` on file sources
+
+Plain `csv` has no header handling and reads a header line as a data row. DataSQRL copies data files
+unchanged, so a CSV file source whose files start with a header must use `flexible-csv`, which skips
+the first line of each file (`'flexible-csv.skip-header'`, default `true`). On a hand-written
+`flexible-csv` source over files without a header, set `'flexible-csv.skip-header' = 'false'`.
+
+`` LIKE `data.csv` `` reads the first line of the file as the column names, so the file needs a
+header row whose column names each start with a letter; otherwise the compile fails with
+`The first line must be a header row ...`. A first data row that happens to look like column names
+(all text) is taken as the header without an error, so check the file first. The generated source
+uses `flexible-csv` with `'flexible-csv.skip-header' = 'true'`. Keep that format: overriding it with
+`'format' = 'csv'` fails at compile time with
+`Unsupported options found for 'filesystem'. Unsupported options: flexible-csv.skip-header`.
+
+`flexible-csv` is decode-only, so sinks use `csv`. It skips the first record each reader decodes,
+so do not use it with `skip-header` enabled on Kafka sources.
+
+## Option prefix
+
+Flink prefixes every format option with the format identifier, so the same option is spelled differently for the two formats:
+
+| `'format' = 'csv'` | `'format' = 'flexible-csv'` |
+|---|---|
+| `'csv.ignore-parse-errors' = 'true'` | `'flexible-csv.ignore-parse-errors' = 'true'` |
+
+A `csv.` key on a `flexible-csv` table (or the other way round) is rejected at compile time as an unsupported option.
 
 ## Configuration Options
+
+Listed with the `csv.` prefix; write `flexible-csv.` instead for `flexible-csv`.
 
 | Option | Default | Description |
 |--------|---------|-------------|
@@ -35,8 +65,9 @@ Too many entries: expected at most 9 (value #9 (0 chars) "")
 The empty extra value (`(0 chars) ""`) is the tell — a row carried one more field
 than the 9-column schema, almost always a trailing delimiter.
 
-Set `'csv.ignore-parse-errors' = 'true'` on CSV **source** connectors so bad rows
-are skipped instead of crashing the run. Apply it to CSV **test** sources by
+Set `'csv.ignore-parse-errors' = 'true'` (`'flexible-csv.ignore-parse-errors'` on
+`flexible-csv` sources) on CSV **source** connectors so bad rows are skipped
+instead of crashing the run. Apply it to CSV **test** sources by
 default, and to any CSV **production** source too — that's where messy real-world
 data bites hardest.
 

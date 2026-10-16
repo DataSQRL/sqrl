@@ -16,6 +16,7 @@
 package com.datasqrl.discovery.preprocessor;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.discovery.file.InvalidDataFileException;
 import com.datasqrl.discovery.file.RecordReader;
 import com.datasqrl.discovery.stats.DefaultSchemaGenerator;
 import com.datasqrl.discovery.stats.SourceTableStatistics;
@@ -86,6 +87,9 @@ public abstract class AbstractDiscoveryTableSchemaFactory implements TableSchema
     } catch (IOException e) {
       throw localErrors.exception(
           "Could not infer schema of file [%s] due to IO error: %s", location, e);
+    } catch (InvalidDataFileException e) {
+      throw localErrors.exception(
+          "Could not infer schema for data file [%s]: %s", location, e.getMessage());
     }
     localErrors.checkFatal(
         statistics.isPresent() && statistics.get().getCount() > 0,

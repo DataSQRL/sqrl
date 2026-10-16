@@ -80,16 +80,15 @@ class FilePreprocessingPipelineIT {
     String jsonlContent = Files.readString(jsonlFile);
     assertThat(jsonlContent).contains("Alice", "Bob", "Charlie");
 
-    // Verify CSV.GZ file is processed (header removed) and copied to data directory
+    // Verify CSV.GZ file is copied to data directory unchanged, header included
     Path csvFile = dataDir.resolve("sample_data.csv.gz");
     assertThat(csvFile).exists();
+    assertThat(csvFile).hasSameBinaryContentAs(FILES_DIR.resolve("sample_data.csv.gz"));
 
-    // Verify CSV header was removed by reading the processed file
     String csvContent = readGzipFile(csvFile);
     String[] lines = csvContent.split("\n");
-    assertThat(lines).hasSize(2); // Should have 2 data lines, header removed
-    assertThat(lines[0]).startsWith("value1"); // First line should be data, not header
-    assertThat(csvContent).doesNotContain("header1,header2,header3");
+    assertThat(lines).hasSize(3);
+    assertThat(lines[0]).isEqualTo("header1,header2,header3");
 
     // Verify exactly 2 data files were processed
     assertThat(countFiles(dataDir, false)).isEqualTo(2);
@@ -146,9 +145,9 @@ class FilePreprocessingPipelineIT {
     assertThat(dataDir.resolve("sample_data.csv.gz")).exists();
     assertThat(countFiles(dataDir, false)).isEqualTo(2); // jsonl + csv.gz
 
-    // Verify CSV header removal worked
+    // Verify CSV header is kept
     String csvContent = readGzipFile(dataDir.resolve("sample_data.csv.gz"));
-    assertThat(csvContent).doesNotContain("header1,header2,header3");
+    assertThat(csvContent).startsWith("header1,header2,header3");
 
     // Assert JAR files are processed correctly
     Path libDir = workspacePaths.getUdfPath();

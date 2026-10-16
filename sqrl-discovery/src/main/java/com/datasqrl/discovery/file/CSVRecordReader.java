@@ -25,7 +25,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
@@ -39,27 +38,30 @@ import org.apache.commons.lang3.tuple.Pair;
 public class CSVRecordReader implements RecordReader {
 
   public static final String DEFAULT_DELIMITER = ",";
-  public static final String DEFAULT_COMMENT = "#";
 
   public static final Set<String> EXTENSIONS = Set.of("csv");
 
   private static final String[] DELIMITER_CANDIDATES = new String[] {",", ";", "\t"};
 
+  private static final int MAX_HEADER_LINE_IN_ERROR = 200;
+
+  // Discovery always reads the first line as the header, so the source must skip it as well
   @Override
   public String getFormat() {
-    return "csv";
+    return "flexible-csv";
   }
 
   @Override
   public Stream<Map<String, Object>> read(InputStream input) throws IOException {
     var reader = new BufferedReader(new InputStreamReader(input));
     var headerLine = reader.readLine();
-    var configOpt = inferConfig(headerLine);
-    if (configOpt.isEmpty()) {
+    if (headerLine == null) {
       return Stream.of();
     }
-    var format = configOpt.get().format();
-    var header = configOpt.get().header();
+
+    var config = inferConfig(headerLine);
+    var format = config.format();
+    var header = config.header();
 
     var parser = CSVParser.parse(reader, format);
     return parser.stream()
@@ -77,24 +79,21 @@ public class CSVRecordReader implements RecordReader {
             });
   }
 
-  private static boolean isComment(String line, String commentPrefix) {
-    return !Strings.isNullOrEmpty(commentPrefix) && line.startsWith(commentPrefix);
-  }
-
   @Override
   public Set<String> getExtensions() {
     return EXTENSIONS;
   }
 
-  private static CSVFormat getDefaultFormat(String delimiter) {
-    return org.apache.commons.csv.CSVFormat.DEFAULT
-        .builder()
-        .setDelimiter(delimiter.charAt(0))
-        .setTrim(true)
-        .build();
+  @Override
+  public Map<String, String> getDefaultFormatOptions() {
+    return Map.of("flexible-csv.skip-header", "true");
   }
 
-  private static Optional<Config> inferConfig(String headerLine) throws IOException {
+  private static CSVFormat getDefaultFormat(String delimiter) {
+    return CSVFormat.DEFAULT.builder().setDelimiter(delimiter.charAt(0)).setTrim(true).build();
+  }
+
+  private static Config inferConfig(String headerLine) throws IOException {
     var delimiter = DEFAULT_DELIMITER;
     var topScoringDelimiter =
         Arrays.stream(DELIMITER_CANDIDATES)
@@ -107,29 +106,24 @@ public class CSVRecordReader implements RecordReader {
     var format = getDefaultFormat(delimiter);
 
     try (var parser = CSVParser.parse(headerLine, format)) {
-      Optional<String[]> header =
+      var header =
           parser.stream()
               .findFirst()
-              .flatMap(
-                  r -> {
-                    if (r.size() == 0) {
-                      return Optional.empty();
-                    }
-                    // Make sure all column names are valid
-                    if (!r.stream()
-                        .allMatch(
-                            col ->
-                                !Strings.isNullOrEmpty(col) && Character.isLetter(col.charAt(0)))) {
-                      log.error("CSV header column names are invalid: {}", r);
-                      return Optional.empty();
-                    }
-                    return Optional.of(r.stream().toArray(String[]::new));
-                  });
-      if (header.isPresent()) {
-        return Optional.of(new Config(format, header.get()));
+              .map(r -> r.stream().toArray(String[]::new))
+              .orElse(new String[0]);
+      var isValidHeader =
+          header.length > 0
+              && Arrays.stream(header)
+                  .allMatch(
+                      col -> !Strings.isNullOrEmpty(col) && Character.isLetter(col.charAt(0)));
+      if (!isValidHeader) {
+        throw new InvalidDataFileException(
+            "The first line must be a header row of column names that each start with a letter,"
+                + " but was: "
+                + StringUtils.abbreviate(headerLine, MAX_HEADER_LINE_IN_ERROR));
       }
+      return new Config(format, header);
     }
-    return Optional.empty();
   }
 
   private record Config(CSVFormat format, String[] header) {}

@@ -239,7 +239,8 @@ CREATE TEMPORARY TABLE `SensorReading__schema` (
 )
 WITH (
   'connector' = 'filesystem',
-  'format' = 'csv',
+  'flexible-csv.skip-header' = 'true',
+  'format' = 'flexible-csv',
   'path' = '${DATA_PATH}/sensor_reading.csv.gz'
 );
 CREATE TABLE `SensorReading` (
