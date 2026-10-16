@@ -28,6 +28,7 @@ Flink has one JobManager and one or more identically sized TaskManagers.
 | `medium` | 2 | 2 | 8 GiB | 110 GB |
 | `large` | 4 | 4 | 16 GiB | 220 GB |
 | `xlarge` | 8 | 8 | 32 GiB | 440 GB |
+| `xxlarge` | 16 | 16 | 64 GiB | 880 GB |
 
 `taskmanager-disk-size-gb` independently overrides the default local-NVMe allocation. It must be positive and no greater than 4000 GiB. Treat it as a hard scheduling requirement: an unavailable requested disk size leaves the pod Pending.
 
@@ -46,7 +47,7 @@ The legacy `.mem-headroom` form is deprecated; use an explicit `-Nx` qualifier. 
 |---|---:|---:|---:|
 | `dev` | under 100 | 0.5 | 1 GiB |
 | `small` | 100–800 | 0.5 | 2 GiB |
-| `medium` | 800–2000 | 1 | 4 GiB |
+| `medium` | 801–2000 | 1 | 4 GiB |
 | `large` | over 2000 | 2 | 8 GiB |
 
 ### Scheduled batch jobs
