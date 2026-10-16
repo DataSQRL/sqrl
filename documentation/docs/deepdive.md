@@ -90,7 +90,7 @@ As part of this process, the packager executes the following preprocessors:
 
 * The SQRL preprocessor renders template variables in `.sqrl` scripts with the values configured under `script.config`.
 * The UDF preprocessors extract user-defined function definitions from provided JAR files and from [JBang](https://www.jbang.dev/) `.java` files (see [functions](functions.md)).
-* The static data preprocessor copies `.jsonl`, `.csv`, and `.avro` files (optionally compressed) into a consolidated data directory for Flink to read at runtime. This requires that filenames for static data files are unique.
+* The static data preprocessor copies `.jsonl`, `.csv`, and `.avro` files (optionally compressed) unchanged into a consolidated data directory for Flink to read at runtime. This requires that filenames for static data files are unique.
 
 Preprocessors are internal to DataSQRL and can be extended within the framework.
 

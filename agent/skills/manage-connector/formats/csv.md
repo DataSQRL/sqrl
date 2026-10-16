@@ -17,8 +17,10 @@ uses `flexible-csv` with `'flexible-csv.skip-header' = 'true'`. Keep that format
 `'format' = 'csv'` fails at compile time with
 `Unsupported options found for 'filesystem'. Unsupported options: flexible-csv.skip-header`.
 
-`flexible-csv` is decode-only, so sinks use `csv`. It skips the first record each reader decodes,
-so do not use it with `skip-header` enabled on Kafka sources.
+`flexible-csv` is decode-only, so sinks use `csv`. Use `flexible-csv` only on file sources and `csv`
+on Kafka sources: on Kafka it skips the first record each reader decodes, and it accepts no
+`flexible-csv.` option except `skip-header` (`'flexible-csv.ignore-parse-errors'` fails with
+`Unsupported options found for 'kafka-safe'`).
 
 ## Option prefix
 

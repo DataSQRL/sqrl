@@ -74,3 +74,13 @@ CREATE TABLE Users (
 ```
 
 This syntax is useful when building DataSQRL projects from data files since it eliminates the manual schema creation.
+
+#### CSV Files and Header Rows
+
+DataSQRL copies data files into the build unchanged, so the table's format handles CSV header rows:
+
+- `` LIKE `data.csv` `` reads the first line of the file as the column names, so the file must start with a header row whose column names each start with a letter. Otherwise, the compile fails with `The first line must be a header row of column names that each start with a letter`. A first data row that contains only text is taken as the header without an error.
+- The generated source uses the `flexible-csv` format with `'flexible-csv.skip-header' = 'true'`, which skips the header line of each file. Keep that format: overriding it with `'format' = 'csv'` fails at compile time because the source still carries the `flexible-csv.skip-header` option.
+- On a `flexible-csv` source, the options of Flink's `csv` format take the `flexible-csv.` prefix, for example `'flexible-csv.ignore-parse-errors' = 'true'`.
+- `flexible-csv` can only read data, so sinks use `csv`. Use `csv` for Kafka sources as well: on Kafka, `flexible-csv` skips the first record each reader consumes and accepts no options except `skip-header`.
+- A source you define with `'format' = 'csv'` reads a header line as a data row. If its files start with a header, switch it to `'format' = 'flexible-csv'`, which skips the header by default, and rename its `csv.` options to `flexible-csv.`. Earlier DataSQRL versions removed the first line of every project `.csv` file when copying it, so sources written for those versions need this change.
