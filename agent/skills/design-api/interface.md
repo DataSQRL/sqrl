@@ -69,6 +69,18 @@ You can customize the GraphQL schema by:
 * Adding enums
 * Adding interfaces and structuring types with interfaces
 
+With a provided GraphQL schema, the compiler matches each GraphQL field to an item in the SQRL script:
+* A field of `type Query` matches the SQRL table or SQRL function with the same name.
+* A column field matches the SQRL column with the same name in the rows that the SQRL table or SQRL function returns. The name of the GraphQL type has no role in this match, so a type with only column fields can have any name.
+* A relationship field matches the SQRL relationship with the full name `<GraphQL type name>.<GraphQL field name>`. So a GraphQL type with relationship fields has the name of the SQRL table that owns those relationships.
+* A SQRL function cannot own a SQRL relationship. A query whose result has relationship fields returns the GraphQL type of the SQRL table that owns them, for example `OrderById(id: Long!): OrderRecord` for the relationship `OrderRecord.items`.
+* These rules apply at every level. A nested GraphQL type that the compiler reaches through a relationship can have its own relationship fields, and it has the name of its own SQRL table.
+* A nested GraphQL type that the compiler reaches through a column with nested data (`ROW<...>` or `ARRAY<ROW<...>>`) can have only column fields. The compiler does not look for relationships inside a column.
+
+A SQRL table and a SQRL function cannot have the same name. So a query and the GraphQL type it returns have different names when the result has relationship fields.
+
+A field that matches no SQRL item stops the compile with `Unknown field at location <field>. Possible scalars are [...]`. The list shows only the columns that the compiler searched. For a relationship field, compare the GraphQL type name with the table name in the SQRL relationship definition `<Table>.<field> :=`.
+
 Mutation input fields must match the column types of the table. A `String` column also accepts enum, `ID`, and `JSON` inputs, where JSON objects and arrays are stored as JSON text. Nullable columns can be omitted from the mutation input. If the mutation result type still includes them, those fields must be nullable and return `null`.
 
 :::warning
