@@ -41,6 +41,7 @@ Maps to GraphQL query `Customer(limit: Int = 10, offset: Int = 0): [Customer!]` 
 - Change cardinalities, scalar types, mutation argument names, field types
 - Add enums and interfaces
 - Compiler validates compatibility with SQRL script(s)
+- Give each type with relationship fields the name of the table that owns those relationships. The compiler looks up a relationship as `<GraphQL type name>.<field name>` (see [interface.md](interface.md)).
 
 ## REST and MCP Endpoints
 
