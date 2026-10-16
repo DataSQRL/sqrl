@@ -69,10 +69,14 @@ Initializes an empty SQRL project.
 ### Example
 
 ```bash
-docker run --rm -v $PWD:/workspace datasqrl/cmd:0.11.7 init stream my-project
+docker run --rm --user "$(id -u):$(id -g)" -v $PWD:/workspace datasqrl/cmd:0.11.7 init stream my-project
+cd my-project
 ```
 
 This creates a new streaming project in the `my-project` subdirectory of the mounted directory, with the `my-project.sqrl` script, `my-project-prod-package.json` and `my-project-test-package.json` package configurations, source definitions and test data in `connectors/`, and an initial test snapshot in `snapshots/`.
+Run the other commands from the `my-project` folder.
+
+The `--user` option makes you the owner of the generated files. Without it, Docker on Linux creates them as `root`, and you can't edit them. Leave it out in PowerShell on Windows.
 
 The test package reads the sample data in `connectors/test-data/`, so the project compiles and tests out of the box.
 In DataSQRL 0.11, the production package doesn't compile as generated: the production source in `connectors/sources-prod.sqrl` lacks the engine hint that internal `CREATE TABLE` statements require, and compiling fails with `Mutation engine hint "/*+ engine(...) */" is required for internal CREATE TABLE statements`.
