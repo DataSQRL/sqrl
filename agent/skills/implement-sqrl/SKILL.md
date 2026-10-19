@@ -199,6 +199,20 @@ EnrichedOrders := SELECT o.*, c.name, c.email
     ON o.customerid = c.customerid;
 ```
 
+### Timestamp of a join result
+
+For every join, decide the timestamp of the result: the time when the result row last changed. Choose it by the type of join:
+
+| Join | Timestamp of the result |
+|---|---|
+| Temporal join (`FOR SYSTEM_TIME AS OF`) or interval join | The timestamp of the stream side. Each result row is an event at that time, and the join never changes it later. |
+| Regular join (an inner or outer join without `FOR SYSTEM_TIME AS OF` or a time bound) | Reason about how the result row changes over time. In the common case, both sides change independently. The row then last changed at the later of the two times: `GREATEST(l.ts, r.ts)`, with one argument for each joined table. `GREATEST` returns `NULL` when one argument is `NULL`. In an outer join, wrap the timestamp of each side that can be missing in `COALESCE` with the timestamp of another side. For example, in a `LEFT JOIN`, write `GREATEST(l.ts, COALESCE(r.ts, l.ts))`. |
+
+A regular join emits a new version of a result row each time either side changes. A row that keeps the timestamp of one side only looks out of date when the other side changes. API clients that sort or filter by that timestamp then get wrong results.
+The Postgres sink also uses this timestamp to skip an older version of a `STATE` row that arrives after a newer one. A timestamp from one side does not change when the other side changes. The sink then cannot tell an old version of the row from a new one.
+
+When the sink skips the new versions of a joined row, compute the result timestamp with the rule in the table. A `CAST` of the result timestamp removes its row-time marker. The sink then writes every version in arrival order, and an older version that arrives late replaces a newer one.
+
 ### DISTINCT operator
 
 ```
