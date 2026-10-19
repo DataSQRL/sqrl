@@ -79,7 +79,11 @@ With a provided GraphQL schema, the compiler matches each GraphQL field to an it
 
 A SQRL table and a SQRL function cannot have the same name. So a query and the GraphQL type it returns have different names when the result has relationship fields.
 
-A field that matches no SQRL item stops the compile with `Unknown field at location <field>. Possible scalars are [...]`. The list shows only the columns that the compiler searched. For a relationship field, compare the GraphQL type name with the table name in the SQRL relationship definition `<Table>.<field> :=`.
+A GraphQL field that matches no SQRL item stops the compile. The error depends on the type that holds the field:
+* A field of `type Query` or `type Subscription` gives `Could not find table or function for field: <field>`. Compare the field name with the names of the SQRL tables and SQRL functions.
+* A field of `type Mutation` gives `No mutation found for <field>`. Compare the field name with the names of the mutation tables.
+* A field of the input type or the result type of a mutation gives `Could not find field <field> in type <mutation>`. Compare the fields with the columns of the mutation table.
+* A field of the result type of a query or a subscription gives `Unknown field at location <field>. Possible scalars are [...]`. This applies at every level, also in nested types. The list shows only the columns that the compiler searched. For a relationship field, compare the GraphQL type name with the table name in the SQRL relationship definition `<Table>.<field> :=`.
 
 Mutation input fields must match the column types of the table. A `String` column also accepts enum, `ID`, and `JSON` inputs, where JSON objects and arrays are stored as JSON text. Nullable columns can be omitted from the mutation input. If the mutation result type still includes them, those fields must be nullable and return `null`.
 
