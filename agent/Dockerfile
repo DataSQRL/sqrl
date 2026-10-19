@@ -65,6 +65,16 @@ RUN mkdir -p /workspace /opt/agent /root/.pi/agent \
     && rm -rf /build \
     && (test ! -e /build || rmdir /build)
 
+# Pi rejects --provider without --model, so the entrypoint looks up the default
+# model of the selected provider in Pi's own defaults. They are not part of
+# Pi's public API, so this fails the build if a Pi upgrade moves them.
+RUN node --input-type=module -e ' \
+      const { defaultModelPerProvider } = await import(process.argv[1]); \
+      for (const [provider, model] of Object.entries(defaultModelPerProvider)) console.log(`${provider}\t${model}`);' \
+      "$(npm root -g)/@earendil-works/pi-coding-agent/dist/core/model-resolver.js" \
+      > /opt/agent/pi-default-models.tsv \
+    && test -s /opt/agent/pi-default-models.tsv
+
 COPY README.md /root/.pi/agent/README_SQRL.md
 COPY agent/AGENTS.md /root/.pi/agent/AGENTS.md
 COPY agent/CLI_REFERENCE.md /root/.pi/agent/CLI_REFERENCE.md
