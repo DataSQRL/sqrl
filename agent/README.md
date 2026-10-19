@@ -9,7 +9,7 @@ The image starts Pi in `/workspace`. Mount a project there, provide a model-prov
 | File or directory                | Purpose                                                                                                                   |
 |----------------------------------|---------------------------------------------------------------------------------------------------------------------------|
 | [`Dockerfile`](Dockerfile)       | Builds the agent image on top of a DataSQRL CLI image. Installs Pi, then packages the agent content.                      |
-| [`entrypoint.sh`](entrypoint.sh) | Starts interactive Pi and selects a provider from explicit settings or available API keys.                                |
+| [`entrypoint.sh`](entrypoint.sh) | Starts interactive Pi and selects a provider and model from explicit settings or available API keys.                      |
 | [`cmd.sh`](cmd.sh)               | Runs DataSQRL CLI commands with fresh local engine state and large-data protection. Agents use it as `/opt/agent/cmd.sh`. |
 | [`bin/jwt`](bin/jwt)             | Dependency-free HS256 JWT helper for API test tokens, on `PATH` as `jwt`. The `design-api` skill teaches it.              |
 | [`AGENTS.md`](AGENTS.md)         | Always-loaded instructions: the working directory, skill-selection rules, and verification expectations.                  |
@@ -66,7 +66,7 @@ docker run --rm -it \
   core-agent
 ```
 
-To select a model explicitly, set `PI_MODEL`. `PI_PROVIDER` overrides provider inference when needed:
+By default, the agent uses Pi's default model for the provider of the first available API key. To select a model explicitly, set `PI_MODEL`. `PI_PROVIDER` overrides provider inference when needed, and uses that provider's default model unless `PI_MODEL` is also set:
 
 ```bash
 docker run --rm -it \

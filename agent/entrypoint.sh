@@ -32,10 +32,17 @@ has_option() {
   return 1
 }
 
+# Pi's default model of a provider, exported from the installed Pi when the
+# image is built.
+default_model() {
+  awk -F '\t' -v provider="$1" '$1 == provider { print $2 }' \
+    "${AGENT_HOME:-/opt/agent}/pi-default-models.tsv"
+}
+
 # PI_PROVIDER and PI_MODEL are optional explicit selections. Without either,
-# select a provider from the first available API key and let Pi choose one of
-# that provider's available models. Pi still resolves the actual key from its
-# standard provider environment variables.
+# select a provider from the first available API key and use its default
+# model. Pi still resolves the actual key from its standard provider
+# environment variables.
 provider="${PI_PROVIDER:-}"
 model="${PI_MODEL:-}"
 
@@ -82,6 +89,15 @@ pi_args=()
 # environment-based selections.
 if ! has_option --provider "$@" && [[ -n "$provider" ]]; then
   pi_args+=(--provider "$provider")
+
+  # Pi rejects --provider without --model.
+  if [[ -z "$model" ]] && ! has_option --model "$@"; then
+    model="$(default_model "$provider")"
+    if [[ -z "$model" ]]; then
+      echo "Error: no default model for provider '$provider', set PI_MODEL" >&2
+      exit 1
+    fi
+  fi
 fi
 
 if ! has_option --model "$@" && [[ -n "$model" ]]; then
