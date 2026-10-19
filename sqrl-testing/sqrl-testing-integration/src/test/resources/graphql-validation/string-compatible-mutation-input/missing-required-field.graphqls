@@ -1,0 +1,28 @@
+type Mutation {
+  Events(event: EventsInput!): EventsResultOutput!
+}
+
+input EventsInput {
+  event_id: ID!
+  payload: JSON
+}
+
+type EventsResultOutput {
+  event_id: ID!
+  payload: JSON
+  event_time: DateTime!
+}
+
+type Events {
+  event_id: ID!
+  status: String!
+  payload: String
+  event_time: DateTime!
+}
+
+type Query {
+  Events(limit: Int = 10, offset: Int = 0): [Events!]
+}
+
+scalar DateTime
+scalar JSON

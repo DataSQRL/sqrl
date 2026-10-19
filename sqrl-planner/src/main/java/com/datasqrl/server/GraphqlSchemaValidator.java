@@ -28,9 +28,11 @@ import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.Documented;
+import com.datasqrl.server.graphql.CustomScalars;
 import com.datasqrl.server.util.GraphqlErrorUtil;
 import com.datasqrl.server.util.GraphqlSchemaUtil;
 import graphql.ParseAndValidate;
+import graphql.Scalars;
 import graphql.language.EnumTypeDefinition;
 import graphql.language.FieldDefinition;
 import graphql.language.InputObjectTypeDefinition;
@@ -40,6 +42,7 @@ import graphql.language.NonNullType;
 import graphql.language.ObjectTypeDefinition;
 import graphql.language.ScalarTypeDefinition;
 import graphql.language.Type;
+import graphql.language.TypeDefinition;
 import graphql.language.TypeName;
 import graphql.parser.Parser;
 import graphql.schema.GraphQLInputObjectType;
@@ -156,13 +159,23 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
     var expectedObjectType = (GraphQLInputObjectType) unwrappedExpectedType;
     for (var expectedField : expectedObjectType.getFieldDefinitions()) {
       var actualField =
-          findExactlyOneInputValue(
-              mutationField, expectedField.getName(), actualType.getInputValueDefinitions());
+          findInputValue(expectedField.getName(), actualType.getInputValueDefinitions());
+      if (actualField.isEmpty()) {
+        // A nullable column can be omitted from the mutation input, it is written as null.
+        checkState(
+            !(expectedField.getType() instanceof GraphQLNonNull),
+            mutationField.getSourceLocation(),
+            "Could not find field %s in type %s",
+            expectedField.getName(),
+            mutationField.getName());
+        continue;
+      }
+
       validateInputTypeMatchesTable(
           mutationField,
           expectedField.getName(),
           expectedField.getType(),
-          actualField.getType(),
+          actualField.get().getType(),
           registry);
     }
 
@@ -253,8 +266,8 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
     var actualTypeDefinition = registry.getType(actualTypeName).orElse(null);
     checkState(
         expectedTypeName.equals(actualTypeName.getName())
-            || (expectedTypeName.equals("String")
-                && actualTypeDefinition instanceof EnumTypeDefinition),
+            || (expectedTypeName.equals(Scalars.GraphQLString.getName())
+                && isStringCompatible(actualTypeName, actualTypeDefinition)),
         actualType.getSourceLocation(),
         "Mutation input type mismatch for field '%s': found '%s' but table requires '%s'",
         fieldName,
@@ -418,8 +431,31 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
         argumentAppendix);
   }
 
+  /**
+   * Enum and ID inputs are coerced to strings and JSON inputs are written as their JSON text, so a
+   * string column can store any of them.
+   */
+  private static boolean isStringCompatible(
+      TypeName actualTypeName, TypeDefinition<?> actualTypeDefinition) {
+    return actualTypeDefinition instanceof EnumTypeDefinition
+        || actualTypeName.getName().equals(Scalars.GraphQLID.getName())
+        || actualTypeName.getName().equals(CustomScalars.JSON.getName());
+  }
+
   private InputValueDefinition findExactlyOneInputValue(
       FieldDefinition field, String forName, List<InputValueDefinition> inputValueDefinitions) {
+    return findInputValue(forName, inputValueDefinitions)
+        .orElseThrow(
+            () ->
+                createThrowable(
+                    field.getSourceLocation(),
+                    "Could not find field %s in type %s",
+                    forName,
+                    field.getName()));
+  }
+
+  private Optional<InputValueDefinition> findInputValue(
+      String forName, List<InputValueDefinition> inputValueDefinitions) {
     InputValueDefinition found = null;
     for (InputValueDefinition inputDefinition : inputValueDefinitions) {
       if (inputDefinition.getName().equals(forName)) {
@@ -428,14 +464,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
       }
     }
 
-    checkState(
-        found != null,
-        field.getSourceLocation(),
-        "Could not find field %s in type %s",
-        forName,
-        field.getName());
-
-    return found;
+    return Optional.ofNullable(found);
   }
 
   private InputObjectTypeDefinition getValidMutationInputType(

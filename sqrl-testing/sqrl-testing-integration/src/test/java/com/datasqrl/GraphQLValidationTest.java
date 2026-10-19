@@ -68,6 +68,24 @@ public class GraphQLValidationTest {
     assertThat(result.isSuccess()).as(result.getMessages()).isTrue();
   }
 
+  @Test
+  void givenStringCompatibleAndOmittedNullableInputs_whenCompile_thenMutationIsAccepted() {
+    var useCase = USECASE_DIR.resolve("string-compatible-mutation-input");
+    var result = snapshotExtension.execute(useCase, "compile", "package.json");
+
+    assertThat(result.isSuccess()).as(result.getMessages()).isTrue();
+  }
+
+  @Test
+  void givenOmittedNonNullColumn_whenCompile_thenMutationIsRejected() {
+    var useCase = USECASE_DIR.resolve("string-compatible-mutation-input");
+    var result =
+        snapshotExtension.execute(useCase, "compile", "package-missing-required-field.json");
+
+    assertThat(result.isFailed()).isTrue();
+    assertThat(result.getMessages()).contains("Could not find field status in type Events");
+  }
+
   private Predicate<Path> getBuildDirFilter() {
     return file -> {
       var fileName = file.getFileName().toString();

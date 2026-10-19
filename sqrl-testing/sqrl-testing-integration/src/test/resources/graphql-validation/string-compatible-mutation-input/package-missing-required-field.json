@@ -1,0 +1,7 @@
+{
+  "version": "1",
+  "script": {
+    "main": "string-compatible-mutation-input.sqrl",
+    "graphql": "missing-required-field.graphqls"
+  }
+}
