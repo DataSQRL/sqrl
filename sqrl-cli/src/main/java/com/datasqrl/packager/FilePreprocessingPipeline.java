@@ -183,12 +183,6 @@ public class FilePreprocessingPipeline {
       return copy(file, destination);
     }
 
-    public Path createNewDataFile(Path file) {
-      Path result = dataDir.resolve(file.getFileName());
-      ensureDirectoryExists(result.getParent());
-      return result;
-    }
-
     public void copyToData(Path file) {
       copy(file, dataDir);
     }

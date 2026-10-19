@@ -17,99 +17,109 @@ package com.datasqrl.packager.preprocess;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorMessage;
+import com.datasqrl.packager.FilePreprocessingPipeline;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.StreamSupport;
+import java.util.zip.GZIPOutputStream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class CopyStaticDataPreprocessorTest {
 
-  CopyStaticDataPreprocessor underTest = new CopyStaticDataPreprocessor();
+  private final CopyStaticDataPreprocessor underTest = new CopyStaticDataPreprocessor();
+
+  @TempDir Path tempDir;
+
+  @Test
+  void givenCsvFileWithHeader_whenProcess_thenCopiesItUnchangedAndWarns() throws IOException {
+    var file = Files.writeString(tempDir.resolve("data.csv"), "id,name\n1,a\n");
+    var errors = ErrorCollector.root();
+
+    underTest.process(file, context(errors));
+
+    assertThat(dataFile("data.csv")).hasSameBinaryContentAs(file);
+    assertThat(warnings(errors))
+        .singleElement()
+        .asString()
+        .contains("seems to start with a header row: id,name", "remove the header row");
+  }
+
+  @Test
+  void givenCsvFileWithoutHeader_whenProcess_thenCopiesItWithoutWarning() throws IOException {
+    var file = Files.writeString(tempDir.resolve("data.csv"), "1,a\n2,b\n");
+    var errors = ErrorCollector.root();
+
+    underTest.process(file, context(errors));
+
+    assertThat(dataFile("data.csv")).hasSameBinaryContentAs(file);
+    assertThat(warnings(errors)).isEmpty();
+  }
+
+  @Test
+  void givenCompressedCsvFileWithHeader_whenProcess_thenCopiesItUnchangedAndWarns()
+      throws IOException {
+    var file = tempDir.resolve("data.csv.gz");
+    try (var out = new GZIPOutputStream(Files.newOutputStream(file))) {
+      out.write("id,name\n1,a\n".getBytes(StandardCharsets.UTF_8));
+    }
+    var errors = ErrorCollector.root();
+
+    underTest.process(file, context(errors));
+
+    assertThat(dataFile("data.csv.gz")).hasSameBinaryContentAs(file);
+    assertThat(warnings(errors)).hasSize(1);
+  }
+
+  @Test
+  void givenJsonlFile_whenProcess_thenCopiesItWithoutWarning() throws IOException {
+    var file = Files.writeString(tempDir.resolve("data.jsonl"), "{\"id\":1}\n");
+    var errors = ErrorCollector.root();
+
+    underTest.process(file, context(errors));
+
+    assertThat(dataFile("data.jsonl")).hasSameBinaryContentAs(file);
+    assertThat(warnings(errors)).isEmpty();
+  }
 
   @ParameterizedTest
-  @CsvSource({
-    "'\\n',second line\\nthird line",
-    "'\\r\\n',second line\\r\\nthird line",
-    "'\\r',second line\\rthird line"
-  })
-  void givenTextWithMultipleLines_whenCopyFileSkipFirstLine_thenFirstLineIsRemovedAndRestPreserved(
-      String escapedLineEnding, String expectedContent) throws IOException {
-    // given
-    var lineEnding = unescape(escapedLineEnding);
-    var expected = unescape(expectedContent);
-    var input = "first line" + lineEnding + expected;
+  @ValueSource(
+      strings = {"id,name", "id;name", "id\tname", "\"id\",\"name\"", " id , name ", "﻿id,name"})
+  void givenColumnNames_whenIsHeader_thenReturnsTrue(String line) {
+    assertThat(CopyStaticDataPreprocessor.isHeader(line)).isTrue();
+  }
 
-    var in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-    var out = new ByteArrayOutputStream();
-
-    // when
-    underTest.copyFileSkipFirstLine(in, out);
-
-    // then
-    var result = out.toString(StandardCharsets.UTF_8);
-    assertThat(result).as("Line ending: %s", repr(lineEnding)).isEqualTo(expected);
+  @ParameterizedTest
+  @ValueSource(strings = {"1,a", "id,2", "-1,a", "id,,name", ""})
+  void givenFieldNotStartingWithLetter_whenIsHeader_thenReturnsFalse(String line) {
+    assertThat(CopyStaticDataPreprocessor.isHeader(line)).isFalse();
   }
 
   @Test
-  void givenSingleLineFile_whenCopyFileSkipFirstLine_thenOutputIsEmpty() throws IOException {
-    var input = "only line";
-    var in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-    var out = new ByteArrayOutputStream();
-
-    underTest.copyFileSkipFirstLine(in, out);
-
-    assertThat(out.toString(StandardCharsets.UTF_8)).isEmpty();
+  void givenEmptyFile_whenIsHeader_thenReturnsFalse() {
+    assertThat(CopyStaticDataPreprocessor.isHeader(null)).isFalse();
   }
 
-  @Test
-  void givenEmptyFile_whenCopyFileSkipFirstLine_thenOutputIsEmpty() throws IOException {
-    var in = new ByteArrayInputStream(new byte[0]);
-    var out = new ByteArrayOutputStream();
-
-    underTest.copyFileSkipFirstLine(in, out);
-
-    assertThat(out.toString(StandardCharsets.UTF_8)).isEmpty();
+  private FilePreprocessingPipeline.Context context(ErrorCollector errors) {
+    return new FilePreprocessingPipeline.Context(
+        tempDir, tempDir.resolve("build"), tempDir.resolve("lib"), tempDir.resolve("data"), errors);
   }
 
-  @Test
-  void givenLongFirstLine_whenCopyFileSkipFirstLine_thenSecondLineAndBeyondArePreserved()
-      throws IOException {
-    var lineEnding = "\n";
-    var longFirstLine = "A".repeat(10_000);
-    var input = longFirstLine + lineEnding + "second" + lineEnding + "third";
-
-    var in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-    var out = new ByteArrayOutputStream();
-
-    underTest.copyFileSkipFirstLine(in, out);
-
-    var result = out.toString(StandardCharsets.UTF_8);
-    assertThat(result).isEqualTo("second\nthird");
+  private Path dataFile(String name) {
+    return tempDir.resolve("data").resolve(name);
   }
 
-  @Test
-  void givenFirstLineIsJustLineBreak_whenCopyFileSkipFirstLine_thenAllOtherLinesRemain()
-      throws IOException {
-    var input = "\nsecond\nthird";
-    var in = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-    var out = new ByteArrayOutputStream();
-
-    underTest.copyFileSkipFirstLine(in, out);
-
-    var result = out.toString(StandardCharsets.UTF_8);
-    assertThat(result).isEqualTo("second\nthird");
-  }
-
-  // Helper method to visualize line endings in assertion messages
-  private String repr(String s) {
-    return s.replace("\r", "\\r").replace("\n", "\\n");
-  }
-
-  // Converts escaped line endings (from CSV) to actual control characters
-  private String unescape(String s) {
-    return s.replace("\\r", "\r").replace("\\n", "\n");
+  private static List<String> warnings(ErrorCollector errors) {
+    return StreamSupport.stream(errors.spliterator(), false)
+        .filter(ErrorMessage::isWarning)
+        .map(ErrorMessage::getMessage)
+        .toList();
   }
 }
