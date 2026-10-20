@@ -198,6 +198,28 @@ public class GraphQLSchemaConverterTest {
     assertThat(result.getProperties().get("observedAt").getFormat()).isEqualTo("date-time");
   }
 
+  @Test
+  void givenQueryWithoutArguments_whenConvertSchema_thenOmitsVariableDefinitions() {
+    var schema =
+        underTest.getSchema(
+            """
+            type Query {
+              counter: Counter!
+            }
+            type Counter {
+              numEvents: Int!
+            }
+            """);
+
+    var operations = underTest.convertSchema(GraphQLSchemaConverterConfig.DEFAULT, schema);
+
+    assertThat(operations).hasSize(1);
+    var query = operations.get(0).getApiQuery().query();
+    assertThat(query).startsWith("query counter {");
+    assertThatCode(() -> Parser.parse(query)).doesNotThrowAnyException();
+    assertThat(operations.get(0).getResultDefinition().getProperties()).containsKey("numEvents");
+  }
+
   @ParameterizedTest
   @MethodSource("scalarTypeToJsonTypeProvider")
   void givenScalarType_whenConvertToJsonType_thenReturnsExpectedJsonType(

@@ -255,10 +255,12 @@ public class GraphQLSchemaConverter {
                   ApiOperation op = convert(input.op(), input.fieldDefinition(), config, schema);
                   return Stream.of(op);
                 } catch (Exception e) {
-                  log.info(
-                      "Operation could not be converted and is removed: {}",
+                  log.warn(
+                      "Operation could not be converted and is removed: {} ({})",
                       input.fieldDefinition.getName(),
-                      e);
+                      e.getMessage());
+                  log.debug(
+                      "Conversion failure of operation {}", input.fieldDefinition.getName(), e);
                 }
               } else { // else filter out
                 log.info(
@@ -334,13 +336,23 @@ public class GraphQLSchemaConverter {
     StringBuilder queryHeader =
         new StringBuilder(operationType.name().toLowerCase())
             .append(" ")
-            .append(fieldDef.getName())
-            .append("(");
+            .append(fieldDef.getName());
+    StringBuilder variableDefinitions = new StringBuilder();
     StringBuilder queryBody = new StringBuilder();
 
-    visit(fieldDef, queryBody, queryHeader, params, new Context(opName, "", 0, List.of()), config);
+    visit(
+        fieldDef,
+        queryBody,
+        variableDefinitions,
+        params,
+        new Context(opName, "", 0, List.of()),
+        config);
 
-    queryHeader.append(") {\n").append(queryBody).append("\n}");
+    // GraphQL does not allow an empty variable list, so operations without arguments get none
+    if (!variableDefinitions.isEmpty()) {
+      queryHeader.append("(").append(variableDefinitions).append(")");
+    }
+    queryHeader.append(" {\n").append(queryBody).append("\n}");
     GraphQLQuery apiQuery =
         new GraphQLQuery(queryHeader.toString(), fieldDef.getName(), operationType);
     ApiOperation.ApiOperationBuilder builder = ApiOperation.getBuilder(funcDef, apiQuery);
