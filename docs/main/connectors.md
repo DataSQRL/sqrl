@@ -59,7 +59,7 @@ In this example:
 
 ### Inferring Schema from Data Files
 
-To automatically discover the schema of a JSONL or CSV file, add the filename in the `LIKE` clause.
+To automatically discover the schema of a JSONL file, add the filename in the `LIKE` clause.
 In addition to generating the table columns based on the inferred schema of the data, this also configures the `filesystem` connector to access the data.
 
 For example, suppose you have a `users.jsonl` file in the `connectors` directory, you can define the `Users` table simply as:
@@ -74,3 +74,19 @@ CREATE TABLE Users (
 ```
 
 This syntax is useful when building DataSQRL projects from data files since it eliminates the manual schema creation.
+
+Schema discovery isn't available for CSV files. Declare the columns and configure the `filesystem` connector with the `csv` format instead:
+
+```sql
+CREATE TABLE Readings (
+  sensorid BIGINT NOT NULL,
+  temperature DOUBLE NOT NULL
+) WITH (
+  'connector' = 'filesystem',
+  'format' = 'csv',
+  'path' = '${DATA_PATH}/readings.csv'
+);
+```
+
+DataSQRL copies data files unchanged, and Flink reads every line of a CSV file as data, so the file must not have a header row.
+The compiler warns when a CSV data file seems to start with a header row, that is, when every field of its first line starts with a letter.
