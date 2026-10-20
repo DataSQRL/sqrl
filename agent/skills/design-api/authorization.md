@@ -94,7 +94,7 @@ The `oauthConfig` object combines Vert.x's OAuth2Options with discovery metadata
 | `oauth2Options`          | **object** | Yes      | Vert.x OAuth2Options for authentication                  |
 | `authorizationServerUrl` | **string** | No       | External authorization server URL for discovery          |
 | `scopesSupported`        | **array**  | No       | Scopes advertised (default: `["mcp:tools", "mcp:resources"]`) |
-| `resource`               | **string** | No       | Override resource identifier in discovery metadata       |
+| `resource`               | **string** | No       | Public URL of the MCP endpoint, e.g. `https://api.example.com/v1/mcp` |
 
 ### OAuth2Options Configuration
 
@@ -109,6 +109,11 @@ The `oauth2Options` object uses Vert.x's OAuth2Options class:
 
 When OAuth is configured, the server exposes a discovery endpoint at `/.well-known/oauth-protected-resource` per RFC 9728.
 This enables MCP clients to discover the authorization server and scopes.
+MCP requests without a valid token get a `401` with a `WWW-Authenticate: Bearer resource_metadata="..."` header that points to this endpoint.
+
+Without `resource`, the server derives the `resource` value and the `resource_metadata` URL from each request (`X-Forwarded-Proto` or the request scheme, plus the `Host` header).
+With `resource`, the discovery metadata returns it unchanged, and `resource_metadata` uses its origin: `https://api.example.com/v1/mcp` gives `https://api.example.com/.well-known/oauth-protected-resource`.
+Set `resource` to the exact public URL of the MCP endpoint when the server runs behind a proxy that terminates TLS, and route `/.well-known/oauth-protected-resource` on that origin to the server.
 
 ### Environment Variable Support
 

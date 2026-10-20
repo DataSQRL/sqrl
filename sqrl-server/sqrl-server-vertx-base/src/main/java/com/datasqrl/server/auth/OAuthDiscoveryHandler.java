@@ -50,9 +50,7 @@ public class OAuthDiscoveryHandler {
 
     log.info("Registering OAuth discovery endpoints for site: {}", oauthConfig.getSite());
 
-    router
-        .get("/.well-known/oauth-protected-resource")
-        .handler(this::handleProtectedResourceMetadata);
+    router.get(ProtectedResourceUrls.METADATA_PATH).handler(this::handleProtectedResourceMetadata);
   }
 
   /**
@@ -62,7 +60,7 @@ public class OAuthDiscoveryHandler {
   private void handleProtectedResourceMetadata(RoutingContext ctx) {
     var oauthConfig = config.getOauthConfig();
 
-    var resource = determineResourceUri(ctx, oauthConfig);
+    var resource = ProtectedResourceUrls.resource(config, ctx.request());
     var authServer = oauthConfig.getEffectiveAuthorizationServer();
     var scopes = getScopes(oauthConfig);
 
@@ -86,18 +84,5 @@ public class OAuthDiscoveryHandler {
       return oauthConfig.getScopesSupported();
     }
     return DEFAULT_SCOPES;
-  }
-
-  private String determineResourceUri(RoutingContext ctx, OAuthConfig oauthConfig) {
-    if (oauthConfig.getResource() != null && !oauthConfig.getResource().isBlank()) {
-      return oauthConfig.getResource();
-    }
-
-    var host = ctx.request().getHeader("Host");
-    var forwardedProto = ctx.request().getHeader("X-Forwarded-Proto");
-    var scheme = forwardedProto != null ? forwardedProto : ctx.request().scheme();
-    var mcpEndpoint = config.getServletConfig().getMcpEndpoint("v1");
-
-    return scheme + "://" + host + mcpEndpoint;
   }
 }
