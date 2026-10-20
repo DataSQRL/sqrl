@@ -65,12 +65,8 @@ Orders := SELECT ... ;
 
 ## Index hints
 
-Add an `index` hint only to a table that needs it. A table without a hint keeps the indexes that the compiler selects.
+Add an `index` hint only to a table that needs it. An `index` hint replaces the automatic index selection for its whole table: the compiler then creates only the hinted indexes and the primary key. So also add to the hint each index of that table in `deploy/plan/postgres.json` that another served query still uses. Write it as `index(TYPE, column, ...)` hint, not as the `CREATE INDEX` statement.
 
-An `index` hint replaces the automatic index selection for its whole table: the compiler then creates only the hinted indexes and the primary key. So the hint must list every index that the table needs:
-
-1. Copy the table's `CREATE INDEX` statements from `deploy/plan/postgres.json` into the hint, except the primary key.
-2. Add the new index to the hint.
-3. Compile, then compare the table's `CREATE INDEX` statements with the list from step 1. Make sure that every index from step 1 is still there.
+After the compile, check the indexes of the other served queries of that table (see Checking the indexes).
 
 If the table comes from an included project (`script.include`), the `index` hint belongs in that project. If you cannot change that project, report it to its owners.
