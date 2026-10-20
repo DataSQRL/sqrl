@@ -22,6 +22,7 @@ import com.datasqrl.CliCompileTestExtension;
 import com.datasqrl.config.PackageJsonImpl;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.packager.FilePreprocessingPipeline;
 import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
@@ -80,16 +81,17 @@ class FilePreprocessingPipelineIT {
     String jsonlContent = Files.readString(jsonlFile);
     assertThat(jsonlContent).contains("Alice", "Bob", "Charlie");
 
-    // Verify CSV.GZ file is processed (header removed) and copied to data directory
+    // Verify CSV.GZ file is copied to data directory unchanged, and its header row gets a warning
     Path csvFile = dataDir.resolve("sample_data.csv.gz");
-    assertThat(csvFile).exists();
-
-    // Verify CSV header was removed by reading the processed file
-    String csvContent = readGzipFile(csvFile);
-    String[] lines = csvContent.split("\n");
-    assertThat(lines).hasSize(2); // Should have 2 data lines, header removed
-    assertThat(lines[0]).startsWith("value1"); // First line should be data, not header
-    assertThat(csvContent).doesNotContain("header1,header2,header3");
+    assertThat(csvFile).hasSameBinaryContentAs(FILES_DIR.resolve("sample_data.csv.gz"));
+    assertThat(readGzipFile(csvFile)).startsWith("header1,header2,header3");
+    assertThat(errorCollector)
+        .filteredOn(ErrorMessage::isWarning)
+        .extracting(ErrorMessage::getMessage)
+        .singleElement()
+        .asString()
+        .contains(
+            "sample_data.csv.gz", "seems to start with a header row: header1,header2,header3");
 
     // Verify exactly 2 data files were processed
     assertThat(countFiles(dataDir, false)).isEqualTo(2);
@@ -146,9 +148,9 @@ class FilePreprocessingPipelineIT {
     assertThat(dataDir.resolve("sample_data.csv.gz")).exists();
     assertThat(countFiles(dataDir, false)).isEqualTo(2); // jsonl + csv.gz
 
-    // Verify CSV header removal worked
-    String csvContent = readGzipFile(dataDir.resolve("sample_data.csv.gz"));
-    assertThat(csvContent).doesNotContain("header1,header2,header3");
+    // Verify the CSV file is copied unchanged
+    assertThat(dataDir.resolve("sample_data.csv.gz"))
+        .hasSameBinaryContentAs(FILES_DIR.resolve("sample_data.csv.gz"));
 
     // Assert JAR files are processed correctly
     Path libDir = workspacePaths.getUdfPath();
@@ -163,8 +165,9 @@ class FilePreprocessingPipelineIT {
     assertThat(outputDir.resolve("operations").resolve("query.graphql")).exists();
     assertThat(outputDir.resolve("sub").resolve("imported.sqrl")).exists();
     assertThat(outputDir.resolve("sub").resolve("avro.avsc")).exists();
-    // 4 build files + 2*2 data files (duplicated) + 1 JAR + 2 function manifest
-    assertThat(countFiles(outputDir, true)).isEqualTo(11);
+    // 4 build files + 2 data files + the JSONL file copied to build for schema discovery + 1 JAR +
+    // 2 function manifest
+    assertThat(countFiles(outputDir, true)).isEqualTo(10);
 
     // Verify filtering works - unsupported files are not copied
     assertThat(outputDir.resolve("sub").resolve("dontcopy.txt")).doesNotExist();

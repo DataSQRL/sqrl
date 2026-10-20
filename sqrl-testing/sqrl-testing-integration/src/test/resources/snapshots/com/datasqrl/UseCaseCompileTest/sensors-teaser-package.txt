@@ -231,29 +231,20 @@ CREATE TABLE `Sensors` (
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 LIKE `Sensors__schema`;
-CREATE TEMPORARY TABLE `SensorReading__schema` (
+CREATE TABLE `SensorReading` (
   `sensorid` BIGINT NOT NULL,
   `time` BIGINT NOT NULL,
   `temperature` DOUBLE NOT NULL,
-  `humidity` DOUBLE NOT NULL
-)
-WITH (
-  'connector' = 'filesystem',
-  'format' = 'csv',
-  'path' = '${DATA_PATH}/sensor_reading.csv.gz'
-);
-CREATE TABLE `SensorReading` (
+  `humidity` DOUBLE NOT NULL,
   `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`time`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
   PRIMARY KEY (`sensorid`, `time`) NOT ENFORCED,
   WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
 )
 WITH (
   'connector' = 'filesystem',
-  'flexible-csv.skip-header' = 'true',
-  'format' = 'flexible-csv',
+  'format' = 'csv',
   'path' = '${DATA_PATH}/sensor_reading.csv.gz'
-)
-LIKE `SensorReading__schema`;
+);
 CREATE VIEW `SecReading`
 AS
 SELECT `sensorid`, `window_time` AS `timeSec`, `window_start` AS `timeStart`, `window_end` AS `timeEnd`, AVG(`temperature`) AS `temp`

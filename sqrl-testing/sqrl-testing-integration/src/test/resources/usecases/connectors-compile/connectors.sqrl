@@ -34,7 +34,7 @@ CREATE TABLE kafka_safe_csv_table (
     'topic' = 'users-csv-avro',
     'properties.bootstrap.servers' = 'localhost:9092',
     'properties.group.id' = 'test',
-    'format' = 'flexible-csv'
+    'format' = 'csv'
       );
 
 -- ========== UPSERT KAFKA (with Confluent Avro) ==========

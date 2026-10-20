@@ -15,103 +15,100 @@
  */
 package com.datasqrl.packager.preprocess;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.FilePreprocessingPipeline;
 import com.datasqrl.util.FileCompression;
-import com.datasqrl.util.FileCompression.CompressionIO;
 import com.datasqrl.util.FilenameAnalyzer;
-import com.datasqrl.util.FilenameAnalyzer.Components;
-import com.google.common.io.ByteStreams;
-import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.regex.Pattern;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Copies {@code .jsonl}, {@code .csv}, and {@code .avro} files (optionally with compression) to the
- * data folder, so they can be useb by Flink.
+ * Copies {@code .jsonl}, {@code .csv}, and {@code .avro} files (optionally with compression)
+ * unchanged to the data folder, so they can be used by Flink. Flink reads every line of a CSV file
+ * as data, so a CSV file that starts with a header row gets a warning.
  */
 @Component
-@Slf4j
 public class CopyStaticDataPreprocessor implements Preprocessor {
 
   private static final FilenameAnalyzer DATA_PATTERN = FilenameAnalyzer.of("jsonl", "csv", "avro");
 
+  private static final List<String> CSV_DELIMITERS = List.of(",", ";", "\t");
+
+  private static final int MAX_HEADER_LENGTH_IN_WARNING = 200;
+
   @SneakyThrows
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
-    Optional<Components> fileComponents = DATA_PATTERN.analyze(file);
+    var fileComponents = DATA_PATTERN.analyze(file);
     if (fileComponents.isEmpty()) {
       return;
     }
 
-    var fileComp = fileComponents.get();
-    if (!"csv".equalsIgnoreCase(fileComp.extension())) {
-      ctx.copyToData(file);
-      return;
-    }
+    ctx.copyToData(file);
 
-    var compression = FileCompression.of(fileComp.compression());
-    if (compression.isPresent()) {
-      // Need to remove header row for CSV files since Flink does not support headers
-      copyFileSkipFirstLine(file, ctx.createNewDataFile(file), compression.get());
-
-    } else {
-      ctx.errorCollector()
-          .warn(
-              "Compression codex %s not supported. CSV file [%s] not copied.",
-              fileComponents.get().compression(), file);
-    }
-  }
-
-  private void copyFileSkipFirstLine(Path from, Path to, CompressionIO fileCompress) {
-    try (var in = fileCompress.decompress(new FileInputStream(from.toFile()));
-        var out = fileCompress.compress(new FileOutputStream(to.toFile()))) {
-
-      copyFileSkipFirstLine(in, out);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  void copyFileSkipFirstLine(InputStream in, OutputStream out) throws IOException {
-    var afterFirstLine = skipFirstLine(in);
-    ByteStreams.copy(afterFirstLine, out);
-  }
-
-  private static InputStream skipFirstLine(InputStream rawIn) throws IOException {
-    // Make sure we can mark and reset (peek the next byte safely)
-    var in = (rawIn instanceof BufferedInputStream bis) ? bis : new BufferedInputStream(rawIn);
-
-    while (true) {
-      in.mark(1);
-      var b = in.read();
-      if (b == -1) {
-        // End of stream, no more lines
-        break;
-      } else if (b == '\n') {
-        // Found line break (Unix), done skipping
-        break;
-      } else if (b == '\r') {
-        // Might be Windows-style \r\n or old Mac \r
-        in.mark(1);
-        var next = in.read();
-        if (next != '\n' && next != -1) {
-          // It's not \n, so reset => unread that byte
-          in.reset();
-        }
-        // done skipping the first line
-        break;
+    var components = fileComponents.get();
+    var compression = FileCompression.of(components.compression());
+    if ("csv".equals(components.extension()) && compression.isPresent()) {
+      var firstLine = readFirstLine(file, compression.get());
+      if (isHeader(firstLine)) {
+        warnHeader(file, firstLine, ctx.errorCollector());
       }
-      // Otherwise keep reading until we find line break or EOF
     }
+  }
 
-    return in;
+  /**
+   * Returns whether the line looks like a header row: every field starts with a letter, as column
+   * names do. A data row whose values all start with a letter looks like a header too.
+   */
+  static boolean isHeader(String line) {
+    if (line == null) {
+      return false;
+    }
+    var fields = line.startsWith("﻿") ? line.substring(1) : line;
+    var delimiter =
+        CSV_DELIMITERS.stream()
+            .max(Comparator.comparingInt(d -> fields.split(Pattern.quote(d), -1).length))
+            .get();
+    return Arrays.stream(fields.split(Pattern.quote(delimiter), -1))
+        .map(field -> unquote(field.strip()))
+        .allMatch(field -> !field.isEmpty() && Character.isLetter(field.charAt(0)));
+  }
+
+  private static String unquote(String field) {
+    return field.length() >= 2 && field.startsWith("\"") && field.endsWith("\"")
+        ? field.substring(1, field.length() - 1).strip()
+        : field;
+  }
+
+  private static void warnHeader(Path file, String header, ErrorCollector errors) {
+    var shownHeader =
+        header.length() > MAX_HEADER_LENGTH_IN_WARNING
+            ? header.substring(0, MAX_HEADER_LENGTH_IN_WARNING) + "..."
+            : header;
+    errors.warn(
+        "CSV file [%s] seems to start with a header row: %s. Flink reads every line of a CSV file"
+            + " as data, so remove the header row from the file.",
+        file, shownHeader);
+  }
+
+  private static String readFirstLine(Path file, FileCompression.CompressionIO compression)
+      throws IOException {
+    try (var reader =
+        new BufferedReader(
+            new InputStreamReader(
+                compression.decompress(new FileInputStream(file.toFile())),
+                StandardCharsets.UTF_8))) {
+      return reader.readLine();
+    }
   }
 }
