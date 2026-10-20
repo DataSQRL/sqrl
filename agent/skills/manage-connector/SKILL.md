@@ -223,7 +223,7 @@ CREATE TABLE User (
 - Add metadata columns and watermarks separately
 - The file name after `LIKE` is an identifier, so it must be **backtick-quoted** (`` LIKE `user.avsc` ``, `` LIKE `testdata/customers.jsonl` ``). Single quotes (`LIKE 'user.avsc'`) are a parse error.
 
-**From JSONL data files:** `` LIKE `data.jsonl` `` infers the columns and configures a filesystem source. CSV files have no schema discovery: declare the columns and use `'format' = 'csv'` (see [formats/csv.md](formats/csv.md)). Add a `WATERMARK` in the table definition and set `'source.monitor-interval'` only when the source must continuously discover files; omit it for bounded reads.
+**From JSONL data files:** `` LIKE `data.jsonl` `` infers the columns and configures a filesystem source. CSV files have no schema discovery. For CSV sources, the header data only lives in the schema: the column names go into the `CREATE TABLE` statement, and the CSV file contains only data rows. Use `'format' = 'csv'` (see [formats/csv.md](formats/csv.md)). Add a `WATERMARK` in the table definition and set `'source.monitor-interval'` only when the source must continuously discover files; omit it for bounded reads.
 
 ## Connector Preferences
 

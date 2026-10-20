@@ -20,6 +20,7 @@ Replace it with a small, coherent sample and point the connector at the sample.
 1. Produce a small sample (<1000 rows), **keeping the same format** so the connector's `'format'` still matches:
    - For `.jsonl` / `.csv` files, use `head -1000 big.jsonl > sample.jsonl` command
    - For `.csv.gz` files, use `zcat big.csv.gz | head -1000 | gzip > sample.csv.gz` command
+   - A CSV sample must contain only data rows, because the header data only lives in the `CREATE TABLE` schema. If the original starts with a header row, note the column names and skip it while sampling: `tail -n +2 big.csv | head -1000 > sample.csv`, or `zcat big.csv.gz | tail -n +2 | head -1000 | gzip > sample.csv.gz`
    - For `.parquet` files, use `duckdb -c "COPY (SELECT * FROM 'big.parquet' LIMIT 1000) TO 'sample.parquet' (FORMAT PARQUET)"` command
 2. **Sample coherently across related files.** When files reference each other (foreign keys), sample a consistent set of keys so references still resolve — otherwise the sampled test data has orphaned references. Pick a set of parent keys first, then keep only the child rows for those keys.
 3. Point the connector's `path` at the sample file. If you sampled into a **different** format than the original (e.g. parquet → jsonl), also update the connector's `'format'` (and any format-specific options) to match — the `'format'` key is independent of the file extension.

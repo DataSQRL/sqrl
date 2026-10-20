@@ -4,6 +4,9 @@
 
 ## Declare the columns, and keep header rows out of the file
 
+For CSV sources, the header data only lives in the schema: the column names go into the
+`CREATE TABLE` statement, and the CSV file contains only data rows.
+
 There is no schema discovery for CSV files: `` LIKE `data.csv` `` fails at compile time with
 `Cannot infer the schema of CSV file [...]`. Declare the columns in the `CREATE TABLE` statement
 and configure the `filesystem` connector with `'format' = 'csv'` and
