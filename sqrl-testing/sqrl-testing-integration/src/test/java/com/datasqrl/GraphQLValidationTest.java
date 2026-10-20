@@ -86,6 +86,19 @@ public class GraphQLValidationTest {
     assertThat(result.getMessages()).contains("Could not find field status in type Events");
   }
 
+  @Test
+  void givenOmittedNullableColumnWithNonNullResultField_whenCompile_thenMutationIsRejected() {
+    var useCase = USECASE_DIR.resolve("string-compatible-mutation-input");
+    var result =
+        snapshotExtension.execute(useCase, "compile", "package-non-null-omitted-result-field.json");
+
+    assertThat(result.isFailed()).isTrue();
+    assertThat(result.getMessages())
+        .contains(
+            "Field 'note' is omitted from the mutation input, so it must be nullable in the"
+                + " mutation result");
+  }
+
   private Predicate<Path> getBuildDirFilter() {
     return file -> {
       var fileName = file.getFileName().toString();

@@ -19,6 +19,7 @@ type EventsResultOutput {
   status: EventStatus!
   payload: JSON
   parts: [JSON]
+  note: String
   event_time: DateTime!
 }
 

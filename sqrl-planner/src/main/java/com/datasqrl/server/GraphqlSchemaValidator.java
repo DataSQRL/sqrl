@@ -98,6 +98,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
         getValidMutationOutputType(atField, registry),
         inputType,
         getComputedColumnNames(mutation),
+        getNullableColumnNames(mutation),
         registry);
 
     validateMutationInputMatchesTable(atField, inputType, mutation, registry);
@@ -141,6 +142,17 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
             mutation.getOutputDataType().getFieldNames().stream()
                 .filter(fieldName -> !inputFieldNames.contains(fieldName)))
         .distinct()
+        .toList();
+  }
+
+  /**
+   * Returns the nullable columns of the mutation table. These can be omitted from the mutation
+   * input, in which case the mutation result returns null for them.
+   */
+  private List<String> getNullableColumnNames(MutationTable mutation) {
+    return mutation.getInputDataType().getFieldList().stream()
+        .filter(field -> field.getType().isNullable())
+        .map(RelDataTypeField::getName)
         .toList();
   }
 
@@ -280,6 +292,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
       ObjectTypeDefinition outputType,
       InputObjectTypeDefinition inputType,
       List<String> allowedFieldNames,
+      List<String> nullableFieldNames,
       TypeDefinitionRegistry registry) {
 
     for (FieldDefinition outputField : outputType.getFieldDefinitions()) {
@@ -288,6 +301,18 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
       }
 
       var outputFieldName = outputField.getName();
+      if (nullableFieldNames.contains(outputFieldName)
+          && findInputValue(outputFieldName, inputType.getInputValueDefinitions()).isEmpty()) {
+        // A nullable column omitted from the mutation input is returned as null.
+        checkState(
+            !(outputField.getType() instanceof NonNullType),
+            outputField.getSourceLocation(),
+            "Field '%s' is omitted from the mutation input, so it must be nullable in the mutation"
+                + " result",
+            outputFieldName);
+        continue;
+      }
+
       var inputField =
           findExactlyOneInputValue(field, outputFieldName, inputType.getInputValueDefinitions());
 
@@ -414,7 +439,7 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
         var outputObjectTypeDef = (ObjectTypeDefinition) outputTypeDef;
         // walk object types
         return validateStructurallyEqualMutation(
-            outputField, outputObjectTypeDef, inputObjectTypeDef, List.of(), registry);
+            outputField, outputObjectTypeDef, inputObjectTypeDef, List.of(), List.of(), registry);
       } else {
         throw createThrowable(
             inputType.getSourceLocation(),
