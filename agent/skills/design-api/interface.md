@@ -86,7 +86,9 @@ A GraphQL field that matches no SQRL item stops the compile. The error depends o
 * A field of `type Mutation` gives `No mutation found for <field>`. Compare the field name with the names of the mutation tables.
 * A field of the input type of a mutation gives `Field '<field>' is not present in the mutation table input`. Compare the field name with the columns of the mutation table.
 * A non-null column of the mutation table that is missing from the input type gives `Could not find field <column> in type <mutation>`. Add the column to the input type, or make the column nullable.
-* A field of the result type of a mutation that has no field with the same name in the input type gives `Could not find field <field> in type <mutation>`. A nullable column left out of the input is the exception. Its result field must be nullable, or the compile fails with `Field '<field>' is omitted from the mutation input, so it must be nullable in the mutation result`.
+* A field of the result type of a mutation that has no field with the same name in the input type gives `Could not find field <field> in type <mutation>`. There are two exceptions:
+  * A computed column (`total AS price * quantity`) or a metadata column (`event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'`) belongs only in the result type. Keep it in the result type and leave it out of the input type.
+  * A nullable column left out of the input. Its result field must be nullable, or the compile fails with `Field '<field>' is omitted from the mutation input, so it must be nullable in the mutation result`.
 * A field of the result type of a query or a subscription gives `Unknown field at location <field>. Possible scalars are [...]`. This applies at every level, also in nested types. The list shows only the columns that the compiler searched. For a relationship field, compare the GraphQL type name with the table name in the SQRL relationship definition `<Table>.<field> :=`.
 
 :::warning
