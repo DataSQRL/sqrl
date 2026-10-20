@@ -2,7 +2,7 @@
 
 `'connector' = 'datagen'`
 
-Generates synthetic data for testing. For snapshot tests, use data files (see the `test-sqrl` skill), because datagen changes its output on every run.
+Generates synthetic data for testing. For snapshot tests, use data files (see the `test-sqrl` skill). Random fields and timestamps change on every run. `sequence` fields stay the same, but all of them count up together, so no two rows share a key. A timestamp cannot use `sequence`, and sequence data cannot express edge cases such as late events, duplicates or nulls.
 
 ## Configuration Options
 
