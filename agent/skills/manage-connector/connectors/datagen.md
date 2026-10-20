@@ -2,7 +2,7 @@
 
 `'connector' = 'datagen'`
 
-Generates synthetic data for testing.
+Generates synthetic data for testing. For snapshot tests, use data files (see the `test-sqrl` skill), because datagen changes its output on every run.
 
 ## Configuration Options
 
@@ -32,6 +32,7 @@ Use `fields.<field_name>.<option>`:
 
 - **Unbounded by default**: Set `number-of-rows` or use sequence generator to bound
 - **Sequence generator**: When any column uses sequence, table ends when first sequence completes
+- **Sequence memory**: A sequence generator keeps every value of its range in memory and in checkpoints, so keep `start` to `end` small
 - **Time types**: DATE/TIME always use current system time; TIMESTAMP/TIMESTAMP_LTZ use current time minus random `max-past`
 - **Length constraints**: varchar/varbinary limited by schema definition; string/bytes default 100 (max 2^31)
 
