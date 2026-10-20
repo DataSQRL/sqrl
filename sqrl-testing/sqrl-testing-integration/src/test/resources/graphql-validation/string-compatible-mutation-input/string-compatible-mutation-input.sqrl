@@ -1,0 +1,9 @@
+/*+engine(kafka)*/
+CREATE TABLE Events (
+  event_id STRING NOT NULL,
+  status STRING NOT NULL,
+  payload STRING,
+  parts ARRAY<STRING>,
+  note STRING,
+  event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
