@@ -1909,6 +1909,68 @@ FROM "ExternalOrders"
         }
       }
     },
+    "/v1/rest/queries/CustomerByTime2" : {
+      "get" : {
+        "summary" : "GetCustomerByTime2",
+        "operationId" : "GetCustomerByTime2",
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object",
+                        "properties" : {
+                          "customerid" : {
+                            "type" : "integer"
+                          },
+                          "email" : {
+                            "type" : "string"
+                          },
+                          "name" : {
+                            "type" : "string"
+                          },
+                          "lastUpdated" : {
+                            "type" : "integer"
+                          },
+                          "timestamp" : {
+                            "type" : "string",
+                            "format" : "date-time"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/rest/queries/CustomerByMultipleTime" : {
       "get" : {
         "summary" : "GetCustomerByMultipleTime",
@@ -2266,6 +2328,49 @@ FROM "ExternalOrders"
           "mcpMethod" : "TOOL",
           "restMethod" : "GET",
           "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,offset,arg1,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerByTime2",
+            "parameters" : {
+              "type" : "object",
+              "properties" : { },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerByTime2 {\nCustomerByTime2 {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerByTime2",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerByTime2",
           "format" : "JSON",
           "resultDefinition" : {
             "type" : "array",
