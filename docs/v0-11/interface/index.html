@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.d902c99c.css">
-<script src="/assets/js/runtime~main.4756dd77.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.79115cd2.js" defer="defer"></script>
 <script src="/assets/js/main.2df9c263.js" defer="defer"></script>
 </head>
 <body>
@@ -68,6 +68,7 @@ To serve multiple API versions, configure each version under <code>script.api</c
 <li class="">Adding enums</li>
 <li class="">Adding interfaces and structuring types with interfaces</li>
 </ul>
+<p>Mutation input fields must match the column types of the table. A <code>String</code> column also accepts enum, <code>ID</code>, and <code>JSON</code> inputs, where JSON objects and arrays are stored as JSON text. Nullable columns can be omitted from the mutation input. If the mutation result type still includes them, those fields must be nullable and return <code>null</code>.</p>
 <div class="theme-admonition theme-admonition-warning admonition_xJq3 alert alert--warning"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>warning</div><div class="admonitionContent_BuS1"><p>The compiler raises errors when the provided GraphQL schema is not compatible with the object-relationship model.</p></div></div>
 <h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="pagination">Pagination<a href="#pagination" class="hash-link" aria-label="Direct link to Pagination" title="Direct link to Pagination" translate="no">​</a></h4>
 <p>Every generated query endpoint takes <code>limit</code> and <code>offset</code> arguments to page through the result (<code>limit</code> defaults to the configured <code>default-limit</code>). By default the endpoint returns the rows directly and the client tracks the offsets itself.</p>

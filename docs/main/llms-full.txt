@@ -3113,7 +3113,7 @@ DataSQRL provides built-in system functions that are available in all SQRL scrip
 
 | Function | Description | Example |
 |----------|-------------|---------|
-| `to_jsonb` | Parses a JSON string or Flink object (e.g., `Row`, `Row[]`) into a JSON object. | `to_jsonb('{"name":"Alice"}') → JSON object` |
+| `to_jsonb` | Parses a JSON string or Flink object (e.g., `Row`, array, map) into a JSON object. Nested JSON values are embedded as is, and map entries with a `NULL` key are skipped. | `to_jsonb('{"name":"Alice"}') → JSON object` |
 | `jsonb_to_string` | Serializes a JSON object into a JSON string. | `jsonb_to_string(to_jsonb('{"a":1}')) → '{"a":1}'` |
 | `jsonb_object` | Constructs a JSON object from key-value pairs. Keys must be strings. | `jsonb_object('a', 1, 'b', 2) → {"a":1,"b":2}` |
 | `jsonb_array` | Constructs a JSON array from multiple values or JSON objects. | `jsonb_array(1, 'a', to_jsonb('{"b":2}')) → [1,"a",{"b":2}]` |
