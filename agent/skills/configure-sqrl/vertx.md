@@ -126,7 +126,7 @@ Set `authKind` to include `OAUTH` and configure `oauthConfig`. OAuth enables MCP
           },
           "authorizationServerUrl": "${AUTH_EXTERNAL_URL}",
           "scopesSupported": ["mcp:tools", "mcp:resources"],
-          "resource": "https://api.example"
+          "resource": "https://api.example.com/v1/mcp"
         }
       }
     }
@@ -135,3 +135,5 @@ Set `authKind` to include `OAUTH` and configure `oauthConfig`. OAuth enables MCP
 ```
 
 `oauth2Options.site` is required. `clientId` defaults to `datasqrl-mcp`; `authorizationServerUrl`, `scopesSupported`, and `resource` are optional. Use `["JWT", "OAUTH"]` and provide both configuration blocks to enable both methods.
+
+`resource` is the public URL of the MCP endpoint. Without it, the server derives the discovery `resource` and the `WWW-Authenticate: Bearer resource_metadata="..."` URL of `401` responses from each request (`X-Forwarded-Proto` or the request scheme, plus `Host`). With it, the discovery metadata returns it unchanged, and `resource_metadata` points to `/.well-known/oauth-protected-resource` on its origin. Set it behind a proxy that terminates TLS, so MCP clients always receive `https` URLs.

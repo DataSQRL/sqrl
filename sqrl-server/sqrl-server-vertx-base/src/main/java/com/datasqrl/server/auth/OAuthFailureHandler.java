@@ -58,7 +58,7 @@ public class OAuthFailureHandler implements Handler<RoutingContext> {
 
     var oauthConfig = config.getOauthConfig();
     if (oauthConfig != null && oauthConfig.getSite() != null) {
-      var resourceMetadataUrl = buildResourceMetadataUrl(ctx);
+      var resourceMetadataUrl = ProtectedResourceUrls.metadataUrl(config, ctx.request());
       response.putHeader(
           "WWW-Authenticate",
           String.format("Bearer resource_metadata=\"%s\"", resourceMetadataUrl));
@@ -67,13 +67,5 @@ public class OAuthFailureHandler implements Handler<RoutingContext> {
     var json = new JsonObject().put("error", "authentication_required").put("cause", errorCause);
 
     response.end(json.encode());
-  }
-
-  private String buildResourceMetadataUrl(RoutingContext ctx) {
-    var host = ctx.request().getHeader("Host");
-    var forwardedProto = ctx.request().getHeader("X-Forwarded-Proto");
-    var scheme = forwardedProto != null ? forwardedProto : ctx.request().scheme();
-
-    return scheme + "://" + host + "/.well-known/oauth-protected-resource";
   }
 }
