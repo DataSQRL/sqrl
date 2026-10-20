@@ -145,12 +145,12 @@ You can enable both authentication methods simultaneously:
 
 The `oauthConfig` object combines Vert.x's [OAuth2Options](https://vertx.io/docs/apidocs/io/vertx/ext/auth/oauth2/OAuth2Options.html) with discovery metadata:
 
-| Key                      | Type       | Required | Description                                                   |
-|--------------------------|------------|----------|---------------------------------------------------------------|
-| `oauth2Options`          | **object** | Yes      | Vert.x OAuth2Options for authentication                       |
-| `authorizationServerUrl` | **string** | No       | External authorization server URL for discovery               |
-| `scopesSupported`        | **array**  | No       | Scopes advertised (default: `["mcp:tools", "mcp:resources"]`) |
-| `resource`               | **string** | No       | Override resource identifier in discovery metadata            |
+| Key                      | Type       | Required | Description                                                           |
+|--------------------------|------------|----------|-----------------------------------------------------------------------|
+| `oauth2Options`          | **object** | Yes      | Vert.x OAuth2Options for authentication                               |
+| `authorizationServerUrl` | **string** | No       | External authorization server URL for discovery                       |
+| `scopesSupported`        | **array**  | No       | Scopes advertised (default: `["mcp:tools", "mcp:resources"]`)         |
+| `resource`               | **string** | No       | Public URL of the MCP endpoint, e.g. `https://api.example.com/v1/mcp` |
 
 ### OAuth2Options Configuration
 
@@ -165,6 +165,15 @@ The `oauth2Options` object uses Vert.x's OAuth2Options class:
 
 When OAuth is configured, the server exposes a discovery endpoint at `/.well-known/oauth-protected-resource` per RFC 9728.
 This enables MCP clients to discover the authorization server and scopes.
+When an MCP request has no valid token, the server responds with `401` and a `WWW-Authenticate: Bearer resource_metadata="..."` header that points MCP clients to this endpoint.
+
+If `resource` is not set, the server derives both the `resource` value in the discovery metadata and the `resource_metadata` URL from each request: the scheme from the `X-Forwarded-Proto` header (or the request scheme), and the host from the `Host` header.
+If `resource` is set, the discovery metadata returns it unchanged, and the `resource_metadata` URL uses its origin.
+For example, `"resource": "https://api.example.com/v1/mcp"` makes the `401` header point to `https://api.example.com/.well-known/oauth-protected-resource`.
+
+Set `resource` when the server runs behind a reverse proxy or load balancer that terminates TLS, so MCP clients always receive `https` URLs.
+Use the exact URL MCP clients connect to: RFC 9728 requires clients to reject discovery metadata whose `resource` does not match that URL.
+The proxy must also route `/.well-known/oauth-protected-resource` on the same origin to the server.
 
 ### Environment Variable Support
 
