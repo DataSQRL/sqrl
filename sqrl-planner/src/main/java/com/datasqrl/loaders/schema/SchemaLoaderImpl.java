@@ -30,12 +30,22 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class SchemaLoaderImpl implements SchemaLoader {
 
+  private static final FilenameAnalyzer CSV_FILES = FilenameAnalyzer.of("csv");
+
   private final ResourceResolver resourceResolver;
   private final ErrorCollector errors;
 
   @Override
   public Optional<SchemaConversionResult> loadSchema(
       String tableName, String relativeSchemaFilePath, Map<String, String> tableProps) {
+    errors.checkFatal(
+        CSV_FILES.analyze(relativeSchemaFilePath).isEmpty(),
+        "Cannot infer the schema of CSV file [%s]. Declare the columns of table [%s] and configure"
+            + " the 'filesystem' connector with 'format' = 'csv' instead. Flink reads every line"
+            + " of the file as data, so the file must not have a header row.",
+        relativeSchemaFilePath,
+        tableName);
+
     var schemaFactoryMap = TableSchemaFactory.factoriesByExtension();
     var fileAnalyzer = FilenameAnalyzer.of(schemaFactoryMap.keySet());
     var fileComponentsOpt = fileAnalyzer.analyze(relativeSchemaFilePath);

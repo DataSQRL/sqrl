@@ -181,7 +181,7 @@ CREATE TABLE `kafka_safe_csv_table` (
 )
 WITH (
   'connector' = 'kafka-safe',
-  'format' = 'flexible-csv',
+  'format' = 'csv',
   'properties.bootstrap.servers' = 'localhost:9092',
   'properties.group.id' = 'test',
   'topic' = 'users-csv-avro'
