@@ -33,9 +33,7 @@ Specifically, tables and functions are exposed as query endpoints of the same na
 Tables/functions defined with the `SUBSCRIBE` keyword are exposed as subscriptions.
 Internal table sources are exposed as mutations with the input type identical to the columns in the table excluding computed columns.
 
-In addition, the result type of the endpoint matches the schema of the table or function. That means, each field of the result type matches a column or relationship on the table/function by name and the field type is compatible.
-A relationship field resolves to the relationship defined on the table that has the same name as the GraphQL type. If there is no such relationship or column, it resolves to the relationship on the [base table](#base-tables) of the table/function.
-When a relationship field resolves on the base table, all tables/functions that return this GraphQL type must have the same base table.
+In addition, the result type of the endpoint matches the schema of the table or function. That means, each field of the result type matches a column of the table/function or a relationship by name (see [Schema Customization](#schema-customization) for how relationship fields resolve) and the field type is compatible.
 The field type is compatible with the column/relationship type iff:
 * For scalar or collection types there is a native mapping from one type system to the other
 * For structured types (i.e. nested or relationship), the mapping applies recursively.
@@ -70,26 +68,30 @@ You can customize the GraphQL schema by:
 * Adding interfaces and structuring types with interfaces
 
 With a provided GraphQL schema, the compiler matches each GraphQL field to an item in the SQRL script:
-* A field of `type Query` matches the SQRL table or SQRL function with the same name.
-* A column field matches the SQRL column with the same name in the rows that the SQRL table or SQRL function returns. The name of the GraphQL type has no role in this match, so a type with only column fields can have any name.
-* A relationship field matches the SQRL relationship with the full name `<GraphQL type name>.<GraphQL field name>`. So a GraphQL type with relationship fields has the name of the SQRL table that owns those relationships.
-* A SQRL function cannot own a SQRL relationship. A query whose result has relationship fields returns the GraphQL type of the SQRL table that owns them, for example `OrderById(id: Long!): OrderRecord` for the relationship `OrderRecord.items`.
-* These rules apply at every level. A nested GraphQL type that the compiler reaches through a relationship can have its own relationship fields, and it has the name of its own SQRL table.
+* A field of `type Query` matches the queryable SQRL table or SQRL function with the same name, and a field of `type Subscription` matches the `SUBSCRIBE` table or function with the same name. The compiler does not check that a field is in the matching root type.
+* A field of the type that a table, function, or relationship returns matches the first of:
+  1. the SQRL relationship `<GraphQL type name>.<field name>`
+  2. the column with the same name in the returned rows
+  3. the SQRL relationship `<base table>.<field name>`, with the [base table](#base-tables) of the table, function, or relationship
+
+  So the type can have any name, unless a relationship field must resolve by the type name.
+* Only a base table can own a SQRL relationship, not a SQRL function or a table whose base table is another table. A function or table that returns only some columns of a table has no base table, so its type reaches that table's relationships only by the type name, for example `OrderById(id: Long!): OrderRecord` for `OrderRecord.items`. Its rows must include the parent columns that the relationship reads (`this.id`). Otherwise the relationship gets `null` and returns no rows, without a compile error.
+* All tables, functions, and relationships that return the same type must resolve its relationship fields to the same relationships, so a field that resolves on the base table needs the same base table for all of them. Otherwise the compile fails with `Type [<type>] is returned by [...] with base table [...] and by [...] with base table [...], which resolve its relationship fields differently. Use a separate type for each base table.`
+* A nested GraphQL type that the compiler reaches through a relationship can have its own relationship fields, by the same rules.
 * A nested GraphQL type that the compiler reaches through a column with nested data (`ROW<...>` or `ARRAY<ROW<...>>`) can have only column fields. The compiler does not look for relationships inside a column.
+* The compiler checks the column fields of each GraphQL type only once, against the rows of the first field that returns it. If several fields return the same type, the rows of each must contain all its column fields. A missing column compiles and returns `null`. Do not use one type both for a column with nested data and for a table or function result.
 
-A SQRL table and a SQRL function cannot have the same name. So a query and the GraphQL type it returns have different names when the result has relationship fields.
-
-Mutation input fields must match the column types of the table. A `String` column also accepts enum, `ID`, and `JSON` inputs, where JSON objects and arrays are stored as JSON text. Nullable columns can be omitted from the mutation input. If the mutation result type still includes them, those fields must be nullable and return `null`.
+Mutation input fields must match the column types of the table. A `String` column also accepts enum, `ID`, and `JSON` inputs, where JSON objects and arrays are stored as JSON text. Nullable columns can be omitted from the mutation input. If the mutation result type still includes them, those fields must be nullable and return `null`. In a nested input type, an omitted nullable field must also be omitted from the nested result type.
 
 A GraphQL field that matches no SQRL item stops the compile. The error depends on the type that holds the field:
-* A field of `type Query` or `type Subscription` gives `Could not find table or function for field: <field>`. Compare the field name with the names of the SQRL tables and SQRL functions.
+* A field of `type Query` or `type Subscription` gives `Could not find table or function for field: <field>`. Compare the field name with the names of the SQRL tables and SQRL functions. A matching name also gives this error if the table or function is not queryable: hidden (`_` prefix), marked `/*+no_query*/`, or not defined in the main script or imported inline (`IMPORT otherscript.*`).
 * A field of `type Mutation` gives `No mutation found for <field>`. Compare the field name with the names of the mutation tables.
 * A field of the input type of a mutation gives `Field '<field>' is not present in the mutation table input`. Compare the field name with the columns of the mutation table.
-* A non-null column of the mutation table that is missing from the input type gives `Could not find field <column> in type <mutation>`. Add the column to the input type, or make the column nullable.
-* A field of the result type of a mutation that has no field with the same name in the input type gives `Could not find field <field> in type <mutation>`. There are two exceptions:
-  * A computed column (`total AS price * quantity`) or a metadata column (`event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'`) belongs only in the result type. Keep it in the result type and leave it out of the input type.
-  * A nullable column left out of the input. Its result field must be nullable, or the compile fails with `Field '<field>' is omitted from the mutation input, so it must be nullable in the mutation result`.
-* A field of the result type of a query or a subscription gives `Unknown field at location <field>. Possible scalars are [...]`. This applies at every level, also in nested types. The list shows only the columns that the compiler searched. For a relationship field, compare the GraphQL type name with the table name in the SQRL relationship definition `<Table>.<field> :=`.
+* A field of the result type of a mutation without a field of the same name in the input type, and a non-null column of the mutation table that is missing from the input type, both give `Could not find field <field> in type <mutation>`. The result type is checked first. If `<field>` is a non-null column of the mutation table, add it to the input type or make the column nullable. Otherwise, remove it from the result type. Exceptions for the result type:
+  * A metadata column (`event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'`, `'uuid'`, `'auth.<claim>'`) belongs only in the result type, and the server fills it.
+  * A computed column (`total AS price * quantity`) can also stay in the result type, but the server does not compute it and returns `null`. Its result field must be nullable, or the mutation fails at runtime after the event was written.
+  * A nullable top-level column left out of the input. Its result field must be nullable, or the compile fails with `Field '<field>' is omitted from the mutation input, so it must be nullable in the mutation result`.
+* A field of the result type of a query or a subscription gives `Unknown field at location <type>.<field>. No relationship [<type>.<field>] or [<base table>.<field>] exists. Relationships named [<field>] exist on other tables: <Table>.<field>. Possible scalars are [...]`. The scalar list shows only the columns that the compiler searched. The other-tables part appears only if such relationships exist, and a nested type reached through a column has no relationship parts. For a relationship field, name the type after a listed table that has the relationship, or make that table the base table of the query.
 
 :::warning
 The compiler raises errors when the provided GraphQL schema is not compatible with the object-relationship model.
