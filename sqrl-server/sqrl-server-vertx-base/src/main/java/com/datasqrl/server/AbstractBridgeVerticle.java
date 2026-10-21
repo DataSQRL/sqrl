@@ -36,6 +36,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -79,11 +80,62 @@ public abstract class AbstractBridgeVerticle extends AbstractVerticle {
 
   protected Future<ExecutionResult> bridgeRequestToGraphQL(
       RoutingContext ctx, ApiOperation operation, Map<String, Object> variables) {
+    var arguments = removeOptionalNulls(variables, operation);
+
     // Validate parameters
-    validateParameters(variables, operation);
+    validateParameters(arguments, operation);
 
     // Execute GraphQL query directly with ExecutionInput
-    return executeGraphQLAsync(ctx, operation, variables);
+    return executeGraphQLAsync(ctx, operation, arguments);
+  }
+
+  /**
+   * Treats optional arguments that are explicitly null as omitted, including fields of nested input
+   * objects. Clients, LLMs in particular, commonly send null for optional fields instead of leaving
+   * them out, which would otherwise fail validation against the operation's parameter schema. Only
+   * nulls the schema rejects are removed, so unknown and untyped (JSON) arguments keep them.
+   */
+  private static Map<String, Object> removeOptionalNulls(
+      Map<String, Object> variables, ApiOperation operation) {
+    var parameters = operation.getFunction().getParameters();
+    if (variables == null || parameters == null) {
+      return variables;
+    }
+    return removeOptionalNulls(variables, parameters.getProperties(), parameters.getRequired());
+  }
+
+  private static Map<String, Object> removeOptionalNulls(
+      Map<String, Object> values,
+      Map<String, FunctionDefinition.Argument> properties,
+      List<String> required) {
+    var result = new LinkedHashMap<String, Object>();
+    values.forEach(
+        (name, value) -> {
+          var argument = properties == null ? null : properties.get(name);
+          if (value == null
+              && argument != null
+              && argument.getType() != null
+              && (required == null || !required.contains(name))) {
+            return;
+          }
+          result.put(name, removeOptionalNulls(value, argument));
+        });
+    return result;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Object removeOptionalNulls(Object value, FunctionDefinition.Argument argument) {
+    if (argument == null) {
+      return value;
+    }
+    if (value instanceof Map<?, ?> map && argument.getProperties() != null) {
+      return removeOptionalNulls(
+          (Map<String, Object>) map, argument.getProperties(), argument.getRequired());
+    }
+    if (value instanceof List<?> list && argument.getItems() != null) {
+      return list.stream().map(item -> removeOptionalNulls(item, argument.getItems())).toList();
+    }
+    return value;
   }
 
   protected void validateParameters(Map<String, Object> variables, ApiOperation operation) {

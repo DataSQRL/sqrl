@@ -570,7 +570,7 @@ CREATE TABLE IF NOT EXISTS "SensorReading" ("sensorid" INTEGER NOT NULL, "temper
             "queryName" : "SensorReading",
             "operationType" : "MUTATION"
           },
-          "mcpMethod" : "NONE",
+          "mcpMethod" : "TOOL",
           "restMethod" : "POST",
           "uriTemplate" : "mutations/SensorReading",
           "format" : "JSON",

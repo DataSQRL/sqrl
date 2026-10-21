@@ -18,6 +18,7 @@ package com.datasqrl.server;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -28,6 +29,7 @@ import com.datasqrl.server.graphql.ModelContainer;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.openapi.OpenApiService;
 import com.datasqrl.server.operation.ApiOperation;
+import com.datasqrl.server.operation.FunctionDefinition;
 import com.datasqrl.server.operation.RestMethodType;
 import com.datasqrl.server.operation.ResultDefinition;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import lombok.SneakyThrows;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -332,6 +335,92 @@ class RestBridgeVerticleTest {
   }
 
   @Test
+  void givenPostBodyWithExplicitNullForOptionalNestedFields_whenBridgeRequest_thenOmitsThem() {
+    var operation = addOrderOperation();
+    when(requestBody.asJsonObject())
+        .thenReturn(
+            new JsonObject(
+                """
+                {
+                  "id": 1,
+                  "shipping": {"name": "Ada", "address": {"city": "Paris", "zip": null}},
+                  "entries": [{"productid": 7, "discount": null}],
+                  "tags": null
+                }
+                """));
+    when(routingContext.body()).thenReturn(requestBody);
+    when(graphQL.executeAsync(any(ExecutionInput.class)))
+        .thenReturn(CompletableFuture.completedFuture(executionResult));
+
+    var parameters = RestBridgeVerticle.extractParameters(routingContext, operation);
+    restBridgeVerticle.bridgeRequestToGraphQL(routingContext, operation, parameters);
+
+    verify(graphQL).executeAsync(executionInputCaptor.capture());
+    assertThat(executionInputCaptor.getValue().getVariables())
+        .isEqualTo(
+            Map.of(
+                "id",
+                1,
+                "shipping",
+                Map.of("name", "Ada", "address", Map.of("city", "Paris")),
+                "entries",
+                List.of(Map.of("productid", 7))));
+  }
+
+  @Test
+  void givenPostBodyWithNullForUntypedAndUnknownFields_whenBridgeRequest_thenKeepsThem() {
+    var operation = addOrderOperation();
+    when(requestBody.asJsonObject())
+        .thenReturn(
+            new JsonObject(
+                """
+                {
+                  "id": 1,
+                  "shipping": {"name": "Ada", "address": {"city": "Paris", "country": null}},
+                  "entries": [],
+                  "metadata": null
+                }
+                """));
+    when(routingContext.body()).thenReturn(requestBody);
+    when(graphQL.executeAsync(any(ExecutionInput.class)))
+        .thenReturn(CompletableFuture.completedFuture(executionResult));
+
+    var parameters = RestBridgeVerticle.extractParameters(routingContext, operation);
+    restBridgeVerticle.bridgeRequestToGraphQL(routingContext, operation, parameters);
+
+    verify(graphQL).executeAsync(executionInputCaptor.capture());
+    assertThat(executionInputCaptor.getValue().getVariables())
+        .containsEntry("metadata", null)
+        .extractingByKey("shipping", InstanceOfAssertFactories.MAP)
+        .extractingByKey("address", InstanceOfAssertFactories.MAP)
+        .containsEntry("country", null);
+  }
+
+  @Test
+  void givenPostBodyWithExplicitNullForRequiredNestedField_whenBridgeRequest_thenRejectsRequest() {
+    var operation = addOrderOperation();
+    when(requestBody.asJsonObject())
+        .thenReturn(
+            new JsonObject(
+                """
+                {
+                  "id": 1,
+                  "shipping": {"name": "Ada", "address": {"city": null}},
+                  "entries": [{"productid": 7}]
+                }
+                """));
+    when(routingContext.body()).thenReturn(requestBody);
+
+    var parameters = RestBridgeVerticle.extractParameters(routingContext, operation);
+
+    assertThatThrownBy(
+            () -> restBridgeVerticle.bridgeRequestToGraphQL(routingContext, operation, parameters))
+        .isInstanceOf(AbstractBridgeVerticle.ValidationException.class)
+        .hasMessageContaining("/shipping/address/city");
+    verify(graphQL, never()).executeAsync(any(ExecutionInput.class));
+  }
+
+  @Test
   @SneakyThrows
   void given_modelWithRestOperations_when_generateOpenApi_then_includesResponseSchemas() {
     var operation = addSensorReadingOperation();
@@ -496,5 +585,59 @@ class RestBridgeVerticleTest {
 
   private ApiOperation addSensorReadingOperation() {
     return getOperationByName("AddSensorReading");
+  }
+
+  @SneakyThrows
+  private ApiOperation addOrderOperation() {
+    var function =
+        new ObjectMapper()
+            .readValue(
+                """
+                {
+                  "name": "AddOrder",
+                  "parameters": {
+                    "type": "object",
+                    "properties": {
+                      "id": {"type": "integer"},
+                      "shipping": {
+                        "type": "object",
+                        "properties": {
+                          "name": {"type": "string"},
+                          "address": {
+                            "type": "object",
+                            "properties": {"city": {"type": "string"}, "zip": {"type": "string"}},
+                            "required": ["city"]
+                          }
+                        },
+                        "required": ["name", "address"]
+                      },
+                      "entries": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "productid": {"type": "integer"},
+                            "discount": {"type": "number"}
+                          },
+                          "required": ["productid"]
+                        }
+                      },
+                      "tags": {"type": "array", "items": {"type": "string"}},
+                      "metadata": {}
+                    },
+                    "required": ["id", "entries"]
+                  }
+                }
+                """,
+                FunctionDefinition.class);
+    var operation = addSensorReadingOperation();
+    return ApiOperation.builder()
+        .function(function)
+        .apiQuery(operation.getApiQuery())
+        .mcpMethod(operation.getMcpMethod())
+        .restMethod(RestMethodType.POST)
+        .uriTemplate("mutations/AddOrder")
+        .format(operation.getFormat())
+        .build();
   }
 }

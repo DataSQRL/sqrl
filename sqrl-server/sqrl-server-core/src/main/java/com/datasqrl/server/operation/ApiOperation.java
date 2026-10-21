@@ -46,7 +46,7 @@ public class ApiOperation {
     return builder()
         .function(function)
         .apiQuery(apiQuery)
-        .mcpMethod(getDefaultMcpMethod(function))
+        .mcpMethod(McpMethodType.TOOL)
         .restMethod(getDefaultRestMethod(apiQuery))
         .uriTemplate(getDefaultUriTemplate(function, apiQuery))
         .format(ResultFormat.JSON);
@@ -118,14 +118,6 @@ public class ApiOperation {
   @Override
   public int hashCode() {
     return Objects.hashCode(getId());
-  }
-
-  public static McpMethodType getDefaultMcpMethod(FunctionDefinition function) {
-    if (function.getParameters() == null || !function.getParameters().isNested()) {
-      return McpMethodType.TOOL;
-    } else {
-      return McpMethodType.NONE;
-    }
   }
 
   public static RestMethodType getDefaultRestMethod(GraphQLQuery apiQuery) {

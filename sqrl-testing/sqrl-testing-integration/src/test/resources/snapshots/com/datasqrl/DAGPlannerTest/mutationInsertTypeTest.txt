@@ -772,7 +772,7 @@ END
             "queryName" : "Sensors",
             "operationType" : "MUTATION"
           },
-          "mcpMethod" : "NONE",
+          "mcpMethod" : "TOOL",
           "restMethod" : "POST",
           "uriTemplate" : "mutations/Sensors",
           "format" : "JSON",

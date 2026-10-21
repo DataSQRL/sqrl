@@ -716,7 +716,7 @@ END
             "queryName" : "NestedCustomers",
             "operationType" : "MUTATION"
           },
-          "mcpMethod" : "NONE",
+          "mcpMethod" : "TOOL",
           "restMethod" : "POST",
           "uriTemplate" : "mutations/NestedCustomers",
           "format" : "JSON",

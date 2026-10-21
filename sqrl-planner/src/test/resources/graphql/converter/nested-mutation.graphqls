@@ -1,0 +1,86 @@
+scalar DateTime
+scalar JSON
+scalar Long
+
+type Query {
+  Orders(customerid: Long!, limit: Int = 10, offset: Int = 0): [Orders!]
+}
+
+type Mutation {
+  "Places an order with shipping details and line items"
+  AddOrder(event: OrderInput!): OrderResult!
+  "Records a batch of sensor readings"
+  AddReadings(event: [ReadingInput!]!): [ReadingResult!]!
+}
+
+type Orders {
+  id: Long!
+  customerid: Long!
+}
+
+input OrderInput {
+  id: Long!
+  customerid: Long!
+  time: DateTime!
+  "Where the order is shipped to"
+  shipping: Order_shippingInput
+  entries: [Order_entriesInput]!
+  tags: [String]
+  metadata: JSON
+}
+
+input Order_shippingInput {
+  name: String!
+  address: Order_shipping_addressInput!
+}
+
+input Order_shipping_addressInput {
+  street: String!
+  city: String!
+  zip: String
+}
+
+input Order_entriesInput {
+  productid: Long!
+  quantity: Long!
+  unit_price: Float!
+  discount: Float
+}
+
+type OrderResult {
+  id: Long!
+  customerid: Long!
+  time: DateTime!
+  shipping: Order_shippingOutput
+  entries: [Order_entriesOutput]!
+  tags: [String]
+  metadata: JSON
+}
+
+type Order_shippingOutput {
+  name: String!
+  address: Order_shipping_addressOutput!
+}
+
+type Order_shipping_addressOutput {
+  street: String!
+  city: String!
+  zip: String
+}
+
+type Order_entriesOutput {
+  productid: Long!
+  quantity: Long!
+  unit_price: Float!
+  discount: Float
+}
+
+input ReadingInput {
+  sensorid: Int!
+  temperature: Float!
+}
+
+type ReadingResult {
+  sensorid: Int!
+  temperature: Float!
+}
