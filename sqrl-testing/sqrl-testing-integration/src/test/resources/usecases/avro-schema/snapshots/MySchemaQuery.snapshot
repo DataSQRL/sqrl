@@ -2,10 +2,10 @@
   "data" : {
     "Schema" : [ {
       "uuidField" : "223e4567-e89b-12d3-a456-426614174001",
-      "timestampMillisField" : "2023-08-08T10:29:39.000Z",
-      "nullableTimestampMillisField" : "2023-08-08T10:29:39.000Z",
-      "timestampMicrosField" : "2023-08-08T10:29:39.000Z",
-      "nullableTimestampMicrosField" : "2023-08-08T10:29:39.000Z",
+      "timestampMillisField" : "2023-08-08T03:29:39.000Z",
+      "nullableTimestampMillisField" : "2023-08-08T03:29:39.000Z",
+      "timestampMicrosField" : "2023-08-08T03:29:39.000Z",
+      "nullableTimestampMicrosField" : "2023-08-08T03:29:39.000Z",
       "dateField" : "2020-01-01",
       "nullableDateField" : "2020-01-01",
       "timeMillisField" : "23:59:59",
@@ -68,9 +68,9 @@
       }
     }, {
       "uuidField" : "123e4567-e89b-12d3-a456-426614174000",
-      "timestampMillisField" : "2023-08-08T10:29:39.000Z",
+      "timestampMillisField" : "2023-08-08T03:29:39.000Z",
       "nullableTimestampMillisField" : null,
-      "timestampMicrosField" : "2023-08-08T10:33:39.000Z",
+      "timestampMicrosField" : "2023-08-08T03:33:39.000Z",
       "nullableTimestampMicrosField" : null,
       "dateField" : "2020-01-01",
       "nullableDateField" : null,
