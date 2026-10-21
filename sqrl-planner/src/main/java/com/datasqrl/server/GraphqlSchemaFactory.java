@@ -147,17 +147,10 @@ public class GraphqlSchemaFactory {
                     Collectors.toList()));
 
     for (SqrlTableFunction tableFunction : tableFunctions) {
-      NamePath typeNamePath;
-      TableAnalysis tableAnalysis;
       // If the function has a base table, we need to create the type for that table instead of this
       // function
-      if (tableFunction.getFunctionAnalysis().getOptionalBaseTable().isPresent()) {
-        tableAnalysis = tableFunction.getBaseTable();
-        typeNamePath = NamePath.of(tableAnalysis.getName());
-      } else {
-        tableAnalysis = tableFunction.getFunctionAnalysis();
-        typeNamePath = tableFunction.getFullPath();
-      }
+      var tableAnalysis = tableFunction.getBaseTable();
+      var typeNamePath = tableFunction.getBaseTablePath();
       var resultType =
           createTableResultType(
               typeNamePath,
@@ -428,11 +421,7 @@ public class GraphqlSchemaFactory {
   }
 
   private GraphQLOutputType createTypeReference(SqrlTableFunction tableFunction) {
-    var typeName =
-        tableFunction.getFunctionAnalysis().getOptionalBaseTable().isPresent()
-            ? tableFunction.getBaseTable().getName()
-            : uniquifyNameForPath(tableFunction.getFullPath());
-    return new GraphQLTypeReference(typeName);
+    return new GraphQLTypeReference(uniquifyNameForPath(tableFunction.getBaseTablePath()));
   }
 
   /**

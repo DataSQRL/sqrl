@@ -34,6 +34,8 @@ Tables/functions defined with the `SUBSCRIBE` keyword are exposed as subscriptio
 Internal table sources are exposed as mutations with the input type identical to the columns in the table excluding computed columns.
 
 In addition, the result type of the endpoint matches the schema of the table or function. That means, each field of the result type matches a column or relationship on the table/function by name and the field type is compatible.
+A relationship field resolves to the relationship defined on the table that has the same name as the GraphQL type. If there is no such relationship or column, it resolves to the relationship on the [base table](#base-tables) of the table/function.
+When a relationship field resolves on the base table, all tables/functions that return this GraphQL type must have the same base table.
 The field type is compatible with the column/relationship type iff:
 * For scalar or collection types there is a native mapping from one type system to the other
 * For structured types (i.e. nested or relationship), the mapping applies recursively.
