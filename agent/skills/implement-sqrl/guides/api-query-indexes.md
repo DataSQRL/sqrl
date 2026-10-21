@@ -36,10 +36,10 @@ The compiler selects the indexes from these parts of the served queries:
 
 ## Filters inside a subquery
 
-The compiler selects no index for a filter inside a subquery in a `WHERE` clause, such as `EXISTS (...)` or `IN (SELECT ...)`, and none for the column of the outer table that the subquery compares with. When the subquery cannot become a `JOIN` (see implement-sqrl `SKILL.md`, "Filters in API queries"), keep it and check the compiled plan (see Checking the indexes). For each large table whose filter no index serves, add an `index` hint (see Index hints):
+The compiler selects no index for a filter inside a subquery in a `WHERE` clause, such as `EXISTS (...)` or `IN (SELECT ...)`. For the column of the outer table that the subquery compares with, it selects no index in `EXISTS (...)`, and a `BTREE` index in `col IN (SELECT ...)`. When the subquery cannot become a `JOIN` (see implement-sqrl `SKILL.md`, "Filters in API queries"), keep it and check the compiled plan (see Checking the indexes). For each large table whose filter no index serves, add an `index` hint (see Index hints):
 
 - On the subquery's table: the columns that the subquery compares with a parameter first, then the columns that it compares with the outer query.
-- On the outer table: the column that the subquery compares with, but only when the subquery is not part of an `OR`. Inside an `OR`, the database runs the subquery once and reads the whole outer table, with or without that index.
+- On the outer table of an `EXISTS (...)`: the column that the subquery compares with, but only when the subquery is not part of an `OR`. Inside an `OR`, the database runs the subquery once and reads the whole outer table, with or without that index.
 
 Example: the API returns the orders of all customers who own a given account. `AccountOwners` has the primary key `owner_id`, and a customer can own an account through several of its rows, so a `JOIN` would add duplicate rows.
 
@@ -59,7 +59,7 @@ Orders := SELECT ... ;
 
 ## Index hints
 
-Add an `index` hint only to a table that needs it. An `index` hint replaces the automatic index selection for its whole table: the compiler then creates only the hinted indexes and the primary key, and no longer warns about that table. So also add to the hint each index of that table in `deploy/plan/postgres.json` that another served query still uses. Write it as `index(TYPE, column, ...)` hint, not as the `CREATE INDEX` statement. The hint is not limited to the maximum number of indexes that the full-table-scan warning names.
+Add an `index` hint only to a table that needs it. An `index` hint replaces the automatic index selection for its whole table: the compiler then creates only the hinted indexes, the primary key and, when the table backs a paginated query, a `BTREE` index on its row-time column, and no longer warns about that table. So also add to the hint each index of that table in `deploy/plan/postgres.json` that another served query still uses. The row-time index needs no hint. Write it as `index(TYPE, column, ...)` hint, not as the `CREATE INDEX` statement. The hint is not limited to the maximum number of indexes that the full-table-scan warning names.
 
 After the compile, check the indexes of the other served queries of that table (see Checking the indexes).
 
