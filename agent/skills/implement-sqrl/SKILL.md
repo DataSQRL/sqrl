@@ -669,7 +669,7 @@ How DataSQRL publishes a doc-string:
 * A function or relationship that returns the rows of an existing table (`SELECT * FROM T ...`) uses the type of `T`. Its doc-string describes only the field.
 * A definition without a doc-string takes the doc-string of its base table as its type description. This includes a hidden `_` table.
 * A `CREATE TABLE` doc-string describes the type, the generated query and the mutation.
-* A `# Columns:` section describes the columns of the type that the definition creates. A `# Arguments:` section describes the arguments of a function. Each section has one `- name: text` line for each column or argument. A column note becomes the GraphQL field description and the field description in the REST and MCP results. An argument note becomes the GraphQL argument description and the MCP parameter description.
+* A `# Columns:` section describes the columns of the type that the definition creates. A `# Arguments:` section describes the arguments of a function. Each section has one `- name: text` line for each column or argument. A column note becomes the GraphQL field description and the field description in the REST response schema. An argument note becomes the GraphQL argument description and the MCP parameter description.
 
 ```sql
 /** A registered person.
