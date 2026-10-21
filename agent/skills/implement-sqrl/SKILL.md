@@ -555,18 +555,22 @@ For choosing between `query_by_all` (required filter arguments) and `query_by_an
 
 ### Filters in API queries
 
-DataSQRL creates the database indexes for the tables that the API queries. The database (Postgres) can use an index only when the filtered column stands alone in the comparison, so write every filter of a served query in the following form:
+DataSQRL creates the database indexes for the tables that the API queries. The database (Postgres) can use an index only when the filtered column stands alone in the comparison, so write every served query in the following form:
 
 - Compare the bare column: `customer_id = :customerId`.
 - Do a type conversion or a derived value in a table that Flink computes, then filter on the result: add `/*+engine(flink) */` to the table, select `CAST(c.customer_id AS STRING) AS customer_id` in it, and filter on `customer_id = :customerId`. A table that runs in the database (an `engine(database)` hint, or the planner's choice) is copied into the served query, so its `CAST` ends up in the filter again. A function on the column in the filter, such as `CAST(customer_id AS STRING) = :customerId` or `LOWER(email) = :email`, makes the database read the whole table.
 - Put arithmetic on the parameter side: `day_index = :day - 1`.
+- In a `JOIN`, put the table that the `WHERE` clause filters with a parameter first. With the other order, the database reads every row of the table that the `WHERE` clause does not filter. Write `FROM AccountOwners o JOIN Orders c ON c.customer_id = o.customer_id WHERE o.account_id = :accountId`, not `FROM Orders c JOIN AccountOwners o ON o.customer_id = c.customer_id WHERE o.account_id = :accountId`.
+- Filter on another table with a `JOIN`, not with `EXISTS (...)` or `IN (SELECT ...)` in the `WHERE` clause. With a subquery, the database reads the whole table. For example, when the primary key of `AccountOwners` is `(account_id, customer_id)`, replace `FROM Orders c WHERE EXISTS (SELECT 1 FROM AccountOwners o WHERE o.account_id = :accountId AND o.customer_id = c.customer_id)` with `FROM AccountOwners o JOIN Orders c ON c.customer_id = o.customer_id WHERE o.account_id = :accountId`. Use the join only when it adds no duplicate rows: after the filter, the other table has at most one matching row for each row, for example because its primary key consists of the filter and join columns. Otherwise, or when the subquery is part of an `OR`, keep the subquery.
+
+The compiler does not warn when a filter breaks these rules, so follow them when you write the query.
 
 ### Indexes for API queries
 
 The compiler selects the indexes for the tables that the API queries. An `index` hint replaces the automatic index selection for its whole table, so a hint that one query does not need can remove the indexes that other queries need. Leave the index selection to the compiler. Read [Indexes for API Queries](guides/api-query-indexes.md) and fix the query only in these cases:
 
 - The requirements, the plan or a review issue name a slow query or an index.
-- A served query reads a large table, and you find that no index from the compiler serves its filter.
+- The compiler warns that query filter patterns of a table "have no supporting index and require a full table scan". Read the guide before you add the `index` hint that the warning suggests.
 
 
 ### Constraints and mutual exclusions
