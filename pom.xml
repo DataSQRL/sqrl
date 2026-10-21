@@ -958,9 +958,6 @@
           <includes>
             <include>**/*Test.java</include>
           </includes>
-          <environmentVariables>
-            <TZ>America/Los_Angeles</TZ>
-          </environmentVariables>
           <argLine>@{jacocoArgLine} ${argLine}</argLine>
         </configuration>
       </plugin>
@@ -972,9 +969,6 @@
           <includes>
             <include>**/*IT.java</include>
           </includes>
-          <environmentVariables>
-            <TZ>America/Los_Angeles</TZ>
-          </environmentVariables>
           <systemPropertyVariables>
             <flinkrunner.image.repo>${flinkrunner.image.repo}</flinkrunner.image.repo>
             <flinkrunner.version>${flinkrunner.version}</flinkrunner.version>

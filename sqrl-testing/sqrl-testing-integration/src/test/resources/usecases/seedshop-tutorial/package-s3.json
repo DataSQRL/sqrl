@@ -10,7 +10,8 @@
     "flink": {
       "config": {
         "s3.endpoint": "http://s3mock:9090",
-        "s3.path.style.access": "true"
+        "s3.path.style.access": "true",
+        "table.local-time-zone": "America/Los_Angeles"
       }
     }
   },
