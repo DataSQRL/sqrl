@@ -35,10 +35,13 @@ import graphql.language.ObjectTypeDefinition;
 import graphql.language.Type;
 import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
@@ -59,6 +62,9 @@ public abstract class GraphqlSchemaWalker {
 
   protected final Set<ObjectTypeDefinition> seenObjectTypes = new HashSet<>();
   protected final Set<NamePath> seenTableFunctions = new HashSet<>();
+
+  /** The first function that returned each object type, see {@link #checkSameRelationships}. */
+  private final Map<ObjectTypeDefinition, SqrlTableFunction> resultTypeFunctions = new HashMap<>();
 
   /*
    * Schema walking methods
@@ -121,8 +127,9 @@ public abstract class GraphqlSchemaWalker {
       FieldDefinition atField,
       SqrlTableFunction tableFunction,
       TypeDefinitionRegistry registry) {
+    // A relationship is walked once for each object type that has it as a field
     checkState(
-        !seenTableFunctions.contains(tableFunction.getFullPath()),
+        tableFunction.isRelationship() || !seenTableFunctions.contains(tableFunction.getFullPath()),
         atField.getSourceLocation(),
         "Duplicate table function: %s",
         tableFunction.getFullPath());
@@ -167,11 +174,62 @@ public abstract class GraphqlSchemaWalker {
       visitSubscription(atField, tableFunction, registry);
     }
     var functionRowType = tableFunction.getRowType();
-    walkObjectType(true, resultType, Optional.of(functionRowType), registry);
+    checkSameRelationships(atField, resultType, tableFunction);
+    walkObjectType(Optional.of(tableFunction), resultType, Optional.of(functionRowType), registry);
+  }
+
+  /**
+   * Looks up the relationship for a field of a function result type: on the table with the name of
+   * the type or, like in the inferred schema, on the base table of the function. A relationship can
+   * have the name of a column, so a column takes precedence over a relationship on the base table.
+   */
+  private Optional<SqrlTableFunction> findRelationship(
+      ObjectTypeDefinition objectType, FieldDefinition field, SqrlTableFunction tableFunction) {
+    var fieldName = Name.system(field.getName());
+    var relationship =
+        getTableFunctionFromPath(
+            tableFunctions, NamePath.of(objectType.getName()).concat(fieldName));
+    if (relationship.isPresent()
+        || tableFunction.getRowType().getField(field.getName(), true, false) != null) {
+      return relationship;
+    }
+    return getTableFunctionFromPath(
+        tableFunctions, tableFunction.getBaseTablePath().concat(fieldName));
+  }
+
+  /**
+   * A GraphQL field has a single resolver, so all functions that return an object type must resolve
+   * its fields to the same relationships.
+   */
+  private void checkSameRelationships(
+      FieldDefinition atField, ObjectTypeDefinition resultType, SqrlTableFunction tableFunction) {
+    var previous = resultTypeFunctions.putIfAbsent(resultType, tableFunction);
+    if (previous == null) {
+      return;
+    }
+    checkState(
+        findRelationships(resultType, previous)
+            .equals(findRelationships(resultType, tableFunction)),
+        atField.getSourceLocation(),
+        "Type [%s] is returned by [%s] with base table [%s] and by [%s] with base table [%s], which"
+            + " resolve its relationship fields differently. Use a separate type for each base"
+            + " table.",
+        resultType.getName(),
+        previous.getFullPath().getDisplay(),
+        previous.getBaseTablePath().getDisplay(),
+        tableFunction.getFullPath().getDisplay(),
+        tableFunction.getBaseTablePath().getDisplay());
+  }
+
+  private List<SqrlTableFunction> findRelationships(
+      ObjectTypeDefinition objectType, SqrlTableFunction tableFunction) {
+    return objectType.getFieldDefinitions().stream()
+        .flatMap(field -> findRelationship(objectType, field, tableFunction).stream())
+        .toList();
   }
 
   private void walkObjectType(
-      boolean isFunctionResultType,
+      Optional<SqrlTableFunction> tableFunction,
       ObjectTypeDefinition objectType,
       Optional<RelDataType> relDataType,
       TypeDefinitionRegistry registry) {
@@ -195,16 +253,15 @@ public abstract class GraphqlSchemaWalker {
           field.getSourceLocation(),
           "Invalid field name: %s",
           field.getName());
-      var fieldPath = NamePath.of(objectType.getName()).concat(Name.system(field.getName()));
 
       // Functions can have relationships, so if we are walking a function resultType, process
       // relationship fields
       // When this method is recursively called for a nested relDataType, there can not be any
       // relationship field
-      // so in that case we call this method with isFunctionResultType == false to avoid checking
+      // so in that case we call this method without a table function to avoid checking
       // for relationships
-      if (isFunctionResultType) {
-        final var relationship = getTableFunctionFromPath(tableFunctions, fieldPath);
+      if (tableFunction.isPresent()) {
+        final var relationship = findRelationship(objectType, field, tableFunction.get());
         if (relationship.isPresent()) { // the field is a relationship field, walk the related table
           // relationship
           walkTableFunction(
@@ -228,7 +285,7 @@ public abstract class GraphqlSchemaWalker {
                   .orElseThrow(); // assure it is an object type
 
           var relRecordType = (RelRecordType) relDataTypeField.getType();
-          walkObjectType(false, fieldType, Optional.of(relRecordType), registry);
+          walkObjectType(Optional.empty(), fieldType, Optional.of(relRecordType), registry);
           continue;
         }
         if (relDataTypeField.getType().getComponentType() != null) { // the field is an array
@@ -250,7 +307,8 @@ public abstract class GraphqlSchemaWalker {
                       .filter(f -> f instanceof ObjectTypeDefinition)
                       .map(f -> (ObjectTypeDefinition) f)
                       .orElseThrow();
-              walkObjectType(false, elementObjectType, Optional.of(relRecordType), registry);
+              walkObjectType(
+                  Optional.empty(), elementObjectType, Optional.of(relRecordType), registry);
             } else {
               // The array contains scalar types
               visitScalar(objectType, field, relDataTypeField);
@@ -265,7 +323,13 @@ public abstract class GraphqlSchemaWalker {
         continue;
       }
 
-      visitUnknownObject(field, relDataType);
+      visitUnknownObject(
+          objectType,
+          field,
+          relDataType,
+          tableFunction
+              .map(function -> getRelationshipPaths(objectType, field, function))
+              .orElse(List.of()));
 
       // Is not a scalar or a table function, do nothing
     }
@@ -287,8 +351,15 @@ public abstract class GraphqlSchemaWalker {
   protected abstract void visitMutation(
       FieldDefinition atField, TypeDefinitionRegistry registry, MutationTable mutation);
 
+  /**
+   * @param relationshipPaths the relationship paths that were looked up for the field, empty if the
+   *     object type cannot have relationships
+   */
   protected abstract void visitUnknownObject(
-      FieldDefinition atField, Optional<RelDataType> relDataType);
+      ObjectTypeDefinition objectType,
+      FieldDefinition atField,
+      Optional<RelDataType> relDataType,
+      List<NamePath> relationshipPaths);
 
   protected abstract void visitScalar(
       ObjectTypeDefinition objectType, FieldDefinition atField, RelDataTypeField relDataTypeField);
@@ -296,6 +367,16 @@ public abstract class GraphqlSchemaWalker {
   /*
    * Utility methods
    */
+
+  /** The paths {@link #findRelationship} looks up a relationship field at. */
+  private static List<NamePath> getRelationshipPaths(
+      ObjectTypeDefinition objectType, FieldDefinition field, SqrlTableFunction tableFunction) {
+    var fieldName = Name.system(field.getName());
+    return Stream.of(NamePath.of(objectType.getName()), tableFunction.getBaseTablePath())
+        .distinct()
+        .map(owner -> owner.concat(fieldName))
+        .toList();
+  }
 
   private Type<?> unwrapNonNullType(Type<?> type) {
     if (type instanceof NonNullType nullType) {

@@ -141,6 +141,17 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
     return functionAnalysis.getBaseTable();
   }
 
+  /**
+   * The path of the base table, which owns the relationships of the rows of this function. It is
+   * the path of this function if it has no base table.
+   */
+  public NamePath getBaseTablePath() {
+    return functionAnalysis
+        .getOptionalBaseTable()
+        .map(baseTable -> NamePath.of(baseTable.getName()))
+        .orElse(fullPath);
+  }
+
   public Supplier<RelNode> getViewTransform() {
     return functionAnalysis::getCollapsedRelnode;
   }

@@ -1,0 +1,28 @@
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database._Customer[timestamp]
+in script:comprehensiveTest.sqrl [10:1]:
+CustomerFilteredDistinct := DISTINCT Customer ON customerid ORDER BY lastUpdated DESC;
+
+AnotherCustomer := SELECT customerid, email, lastUpdated FROM _Customer WHERE customerid > 100;
+^
+
+[NOTICE] You can rewrite the join as a temporal join for greater efficiency by adding: FOR SYSTEM_TIME AS OF `time`
+in script:comprehensiveTest.sqrl [18:1]:
+InvalidDistinct := SELECT customerid, `timestamp`, name AS namee FROM (SELECT *, (ROW_NUMBER() OVER (PARTITION BY customerid ORDER BY `timestamp` DESC)) AS _rownum FROM Customer) WHERE (_rownum = 1);
+
+MissedTemporalJoin := SELECT o.*, CAST(`timestamp` AS TIMESTAMP_LTZ(3)) AS `timestamp`, name FROM ExternalOrders o JOIN ExplicitDistinct c ON o.customerid = c.customerid;
+^
+
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.SelectCustomers[timestamp]
+in script:comprehensiveTest.sqrl [54:1]:
+);
+
+CustomerTimeWindow := SELECT
+^
+
+[FATAL] Unknown field at location CustomerResult.related. No relationship [CustomerResult.related] or [AnotherCustomer.related] exists. Relationships named [related] exist on other tables: Customer.related. Possible scalars are [customerid, email, lastUpdated]
+in script:comprehensiveTest-fail-relationship-not-on-base-table.graphqls [9:5]:
+    customerid: Long!
+    email: String!
+    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]
+----^
+

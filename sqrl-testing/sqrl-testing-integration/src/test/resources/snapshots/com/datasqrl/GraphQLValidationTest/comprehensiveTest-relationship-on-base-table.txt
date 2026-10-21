@@ -1,0 +1,2326 @@
+>>>comprehensiveTest-fail-duplicate-tablefunction.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Subscription {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-duplicate-tablefunction2.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-empty-mutation.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Mutation {
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-empty-query.graphqls
+type Query {
+}
+
+>>>comprehensiveTest-fail-empty-result-type.graphqls
+type Customer {
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-empty-subscription.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Subscription {
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-invalid-field-name.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name~: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-invalid-type-name.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer~ {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer~!]
+}
+
+>>>comprehensiveTest-fail-no-query-root-type.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Mutation {
+    Orders(event: OrdersInput!): OrdersResultOutput!
+}
+
+input OrdersInput {
+    orderid: Int!
+    amount: Float
+}
+
+type OrdersResultOutput {
+    orderid: Int!
+    amount: Float
+}
+
+type Subscription {
+    CustomerSubscription: Customer
+}
+
+>>>comprehensiveTest-fail-no-type.graphqls
+type Query {
+    AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
+}
+
+>>>comprehensiveTest-fail-not-equal-mutations-field-types.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Mutation {
+    Orders(event: OrdersInput!): OrdersResultOutput!
+}
+
+input OrdersInput {
+    orderid: Int!
+    amount: Int
+}
+
+type OrdersResultOutput {
+    orderid: Int!
+    amount: Int
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-not-equal-mutations-inout-types.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Mutation {
+    Orders(event: OrdersInput!): OrdersResultOutput!
+}
+
+input OrdersInput {
+    orderid: Int!
+    amount: Float
+}
+
+type OrdersResultOutput {
+    orderid: Int!
+    amount: Float
+    different_output: Float
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-nullableArgForNotNull.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int, arg2: Int, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-paged-no-limit-offset.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+}
+
+type CustomerPage {
+    results: [Customer!]
+    pagination: OffsetPageInfo
+}
+
+type OffsetPageInfo {
+    pageSize: Int!
+    currentPage: Int!
+    totalRecords: Long!
+    totalPages: Int!
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    nextOffset: Int
+    prevOffset: Int
+    firstEventTime: DateTime
+    lastEventTime: DateTime
+}
+
+type Query {
+    CustomerByTime2: CustomerPage!
+}
+
+>>>comprehensiveTest-fail-paged-subscription.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+}
+
+type CustomerPage {
+    results: [Customer!]
+    pagination: OffsetPageInfo
+}
+
+type Query {
+    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!
+}
+
+type Subscription {
+    CustomerSubscription: CustomerPage
+}
+
+>>>comprehensiveTest-fail-paged-undeclared.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+}
+
+type CustomerPage {
+    results: [Customer!]
+    pagination: OffsetPageInfo
+}
+
+type Query {
+    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!
+}
+
+>>>comprehensiveTest-fail-paged-unknown-field.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+    doesNotExist: String!
+}
+
+type CustomerPage {
+    results: [Customer!]
+    pagination: OffsetPageInfo
+}
+
+type OffsetPageInfo {
+    pageSize: Int!
+    currentPage: Int!
+    totalRecords: Long!
+    totalPages: Int!
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    nextOffset: Int
+    prevOffset: Int
+    firstEventTime: DateTime
+    lastEventTime: DateTime
+}
+
+type Query {
+    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!
+}
+
+>>>comprehensiveTest-fail-paged-wrong-pagination-type.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type OffsetPageInfo {
+    totalRecords: Long!
+    pageSize: Int!
+}
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+}
+
+type CustomerPage {
+    results: [Customer!]
+    pagination: OffsetPageInfo
+}
+
+type Query {
+    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!
+}
+
+>>>comprehensiveTest-fail-parameters-names.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(wrongName: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-parameters-types.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Float!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-query-with-no-table-function.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct1(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-relationship-different-base-tables.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type CustomerResult {
+    customerid: Long!
+    email: String!
+    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+type Query {
+    CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [CustomerResult!]
+    CustomerQuery(id: Long!, limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+>>>comprehensiveTest-fail-relationship-not-on-base-table.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type CustomerResult {
+    customerid: Long!
+    email: String!
+    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+type Query {
+    CustomerQuery(id: Long!, limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+>>>comprehensiveTest-fail-subscription-with-no-table-function.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Subscription {
+    TableFunctionCallsTblFct1(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-unknown-field.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    unknown: Int
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-fail-wrong-query.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [[Customer!]]
+}
+
+>>>comprehensiveTest-limit-offset-combinations.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    CustomerByTime2: [Customer!]
+    CustomerByMultipleTime(limit: Int = 10): [Customer!]
+    SelectCustomers(offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-paged-results.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+}
+
+type CustomerPage {
+    results: [Customer!]
+    pagination: OffsetPageInfo
+}
+
+type OffsetPageInfo {
+    pageSize: Int!
+    currentPage: Int!
+    totalRecords: Long!
+    totalPages: Int!
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    nextOffset: Int
+    prevOffset: Int
+    firstEventTime: DateTime
+    lastEventTime: DateTime
+}
+
+type Query {
+    CustomerByTime2(limit: Int = 10, offset: Int = 0): CustomerPage!
+}
+
+>>>comprehensiveTest-paged-userdefined.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type OffsetPageInfo {
+    pageSize: Int!
+    currentPage: Int!
+    totalRecords: Long!
+    totalPages: Int!
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    nextOffset: Int
+    prevOffset: Int
+    firstEventTime: DateTime
+    lastEventTime: DateTime
+}
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+    related(limit: Int = 10, offset: Int = 0): CustomerRelatedPage
+}
+
+type CustomerRelatedPage {
+    items: [Customer!]
+    meta: OffsetPageInfo
+}
+
+type CustomerPage {
+    items: [Customer!]
+    meta: OffsetPageInfo
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): CustomerPage!
+}
+
+>>>comprehensiveTest-parameters-order.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime!
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Query {
+    TableFunctionCallsTblFct(arg2: Int!, arg1: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-relationship-on-base-table.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type CustomerResult {
+    customerid: Long!
+    email: String!
+    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+type CustomerSummary {
+    customerid: Long!
+    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+type Query {
+    CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [CustomerResult!]
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [CustomerSummary!]
+}
+
+>>>comprehensiveTest.graphqls
+type AnotherCustomer {
+    customerid: Long!
+    email: String!
+    lastUpdated: Long!
+}
+
+type Customer {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+    related(limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByLength(length: Int, limit: Int = 10, offset: Int = 0): [Customer!]
+    relatedByTimestamp(limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type CustomerByMultipleTime {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+}
+
+type CustomerByTime2 {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+}
+
+type CustomerFilteredDistinct {
+    customerid: Long!
+    email: String!
+    name: String!
+    lastUpdated: Long!
+    timestamp: DateTime
+}
+
+type CustomerTimeWindow {
+    window_start: DateTime!
+    window_end: DateTime!
+    unique_email_count: Long!
+}
+
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+
+type ExplicitDistinct {
+    customerid: Long!
+    timestamp: DateTime
+    name: String!
+}
+
+type ExternalOrders {
+    id: Long!
+    customerid: Long!
+    time: DateTime!
+    entries: [ExternalOrders_entriesOutput]!
+}
+
+type ExternalOrders_entriesOutput {
+    productid: Long!
+    quantity: Long!
+    unit_price: Float!
+    discount: Float
+}
+
+"A 64-bit signed integer"
+scalar Long
+
+type InvalidDistinct {
+    customerid: Long!
+    timestamp: DateTime
+    namee: String!
+}
+
+type MissedTemporalJoin {
+    id: Long!
+    customerid: Long!
+    time: DateTime!
+    entries: [MissedTemporalJoin_entriesOutput]!
+    timestamp: DateTime
+    name: String!
+}
+
+type MissedTemporalJoin_entriesOutput {
+    productid: Long!
+    quantity: Long!
+    unit_price: Float!
+    discount: Float
+}
+
+type Mutation {
+    Orders(event: OrdersInput!): OrdersResultOutput!
+}
+
+type Orders {
+    orderid: Int!
+    amount: Float
+}
+
+input OrdersInput {
+    orderid: Int!
+    amount: Float
+}
+
+type OrdersResultOutput {
+    orderid: Int!
+    amount: Float
+}
+
+type Query {
+    AnotherCustomer(limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
+    Customer(limit: Int = 10, offset: Int = 0): [Customer!]
+    CustomerByMultipleTime(limit: Int = 10, offset: Int = 0): [CustomerByMultipleTime!]
+    CustomerByTime2(limit: Int = 10, offset: Int = 0): [CustomerByTime2!]
+    CustomerFilteredDistinct(limit: Int = 10, offset: Int = 0): [CustomerFilteredDistinct!]
+    CustomerTimeWindow(limit: Int = 10, offset: Int = 0): [CustomerTimeWindow!]
+    ExplicitDistinct(limit: Int = 10, offset: Int = 0): [ExplicitDistinct!]
+    ExternalOrders(limit: Int = 10, offset: Int = 0): [ExternalOrders!]
+    InvalidDistinct(limit: Int = 10, offset: Int = 0): [InvalidDistinct!]
+    MissedTemporalJoin(limit: Int = 10, offset: Int = 0): [MissedTemporalJoin!]
+    Orders(limit: Int = 10, offset: Int = 0): [Orders!]
+    """
+    This is for selected customers
+    and their orders
+    """
+    SelectCustomers(limit: Int = 10, offset: Int = 0): [Customer!]
+    TemporalJoin(limit: Int = 10, offset: Int = 0): [TemporalJoin!]
+    UnnestOrders(limit: Int = 10, offset: Int = 0): [UnnestOrders!]
+    CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+    CustomerQuery(id: Long!, limit: Int = 10, offset: Int = 0): [AnotherCustomer!]
+    TableFunctionCallsTblFct(arg1: Int, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+type Subscription {
+    CustomerSubscription: Customer
+    CustomerSubscriptionById(minId: Int!): Customer
+}
+
+type TemporalJoin {
+    id: Long!
+    customerid: Long!
+    time: DateTime!
+    entries: [TemporalJoin_entriesOutput]!
+    timestamp: DateTime
+    name: String!
+}
+
+type TemporalJoin_entriesOutput {
+    productid: Long!
+    quantity: Long!
+    unit_price: Float!
+    discount: Float
+}
+
+type UnnestOrders {
+    id: Long!
+    customerid: Long!
+    time: DateTime!
+    productid: Long!
+    quantity: Long!
+    discount: Float
+    newId: Long!
+}
+
+>>>pipeline_explain.txt
+=== AnotherCustomer
+ID:          default_catalog.default_database.AnotherCustomer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   -
+Row count:   ~5e7
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database._Customer
+Annotations:
+ - stream-root: _Customer
+
+=== Customer
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
+
+=== CustomerById
+ID:          default_catalog.default_database.CustomerById
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+ - parameters: minId
+ - base-table: Customer
+
+=== CustomerByMultipleTime
+ID:          default_catalog.default_database.CustomerByMultipleTime
+Type:        state
+Stage:       flink
+Primary key: customerid, email
+Timestamp:   timestamp
+Row count:   ~2e7
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: Customer
+
+=== CustomerByTime2
+ID:          default_catalog.default_database.CustomerByTime2
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+Row count:   ~2e7
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - mostRecentDistinct: true
+ - stream-root: Customer
+
+=== CustomerFilteredDistinct
+ID:          default_catalog.default_database.CustomerFilteredDistinct
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+Row count:   ~2e6
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+
+=== CustomerQuery
+ID:          default_catalog.default_database.CustomerQuery
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.AnotherCustomer
+Annotations:
+ - stream-root: _Customer
+ - parameters: id
+ - base-table: AnotherCustomer
+
+=== CustomerSubscription
+ID:          default_catalog.default_database.CustomerSubscription
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+
+=== CustomerSubscriptionById
+ID:          default_catalog.default_database.CustomerSubscriptionById
+Type:        query
+Stage:       kafka
+---
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+ - parameters: minId
+ - base-table: Customer
+
+=== CustomerTimeWindow
+ID:          default_catalog.default_database.CustomerTimeWindow
+Type:        stream
+Stage:       flink
+Primary key: window_start, window_end
+Timestamp:   -
+Row count:   ~3e7
+---
+Schema:
+ - window_start: TIMESTAMP(3) NOT NULL
+ - window_end: TIMESTAMP(3) NOT NULL
+ - unique_email_count: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.SelectCustomers
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+
+=== ExplicitDistinct
+ID:          default_catalog.default_database.ExplicitDistinct
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+Row count:   ~2e7
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+
+=== ExternalOrders
+ID:          default_catalog.default_database.ExternalOrders
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+Inputs:
+ - default_catalog.default_database.ExternalOrders__base
+Annotations:
+ - features: DENORMALIZE (feature)
+ - stream-root: ExternalOrders
+
+=== InvalidDistinct
+ID:          default_catalog.default_database.InvalidDistinct
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   timestamp
+Row count:   ~2e7
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - namee: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+
+=== MissedTemporalJoin
+ID:          default_catalog.default_database.MissedTemporalJoin
+Type:        state
+Stage:       postgres
+Primary key: id, time
+Timestamp:   time
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.ExplicitDistinct
+ - default_catalog.default_database.ExternalOrders
+
+=== Orders
+ID:          default_catalog.default_database.Orders
+Type:        state
+Stage:       flink
+Primary key: orderid
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - orderid: INTEGER NOT NULL
+ - amount: FLOAT
+Inputs:
+ - default_catalog.default_database.Orders__base
+
+=== SelectCustomers
+ID:          default_catalog.default_database.SelectCustomers
+Type:        stream
+Stage:       flink
+Primary key: customerid, name
+Timestamp:   timestamp
+Row count:   ~5e7
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+ - sort: [4 DESC-nulls-last]
+
+=== TableFunctionCallsTblFct
+ID:          default_catalog.default_database.TableFunctionCallsTblFct
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.CustomerById
+Annotations:
+ - features: TABLE_FUNCTION_SCAN (feature)
+ - stream-root: Customer
+ - parameters: arg1, arg2
+ - base-table: Customer
+
+=== TemporalJoin
+ID:          default_catalog.default_database.TemporalJoin
+Type:        stream
+Stage:       flink
+Primary key: id, time
+Timestamp:   time
+Row count:   ~9e7
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - entries: RecordType:peek_no_expand(BIGINT NOT NULL productid, BIGINT NOT NULL quantity, DOUBLE NOT NULL unit_price, DOUBLE discount) NOT NULL ARRAY NOT NULL
+ - customerid0: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.ExplicitDistinct
+ - default_catalog.default_database.ExternalOrders
+Annotations:
+ - stream-root: ExternalOrders
+
+=== UnnestOrders
+ID:          default_catalog.default_database.UnnestOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   time
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - productid: BIGINT NOT NULL
+ - quantity: BIGINT NOT NULL
+ - discount: DOUBLE
+ - newId: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.ExternalOrders
+Annotations:
+ - stream-root: ExternalOrders
+
+=== _Customer
+ID:          default_catalog.default_database._Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._Customer__base
+Annotations:
+ - stream-root: _Customer
+
+=== customersink
+ID:          mysink.customersink
+Type:        export
+Stage:       flink
+Connector:   print
+---
+Inputs:
+ - default_catalog.default_database.TemporalJoin
+
+=== TimeWindow
+ID:          print.TimeWindow
+Type:        export
+Stage:       flink
+---
+Inputs:
+ - default_catalog.default_database.CustomerTimeWindow
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+);
+CREATE TABLE `ExternalOrders` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+);
+CREATE TABLE `_Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+);
+CREATE TABLE `_Orders` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP_LTZ(3) NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED,
+  WATERMARK FOR `time` AS `time` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+);
+CREATE TABLE `_Product` (
+  `productid` BIGINT NOT NULL,
+  `name` STRING NOT NULL,
+  `description` STRING NOT NULL,
+  `category` STRING NOT NULL,
+  `_ingest_time` TIMESTAMP_LTZ(3) NOT NULL,
+  PRIMARY KEY (`productid`, `name`, `description`, `category`) NOT ENFORCED,
+  WATERMARK FOR `_ingest_time` AS `_ingest_time` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+);
+CREATE VIEW `CustomerByTime2`
+AS
+SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`Customer`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `CustomerFilteredDistinct`
+AS
+SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `lastUpdated` DESC NULLS LAST) AS `$f5`
+  FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+    FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, LAG(`email`, 1) OVER (PARTITION BY `customerid` ORDER BY `timestamp`) AS `$f5`, LAG(`name`, 1) OVER (PARTITION BY `customerid` ORDER BY `timestamp`) AS `$f6`
+      FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, MAX(`lastUpdated`) OVER (PARTITION BY `customerid` ORDER BY `timestamp` RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS `$f5`
+        FROM `default_catalog`.`default_database`.`Customer`) AS `t`
+      WHERE `lastUpdated` >= `$f5`) AS `t1`
+    WHERE `$f5` IS NULL AND `$f6` IS NULL OR `email` <> `$f5` OR `name` <> `$f6`) AS `t3`) AS `t4`
+WHERE `$f5` = 1;
+CREATE VIEW `AnotherCustomer`
+AS
+SELECT `customerid`, `email`, `lastUpdated`
+FROM `_Customer`
+WHERE `customerid` > 100;
+CREATE VIEW `CustomerByMultipleTime`
+AS
+SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
+FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid`, `email` ORDER BY `timestamp` DESC NULLS LAST, `lastUpdated` NULLS FIRST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`Customer`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE VIEW `ExplicitDistinct`
+AS
+SELECT `customerid`, `timestamp`, `name`
+FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`
+  FROM `Customer`)
+WHERE `_rownum` = 1;
+CREATE VIEW `InvalidDistinct`
+AS
+SELECT `customerid`, `timestamp`, `name` AS `namee`
+FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC) AS `_rownum`
+  FROM `Customer`)
+WHERE `_rownum` = 1;
+CREATE VIEW `MissedTemporalJoin`
+AS
+SELECT `o`.*, CAST(`timestamp` AS TIMESTAMP_LTZ(3)) AS `timestamp`, `name`
+FROM `ExternalOrders` AS `o`
+ INNER JOIN `ExplicitDistinct` AS `c` ON `o`.`customerid` = `c`.`customerid`;
+CREATE VIEW `TemporalJoin`
+AS
+SELECT *
+FROM `ExternalOrders` AS `o`
+ INNER JOIN `ExplicitDistinct` FOR SYSTEM_TIME AS OF `time` AS `c` ON `o`.`customerid` = `c`.`customerid`;
+CREATE VIEW `SelectCustomers`
+AS
+SELECT *
+FROM `Customer`
+WHERE `customerid` > 0;
+CREATE VIEW `CustomerSubscription`
+AS
+SELECT *
+FROM `Customer`;
+CREATE VIEW `UnnestOrders`
+AS
+SELECT `o`.`id`, `o`.`customerid`, `o`.`time`, `e`.`productid`, `e`.`quantity`, `e`.`discount`
+FROM `ExternalOrders` AS `o`
+ CROSS JOIN UNNEST(`entries`) AS `e`;
+ALTER VIEW `UnnestOrders`
+AS
+SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `id` + `productid` AS `newId`
+FROM (SELECT `o`.`id`, `o`.`customerid`, `o`.`time`, `e`.`productid`, `e`.`quantity`, `e`.`discount`
+  FROM `ExternalOrders` AS `o`
+   CROSS JOIN UNNEST(`entries`) AS `e`);
+CREATE TABLE `Orders` (
+  `orderid` INTEGER,
+  `amount` FLOAT,
+  PRIMARY KEY (`orderid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'upsert-kafka-safe',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'key.format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'Orders',
+  'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.format' = 'flexible-json'
+);
+CREATE VIEW `CustomerTimeWindow`
+AS
+SELECT `window_start`, `window_end`, COUNT(DISTINCT `email`) AS `unique_email_count`
+FROM TABLE(TUMBLE(TABLE `SelectCustomers`, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTE))
+GROUP BY `window_start`, `window_end`;
+CREATE TEMPORARY TABLE `MyPrintSink_ex1__schema` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` ROW(`productid` BIGINT NOT NULL, `quantity` BIGINT NOT NULL, `unit_price` DOUBLE NOT NULL, `discount` DOUBLE) NOT NULL ARRAY NOT NULL,
+  `customerid0` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL
+)
+WITH (
+  'connector' = 'datagen'
+);
+CREATE TABLE `MyPrintSink_ex1` (
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'print'
+)
+LIKE `MyPrintSink_ex1__schema`;
+CREATE TABLE `AnotherCustomer_1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'AnotherCustomer',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Customer_2` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Customer',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Customer_3` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'Customer'
+);
+CREATE TABLE `CustomerByMultipleTime_4` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `email`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'TIMESTAMP',
+  'sink.on-conflict.timestamp-column' = 'timestamp',
+  'table-name' = 'CustomerByMultipleTime',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerByTime2_5` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'TIMESTAMP',
+  'sink.on-conflict.timestamp-column' = 'timestamp',
+  'table-name' = 'CustomerByTime2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerFilteredDistinct_6` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'TIMESTAMP',
+  'sink.on-conflict.timestamp-column' = 'timestamp',
+  'table-name' = 'CustomerFilteredDistinct',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerSubscription_7` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'CustomerSubscription'
+);
+CREATE TABLE `TimeWindow_8` (
+  `window_start` TIMESTAMP(3) NOT NULL,
+  `window_end` TIMESTAMP(3) NOT NULL,
+  `unique_email_count` BIGINT NOT NULL,
+  PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'print',
+  'print-identifier' = 'TimeWindow'
+);
+CREATE TABLE `CustomerTimeWindow_9` (
+  `window_start` TIMESTAMP(3) NOT NULL,
+  `window_end` TIMESTAMP(3) NOT NULL,
+  `unique_email_count` BIGINT NOT NULL,
+  PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerTimeWindow',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `ExplicitDistinct_10` (
+  `customerid` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'TIMESTAMP',
+  'sink.on-conflict.timestamp-column' = 'timestamp',
+  'table-name' = 'ExplicitDistinct',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `ExternalOrders_11` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'ExternalOrders',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `InvalidDistinct_12` (
+  `customerid` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `namee` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'TIMESTAMP',
+  'sink.on-conflict.timestamp-column' = 'timestamp',
+  'table-name' = 'InvalidDistinct',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Orders_13` (
+  `orderid` INTEGER NOT NULL,
+  `amount` FLOAT,
+  PRIMARY KEY (`orderid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Orders',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `SelectCustomers_14` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `name`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'SelectCustomers',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `TemporalJoin_15` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `entries` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `customerid0` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  PRIMARY KEY (`id`, `time`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'TemporalJoin',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `UnnestOrders_16` (
+  `id` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `productid` BIGINT NOT NULL,
+  `quantity` BIGINT NOT NULL,
+  `discount` DOUBLE,
+  `newId` BIGINT NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'UnnestOrders',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`AnotherCustomer_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`AnotherCustomer`
+;
+INSERT INTO `default_catalog`.`default_database`.`Customer_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer`
+;
+INSERT INTO `default_catalog`.`default_database`.`Customer_3`
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerByMultipleTime_4`
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerByTime2_5`
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerFilteredDistinct_6`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerFilteredDistinct`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerSubscription_7`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerSubscription`
+;
+INSERT INTO `default_catalog`.`default_database`.`TimeWindow_8`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerTimeWindow`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerTimeWindow_9`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerTimeWindow`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`ExplicitDistinct_10`
+SELECT *
+FROM `default_catalog`.`default_database`.`ExplicitDistinct`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`ExternalOrders_11`
+SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
+FROM `default_catalog`.`default_database`.`ExternalOrders`
+;
+INSERT INTO `default_catalog`.`default_database`.`InvalidDistinct_12`
+SELECT *
+FROM `default_catalog`.`default_database`.`InvalidDistinct`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`Orders_13`
+SELECT *
+FROM `default_catalog`.`default_database`.`Orders`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`SelectCustomers_14`
+SELECT *
+FROM `default_catalog`.`default_database`.`SelectCustomers`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`MyPrintSink_ex1`
+SELECT *
+FROM `default_catalog`.`default_database`.`TemporalJoin`
+;
+INSERT INTO `default_catalog`.`default_database`.`TemporalJoin_15`
+SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`, `customerid0`, CAST(`timestamp` AS TIMESTAMP(3) WITH LOCAL TIME ZONE) AS `timestamp`, `name`
+FROM `default_catalog`.`default_database`.`TemporalJoin`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`
+SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`UnnestOrders`
+ON CONFLICT DO NOTHING
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "Customer",
+      "tableName" : "Customer_3",
+      "logicalName" : "Customer",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "CustomerSubscription",
+      "tableName" : "CustomerSubscription_7",
+      "logicalName" : "CustomerSubscription",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "Orders",
+      "tableName" : "Orders",
+      "logicalName" : "Orders",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [
+        "orderid"
+      ],
+      "messageSchema" : "",
+      "config" : {
+        "cleanup.policy" : "compact",
+        "retention.ms" : "129600000"
+      }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "AnotherCustomer" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, PRIMARY KEY ("customerid","lastUpdated"));
+CREATE TABLE IF NOT EXISTS "Customer" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid","lastUpdated"));
+CREATE TABLE IF NOT EXISTS "CustomerByMultipleTime" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid","email"));
+CREATE TABLE IF NOT EXISTS "CustomerByTime2" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "CustomerFilteredDistinct" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "CustomerTimeWindow" ("window_start" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "window_end" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "unique_email_count" BIGINT NOT NULL, PRIMARY KEY ("window_start","window_end"));
+CREATE TABLE IF NOT EXISTS "ExplicitDistinct" ("customerid" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL, PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "ExternalOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB, PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS "InvalidDistinct" ("customerid" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "namee" TEXT NOT NULL, PRIMARY KEY ("customerid"));
+CREATE TABLE IF NOT EXISTS "Orders" ("orderid" INTEGER NOT NULL, "amount" FLOAT, PRIMARY KEY ("orderid"));
+CREATE TABLE IF NOT EXISTS "SelectCustomers" ("customerid" BIGINT NOT NULL, "email" TEXT NOT NULL, "name" TEXT NOT NULL, "lastUpdated" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("customerid","name"));
+CREATE TABLE IF NOT EXISTS "TemporalJoin" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "entries" JSONB, "customerid0" BIGINT NOT NULL, "timestamp" TIMESTAMP WITH TIME ZONE NOT NULL, "name" TEXT NOT NULL, PRIMARY KEY ("id","time"));
+CREATE TABLE IF NOT EXISTS "UnnestOrders" ("id" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "time" TIMESTAMP WITH TIME ZONE NOT NULL, "productid" BIGINT NOT NULL, "quantity" BIGINT NOT NULL, "discount" DOUBLE PRECISION, "newId" BIGINT NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+
+CREATE INDEX IF NOT EXISTS "Customer_btree_c4" ON "Customer" USING btree ("timestamp");
+CREATE INDEX IF NOT EXISTS "SelectCustomers_hash_c2" ON "SelectCustomers" USING hash ("name")
+>>>postgres-views.sql
+CREATE OR REPLACE VIEW "MissedTemporalJoin"("id", "customerid", "time", "entries", "timestamp", "name") AS SELECT "ExternalOrders"."id", "ExternalOrders"."customerid", "ExternalOrders"."time", "ExternalOrders"."entries", CAST("ExplicitDistinct"."timestamp" AS TIMESTAMP WITH TIME ZONE) AS "timestamp", "ExplicitDistinct"."name"
+FROM "ExternalOrders"
+ INNER JOIN "ExplicitDistinct" ON "ExternalOrders"."customerid" = "ExplicitDistinct"."customerid"
+>>>vertx-v1-openapi.json
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "DataSQRL REST API",
+    "description" : "Auto-generated REST API documentation for DataSQRL endpoints",
+    "contact" : {
+      "name" : "DataSQRL",
+      "url" : "https://datasqrl.com",
+      "email" : "contact@datasqrl.com"
+    },
+    "license" : {
+      "name" : "Apache License 2.0",
+      "url" : "https://www.apache.org/licenses/LICENSE-2.0"
+    },
+    "version" : "0.11.0"
+  },
+  "servers" : [ {
+    "url" : "http://localhost:8888",
+    "description" : "DataSQRL API Server"
+  } ],
+  "paths" : {
+    "/v1/rest/queries/CustomerById" : {
+      "get" : {
+        "summary" : "GetCustomerById",
+        "operationId" : "GetCustomerById",
+        "parameters" : [ {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "minId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object",
+                        "properties" : {
+                          "customerid" : {
+                            "type" : "integer"
+                          },
+                          "email" : {
+                            "type" : "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/rest/queries/TableFunctionCallsTblFct" : {
+      "get" : {
+        "summary" : "GetTableFunctionCallsTblFct",
+        "operationId" : "GetTableFunctionCallsTblFct",
+        "parameters" : [ {
+          "name" : "arg2",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "related_limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "related_offset",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "arg1",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "Successful operation",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "data" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object",
+                        "properties" : {
+                          "customerid" : {
+                            "type" : "integer"
+                          },
+                          "related" : {
+                            "type" : "array",
+                            "items" : {
+                              "type" : "object",
+                              "properties" : {
+                                "customerid" : {
+                                  "type" : "integer"
+                                },
+                                "email" : {
+                                  "type" : "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "Error response",
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "type" : "object",
+                  "properties" : {
+                    "errors" : {
+                      "type" : "array",
+                      "items" : {
+                        "type" : "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerById",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "minId"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer\"\nWHERE \"customerid\" > $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "minId",
+                  "sqlType" : "INTEGER"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "CustomerResult",
+          "fieldName" : "related",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "customerid",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "TableFunctionCallsTblFct",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "arg2"
+              },
+              {
+                "type" : "variable",
+                "path" : "arg1"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT *\n  FROM \"Customer\"\n  WHERE \"customerid\" > $2) AS \"t0\"\nWHERE \"customerid\" > $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "arg1",
+                  "sqlType" : "INTEGER"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "arg2",
+                  "sqlType" : "INTEGER"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "CustomerSummary",
+          "fieldName" : "related",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer\"\nWHERE $1 = \"customerid\"\nORDER BY \"timestamp\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "source",
+                  "key" : "customerid",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomerById",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "minId" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "minId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerById($minId: Int!, $limit: Int = 10, $offset: Int = 0) {\nCustomerById(minId: $minId, limit: $limit, offset: $offset) {\ncustomerid\nemail\n}\n\n}",
+            "queryName" : "CustomerById",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerById{?offset,limit,minId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetTableFunctionCallsTblFct",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "arg2" : {
+                  "type" : "integer"
+                },
+                "related_limit" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "related_offset" : {
+                  "type" : "integer"
+                },
+                "arg1" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "arg1",
+                "arg2"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query TableFunctionCallsTblFct($arg1: Int!, $arg2: Int!, $limit: Int = 10, $offset: Int = 0$related_limit: Int = 10, $related_offset: Int = 0) {\nTableFunctionCallsTblFct(arg1: $arg1, arg2: $arg2, limit: $limit, offset: $offset) {\ncustomerid\nrelated(limit: $related_limit, offset: $related_offset) {\ncustomerid\nemail\n}\n}\n\n}",
+            "queryName" : "TableFunctionCallsTblFct",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/TableFunctionCallsTblFct{?arg2,related_limit,offset,related_offset,arg1,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "related" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "customerid" : {
+                        "type" : "integer"
+                      },
+                      "email" : {
+                        "type" : "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant DateTime Scalar\"\nscalar DateTime\n\"A 64-bit signed integer\"\nscalar Long\n\ntype CustomerResult {\n    customerid: Long!\n    email: String!\n    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]\n}\n\ntype CustomerSummary {\n    customerid: Long!\n    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]\n}\n\ntype Query {\n    CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [CustomerResult!]\n    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [CustomerSummary!]\n}\n"
+      }
+    }
+  }
+}

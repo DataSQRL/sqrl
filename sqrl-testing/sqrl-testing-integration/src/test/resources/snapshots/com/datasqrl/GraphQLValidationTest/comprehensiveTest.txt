@@ -480,6 +480,39 @@ type Query {
     TableFunctionCallsTblFct1(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
 }
 
+>>>comprehensiveTest-fail-relationship-different-base-tables.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type CustomerResult {
+    customerid: Long!
+    email: String!
+    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+type Query {
+    CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [CustomerResult!]
+    CustomerQuery(id: Long!, limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+>>>comprehensiveTest-fail-relationship-not-on-base-table.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type CustomerResult {
+    customerid: Long!
+    email: String!
+    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+type Query {
+    CustomerQuery(id: Long!, limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
 >>>comprehensiveTest-fail-subscription-with-no-table-function.graphqls
 "An RFC-3339 compliant DateTime Scalar"
 scalar DateTime
@@ -664,6 +697,28 @@ type Customer {
 
 type Query {
     TableFunctionCallsTblFct(arg2: Int!, arg1: Int!, limit: Int = 10, offset: Int = 0): [Customer!]
+}
+
+>>>comprehensiveTest-relationship-on-base-table.graphqls
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type CustomerResult {
+    customerid: Long!
+    email: String!
+    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+type CustomerSummary {
+    customerid: Long!
+    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+type Query {
+    CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [CustomerResult!]
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [CustomerSummary!]
 }
 
 >>>comprehensiveTest.graphqls

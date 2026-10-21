@@ -18,6 +18,7 @@ package com.datasqrl.server;
 import static com.datasqrl.server.util.GraphqlCheckUtil.checkState;
 import static com.datasqrl.server.util.GraphqlSchemaUtil.hasVaryingCase;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.database.relational.ExecutableJdbcReadQuery;
 import com.datasqrl.engine.log.kafka.KafkaLogEngine;
 import com.datasqrl.engine.log.kafka.KafkaQuery;
@@ -132,7 +133,11 @@ public class GraphqlModelGenerator extends GraphqlSchemaWalker {
   }
 
   @Override
-  protected void visitUnknownObject(FieldDefinition atField, Optional<RelDataType> relDataType) {}
+  protected void visitUnknownObject(
+      ObjectTypeDefinition objectType,
+      FieldDefinition atField,
+      Optional<RelDataType> relDataType,
+      List<NamePath> relationshipPaths) {}
 
   @Override
   protected void visitScalar(
