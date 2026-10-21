@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.d902c99c.css">
-<script src="/assets/js/runtime~main.664a7f8a.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.713a885c.js" defer="defer"></script>
 <script src="/assets/js/main.2df9c263.js" defer="defer"></script>
 </head>
 <body>
@@ -110,7 +110,7 @@ This simplifies the conceptual model and server execution since any API operatio
 <p>DataSQRL exposes MCP and REST endpoints by converting GraphQL operations. With the default <code>compiler.api.endpoints: &quot;FULL&quot;</code>, it also generates one operation for each query and mutation field in the GraphQL schema.</p>
 <ul>
 <li class="">Generated queries are mapped to GET REST endpoints under <code>rest/queries</code>; generated mutations are mapped to POST REST endpoints under <code>rest/mutations</code>. For generated result sets, DataSQRL follows relationship fields up to the configured <code>max-result-depth</code> without loops.</li>
-<li class="">When <code>add-prefix</code> is enabled (the default), generated query and mutation operations are named with <code>Get</code> and <code>Add</code> prefixes respectively. MCP exposes eligible generated operations as tools.</li>
+<li class="">When <code>add-prefix</code> is enabled (the default), generated query and mutation operations are named with <code>Get</code> and <code>Add</code> prefixes respectively. MCP exposes generated operations as tools. Nested input types, such as mutation inputs with nested rows or lists of rows, are passed to MCP tools as nested JSON objects and arrays. Add <code>@api(mcp: NONE)</code> to a query or mutation field in the GraphQL schema to omit its generated operation from MCP.</li>
 </ul>
 <p>For complete control over the exposed MCP tools and resources as well as REST endpoints, define named GraphQL queries or mutations in one or more <code>.graphql</code> files configured under <code>script.operations</code> (or a version&#x27;s <code>script.api.&lt;version&gt;.operations</code>) in <a class="" href="/docs/main/configuration#source-files-script"><code>package.json</code></a>.</p>
 <p>The GraphQL file defining the operations contains named queries or mutations.

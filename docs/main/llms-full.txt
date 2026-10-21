@@ -1250,7 +1250,7 @@ flowchart TD
 DataSQRL exposes MCP and REST endpoints by converting GraphQL operations. With the default `compiler.api.endpoints: "FULL"`, it also generates one operation for each query and mutation field in the GraphQL schema.
 
 * Generated queries are mapped to GET REST endpoints under `rest/queries`; generated mutations are mapped to POST REST endpoints under `rest/mutations`. For generated result sets, DataSQRL follows relationship fields up to the configured `max-result-depth` without loops.
-* When `add-prefix` is enabled (the default), generated query and mutation operations are named with `Get` and `Add` prefixes respectively. MCP exposes eligible generated operations as tools.
+* When `add-prefix` is enabled (the default), generated query and mutation operations are named with `Get` and `Add` prefixes respectively. MCP exposes generated operations as tools. Nested input types, such as mutation inputs with nested rows or lists of rows, are passed to MCP tools as nested JSON objects and arrays. Add `@api(mcp: NONE)` to a query or mutation field in the GraphQL schema to omit its generated operation from MCP.
 
 For complete control over the exposed MCP tools and resources as well as REST endpoints, define named GraphQL queries or mutations in one or more `.graphql` files configured under `script.operations` (or a version's `script.api.<version>.operations`) in [`package.json`](https://docs.datasqrl.com/docs/main/configuration.md#source-files-script).
 
