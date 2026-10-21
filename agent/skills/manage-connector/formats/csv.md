@@ -17,7 +17,7 @@ must not have a header row. The compiler warns when a CSV data file seems to sta
 `CSV file [...] seems to start with a header row: ...`. A header row is read as a data row: on
 typed columns it fails the job with a parse error, or with `'csv.ignore-parse-errors' = 'true'` it becomes a row with nulls in those columns.
  The warning only checks that every field of the first line starts with a letter, so a data row such as `alice,paris` also triggers it. 
- Check the first line with `/data-observation` and compare it with the declared columns. Remove a header once from the file itself (`tail -n +2 data.csv`, or `zcat data.csv.gz | tail -n +2 | gzip` for compressed files).
+ Check the first line with `/data-observation` and compare it with the declared columns. Remove a header once from the file itself: `tail -n +2 data.csv > data.csv.tmp && mv data.csv.tmp data.csv`, or for a compressed file `zcat data.csv.gz | tail -n +2 | gzip > data.csv.gz.tmp && mv data.csv.gz.tmp data.csv.gz`.
 
 ## Configuration Options
 
