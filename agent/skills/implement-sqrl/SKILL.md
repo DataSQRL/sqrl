@@ -199,6 +199,21 @@ EnrichedOrders := SELECT o.*, c.name, c.email
     ON o.customerid = c.customerid;
 ```
 
+### Timestamp of a join result
+
+For every join, decide the timestamp of the result: the time when the result row last changed. Choose it by the type of join:
+
+| Join | Timestamp of the result |
+|---|---|
+| Temporal join (`FOR SYSTEM_TIME AS OF`) or interval join | The timestamp of the stream side. Each result row is an event at that time, and the join never changes it later. |
+| Regular join (an inner or outer join without `FOR SYSTEM_TIME AS OF` or a time bound) | Reason about how the result row changes over time. In the common case, both sides change independently. The row then last changed at the later of the two times: `GREATEST(l.ts, r.ts)`. Give `GREATEST` one argument for each joined table that has a timestamp. A table without a timestamp, such as a table of fixed values, never changes, so it adds no argument. `GREATEST` returns `NULL` when one argument is `NULL`. In an outer join, wrap the timestamp of each side that can be missing in `COALESCE` with the timestamp of another side. For example, in a `LEFT JOIN`, write `GREATEST(l.ts, COALESCE(r.ts, l.ts))`. |
+
+A regular join emits a new version of a result row each time either side changes. A row that keeps the timestamp of one side only looks out of date when the other side changes. API clients that sort or filter by that timestamp then get wrong results.
+
+The Postgres sink writes a new version of a `STATE` row only when this timestamp is not older than the stored one. `GREATEST` goes back to an older timestamp when the optional side of an outer join stops matching, for example because its row is deleted or filtered out. The sink then keeps the old joined values. For such a join, use only the timestamp of the preserved side, such as `l.ts` in a `LEFT JOIN`. It does not show changes of the optional side, but it never goes back.
+
+A `FULL JOIN` has no preserved side. If its sides can stop matching, `CAST` the result timestamp to its type, for example `CAST(GREATEST(...) AS TIMESTAMP_LTZ(3))`, to remove the row-time marker. The sink then writes every version without comparing timestamps.
+
 ### DISTINCT operator
 
 ```
