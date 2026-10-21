@@ -19,6 +19,7 @@ import static com.datasqrl.engine.EngineFeature.STANDARD_STREAM;
 import static org.apache.flink.configuration.CheckpointingOptions.CHECKPOINTING_INTERVAL;
 import static org.apache.flink.configuration.CheckpointingOptions.MIN_PAUSE_BETWEEN_CHECKPOINTS;
 import static org.apache.flink.table.api.config.ExecutionConfigOptions.TABLE_EXEC_SOURCE_IDLE_TIMEOUT;
+import static org.apache.flink.table.api.config.TableConfigOptions.LOCAL_TIME_ZONE;
 
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
@@ -35,18 +36,25 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.ExecutionOptions;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @Slf4j
 public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEngine {
 
   public static final EnumSet<EngineFeature> FLINK_CAPABILITIES = STANDARD_STREAM;
 
+  /** Session time zone of internal test executions, unless the package sets one. */
+  static final String INTERNAL_TEST_TIME_ZONE = "America/Los_Angeles";
+
   @Getter private final EngineConfig engineConfig;
+  private final boolean internalTestExec;
 
   @Inject
-  public FlinkStreamEngine(PackageJson json) {
+  public FlinkStreamEngine(
+      PackageJson json, @Qualifier("internalTestExec") Boolean internalTestExec) {
     super(FlinkEngineFactory.ENGINE_NAME, EngineType.PROCESS, FLINK_CAPABILITIES);
     this.engineConfig = json.getEngines().getEngineConfigOrEmpty(FlinkEngineFactory.ENGINE_NAME);
+    this.internalTestExec = internalTestExec;
   }
 
   @Override
@@ -61,6 +69,12 @@ public class FlinkStreamEngine extends ExecutionEngine.Base implements StreamEng
   public Configuration getBaseConfiguration() {
     var conf = new Configuration();
     engineConfig.getConfig().forEach((key, value) -> conf.setString(key, String.valueOf(value)));
+
+    // Internal tests use a non-UTC session time zone, so time zone handling bugs show up in the
+    // snapshots
+    if (internalTestExec && !conf.contains(LOCAL_TIME_ZONE)) {
+      conf.set(LOCAL_TIME_ZONE, INTERNAL_TEST_TIME_ZONE);
+    }
 
     return conf;
   }

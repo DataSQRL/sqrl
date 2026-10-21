@@ -151,8 +151,7 @@ public class SqrlContainerExtension
     var cmd =
         new GenericContainer<>(DockerImageName.parse(SQRL_CMD_IMAGE + ":" + getImageTag()))
             .withWorkingDirectory(WORKSPACE_DIR)
-            .withFileSystemBind(testDir.toString(), WORKSPACE_DIR, BindMode.READ_WRITE)
-            .withEnv("TZ", "America/Los_Angeles");
+            .withFileSystemBind(testDir.toString(), WORKSPACE_DIR, BindMode.READ_WRITE);
     if (debug) {
       cmd = cmd.withEnv("SQRL_DEBUG", "1");
     }
