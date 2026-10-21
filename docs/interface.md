@@ -35,6 +35,8 @@ Tables/functions defined with the `SUBSCRIBE` keyword are exposed as subscriptio
 Internal table sources are exposed as mutations with the input type identical to the columns in the table excluding computed columns.
 
 In addition, the result type of the endpoint matches the schema of the table or function. That means, each field of the result type matches a column or relationship on the table/function by name and the field type is compatible.
+A relationship field resolves to the relationship defined on the table that has the same name as the GraphQL type. If there is no such relationship or column, it resolves to the relationship on the [base table](#base-tables) of the table/function.
+When a relationship field resolves on the base table, all tables/functions that return this GraphQL type must have the same base table.
 The field type is compatible with the column/relationship type iff:
 * For scalar or collection types there is a native mapping from one type system to the other
 * For structured types (i.e. nested or relationship), the mapping applies recursively.
@@ -68,6 +70,8 @@ You can customize the GraphQL schema by:
 * Changing the type of fields to compatible types (e.g. `Person` to `SpecificPerson`)
 * Adding enums
 * Adding interfaces and structuring types with interfaces
+
+Mutation input fields must match the column types of the table. A `String` column also accepts enum, `ID`, and `JSON` inputs, where JSON objects and arrays are stored as JSON text. Nullable columns can be omitted from the mutation input. If the mutation result type still includes them, those fields must be nullable and return `null`.
 
 > **Warning**
 >
@@ -174,7 +178,7 @@ flowchart TD
 DataSQRL exposes MCP and REST endpoints by converting GraphQL operations. With the default `compiler.api.endpoints: "FULL"`, it also generates one operation for each query and mutation field in the GraphQL schema.
 
 * Generated queries are mapped to GET REST endpoints under `rest/queries`; generated mutations are mapped to POST REST endpoints under `rest/mutations`. For generated result sets, DataSQRL follows relationship fields up to the configured `max-result-depth` without loops.
-* When `add-prefix` is enabled (the default), generated query and mutation operations are named with `Get` and `Add` prefixes respectively. MCP exposes eligible generated operations as tools.
+* When `add-prefix` is enabled (the default), generated query and mutation operations are named with `Get` and `Add` prefixes respectively. MCP exposes generated operations as tools. Nested input types, such as mutation inputs with nested rows or lists of rows, are passed to MCP tools as nested JSON objects and arrays. Add `@api(mcp: NONE)` to a query or mutation field in the GraphQL schema to omit its generated operation from MCP.
 
 For complete control over the exposed MCP tools and resources as well as REST endpoints, define named GraphQL queries or mutations in one or more `.graphql` files configured under `script.operations` (or a version's `script.api.<version>.operations`) in [`package.json`](https://docs.datasqrl.com/docs/configuration.md#source-files-script).
 

@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.d902c99c.css">
-<script src="/assets/js/runtime~main.88656826.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.422e38be.js" defer="defer"></script>
 <script src="/assets/js/main.2df9c263.js" defer="defer"></script>
 </head>
 <body>
@@ -111,10 +111,10 @@ It writes the merged configuration to <code>build/package.json</code>.</p>
 <ul>
 <li class="">The SQRL preprocessor renders template variables in <code>.sqrl</code> scripts with the values configured under <code>script.config</code>.</li>
 <li class="">The UDF preprocessors extract user-defined function definitions from provided JAR files and from <a href="https://www.jbang.dev/" target="_blank" rel="noopener noreferrer" class="">JBang</a> <code>.java</code> files (see <a class="" href="/docs/functions">functions</a>).</li>
-<li class="">The static data preprocessor copies <code>.jsonl</code>, <code>.csv</code>, and <code>.avro</code> files (optionally compressed) into a consolidated data directory for Flink to read at runtime. This requires that filenames for static data files are unique.</li>
+<li class="">The static data preprocessor copies <code>.jsonl</code>, <code>.csv</code>, and <code>.avro</code> files (optionally compressed) unchanged into a consolidated data directory for Flink to read at runtime. This requires that filenames for static data files are unique. Flink reads every line of a CSV file as data, so the preprocessor warns when a <code>.csv</code> file seems to start with a header row.</li>
 </ul>
 <p>Preprocessors are internal to DataSQRL and can be extended within the framework.</p>
-<p>The schema of <code>.jsonl</code> and <code>.csv</code> data files is discovered during planning when a table definition references the file.</p>
+<p>The schema of <code>.jsonl</code> data files is discovered during planning when a table definition references the file.</p>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="parser">Parser<a href="#parser" class="hash-link" aria-label="Direct link to Parser" title="Direct link to Parser" translate="no">​</a></h3>
 <p>The parser is the first stage of the compiler. The parser parses the
 SQRL script into a logical plan by pre-processing any SQRL specific syntax and then

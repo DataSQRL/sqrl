@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.d902c99c.css">
-<script src="/assets/js/runtime~main.88656826.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.422e38be.js" defer="defer"></script>
 <script src="/assets/js/main.2df9c263.js" defer="defer"></script>
 </head>
 <body>
@@ -42,6 +42,8 @@ Each object maps to a type or input and each relationship maps to a relationship
 Tables/functions defined with the <code>SUBSCRIBE</code> keyword are exposed as subscriptions.
 Internal table sources are exposed as mutations with the input type identical to the columns in the table excluding computed columns.</p>
 <p>In addition, the result type of the endpoint matches the schema of the table or function. That means, each field of the result type matches a column or relationship on the table/function by name and the field type is compatible.
+A relationship field resolves to the relationship defined on the table that has the same name as the GraphQL type. If there is no such relationship or column, it resolves to the relationship on the <a href="#base-tables" class="">base table</a> of the table/function.
+When a relationship field resolves on the base table, all tables/functions that return this GraphQL type must have the same base table.
 The field type is compatible with the column/relationship type iff:</p>
 <ul>
 <li class="">For scalar or collection types there is a native mapping from one type system to the other</li>
@@ -68,6 +70,7 @@ To serve multiple API versions, configure each version under <code>script.api</c
 <li class="">Adding enums</li>
 <li class="">Adding interfaces and structuring types with interfaces</li>
 </ul>
+<p>Mutation input fields must match the column types of the table. A <code>String</code> column also accepts enum, <code>ID</code>, and <code>JSON</code> inputs, where JSON objects and arrays are stored as JSON text. Nullable columns can be omitted from the mutation input. If the mutation result type still includes them, those fields must be nullable and return <code>null</code>.</p>
 <div class="theme-admonition theme-admonition-warning admonition_xJq3 alert alert--warning"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8.893 1.5c-.183-.31-.52-.5-.887-.5s-.703.19-.886.5L.138 13.499a.98.98 0 0 0 0 1.001c.193.31.53.501.886.501h13.964c.367 0 .704-.19.877-.5a1.03 1.03 0 0 0 .01-1.002L8.893 1.5zm.133 11.497H6.987v-2.003h2.039v2.003zm0-3.004H6.987V5.987h2.039v4.006z"></path></svg></span>warning</div><div class="admonitionContent_BuS1"><p>The compiler raises errors when the provided GraphQL schema is not compatible with the object-relationship model.</p></div></div>
 <h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="pagination">Pagination<a href="#pagination" class="hash-link" aria-label="Direct link to Pagination" title="Direct link to Pagination" translate="no">​</a></h4>
 <p>Every generated query endpoint takes <code>limit</code> and <code>offset</code> arguments to page through the result (<code>limit</code> defaults to the configured <code>default-limit</code>). By default the endpoint returns the rows directly and the client tracks the offsets itself.</p>
@@ -107,7 +110,7 @@ This simplifies the conceptual model and server execution since any API operatio
 <p>DataSQRL exposes MCP and REST endpoints by converting GraphQL operations. With the default <code>compiler.api.endpoints: &quot;FULL&quot;</code>, it also generates one operation for each query and mutation field in the GraphQL schema.</p>
 <ul>
 <li class="">Generated queries are mapped to GET REST endpoints under <code>rest/queries</code>; generated mutations are mapped to POST REST endpoints under <code>rest/mutations</code>. For generated result sets, DataSQRL follows relationship fields up to the configured <code>max-result-depth</code> without loops.</li>
-<li class="">When <code>add-prefix</code> is enabled (the default), generated query and mutation operations are named with <code>Get</code> and <code>Add</code> prefixes respectively. MCP exposes eligible generated operations as tools.</li>
+<li class="">When <code>add-prefix</code> is enabled (the default), generated query and mutation operations are named with <code>Get</code> and <code>Add</code> prefixes respectively. MCP exposes generated operations as tools. Nested input types, such as mutation inputs with nested rows or lists of rows, are passed to MCP tools as nested JSON objects and arrays. Add <code>@api(mcp: NONE)</code> to a query or mutation field in the GraphQL schema to omit its generated operation from MCP.</li>
 </ul>
 <p>For complete control over the exposed MCP tools and resources as well as REST endpoints, define named GraphQL queries or mutations in one or more <code>.graphql</code> files configured under <code>script.operations</code> (or a version&#x27;s <code>script.api.&lt;version&gt;.operations</code>) in <a class="" href="/docs/configuration#source-files-script"><code>package.json</code></a>.</p>
 <p>The GraphQL file defining the operations contains named queries or mutations.

@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.d902c99c.css">
-<script src="/assets/js/runtime~main.88656826.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.422e38be.js" defer="defer"></script>
 <script src="/assets/js/main.2df9c263.js" defer="defer"></script>
 </head>
 <body>
@@ -36,7 +36,7 @@
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="conflict-handling">Conflict Handling<a href="#conflict-handling" class="hash-link" aria-label="Direct link to Conflict Handling" title="Direct link to Conflict Handling" translate="no">​</a></h2>
 <p>When a generated PostgreSQL table receives a row that conflicts with an existing row on a primary key or unique constraint,
 DataSQRL chooses one of the following conflict handling strategies:</p>
-<table><thead><tr><th>Strategy</th><th>PostgreSQL behavior</th><th>Description</th></tr></thead><tbody><tr><td>Update</td><td><code>ON CONFLICT (...) DO UPDATE SET ...</code></td><td>The existing row is overwritten with the incoming row.</td></tr><tr><td>Timestamp update</td><td><code>ON CONFLICT (...) DO UPDATE SET ... WHERE incoming timestamp &gt; existing timestamp</code></td><td>The existing row is overwritten only when the incoming row has a newer timestamp than the existing row. Otherwise, the conflicting insert is silently skipped, which prevents out-of-order events from rolling back newer state.</td></tr><tr><td>Ignore</td><td><code>ON CONFLICT (...) DO NOTHING</code></td><td>The existing row is kept, and the conflicting insert is silently skipped.</td></tr></tbody></table>
+<table><thead><tr><th>Strategy</th><th>PostgreSQL behavior</th><th>Description</th></tr></thead><tbody><tr><td>Update</td><td><code>ON CONFLICT (...) DO UPDATE SET ...</code></td><td>The existing row is overwritten with the incoming row.</td></tr><tr><td>Timestamp update</td><td><code>ON CONFLICT (...) DO UPDATE SET ... WHERE incoming timestamp &gt;= existing timestamp</code></td><td>The existing row is overwritten only when the incoming timestamp is not older than the existing one. Otherwise, the conflicting insert is silently skipped, which prevents out-of-order events from rolling back newer state.</td></tr><tr><td>Ignore</td><td><code>ON CONFLICT (...) DO NOTHING</code></td><td>The existing row is kept, and the conflicting insert is silently skipped.</td></tr></tbody></table>
 <p>DataSQRL applies these strategies automatically based on the generated <a class="" href="/docs/sqrl-language#type-system">table type</a>:</p>
 <ul>
 <li class=""><code>STATE</code> tables use timestamp update with the appropriate timestamp column.</li>

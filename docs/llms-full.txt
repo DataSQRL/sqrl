@@ -1033,7 +1033,7 @@ In this example:
 
 ### Inferring Schema from Data Files
 
-To automatically discover the schema of a JSONL or CSV file, add the filename in the `LIKE` clause.
+To automatically discover the schema of a JSONL file, add the filename in the `LIKE` clause.
 In addition to generating the table columns based on the inferred schema of the data, this also configures the `filesystem` connector to access the data.
 
 For example, suppose you have a `users.jsonl` file in the `connectors` directory, you can define the `Users` table simply as:
@@ -1048,6 +1048,22 @@ CREATE TABLE Users (
 ```
 
 This syntax is useful when building DataSQRL projects from data files since it eliminates the manual schema creation.
+
+Schema discovery isn't available for CSV files. Declare the columns and configure the `filesystem` connector with the `csv` format instead:
+
+```sql
+CREATE TABLE Readings (
+  sensorid BIGINT NOT NULL,
+  temperature DOUBLE NOT NULL
+) WITH (
+  'connector' = 'filesystem',
+  'format' = 'csv',
+  'path' = '${DATA_PATH}/readings.csv'
+);
+```
+
+DataSQRL copies data files unchanged, and Flink reads every line of a CSV file as data, so the file must not have a header row.
+The compiler warns when a CSV data file seems to start with a header row, that is, when every field of its first line starts with a letter.
 
 
 ---
@@ -1091,6 +1107,8 @@ Tables/functions defined with the `SUBSCRIBE` keyword are exposed as subscriptio
 Internal table sources are exposed as mutations with the input type identical to the columns in the table excluding computed columns.
 
 In addition, the result type of the endpoint matches the schema of the table or function. That means, each field of the result type matches a column or relationship on the table/function by name and the field type is compatible.
+A relationship field resolves to the relationship defined on the table that has the same name as the GraphQL type. If there is no such relationship or column, it resolves to the relationship on the [base table](#base-tables) of the table/function.
+When a relationship field resolves on the base table, all tables/functions that return this GraphQL type must have the same base table.
 The field type is compatible with the column/relationship type iff:
 * For scalar or collection types there is a native mapping from one type system to the other
 * For structured types (i.e. nested or relationship), the mapping applies recursively.
@@ -1124,6 +1142,8 @@ You can customize the GraphQL schema by:
 * Changing the type of fields to compatible types (e.g. `Person` to `SpecificPerson`)
 * Adding enums
 * Adding interfaces and structuring types with interfaces
+
+Mutation input fields must match the column types of the table. A `String` column also accepts enum, `ID`, and `JSON` inputs, where JSON objects and arrays are stored as JSON text. Nullable columns can be omitted from the mutation input. If the mutation result type still includes them, those fields must be nullable and return `null`.
 
 > **Warning**
 >
@@ -1230,7 +1250,7 @@ flowchart TD
 DataSQRL exposes MCP and REST endpoints by converting GraphQL operations. With the default `compiler.api.endpoints: "FULL"`, it also generates one operation for each query and mutation field in the GraphQL schema.
 
 * Generated queries are mapped to GET REST endpoints under `rest/queries`; generated mutations are mapped to POST REST endpoints under `rest/mutations`. For generated result sets, DataSQRL follows relationship fields up to the configured `max-result-depth` without loops.
-* When `add-prefix` is enabled (the default), generated query and mutation operations are named with `Get` and `Add` prefixes respectively. MCP exposes eligible generated operations as tools.
+* When `add-prefix` is enabled (the default), generated query and mutation operations are named with `Get` and `Add` prefixes respectively. MCP exposes generated operations as tools. Nested input types, such as mutation inputs with nested rows or lists of rows, are passed to MCP tools as nested JSON objects and arrays. Add `@api(mcp: NONE)` to a query or mutation field in the GraphQL schema to omit its generated operation from MCP.
 
 For complete control over the exposed MCP tools and resources as well as REST endpoints, define named GraphQL queries or mutations in one or more `.graphql` files configured under `script.operations` (or a version's `script.api.<version>.operations`) in [`package.json`](https://docs.datasqrl.com/docs/configuration.md#source-files-script).
 
@@ -1869,12 +1889,12 @@ You can enable both authentication methods simultaneously:
 
 The `oauthConfig` object combines Vert.x's [OAuth2Options](https://vertx.io/docs/apidocs/io/vertx/ext/auth/oauth2/OAuth2Options.html) with discovery metadata:
 
-| Key                      | Type       | Required | Description                                                   |
-|--------------------------|------------|----------|---------------------------------------------------------------|
-| `oauth2Options`          | **object** | Yes      | Vert.x OAuth2Options for authentication                       |
-| `authorizationServerUrl` | **string** | No       | External authorization server URL for discovery               |
-| `scopesSupported`        | **array**  | No       | Scopes advertised (default: `["mcp:tools", "mcp:resources"]`) |
-| `resource`               | **string** | No       | Override resource identifier in discovery metadata            |
+| Key                      | Type       | Required | Description                                                           |
+|--------------------------|------------|----------|-----------------------------------------------------------------------|
+| `oauth2Options`          | **object** | Yes      | Vert.x OAuth2Options for authentication                               |
+| `authorizationServerUrl` | **string** | No       | External authorization server URL for discovery                       |
+| `scopesSupported`        | **array**  | No       | Scopes advertised (default: `["mcp:tools", "mcp:resources"]`)         |
+| `resource`               | **string** | No       | Public URL of the MCP endpoint, e.g. `https://api.example.com/v1/mcp` |
 
 ### OAuth2Options Configuration
 
@@ -1889,6 +1909,15 @@ The `oauth2Options` object uses Vert.x's OAuth2Options class:
 
 When OAuth is configured, the server exposes a discovery endpoint at `/.well-known/oauth-protected-resource` per RFC 9728.
 This enables MCP clients to discover the authorization server and scopes.
+When an MCP request has no valid token, the server responds with `401` and a `WWW-Authenticate: Bearer resource_metadata="..."` header that points MCP clients to this endpoint.
+
+If `resource` is not set, the server derives both the `resource` value in the discovery metadata and the `resource_metadata` URL from each request: the scheme from the `X-Forwarded-Proto` header (or the request scheme), and the host from the `Host` header.
+If `resource` is set, the discovery metadata returns it unchanged, and the `resource_metadata` URL uses its origin.
+For example, `"resource": "https://api.example.com/v1/mcp"` makes the `401` header point to `https://api.example.com/.well-known/oauth-protected-resource`.
+
+Set `resource` when the server runs behind a reverse proxy or load balancer that terminates TLS, so MCP clients always receive `https` URLs.
+Use the exact URL MCP clients connect to: RFC 9728 requires clients to reject discovery metadata whose `resource` does not match that URL.
+The proxy must also route `/.well-known/oauth-protected-resource` on the same origin to the server.
 
 ### Environment Variable Support
 
@@ -2069,7 +2098,7 @@ DataSQRL chooses one of the following conflict handling strategies:
 | Strategy         | PostgreSQL behavior                                                                 | Description                                                                                                                                                                                                                      |
 |------------------|-------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | Update           | `ON CONFLICT (...) DO UPDATE SET ...`                                               | The existing row is overwritten with the incoming row.                                                                                                                                                                           |
-| Timestamp update | `ON CONFLICT (...) DO UPDATE SET ... WHERE incoming timestamp > existing timestamp` | The existing row is overwritten only when the incoming row has a newer timestamp than the existing row. Otherwise, the conflicting insert is silently skipped, which prevents out-of-order events from rolling back newer state. |
+| Timestamp update | `ON CONFLICT (...) DO UPDATE SET ... WHERE incoming timestamp >= existing timestamp` | The existing row is overwritten only when the incoming timestamp is not older than the existing one. Otherwise, the conflicting insert is silently skipped, which prevents out-of-order events from rolling back newer state. |
 | Ignore           | `ON CONFLICT (...) DO NOTHING`                                                      | The existing row is kept, and the conflicting insert is silently skipped.                                                                                                                                                        |
 
 DataSQRL applies these strategies automatically based on the generated [table type](https://docs.datasqrl.com/docs/sqrl-language.md#type-system):
@@ -4071,11 +4100,11 @@ As part of this process, the packager executes the following preprocessors:
 
 * The SQRL preprocessor renders template variables in `.sqrl` scripts with the values configured under `script.config`.
 * The UDF preprocessors extract user-defined function definitions from provided JAR files and from [JBang](https://www.jbang.dev/) `.java` files (see [functions](https://docs.datasqrl.com/docs/functions.md)).
-* The static data preprocessor copies `.jsonl`, `.csv`, and `.avro` files (optionally compressed) into a consolidated data directory for Flink to read at runtime. This requires that filenames for static data files are unique.
+* The static data preprocessor copies `.jsonl`, `.csv`, and `.avro` files (optionally compressed) unchanged into a consolidated data directory for Flink to read at runtime. This requires that filenames for static data files are unique. Flink reads every line of a CSV file as data, so the preprocessor warns when a `.csv` file seems to start with a header row.
 
 Preprocessors are internal to DataSQRL and can be extended within the framework.
 
-The schema of `.jsonl` and `.csv` data files is discovered during planning when a table definition references the file.
+The schema of `.jsonl` data files is discovered during planning when a table definition references the file.
 
 ### Parser
 
