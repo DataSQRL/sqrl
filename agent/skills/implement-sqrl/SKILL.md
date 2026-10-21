@@ -485,7 +485,7 @@ Defines an internal table that is not exposed in the interface.
 * **`/*+no_query*/`** — the object **is** part of the interface through relationship but it cannot be queryable directly. Use it for a table clients reach only through a relationship from its parent.
 
 ```sql
--- Clients reach Purchase only through Order and the relationships below, so it has no query endpoint.
+-- Clients reach Purchase only through Order, so it has no query endpoint of its own.
 /** A line of a purchase order, with its total price (quantity times unit price). */
 /*+no_query */
 Purchase := SELECT *, quantity * unit_price AS total_price FROM sources.Purchase;
@@ -662,9 +662,30 @@ GROUP BY sensorid, window_start, window_end, window_time;
 
 * `--` single-line comment; write it on its own line, never trailing at the end of a statement
 * `/* ... */` multi-line comment
-* `/** ... */` **doc-string**: attached to the next definition. When DataSQRL generates the GraphQL schema, the doc-string becomes the GraphQL description of the type and of its query, mutation, subscription or relationship field. For a queryable table, a function or a `CREATE TABLE` mutation, it also becomes the description of its generated REST (OpenAPI) operation and MCP tool. With a custom schema, the descriptions in that schema replace the doc-strings (see `/design-api`, API Descriptions).
+* `/** ... */` **doc-string**: attached to the next definition. When DataSQRL generates the GraphQL schema, the doc-string becomes the GraphQL description of the query, mutation, subscription or relationship field, and of the type that the definition creates. For a queryable table, a function or a `CREATE TABLE` mutation, it also becomes the description of its generated REST (OpenAPI) operation and MCP tool. With a custom schema, the descriptions in that schema replace the doc-strings (see `/design-api`, API Descriptions).
 
-Write each doc-string for the API consumer, who sees only the API. State what the object is and what it returns: its key, its order, and when the result is null or empty. Describe the behavior the consumer sees, such as "only the latest version of each order", and leave out how the pipeline computes it.
+How DataSQRL publishes a doc-string:
+
+* A function or relationship that returns the rows of an existing table (`SELECT * FROM T ...`) uses the type of `T`. Its doc-string describes only the field.
+* A definition without a doc-string takes the doc-string of its base table as its type description. This includes a hidden `_` table.
+* A `CREATE TABLE` doc-string describes the type, the generated query and the mutation.
+* A `# Columns:` section describes the columns of the type that the definition creates. A `# Arguments:` section describes the arguments of a function. Each section has one `- name: text` line for each column or argument. A column note becomes the GraphQL field description and the field description in the REST and MCP results. An argument note becomes the GraphQL argument description and the MCP parameter description.
+
+```sql
+/** A registered person.
+# Columns:
+- email: Email address. Null when the person gave none.
+*/
+Person := SELECT name, email, age FROM sources.Person;
+
+/** The people of one age, sorted by name.
+# Arguments:
+- age: Age in whole years.
+*/
+PersonByAge(age INT NOT NULL) := SELECT * FROM Person WHERE age = :age ORDER BY name;
+```
+
+Write each doc-string for the API consumer, who sees only the API, and this includes the doc-string of a `_` table. State what the object is and what it returns: its key, its order, and when the result is null or empty. Describe the behavior the consumer sees, such as "only the latest version of each order", and leave out how the pipeline computes it. For a `CREATE TABLE`, describe the record it holds, because the same text describes the query and the mutation.
 
 Put requirement IDs and other maintainer notes in `--` or `/* */` comments.
 

@@ -161,7 +161,7 @@ query GetPersonByAge($age: Int!) @api(rest: GET, mcp: TOOL, uri: "/queries/perso
 
 This defines an operation `GetPersonByAge` which is the name of the MCP tool and REST endpoint with the path `/queries/personByAge/{age}` using GET method.
 
-The `#` comment lines above an operation are its REST (OpenAPI) and MCP tool description. A `"""` description before an operation fails the compile with `Invalid syntax`. In the schema file, write descriptions with `"..."` or `"""..."""`.
+The `#` comment lines above an operation are its REST (OpenAPI) description and its MCP tool or resource description. A `"""` description before an operation fails the compile with `Invalid syntax`. In the schema file, write descriptions with `"..."` or `"""..."""`.
 
 By default, DataSQRL adds explicit operations to the generated ones. Set `compiler.api.endpoints` to `OPS_ONLY` to omit generated REST/MCP operations and restrict a public GraphQL endpoint to explicitly defined named operations. The server executes its stored operation definition, so clients cannot alter its selection set.
 
