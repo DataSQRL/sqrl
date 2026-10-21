@@ -191,7 +191,7 @@ Apply the `@api` directive to an operation to control how it is exposed:
 * `uri`: AN RFC 6570 template to configure the REST path and MCP resource path. Any operation arguments that are not defined in the uri template are considered part of the payload for REST (and the method must be POST).
 
 ```graphql
-""" Returns up to 10 people for a given age """
+# Returns up to 10 people of the given age.
 query GetPersonByAge($age: Int!) @api(rest: GET, mcp: TOOL, uri: "/queries/personByAge/{age}") {
     Person(age: $age, limit: 10, offset: 0) {
         name
@@ -202,7 +202,7 @@ query GetPersonByAge($age: Int!) @api(rest: GET, mcp: TOOL, uri: "/queries/perso
 
 This defines an operation `GetPersonByAge` which is the name of the MCP tool and REST endpoint with the path `/queries/personByAge/{age}` using GET method.
 
-The doc strings for the operations are used in the API and tooling documentation.
+The `#` comment lines above an operation are its REST (OpenAPI) description and its MCP tool or resource description. A `"""` description before an operation fails the compile with `Invalid syntax`. In the schema file, write descriptions with `"..."` or `"""..."""`.
 
 By default, DataSQRL adds explicit operations to the generated ones. Set `compiler.api.endpoints` to `OPS_ONLY` in the [`package.json`](https://docs.datasqrl.com/docs/main/configuration.md) to omit generated MCP and REST operations and restrict a public GraphQL endpoint to explicitly defined named operations. The server executes its stored operation definition, so clients cannot alter its selection set. Whether the GraphQL endpoint is publicly available is controlled independently by whether `compiler.api.protocols` includes `GRAPHQL`.
 
