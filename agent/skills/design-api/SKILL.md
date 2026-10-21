@@ -57,7 +57,7 @@ Maps to GraphQL query `Customer(limit: Int = 10, offset: Int = 0): [Customer!]` 
 Defined in `.graphql` files and configured in `package.json` under `script.operations`, or under `script.api.<version>.operations` for a versioned API.
 
 ```graphql
-""" Returns up to 10 people for a given age """
+# Returns up to 10 people of the given age.
 query GetPersonByAge($age: Int!)
   @api(rest: GET, mcp: TOOL, uri: "/queries/personByAge/{age}") {
   Person(age: $age, limit: 10, offset: 0) { name email }
@@ -71,8 +71,19 @@ query GetPersonByAge($age: Int!)
 
 **Rules:**
 - Operation name = MCP tool name = REST endpoint name (must be unique)
-- Doc strings propagate to API documentation
 - `compiler.api.endpoints: OPS_ONLY` to expose only custom operations and restrict a public GraphQL endpoint to those stored named operations. `GRAPHQL` keeps public GraphQL flexible while exposing only explicit REST/MCP operations; `FULL` is the default and adds generated operations.
+
+## API Descriptions
+
+API consumers read these descriptions in GraphQL, REST (OpenAPI) and MCP. Each one comes from a single source:
+
+| API part | Source of the description |
+|---|---|
+| Generated schema | The SQRL `/** ... */` doc-strings |
+| Custom schema | The `"..."` or `"""..."""` descriptions in the schema file. A `#` line above a field also becomes its REST and MCP description. The SQRL doc-strings do not reach the API |
+| Custom operation | The `#` comment lines above the operation, from the end of the previous operation, blank lines included. A `#` line above a variable becomes its MCP argument description. A `"""` description before an operation fails the compile with `Invalid syntax` |
+
+Write every description for the API consumer. Describe each field, argument, input field and enum value whose name does not show its full meaning. For a mutation, state what it creates or changes and what it returns.
 
 ## API Entrypoints
 

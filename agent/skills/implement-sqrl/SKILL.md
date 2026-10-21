@@ -485,13 +485,14 @@ Defines an internal table that is not exposed in the interface.
 * **`/*+no_query*/`** — the object **is** part of the interface through relationship but it cannot be queryable directly. Use it for a table clients reach only through a relationship from its parent.
 
 ```sql
-/** Purchase order lines. Reached through the relationships below, never queried directly. */
+-- Clients reach Purchase only through Order and the relationships below, so it has no query endpoint.
+/** A line of a purchase order, with its total price (quantity times unit price). */
 /*+no_query */
 Purchase := SELECT *, quantity * unit_price AS total_price FROM sources.Purchase;
 Purchase.offering := SELECT * FROM Offering o WHERE o.offering_id = this.offering_id LIMIT 1;
 Purchase.customer := SELECT * FROM Customer c WHERE c.customer_id = this.customer_id LIMIT 1;
 
-/** Explicit, parametrized access to the same table. */
+/** The lines of one purchase order, sorted by offering id. Empty when no order has this id. */
 Order(order_id STRING NOT NULL) := SELECT * FROM Purchase WHERE order_id = :order_id ORDER BY offering_id ASC;
 ```
 
@@ -661,7 +662,11 @@ GROUP BY sensorid, window_start, window_end, window_time;
 
 * `--` single-line comment; write it on its own line, never trailing at the end of a statement
 * `/* ... */` multi-line comment
-* `/** ... */` **doc-string**: attached to the next definition and propagated to generated API docs.
+* `/** ... */` **doc-string**: attached to the next definition. When DataSQRL generates the GraphQL schema, the doc-string becomes the GraphQL description of the type and of its query, mutation, subscription or relationship field. For a queryable table, a function or a `CREATE TABLE` mutation, it also becomes the description of its generated REST (OpenAPI) operation and MCP tool. With a custom schema, the descriptions in that schema replace the doc-strings (see `/design-api`, API Descriptions).
+
+Write each doc-string for the API consumer, who sees only the API. State what the object is and what it returns: its key, its order, and when the result is null or empty. Describe the behavior the consumer sees, such as "only the latest version of each order", and leave out how the pipeline computes it.
+
+Put requirement IDs and other maintainer notes in `--` or `/* */` comments.
 
 ## Validation rules
 
