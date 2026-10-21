@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.d902c99c.css">
-<script src="/assets/js/runtime~main.fc0be237.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.664a7f8a.js" defer="defer"></script>
 <script src="/assets/js/main.2df9c263.js" defer="defer"></script>
 </head>
 <body>
@@ -42,6 +42,8 @@ Each object maps to a type or input and each relationship maps to a relationship
 Tables/functions defined with the <code>SUBSCRIBE</code> keyword are exposed as subscriptions.
 Internal table sources are exposed as mutations with the input type identical to the columns in the table excluding computed columns.</p>
 <p>In addition, the result type of the endpoint matches the schema of the table or function. That means, each field of the result type matches a column or relationship on the table/function by name and the field type is compatible.
+A relationship field resolves to the relationship defined on the table that has the same name as the GraphQL type. If there is no such relationship or column, it resolves to the relationship on the <a href="#base-tables" class="">base table</a> of the table/function.
+When a relationship field resolves on the base table, all tables/functions that return this GraphQL type must have the same base table.
 The field type is compatible with the column/relationship type iff:</p>
 <ul>
 <li class="">For scalar or collection types there is a native mapping from one type system to the other</li>
