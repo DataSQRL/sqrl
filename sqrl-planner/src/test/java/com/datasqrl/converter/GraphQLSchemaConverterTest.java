@@ -28,6 +28,8 @@ import com.datasqrl.server.converter.GraphQLSchemaConverter;
 import com.datasqrl.server.converter.GraphQLSchemaConverterConfig;
 import com.datasqrl.server.graphql.CustomScalars;
 import com.datasqrl.server.operation.ApiOperation;
+import com.datasqrl.server.operation.McpMethodType;
+import com.datasqrl.server.operation.RestMethodType;
 import com.datasqrl.util.FileUtil;
 import com.datasqrl.util.SnapshotTest;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -218,6 +220,122 @@ public class GraphQLSchemaConverterTest {
     assertThat(query).startsWith("query counter {");
     assertThatCode(() -> Parser.parse(query)).doesNotThrowAnyException();
     assertThat(operations.get(0).getResultDefinition().getProperties()).containsKey("numEvents");
+  }
+
+  @Test
+  void givenMutationWithNestedInput_whenConvertSchema_thenExposesMcpToolWithNestedSchema() {
+    var functions = getFunctionsFromPath("nested-mutation.graphqls");
+
+    assertThat(functions)
+        .extracting(ApiOperation::getName)
+        .containsExactlyInAnyOrder("GetOrders", "AddAddOrder", "AddAddReadings");
+    assertThat(functions)
+        .allSatisfy(op -> assertThat(op.getMcpMethod()).isEqualTo(McpMethodType.TOOL));
+
+    var addOrder = getOperation(functions, "AddAddOrder");
+    assertThat(addOrder.getRestMethod()).isEqualTo(RestMethodType.POST);
+    var params = addOrder.getFunction().getParameters();
+    assertThat(params.getProperties())
+        .containsOnlyKeys("id", "customerid", "time", "shipping", "entries", "tags", "metadata");
+    assertThat(params.getRequired())
+        .containsExactlyInAnyOrder("id", "customerid", "time", "entries");
+
+    var shipping = params.getProperties().get("shipping");
+    assertThat(shipping.getType()).isEqualTo("object");
+    assertThat(shipping.getDescription()).isEqualTo("Where the order is shipped to");
+    assertThat(shipping.getRequired()).containsExactlyInAnyOrder("name", "address");
+    var address = shipping.getProperties().get("address");
+    assertThat(address.getType()).isEqualTo("object");
+    assertThat(address.getProperties()).containsOnlyKeys("street", "city", "zip");
+    assertThat(address.getRequired()).containsExactlyInAnyOrder("street", "city");
+
+    var entries = params.getProperties().get("entries");
+    assertThat(entries.getType()).isEqualTo("array");
+    assertThat(entries.getItems().getType()).isEqualTo("object");
+    assertThat(entries.getItems().getProperties().get("quantity").getType()).isEqualTo("integer");
+    assertThat(entries.getItems().getProperties().get("unit_price").getType()).isEqualTo("number");
+    assertThat(entries.getItems().getRequired())
+        .containsExactlyInAnyOrder("productid", "quantity", "unit_price");
+
+    var addReadings = getOperation(functions, "AddAddReadings");
+    var event = addReadings.getFunction().getParameters().getProperties().get("event");
+    assertThat(event.getType()).isEqualTo("array");
+    assertThat(event.getItems().getProperties()).containsOnlyKeys("sensorid", "temperature");
+    assertThat(addReadings.getFunction().getParameters().getRequired()).containsExactly("event");
+
+    snapshot(functions, "nested-mutation");
+  }
+
+  @Test
+  void givenNestedInputWithApiDirective_whenConvertSchema_thenDirectiveOverridesMcpDefault() {
+    var schema =
+        underTest.getSchema(
+            """
+            enum _McpMethodType { NONE TOOL RESOURCE }
+            enum _RestMethodType { NONE GET POST }
+            directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+            type Query {
+              ping: String
+            }
+            type Mutation {
+              AddHidden(event: OrderInput!): String @api(mcp: NONE)
+              AddVisible(event: OrderInput!): String
+            }
+            input OrderInput {
+              id: Int!
+              shipping: ShippingInput
+            }
+            input ShippingInput {
+              city: String
+            }
+            """);
+
+    var functions = underTest.convertSchema(GraphQLSchemaConverterConfig.DEFAULT, schema);
+
+    assertThat(getOperation(functions, "AddAddHidden").getMcpMethod())
+        .isEqualTo(McpMethodType.NONE);
+    assertThat(getOperation(functions, "AddAddHidden").getRestMethod())
+        .isEqualTo(RestMethodType.POST);
+    assertThat(getOperation(functions, "AddAddVisible").getMcpMethod())
+        .isEqualTo(McpMethodType.TOOL);
+  }
+
+  @Test
+  void givenOperationWithInputObjectVariable_whenConvertOperations_thenExposesMcpTool() {
+    var schema = underTest.getSchema(getTestSchema("nested-mutation.graphqls"));
+
+    var operations =
+        underTest.convertOperations(
+            """
+            mutation PlaceOrder($order: OrderInput!) {
+              AddOrder(event: $order) { id }
+            }
+            mutation PlaceHiddenOrder($order: OrderInput!) @api(mcp: NONE) {
+              AddOrder(event: $order) { id }
+            }
+            """,
+            GraphQLSchemaConverterConfig.DEFAULT,
+            schema);
+
+    var placeOrder = getOperation(operations, "PlaceOrder");
+    assertThat(placeOrder.getMcpMethod()).isEqualTo(McpMethodType.TOOL);
+    var order = placeOrder.getFunction().getParameters().getProperties().get("order");
+    assertThat(order.getType()).isEqualTo("object");
+    assertThat(order.getProperties().get("shipping").getProperties().get("address").getType())
+        .isEqualTo("object");
+    assertThat(order.getProperties().get("entries").getItems().getType()).isEqualTo("object");
+    assertThat(placeOrder.getFunction().getParameters().getRequired()).containsExactly("order");
+
+    assertThat(getOperation(operations, "PlaceHiddenOrder").getMcpMethod())
+        .isEqualTo(McpMethodType.NONE);
+  }
+
+  private static ApiOperation getOperation(List<ApiOperation> operations, String name) {
+    return operations.stream()
+        .filter(op -> op.getName().equals(name))
+        .findFirst()
+        .orElseThrow(() -> new AssertionError("Operation not found: " + name));
   }
 
   @ParameterizedTest

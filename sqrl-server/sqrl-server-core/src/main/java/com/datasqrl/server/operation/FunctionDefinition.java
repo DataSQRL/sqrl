@@ -15,7 +15,6 @@
  */
 package com.datasqrl.server.operation;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
@@ -53,15 +52,6 @@ public class FunctionDefinition {
     private String type;
     private Map<String, Argument> properties = Map.of();
     private List<String> required = List.of();
-
-    @JsonIgnore
-    public boolean isNested() {
-      return properties.values().stream()
-          .anyMatch(
-              arg ->
-                  arg.getProperties() != null
-                      || (arg.getItems() != null && arg.getItems().getProperties() != null));
-    }
   }
 
   @Data
