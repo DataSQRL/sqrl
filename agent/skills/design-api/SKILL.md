@@ -57,7 +57,7 @@ Maps to GraphQL query `Customer(limit: Int = 10, offset: Int = 0): [Customer!]` 
 Defined in `.graphql` files and configured in `package.json` under `script.operations`, or under `script.api.<version>.operations` for a versioned API.
 
 ```graphql
-""" Returns up to 10 people for a given age """
+# Returns up to 10 people of the given age.
 query GetPersonByAge($age: Int!)
   @api(rest: GET, mcp: TOOL, uri: "/queries/personByAge/{age}") {
   Person(age: $age, limit: 10, offset: 0) { name email }
@@ -71,8 +71,50 @@ query GetPersonByAge($age: Int!)
 
 **Rules:**
 - Operation name = MCP tool name = REST endpoint name (must be unique)
-- Doc strings propagate to API documentation
 - `compiler.api.endpoints: OPS_ONLY` to expose only custom operations and restrict a public GraphQL endpoint to those stored named operations. `GRAPHQL` keeps public GraphQL flexible while exposing only explicit REST/MCP operations; `FULL` is the default and adds generated operations.
+
+## API Descriptions
+
+API consumers read these descriptions in GraphQL, REST (OpenAPI) and MCP. Each one comes from a single source:
+
+| API part | Source of the description |
+|---|---|
+| Generated schema | The SQRL `/** ... */` doc-strings, with their `# Columns:` and `# Arguments:` sections (see `/implement-sqrl`, Comments & Doc-strings) |
+| Custom schema | The `"..."` or `"""..."""` descriptions in the schema file. A `#` line above a type, field, argument, input field or enum value without a `"..."` description also becomes its description. The SQRL doc-strings do not reach the API |
+| Custom operation | All `#` lines above the operation, back to the end of the previous operation or to the top of the file, joined with spaces into one text. So a `#` note between two operations, or in the file header, becomes part of the next operation's description. They describe the REST operation and the MCP tool or resource. A `#` line above a variable describes that argument in MCP, and in the REST request body of a `POST` operation. A `"""` description before an operation fails the compile with `Invalid syntax` |
+
+Write every description for the API consumer. Describe each field, argument, input field and enum value whose name does not show its full meaning. For a mutation field in a custom schema, state what it creates or changes and what it returns.
+
+Example from a custom schema:
+
+```graphql
+"The status of an event or action item."
+enum UpdateStatus {
+  "Not started or in progress. The default when no update has set a status."
+  open
+  "Completed."
+  done
+}
+
+type Query {
+  "One event by its key, or null when it does not exist or the caller cannot see it."
+  Event(
+    "Subject identifier of the event's author."
+    author_sub: String!,
+    "Business time of the event in epoch seconds."
+    event_time: Long!
+  ): EventData
+}
+
+type Mutation {
+  """
+  Creates an event, or replaces the existing event with the same key, and returns the stored event.
+  """
+  upsertEvent(event: upsertEventInput!): upsertEventResultOutput!
+}
+```
+
+Put maintainer notes where DataSQRL does not publish them. In an operations file, write them as `#` lines inside the operation body. For a custom schema, write them as `--` comments in the SQRL script.
 
 ## API Entrypoints
 
