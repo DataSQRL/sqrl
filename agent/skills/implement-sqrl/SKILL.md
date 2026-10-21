@@ -543,7 +543,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | Hint                        | Form                                                                       | Applies to     | Effect                                                                                                                                                                             |
 |-----------------------------|----------------------------------------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare PK when optimiser cannot infer; does not deduplicate (see Primary key columns)                                                                                             |
-| **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | replaces automatic index selection for this table (see Indexes for API queries). `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`; `DESC` is supported only for `BTREE` and `PBTREE`. <br />`index` *alone* disables all automatic indexes |
+| **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | replaces automatic index selection for this table. `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`; `DESC` is supported only for `BTREE` and `PBTREE`. <br />`index` *alone* disables all automatic indexes, except the row-time index of a table behind a paginated query |
 | **partition_key**           | `partition_key(col, ...)`                                                  | table          | define partition columns for sinks that support partitioning                                                                                                                       |
 | **vector_dim**              | `vector_dim(col, 1536)`                                                    | table          | declare fixed vector length. This is required when using vector indexes.                                                                                                           |
 | **query_by_all**            | `query_by_all(col, ...)`                                                   | table          | generate interface with *required* filter arguments for all listed columns                                                                                                         |
@@ -568,58 +568,24 @@ SensorTempByHour := SELECT ... ;
 
 For choosing between `query_by_all` (required filter arguments) and `query_by_any` (optional filter arguments) when designing table access, invoke the `/design-api` skill (Table Hints for Table Access).
 
-### Indexes for API queries
+### Filters in API queries
 
-DataSQRL creates the database indexes for the tables that the API queries. The database (Postgres) can use an index only when the filtered column stands alone in the comparison, so prefer to write every filter of a served query in the following form:
+DataSQRL creates the database indexes for the tables that the API queries. The database (Postgres) can use an index only when the filtered column stands alone in the comparison, so write every served query in the following form:
 
 - Compare the bare column: `customer_id = :customerId`.
 - Do a type conversion or a derived value in a table that Flink computes, then filter on the result: add `/*+engine(flink) */` to the table, select `CAST(c.customer_id AS STRING) AS customer_id` in it, and filter on `customer_id = :customerId`. A table that runs in the database (an `engine(database)` hint, or the planner's choice) is copied into the served query, so its `CAST` ends up in the filter again. A function on the column in the filter, such as `CAST(customer_id AS STRING) = :customerId` or `LOWER(email) = :email`, makes the database read the whole table.
 - Put arithmetic on the parameter side: `day_index = :day - 1`.
+- In a `JOIN`, put the table that the `WHERE` clause filters with a parameter first. With the other order, the database reads every row of the table that the `WHERE` clause does not filter. Write `FROM AccountOwners o JOIN Orders c ON c.customer_id = o.customer_id WHERE o.account_id = :accountId`, not `FROM Orders c JOIN AccountOwners o ON o.customer_id = c.customer_id WHERE o.account_id = :accountId`.
+- Filter on another table with a `JOIN`, not with `EXISTS (...)` or `IN (SELECT ...)` in the `WHERE` clause. With a subquery, the database can read every row of the subquery's table. For example, when the primary key of `AccountOwners` is `(account_id, customer_id)`, replace `FROM Orders c WHERE EXISTS (SELECT 1 FROM AccountOwners o WHERE o.account_id = :accountId AND o.customer_id = c.customer_id)` with `FROM AccountOwners o JOIN Orders c ON c.customer_id = o.customer_id WHERE o.account_id = :accountId`. Use the join only when it adds no duplicate rows: after the filter, the other table has at most one matching row for each row, for example because its primary key consists of the filter and join columns. Otherwise, or when the subquery is part of an `OR`, keep the subquery.
 
-The compiler (automatic index selection) picks the indexes from these parts of the served queries:
+The compiler does not warn when a filter breaks these rules, so follow them when you write the query.
 
-- The filters of `WHERE` clauses, in table functions, relationships and `query_by_*` arguments.
-- Table order in the `FROM` clause matters for `JOIN ... ON` conditions: only the table on the right side of the `JOIN` gets an index from the join condition. The columns of the left table become parameters, and the left table gets no index from the join. List the table that the `WHERE` clause filters with a parameter first:
-  - `FROM Orders c JOIN AccountOwners o ON o.customer_id = c.customer_id WHERE o.account_id = :accountId` gives an index only to `AccountOwners` (`account_id, customer_id`), and the database reads all of `Orders`.
-  - `FROM AccountOwners o JOIN Orders c ON c.customer_id = o.customer_id WHERE o.account_id = :accountId` gives an index to both tables: `AccountOwners` (`account_id`) and `Orders` (`customer_id`).
-- The first `ORDER BY` column, only when the query has no `WHERE` filter and a literal `LIMIT` of 10000 at most. For example, in `WHERE customer_id = :cid ORDER BY amount DESC LIMIT 10`, only `customer_id` gets an index.
+### Indexes for API queries
 
-Note: the compiler picks no index for a filter inside a subquery in a `WHERE` clause, such as `EXISTS (...)` or `IN (SELECT ...)`, and none for the column of the outer table that the subquery compares with. Check the compiled plan (see Checking the indexes). If the subquery's table is large and has no index for the subquery's filter, handle the filter in this order:
+The compiler selects the indexes for the tables that the API queries. An `index` hint replaces the automatic index selection for its whole table, so a hint that one query does not need can remove the indexes that other queries need. Leave the index selection to the compiler. Read [Indexes for API Queries](guides/api-query-indexes.md) and fix the query only in these cases:
 
-1. Rewrite the subquery as a `JOIN`, with the subquery's table first. Do this only when the join adds no duplicate rows: after the subquery's filter, its table has at most one matching row for each row of the outer table, for example because its primary key consists of the filter and join columns.
-2. When a join cannot replace the subquery, because it would add duplicate rows or the subquery is part of an `OR`, keep the subquery and add an `index` hint to the subquery's table: the columns that the subquery compares with a parameter first, then the columns that it compares with the outer query. Also hint the outer table's column that the subquery compares with, but only when the subquery is not part of an `OR`. Inside an `OR`, the database runs the subquery once and reads the whole outer table, with or without that index.
-
-Example: the API returns the orders of all customers who own a given account.
-
-```sql
--- Subquery: no index for the filter on AccountOwners, and none on Orders.customer_id
-OrdersByAccount(accountId STRING) := SELECT * FROM Orders c
-WHERE EXISTS (SELECT 1 FROM AccountOwners o
-              WHERE o.account_id = :accountId AND o.customer_id = c.customer_id);
-
--- Step 1, join: the primary key (account_id, customer_id) serves AccountOwners, and Orders gets an index on customer_id
-OrdersByAccount(accountId STRING) := SELECT c.* FROM AccountOwners o JOIN Orders c ON c.customer_id = o.customer_id
-WHERE o.account_id = :accountId;
-
--- Step 2, when the join cannot be used: hint the subquery's table, and the outer table only if the subquery is not part of an OR
-/*+index(BTREE, account_id, customer_id) */
-AccountOwners := SELECT account_id, customer_id FROM ... ;
-/*+index(HASH, customer_id) */
-Orders := SELECT ... ;
-```
-
-An `index` hint replaces the automatic index selection for its whole table: the compiler then creates only the hinted indexes and the primary key. List every index that the table needs in the hint.
-
-If the table comes from an included project (`script.include`), the `index` hint belongs in that project. If you cannot change that project, report it to its owners.
-
-**Checking the indexes.** After a compile, check each served query that filters a large table. Judge the table size from the requirements and the source data.
-
-1. Find the SQL of the query in `deploy/plan/vertx.json`, and the `CREATE INDEX` statements of the table in `deploy/plan/postgres.json`. The primary key also counts as an index.
-2. Compare the columns that the query compares with a parameter or with another table, in the `WHERE` clause, in `JOIN ... ON` conditions and in subqueries, with the leading columns of the indexes. In a correlated subquery that is not part of an `OR`, the column of the outer table counts too: in the `EXISTS` example above, `Orders.customer_id` gets no index.
-3. Make sure that each of these columns stands alone in the SQL. The compiler also creates an index for `day_index + 1 = $1`, but the database cannot use it for that filter.
-4. If no index fits, rewrite the filter into the form at the start of this section, or add an `index` hint. If no index can serve the filter, denormalize: compute the value in Flink and store it as a column of the served table.
-
-**Fixing a slow query.** An issue or a slow-query log names a slow query by its API field. A top-level path, such as `/OrdersByCustomer`, is the name of the SQRL table or table function. A nested path, such as `/Customers[0]/orders`, names the relationship `orders` of `Customers`. A client alias replaces the field name in the path. Check that query with the steps above, then run the tests.
+- The requirements, the plan or a review issue name a slow query or an index.
+- The compiler warns that query filter patterns of a table "have no supporting index and require a full table scan". Read the guide before you add the `index` hint that the warning suggests.
 
 
 ### Constraints and mutual exclusions
@@ -695,4 +661,5 @@ The following produce compile time errors:
 For additional patterns, read these guides:
 * [Stream Enrichment](guides/stream-enrichment.md): How to enrich a data stream with dimensional information or state consistently, and how to carry the whole dimension row as one nested object.
 * [Config Templating](guides/templating.md): How to use variables in SQRL scripts for templating that gets substituted at compile time with mustache engine.
+* [Indexes for API Queries](guides/api-query-indexes.md): How the compiler selects indexes, and how to check and fix the indexes of a slow API query. Read it only in the cases that Indexes for API queries names.
 * [SESSION Windows](guides/session-tvf.md): The `SESSION` TVF for window aggregation has limitations and quirks. Always read this guide before implementing `SESSION` windows.
