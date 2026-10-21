@@ -45,8 +45,9 @@ Maps to GraphQL query `Customer(limit: Int = 10, offset: Int = 0): [Customer!]` 
 ## REST and MCP Endpoints
 
 **Auto-generated from GraphQL:**
-- Queries → eligible MCP tools with `Get` prefix, REST GET endpoints under `rest/queries`
-- Mutations → eligible MCP tools with `Add` prefix, REST POST endpoints under `rest/mutations`
+- Queries → MCP tools with `Get` prefix, REST GET endpoints under `rest/queries`
+- Mutations → MCP tools with `Add` prefix, REST POST endpoints under `rest/mutations` (nested inputs become nested JSON tool arguments)
+- `@api(mcp: NONE)` on a query or mutation field omits its generated operation from MCP
 - Results follow relationships in GraphQL up to configured `max-result-depth`
 - Mutation input types are followed to the leaf input types to construct the expected request payload. 
 

@@ -1,0 +1,238 @@
+[ {
+  "apiQuery" : {
+    "operationType" : "QUERY",
+    "query" : "query Orders($customerid: Long!, $limit: Int = 10, $offset: Int = 0) {\nOrders(customerid: $customerid, limit: $limit, offset: $offset) {\nid\ncustomerid\n}\n\n}",
+    "queryName" : "Orders"
+  },
+  "format" : "JSON",
+  "function" : {
+    "name" : "GetOrders",
+    "parameters" : {
+      "properties" : {
+        "customerid" : {
+          "type" : "integer"
+        },
+        "limit" : {
+          "type" : "integer"
+        },
+        "offset" : {
+          "type" : "integer"
+        }
+      },
+      "required" : [ "customerid" ],
+      "type" : "object"
+    }
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "GET",
+  "resultDefinition" : {
+    "items" : {
+      "properties" : {
+        "customerid" : {
+          "type" : "integer"
+        },
+        "id" : {
+          "type" : "integer"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
+  "uriTemplate" : "queries/Orders{?offset,customerid,limit}"
+}, {
+  "apiQuery" : {
+    "operationType" : "MUTATION",
+    "query" : "mutation AddOrder($id: Long!, $customerid: Long!, $time: DateTime!, $shipping: Order_shippingInput, $entries: [Order_entriesInput]!, $tags: [String], $metadata: JSON) {\nAddOrder(event: { id: $id, customerid: $customerid, time: $time, shipping: $shipping, entries: $entries, tags: $tags, metadata: $metadata }) {\nid\ncustomerid\ntime\nshipping {\nname\naddress {\nstreet\ncity\nzip\n}\n}\nentries {\nproductid\nquantity\nunit_price\ndiscount\n}\ntags\nmetadata\n}\n\n}",
+    "queryName" : "AddOrder"
+  },
+  "format" : "JSON",
+  "function" : {
+    "description" : "Places an order with shipping details and line items",
+    "name" : "AddAddOrder",
+    "parameters" : {
+      "properties" : {
+        "customerid" : {
+          "type" : "integer"
+        },
+        "entries" : {
+          "items" : {
+            "properties" : {
+              "discount" : {
+                "type" : "number"
+              },
+              "productid" : {
+                "type" : "integer"
+              },
+              "quantity" : {
+                "type" : "integer"
+              },
+              "unit_price" : {
+                "type" : "number"
+              }
+            },
+            "required" : [ "productid", "quantity", "unit_price" ],
+            "type" : "object"
+          },
+          "type" : "array"
+        },
+        "id" : {
+          "type" : "integer"
+        },
+        "metadata" : { },
+        "shipping" : {
+          "description" : "Where the order is shipped to",
+          "properties" : {
+            "address" : {
+              "properties" : {
+                "city" : {
+                  "type" : "string"
+                },
+                "street" : {
+                  "type" : "string"
+                },
+                "zip" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [ "street", "city" ],
+              "type" : "object"
+            },
+            "name" : {
+              "type" : "string"
+            }
+          },
+          "required" : [ "name", "address" ],
+          "type" : "object"
+        },
+        "tags" : {
+          "items" : {
+            "type" : "string"
+          },
+          "type" : "array"
+        },
+        "time" : {
+          "type" : "string"
+        }
+      },
+      "required" : [ "id", "customerid", "time", "entries" ],
+      "type" : "object"
+    }
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "POST",
+  "resultDefinition" : {
+    "properties" : {
+      "customerid" : {
+        "type" : "integer"
+      },
+      "entries" : {
+        "items" : {
+          "properties" : {
+            "discount" : {
+              "type" : "number"
+            },
+            "productid" : {
+              "type" : "integer"
+            },
+            "quantity" : {
+              "type" : "integer"
+            },
+            "unit_price" : {
+              "type" : "number"
+            }
+          },
+          "type" : "object"
+        },
+        "type" : "array"
+      },
+      "id" : {
+        "type" : "integer"
+      },
+      "metadata" : { },
+      "shipping" : {
+        "properties" : {
+          "address" : {
+            "properties" : {
+              "city" : {
+                "type" : "string"
+              },
+              "street" : {
+                "type" : "string"
+              },
+              "zip" : {
+                "type" : "string"
+              }
+            },
+            "type" : "object"
+          },
+          "name" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "tags" : {
+        "items" : {
+          "type" : "string"
+        },
+        "type" : "array"
+      },
+      "time" : {
+        "format" : "date-time",
+        "type" : "string"
+      }
+    },
+    "type" : "object"
+  },
+  "uriTemplate" : "mutations/AddOrder"
+}, {
+  "apiQuery" : {
+    "operationType" : "MUTATION",
+    "query" : "mutation AddReadings($event: [ReadingInput!]!) {\nAddReadings(event: $event) {\nsensorid\ntemperature\n}\n\n}",
+    "queryName" : "AddReadings"
+  },
+  "format" : "JSON",
+  "function" : {
+    "description" : "Records a batch of sensor readings",
+    "name" : "AddAddReadings",
+    "parameters" : {
+      "properties" : {
+        "event" : {
+          "items" : {
+            "properties" : {
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "temperature" : {
+                "type" : "number"
+              }
+            },
+            "required" : [ "sensorid", "temperature" ],
+            "type" : "object"
+          },
+          "type" : "array"
+        }
+      },
+      "required" : [ "event" ],
+      "type" : "object"
+    }
+  },
+  "mcpMethod" : "TOOL",
+  "restMethod" : "POST",
+  "resultDefinition" : {
+    "items" : {
+      "properties" : {
+        "sensorid" : {
+          "type" : "integer"
+        },
+        "temperature" : {
+          "type" : "number"
+        }
+      },
+      "type" : "object"
+    },
+    "type" : "array"
+  },
+  "uriTemplate" : "mutations/AddReadings"
+} ]

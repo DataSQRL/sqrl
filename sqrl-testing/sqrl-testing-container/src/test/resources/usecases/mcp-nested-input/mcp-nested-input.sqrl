@@ -1,0 +1,21 @@
+/*+engine(kafka) */
+CREATE TABLE Orders (
+    id BIGINT NOT NULL,
+    customerid BIGINT NOT NULL,
+    shipping ROW<name STRING NOT NULL, address ROW<street STRING NOT NULL, city STRING NOT NULL, zip STRING> NOT NULL>,
+    entries ARRAY<ROW<productid BIGINT NOT NULL, quantity INT NOT NULL, unit_price DOUBLE NOT NULL, discount DOUBLE>> NOT NULL,
+    event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+/*+engine(kafka), insert(batch) */
+CREATE TABLE Readings (
+    sensorid INT NOT NULL,
+    temperature DOUBLE NOT NULL,
+    event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+/* Returns the orders of a customer */
+CustomerOrders(customerid BIGINT NOT NULL) := SELECT * FROM Orders WHERE customerid = :customerid ORDER BY id ASC;
+
+/* Returns the readings of a sensor */
+SensorReadings(sensorid INT NOT NULL) := SELECT * FROM Readings WHERE sensorid = :sensorid ORDER BY temperature ASC;

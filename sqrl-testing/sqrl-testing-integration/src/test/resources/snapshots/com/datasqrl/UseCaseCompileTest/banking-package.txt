@@ -2271,7 +2271,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "queryName" : "AddChatMessage",
             "operationType" : "MUTATION"
           },
-          "mcpMethod" : "NONE",
+          "mcpMethod" : "TOOL",
           "restMethod" : "POST",
           "uriTemplate" : "mutations/AddChatMessage",
           "format" : "JSON",
@@ -2340,7 +2340,7 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "queryName" : "ApplicationUpdates",
             "operationType" : "MUTATION"
           },
-          "mcpMethod" : "NONE",
+          "mcpMethod" : "TOOL",
           "restMethod" : "POST",
           "uriTemplate" : "mutations/ApplicationUpdates",
           "format" : "JSON",
