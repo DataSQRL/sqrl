@@ -19,7 +19,7 @@ in script:comprehensiveTest.sqrl [54:1]:
 CustomerTimeWindow := SELECT
 ^
 
-[FATAL] Unknown field at location unknown. Possible scalars are [customerid, email, name, lastUpdated, timestamp]
+[FATAL] Unknown field at location Customer.unknown. No relationship [Customer.unknown] exists. Possible scalars are [customerid, email, name, lastUpdated, timestamp]
 in script:comprehensiveTest-fail-unknown-field.graphqls [14:5]:
     related(limit: Int = 10, offset: Int = 0): [Customer!]
     relatedByLength(length: Int!, limit: Int = 10, offset: Int = 0): [Customer!]

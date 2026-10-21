@@ -22,6 +22,7 @@ import static com.datasqrl.server.jdbc.SchemaConstants.OFFSET;
 import static com.datasqrl.server.util.GraphqlCheckUtil.checkState;
 import static com.datasqrl.server.util.GraphqlCheckUtil.createThrowable;
 
+import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.dag.plan.MutationTable;
@@ -55,6 +56,7 @@ import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.UnExecutableSchemaGenerator;
 import jakarta.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -563,20 +565,40 @@ public class GraphqlSchemaValidator extends GraphqlSchemaWalker {
   }
 
   @Override
-  protected void visitUnknownObject(FieldDefinition atField, Optional<RelDataType> relDataType) {
+  protected void visitUnknownObject(
+      ObjectTypeDefinition objectType,
+      FieldDefinition atField,
+      Optional<RelDataType> relDataType,
+      List<NamePath> relationshipPaths) {
+    var parts = new ArrayList<String>();
+    parts.add(objectType.getName() + "." + atField.getName());
+    if (!relationshipPaths.isEmpty()) {
+      parts.add(
+          relationshipPaths.stream()
+              .map(path -> "[" + path.getDisplay() + "]")
+              .collect(Collectors.joining(" or ", "No relationship ", " exists")));
+      var fieldName = Name.system(atField.getName());
+      var otherRelationships =
+          tableFunctions.stream()
+              .filter(SqrlTableFunction::isRelationship)
+              .map(SqrlTableFunction::getFullPath)
+              .filter(path -> path.getLast().equals(fieldName))
+              .map(NamePath::getDisplay)
+              .collect(Collectors.joining(", "));
+      if (!otherRelationships.isEmpty()) {
+        parts.add(
+            "Relationships named [%s] exist on other tables: %s"
+                .formatted(atField.getName(), otherRelationships));
+      }
+    }
+    relDataType.ifPresent(
+        r ->
+            parts.add(
+                r.getFieldNames().stream()
+                    .filter(GraphqlSchemaUtil::isValidGraphQLName)
+                    .collect(Collectors.joining(", ", "Possible scalars are [", "]"))));
     throw createThrowable(
-        atField.getSourceLocation(),
-        "Unknown field at location %s",
-        relDataType
-            .map(
-                r ->
-                    atField.getName()
-                        + ". Possible scalars are ["
-                        + r.getFieldNames().stream()
-                            .filter(GraphqlSchemaUtil::isValidGraphQLName)
-                            .collect(Collectors.joining(", "))
-                        + "]")
-            .orElse(atField.getName()));
+        atField.getSourceLocation(), "Unknown field at location %s", String.join(". ", parts));
   }
 
   @Override

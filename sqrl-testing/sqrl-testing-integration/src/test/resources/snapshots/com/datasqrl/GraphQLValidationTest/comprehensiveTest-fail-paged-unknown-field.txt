@@ -19,7 +19,7 @@ in script:comprehensiveTest.sqrl [54:1]:
 CustomerTimeWindow := SELECT
 ^
 
-[FATAL] Unknown field at location doesNotExist. Possible scalars are [customerid, email, name, lastUpdated, timestamp]
+[FATAL] Unknown field at location Customer.doesNotExist. No relationship [Customer.doesNotExist] or [CustomerByTime2.doesNotExist] exists. Possible scalars are [customerid, email, name, lastUpdated, timestamp]
 in script:comprehensiveTest-fail-paged-unknown-field.graphqls [12:5]:
     lastUpdated: Long!
     timestamp: DateTime!

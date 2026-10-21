@@ -1,0 +1,20 @@
+"An RFC-3339 compliant DateTime Scalar"
+scalar DateTime
+"A 64-bit signed integer"
+scalar Long
+
+type CustomerResult {
+    customerid: Long!
+    email: String!
+    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+type CustomerSummary {
+    customerid: Long!
+    related(limit: Int = 10, offset: Int = 0): [CustomerResult!]
+}
+
+type Query {
+    CustomerById(minId: Int!, limit: Int = 10, offset: Int = 0): [CustomerResult!]
+    TableFunctionCallsTblFct(arg1: Int!, arg2: Int!, limit: Int = 10, offset: Int = 0): [CustomerSummary!]
+}
