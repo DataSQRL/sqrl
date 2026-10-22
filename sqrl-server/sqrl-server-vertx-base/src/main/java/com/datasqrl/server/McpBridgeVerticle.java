@@ -55,7 +55,10 @@ import lombok.extern.slf4j.Slf4j;
 public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
   private static final String JSONRPC_VERSION = "2.0";
-  private static final String PROTOCOL_VERSION = "2024-11-05";
+  // Supported MCP protocol versions, ordered from oldest to latest
+  static final List<String> PROTOCOL_VERSIONS =
+      List.of("2024-11-05", "2025-03-26", "2025-06-18", "2025-11-25");
+  static final String LATEST_PROTOCOL_VERSION = PROTOCOL_VERSIONS.get(PROTOCOL_VERSIONS.size() - 1);
   private static final String CT_JSON = "application/json";
   private static final String CT_SSE = "text/event-stream";
 
@@ -398,7 +401,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
   }
 
   private JsonObject handleInitialize(JsonNode params) {
-    log.info("Initializing MCP server with protocol version: {}", PROTOCOL_VERSION);
+    var protocolVersion = negotiateProtocolVersion(params);
+    log.info("Initializing MCP server with protocol version: {}", protocolVersion);
     var capabilities =
         new JsonObject()
             .put("tools", new JsonObject())
@@ -411,12 +415,24 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
     var response =
         new JsonObject()
-            .put("protocolVersion", PROTOCOL_VERSION)
+            .put("protocolVersion", protocolVersion)
             .put("capabilities", capabilities)
             .put("serverInfo", serverInfo);
 
     log.info("Initialize response: {}", response.encodePrettily());
     return response;
+  }
+
+  /**
+   * Echoes the protocol version requested by the client if it is supported, otherwise falls back to
+   * the latest supported version, as mandated by the MCP lifecycle specification.
+   */
+  static String negotiateProtocolVersion(JsonNode params) {
+    var requested = params == null ? null : params.path("protocolVersion").asText(null);
+    if (requested != null && PROTOCOL_VERSIONS.contains(requested)) {
+      return requested;
+    }
+    return LATEST_PROTOCOL_VERSION;
   }
 
   /**
