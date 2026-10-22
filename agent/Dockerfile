@@ -45,7 +45,7 @@ RUN test -f docs/stdlib-docs/stdlib-docs/system-functions.yml \
 
 FROM ${SQRL_IMAGE}
 
-ARG PI_PACKAGE=@earendil-works/pi-coding-agent@1.3.0
+ARG PI_PACKAGE=@earendil-works/pi-coding-agent@1.4.0
 
 USER root
 
