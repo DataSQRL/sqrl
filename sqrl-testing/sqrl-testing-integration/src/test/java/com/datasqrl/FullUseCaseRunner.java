@@ -25,6 +25,7 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.flinkrunner.utils.EnvVarResolver;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.SnapshotTest.Snapshot;
 import com.datasqrl.util.SqrlScriptExecutor;
@@ -139,7 +140,7 @@ public final class FullUseCaseRunner {
   /** Loads Flink configuration for a local mini-cluster test run. */
   @SneakyThrows
   public static Configuration loadInternalTestFlinkConfig(Path planDir, Map<String, String> env) {
-    var flinkConfig = ConfigLoaderUtils.loadFlinkConfig(planDir);
+    var flinkConfig = resolveEnvVars(ConfigLoaderUtils.loadFlinkConfig(planDir), env);
 
     flinkConfig.set(DeploymentOptions.TARGET, "local");
     if (env.get("FLINK_RESTART_STRATEGY") != null) {
@@ -153,5 +154,25 @@ public final class FullUseCaseRunner {
     flinkConfig.removeConfig(CheckpointingOptions.SAVEPOINT_DIRECTORY);
 
     return flinkConfig;
+  }
+
+  /**
+   * Resolves {@code ${VAR}} placeholders in config values against the test environment, as the
+   * Flink SQL Runner does when it loads {@code flink-config.yaml} from its config directory.
+   */
+  private static Configuration resolveEnvVars(Configuration config, Map<String, String> env) {
+    var resolver = EnvVarResolver.builder().envVars(env).build();
+    var resolved = new Configuration(config);
+    config
+        .toMap()
+        .forEach(
+            (key, value) -> {
+              var resolvedValue = resolver.resolve(value);
+              if (!resolvedValue.equals(value)) {
+                resolved.setString(key, resolvedValue);
+              }
+            });
+
+    return resolved;
   }
 }
