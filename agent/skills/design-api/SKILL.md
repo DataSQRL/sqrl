@@ -51,6 +51,7 @@ Maps to GraphQL query `Customer(limit: Int = 10, offset: Int = 0): [Customer!]` 
 - `@api(mcp: NONE)` on a query or mutation field omits its generated operation from MCP
 - Results follow relationships in GraphQL up to configured `max-result-depth`
 - Mutation input types are followed to the leaf input types to construct the expected request payload. 
+- MCP is served over Streamable HTTP at `/<version>/mcp` (e.g. `/v1/mcp`) and supports MCP protocol versions `2024-11-05`, `2025-03-26`, `2025-06-18`, and `2025-11-25`. The server echoes the client's requested version if supported, otherwise it responds with `2025-11-25` (see [interface.md](interface.md)).
 
 ### Custom Operations
 

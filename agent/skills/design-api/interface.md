@@ -165,6 +165,8 @@ The `#` comment lines above an operation are its REST (OpenAPI) description and 
 
 By default, DataSQRL adds explicit operations to the generated ones. Set `compiler.api.endpoints` to `OPS_ONLY` to omit generated REST/MCP operations and restrict a public GraphQL endpoint to explicitly defined named operations. The server executes its stored operation definition, so clients cannot alter its selection set.
 
+The MCP server uses the Streamable HTTP transport at `/<version>/mcp` (e.g. `/v1/mcp`) and supports the MCP protocol versions `2024-11-05`, `2025-03-26`, `2025-06-18`, and `2025-11-25`. On `initialize`, it responds with the protocol version the client requests if that version is supported, and with the latest supported version, `2025-11-25`, otherwise.
+
 ### OpenAPI and API Versioning
 
 OpenAPI describes the REST API derived from GraphQL operations; it is not a second API definition. DataSQRL generates an OpenAPI 3 document for every compiled API version from REST-exposed operations at `deploy/plan/vertx-<version>-openapi.json` under the build directory: `build/` normally or `build/<sub-project>/` when compiling with `-b`.
