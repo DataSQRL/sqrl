@@ -1,0 +1,65 @@
+{
+  "data" : {
+    "UnderwritingJudgmentsTest" : [ {
+      "application_id" : "app-1",
+      "income_verified" : 0.9,
+      "purpose" : "debt_consolidation",
+      "purpose_confidence" : 0.8,
+      "business_probability" : 0.05,
+      "scrutiny" : 0,
+      "scrutiny_probabilities" : [ 0.8, 0.0667, 0.0667, 0.0667 ],
+      "model" : "jev-1.13.0",
+      "error" : null
+    }, {
+      "application_id" : "app-2",
+      "income_verified" : 0.1,
+      "purpose" : "home_improvement",
+      "purpose_confidence" : 0.8,
+      "business_probability" : 0.05,
+      "scrutiny" : 1,
+      "scrutiny_probabilities" : [ 0.0667, 0.8, 0.0667, 0.0667 ],
+      "model" : "jev-1.13.0",
+      "error" : null
+    }, {
+      "application_id" : "app-3",
+      "income_verified" : 0.9,
+      "purpose" : null,
+      "purpose_confidence" : null,
+      "business_probability" : null,
+      "scrutiny" : 2,
+      "scrutiny_probabilities" : [ 0.0667, 0.0667, 0.8, 0.0667 ],
+      "model" : "jev-1.13.0",
+      "error" : null
+    }, {
+      "application_id" : "app-4",
+      "income_verified" : null,
+      "purpose" : null,
+      "purpose_confidence" : null,
+      "business_probability" : null,
+      "scrutiny" : null,
+      "scrutiny_probabilities" : null,
+      "model" : "jev-1.13.0",
+      "error" : null
+    }, {
+      "application_id" : "app-5",
+      "income_verified" : null,
+      "purpose" : null,
+      "purpose_confidence" : null,
+      "business_probability" : null,
+      "scrutiny" : null,
+      "scrutiny_probabilities" : null,
+      "model" : "jev-1.13.0",
+      "error" : "HTTP_422: request rejected by the API (token_limit_exceeded)"
+    }, {
+      "application_id" : "app-6",
+      "income_verified" : 0.9,
+      "purpose" : "vehicle",
+      "purpose_confidence" : 0.8,
+      "business_probability" : 0.05,
+      "scrutiny" : 3,
+      "scrutiny_probabilities" : [ 0.0667, 0.0667, 0.0667, 0.8 ],
+      "model" : "jev-1.13.0",
+      "error" : null
+    } ]
+  }
+}

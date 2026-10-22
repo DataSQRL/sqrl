@@ -1,0 +1,17 @@
+{
+  "version": "1",
+  "script": {
+    "main": "stdlib-typesafe.sqrl"
+  },
+  "engines": {
+    "flink": {
+      "config": {
+        "pipeline.global-job-parameters.typesafe.api-key": "test-key",
+        "pipeline.global-job-parameters.typesafe.endpoint": "${TYPESAFE_ENDPOINT}"
+      }
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1
+  }
+}
