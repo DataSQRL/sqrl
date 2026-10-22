@@ -213,7 +213,7 @@ public class JwtContainerIT {
     // Create MCP client with JWT authentication
     var transport =
         HttpClientStreamableHttpTransport.builder(mcpUrl)
-            .httpRequestCustomizer(
+            .addHttpRequestCustomizer(
                 (requestBuilder, method, uri, body, context) ->
                     requestBuilder.header("Authorization", "Bearer " + jwtToken))
             .endpoint("/v1/mcp")
@@ -269,7 +269,7 @@ public class JwtContainerIT {
     // Create MCP client with JWT authentication but missing required claims
     var transport =
         HttpClientStreamableHttpTransport.builder(mcpUrl)
-            .httpRequestCustomizer(
+            .addHttpRequestCustomizer(
                 (requestBuilder, method, uri, body, context) ->
                     requestBuilder.header("Authorization", "Bearer " + jwtToken))
             .endpoint("/v1/mcp")
