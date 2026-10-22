@@ -52,10 +52,10 @@ The complete DataSQRL documentation matching this image is in [docs/llms-full.tx
 
 ## Commands for the user
 
-`/opt/agent/cmd.sh` exists only inside this container, so never give it to the user. When the user asks how to compile, test, or run the pipeline themselves, or you suggest a command for their terminal, give the equivalent `docker run` command of the `datasqrl/cmd` image with the same CLI arguments, and tell them to run it from the directory they mounted as `/workspace`:
+`/opt/agent/cmd.sh` exists only inside this container, so never give it to the user. When the user asks how to compile, test, or run the pipeline themselves, or you suggest a command for their terminal, give the equivalent `docker run` command of the `datasqrl/cmd` image with the same CLI arguments, leaving out the default `-r .`, and tell them to run it from the directory they mounted as `/workspace`:
 
 ```bash
-docker run -it --rm -p 8888:8888 -p 8081:8081 -v "$PWD":/workspace datasqrl/cmd:latest run -r . project-shared-package.json project-prod-package.json
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v "$PWD":/workspace datasqrl/cmd:latest run project-shared-package.json project-prod-package.json
 ```
 
 See [CLI_REFERENCE.md](CLI_REFERENCE.md#commands-for-the-user) for the Docker options of each command.
