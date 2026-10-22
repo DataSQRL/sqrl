@@ -54,6 +54,10 @@ import org.testcontainers.utility.DockerImageName;
 
 public class TestContainersForTestGoal implements TestEngineVisitor<TestContainerHook, Void> {
 
+  public static final DockerImageName POSTGRES_IMAGE =
+      DockerImageName.parse("pgvector/pgvector:0.8.1-pg18-trixie")
+          .asCompatibleSubstituteFor("postgres");
+
   @Override
   public TestContainerHook accept(TestEngines testEngines, Void context) {
     List<TestContainerHook> hooks = new ArrayList<>();
@@ -68,9 +72,7 @@ public class TestContainersForTestGoal implements TestEngineVisitor<TestContaine
   public TestContainerHook visit(PostgresTestEngine engine, Void context) {
     return new TestContainerHook() {
       final PostgreSQLContainer testDatabase =
-          new PostgreSQLContainer(
-                  DockerImageName.parse("pgvector/pgvector:0.8.1-pg18-trixie")
-                      .asCompatibleSubstituteFor("postgres"))
+          new PostgreSQLContainer(POSTGRES_IMAGE)
               .withDatabaseName("datasqrl")
               .withUsername("foo")
               .withPassword("secret");

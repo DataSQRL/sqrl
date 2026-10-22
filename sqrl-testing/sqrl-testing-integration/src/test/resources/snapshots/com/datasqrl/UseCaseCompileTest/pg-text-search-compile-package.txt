@@ -1,0 +1,542 @@
+>>>inferred_schema.graphqls
+type ArticleSearch {
+  id: Long!
+  title: String!
+  score: Float
+}
+
+type Articles {
+  id: Long!
+  title: String!
+  epoch_timestamp: Long!
+  createdAt: DateTime!
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type PostSearch {
+  id: Long!
+  title: String!
+  body: String
+  score: Float
+}
+
+type Posts {
+  id: Long!
+  title: String!
+  body: String
+  epoch_timestamp: Long!
+  createdAt: DateTime!
+}
+
+type Query {
+  Articles(limit: Int = 10, offset: Int = 0): [Articles!]
+  Posts(limit: Int = 10, offset: Int = 0): [Posts!]
+  ArticleSearch(query: String!, limit: Int = 10, offset: Int = 0): [ArticleSearch!]
+  PostSearch(query: String!, limit: Int = 10, offset: Int = 0): [PostSearch!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== ArticleSearch
+ID:          default_catalog.default_database.ArticleSearch
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Articles
+Annotations:
+ - parameters: query
+ - base-table: ArticleSearch
+
+=== Articles
+ID:          default_catalog.default_database.Articles
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   createdAt
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - title: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - epoch_timestamp: BIGINT NOT NULL
+ - createdAt: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Articles__base
+
+=== PostSearch
+ID:          default_catalog.default_database.PostSearch
+Type:        query
+Stage:       postgres
+---
+Inputs:
+ - default_catalog.default_database.Posts
+Annotations:
+ - parameters: query
+ - base-table: PostSearch
+
+=== Posts
+ID:          default_catalog.default_database.Posts
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   createdAt
+Row count:   ~1e8
+---
+Schema:
+ - id: BIGINT NOT NULL
+ - title: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - body: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - epoch_timestamp: BIGINT NOT NULL
+ - createdAt: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Posts__base
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Articles` (
+  `id` BIGINT NOT NULL,
+  `title` STRING NOT NULL,
+  `epoch_timestamp` BIGINT NOT NULL,
+  `createdAt` AS COALESCE(`TO_TIMESTAMP_LTZ`(`epoch_timestamp`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  WATERMARK FOR `createdAt` AS `createdAt`
+)
+WITH (
+  'connector' = 'datagen',
+  'fields.epoch_timestamp.end' = '1719319565000',
+  'fields.epoch_timestamp.kind' = 'sequence',
+  'fields.epoch_timestamp.start' = '1719318565000',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `Posts` (
+  `id` BIGINT NOT NULL,
+  `title` STRING NOT NULL,
+  `body` STRING,
+  `epoch_timestamp` BIGINT NOT NULL,
+  `createdAt` AS COALESCE(`TO_TIMESTAMP_LTZ`(`epoch_timestamp`, 3), TIMESTAMP '1970-01-01 00:00:00.000'),
+  WATERMARK FOR `createdAt` AS `createdAt`
+)
+WITH (
+  'connector' = 'datagen',
+  'fields.epoch_timestamp.end' = '1719319565000',
+  'fields.epoch_timestamp.kind' = 'sequence',
+  'fields.epoch_timestamp.start' = '1719318565000',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `Articles_1` (
+  `id` BIGINT NOT NULL,
+  `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `epoch_timestamp` BIGINT NOT NULL,
+  `createdAt` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Articles',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `Posts_2` (
+  `id` BIGINT NOT NULL,
+  `title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `body` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `epoch_timestamp` BIGINT NOT NULL,
+  `createdAt` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Posts',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Articles_1`
+SELECT `id`, `title`, `epoch_timestamp`, `createdAt`, `hash_columns`(`id`, `title`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Articles`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`Posts_2`
+SELECT `id`, `title`, `body`, `epoch_timestamp`, `createdAt`, `hash_columns`(`id`, `title`, `body`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Posts`
+ON CONFLICT DO NOTHING
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Articles" ("id" BIGINT NOT NULL, "title" TEXT NOT NULL, "epoch_timestamp" BIGINT NOT NULL, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "Posts" ("id" BIGINT NOT NULL, "title" TEXT NOT NULL, "body" TEXT, "epoch_timestamp" BIGINT NOT NULL, "createdAt" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+
+CREATE INDEX IF NOT EXISTS "Articles_text_c1" ON "Articles" USING GIN (to_tsvector('english', coalesce("title", '') ));
+CREATE INDEX IF NOT EXISTS "Posts_text_c1c2" ON "Posts" USING GIN (to_tsvector('english', coalesce("title", '') || ' ' || coalesce("body", '') ))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Articles",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"title\", \"epoch_timestamp\", \"createdAt\"\nFROM \"Articles\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Posts",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"title\", \"body\", \"epoch_timestamp\", \"createdAt\"\nFROM \"Posts\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ArticleSearch",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "query"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"title\", \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"title\", '')), \"websearch_to_tsquery\"('english', $1)) AS \"score\"\nFROM (SELECT \"id\", \"title\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Articles\") AS \"t\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"title\", '')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"title\", '')), \"websearch_to_tsquery\"('english', $1)) DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "query",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "PostSearch",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "query"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"title\", \"body\", \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"title\", '') || ' ' || COALESCE(\"body\", '')), \"websearch_to_tsquery\"('english', $1)) AS \"score\"\nFROM (SELECT \"id\", \"title\", \"body\", \"epoch_timestamp\", \"createdAt\"\n  FROM \"Posts\") AS \"t\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"title\", '') || ' ' || COALESCE(\"body\", '')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"title\", '') || ' ' || COALESCE(\"body\", '')), \"websearch_to_tsquery\"('english', $1)) DESC NULLS LAST",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "query",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetArticles",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Articles($limit: Int = 10, $offset: Int = 0) {\nArticles(limit: $limit, offset: $offset) {\nid\ntitle\nepoch_timestamp\ncreatedAt\n}\n\n}",
+            "queryName" : "Articles",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Articles{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "title" : {
+                  "type" : "string"
+                },
+                "epoch_timestamp" : {
+                  "type" : "integer"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetPosts",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Posts($limit: Int = 10, $offset: Int = 0) {\nPosts(limit: $limit, offset: $offset) {\nid\ntitle\nbody\nepoch_timestamp\ncreatedAt\n}\n\n}",
+            "queryName" : "Posts",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Posts{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "title" : {
+                  "type" : "string"
+                },
+                "body" : {
+                  "type" : "string"
+                },
+                "epoch_timestamp" : {
+                  "type" : "integer"
+                },
+                "createdAt" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetArticleSearch",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "query" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "query"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ArticleSearch($query: String!, $limit: Int = 10, $offset: Int = 0) {\nArticleSearch(query: $query, limit: $limit, offset: $offset) {\nid\ntitle\nscore\n}\n\n}",
+            "queryName" : "ArticleSearch",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ArticleSearch{?offset,query,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "title" : {
+                  "type" : "string"
+                },
+                "score" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetPostSearch",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "query" : {
+                  "type" : "string"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "query"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query PostSearch($query: String!, $limit: Int = 10, $offset: Int = 0) {\nPostSearch(query: $query, limit: $limit, offset: $offset) {\nid\ntitle\nbody\nscore\n}\n\n}",
+            "queryName" : "PostSearch",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/PostSearch{?offset,query,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer"
+                },
+                "title" : {
+                  "type" : "string"
+                },
+                "body" : {
+                  "type" : "string"
+                },
+                "score" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type ArticleSearch {\n  id: Long!\n  title: String!\n  score: Float\n}\n\ntype Articles {\n  id: Long!\n  title: String!\n  epoch_timestamp: Long!\n  createdAt: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype PostSearch {\n  id: Long!\n  title: String!\n  body: String\n  score: Float\n}\n\ntype Posts {\n  id: Long!\n  title: String!\n  body: String\n  epoch_timestamp: Long!\n  createdAt: DateTime!\n}\n\ntype Query {\n  Articles(limit: Int = 10, offset: Int = 0): [Articles!]\n  Posts(limit: Int = 10, offset: Int = 0): [Posts!]\n  ArticleSearch(query: String!, limit: Int = 10, offset: Int = 0): [ArticleSearch!]\n  PostSearch(query: String!, limit: Int = 10, offset: Int = 0): [PostSearch!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
