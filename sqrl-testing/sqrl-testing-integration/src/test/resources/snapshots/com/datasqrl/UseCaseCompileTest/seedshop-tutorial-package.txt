@@ -1143,7 +1143,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) AS \"score\"\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", ' ')), \"websearch_to_tsquery\"('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
+              "sql" : "SELECT \"id\", \"name\", \"sizing\", \"weight_in_gram\", \"type\", \"category\", \"usda_id\", \"updated\", \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", '')), \"websearch_to_tsquery\"('english', $1)) AS \"score\"\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", '')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT)))\nORDER BY \"ts_rank_cd\"(\"to_tsvector\"('english', COALESCE(\"name\", '')), \"websearch_to_tsquery\"('english', $1)) DESC NULLS LAST, \"id\" NULLS FIRST",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -1182,7 +1182,7 @@ CREATE INDEX IF NOT EXISTS "Products_text_c1c5" ON "Products" USING GIN (to_tsve
             ],
             "query" : {
               "type" : "SqlQuery",
-              "sql" : "SELECT *\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", ' ') || ' ' || COALESCE(\"category\", ' ')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
+              "sql" : "SELECT *\nFROM \"Products\"\nWHERE (\"to_tsvector\"('english', COALESCE(\"name\", '') || ' ' || COALESCE(\"category\", '')) @@ \"websearch_to_tsquery\"('english', CAST($1 AS TEXT))) AND \"id\" > $2\nORDER BY \"id\" NULLS FIRST",
               "parameters" : [
                 {
                   "type" : "arg",
