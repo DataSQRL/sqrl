@@ -1,0 +1,67 @@
+IMPORT stdlib.typesafe.*;
+IMPORT underwriting.sources.*;
+
+-- The question columns are typed: the field names of a choice question's criteria ROW are its
+-- options, so each option becomes a typed probability field in the answer.
+_UnderwritingInput := SELECT application_id, submitted_at, case_file,
+    CAST(ROW(
+      'Do the verification notes corroborate the stated employment and income?',
+      ROW('Notes confirm employer, role and income', 'Notes contradict or cannot confirm the application')
+    ) AS ROW<instructions STRING, criteria ROW<`true` STRING, `false` STRING>>) AS q_income_verified,
+    CASE WHEN case_file.loan.purpose IS NOT NULL THEN CAST(ROW(
+      'Which category best describes the purpose of the loan?',
+      ROW('Paying off existing credit cards or loans',
+          'Repairs, renovation or improvements to a residence',
+          'Purchase or repair of a vehicle',
+          'Starting or funding a business',
+          CAST(NULL AS STRING))
+    ) AS ROW<instructions STRING,
+             criteria ROW<debt_consolidation STRING, home_improvement STRING,
+                          vehicle STRING, business STRING, other STRING>>) END AS q_purpose,
+    CAST(ROW(
+      'How much underwriting scrutiny does this application warrant?',
+      ARRAY['No concerns', 'Minor concerns', 'Significant concerns', 'Serious red flags']
+    ) AS ROW<instructions STRING, criteria ARRAY<STRING>>) AS q_scrutiny
+  FROM Applications;
+
+-- The passed-through submitted_at is a second ROWTIME column next to the appended rowtime, so it
+-- is cast to a regular timestamp to keep rowtime as the authoritative event time.
+/*+ engine(flink) */
+/*+ primary_key(application_id) */
+UnderwritingJudgments := SELECT application_id,
+    CAST(submitted_at AS TIMESTAMP_LTZ(3)) AS submitted_at,
+    q_income_verified_answer AS income_verified,
+    q_purpose_answer.choice AS purpose,
+    q_purpose_answer.confidence AS purpose_confidence,
+    q_purpose_answer.probabilities.business AS business_probability,
+    q_scrutiny_answer.score AS scrutiny,
+    q_scrutiny_answer.probabilities AS scrutiny_probabilities,
+    _model AS model,
+    _error AS error,
+    rowtime
+  FROM typesafe_classify(
+    input    => TABLE _UnderwritingInput,
+    state    => DESCRIPTOR(case_file),
+    noul     => DESCRIPTOR(q_income_verified),
+    choice   => DESCRIPTOR(q_purpose),
+    score    => DESCRIPTOR(q_scrutiny),
+    model    => 'jev-1.13.0',
+    on_error => 'NULL',
+    on_time  => DESCRIPTOR(submitted_at)
+  );
+
+-- The function appends the event time as rowtime, so its output feeds event-time windows.
+DailyUnderwriting := SELECT window_start, window_end,
+    COUNT(*) AS applications,
+    COUNT(error) AS errors,
+    SUM(CASE WHEN income_verified > 0.5 THEN 1 ELSE 0 END) AS verified_income
+  FROM TABLE(TUMBLE(TABLE UnderwritingJudgments, DESCRIPTOR(rowtime), INTERVAL '1' DAY))
+  GROUP BY window_start, window_end;
+
+/*+ test */
+UnderwritingJudgmentsTest := SELECT application_id, income_verified, purpose, purpose_confidence,
+    business_probability, scrutiny, scrutiny_probabilities, model, error
+  FROM UnderwritingJudgments ORDER BY application_id;
+
+/*+ test */
+DailyUnderwritingTest := SELECT * FROM DailyUnderwriting ORDER BY window_start;
