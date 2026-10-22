@@ -49,6 +49,7 @@ public record CreateIndexDDL(
     String indexType, columnExpression;
     switch (type) {
       case TEXT:
+        // TextSearchTranslation#makeTsVector must build the same expression for queries to use it
         columnExpression =
             "to_tsvector('english', %s )"
                 .formatted(

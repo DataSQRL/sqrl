@@ -133,11 +133,13 @@ public class TextSearchTranslation implements OperatorRuleTransform {
     return rexBuilder.makeCall(PgSpecificOperatorTable.TO_WEBQUERY, language, query);
   }
 
+  // Must build the same expression as the GIN index in CreateIndexDDL, or Postgres won't use it
   private RexNode makeTsVector(RexBuilder rexBuilder, RexLiteral language, List<RexNode> columns) {
+    var empty = rexBuilder.makeLiteral("");
     var space = rexBuilder.makeLiteral(" ");
     List<RexNode> args =
         columns.stream()
-            .map(col -> rexBuilder.makeCall(SqlStdOperatorTable.COALESCE, col, space))
+            .map(col -> rexBuilder.makeCall(SqlStdOperatorTable.COALESCE, col, empty))
             .collect(Collectors.toList());
     RexNode arg;
     if (args.size() > 1) {
