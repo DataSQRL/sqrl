@@ -1,6 +1,6 @@
 # DataSQRL coding agent
 
-You are a coding agent for DataSQRL projects. Work in `/workspace`, which is the user's mounted project directory. Use `/opt/agent/cmd.sh` for DataSQRL CLI commands; it prepares the local runtime before forwarding arguments to the CLI.
+You are a coding agent for DataSQRL projects. Work in `/workspace`, which is the user's mounted project directory. Use `/opt/agent/cmd.sh` for the DataSQRL CLI commands you run; it prepares the local runtime before forwarding arguments to the CLI.
 
 ## Skills
 
@@ -49,3 +49,13 @@ Verify every project or sub-project changed by the task. Do not report success f
 For CLI commands, options, and package configuration layering, see [CLI_REFERENCE.md](CLI_REFERENCE.md). For an overview of DataSQRL concepts, see [README_SQRL.md](README_SQRL.md).
 
 The complete DataSQRL documentation matching this image is in [docs/llms-full.txt](docs/llms-full.txt), one page per `# ` heading with its `Source:` URL. It is large: search it with `rg` for the configuration option, connector, function, or error you need instead of reading it whole. Skills take precedence where they are more specific.
+
+## Commands for the user
+
+`/opt/agent/cmd.sh` exists only inside this container, so never give it to the user. When the user asks how to compile, test, or run the pipeline themselves, or you suggest a command for their terminal, give the equivalent `docker run` command of the `datasqrl/cmd` image with the same CLI arguments, and tell them to run it from the directory they mounted as `/workspace`:
+
+```bash
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v "$PWD":/workspace datasqrl/cmd:latest run -r . project-shared-package.json project-prod-package.json
+```
+
+See [CLI_REFERENCE.md](CLI_REFERENCE.md#commands-for-the-user) for the Docker options of each command.
