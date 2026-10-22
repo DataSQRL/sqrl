@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.d902c99c.css">
-<script src="/assets/js/runtime~main.9edb857c.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.b257ef35.js" defer="defer"></script>
 <script src="/assets/js/main.2df9c263.js" defer="defer"></script>
 </head>
 <body>
@@ -125,6 +125,7 @@ The name of the operation is the name of the MCP tool and REST endpoint and must
 <p>This defines an operation <code>GetPersonByAge</code> which is the name of the MCP tool and REST endpoint with the path <code>/queries/personByAge/{age}</code> using GET method.</p>
 <p>The <code>#</code> comment lines above an operation are its REST (OpenAPI) description and its MCP tool or resource description. A <code>&quot;&quot;&quot;</code> description before an operation fails the compile with <code>Invalid syntax</code>. In the schema file, write descriptions with <code>&quot;...&quot;</code> or <code>&quot;&quot;&quot;...&quot;&quot;&quot;</code>.</p>
 <p>By default, DataSQRL adds explicit operations to the generated ones. Set <code>compiler.api.endpoints</code> to <code>OPS_ONLY</code> in the <a class="" href="/docs/main/configuration"><code>package.json</code></a> to omit generated MCP and REST operations and restrict a public GraphQL endpoint to explicitly defined named operations. The server executes its stored operation definition, so clients cannot alter its selection set. Whether the GraphQL endpoint is publicly available is controlled independently by whether <code>compiler.api.protocols</code> includes <code>GRAPHQL</code>.</p>
+<p>The MCP server uses the Streamable HTTP transport at <code>/&lt;version&gt;/mcp</code> (e.g. <code>/v1/mcp</code>) and supports the MCP protocol versions <code>2024-11-05</code>, <code>2025-03-26</code>, <code>2025-06-18</code>, and <code>2025-11-25</code>. On <code>initialize</code>, it responds with the protocol version the client requests if that version is supported, and with the latest supported version, <code>2025-11-25</code>, otherwise.</p>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="openapi">OpenAPI<a href="#openapi" class="hash-link" aria-label="Direct link to OpenAPI" title="Direct link to OpenAPI" translate="no">​</a></h3>
 <p>OpenAPI describes the REST API derived from GraphQL operations. It is not a second API definition.
 For every compiled API version, DataSQRL generates an OpenAPI 3 document from operations that expose a REST endpoint.
