@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
 import io.modelcontextprotocol.spec.McpSchema;
+import io.modelcontextprotocol.spec.ProtocolVersions;
 import java.time.Duration;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -213,7 +214,7 @@ class McpValidationIT {
       log.info("MCP server initialized successfully: {}", initResponse);
 
       assertThat(initResponse).isNotNull();
-      assertThat(initResponse.protocolVersion()).isEqualTo("2024-11-05");
+      assertThat(initResponse.protocolVersion()).isEqualTo(ProtocolVersions.MCP_2025_11_25);
       assertThat(initResponse.serverInfo()).isNotNull();
       assertThat(initResponse.serverInfo().name()).isEqualTo("datasqrl-mcp-server");
       assertThat(initResponse.capabilities()).isNotNull();
