@@ -85,12 +85,12 @@ When several sub-projects share a repository, give each its own build folder so 
 
 ## Commands for the user
 
-The user runs DataSQRL with the `datasqrl/cmd` Docker image, not `/opt/agent/cmd.sh`. When you give the user a command, use the `docker run` form below with the same CLI arguments you pass to `cmd.sh`, leaving out the default `-r .`. Both images run the CLI in `/workspace`, so the paths stay valid when the user runs the command from the directory they mounted as `/workspace` when starting the agent; tell them to run it from there.
+The user runs DataSQRL with the `datasqrl/cmd` Docker image, not `/opt/agent/cmd.sh`. When you give the user a command, use the `docker run` form below with the same CLI arguments you pass to `cmd.sh`. Both images run the CLI in `/workspace`, so the paths stay valid when the user runs the command from the directory they mounted as `/workspace` when starting the agent; tell them to run it from there.
 
 ```bash
-docker run --rm -v "$PWD":/workspace datasqrl/cmd:latest compile myproject-shared-package.json myproject-prod-package.json
-docker run -it --rm -v "$PWD":/workspace datasqrl/cmd:latest test myproject-shared-package.json myproject-test-package.json
-docker run -it --rm -p 8888:8888 -p 8081:8081 -v "$PWD":/workspace datasqrl/cmd:latest run myproject-shared-package.json myproject-prod-package.json
+docker run --rm -v "$PWD":/workspace datasqrl/cmd:latest compile -r . myproject-shared-package.json myproject-prod-package.json
+docker run -it --rm -v "$PWD":/workspace datasqrl/cmd:latest test -r . myproject-shared-package.json myproject-test-package.json
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v "$PWD":/workspace datasqrl/cmd:latest run -r . myproject-shared-package.json myproject-prod-package.json
 ```
 
 `init` and `add-func` take the `compile` options, and `exec` takes the `run` options. The port mappings of `run` and `exec` expose the API at `http://localhost:8888/v1/graphiql/` and the Flink UI at `http://localhost:8081/`; add `-p 9092:9092` when the user needs to reach Redpanda with Kafka tooling. The pipeline keeps running until the user stops it with `Ctrl-C`. In Windows PowerShell, mount the directory with `-v "${PWD}:/workspace"`.
