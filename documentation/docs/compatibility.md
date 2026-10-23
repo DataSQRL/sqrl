@@ -13,9 +13,9 @@ DataSQRL builds on top of Flink and the Flink connector ecosystem.
 
 ## Upgrade Notes
 
-### Upgrading to 1.0
+### Upgrading to 0.12+
 
-DataSQRL 1.0 computes the generated `__pk_hash` primary key column with `hash_key` instead of `hash_columns`.
+DataSQRL 0.12+ computes the generated `__pk_hash` primary key column with `hash_key` instead of `hash_columns`.
 This column is the primary key of the database tables for stream tables without a primary key, where it hashes all columns, and for tables with nullable primary key columns, where it hashes the key columns.
 `hash_columns` could give distinct rows the same key, so one of them was dropped, and it gave a row with an `ARRAY` or `BYTES` column a different key each time the row was processed.
 

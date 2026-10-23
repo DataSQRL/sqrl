@@ -134,9 +134,9 @@ Dedicated-node names are hard scheduling requirements: the workload remains Pend
 
 `do-not-disrupt` prevents voluntary autoscaler disruption. It defaults to `false` for Flink and Vert.x and `true` for Postgres. Use it for stateful, long-running, or hard-to-reschedule work.
 
-## Upgrading an existing deployment to 1.0
+## Upgrading an existing deployment to 0.12+
 
-DataSQRL 1.0 computes the generated `__pk_hash` primary key column with `hash_key` instead of `hash_columns`, so the same row gets a different key than before.
+DataSQRL 0.12+ computes the generated `__pk_hash` primary key column with `hash_key` instead of `hash_columns`, so the same row gets a different key than before.
 Rows already stored in the database keep their old keys and do not conflict with rows written after the upgrade:
 
 - Stream tables without a primary key (the key hashes all columns): rows processed again after the upgrade are stored twice. Upgrade with a savepoint taken when stopping the job, and do not restore an older checkpoint or reset Kafka offsets.
