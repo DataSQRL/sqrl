@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.d902c99c.css">
-<script src="/assets/js/runtime~main.b7ff8296.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.3b7de253.js" defer="defer"></script>
 <script src="/assets/js/main.2df9c263.js" defer="defer"></script>
 </head>
 <body>
@@ -43,6 +43,11 @@ DataSQRL chooses one of the following conflict handling strategies:</p>
 <li class=""><code>STREAM</code> tables use ignore.</li>
 <li class="">Other PostgreSQL tables use update.</li>
 </ul>
+<p>To override the automatic choice, set <code>sink.on-conflict.action</code> to <code>UPDATE</code>, <code>TIMESTAMP</code>, or <code>IGNORE</code> in the <code>postgres</code> <a class="" href="/docs/configuration#connector-templates-connectors">connector template</a>.
+The template applies to every PostgreSQL table, and <code>TIMESTAMP</code> also requires <code>sink.on-conflict.timestamp-column</code> to name a timestamp column that exists in each table.</p>
+<p>The primary key of a <code>STREAM</code> table is expected to identify each row, and a <code>STREAM</code> table without a primary key is keyed on a hash of all its columns.
+DataSQRL does not enforce this. When it holds, a conflict is a replay of a row that was already written, for example after the pipeline restarts from a checkpoint, and every strategy stores the same row.
+When rows with the same key differ, those in one write batch are first reduced to the last one, and the strategy then decides between that row and the stored one. Ignore keeps the stored row.</p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="usage-notes">Usage Notes<a href="#usage-notes" class="hash-link" aria-label="Direct link to Usage Notes" title="Direct link to Usage Notes" translate="no">​</a></h2>
 <ul>
 <li class="">Database schema is automatically generated from your SQRL script</li>

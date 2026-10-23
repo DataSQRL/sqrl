@@ -577,6 +577,10 @@ Internal tables are managed by an SQRL engine selected through an `engine(...)` 
 | Watermark spec             | **generated**                                                   | **required**                 |
 | Primary key                | *Unenforced* upsert semantics                                   | Same as Flink                |
 
+With the `kafka` engine, `PARTITIONED BY (col, ...)` on an internal table without a primary key sets the Kafka message key of each record that the server writes for a mutation. Records with the same key go to the same Kafka partition, so their order is kept.
+The Flink source of the table reads every column from the message value and ignores the key. Adding `PARTITIONED BY` to an existing table therefore keeps the records written before the table had a key, also when the pipeline reads the topic again from the earliest offset.
+A table with a primary key is keyed by its primary key instead, and its upsert source drops records that were written without a key.
+
 ### Internal Example
 
 ```sql
@@ -2108,6 +2112,13 @@ DataSQRL applies these strategies automatically based on the generated [table ty
 - `STATE` tables use timestamp update with the appropriate timestamp column.
 - `STREAM` tables use ignore.
 - Other PostgreSQL tables use update.
+
+To override the automatic choice, set `sink.on-conflict.action` to `UPDATE`, `TIMESTAMP`, or `IGNORE` in the `postgres` [connector template](https://docs.datasqrl.com/docs/configuration.md#connector-templates-connectors).
+The template applies to every PostgreSQL table, and `TIMESTAMP` also requires `sink.on-conflict.timestamp-column` to name a timestamp column that exists in each table.
+
+The primary key of a `STREAM` table is expected to identify each row, and a `STREAM` table without a primary key is keyed on a hash of all its columns.
+DataSQRL does not enforce this. When it holds, a conflict is a replay of a row that was already written, for example after the pipeline restarts from a checkpoint, and every strategy stores the same row.
+When rows with the same key differ, those in one write batch are first reduced to the last one, and the strategy then decides between that row and the stored one. Ignore keeps the stored row.
 
 ## Usage Notes
 
@@ -3787,12 +3798,20 @@ The `build/deploy/flink` folder contains the data files that sources read locall
 The deployment outputs show the physical plan, the most detailed level. Use them to validate how the pipeline executes and whether it will hold up in production:
 
 - **`flink-explained-plan.txt`** shows how Flink executes each table. Check that deduplications use the expected rank strategy, that joins are temporal or interval joins where expected rather than regular joins with unbounded state, and that watermarks are assigned with the intended delay.
-- **`flink-compiled-plan.json`** is the exact plan that runs. Compare it between versions to detect changes that are incompatible with existing savepoints.
+- **`flink-compiled-plan.json`** is the exact plan that runs. Compare it between versions to detect changes that are incompatible with existing savepoints (see [Upgrading from a Savepoint](#upgrading-from-a-savepoint)).
 - **`postgres-schema.sql`** and **`postgres-views.sql`** show which tables are materialized, which are computed at query time, and which indexes the compiler selected. Check that the API queries in `vertx.json` are served by an index.
 - **`vertx.json`** and the OpenAPI specification show exactly which SQL each API endpoint executes. Use them to review the cost of queries and to verify that filters and access restrictions are applied.
 - **`flink-config.yaml`**, **`kafka.json`**, and **`vertx-config.json`** show the operational settings. Validate them against your deployment requirements, such as checkpoint intervals, topic retention, and partitioning.
 
 Together, these files let you build an ensemble of reviews: humans inspect the visualizations, coding agents read the text plans, and automated checks enforce compliance, governance, and reliability requirements on the JSON outputs.
+
+### Upgrading from a Savepoint
+
+A running pipeline is upgraded by restoring its Flink job from a savepoint taken with the previous `flink-compiled-plan.json`. Flink maps the saved state to the operators of the new plan and, by default, refuses to start when the savepoint holds state for an operator that the new plan no longer has.
+
+When a new plan removes stateful operators, restore once with `execution.state-recovery.ignore-unclaimed-state: true` in the Flink configuration (`job.allowNonRestoredState: true` with the Flink Kubernetes Operator). Flink then drops the state of the removed operators, so check what that state held before upgrading. Remove the option after the restore, so it cannot hide an unexpected state mismatch in a later upgrade.
+
+For example, plans compiled by earlier DataSQRL versions write `STREAM` tables to databases through `WatermarkTimestampAssigner` and `SinkMaterializer` operators, which current plans no longer have. Their state holds rows that were not yet written to the database, and these rows are not written after the restore.
 
 
 ---
@@ -4198,3 +4217,18 @@ DataSQRL builds on top of Flink and the Flink connector ecosystem.
 | 0.9.x    | 2.2.x     | 2.2+ <br /> 2.2.0 tested     | 17+ <br /> 17 tested | 0.8.0    | 1.10+ <br /> 1.10.0 tested | 3+ <br /> 3.9.1 tested |
 | 0.10.x   | 2.2.x     | 2.2+ <br /> 2.2.1 tested     | 17+ <br /> 18 tested | 0.8.0    | 1.10+ <br /> 1.11.0 tested | 3+ <br /> 4.2.0 tested |
 | 0.11.x   | 2.3.x     | 2.3+ <br /> 2.3.0 tested     | 17+ <br /> 18 tested | 0.8.0    | 1.11+ <br /> 1.11.0 tested | 3+ <br /> 4.2.0 tested |
+
+## Upgrade Notes
+
+### Upgrading from 0.11
+
+DataSQRL 0.12.2+ computes the generated `__pk_hash` primary key column with `hash_key` instead of `hash_columns`, which 0.11 used.
+This column is the primary key of the database tables for stream tables without a primary key, where it hashes all columns, and for tables with nullable primary key columns, where it hashes the key columns.
+`hash_columns` could give distinct rows the same key, so one of them was dropped, and it gave a row with an `ARRAY` or `BYTES` column a different key each time the row was processed.
+
+Rows that a 0.11 deployment already stored keep the keys computed by `hash_columns`, so they do not conflict with rows written after the upgrade:
+
+- **Stream tables without a primary key:** rows that are processed again after the upgrade are stored a second time, for example when the job starts without a savepoint, restores an older checkpoint, or Kafka offsets are reset. Restore the job from a savepoint taken when stopping the 0.11 job, or rebuild these tables as well.
+- **Tables with nullable primary key columns:** the first update of an existing row after the upgrade stores a new row, and the old row stays. Rebuild these tables by emptying them and processing their input again from the start.
+
+The key change itself only renames the function in the compiled Flink plan, so it does not affect whether a savepoint can be restored. Compare `flink-compiled-plan.json` between the versions to check the other changes.
