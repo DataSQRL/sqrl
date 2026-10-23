@@ -577,6 +577,10 @@ Internal tables are managed by an SQRL engine selected through an `engine(...)` 
 | Watermark spec             | **generated**                                                   | **required**                 |
 | Primary key                | *Unenforced* upsert semantics                                   | Same as Flink                |
 
+With the `kafka` engine, `PARTITIONED BY (col, ...)` on an internal table without a primary key sets the Kafka message key of each record that the server writes for a mutation. Records with the same key go to the same Kafka partition, so their order is kept.
+The Flink source of the table reads every column from the message value and ignores the key. Adding `PARTITIONED BY` to an existing table therefore keeps the records written before the table had a key, also when the pipeline reads the topic again from the earliest offset.
+A table with a primary key is keyed by its primary key instead, and its upsert source drops records that were written without a key.
+
 ### Internal Example
 
 ```sql
