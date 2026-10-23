@@ -29,7 +29,7 @@ EXPORT MyTable TO ... -- write table data to sinks
 ```
 
 At compile time the statements form a *directed-acyclic graph* (DAG).  
-Each node is then assigned to an enabled execution engine according to the optimizer and the compiler generates the data processing code for that engine.
+Each node is then assigned to an enabled execution engine according to the optimizer and the compiler generates the data processing code for that engine. See [Where a table runs](#where-a-table-runs).
 
 ## Flink SQL
 
@@ -547,7 +547,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 
 | Hint                        | Form                                                                       | Applies to     | Effect                                                                                                                                                                             |
 |-----------------------------|----------------------------------------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare PK when optimiser cannot infer; does not deduplicate (see Primary key columns)                                                                                             |
+| **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare the key when the compile fails with `Could not determine primary key for table [...]`; does not deduplicate (see Primary key columns)                                                                                             |
 | **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | replaces automatic index selection for this table. `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`; `DESC` is supported only for `BTREE` and `PBTREE`. <br />`index` *alone* disables all automatic indexes, except the row-time index of a table behind a paginated query |
 | **partition_key**           | `partition_key(col, ...)`                                                  | table          | define partition columns for sinks that support partitioning                                                                                                                       |
 | **vector_dim**              | `vector_dim(col, 1536)`                                                    | table          | declare fixed vector length. This is required when using vector indexes.                                                                                                           |
@@ -558,20 +558,44 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **ttl**                     | `ttl(duration)`                                                            | table          | specifies how long the records for this table are retained in the underlying data system before it can be discarded. Expects a duration string with a unit between minute and day, e.g. `30 min`, `36 hours`, `14 days`. Disabled by default. |
 | **cache**                   | `cache(duration)`                                                          | table          | how long the results retrieved from this table can be cached on the server before they are refreshed. Expects a duration string like `10 seconds`. Disabled by default.            |
 | **filtered_distinct_order** | flag                                                                       | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                |
-| **engine**                  | `engine(engine_id)`                                                        | table          | pin execution engine (`process`, `database`, `flink`, ...). `exec` is a deprecated alias of `engine`                                                                                                                         |
+| **engine**                  | `engine(engine_id)`                                                        | table          | on a table definition, select the engine that computes the table, such as `flink` or `postgres` (see [Where a table runs](#where-a-table-runs)). On a `CREATE TABLE`, name the engine that manages the internal table, such as `kafka` (see [CREATE TABLE](#create-table-internal-vs-external)). `exec` is a deprecated alias of `engine` |
 | **maintenance**             | `maintenance(type)`                                                        | table          | table maintenance for engines that support it. `type` ∈ `NONE`, `REGULAR`; `REGULAR` on an Iceberg table adds the `iceberg-maintenance` connector options |
 | **row_count**               | `row_count(count)` or `row_count(col, ..., count)`                         | table          | estimated total row count (e.g. `1e6`), or the number of distinct values for the listed column combination. Used for query optimization |
 | **test**                    | `test` or `test(no_rows)`                                                  | table          | marks test case, only executed with `test` command.                                                                                                       |
 | **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                    |
 
-Multiple hints are comma-separated inside one comment. This example configures a primary key and a vector index for the `SensorTempByHour` table:
+Multiple hints are comma-separated inside one comment. This example configures the vector length and a vector index for the `SensorTempByHour` table:
 
 ```sql
-/*+primary_key(sensorid, time_hour), index(VECTOR_COSINE, embedding) */
+/*+vector_dim(embedding, 1536), index(VECTOR_COSINE, embedding) */
 SensorTempByHour := SELECT ... ;
 ```
 
 For choosing between `query_by_all` (required filter arguments) and `query_by_any` (optional filter arguments) when designing table access, invoke the `/design-api` skill (Table Hints for Table Access).
+
+### Where a table runs
+
+The compiler runs each table in Flink or in the database, and picks the cheaper of the two. The `engine` hint replaces this choice for one table:
+
+- `/*+engine(flink) */`: Flink engine computes the rows when the data arrives. When the API reads the table, Flink writes the rows to a Postgres table, and the compiler can index its columns.
+- `/*+engine(postgres) */`: Postgres engine stores no rows for the table. When the API reads the table directly, the compiler creates a view with the query of the table. Otherwise, it copies the query into each served query that reads the table. Postgres computes the rows on every request.
+
+A table definition accepts only an enabled engine that can compute a table:
+
+| Engine     | Engine type |
+|------------|-------------|
+| `flink`    | `process`   |
+| `postgres` | `database`  |
+| `iceberg`  | `database`  |
+
+The hint also accepts the engine type like `engine(database)`, but compiler selects the engine. Use the engine name. Other engines, such as `kafka`, `vertx`, `duckdb` or `snowflake`, cannot compute a table. For what each engine does and when to enable it, see the `/configure-sqrl` skill.
+
+Leave the choice to the compiler, unless a table needs an index that the compiler cannot give it. A served query can use an index only on rows that the database stores. A table that runs in Postgres stores no rows, so no index can serve a column that it computes, such as a `CONCAT_WS` text for `text_search` or a `CAST` value for a filter. In that case, add `/*+engine(flink) */` to the table: Flink computes the column ahead of time, and Postgres stores it in a table that can have an index. The hint costs Flink state and one more database table.
+
+After compile, read the `Stage:` line of the table in `pipeline_explain.txt` in the build folder to see which engine computes it.
+
+Put the `engine` hint on a table definition. On a function, the compile fails with `Provided execution stages could not be found or are not configured`. 
+A table in Postgres cannot feed a table in Flink. Pinning such a table to `postgres` fails with `Could not find execution stage for [table ...]`.
 
 ### Filters in API queries
 
