@@ -70,7 +70,7 @@ WITH (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Records_1`
-SELECT `source_id`, `hash_columns`(`source_id`) AS `__pk_hash`
+SELECT `source_id`, `hash_key`(`source_id`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`Records`
 /*+ `OPTIONS`(`rows-per-second` = '11') */
 ON CONFLICT DO DEDUPLICATE

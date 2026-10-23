@@ -209,7 +209,7 @@ Important rules:
 
 The `deployment` section under each `engines` configuration specifies what resources (i.e. instance type and number of instances) to use for deploying a DataSQRL pipeline in DataSQRL Cloud.
 
-Always read [Cloud Deployment Configuration](cloud-deployment.md) when configuring deployment size and resources.
+Always read [Cloud Deployment Configuration](cloud-deployment.md) when configuring deployment size and resources, or when upgrading an existing deployment to a new DataSQRL version.
 
 ## Script (`script`)
 

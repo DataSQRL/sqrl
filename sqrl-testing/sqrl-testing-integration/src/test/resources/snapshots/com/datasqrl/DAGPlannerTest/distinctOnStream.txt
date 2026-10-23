@@ -181,7 +181,7 @@ SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerUpdates_2`
-SELECT `customerid`, `endOfMin`, `total`, `hash_columns`(`customerid`, `endOfMin`, `total`) AS `__pk_hash`
+SELECT `customerid`, `endOfMin`, `total`, `hash_key`(`customerid`, `endOfMin`, `total`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CustomerUpdates`
 ON CONFLICT DO DEDUPLICATE
 ;

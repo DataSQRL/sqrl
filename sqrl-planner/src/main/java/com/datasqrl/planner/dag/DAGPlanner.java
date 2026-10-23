@@ -27,7 +27,7 @@ import com.datasqrl.engine.export.ExportEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.flinkrunner.stdlib.commons.hash_columns;
+import com.datasqrl.flinkrunner.stdlib.commons.hash_key;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
@@ -101,7 +101,7 @@ public class DAGPlanner {
   public static final String UNIQUE_TABLE_APPENDIX = "_"; // TODO: add $ to ensure uniqueness?
   public static final String HASHED_PK_NAME = "__pk_hash";
 
-  private static final FunctionDefinition HASH_COLUMNS = new hash_columns();
+  private static final FunctionDefinition HASH_KEY = new hash_key();
 
   private final ExecutionPipeline pipeline;
   private final ErrorCollector errors;
@@ -507,7 +507,7 @@ public class DAGPlanner {
             relBuilder
                 .getRexBuilder()
                 .makeCall(
-                    sqrlEnv.lookupUserDefinedFunction(HASH_COLUMNS),
+                    sqrlEnv.lookupUserDefinedFunction(HASH_KEY),
                     CalciteUtil.getSelectRex(relBuilder, addHashColumn)),
             HASHED_PK_NAME);
       } else {

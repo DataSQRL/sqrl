@@ -192,7 +192,7 @@ WITH (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`CustomerData_1`
-SELECT `customerid`, `to_jsonb`(`payload`) AS `payload`, `hash_columns`(`customerid`, `payload`) AS `__pk_hash`
+SELECT `customerid`, `to_jsonb`(`payload`) AS `payload`, `hash_key`(`customerid`, `payload`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CustomerData`
 ON CONFLICT DO DEDUPLICATE
 ;

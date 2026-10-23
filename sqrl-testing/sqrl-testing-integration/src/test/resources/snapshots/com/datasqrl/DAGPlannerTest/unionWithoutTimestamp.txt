@@ -226,7 +226,7 @@ FROM `default_catalog`.`default_database`.`CombinedState`
 ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`CombinedStream_2`
-SELECT `customerid`, `hash_columns`(`customerid`) AS `__pk_hash`
+SELECT `customerid`, `hash_key`(`customerid`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CombinedStream`
 ON CONFLICT DO DEDUPLICATE
 ;
