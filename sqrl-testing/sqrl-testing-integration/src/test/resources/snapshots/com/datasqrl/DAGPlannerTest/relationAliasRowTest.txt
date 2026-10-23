@@ -524,12 +524,12 @@ WITH (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`CteCustomerRow_1`
-SELECT `customerid`, `to_jsonb`(`customer`) AS `customer`, `hash_columns`(`customerid`, `customer`) AS `__pk_hash`
+SELECT `customerid`, `to_jsonb`(`customer`) AS `customer`, `hash_key`(`customerid`, `customer`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CteCustomerRow`
 ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`CteDefinitionRow_2`
-SELECT `customerid`, `to_jsonb`(`customer`) AS `customer`, `hash_columns`(`customerid`, `customer`) AS `__pk_hash`
+SELECT `customerid`, `to_jsonb`(`customer`) AS `customer`, `hash_key`(`customerid`, `customer`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CteDefinitionRow`
 ON CONFLICT DO DEDUPLICATE
 ;
@@ -538,17 +538,17 @@ SELECT *
 FROM `default_catalog`.`default_database`.`Customer`
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerBare_4`
-SELECT `customerid`, `to_jsonb`(`c`) AS `c`, `hash_columns`(`customerid`, `c`) AS `__pk_hash`
+SELECT `customerid`, `to_jsonb`(`c`) AS `c`, `hash_key`(`customerid`, `c`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CustomerBare`
 ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerRow_5`
-SELECT `customerid`, `to_jsonb`(`customer`) AS `customer`, `hash_columns`(`customerid`, `customer`) AS `__pk_hash`
+SELECT `customerid`, `to_jsonb`(`customer`) AS `customer`, `hash_key`(`customerid`, `customer`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CustomerRow`
 ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`NestedCustomerRow_6`
-SELECT `to_jsonb`(`customer`) AS `customer`, `hash_columns`(`customer`) AS `__pk_hash`
+SELECT `to_jsonb`(`customer`) AS `customer`, `hash_key`(`customer`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`NestedCustomerRow`
 ON CONFLICT DO DEDUPLICATE
 ;
@@ -557,17 +557,17 @@ SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
 FROM `default_catalog`.`default_database`.`Orders`
 ;
 INSERT INTO `default_catalog`.`default_database`.`ReservedAliasRow_8`
-SELECT `customerid`, `to_jsonb`(`whole`) AS `whole`, `hash_columns`(`customerid`, `whole`) AS `__pk_hash`
+SELECT `customerid`, `to_jsonb`(`whole`) AS `whole`, `hash_key`(`customerid`, `whole`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`ReservedAliasRow`
 ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`Shadowed_9`
-SELECT `c`, `label`, `hash_columns`(`c`, `label`) AS `__pk_hash`
+SELECT `c`, `label`, `hash_key`(`c`, `label`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`Shadowed`
 ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`ShadowedAlias_10`
-SELECT `c`, `label`, `hash_columns`(`c`, `label`) AS `__pk_hash`
+SELECT `c`, `label`, `hash_key`(`c`, `label`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`ShadowedAlias`
 ON CONFLICT DO DEDUPLICATE
 ;
