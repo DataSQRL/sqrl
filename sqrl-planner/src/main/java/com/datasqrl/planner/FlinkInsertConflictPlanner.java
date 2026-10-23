@@ -19,9 +19,6 @@ import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.planner.FlinkPhysicalPlan.Builder;
 import com.datasqrl.planner.analyzer.TableAnalysis;
-import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
-import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
-import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.FlinkCompileException;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +35,6 @@ import org.apache.flink.table.api.TableException;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.api.config.ExecutionConfigOptions;
 import org.apache.flink.table.catalog.ObjectIdentifier;
-import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.operations.ModifyOperation;
 import org.apache.flink.table.planner.calcite.FlinkPlannerImpl;
 import org.apache.flink.table.planner.delegation.PlannerBase;
@@ -168,20 +164,28 @@ final class FlinkInsertConflictPlanner {
     return flinkSql;
   }
 
+  /**
+   * Returns the automatic conflict behavior of a generated insert, which {@link
+   * FlinkInsertConflictProgram} applies when the optimized sink plan calls for a clause.
+   *
+   * <ul>
+   *   <li>Versioned state, state, and static tables keep the latest row of each key, which is what
+   *       {@code DO DEDUPLICATE} stores.
+   *   <li>The rows of a stream are unique on its primary key (a hash of all columns if it has
+   *       none), so a conflict is a replay of the same row. {@code DO DEDUPLICATE} stores the same
+   *       result as {@code DO NOTHING}, but without the sink materializer that {@code DO NOTHING}
+   *       adds for insert-only inputs, which keeps state for every key and holds rows back until a
+   *       later watermark arrives.
+   *   <li>Lookup and relation tables have no automatic behavior, so a required clause falls back to
+   *       {@code DO NOTHING}.
+   * </ul>
+   */
   private static Optional<SqlInsertConflictBehavior> automaticConflictBehavior(
       TableAnalysis table) {
 
     return switch (table.getType()) {
-      case VERSIONED_STATE, STATE, STATIC -> Optional.of(SqlInsertConflictBehavior.DEDUPLICATE);
-      // A stream without a primary key is keyed on a hash of all its columns, so a conflict is a
-      // duplicate of the same row (barring hash collisions) and both behaviors store the same
-      // result. DO DEDUPLICATE avoids the sink materializer of DO NOTHING for insert-only inputs,
-      // which holds rows back until a later watermark arrives.
-      case STREAM ->
-          Optional.of(
-              hasWatermarkOnSource(table) && table.getPrimaryKey().isDefined()
-                  ? SqlInsertConflictBehavior.NOTHING
-                  : SqlInsertConflictBehavior.DEDUPLICATE);
+      case STREAM, VERSIONED_STATE, STATE, STATIC ->
+          Optional.of(SqlInsertConflictBehavior.DEDUPLICATE);
       default -> Optional.empty();
     };
   }
@@ -194,30 +198,6 @@ final class FlinkInsertConflictPlanner {
       case NOTHING -> SqlInsertConflictBehavior.NOTHING;
       case DEDUPLICATE -> SqlInsertConflictBehavior.DEDUPLICATE;
     };
-  }
-
-  private static boolean hasWatermarkOnSource(TableOrFunctionAnalysis table) {
-    if (table instanceof TableAnalysis tableAnalysis
-        && !tableAnalysis.isSourceOrSink()
-        && !tableAnalysis.getFromTables().isEmpty()) {
-      return tableAnalysis.getFromTables().stream()
-          .allMatch(FlinkInsertConflictPlanner::hasWatermarkOnSource);
-    }
-
-    if (table instanceof SqrlTableFunction tableFunction) {
-      return hasWatermarkOnSource(tableFunction.getFunctionAnalysis());
-    }
-
-    if (table instanceof TableAnalysis sourceTable) {
-      return sourceTable
-          .getSourceSinkTable()
-          .map(SourceSinkTableAnalysis::schema)
-          .map(ResolvedSchema::getWatermarkSpecs)
-          .map(watermarkSpecs -> !watermarkSpecs.isEmpty())
-          .orElse(false);
-    }
-
-    return false;
   }
 
   private record PendingInsert(

@@ -190,14 +190,14 @@ class FlinkInsertConflictPlannerTest {
   }
 
   @Test
-  void givenStreamWithPrimaryKey_whenCompileInsertOnlyQuery_thenKeepsDoNothingWithMaterializer() {
+  void givenStreamWithPrimaryKey_whenCompileInsertOnlyQuery_thenDeduplicatesWithoutMaterializer() {
     addInsert(
         appendQuery(), MISMATCH_SINK, streamOverWatermarkedSource(PrimaryKeyMap.of(List.of(1))));
 
     var compiledPlan = conflictPlanner.compilePlan();
 
-    assertThat(insertSql(0)).contains("ON CONFLICT DO NOTHING");
-    assertThat(sinkRequiresUpsertMaterialize(compiledPlan.asJsonString())).isTrue();
+    assertThat(insertSql(0)).contains("ON CONFLICT DO DEDUPLICATE");
+    assertThat(sinkRequiresUpsertMaterialize(compiledPlan.asJsonString())).isFalse();
   }
 
   @Test

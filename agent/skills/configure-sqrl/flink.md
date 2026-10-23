@@ -87,4 +87,4 @@ Frequently configured options:
 
 Flink refuses to restore a savepoint that holds state for an operator the new `flink-compiled-plan.json` no longer has.
 Compare the compiled plans of both versions before upgrading. If stateful operators were removed, restore once with `execution.state-recovery.ignore-unclaimed-state: true` (`job.allowNonRestoredState: true` with the Flink Kubernetes Operator), then remove the option so it cannot hide an unexpected state mismatch later.
-The state of the removed operators is dropped. For example, plans compiled by earlier DataSQRL versions write `STREAM` tables without a primary key through `WatermarkTimestampAssigner` and `SinkMaterializer` operators that current plans no longer have; rows still held in their state are not written to the database after the restore.
+The state of the removed operators is dropped. For example, plans compiled by earlier DataSQRL versions write `STREAM` tables through `WatermarkTimestampAssigner` and `SinkMaterializer` operators that current plans no longer have; rows still held in their state are not written to the database after the restore.
