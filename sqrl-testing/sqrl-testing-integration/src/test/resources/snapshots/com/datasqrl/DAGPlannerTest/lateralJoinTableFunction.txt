@@ -123,7 +123,7 @@ FROM `default_catalog`.`default_database`.`Customer`
 INSERT INTO `default_catalog`.`default_database`.`CustomerEmailCopies_2`
 SELECT `customerid`, `email`, `hash_columns`(`customerid`, `email`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CustomerEmailCopies`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json

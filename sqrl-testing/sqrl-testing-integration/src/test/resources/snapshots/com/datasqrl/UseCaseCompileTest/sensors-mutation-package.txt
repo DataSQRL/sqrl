@@ -234,7 +234,7 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`HighTempAlert_1`
 SELECT `sensorid`, `temperature`, `event_time`, `hash_columns`(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`HighTempAlert`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorMaxTemp_2`
 SELECT *
@@ -244,7 +244,7 @@ ON CONFLICT DO DEDUPLICATE
 INSERT INTO `default_catalog`.`default_database`.`SensorReading_3`
 SELECT `sensorid`, `temperature`, `event_time`, `hash_columns`(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`SensorReading`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorReadingSubscription_4`
 SELECT *

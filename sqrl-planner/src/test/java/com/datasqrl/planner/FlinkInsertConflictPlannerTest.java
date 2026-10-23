@@ -24,8 +24,17 @@ import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.io.tables.TableType;
+import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
+import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import lombok.SneakyThrows;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -169,6 +178,48 @@ class FlinkInsertConflictPlannerTest {
     assertThat(insertSql(0)).contains("ON CONFLICT DO DEDUPLICATE");
   }
 
+  @Test
+  void
+      givenStreamWithoutPrimaryKey_whenCompileInsertOnlyQuery_thenDeduplicatesWithoutMaterializer() {
+    addInsert(appendQuery(), MISMATCH_SINK, streamOverWatermarkedSource(PrimaryKeyMap.UNDEFINED));
+
+    var compiledPlan = conflictPlanner.compilePlan();
+
+    assertThat(insertSql(0)).contains("ON CONFLICT DO DEDUPLICATE");
+    assertThat(sinkRequiresUpsertMaterialize(compiledPlan.asJsonString())).isFalse();
+  }
+
+  @Test
+  void givenStreamWithPrimaryKey_whenCompileInsertOnlyQuery_thenKeepsDoNothingWithMaterializer() {
+    addInsert(
+        appendQuery(), MISMATCH_SINK, streamOverWatermarkedSource(PrimaryKeyMap.of(List.of(1))));
+
+    var compiledPlan = conflictPlanner.compilePlan();
+
+    assertThat(insertSql(0)).contains("ON CONFLICT DO NOTHING");
+    assertThat(sinkRequiresUpsertMaterialize(compiledPlan.asJsonString())).isTrue();
+  }
+
+  @Test
+  void givenStreamWithoutPrimaryKey_whenCompileUpdatingQuery_thenDeduplicatesWithMaterializer() {
+    addInsert(
+        aggregateQuery(), MISMATCH_SINK, streamOverWatermarkedSource(PrimaryKeyMap.UNDEFINED));
+
+    var compiledPlan = conflictPlanner.compilePlan();
+
+    assertThat(insertSql(0)).contains("ON CONFLICT DO DEDUPLICATE");
+    assertThat(sinkRequiresUpsertMaterialize(compiledPlan.asJsonString())).isTrue();
+  }
+
+  @Test
+  void givenStreamWithoutPrimaryKey_whenResolveWithoutCompiling_thenDeduplicates() {
+    addInsert(appendQuery(), MISMATCH_SINK, streamOverWatermarkedSource(PrimaryKeyMap.UNDEFINED));
+
+    conflictPlanner.resolve();
+
+    assertThat(insertSql(0)).contains("ON CONFLICT DO DEDUPLICATE");
+  }
+
   private void createJdbcSink(String name, String primaryKey) {
     tEnv.executeSql(
         """
@@ -186,6 +237,48 @@ class FlinkInsertConflictPlannerTest {
 
   private static String aggregateQuery() {
     return "SELECT name, COUNT(*) AS cnt FROM src GROUP BY name";
+  }
+
+  private static String appendQuery() {
+    return "SELECT name, CAST(1 AS BIGINT) AS cnt FROM src";
+  }
+
+  @SneakyThrows
+  private static boolean sinkRequiresUpsertMaterialize(String compiledPlanJson) {
+    var sinks = new ArrayList<JsonNode>();
+    for (var node : new ObjectMapper().readTree(compiledPlanJson).path("nodes")) {
+      if (node.path("type").asText().startsWith("stream-exec-sink")) {
+        sinks.add(node);
+      }
+    }
+    assertThat(sinks).hasSize(1);
+    return sinks.get(0).path("requireUpsertMaterialize").asBoolean();
+  }
+
+  /** A stream table derived from the watermarked source, with the given primary key. */
+  private TableAnalysis streamOverWatermarkedSource(PrimaryKeyMap primaryKey) {
+    var sourceSchema =
+        tEnv.getCatalogManager()
+            .getTableOrError(ObjectIdentifier.of("default_catalog", "default_database", "src"))
+            .getResolvedSchema();
+    var source =
+        TableAnalysis.builder()
+            .objectIdentifier(ObjectIdentifier.of("catalog", "database", "src"))
+            .type(TableType.STREAM)
+            .sourceSinkTable(
+                Optional.of(
+                    new SourceSinkTableAnalysis(
+                        new FlinkConnectorConfigWrapper(Map.of(), Optional.empty()),
+                        sourceSchema,
+                        null)))
+            .build();
+
+    return TableAnalysis.builder()
+        .objectIdentifier(ObjectIdentifier.of("catalog", "database", "table"))
+        .type(TableType.STREAM)
+        .primaryKey(primaryKey)
+        .fromTables(List.of(source))
+        .build();
   }
 
   private void addInsert(String selectSql, ObjectIdentifier sinkTableId, TableAnalysis table) {

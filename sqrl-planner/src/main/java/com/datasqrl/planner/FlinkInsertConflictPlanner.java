@@ -173,9 +173,13 @@ final class FlinkInsertConflictPlanner {
 
     return switch (table.getType()) {
       case VERSIONED_STATE, STATE, STATIC -> Optional.of(SqlInsertConflictBehavior.DEDUPLICATE);
+      // A stream without a primary key is keyed on a hash of all its columns, so a conflict is a
+      // duplicate of the same row (barring hash collisions) and both behaviors store the same
+      // result. DO DEDUPLICATE avoids the sink materializer of DO NOTHING for insert-only inputs,
+      // which holds rows back until a later watermark arrives.
       case STREAM ->
           Optional.of(
-              hasWatermarkOnSource(table)
+              hasWatermarkOnSource(table) && table.getPrimaryKey().isDefined()
                   ? SqlInsertConflictBehavior.NOTHING
                   : SqlInsertConflictBehavior.DEDUPLICATE);
       default -> Optional.empty();
