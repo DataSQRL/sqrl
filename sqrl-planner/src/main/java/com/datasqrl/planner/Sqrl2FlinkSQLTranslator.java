@@ -1005,17 +1005,9 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
   /** Adds a generated materialization insert whose conflict behavior is resolved after planning. */
   public void addInsert(
-      RelNode relNode,
-      ObjectIdentifier sinkTableId,
-      TableAnalysis table,
-      boolean isUpsertSink,
-      boolean keyHashesAllColumns) {
+      RelNode relNode, ObjectIdentifier sinkTableId, TableAnalysis table, boolean isUpsertSink) {
     insertConflictPlanner.addInsert(
-        RelToFlinkSql.convertToSqlNode(relNode),
-        sinkTableId,
-        table,
-        isUpsertSink,
-        keyHashesAllColumns);
+        RelToFlinkSql.convertToSqlNode(relNode), sinkTableId, table, isUpsertSink);
   }
 
   /** Adds a generated direct-export insert without automatic conflict resolution. */

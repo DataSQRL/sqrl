@@ -65,16 +65,12 @@ final class FlinkInsertConflictPlanner {
   /**
    * Adds a generated insert. Explicit conflict behavior is applied immediately; other
    * upsert-capable sinks are registered for resolution from the optimized plan.
-   *
-   * @param keyHashesAllColumns whether the sink primary key is a hash of all columns, so a conflict
-   *     on it is a duplicate of the same row (barring hash collisions)
    */
   void addInsert(
       SqlNode selectQuery,
       ObjectIdentifier sinkTableId,
       TableAnalysis table,
-      boolean isUpsertSink,
-      boolean keyHashesAllColumns) {
+      boolean isUpsertSink) {
 
     var explicitBehavior = Optional.<SqlInsertConflictBehavior>empty();
     if (isUpsertSink) {
@@ -91,12 +87,7 @@ final class FlinkInsertConflictPlanner {
     var insertIdx = planBuilder.addInsert(FlinkSqlNodes.createInsert(selectQuery, sinkTableId));
     pendingInserts.add(
         new PendingInsert(
-            selectQuery,
-            sinkTableId,
-            automaticConflictBehavior(table),
-            keyHashesAllColumns,
-            batchIdx,
-            insertIdx));
+            selectQuery, sinkTableId, automaticConflictBehavior(table), batchIdx, insertIdx));
   }
 
   /** Applies the automatic conflict behavior to plans that are not compiled by Flink. */
@@ -124,10 +115,7 @@ final class FlinkInsertConflictPlanner {
     conflictProgram.setRequireOnConflict(requireOnConflict);
     pendingInserts.forEach(
         pendingInsert ->
-            conflictProgram.registerSink(
-                pendingInsert.targetTableId(),
-                pendingInsert.fallback(),
-                pendingInsert.keyHashesAllColumns()));
+            conflictProgram.registerSink(pendingInsert.targetTableId(), pendingInsert.fallback()));
 
     try {
       var compiledPlan = (ExecNodeGraphInternalPlan) getPlannerBase().compilePlan(operations);
@@ -185,9 +173,13 @@ final class FlinkInsertConflictPlanner {
 
     return switch (table.getType()) {
       case VERSIONED_STATE, STATE, STATIC -> Optional.of(SqlInsertConflictBehavior.DEDUPLICATE);
+      // A stream without a primary key is keyed on a hash of all its columns, so a conflict is a
+      // duplicate of the same row (barring hash collisions) and both behaviors store the same
+      // result. DO DEDUPLICATE avoids the sink materializer of DO NOTHING for insert-only inputs,
+      // which holds rows back until a later watermark arrives.
       case STREAM ->
           Optional.of(
-              hasWatermarkOnSource(table)
+              hasWatermarkOnSource(table) && table.getPrimaryKey().isDefined()
                   ? SqlInsertConflictBehavior.NOTHING
                   : SqlInsertConflictBehavior.DEDUPLICATE);
       default -> Optional.empty();
@@ -232,7 +224,6 @@ final class FlinkInsertConflictPlanner {
       SqlNode selectQuery,
       ObjectIdentifier targetTableId,
       Optional<SqlInsertConflictBehavior> fallback,
-      boolean keyHashesAllColumns,
       int batchIdx,
       int insertIdx) {}
 }

@@ -17,11 +17,9 @@ package com.datasqrl.planner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import org.apache.calcite.rel.RelNode;
 import org.apache.flink.sql.parser.dml.SqlInsertConflictBehavior;
 import org.apache.flink.table.api.InsertConflictStrategy;
@@ -52,23 +50,14 @@ final class FlinkInsertConflictProgram implements FlinkOptimizeProgram<StreamOpt
   private final Map<ObjectIdentifier, Optional<SqlInsertConflictBehavior>> fallbacks =
       new HashMap<>();
 
-  private final Set<ObjectIdentifier> rowHashKeyedSinks = new HashSet<>();
-
   private final Map<ObjectIdentifier, Optional<SqlInsertConflictBehavior>> resolved =
       new HashMap<>();
 
   private boolean requireOnConflict =
       ExecutionConfigOptions.TABLE_EXEC_SINK_REQUIRE_ON_CONFLICT.defaultValue();
 
-  void registerSink(
-      ObjectIdentifier sinkTableId,
-      Optional<SqlInsertConflictBehavior> fallback,
-      boolean keyHashesAllColumns) {
-
+  void registerSink(ObjectIdentifier sinkTableId, Optional<SqlInsertConflictBehavior> fallback) {
     fallbacks.put(sinkTableId, fallback);
-    if (keyHashesAllColumns) {
-      rowHashKeyedSinks.add(sinkTableId);
-    }
   }
 
   void setRequireOnConflict(boolean requireOnConflict) {
@@ -97,7 +86,7 @@ final class FlinkInsertConflictProgram implements FlinkOptimizeProgram<StreamOpt
       return root;
     }
 
-    var behavior = resolveConflictBehavior(sink, fallback, rowHashKeyedSinks.contains(sinkTableId));
+    var behavior = resolveConflictBehavior(sink, fallback);
     resolved.put(sinkTableId, behavior);
     if (behavior.isEmpty()) {
       return root;
@@ -132,18 +121,9 @@ final class FlinkInsertConflictProgram implements FlinkOptimizeProgram<StreamOpt
    * Derives the clause from the optimized sink plan: append and retract sinks reject the clause,
    * upsert sinks whose primary key does not contain the upsert key require one (falling back to
    * {@code DO NOTHING}), and insert-only inputs need none.
-   *
-   * <p>An insert-only input into a sink whose primary key hashes all columns gets {@code DO
-   * DEDUPLICATE} instead of the fallback. Such a key identifies the whole row, so a conflict on it
-   * is a duplicate of the same row (barring hash collisions) and both behaviors store the same
-   * result. Flink only skips the sink materializer for insert-only inputs with {@code DO
-   * DEDUPLICATE}, and the materializer of {@code DO NOTHING} holds each row back until a later
-   * watermark arrives, which never happens once the source stops receiving newer records.
    */
   static Optional<SqlInsertConflictBehavior> resolveConflictBehavior(
-      StreamPhysicalSink sink,
-      Optional<SqlInsertConflictBehavior> fallback,
-      boolean keyHashesAllColumns) {
+      StreamPhysicalSink sink, Optional<SqlInsertConflictBehavior> fallback) {
 
     var inputMode = inputChangelogMode(sink).orElse(ChangelogMode.all());
     var sinkMode = sink.tableSink().getChangelogMode(inputMode);
@@ -152,9 +132,6 @@ final class FlinkInsertConflictProgram implements FlinkOptimizeProgram<StreamOpt
     }
 
     if (!sink.primaryKeysContainsUpsertKey()) {
-      if (keyHashesAllColumns && inputMode.containsOnly(RowKind.INSERT)) {
-        return Optional.of(SqlInsertConflictBehavior.DEDUPLICATE);
-      }
       return fallback.or(() -> Optional.of(SqlInsertConflictBehavior.NOTHING));
     }
 
