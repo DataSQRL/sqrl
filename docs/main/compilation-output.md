@@ -127,4 +127,4 @@ A running pipeline is upgraded by restoring its Flink job from a savepoint taken
 
 When a new plan removes stateful operators, restore once with `execution.state-recovery.ignore-unclaimed-state: true` in the Flink configuration (`job.allowNonRestoredState: true` with the Flink Kubernetes Operator). Flink then drops the state of the removed operators, so check what that state held before upgrading. Remove the option after the restore, so it cannot hide an unexpected state mismatch in a later upgrade.
 
-For example, plans compiled by earlier DataSQRL versions write `STREAM` tables without a primary key to databases through `WatermarkTimestampAssigner` and `SinkMaterializer` operators, which current plans no longer have. Their state holds rows that were not yet written to the database, and these rows are not written after the restore.
+For example, plans compiled by earlier DataSQRL versions write `STREAM` tables to databases through `WatermarkTimestampAssigner` and `SinkMaterializer` operators, which current plans no longer have. Their state holds rows that were not yet written to the database, and these rows are not written after the restore.

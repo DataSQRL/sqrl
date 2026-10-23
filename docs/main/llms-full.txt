@@ -2113,6 +2113,13 @@ DataSQRL applies these strategies automatically based on the generated [table ty
 - `STREAM` tables use ignore.
 - Other PostgreSQL tables use update.
 
+To override the automatic choice, set `sink.on-conflict.action` to `UPDATE`, `TIMESTAMP`, or `IGNORE` in the `postgres` [connector template](https://docs.datasqrl.com/docs/main/configuration.md#connector-templates-connectors).
+The template applies to every PostgreSQL table, and `TIMESTAMP` also requires `sink.on-conflict.timestamp-column` to name a timestamp column that exists in each table.
+
+The primary key of a `STREAM` table is expected to identify each row, and a `STREAM` table without a primary key is keyed on a hash of all its columns.
+DataSQRL does not enforce this. When it holds, a conflict is a replay of a row that was already written, for example after the pipeline restarts from a checkpoint, and every strategy stores the same row.
+When rows with the same key differ, those in one write batch are first reduced to the last one, and the strategy then decides between that row and the stored one. Ignore keeps the stored row.
+
 ## Usage Notes
 
 - Database schema is automatically generated from your SQRL script
@@ -3804,7 +3811,7 @@ A running pipeline is upgraded by restoring its Flink job from a savepoint taken
 
 When a new plan removes stateful operators, restore once with `execution.state-recovery.ignore-unclaimed-state: true` in the Flink configuration (`job.allowNonRestoredState: true` with the Flink Kubernetes Operator). Flink then drops the state of the removed operators, so check what that state held before upgrading. Remove the option after the restore, so it cannot hide an unexpected state mismatch in a later upgrade.
 
-For example, plans compiled by earlier DataSQRL versions write `STREAM` tables without a primary key to databases through `WatermarkTimestampAssigner` and `SinkMaterializer` operators, which current plans no longer have. Their state holds rows that were not yet written to the database, and these rows are not written after the restore.
+For example, plans compiled by earlier DataSQRL versions write `STREAM` tables to databases through `WatermarkTimestampAssigner` and `SinkMaterializer` operators, which current plans no longer have. Their state holds rows that were not yet written to the database, and these rows are not written after the restore.
 
 
 ---

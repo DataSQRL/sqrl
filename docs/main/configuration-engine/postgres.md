@@ -53,6 +53,13 @@ DataSQRL applies these strategies automatically based on the generated [table ty
 - `STREAM` tables use ignore.
 - Other PostgreSQL tables use update.
 
+To override the automatic choice, set `sink.on-conflict.action` to `UPDATE`, `TIMESTAMP`, or `IGNORE` in the `postgres` [connector template](https://docs.datasqrl.com/docs/main/configuration.md#connector-templates-connectors).
+The template applies to every PostgreSQL table, and `TIMESTAMP` also requires `sink.on-conflict.timestamp-column` to name a timestamp column that exists in each table.
+
+The primary key of a `STREAM` table is expected to identify each row, and a `STREAM` table without a primary key is keyed on a hash of all its columns.
+DataSQRL does not enforce this. When it holds, a conflict is a replay of a row that was already written, for example after the pipeline restarts from a checkpoint, and every strategy stores the same row.
+When rows with the same key differ, those in one write batch are first reduced to the last one, and the strategy then decides between that row and the stored one. Ignore keeps the stored row.
+
 ## Usage Notes
 
 - Database schema is automatically generated from your SQRL script
