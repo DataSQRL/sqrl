@@ -81,3 +81,10 @@ Frequently configured options:
 | `pekko.ask.timeout` | `10s` | `30s` – `60s` | Increased when RPC timeouts occur under load |
 | `pekko.framesize` | `10mb` | `50mb` – `200mb` | Increased when large serialized objects are passed via RPC |
 | `execution.checkpointing.aligned-checkpoint-timeout` | `0ms` | `30s` – `5min` | Set when using unaligned checkpoints with fallback to aligned |
+| `execution.state-recovery.ignore-unclaimed-state` | `false` | `true` | Set only for one restore from a savepoint whose plan had operators the new plan removed; drops their state (see below) |
+
+## Upgrading from a Savepoint
+
+Flink refuses to restore a savepoint that holds state for an operator the new `flink-compiled-plan.json` no longer has.
+Compare the compiled plans of both versions before upgrading. If stateful operators were removed, restore once with `execution.state-recovery.ignore-unclaimed-state: true` (`job.allowNonRestoredState: true` with the Flink Kubernetes Operator), then remove the option so it cannot hide an unexpected state mismatch later.
+The state of the removed operators is dropped. For example, plans compiled by earlier DataSQRL versions write `STREAM` tables without a primary key through `WatermarkTimestampAssigner` and `SinkMaterializer` operators that current plans no longer have; rows still held in their state are not written to the database after the restore.
