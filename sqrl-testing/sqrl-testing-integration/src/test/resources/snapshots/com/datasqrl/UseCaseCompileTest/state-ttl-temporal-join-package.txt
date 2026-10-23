@@ -418,7 +418,7 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Attributed_1`
 SELECT *
 FROM `default_catalog`.`default_database`.`Attributed`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`CountsByVal_2`
 SELECT `val`, `event_date`, `cnt`, `hash_key`(`val`, `event_date`) AS `__pk_hash`
@@ -437,7 +437,7 @@ FROM `default_catalog`.`default_database`.`DimStream`
 INSERT INTO `default_catalog`.`default_database`.`Enriched_5`
 SELECT *
 FROM `default_catalog`.`default_database`.`Enriched`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`Events_6`
 SELECT `event_id`, `id`, `ts`, `hash_key`(`event_id`, `id`, `ts`) AS `__pk_hash`
