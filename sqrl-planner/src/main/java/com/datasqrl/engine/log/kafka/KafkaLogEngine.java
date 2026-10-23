@@ -210,7 +210,12 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         "Need to configure a 'format' for connector {}",
         KafkaLogEngineFactory.ENGINE_NAME);
 
-    if (!messageKey.isEmpty() && !isUpsert) {
+    // The server keys mutation records itself; decoding that key in Flink would silently drop
+    // records written before the table was keyed, since a null key yields no key row. Upsert
+    // mutations still decode it because upsert-kafka requires a key, so this applies to them.
+    var decodeKey = isUpsert || (!isMutation && !messageKey.isEmpty());
+
+    if (decodeKey && !isUpsert) {
       connectorConfig.put("key.fields", String.join(";", messageKey));
     }
 
@@ -223,7 +228,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       topicConfig.put("cleanup.policy", "compact");
     }
 
-    if (!messageKey.isEmpty()) {
+    if (decodeKey) {
       connectorConfig.remove(FlinkConnectorConfigWrapper.FORMAT_KEY);
       connectorConfig.put(FlinkConnectorConfigWrapper.KEY_FORMAT_KEY, format);
       connectorConfig.put(FlinkConnectorConfigWrapper.VALUE_FORMAT_KEY, format);
