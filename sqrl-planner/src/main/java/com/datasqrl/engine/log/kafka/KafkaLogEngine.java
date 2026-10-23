@@ -211,8 +211,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         KafkaLogEngineFactory.ENGINE_NAME);
 
     // The server keys mutation records itself; decoding that key in Flink would silently drop
-    // records written before the table was keyed, since a null key yields no key row.
-    var decodeKey = !messageKey.isEmpty() && (isUpsert || !isMutation);
+    // records written before the table was keyed, since a null key yields no key row. Upsert
+    // mutations still decode it because upsert-kafka requires a key, so this applies to them.
+    var decodeKey = isUpsert || (!isMutation && !messageKey.isEmpty());
 
     if (decodeKey && !isUpsert) {
       connectorConfig.put("key.fields", String.join(";", messageKey));
