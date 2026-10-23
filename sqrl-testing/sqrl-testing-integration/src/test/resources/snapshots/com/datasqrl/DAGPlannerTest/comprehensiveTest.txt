@@ -1110,7 +1110,7 @@ ON CONFLICT DO NOTHING
 INSERT INTO `default_catalog`.`default_database`.`UnnestOrders_16`
 SELECT `id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`, `hash_columns`(`id`, `customerid`, `time`, `productid`, `quantity`, `discount`, `newId`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`UnnestOrders`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 END
 >>>kafka.json

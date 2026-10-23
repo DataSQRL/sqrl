@@ -114,9 +114,17 @@ The `build/deploy/flink` folder contains the data files that sources read locall
 The deployment outputs show the physical plan, the most detailed level. Use them to validate how the pipeline executes and whether it will hold up in production:
 
 - **`flink-explained-plan.txt`** shows how Flink executes each table. Check that deduplications use the expected rank strategy, that joins are temporal or interval joins where expected rather than regular joins with unbounded state, and that watermarks are assigned with the intended delay.
-- **`flink-compiled-plan.json`** is the exact plan that runs. Compare it between versions to detect changes that are incompatible with existing savepoints.
+- **`flink-compiled-plan.json`** is the exact plan that runs. Compare it between versions to detect changes that are incompatible with existing savepoints (see [Upgrading from a Savepoint](#upgrading-from-a-savepoint)).
 - **`postgres-schema.sql`** and **`postgres-views.sql`** show which tables are materialized, which are computed at query time, and which indexes the compiler selected. Check that the API queries in `vertx.json` are served by an index.
 - **`vertx.json`** and the OpenAPI specification show exactly which SQL each API endpoint executes. Use them to review the cost of queries and to verify that filters and access restrictions are applied.
 - **`flink-config.yaml`**, **`kafka.json`**, and **`vertx-config.json`** show the operational settings. Validate them against your deployment requirements, such as checkpoint intervals, topic retention, and partitioning.
 
 Together, these files let you build an ensemble of reviews: humans inspect the visualizations, coding agents read the text plans, and automated checks enforce compliance, governance, and reliability requirements on the JSON outputs.
+
+### Upgrading from a Savepoint
+
+A running pipeline is upgraded by restoring its Flink job from a savepoint taken with the previous `flink-compiled-plan.json`. Flink maps the saved state to the operators of the new plan and, by default, refuses to start when the savepoint holds state for an operator that the new plan no longer has.
+
+When a new plan removes stateful operators, restore once with `execution.state-recovery.ignore-unclaimed-state: true` in the Flink configuration (`job.allowNonRestoredState: true` with the Flink Kubernetes Operator). Flink then drops the state of the removed operators, so check what that state held before upgrading. Remove the option after the restore, so it cannot hide an unexpected state mismatch in a later upgrade.
+
+For example, plans compiled by earlier DataSQRL versions write `STREAM` tables without a primary key to databases through `WatermarkTimestampAssigner` and `SinkMaterializer` operators, which current plans no longer have. Their state holds rows that were not yet written to the database, and these rows are not written after the restore.
