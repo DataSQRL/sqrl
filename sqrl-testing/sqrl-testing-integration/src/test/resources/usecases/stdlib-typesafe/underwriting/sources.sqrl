@@ -1,0 +1,5 @@
+CREATE TABLE Applications (
+    WATERMARK FOR submitted_at AS submitted_at - INTERVAL '0.001' SECOND
+) WITH (
+    'source.monitor-interval' = '1m'
+) LIKE `applications.jsonl`;
