@@ -65,12 +65,16 @@ final class FlinkInsertConflictPlanner {
   /**
    * Adds a generated insert. Explicit conflict behavior is applied immediately; other
    * upsert-capable sinks are registered for resolution from the optimized plan.
+   *
+   * @param keyHashesAllColumns whether the sink primary key is a hash of all columns, so a conflict
+   *     on it is a duplicate of the same row (barring hash collisions)
    */
   void addInsert(
       SqlNode selectQuery,
       ObjectIdentifier sinkTableId,
       TableAnalysis table,
-      boolean isUpsertSink) {
+      boolean isUpsertSink,
+      boolean keyHashesAllColumns) {
 
     var explicitBehavior = Optional.<SqlInsertConflictBehavior>empty();
     if (isUpsertSink) {
@@ -87,7 +91,12 @@ final class FlinkInsertConflictPlanner {
     var insertIdx = planBuilder.addInsert(FlinkSqlNodes.createInsert(selectQuery, sinkTableId));
     pendingInserts.add(
         new PendingInsert(
-            selectQuery, sinkTableId, automaticConflictBehavior(table), batchIdx, insertIdx));
+            selectQuery,
+            sinkTableId,
+            automaticConflictBehavior(table),
+            keyHashesAllColumns,
+            batchIdx,
+            insertIdx));
   }
 
   /** Applies the automatic conflict behavior to plans that are not compiled by Flink. */
@@ -115,7 +124,10 @@ final class FlinkInsertConflictPlanner {
     conflictProgram.setRequireOnConflict(requireOnConflict);
     pendingInserts.forEach(
         pendingInsert ->
-            conflictProgram.registerSink(pendingInsert.targetTableId(), pendingInsert.fallback()));
+            conflictProgram.registerSink(
+                pendingInsert.targetTableId(),
+                pendingInsert.fallback(),
+                pendingInsert.keyHashesAllColumns()));
 
     try {
       var compiledPlan = (ExecNodeGraphInternalPlan) getPlannerBase().compilePlan(operations);
@@ -220,6 +232,7 @@ final class FlinkInsertConflictPlanner {
       SqlNode selectQuery,
       ObjectIdentifier targetTableId,
       Optional<SqlInsertConflictBehavior> fallback,
+      boolean keyHashesAllColumns,
       int batchIdx,
       int insertIdx) {}
 }

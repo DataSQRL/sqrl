@@ -303,7 +303,9 @@ public class DAGPlanner {
                 var tblBuilder = new FlinkTableBuilder();
                 tblBuilder.setName(uniqueNameFct.apply(originalTableName));
                 // #1st: determine primary key and partition key (if present)
-                var pk = determinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
+                var sinkPk =
+                    determinePrimaryKey(originalNodeTable, relBuilder, sqrlEnv, exportStage);
+                var pk = sinkPk.columns();
                 if (pk.isDefined()) {
                   var fields = relBuilder.peek().getRowType().getFieldList();
                   var pkColNames =
@@ -351,7 +353,8 @@ public class DAGPlanner {
                     relBuilder.build(),
                     targetTable,
                     originalNodeTable,
-                    exportEngine.isUpsertSink(tblBuilder));
+                    exportEngine.isUpsertSink(tblBuilder),
+                    sinkPk.hashesAllColumns());
               }
             });
 
@@ -460,7 +463,7 @@ public class DAGPlanner {
    * @param stage
    * @return
    */
-  private PrimaryKeyMap determinePrimaryKey(
+  private SinkPrimaryKey determinePrimaryKey(
       TableAnalysis table,
       FlinkRelBuilder relBuilder,
       Sqrl2FlinkSQLTranslator sqrlEnv,
@@ -469,6 +472,7 @@ public class DAGPlanner {
     var pk = table.getPrimaryKey().makeSimple(rowType);
     var numCols = rowType.getFieldCount();
     List<Integer> addHashColumn = null;
+    var hashesAllColumns = false;
     if (pk.isDefined() && pk.getLength() == 0) {
       // need to add a constant at the end so we have an actual pk column which is required by most
       // databases
@@ -485,8 +489,9 @@ public class DAGPlanner {
         // For stream tables, we hash all columns as primary key if none is explicitly defined or
         // inferred
         addHashColumn = IntStream.range(0, numCols).boxed().collect(Collectors.toList());
+        hashesAllColumns = true;
       } else {
-        return pk; // We don't have and don't need a pk
+        return new SinkPrimaryKey(pk, false); // We don't have and don't need a pk
       }
     } else {
       var hasNullPk =
@@ -526,18 +531,27 @@ public class DAGPlanner {
       }
 
       if (partitionKey.isEmpty()) {
-        return PrimaryKeyMap.of(List.of(numCols));
+        return new SinkPrimaryKey(PrimaryKeyMap.of(List.of(numCols)), hashesAllColumns);
       }
 
       var primaryKey = new ArrayList<>(partitionKey);
       primaryKey.add(numCols);
 
-      return PrimaryKeyMap.of(primaryKey);
+      return new SinkPrimaryKey(PrimaryKeyMap.of(primaryKey), hashesAllColumns);
 
     } else {
-      return pk;
+      return new SinkPrimaryKey(pk, false);
     }
   }
+
+  /**
+   * The primary key of a table that is written to a data system.
+   *
+   * @param columns the primary key columns
+   * @param hashesAllColumns whether the key is a hash of all columns, so a conflict on it is a
+   *     duplicate of the same record (barring hash collisions)
+   */
+  private record SinkPrimaryKey(PrimaryKeyMap columns, boolean hashesAllColumns) {}
 
   /**
    * Maps the field types based on the provided data mapper so they can be written to the engine

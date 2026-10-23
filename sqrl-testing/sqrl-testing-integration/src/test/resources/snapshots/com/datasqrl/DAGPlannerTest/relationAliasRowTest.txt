@@ -526,12 +526,12 @@ EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`CteCustomerRow_1`
 SELECT `customerid`, `to_jsonb`(`customer`) AS `customer`, `hash_columns`(`customerid`, `customer`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CteCustomerRow`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`CteDefinitionRow_2`
 SELECT `customerid`, `to_jsonb`(`customer`) AS `customer`, `hash_columns`(`customerid`, `customer`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CteDefinitionRow`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`Customer_3`
 SELECT *
@@ -540,17 +540,17 @@ FROM `default_catalog`.`default_database`.`Customer`
 INSERT INTO `default_catalog`.`default_database`.`CustomerBare_4`
 SELECT `customerid`, `to_jsonb`(`c`) AS `c`, `hash_columns`(`customerid`, `c`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CustomerBare`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`CustomerRow_5`
 SELECT `customerid`, `to_jsonb`(`customer`) AS `customer`, `hash_columns`(`customerid`, `customer`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CustomerRow`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`NestedCustomerRow_6`
 SELECT `to_jsonb`(`customer`) AS `customer`, `hash_columns`(`customer`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`NestedCustomerRow`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`Orders_7`
 SELECT `id`, `customerid`, `time`, `to_jsonb`(`entries`) AS `entries`
@@ -559,7 +559,7 @@ FROM `default_catalog`.`default_database`.`Orders`
 INSERT INTO `default_catalog`.`default_database`.`ReservedAliasRow_8`
 SELECT `customerid`, `to_jsonb`(`whole`) AS `whole`, `hash_columns`(`customerid`, `whole`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`ReservedAliasRow`
-ON CONFLICT DO NOTHING
+ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`Shadowed_9`
 SELECT `c`, `label`, `hash_columns`(`c`, `label`) AS `__pk_hash`
