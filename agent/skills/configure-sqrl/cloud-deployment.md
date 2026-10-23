@@ -134,17 +134,6 @@ Dedicated-node names are hard scheduling requirements: the workload remains Pend
 
 `do-not-disrupt` prevents voluntary autoscaler disruption. It defaults to `false` for Flink and Vert.x and `true` for Postgres. Use it for stateful, long-running, or hard-to-reschedule work.
 
-## Upgrading an existing deployment to 0.12+
-
-DataSQRL 0.12+ computes the generated `__pk_hash` primary key column with `hash_key` instead of `hash_columns`, so the same row gets a different key than before.
-Rows already stored in the database keep their old keys and do not conflict with rows written after the upgrade:
-
-- Stream tables without a primary key (the key hashes all columns): rows processed again after the upgrade are stored twice. Upgrade with a savepoint taken when stopping the job, and do not restore an older checkpoint or reset Kafka offsets.
-- Tables whose primary key has nullable columns (the key hashes those columns): the first update of an existing row stores a new row and leaves the old one. Rebuild these tables by emptying them and processing their input again from the start.
-
-Find the affected tables in the compiled `flink-sql.sql`: their inserts compute `hash_key(...) AS __pk_hash`.
-Savepoints of the previous version remain compatible, since the compiled Flink plan only changes in the name of that function.
-
 ```json
 {
   "engines": {
@@ -157,3 +146,14 @@ Savepoints of the previous version remain compatible, since the compiled Flink p
   }
 }
 ```
+
+## Upgrading an existing deployment from 0.11
+
+DataSQRL 0.12.2+ computes the generated `__pk_hash` primary key column with `hash_key` instead of `hash_columns`, which 0.11 used, so the same row gets a different key than before.
+Rows that a 0.11 deployment already stored keep their old keys and do not conflict with rows written after the upgrade:
+
+- Stream tables without a primary key (the key hashes all columns): rows processed again after the upgrade are stored twice. Restore the job from a savepoint taken when stopping the 0.11 job, or rebuild these tables as well. Do not restore an older checkpoint or reset Kafka offsets.
+- Tables whose primary key has nullable columns (the key hashes those columns): the first update of an existing row stores a new row and leaves the old one. Rebuild these tables by emptying them and processing their input again from the start.
+
+Find the affected tables in the compiled `flink-sql.sql`: their inserts compute `hash_key(...) AS __pk_hash`.
+The key change itself only renames that function in the compiled Flink plan, so it does not affect whether a savepoint can be restored. Compare `flink-compiled-plan.json` between the versions to check the other changes.

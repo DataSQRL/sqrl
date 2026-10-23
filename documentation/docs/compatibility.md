@@ -13,15 +13,15 @@ DataSQRL builds on top of Flink and the Flink connector ecosystem.
 
 ## Upgrade Notes
 
-### Upgrading to 0.12+
+### Upgrading from 0.11
 
-DataSQRL 0.12+ computes the generated `__pk_hash` primary key column with `hash_key` instead of `hash_columns`.
+DataSQRL 0.12.2+ computes the generated `__pk_hash` primary key column with `hash_key` instead of `hash_columns`, which 0.11 used.
 This column is the primary key of the database tables for stream tables without a primary key, where it hashes all columns, and for tables with nullable primary key columns, where it hashes the key columns.
 `hash_columns` could give distinct rows the same key, so one of them was dropped, and it gave a row with an `ARRAY` or `BYTES` column a different key each time the row was processed.
 
-Rows that are already stored keep the keys computed by `hash_columns`, so they do not conflict with rows written after the upgrade:
+Rows that a 0.11 deployment already stored keep the keys computed by `hash_columns`, so they do not conflict with rows written after the upgrade:
 
-- **Stream tables without a primary key:** rows that are processed again after the upgrade, for example when restoring an older checkpoint or resetting Kafka offsets, are stored a second time. Upgrade with a savepoint taken when stopping the job, so that no row is processed twice.
+- **Stream tables without a primary key:** rows that are processed again after the upgrade are stored a second time, for example when the job starts without a savepoint, restores an older checkpoint, or Kafka offsets are reset. Restore the job from a savepoint taken when stopping the 0.11 job, or rebuild these tables as well.
 - **Tables with nullable primary key columns:** the first update of an existing row after the upgrade stores a new row, and the old row stays. Rebuild these tables by emptying them and processing their input again from the start.
 
-The compiled Flink plan only changes in the name of the function that computes the key, so savepoints taken with the previous version remain compatible.
+The key change itself only renames the function in the compiled Flink plan, so it does not affect whether a savepoint can be restored. Compare `flink-compiled-plan.json` between the versions to check the other changes.
