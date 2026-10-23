@@ -547,7 +547,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 
 | Hint                        | Form                                                                       | Applies to     | Effect                                                                                                                                                                             |
 |-----------------------------|----------------------------------------------------------------------------|----------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare PK when optimiser cannot infer; does not deduplicate (see Primary key columns)                                                                                             |
+| **primary_key**             | `primary_key(col, ...)`                                                    | table          | declare the key when the compile fails with `Could not determine primary key for table [...]`; does not deduplicate (see Primary key columns)                                                                                             |
 | **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | replaces automatic index selection for this table. `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`; `DESC` is supported only for `BTREE` and `PBTREE`. <br />`index` *alone* disables all automatic indexes, except the row-time index of a table behind a paginated query |
 | **partition_key**           | `partition_key(col, ...)`                                                  | table          | define partition columns for sinks that support partitioning                                                                                                                       |
 | **vector_dim**              | `vector_dim(col, 1536)`                                                    | table          | declare fixed vector length. This is required when using vector indexes.                                                                                                           |
@@ -564,10 +564,10 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **test**                    | `test` or `test(no_rows)`                                                  | table          | marks test case, only executed with `test` command.                                                                                                       |
 | **workload**                | `workload`                                                                 | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                    |
 
-Multiple hints are comma-separated inside one comment. This example configures a primary key and a vector index for the `SensorTempByHour` table:
+Multiple hints are comma-separated inside one comment. This example configures the vector length and a vector index for the `SensorTempByHour` table:
 
 ```sql
-/*+primary_key(sensorid, time_hour), index(VECTOR_COSINE, embedding) */
+/*+vector_dim(embedding, 1536), index(VECTOR_COSINE, embedding) */
 SensorTempByHour := SELECT ... ;
 ```
 
