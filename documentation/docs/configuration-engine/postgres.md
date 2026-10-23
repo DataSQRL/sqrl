@@ -53,6 +53,10 @@ DataSQRL applies these strategies automatically based on the generated [table ty
 - `STREAM` tables use ignore.
 - Other PostgreSQL tables use update.
 
+The rows of a `STREAM` table are expected to be unique on its primary key, and a `STREAM` table without a primary key is keyed on a hash of all its columns.
+A conflict is therefore a replay of a row that was already written, for example after the pipeline restarts from a checkpoint.
+If rows with the same key do differ, the first written row is kept, but rows with the same key in one write batch are first reduced to the last one.
+
 ## Usage Notes
 
 - Database schema is automatically generated from your SQRL script
