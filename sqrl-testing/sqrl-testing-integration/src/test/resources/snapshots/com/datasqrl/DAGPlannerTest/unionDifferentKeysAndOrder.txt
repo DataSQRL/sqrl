@@ -143,7 +143,7 @@ WITH (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`CombinedStream_1`
-SELECT `id_a`, `val`, `hash_columns`(`id_a`, `val`) AS `__pk_hash`
+SELECT `id_a`, `val`, `hash_key`(`id_a`, `val`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CombinedStream`
 ON CONFLICT DO DEDUPLICATE
 ;

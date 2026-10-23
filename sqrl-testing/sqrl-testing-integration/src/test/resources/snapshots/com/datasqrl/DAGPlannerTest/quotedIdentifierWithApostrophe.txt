@@ -194,17 +194,17 @@ WITH (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AfterAlias_1`
-SELECT `customerid`, `email`, `hash_columns`(`customerid`, `email`) AS `__pk_hash`
+SELECT `customerid`, `email`, `hash_key`(`customerid`, `email`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`AfterAlias`
 ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`AfterPassThrough_2`
-SELECT `customerid`, `name`, `hash_columns`(`customerid`, `name`) AS `__pk_hash`
+SELECT `customerid`, `name`, `hash_key`(`customerid`, `name`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`AfterPassThrough`
 ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Apostrophe_3`
-SELECT `customerid`, `name`, `hash_columns`(`customerid`, `name`) AS `__pk_hash`
+SELECT `customerid`, `name`, `hash_key`(`customerid`, `name`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`Apostrophe`
 ON CONFLICT DO NOTHING
 ;

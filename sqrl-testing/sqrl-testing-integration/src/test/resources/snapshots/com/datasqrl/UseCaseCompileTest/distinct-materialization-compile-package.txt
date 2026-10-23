@@ -210,17 +210,17 @@ FROM `default_catalog`.`default_database`.`DeploymentState`
 ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`DeploymentStateBase_3`
-SELECT `deploymentId`, `dataGroupId`, `eventTime`, `hash_columns`(`deploymentId`, `dataGroupId`, `eventTime`) AS `__pk_hash`
+SELECT `deploymentId`, `dataGroupId`, `eventTime`, `hash_key`(`deploymentId`, `dataGroupId`, `eventTime`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`DeploymentStateBase`
 ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Deployments_4`
-SELECT `deploymentId`, `projectId`, `eventTime`, `hash_columns`(`deploymentId`, `projectId`, `eventTime`) AS `__pk_hash`
+SELECT `deploymentId`, `projectId`, `eventTime`, `hash_key`(`deploymentId`, `projectId`, `eventTime`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`Deployments`
 ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Projects_5`
-SELECT `projectId`, `dataGroupId`, `eventTime`, `hash_columns`(`projectId`, `dataGroupId`, `eventTime`) AS `__pk_hash`
+SELECT `projectId`, `dataGroupId`, `eventTime`, `hash_key`(`projectId`, `dataGroupId`, `eventTime`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`Projects`
 ON CONFLICT DO NOTHING
 ;

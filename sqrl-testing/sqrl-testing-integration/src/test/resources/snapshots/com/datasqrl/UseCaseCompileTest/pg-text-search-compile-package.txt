@@ -186,12 +186,12 @@ WITH (
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Articles_1`
-SELECT `id`, `title`, `epoch_timestamp`, `createdAt`, `hash_columns`(`id`, `title`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`
+SELECT `id`, `title`, `epoch_timestamp`, `createdAt`, `hash_key`(`id`, `title`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`Articles`
 ON CONFLICT DO NOTHING
 ;
 INSERT INTO `default_catalog`.`default_database`.`Posts_2`
-SELECT `id`, `title`, `body`, `epoch_timestamp`, `createdAt`, `hash_columns`(`id`, `title`, `body`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`
+SELECT `id`, `title`, `body`, `epoch_timestamp`, `createdAt`, `hash_key`(`id`, `title`, `body`, `epoch_timestamp`, `createdAt`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`Posts`
 ON CONFLICT DO NOTHING
 ;

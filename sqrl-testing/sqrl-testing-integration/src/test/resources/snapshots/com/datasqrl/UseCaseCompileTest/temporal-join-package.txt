@@ -243,7 +243,7 @@ SELECT *
 FROM `default_catalog`.`default_database`.`EnrichedSensorReading`
 ;
 INSERT INTO `default_catalog`.`default_database`.`EnrichedSensorReading_2`
-SELECT `sensorid`, `temperature`, `placement`, `event_time`, `sensor_name`, `hash_columns`(`sensorid`, `temperature`, `placement`, `event_time`, `sensor_name`) AS `__pk_hash`
+SELECT `sensorid`, `temperature`, `placement`, `event_time`, `sensor_name`, `hash_key`(`sensorid`, `temperature`, `placement`, `event_time`, `sensor_name`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`EnrichedSensorReading`
 ON CONFLICT DO NOTHING
 ;
@@ -252,7 +252,7 @@ SELECT *
 FROM `default_catalog`.`default_database`.`SensorReading`
 ;
 INSERT INTO `default_catalog`.`default_database`.`SensorReading_4`
-SELECT `sensorid`, `temperature`, `placement`, `event_time`, `hash_columns`(`sensorid`, `temperature`, `placement`, `event_time`) AS `__pk_hash`
+SELECT `sensorid`, `temperature`, `placement`, `event_time`, `hash_key`(`sensorid`, `temperature`, `placement`, `event_time`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`SensorReading`
 ON CONFLICT DO NOTHING
 ;
