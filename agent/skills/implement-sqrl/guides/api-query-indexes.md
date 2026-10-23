@@ -22,7 +22,7 @@ The compiler selects the indexes for most served queries. Fix only the queries t
 
 Judge the table size from the requirements and the source data. For the query that you fix:
 
-1. Find the SQL of the query in `deploy/plan/vertx.json`, and the `CREATE INDEX` statements of the table in `deploy/plan/postgres.json`. The primary key also counts as an index.
+1. Find the SQL of the query in `deploy/plan/vertx.json`, and the `CREATE INDEX` statements of the table in `deploy/plan/postgres.json`. The primary key also counts as an index. When `deploy/plan/postgres.json` has no `CREATE TABLE` for the table, the database computes the table on every request and no index can serve it: add `/*+engine(flink) */` to the table (see "Where a table runs" in [SKILL.md](../SKILL.md#where-a-table-runs)).
 2. Compare the columns that the query compares with a parameter or with another table, in the `WHERE` clause, in `JOIN ... ON` conditions and in subqueries, with the leading columns of the indexes. In a correlated subquery that is not part of an `OR`, the column of the outer table counts too: in the `EXISTS` example below, `Orders.customer_id` gets no index.
 3. Make sure that each of these columns stands alone in the SQL. The compiler also creates an index for `day_index + 1 = $1`, but the database cannot use it for that filter.
 
@@ -32,6 +32,7 @@ The compiler selects the indexes from these parts of the served queries:
 
 - The filters of `WHERE` clauses, in table functions, relationships and `query_by_*` arguments.
 - `JOIN ... ON` conditions, only for the table on the right side of the `JOIN`. The columns of the left table become parameters, and the left table gets no index from the join (see implement-sqrl `SKILL.md`, "Filters in API queries").
+- `text_search(...) > 0` filters: a `TEXT` index (GIN in Postgres) on the searched columns (see implement-sqrl `functions/text.md`).
 - The first `ORDER BY` column, only when the query has no `WHERE` filter and a literal `LIMIT` of 10000 at most. For example, in `WHERE customer_id = :cid ORDER BY amount DESC LIMIT 10`, only `customer_id` gets an index.
 
 ## Filters inside a subquery
