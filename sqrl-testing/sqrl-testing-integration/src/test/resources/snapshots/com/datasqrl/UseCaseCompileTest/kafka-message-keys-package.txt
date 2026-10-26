@@ -1,0 +1,719 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+input ExternalReadingInput {
+  sensorid: Int!
+  writer: String!
+}
+
+type ExternalReadingResultOutput {
+  sensorid: Int!
+  writer: String!
+  event_time: DateTime!
+}
+
+input ForwardedReadingInput {
+  sensorid: Int!
+  writer: String!
+}
+
+type ForwardedReadingResultOutput {
+  sensorid: Int!
+  writer: String!
+  event_time: DateTime!
+}
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Mutation {
+  ExternalReading(event: ExternalReadingInput!): ExternalReadingResultOutput!
+  ForwardedReading(event: ForwardedReadingInput!): ForwardedReadingResultOutput!
+  Reading(event: ReadingInput!): ReadingResultOutput!
+}
+
+type Query {
+  ReadingMessage(limit: Int = 10, offset: Int = 0): [ReadingMessage!]
+  ReadingRecord(limit: Int = 10, offset: Int = 0): [ReadingRecord!]
+}
+
+input ReadingInput {
+  sensorid: Int!
+  writer: String!
+}
+
+type ReadingMessage {
+  writer: String!
+  sensorid: Int!
+  message_key: String
+}
+
+type ReadingRecord {
+  writer: String!
+  sensorid: Int!
+}
+
+type ReadingResultOutput {
+  sensorid: Int!
+  writer: String!
+  event_time: DateTime!
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Reading
+ID:          Reading
+Type:        export
+Stage:       flink
+Connector:   kafka-safe
+---
+Inputs:
+ - default_catalog.default_database.ForwardedReading
+
+=== ExternalReading
+ID:          default_catalog.default_database.ExternalReading
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+---
+Schema:
+ - sensorid: INTEGER NOT NULL
+ - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.ExternalReading__base
+
+=== ForwardedReading
+ID:          default_catalog.default_database.ForwardedReading
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+---
+Schema:
+ - sensorid: INTEGER NOT NULL
+ - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.ForwardedReading__base
+
+=== Reading
+ID:          default_catalog.default_database.Reading
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+---
+Schema:
+ - sensorid: INTEGER NOT NULL
+ - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Reading__base
+
+=== ReadingMessage
+ID:          default_catalog.default_database.ReadingMessage
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - sensorid: INTEGER NOT NULL
+ - message_key: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database._ReadingMessage
+Annotations:
+ - sort: [0 ASC-nulls-first, 1 ASC-nulls-first]
+
+=== ReadingRecord
+ID:          default_catalog.default_database.ReadingRecord
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - sensorid: INTEGER NOT NULL
+Inputs:
+ - default_catalog.default_database.Reading
+Annotations:
+ - sort: [0 ASC-nulls-first, 1 ASC-nulls-first]
+
+=== _ReadingMessage
+ID:          default_catalog.default_database._ReadingMessage
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+---
+Schema:
+ - message_key: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - sensorid: INTEGER NOT NULL
+ - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._ReadingMessage__base
+
+=== ReadingWithoutKey
+ID:          sinks.ReadingWithoutKey
+Type:        export
+Stage:       flink
+Connector:   kafka
+---
+Inputs:
+ - default_catalog.default_database.ExternalReading
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Reading` (
+  `sensorid` INTEGER NOT NULL,
+  `writer` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'key.fields' = 'sensorid',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'key.format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'Reading',
+  'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.format' = 'flexible-json'
+);
+CREATE TABLE `ForwardedReading` (
+  `sensorid` INTEGER NOT NULL,
+  `writer` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'ForwardedReading'
+);
+CREATE TABLE `ExternalReading` (
+  `sensorid` INTEGER NOT NULL,
+  `writer` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'ExternalReading'
+);
+CREATE TABLE `ReadingWithoutKey_ex1` (
+  `sensorid` INTEGER NOT NULL,
+  `writer` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+)
+WITH (
+  'connector' = 'kafka',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'topic' = 'Reading'
+);
+CREATE VIEW `ReadingRecord`
+AS
+SELECT `writer`, `sensorid`
+FROM `Reading`;
+CREATE TABLE `_ReadingMessage` (
+  `message_key` STRING,
+  `sensorid` INTEGER NOT NULL,
+  `writer` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '1' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'key.fields' = 'message_key',
+  'key.format' = 'raw',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = 'reading-message',
+  'scan.startup.mode' = 'earliest-offset',
+  'topic' = 'Reading',
+  'value.fields-include' = 'EXCEPT_KEY',
+  'value.format' = 'flexible-json'
+);
+CREATE VIEW `ReadingMessage`
+AS
+SELECT `writer`, `sensorid`, `message_key`
+FROM `_ReadingMessage`;
+CREATE TABLE `ReadingMessage_1` (
+  `writer` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sensorid` INTEGER NOT NULL,
+  `message_key` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'ReadingMessage',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `ReadingRecord_2` (
+  `writer` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `sensorid` INTEGER NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'ReadingRecord',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`ReadingWithoutKey_ex1`
+SELECT *
+FROM `default_catalog`.`default_database`.`ExternalReading`
+;
+INSERT INTO `default_catalog`.`default_database`.`Reading`
+SELECT *
+FROM `default_catalog`.`default_database`.`ForwardedReading`
+;
+INSERT INTO `default_catalog`.`default_database`.`ReadingMessage_1`
+SELECT `writer`, `sensorid`, `message_key`, `hash_key`(`writer`, `sensorid`, `message_key`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`ReadingMessage`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`ReadingRecord_2`
+SELECT `writer`, `sensorid`, `hash_key`(`writer`, `sensorid`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`ReadingRecord`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "ExternalReading",
+      "tableName" : "ExternalReading",
+      "logicalName" : "ExternalReading",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "ForwardedReading",
+      "tableName" : "ForwardedReading",
+      "logicalName" : "ForwardedReading",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "Reading",
+      "tableName" : "Reading",
+      "logicalName" : "Reading",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [
+        "sensorid"
+      ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "ReadingMessage" ("writer" TEXT NOT NULL, "sensorid" INTEGER NOT NULL, "message_key" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "ReadingRecord" ("writer" TEXT NOT NULL, "sensorid" INTEGER NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ReadingMessage",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"writer\", \"sensorid\", \"message_key\"\n  FROM \"ReadingMessage\"\n  ORDER BY \"writer\" NULLS FIRST, \"sensorid\" NULLS FIRST) AS \"t0\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ReadingRecord",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"writer\", \"sensorid\"\n  FROM \"ReadingRecord\"\n  ORDER BY \"writer\" NULLS FIRST, \"sensorid\" NULLS FIRST) AS \"t0\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "ExternalReading",
+          "returnList" : false,
+          "topic" : "ExternalReading",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "ForwardedReading",
+          "returnList" : false,
+          "topic" : "ForwardedReading",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "Reading",
+          "returnList" : false,
+          "topic" : "Reading",
+          "keyColumns" : [
+            "sensorid"
+          ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetReadingMessage",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ReadingMessage($limit: Int = 10, $offset: Int = 0) {\nReadingMessage(limit: $limit, offset: $offset) {\nwriter\nsensorid\nmessage_key\n}\n\n}",
+            "queryName" : "ReadingMessage",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ReadingMessage{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "writer" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "message_key" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetReadingRecord",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ReadingRecord($limit: Int = 10, $offset: Int = 0) {\nReadingRecord(limit: $limit, offset: $offset) {\nwriter\nsensorid\n}\n\n}",
+            "queryName" : "ReadingRecord",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ReadingRecord{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "writer" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddExternalReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "writer" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "sensorid",
+                "writer"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation ExternalReading($sensorid: Int!, $writer: String!) {\nExternalReading(event: { sensorid: $sensorid, writer: $writer }) {\nsensorid\nwriter\nevent_time\n}\n\n}",
+            "queryName" : "ExternalReading",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/ExternalReading",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "writer" : {
+                "type" : "string"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddForwardedReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "writer" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "sensorid",
+                "writer"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation ForwardedReading($sensorid: Int!, $writer: String!) {\nForwardedReading(event: { sensorid: $sensorid, writer: $writer }) {\nsensorid\nwriter\nevent_time\n}\n\n}",
+            "queryName" : "ForwardedReading",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/ForwardedReading",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "writer" : {
+                "type" : "string"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "writer" : {
+                  "type" : "string"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "sensorid",
+                "writer"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation Reading($sensorid: Int!, $writer: String!) {\nReading(event: { sensorid: $sensorid, writer: $writer }) {\nsensorid\nwriter\nevent_time\n}\n\n}",
+            "queryName" : "Reading",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/Reading",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "writer" : {
+                "type" : "string"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ninput ExternalReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ExternalReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\ninput ForwardedReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ForwardedReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  ExternalReading(event: ExternalReadingInput!): ExternalReadingResultOutput!\n  ForwardedReading(event: ForwardedReadingInput!): ForwardedReadingResultOutput!\n  Reading(event: ReadingInput!): ReadingResultOutput!\n}\n\ntype Query {\n  ReadingMessage(limit: Int = 10, offset: Int = 0): [ReadingMessage!]\n  ReadingRecord(limit: Int = 10, offset: Int = 0): [ReadingRecord!]\n}\n\ninput ReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ReadingMessage {\n  writer: String!\n  sensorid: Int!\n  message_key: String\n}\n\ntype ReadingRecord {\n  writer: String!\n  sensorid: Int!\n}\n\ntype ReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
