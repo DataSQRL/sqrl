@@ -1,0 +1,812 @@
+>>>pipeline_explain.txt
+=== CustomerEvents
+ID:          CustomerEvents
+Type:        export
+Stage:       flink
+Connector:   kafka-safe
+---
+Inputs:
+ - default_catalog.default_database.CustomerSubset
+
+=== CustomerExportInternalPartitioned
+ID:          connectors.sinks.CustomerExportInternalPartitioned
+Type:        export
+Stage:       flink
+Connector:   kafka-safe
+---
+Inputs:
+ - default_catalog.default_database.CustomerSubset
+
+=== Customer
+ID:          default_catalog.default_database.Customer
+Type:        stream
+Stage:       flink
+Primary key: customerid, lastUpdated
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - lastUpdated: BIGINT NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer__base
+Annotations:
+ - stream-root: Customer
+Plan:
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($4, 1:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timestamp=[COALESCE(TO_TIMESTAMP_LTZ($3, 0), 1970-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIME_ZONE(3))])
+    LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), CAST(TIMESTAMP '1970-01-01 00:00:00.000' AS TIMESTAMP(3) WITH LOCAL TIME ZONE)),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+)
+=== CustomerEvents
+ID:          default_catalog.default_database.CustomerEvents
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.CustomerEvents__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($2, 0:INTERVAL SECOND)])
+  LogicalProject(customerid=[$0], name=[$1], timestamp=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME*])
+    LogicalTableScan(table=[[default_catalog, default_database, CustomerEvents, metadata=[timestamp]]])
+SQL:
+CREATE TABLE `CustomerEvents` (
+  `customerid` BIGINT NOT NULL,
+  `name` STRING,
+  `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-CustomerEvents'
+)
+=== CustomerSubset
+ID:          default_catalog.default_database.CustomerSubset
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   timestamp
+Row count:   ~1e8
+---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Customer
+Annotations:
+ - stream-root: Customer
+Plan:
+LogicalProject(customerid=[$0], name=[$2], timestamp=[$4])
+  LogicalTableScan(table=[[default_catalog, default_database, Customer]])
+SQL:
+CREATE VIEW `CustomerSubset` AS  SELECT customerid, name, `timestamp` FROM Customer;
+
+>>>pipeline_mutation_database.json
+{
+  "tables" : [ {
+    "canonicalName" : "CustomerExportInternalPartitioned",
+    "engine" : "kafka",
+    "createTableSql" : "CREATE TABLE `CustomerExportInternalPartitioned_ex1` (\n  `customerid` BIGINT,\n  `name` STRING,\n  `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.0' SECOND\n)\nWITH (\n  'connector' = 'kafka-safe',\n  'flexible-json.timestamp-format.standard' = 'ISO-8601',\n  'format' = 'flexible-json',\n  'properties.auto.offset.reset' = 'earliest',\n  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',\n  'properties.compression.type' = 'zstd',\n  'properties.group.id' = '${KAFKA_GROUP_ID}',\n  'topic' = 'kafka-mutation-CustomerExportInternalPartitioned'\n)",
+    "definition" : {
+      "columns" : [ {
+        "name" : "customerid",
+        "spec" : "BIGINT"
+      }, {
+        "name" : "name",
+        "spec" : "VARCHAR(2147483647)"
+      }, {
+        "name" : "timestamp",
+        "spec" : "TIMESTAMP(3) WITH LOCAL TIME ZONE METADATA FROM 'timestamp'"
+      } ],
+      "primaryKey" : [ ],
+      "partitionKey" : [ "customerid" ]
+    },
+    "configOptions" : { }
+  }, {
+    "canonicalName" : "CustomerEvents",
+    "engine" : "kafka",
+    "createTableSql" : "CREATE TABLE `CustomerEvents` (\n  `customerid` BIGINT NOT NULL,\n  `name` STRING,\n  `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',\n  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.0' SECOND\n)\nWITH (\n  'connector' = 'kafka-safe',\n  'flexible-json.timestamp-format.standard' = 'ISO-8601',\n  'format' = 'flexible-json',\n  'properties.auto.offset.reset' = 'earliest',\n  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',\n  'properties.compression.type' = 'zstd',\n  'properties.group.id' = '${KAFKA_GROUP_ID}',\n  'topic' = 'kafka-mutation-CustomerEvents'\n)",
+    "definition" : {
+      "columns" : [ {
+        "name" : "customerid",
+        "spec" : "BIGINT NOT NULL"
+      }, {
+        "name" : "name",
+        "spec" : "VARCHAR(2147483647)"
+      }, {
+        "name" : "timestamp",
+        "spec" : "TIMESTAMP(3) WITH LOCAL TIME ZONE METADATA FROM 'timestamp'"
+      } ],
+      "primaryKey" : [ ],
+      "partitionKey" : [ "customerid" ]
+    },
+    "configOptions" : { }
+  } ]
+}
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Customer` (
+  `customerid` BIGINT NOT NULL,
+  `email` STRING NOT NULL,
+  `name` STRING NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` AS COALESCE(`TO_TIMESTAMP_LTZ`(`lastUpdated`, 0), TIMESTAMP '1970-01-01 00:00:00.000'),
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'connector' = 'filesystem',
+  'format' = 'flexible-json',
+  'path' = 'file:/mock',
+  'source.monitor-interval' = '10 sec'
+);
+CREATE TABLE `CustomerEvents` (
+  `customerid` BIGINT NOT NULL,
+  `name` STRING,
+  `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-CustomerEvents'
+);
+CREATE VIEW `CustomerSubset`
+AS
+SELECT `customerid`, `name`, `timestamp`
+FROM `Customer`;
+CREATE TABLE `CustomerExportInternalPartitioned_ex1` (
+  `customerid` BIGINT,
+  `name` STRING,
+  `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-CustomerExportInternalPartitioned'
+);
+CREATE TABLE `Customer_1` (
+  `customerid` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `lastUpdated` BIGINT NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`customerid`, `lastUpdated`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Customer_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerEvents_2` (
+  `customerid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerEvents_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerSubset_3` (
+  `customerid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerSubset_3',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Customer_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`Customer`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerEvents_2`
+SELECT `customerid`, `name`, `timestamp`, `hash_key`(`customerid`, `name`, `timestamp`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomerEvents`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerEvents`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerSubset`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerExportInternalPartitioned_ex1`
+SELECT *
+FROM `default_catalog`.`default_database`.`CustomerSubset`
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerSubset_3`
+SELECT `customerid`, `name`, `timestamp`, `hash_key`(`customerid`, `name`, `timestamp`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomerSubset`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "kafka-mutation-CustomerEvents",
+      "tableName" : "CustomerEvents",
+      "logicalName" : "CustomerEvents",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [
+        "customerid"
+      ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "kafka-mutation-CustomerExportInternalPartitioned",
+      "tableName" : "CustomerExportInternalPartitioned_ex1",
+      "logicalName" : "CustomerExportInternalPartitioned",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [
+        "customerid"
+      ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Customer_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Customer_1\" (\"customerid\" BIGINT NOT NULL, \"email\" TEXT NOT NULL, \"name\" TEXT NOT NULL, \"lastUpdated\" BIGINT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"customerid\",\"lastUpdated\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "customerid",
+        "lastUpdated"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "Customer",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "CustomerEvents_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerEvents_2\" (\"customerid\" BIGINT NOT NULL, \"name\" TEXT, \"timestamp\" TIMESTAMP WITH TIME ZONE, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : true
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "CustomerEvents",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "CustomerSubset_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"CustomerSubset_3\" (\"customerid\" BIGINT NOT NULL, \"name\" TEXT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "CustomerSubset",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "Customer",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Customer\"(\"customerid\", \"email\", \"name\", \"lastUpdated\", \"timestamp\") AS SELECT *\nFROM \"Customer_1\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "email",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "lastUpdated",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "Customer_1"
+      ]
+    },
+    {
+      "name" : "CustomerEvents",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerEvents\"(\"customerid\", \"name\", \"timestamp\") AS SELECT \"customerid\", \"name\", \"timestamp\"\nFROM \"CustomerEvents_2\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : true
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : true
+        }
+      ],
+      "referencedTables" : [
+        "CustomerEvents_2"
+      ]
+    },
+    {
+      "name" : "CustomerSubset",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"CustomerSubset\"(\"customerid\", \"name\", \"timestamp\") AS SELECT \"customerid\", \"name\", \"timestamp\"\nFROM \"CustomerSubset_3\"",
+      "fields" : [
+        {
+          "name" : "customerid",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "name",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "CustomerSubset_3"
+      ]
+    }
+  ],
+  "standaloneExtensionStatements" : [ ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Customer",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Customer_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerEvents",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customerid\", \"name\", \"timestamp\"\nFROM \"CustomerEvents_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerSubset",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customerid\", \"name\", \"timestamp\"\nFROM \"CustomerSubset_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerEvents",
+          "returnList" : false,
+          "topic" : "kafka-mutation-CustomerEvents",
+          "keyColumns" : [
+            "customerid"
+          ],
+          "computedColumns" : {
+            "timestamp" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : false
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomer",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Customer($limit: Int = 10, $offset: Int = 0) {\nCustomer(limit: $limit, offset: $offset) {\ncustomerid\nemail\nname\nlastUpdated\ntimestamp\n}\n\n}",
+            "queryName" : "Customer",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Customer{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "email" : {
+                  "type" : "string"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "lastUpdated" : {
+                  "type" : "integer"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerEvents",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerEvents($limit: Int = 10, $offset: Int = 0) {\nCustomerEvents(limit: $limit, offset: $offset) {\ncustomerid\nname\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerEvents",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerEvents{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerSubset",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerSubset($limit: Int = 10, $offset: Int = 0) {\nCustomerSubset(limit: $limit, offset: $offset) {\ncustomerid\nname\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerSubset",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerSubset{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddCustomerEvents",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "customerid"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation CustomerEvents($customerid: Long!, $name: String) {\nCustomerEvents(event: { customerid: $customerid, name: $name }) {\ncustomerid\nname\ntimestamp\n}\n\n}",
+            "queryName" : "CustomerEvents",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/CustomerEvents",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "customerid" : {
+                "type" : "integer"
+              },
+              "name" : {
+                "type" : "string"
+              },
+              "timestamp" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Customer {\n  customerid: Long!\n  email: String!\n  name: String!\n  lastUpdated: Long!\n  timestamp: DateTime!\n}\n\ntype CustomerEvents {\n  customerid: Long!\n  name: String\n  timestamp: DateTime\n}\n\ninput CustomerEventsInput {\n  customerid: Long!\n  name: String\n}\n\ntype CustomerEventsResultOutput {\n  customerid: Long!\n  name: String\n  timestamp: DateTime\n}\n\ntype CustomerSubset {\n  customerid: Long!\n  name: String!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  CustomerEvents(event: CustomerEventsInput!): CustomerEventsResultOutput!\n}\n\ntype Query {\n  Customer(limit: Int = 10, offset: Int = 0): [Customer!]\n  CustomerEvents(limit: Int = 10, offset: Int = 0): [CustomerEvents!]\n  CustomerSubset(limit: Int = 10, offset: Int = 0): [CustomerSubset!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

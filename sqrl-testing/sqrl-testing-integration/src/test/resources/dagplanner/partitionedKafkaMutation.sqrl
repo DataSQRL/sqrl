@@ -1,0 +1,13 @@
+IMPORT ecommerceTs.customer;
+
+/*+engine(kafka) */
+CREATE TABLE CustomerEvents (
+    customerid BIGINT NOT NULL,
+    name STRING,
+    `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+) PARTITIONED BY (customerid);
+
+CustomerSubset := SELECT customerid, name, `timestamp` FROM Customer;
+
+EXPORT CustomerSubset TO CustomerEvents;
+EXPORT CustomerSubset TO connectors.sinks.CustomerExportInternalPartitioned;
