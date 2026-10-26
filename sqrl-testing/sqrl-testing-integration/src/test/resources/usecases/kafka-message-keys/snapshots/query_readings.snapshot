@@ -1,0 +1,20 @@
+{
+  "data" : {
+    "ReadingRecord" : [ {
+      "writer" : "external",
+      "sensorid" : 4
+    }, {
+      "writer" : "flink",
+      "sensorid" : 1
+    }, {
+      "writer" : "flink",
+      "sensorid" : 3
+    }, {
+      "writer" : "server",
+      "sensorid" : 1
+    }, {
+      "writer" : "server",
+      "sensorid" : 2
+    } ]
+  }
+}

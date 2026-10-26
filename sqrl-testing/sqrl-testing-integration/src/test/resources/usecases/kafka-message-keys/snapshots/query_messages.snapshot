@@ -1,6 +1,10 @@
 {
   "data" : {
     "ReadingMessage" : [ {
+      "writer" : "external",
+      "sensorid" : 4,
+      "message_key" : null
+    }, {
       "writer" : "flink",
       "sensorid" : 1,
       "message_key" : "{\"sensorid\":1}"
