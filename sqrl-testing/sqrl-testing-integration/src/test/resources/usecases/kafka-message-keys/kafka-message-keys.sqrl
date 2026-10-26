@@ -1,0 +1,38 @@
+-- The server writes Reading mutations, keyed by sensorid
+/*+engine(kafka), no_query */
+CREATE TABLE Reading (
+    sensorid INT NOT NULL,
+    writer STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+) PARTITIONED BY (sensorid);
+
+/*+engine(kafka), no_query */
+CREATE TABLE ForwardedReading (
+    sensorid INT NOT NULL,
+    writer STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+-- Flink writes the forwarded readings into the Reading topic
+EXPORT ForwardedReading TO Reading;
+
+-- Reads the Reading topic again with the raw message key of each record
+CREATE TABLE _ReadingMessage (
+    message_key STRING,
+    sensorid INT NOT NULL,
+    writer STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+    WATERMARK FOR event_time AS event_time - INTERVAL '1' SECOND
+) WITH (
+    'connector' = 'kafka-safe',
+    'topic' = 'Reading',
+    'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+    'properties.group.id' = 'reading-message',
+    'scan.startup.mode' = 'earliest-offset',
+    'key.format' = 'raw',
+    'key.fields' = 'message_key',
+    'value.format' = 'flexible-json',
+    'value.fields-include' = 'EXCEPT_KEY'
+);
+
+ReadingMessage := SELECT writer, sensorid, message_key FROM _ReadingMessage ORDER BY writer ASC, sensorid ASC;

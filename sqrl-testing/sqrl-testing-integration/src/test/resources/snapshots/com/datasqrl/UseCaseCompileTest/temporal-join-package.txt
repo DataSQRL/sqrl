@@ -110,14 +110,18 @@ CREATE TABLE `SensorReading` (
 )
 WITH (
   'connector' = 'kafka-safe',
-  'flexible-json.timestamp-format.standard' = 'ISO-8601',
-  'format' = 'flexible-json',
+  'key.fields' = 'placement;temperature',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'key.format' = 'flexible-json',
   'properties.auto.offset.reset' = 'earliest',
   'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
   'properties.compression.type' = 'zstd',
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'scan.startup.mode' = 'earliest-offset',
-  'topic' = 'SensorReading'
+  'topic' = 'SensorReading',
+  'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.format' = 'flexible-json'
 );
 CREATE TABLE `SensorUpdates` (
   `sensorid` INTEGER NOT NULL,

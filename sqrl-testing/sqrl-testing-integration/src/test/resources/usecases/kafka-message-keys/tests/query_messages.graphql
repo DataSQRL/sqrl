@@ -1,0 +1,7 @@
+query GetReadingMessages {
+    ReadingMessage(limit: 10, offset: 0) {
+        writer
+        sensorid
+        message_key
+    }
+}
