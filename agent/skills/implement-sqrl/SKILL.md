@@ -590,11 +590,11 @@ A table definition accepts only an enabled engine that can compute a table:
 
 The hint also accepts the engine type like `engine(database)`, but compiler selects the engine. Use the engine name. Other engines, such as `kafka`, `vertx`, `duckdb` or `snowflake`, cannot compute a table. For what each engine does and when to enable it, see the `/configure-sqrl` skill.
 
-Leave the choice to the compiler, unless a table needs an index that the compiler cannot give it. A served query can use an index only on rows that the database stores. A table that runs in Postgres stores no rows, so no index can serve a column that it computes, such as a `CONCAT_WS` text for `text_search` or a `CAST` value for a filter. In that case, add `/*+engine(flink) */` to the table: Flink computes the column ahead of time, and Postgres stores it in a table that can have an index. The hint costs Flink state and one more database table.
+Leave the choice to the compiler, unless a table needs an index that the compiler cannot give it. A served query can use an index only on rows that the database stores. A table that runs in Postgres stores no rows, so no index can serve a column that it computes, such as a `CONCAT_WS` text for `text_search` or a `CAST` value for a filter. In that case, add `/*+engine(flink) */` to the table: Flink computes the column ahead of time, and Postgres stores it in a table that can have an index. The hint also moves every table that this table reads into Flink, because a table in Flink can read only from Flink or Kafka. So the hint costs Flink state for this table and for each upstream table that ran in Postgres before, plus one more database table. Read the `Stage:` lines of the upstream tables after the compile.
 
 After compile, read the `Stage:` line of the table in `pipeline_explain.txt` in the build folder to see which engine computes it.
 
-Put the `engine` hint on a table definition. On a function, the compile fails with `Provided execution stages could not be found or are not configured`. 
+Put the `engine` hint on a table definition. An API function always runs in the database, so `engine(flink)` on a function fails with `Provided execution stages could not be found or are not configured`.
 A table in Postgres cannot feed a table in Flink. Pinning such a table to `postgres` fails with `Could not find execution stage for [table ...]`.
 
 ### Filters in API queries
