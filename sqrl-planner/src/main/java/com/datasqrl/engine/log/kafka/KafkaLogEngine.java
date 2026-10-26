@@ -178,7 +178,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     var topicConfig = new HashMap<String, String>();
 
     if (tableBuilder.hasPartition()) {
+      // PARTITIONED BY only declares the Kafka message key. Flink's Kafka sink rejects partitioned
+      // tables, so the clause must not reach Flink.
       messageKey = tableBuilder.getPartition();
+      tableBuilder.removePartition();
     }
 
     if (tableBuilder.hasPrimaryKey()) {

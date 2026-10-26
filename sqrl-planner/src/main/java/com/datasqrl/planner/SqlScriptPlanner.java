@@ -1010,6 +1010,7 @@ public class SqlScriptPlanner {
                   .getHint(MutationInsertHint.class)
                   .map(MutationInsertHint::getInsertType)
                   .orElse(MutationInsertType.SINGLE);
+          mutationBuilder.partitionKey(tableBuilder.getPartition());
           mutationBuilder.createTable(
               mutationEngine.createMutation(
                   mutationStage.get(),
