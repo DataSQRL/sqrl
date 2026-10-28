@@ -1735,6 +1735,27 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
   corresponding watermark delay. It is only supported by our `kafka-safe` and `upsert-kafka-safe` connectors.
 - Kafka serves as the messaging backbone between different engines in the pipeline
 
+## Key and Value Formats
+
+The `kafka` and `kafka-mutation` [connector templates](https://docs.datasqrl.com/docs/main/configuration.md#connector-templates-connectors) set one `format` (`flexible-json` by default) for the message key and value. To use separate formats, set `key.format` and `value.format` in the template, or in the `WITH` options of an internal table:
+
+```json
+{
+  "connectors": {
+    "kafka-mutation": {
+      "key.format": "json",
+      "value.format": "flexible-json"
+    }
+  }
+}
+```
+
+- `key.format` and `value.format` take precedence over `format`, which the default template always contains.
+- Tables with a message key (`PARTITIONED BY` or a primary key) use `key.format` for the key, otherwise `format`, otherwise `value.format`. Tables without a message key drop `key.format`.
+- Options of `format`, such as `flexible-json.timestamp-format.standard`, apply only to the key or value that uses that format. Set an option for one side with a `key.` or `value.` prefix, for example `value.flexible-json.timestamp-format.standard`.
+- When `key.format` and `value.format` are the same, the compiler notes that `format` is enough.
+- The server writes mutations as JSON, so the compiler warns when a mutation table uses a format other than `json` or `flexible-json`.
+
 ### Internal Environment Variables
 
 When running pipelines with the DataSQRL `run` command, the following environment variables are used
