@@ -155,6 +155,11 @@ public class FlinkTableBuilder {
     return this;
   }
 
+  public FlinkTableBuilder removePartition() {
+    setPartitionKeyList(SqlNodeList.EMPTY);
+    return this;
+  }
+
   public boolean hasPartition() {
     return !getPartitionKeyList().isEmpty();
   }
