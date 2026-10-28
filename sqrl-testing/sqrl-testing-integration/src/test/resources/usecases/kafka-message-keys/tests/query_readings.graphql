@@ -1,0 +1,6 @@
+query GetReadingRecords {
+    ReadingRecord(limit: 10, offset: 0) {
+        writer
+        sensorid
+    }
+}

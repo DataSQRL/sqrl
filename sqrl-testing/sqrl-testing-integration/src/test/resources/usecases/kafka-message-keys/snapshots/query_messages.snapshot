@@ -1,0 +1,25 @@
+{
+  "data" : {
+    "ReadingMessage" : [ {
+      "writer" : "external",
+      "sensorid" : 4,
+      "message_key" : null
+    }, {
+      "writer" : "flink",
+      "sensorid" : 1,
+      "message_key" : "{\"sensorid\":1}"
+    }, {
+      "writer" : "flink",
+      "sensorid" : 3,
+      "message_key" : "{\"sensorid\":3}"
+    }, {
+      "writer" : "server",
+      "sensorid" : 1,
+      "message_key" : "{\"sensorid\":1}"
+    }, {
+      "writer" : "server",
+      "sensorid" : 2,
+      "message_key" : "{\"sensorid\":2}"
+    } ]
+  }
+}
