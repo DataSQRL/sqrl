@@ -1,0 +1,14 @@
+mutation Alerts {
+    add1: Alert(event: { region: "north", writer: "server-region" }) {
+        writer
+    }
+    add2: Alert(event: { writer: "server-omitted-region" }) {
+        writer
+    }
+    add3: Alert(event: { region: null, writer: "server-null-region" }) {
+        writer
+    }
+    add4: ForwardedAlert(event: { writer: "flink-omitted-region" }) {
+        writer
+    }
+}

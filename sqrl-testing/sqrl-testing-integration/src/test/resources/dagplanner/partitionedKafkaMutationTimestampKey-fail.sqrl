@@ -1,0 +1,6 @@
+/*+engine(kafka) */
+CREATE TABLE Events (
+    tenantId STRING NOT NULL METADATA FROM 'auth.tenant_id',
+    payload STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+) PARTITIONED BY (tenantId, event_time);
