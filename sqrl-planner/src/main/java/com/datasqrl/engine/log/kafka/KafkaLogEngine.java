@@ -34,6 +34,7 @@ import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.flinkrunner.connector.kafka.KeyFieldsOptions;
 import com.datasqrl.flinkrunner.format.json.FlexibleJsonFormat;
 import com.datasqrl.io.schema.avro.AvroToRelDataTypeConverter;
 import com.datasqrl.io.tables.TableType;
@@ -80,12 +81,11 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   public static final String DEFAULT_TTL_KEY = "retention";
 
-  public static final String KEY_FIELDS_READ_FROM_VALUE_KEY = "scan.key-fields.read-from-value";
-
   public static final EnumSet<EngineFeature> KAFKA_FEATURES = EnumSet.of(EngineFeature.MUTATIONS);
 
   @Getter private final EngineConfig engineConfig;
   private final ErrorCollector errors;
+  private final KafkaFormatConfigurer formats;
   private final TestRunnerConfiguration testRunnerConfig;
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf mutationConnectorConf;
@@ -106,6 +106,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     super(KafkaLogEngineFactory.ENGINE_NAME, EngineType.LOG, KAFKA_FEATURES);
     this.engineConfig = json.getEngines().getEngineConfigOrEmpty(KafkaLogEngineFactory.ENGINE_NAME);
     this.errors = errors;
+    this.formats = new KafkaFormatConfigurer(errors);
     this.testRunnerConfig = json.getTestConfig();
     this.streamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME);
     this.mutationConnectorConf =
@@ -125,7 +126,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     numPartitions = Integer.parseInt(engineConfig.getProperty("num-partitions"));
     replicationFactor = Short.parseShort(engineConfig.getProperty("replication-factor"));
     format =
-        String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfigWrapper.FORMAT_KEY))
+        String.valueOf(KafkaFormatConfigurer.valueFormat(streamConnectorConf.toMap()))
             .trim()
             .toLowerCase();
   }
@@ -212,13 +213,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       }
     }
 
-    // Configure format depending on type
-    String format = connectorConfig.get(FlinkConnectorConfigWrapper.FORMAT_KEY);
-    checkArgument(
-        format != null && !format.isBlank(),
-        "Need to configure a 'format' for connector {}",
-        KafkaLogEngineFactory.ENGINE_NAME);
-
     // The message key is set in the connector options so that Flink writes it like the server does.
     var hasMessageKey = !messageKey.isEmpty();
 
@@ -230,7 +224,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       // TODO: Remove this '-safe' restriction and the warning once we update to an upstream Kafka
       // connector version that reads records without a key
       if (connector != null && connector.endsWith("-safe")) {
-        connectorConfig.put(KEY_FIELDS_READ_FROM_VALUE_KEY, "true");
+        connectorConfig.put(KeyFieldsOptions.SCAN_KEY_FIELDS_READ_FROM_VALUE.key(), "true");
       } else {
         errors.warn(
             "Kafka table '%s' uses the '%s' connector, which drops records without a message key"
@@ -249,9 +243,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     }
 
     if (hasMessageKey) {
-      connectorConfig.remove(FlinkConnectorConfigWrapper.FORMAT_KEY);
-      connectorConfig.put(FlinkConnectorConfigWrapper.KEY_FORMAT_KEY, format);
-      connectorConfig.put(FlinkConnectorConfigWrapper.VALUE_FORMAT_KEY, format);
       connectorConfig.put(
           "value.fields-include", "ALL"); // it's slightly less efficient but easier for debugging
     }
@@ -263,37 +254,19 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     ttl.ifPresent(duration -> topicConfig.put("retention.ms", String.valueOf(duration.toMillis())));
     // preserve any existing connector options
     connectorConfig.putAll(tableBuilder.getConnectorOptions());
-    if (hasMessageKey) {
-      // after merging, so format options given in WITH reach the key and value formats as well
-      prefixFormatOptions(connectorConfig, format);
-    }
+    // after merging, so formats and format options given in WITH are configured as well
+    var valueFormat =
+        formats.configure(connectorConfig, originalTableName, hasMessageKey, isMutation);
     tableBuilder.setConnectorOptions(connectorConfig);
     String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     return new Table(
         topicName,
         tableBuilder.getTableName(),
         originalTableName,
-        format,
+        valueFormat,
         messageKey,
         relDataType,
         topicConfig);
-  }
-
-  /**
-   * Moves the options of the given format to the key and the value format, without overriding the
-   * options that are already set for one of them.
-   */
-  private static void prefixFormatOptions(Map<String, String> connectorConfig, String format) {
-    var formatOptions =
-        connectorConfig.entrySet().stream()
-            .filter(option -> option.getKey().startsWith(format + "."))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    formatOptions.forEach(
-        (key, value) -> {
-          connectorConfig.remove(key);
-          connectorConfig.putIfAbsent("key." + key, value);
-          connectorConfig.putIfAbsent("value." + key, value);
-        });
   }
 
   @Override
