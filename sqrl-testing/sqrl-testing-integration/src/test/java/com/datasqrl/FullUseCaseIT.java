@@ -21,6 +21,7 @@ import com.datasqrl.engines.TestContainersForTestGoal.TestContainerHook;
 import com.datasqrl.tests.DuckdbTestExtension;
 import com.datasqrl.tests.IcebergTestExtension;
 import com.datasqrl.tests.SnowflakeTestExtension;
+import com.datasqrl.tests.TypeSafeTestExtension;
 import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.TestShardingExtension;
 import java.nio.file.Path;
@@ -50,7 +51,8 @@ import org.junit.jupiter.params.support.ParameterDeclarations;
   FullPipelineContainerExtension.class,
   DuckdbTestExtension.class,
   IcebergTestExtension.class,
-  SnowflakeTestExtension.class
+  SnowflakeTestExtension.class,
+  TypeSafeTestExtension.class
 })
 public class FullUseCaseIT {
 

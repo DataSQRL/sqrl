@@ -1,0 +1,572 @@
+>>>inferred_schema.graphqls
+type Applications {
+  application_id: String!
+  submitted_at: DateTime!
+  case_file: Applications_case_fileOutput
+}
+
+type Applications_case_fileOutput {
+  loan: Applications_case_file_loanOutput
+  applicant: Applications_case_file_applicantOutput
+  underwriter_notes: String
+}
+
+type Applications_case_file_applicantOutput {
+  employer: String
+  job_title: String
+  stated_annual_income: Float
+  credit_score: Long
+  verification_notes: String
+}
+
+type Applications_case_file_loanOutput {
+  amount: Float
+  term_months: Long
+  purpose: String
+}
+
+type DailyUnderwriting {
+  window_start: DateTime!
+  window_end: DateTime!
+  applications: Long!
+  errors: Long!
+  verified_income: Int!
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  Applications(limit: Int = 10, offset: Int = 0): [Applications!]
+  DailyUnderwriting(limit: Int = 10, offset: Int = 0): [DailyUnderwriting!]
+  UnderwritingJudgments(limit: Int = 10, offset: Int = 0): [UnderwritingJudgments!]
+}
+
+type UnderwritingJudgments {
+  application_id: String!
+  submitted_at: DateTime!
+  income_verified: Float
+  purpose: String
+  purpose_confidence: Float
+  business_probability: Float
+  scrutiny: Float
+  scrutiny_probabilities: [Float]
+  model: String!
+  error: String
+  rowtime: DateTime!
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Applications
+ID:          default_catalog.default_database.Applications
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   submitted_at
+Row count:   ~1e8
+---
+Schema:
+ - application_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - submitted_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - case_file: RecordType:peek_no_expand(RecordType:peek_no_expand(DOUBLE amount, BIGINT term_months, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" purpose) loan, RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" employer, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" job_title, DOUBLE stated_annual_income, BIGINT credit_score, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" verification_notes) applicant, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" underwriter_notes)
+Inputs:
+ - default_catalog.default_database.Applications__base
+Annotations:
+ - features: DENORMALIZE (feature)
+
+=== DailyUnderwriting
+ID:          default_catalog.default_database.DailyUnderwriting
+Type:        state
+Stage:       flink
+Primary key: window_start, window_end
+Timestamp:   -
+Row count:   ~3e7
+---
+Schema:
+ - window_start: TIMESTAMP(3) NOT NULL
+ - window_end: TIMESTAMP(3) NOT NULL
+ - applications: BIGINT NOT NULL
+ - errors: BIGINT NOT NULL
+ - verified_income: INTEGER NOT NULL
+Inputs:
+ - default_catalog.default_database.UnderwritingJudgments
+Annotations:
+ - features: STREAM_WINDOW_AGGREGATION (feature)
+
+=== UnderwritingJudgments
+ID:          default_catalog.default_database.UnderwritingJudgments
+Type:        relation
+Stage:       flink
+Primary key: application_id
+Timestamp:   rowtime
+Row count:   ~1e8
+---
+Schema:
+ - application_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - submitted_at: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - income_verified: DOUBLE
+ - purpose: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - purpose_confidence: DOUBLE
+ - business_probability: DOUBLE
+ - scrutiny: DOUBLE
+ - scrutiny_probabilities: DOUBLE ARRAY
+ - model: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - error: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - rowtime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._UnderwritingInput
+
+=== _UnderwritingInput
+ID:          default_catalog.default_database._UnderwritingInput
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   submitted_at
+Row count:   ~1e8
+---
+Schema:
+ - application_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - submitted_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+ - case_file: RecordType:peek_no_expand(RecordType:peek_no_expand(DOUBLE amount, BIGINT term_months, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" purpose) loan, RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" employer, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" job_title, DOUBLE stated_annual_income, BIGINT credit_score, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" verification_notes) applicant, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" underwriter_notes)
+ - q_income_verified: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" instructions, RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" true, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" false) criteria) NOT NULL
+ - q_purpose: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" instructions, RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" debt_consolidation, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" home_improvement, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" vehicle, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" business, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" other) criteria)
+ - q_scrutiny: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" instructions, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY criteria) NOT NULL
+Inputs:
+ - default_catalog.default_database.Applications
+
+>>>flink-sql-no-functions.sql
+CREATE TEMPORARY TABLE `Applications__schema` (
+  `application_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `submitted_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `case_file` ROW(`loan` ROW(`amount` DOUBLE, `term_months` BIGINT, `purpose` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`), `applicant` ROW(`employer` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `job_title` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`, `stated_annual_income` DOUBLE, `credit_score` BIGINT, `verification_notes` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`), `underwriter_notes` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`)
+)
+WITH (
+  'connector' = 'filesystem',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'path' = '${DATA_PATH}/applications.jsonl'
+);
+CREATE TABLE `Applications` (
+  WATERMARK FOR `submitted_at` AS `submitted_at` - INTERVAL '0.001' SECOND
+)
+WITH (
+  'source.monitor-interval' = '1m'
+)
+LIKE `Applications__schema`;
+CREATE VIEW `_UnderwritingInput`
+AS
+SELECT `application_id`, `submitted_at`, `case_file`, CAST(ROW('Do the verification notes corroborate the stated employment and income?', ROW('Notes confirm employer, role and income', 'Notes contradict or cannot confirm the application')) AS ROW< `instructions` STRING, `criteria` ROW< `true` STRING, `false` STRING > >) AS `q_income_verified`, CASE WHEN `case_file`.`loan`.`purpose` IS NOT NULL THEN CAST(ROW('Which category best describes the purpose of the loan?', ROW('Paying off existing credit cards or loans', 'Repairs, renovation or improvements to a residence', 'Purchase or repair of a vehicle', 'Starting or funding a business', CAST(NULL AS STRING))) AS ROW< `instructions` STRING, `criteria` ROW< `debt_consolidation` STRING, `home_improvement` STRING, `vehicle` STRING, `business` STRING, `other` STRING > >) ELSE NULL END AS `q_purpose`, CAST(ROW('How much underwriting scrutiny does this application warrant?', ARRAY['No concerns', 'Minor concerns', 'Significant concerns', 'Serious red flags']) AS ROW< `instructions` STRING, `criteria` ARRAY< STRING > >) AS `q_scrutiny`
+FROM `Applications`;
+CREATE VIEW `UnderwritingJudgments`
+AS
+SELECT `application_id`, CAST(`submitted_at` AS TIMESTAMP_LTZ(3)) AS `submitted_at`, `q_income_verified_answer` AS `income_verified`, `q_purpose_answer`.`choice` AS `purpose`, `q_purpose_answer`.`confidence` AS `purpose_confidence`, `q_purpose_answer`.`probabilities`.`business` AS `business_probability`, `q_scrutiny_answer`.`score` AS `scrutiny`, `q_scrutiny_answer`.`probabilities` AS `scrutiny_probabilities`, `_model` AS `model`, `_error` AS `error`, `rowtime`
+FROM TABLE(`typesafe_classify`(`input` => (TABLE `_UnderwritingInput`), `state` => DESCRIPTOR(`case_file`), `noul` => DESCRIPTOR(`q_income_verified`), `choice` => DESCRIPTOR(`q_purpose`), `score` => DESCRIPTOR(`q_scrutiny`), `model` => 'jev-1.13.0', `on_error` => 'NULL', `on_time` => DESCRIPTOR(`submitted_at`)));
+CREATE VIEW `DailyUnderwriting`
+AS
+SELECT `window_start`, `window_end`, COUNT(*) AS `applications`, COUNT(`error`) AS `errors`, SUM(CASE WHEN `income_verified` > 0.5 THEN 1 ELSE 0 END) AS `verified_income`
+FROM TABLE(TUMBLE(TABLE `UnderwritingJudgments`, DESCRIPTOR(`rowtime`), INTERVAL '1' DAY))
+GROUP BY `window_start`, `window_end`;
+CREATE TABLE `Applications_1` (
+  `application_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `submitted_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `case_file` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Applications',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `DailyUnderwriting_2` (
+  `window_start` TIMESTAMP(3) NOT NULL,
+  `window_end` TIMESTAMP(3) NOT NULL,
+  `applications` BIGINT NOT NULL,
+  `errors` BIGINT NOT NULL,
+  `verified_income` INTEGER NOT NULL,
+  PRIMARY KEY (`window_start`, `window_end`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'DailyUnderwriting',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `UnderwritingJudgments_3` (
+  `application_id` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `submitted_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `income_verified` DOUBLE,
+  `purpose` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `purpose_confidence` DOUBLE,
+  `business_probability` DOUBLE,
+  `scrutiny` DOUBLE,
+  `scrutiny_probabilities` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `model` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `error` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `rowtime` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`application_id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'UnderwritingJudgments',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Applications_1`
+SELECT `application_id`, `submitted_at`, `to_jsonb`(`case_file`) AS `case_file`, `hash_columns`(`application_id`, `submitted_at`, `case_file`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Applications`
+ON CONFLICT DO NOTHING
+;
+INSERT INTO `default_catalog`.`default_database`.`DailyUnderwriting_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`DailyUnderwriting`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`UnderwritingJudgments_3`
+SELECT `application_id`, `submitted_at`, `income_verified`, `purpose`, `purpose_confidence`, `business_probability`, `scrutiny`, `to_jsonb`(`scrutiny_probabilities`) AS `scrutiny_probabilities`, `model`, `error`, `rowtime`
+FROM `default_catalog`.`default_database`.`UnderwritingJudgments`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Applications" ("application_id" TEXT NOT NULL, "submitted_at" TIMESTAMP WITH TIME ZONE NOT NULL, "case_file" JSONB, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "DailyUnderwriting" ("window_start" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "window_end" TIMESTAMP WITHOUT TIME ZONE NOT NULL, "applications" BIGINT NOT NULL, "errors" BIGINT NOT NULL, "verified_income" INTEGER NOT NULL, PRIMARY KEY ("window_start","window_end"));
+CREATE TABLE IF NOT EXISTS "UnderwritingJudgments" ("application_id" TEXT NOT NULL, "submitted_at" TIMESTAMP WITH TIME ZONE NOT NULL, "income_verified" DOUBLE PRECISION, "purpose" TEXT, "purpose_confidence" DOUBLE PRECISION, "business_probability" DOUBLE PRECISION, "scrutiny" DOUBLE PRECISION, "scrutiny_probabilities" JSONB, "model" TEXT NOT NULL, "error" TEXT, "rowtime" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("application_id"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Applications",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"application_id\", \"submitted_at\", \"case_file\"\nFROM \"Applications\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "DailyUnderwriting",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"DailyUnderwriting\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "UnderwritingJudgments",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"UnderwritingJudgments\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetApplications",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Applications($limit: Int = 10, $offset: Int = 0) {\nApplications(limit: $limit, offset: $offset) {\napplication_id\nsubmitted_at\ncase_file {\nloan {\namount\nterm_months\npurpose\n}\napplicant {\nemployer\njob_title\nstated_annual_income\ncredit_score\nverification_notes\n}\nunderwriter_notes\n}\n}\n\n}",
+            "queryName" : "Applications",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Applications{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "application_id" : {
+                  "type" : "string"
+                },
+                "submitted_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "case_file" : {
+                  "type" : "object",
+                  "properties" : {
+                    "loan" : {
+                      "type" : "object",
+                      "properties" : {
+                        "amount" : {
+                          "type" : "number"
+                        },
+                        "term_months" : {
+                          "type" : "integer"
+                        },
+                        "purpose" : {
+                          "type" : "string"
+                        }
+                      }
+                    },
+                    "applicant" : {
+                      "type" : "object",
+                      "properties" : {
+                        "employer" : {
+                          "type" : "string"
+                        },
+                        "job_title" : {
+                          "type" : "string"
+                        },
+                        "stated_annual_income" : {
+                          "type" : "number"
+                        },
+                        "credit_score" : {
+                          "type" : "integer"
+                        },
+                        "verification_notes" : {
+                          "type" : "string"
+                        }
+                      }
+                    },
+                    "underwriter_notes" : {
+                      "type" : "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetDailyUnderwriting",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query DailyUnderwriting($limit: Int = 10, $offset: Int = 0) {\nDailyUnderwriting(limit: $limit, offset: $offset) {\nwindow_start\nwindow_end\napplications\nerrors\nverified_income\n}\n\n}",
+            "queryName" : "DailyUnderwriting",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/DailyUnderwriting{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "window_start" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "window_end" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "applications" : {
+                  "type" : "integer"
+                },
+                "errors" : {
+                  "type" : "integer"
+                },
+                "verified_income" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetUnderwritingJudgments",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query UnderwritingJudgments($limit: Int = 10, $offset: Int = 0) {\nUnderwritingJudgments(limit: $limit, offset: $offset) {\napplication_id\nsubmitted_at\nincome_verified\npurpose\npurpose_confidence\nbusiness_probability\nscrutiny\nscrutiny_probabilities\nmodel\nerror\nrowtime\n}\n\n}",
+            "queryName" : "UnderwritingJudgments",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/UnderwritingJudgments{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "application_id" : {
+                  "type" : "string"
+                },
+                "submitted_at" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                },
+                "income_verified" : {
+                  "type" : "number"
+                },
+                "purpose" : {
+                  "type" : "string"
+                },
+                "purpose_confidence" : {
+                  "type" : "number"
+                },
+                "business_probability" : {
+                  "type" : "number"
+                },
+                "scrutiny" : {
+                  "type" : "number"
+                },
+                "scrutiny_probabilities" : {
+                  "type" : "array",
+                  "items" : {
+                    "type" : "number"
+                  }
+                },
+                "model" : {
+                  "type" : "string"
+                },
+                "error" : {
+                  "type" : "string"
+                },
+                "rowtime" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Applications {\n  application_id: String!\n  submitted_at: DateTime!\n  case_file: Applications_case_fileOutput\n}\n\ntype Applications_case_fileOutput {\n  loan: Applications_case_file_loanOutput\n  applicant: Applications_case_file_applicantOutput\n  underwriter_notes: String\n}\n\ntype Applications_case_file_applicantOutput {\n  employer: String\n  job_title: String\n  stated_annual_income: Float\n  credit_score: Long\n  verification_notes: String\n}\n\ntype Applications_case_file_loanOutput {\n  amount: Float\n  term_months: Long\n  purpose: String\n}\n\ntype DailyUnderwriting {\n  window_start: DateTime!\n  window_end: DateTime!\n  applications: Long!\n  errors: Long!\n  verified_income: Int!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Applications(limit: Int = 10, offset: Int = 0): [Applications!]\n  DailyUnderwriting(limit: Int = 10, offset: Int = 0): [DailyUnderwriting!]\n  UnderwritingJudgments(limit: Int = 10, offset: Int = 0): [UnderwritingJudgments!]\n}\n\ntype UnderwritingJudgments {\n  application_id: String!\n  submitted_at: DateTime!\n  income_verified: Float\n  purpose: String\n  purpose_confidence: Float\n  business_probability: Float\n  scrutiny: Float\n  scrutiny_probabilities: [Float]\n  model: String!\n  error: String\n  rowtime: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
