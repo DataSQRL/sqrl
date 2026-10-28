@@ -108,7 +108,6 @@ CREATE TABLE `SensorReading` (
   `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
 )
-PARTITIONED BY (`placement`, `temperature`)
 WITH (
   'connector' = 'kafka-safe',
   'flexible-json.timestamp-format.standard' = 'ISO-8601',

@@ -67,7 +67,7 @@ public final class MutationDatabase {
                               .getPrimaryKey()
                               .map(UniqueConstraint::getColumns)
                               .orElse(List.of()),
-                          resolvedTable.getPartitionKeys());
+                          mutTbl.getPartitionKey());
                   return new Table(
                       mutTbl.getName().getCanonical(),
                       mutTbl.getStage().name(),
