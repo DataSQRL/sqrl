@@ -59,3 +59,13 @@ The defaults below are the complete set DataSQRL applies. Add or overwrite **ind
   }
 }
 ```
+
+## Kafka key and value formats
+
+The `kafka` and `kafka-mutation` templates set one `format` for the message key and value. For separate formats, add `key.format` and/or `value.format` to the template, or to the `WITH` options of an internal table:
+
+- They take precedence over `format`. The default `format` stays in the merged template, so do not try to remove it.
+- A table with a message key (`PARTITIONED BY` or a `PRIMARY KEY`) uses `key.format` for the key, otherwise `format`, otherwise `value.format`. A table without a message key drops `key.format`.
+- Options of `format` (e.g. `flexible-json.timestamp-format.standard`) only reach the side that uses that format. Prefix an option with `key.` or `value.` to set it for one side.
+- Use `format` when both sides share a format; the compiler notes when `key.format` and `value.format` are equal.
+- Keep mutation tables on `json` or `flexible-json`: the server writes mutations as JSON, and the compiler warns for other formats.
