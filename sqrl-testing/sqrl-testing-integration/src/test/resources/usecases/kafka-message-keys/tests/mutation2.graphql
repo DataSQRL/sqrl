@@ -1,0 +1,8 @@
+mutation FlinkReadings {
+    add1: ForwardedReading(event: { sensorid: 1, writer: "flink" }) {
+        sensorid
+    }
+    add2: ForwardedReading(event: { sensorid: 3, writer: "flink" }) {
+        sensorid
+    }
+}
