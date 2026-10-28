@@ -5,7 +5,7 @@ CREATE TABLE CustomerEvents (
     customerid BIGINT NOT NULL,
     name STRING,
     `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
-) PARTITIONED BY (customerid);
+) PARTITIONED BY (customerid) WITH ('flexible-json.timestamp-format.standard' = 'SQL');
 
 CustomerSubset := SELECT customerid, name, `timestamp` FROM Customer;
 
