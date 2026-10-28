@@ -11,7 +11,7 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 | `transaction-watermark`            | **string**  | `"0 ms"` | Watermark delay for event time processing when transactions are enabled |
 | `use-source-watermark`             | **boolean** | `false`  | Use Flink's `SOURCE_WATERMARK()` for non-transactional Kafka tables     |
 | `use-transaction-source-watermark` | **boolean** | `false`  | Use Flink's `SOURCE_WATERMARK()` for transactional Kafka tables         |
-| `num-partitions`                   | **integer** | `1`      | Number of partitions for generated Kafka topics                         |
+| `num-partitions`                   | **integer** | `1`      | Number of partitions for generated Kafka topics; an internal table can override it with `'topic.num-partitions'` in `WITH` |
 | `replication-factor`               | **integer** | `3`      | Replication factor for generated Kafka topics                           |
 
 ## Example Configuration
@@ -37,6 +37,7 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 - Kafka topics are automatically created based on your SQRL table definitions
 - Topic configurations are generated during the compilation process
 - Retention settings control how long data is stored in Kafka topics
+- Set `'topic.num-partitions' = 'N'` in the `WITH` options of an internal Kafka table to give its topic `N` partitions instead of `num-partitions`. The count then travels with the table, so every project that imports the table creates the topic with the same count. The option is not passed to the Flink connector.
 - Ensure `replication-factor` does not exceed the number of brokers in the target Kafka cluster
 - Watermarks are used for handling late-arriving events in stream processing
 - Source watermarks apply only to mutation tables with a `timestamp` metadata column. When enabled,
