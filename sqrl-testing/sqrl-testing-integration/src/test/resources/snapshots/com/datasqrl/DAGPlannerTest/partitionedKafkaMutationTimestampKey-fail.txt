@@ -1,0 +1,6 @@
+[FATAL] Invalid PARTITIONED BY column [event_time]: partition columns must be regular columns or 'uuid' or 'auth' metadata columns. Available columns: [tenantId, payload]
+in script:partitionedKafkaMutationTimestampKey-fail.sqrl [2:1]:
+/*+engine(kafka) */
+CREATE TABLE Events (
+^
+

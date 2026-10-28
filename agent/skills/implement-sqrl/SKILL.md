@@ -141,6 +141,7 @@ The internal table does not need `WATERMARK` declaration. SQRL generates the wat
 Declare a `WATERMARK` explicitely on an internal table only when the user asks for one.
 
 With `engine(kafka)`, `PARTITIONED BY (col, ...)` on an internal table without a `PRIMARY KEY` keys each record by those columns, both the records the server writes for mutations and the records the pipeline exports into the table, so records with the same key stay on one Kafka partition in order.
+The key columns can be `uuid` or `auth` metadata columns, but not the `timestamp` metadata column.
 The Flink source ignores that key and reads every column from the message value, so adding `PARTITIONED BY` to an existing internal table is safe: records written before the table had a key are still read, also when the topic is read again from the earliest offset.
 This relies on the default `kafka-safe` connector. Do not switch internal Kafka tables to the plain `kafka` connector, which drops records that have no key.
 Use `PARTITIONED BY` when records only need a Kafka key for partitioning and ordering. A `PRIMARY KEY` also keys the records, but it makes the table an upsert table (`VERSIONED_STATE`), and its upsert source drops records that were written without a key.

@@ -23,6 +23,7 @@ import com.datasqrl.server.graphql.RootGraphQLModel.MutationCoordsVisitor;
 import com.datasqrl.server.io.SinkProducer;
 import com.datasqrl.server.kafka.KafkaSinkProducer;
 import com.datasqrl.server.kafka.SaslRetryingSinkProducer;
+import com.google.common.annotations.VisibleForTesting;
 import graphql.schema.DataFetcher;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.CompositeFuture;
@@ -122,7 +123,8 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
     Object compute(DataFetchingEnvironment env);
   }
 
-  private List<SinkProducer.Record> getRecords(
+  @VisibleForTesting
+  static List<SinkProducer.Record> getRecords(
       DataFetchingEnvironment env,
       List<String> keyColumns,
       Map<String, ComputeInputColumns> computedColumns) {
@@ -140,20 +142,6 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
       entries = List.of((Map) argument);
     }
 
-    // Construct keys if necessary (null if no key cols)
-    var keys = new Map[entries.size()];
-    if (!keyColumns.isEmpty()) {
-      for (int i = 0; i < entries.size(); i++) {
-        var filtered = new LinkedHashMap();
-        for (var key : keyColumns) {
-          if (entries.get(i).containsKey(key)) {
-            filtered.put(key, entries.get(i).get(key));
-          }
-        }
-        keys[i] = filtered;
-      }
-    }
-
     if (!computedColumns.isEmpty()) {
       // Add UUID for event for the computed uuid columns
       entries.forEach(
@@ -166,12 +154,26 @@ public class MutationConfigurationImpl implements MutationConfiguration<DataFetc
           });
     }
 
+    // Keys are built after the computed columns are added, since those can be key columns too
     var records = new ArrayList<SinkProducer.Record>();
-    for (int i = 0; i < entries.size(); i++) {
-      records.add(new SinkProducer.Record(keys[i], entries.get(i)));
+    for (var entry : entries) {
+      records.add(new SinkProducer.Record(createKey(entry, keyColumns), entry));
     }
 
     return records;
+  }
+
+  /**
+   * Keeps every key column, also when the input omits it, so that the key matches the one Flink
+   * writes for the same record (null if no key cols)
+   */
+  private static Map createKey(Map entry, List<String> keyColumns) {
+    if (keyColumns.isEmpty()) {
+      return null;
+    }
+    var key = new LinkedHashMap();
+    keyColumns.forEach(col -> key.put(col, entry.get(col)));
+    return key;
   }
 
   private void completeWithResults(
