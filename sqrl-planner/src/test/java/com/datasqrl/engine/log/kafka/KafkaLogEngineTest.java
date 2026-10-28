@@ -15,7 +15,7 @@
  */
 package com.datasqrl.engine.log.kafka;
 
-import static com.datasqrl.engine.log.kafka.KafkaLogEngine.KEY_FIELDS_READ_FROM_VALUE_KEY;
+import static com.datasqrl.flinkrunner.connector.kafka.KeyFieldsOptions.SCAN_KEY_FIELDS_READ_FROM_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -39,6 +39,8 @@ import org.junit.jupiter.api.Test;
 class KafkaLogEngineTest {
 
   private static final String TIMESTAMP_FORMAT = "flexible-json.timestamp-format.standard";
+  private static final String KEY_FIELDS_READ_FROM_VALUE_KEY =
+      SCAN_KEY_FIELDS_READ_FROM_VALUE.key();
 
   private final ConnectorConf mutationConnectorConf = mock(ConnectorConf.class);
 
