@@ -386,10 +386,16 @@ public class SqrlConfig {
     return MAPPER.convertValue(node() == null ? MAPPER.createObjectNode() : node(), Map.class);
   }
 
+  /** Converts the values to strings, skipping null values since they unset a key. */
   public Map<String, String> toStringMap() {
     var map = toMap();
     Map<String, String> out = new TreeMap<>();
-    map.forEach((k, v) -> out.put(k, String.valueOf(v)));
+    map.forEach(
+        (k, v) -> {
+          if (v != null) {
+            out.put(k, String.valueOf(v));
+          }
+        });
     return out;
   }
 

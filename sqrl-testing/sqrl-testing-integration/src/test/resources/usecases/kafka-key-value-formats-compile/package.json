@@ -1,0 +1,13 @@
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "script": {
+    "main": "kafka-key-value-formats.sqrl"
+  },
+  "connectors": {
+    "kafka-mutation": {
+      "key.format": "json",
+      "value.format": "flexible-json"
+    }
+  }
+}

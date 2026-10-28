@@ -1,0 +1,721 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+type KeyedReading {
+  sensorid: Int!
+  temperature: Float!
+  event_time: DateTime!
+}
+
+input KeyedReadingInput {
+  sensorid: Int!
+  temperature: Float!
+}
+
+type KeyedReadingResultOutput {
+  sensorid: Int!
+  temperature: Float!
+  event_time: DateTime!
+}
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Mutation {
+  KeyedReading(event: KeyedReadingInput!): KeyedReadingResultOutput!
+  SensorUpdate(event: SensorUpdateInput!): SensorUpdateResultOutput!
+  UnkeyedReading(event: UnkeyedReadingInput!): UnkeyedReadingResultOutput!
+}
+
+type Query {
+  KeyedReading(limit: Int = 10, offset: Int = 0): [KeyedReading!]
+  SensorUpdate(limit: Int = 10, offset: Int = 0): [SensorUpdate!]
+  UnkeyedReading(limit: Int = 10, offset: Int = 0): [UnkeyedReading!]
+}
+
+type SensorUpdate {
+  sensorid: Int!
+  sensor_name: String!
+  event_time: DateTime!
+}
+
+input SensorUpdateInput {
+  sensorid: Int!
+  sensor_name: String!
+}
+
+type SensorUpdateResultOutput {
+  sensorid: Int!
+  sensor_name: String!
+  event_time: DateTime!
+}
+
+type UnkeyedReading {
+  sensorid: Int!
+  temperature: Float!
+  event_time: DateTime!
+}
+
+input UnkeyedReadingInput {
+  sensorid: Int!
+  temperature: Float!
+}
+
+type UnkeyedReadingResultOutput {
+  sensorid: Int!
+  temperature: Float!
+  event_time: DateTime!
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== KeyedReading
+ID:          default_catalog.default_database.KeyedReading
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+---
+Schema:
+ - sensorid: INTEGER NOT NULL
+ - temperature: FLOAT NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.KeyedReading__base
+
+=== SensorUpdate
+ID:          default_catalog.default_database.SensorUpdate
+Type:        state
+Stage:       flink
+Primary key: sensorid
+Timestamp:   event_time
+Row count:   ~1e8
+---
+Schema:
+ - sensorid: INTEGER NOT NULL
+ - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SensorUpdate__base
+
+=== UnkeyedReading
+ID:          default_catalog.default_database.UnkeyedReading
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+---
+Schema:
+ - sensorid: INTEGER NOT NULL
+ - temperature: FLOAT NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.UnkeyedReading__base
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `KeyedReading` (
+  `sensorid` INTEGER NOT NULL,
+  `temperature` FLOAT NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'key.fields' = 'sensorid',
+  'key.format' = 'json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'scan.key-fields.read-from-value' = 'true',
+  'topic' = 'KeyedReading',
+  'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.format' = 'flexible-json'
+);
+CREATE TABLE `UnkeyedReading` (
+  `sensorid` INTEGER NOT NULL,
+  `temperature` FLOAT NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'UnkeyedReading',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.format' = 'flexible-json'
+);
+CREATE TABLE `SensorUpdate` (
+  `sensorid` INTEGER NOT NULL,
+  `sensor_name` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  PRIMARY KEY (`sensorid`) NOT ENFORCED,
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'upsert-kafka-safe',
+  'key.format' = 'json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'SensorUpdate',
+  'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.format' = 'flexible-json'
+);
+CREATE TABLE `KeyedReading_1` (
+  `sensorid` INTEGER NOT NULL,
+  `temperature` FLOAT NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'KeyedReading',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `SensorUpdate_2` (
+  `sensorid` INTEGER NOT NULL,
+  `sensor_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`sensorid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'TIMESTAMP',
+  'sink.on-conflict.timestamp-column' = 'event_time',
+  'table-name' = 'SensorUpdate',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `UnkeyedReading_3` (
+  `sensorid` INTEGER NOT NULL,
+  `temperature` FLOAT NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'UnkeyedReading',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`KeyedReading_1`
+SELECT `sensorid`, `temperature`, `event_time`, `hash_key`(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`KeyedReading`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`SensorUpdate_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`SensorUpdate`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`UnkeyedReading_3`
+SELECT `sensorid`, `temperature`, `event_time`, `hash_key`(`sensorid`, `temperature`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`UnkeyedReading`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "KeyedReading",
+      "tableName" : "KeyedReading",
+      "logicalName" : "KeyedReading",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [
+        "sensorid"
+      ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "SensorUpdate",
+      "tableName" : "SensorUpdate",
+      "logicalName" : "SensorUpdate",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [
+        "sensorid"
+      ],
+      "messageSchema" : "",
+      "config" : {
+        "cleanup.policy" : "compact"
+      }
+    },
+    {
+      "topicName" : "UnkeyedReading",
+      "tableName" : "UnkeyedReading",
+      "logicalName" : "UnkeyedReading",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "KeyedReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SensorUpdate" ("sensorid" INTEGER NOT NULL, "sensor_name" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("sensorid"));
+CREATE TABLE IF NOT EXISTS "UnkeyedReading" ("sensorid" INTEGER NOT NULL, "temperature" FLOAT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "KeyedReading",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"KeyedReading\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SensorUpdate",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"SensorUpdate\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "UnkeyedReading",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"sensorid\", \"temperature\", \"event_time\"\nFROM \"UnkeyedReading\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "KeyedReading",
+          "returnList" : false,
+          "topic" : "KeyedReading",
+          "keyColumns" : [
+            "sensorid"
+          ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "SensorUpdate",
+          "returnList" : false,
+          "topic" : "SensorUpdate",
+          "keyColumns" : [
+            "sensorid"
+          ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "UnkeyedReading",
+          "returnList" : false,
+          "topic" : "UnkeyedReading",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetKeyedReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query KeyedReading($limit: Int = 10, $offset: Int = 0) {\nKeyedReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "KeyedReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/KeyedReading{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetSensorUpdate",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query SensorUpdate($limit: Int = 10, $offset: Int = 0) {\nSensorUpdate(limit: $limit, offset: $offset) {\nsensorid\nsensor_name\nevent_time\n}\n\n}",
+            "queryName" : "SensorUpdate",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SensorUpdate{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "sensor_name" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetUnkeyedReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query UnkeyedReading($limit: Int = 10, $offset: Int = 0) {\nUnkeyedReading(limit: $limit, offset: $offset) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "UnkeyedReading",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/UnkeyedReading{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "temperature" : {
+                  "type" : "number"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddKeyedReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "temperature" : {
+                  "type" : "number"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "sensorid",
+                "temperature"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation KeyedReading($sensorid: Int!, $temperature: Float!) {\nKeyedReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "KeyedReading",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/KeyedReading",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "temperature" : {
+                "type" : "number"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddSensorUpdate",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "sensorid" : {
+                  "type" : "integer"
+                },
+                "sensor_name" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "sensorid",
+                "sensor_name"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation SensorUpdate($sensorid: Int!, $sensor_name: String!) {\nSensorUpdate(event: { sensorid: $sensorid, sensor_name: $sensor_name }) {\nsensorid\nsensor_name\nevent_time\n}\n\n}",
+            "queryName" : "SensorUpdate",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/SensorUpdate",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "sensor_name" : {
+                "type" : "string"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddUnkeyedReading",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "temperature" : {
+                  "type" : "number"
+                },
+                "sensorid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "sensorid",
+                "temperature"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation UnkeyedReading($sensorid: Int!, $temperature: Float!) {\nUnkeyedReading(event: { sensorid: $sensorid, temperature: $temperature }) {\nsensorid\ntemperature\nevent_time\n}\n\n}",
+            "queryName" : "UnkeyedReading",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/UnkeyedReading",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "sensorid" : {
+                "type" : "integer"
+              },
+              "temperature" : {
+                "type" : "number"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\ntype KeyedReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ninput KeyedReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype KeyedReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  KeyedReading(event: KeyedReadingInput!): KeyedReadingResultOutput!\n  SensorUpdate(event: SensorUpdateInput!): SensorUpdateResultOutput!\n  UnkeyedReading(event: UnkeyedReadingInput!): UnkeyedReadingResultOutput!\n}\n\ntype Query {\n  KeyedReading(limit: Int = 10, offset: Int = 0): [KeyedReading!]\n  SensorUpdate(limit: Int = 10, offset: Int = 0): [SensorUpdate!]\n  UnkeyedReading(limit: Int = 10, offset: Int = 0): [UnkeyedReading!]\n}\n\ntype SensorUpdate {\n  sensorid: Int!\n  sensor_name: String!\n  event_time: DateTime!\n}\n\ninput SensorUpdateInput {\n  sensorid: Int!\n  sensor_name: String!\n}\n\ntype SensorUpdateResultOutput {\n  sensorid: Int!\n  sensor_name: String!\n  event_time: DateTime!\n}\n\ntype UnkeyedReading {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\ninput UnkeyedReadingInput {\n  sensorid: Int!\n  temperature: Float!\n}\n\ntype UnkeyedReadingResultOutput {\n  sensorid: Int!\n  temperature: Float!\n  event_time: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
