@@ -49,3 +49,44 @@ CREATE TABLE _ReadingMessage (
 );
 
 ReadingMessage := SELECT writer, sensorid, message_key FROM _ReadingMessage ORDER BY writer ASC, sensorid ASC;
+
+-- The Alert key contains a column the client can omit and a column the server computes
+/*+engine(kafka), no_query */
+CREATE TABLE Alert (
+    region STRING,
+    alert_id STRING NOT NULL METADATA FROM 'uuid',
+    writer STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+) PARTITIONED BY (region, alert_id);
+
+/*+engine(kafka), no_query */
+CREATE TABLE ForwardedAlert (
+    region STRING,
+    alert_id STRING NOT NULL METADATA FROM 'uuid',
+    writer STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+EXPORT ForwardedAlert TO Alert;
+
+CREATE TABLE _AlertMessage (
+    message_key STRING,
+    region STRING,
+    alert_id STRING NOT NULL,
+    writer STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+    WATERMARK FOR event_time AS event_time - INTERVAL '1' SECOND
+) WITH (
+    'connector' = 'kafka-safe',
+    'topic' = 'Alert',
+    'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+    'properties.group.id' = 'alert-message',
+    'scan.startup.mode' = 'earliest-offset',
+    'key.format' = 'raw',
+    'key.fields' = 'message_key',
+    'value.format' = 'flexible-json',
+    'value.fields-include' = 'EXCEPT_KEY'
+);
+
+-- Masks the random alert_id so that the snapshot shows the exact message key
+AlertMessage := SELECT writer, REPLACE(message_key, alert_id, '<alert_id>') AS message_key FROM _AlertMessage ORDER BY writer ASC;

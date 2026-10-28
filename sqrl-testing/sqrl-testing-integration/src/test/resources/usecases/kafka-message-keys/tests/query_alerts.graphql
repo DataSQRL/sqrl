@@ -1,0 +1,6 @@
+query GetAlertMessages {
+    AlertMessage(limit: 10, offset: 0) {
+        writer
+        message_key
+    }
+}

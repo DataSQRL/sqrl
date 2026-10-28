@@ -1,4 +1,21 @@
 >>>inferred_schema.graphqls
+input AlertInput {
+  region: String
+  writer: String!
+}
+
+type AlertMessage {
+  writer: String!
+  message_key: String
+}
+
+type AlertResultOutput {
+  region: String
+  alert_id: String!
+  writer: String!
+  event_time: DateTime!
+}
+
 "An RFC-3339 compliant Full Date Scalar"
 scalar Date
 
@@ -12,6 +29,18 @@ input ExternalReadingInput {
 
 type ExternalReadingResultOutput {
   sensorid: Int!
+  writer: String!
+  event_time: DateTime!
+}
+
+input ForwardedAlertInput {
+  region: String
+  writer: String!
+}
+
+type ForwardedAlertResultOutput {
+  region: String
+  alert_id: String!
   writer: String!
   event_time: DateTime!
 }
@@ -37,12 +66,15 @@ scalar LocalTime
 scalar Long
 
 type Mutation {
+  Alert(event: AlertInput!): AlertResultOutput!
   ExternalReading(event: ExternalReadingInput!): ExternalReadingResultOutput!
+  ForwardedAlert(event: ForwardedAlertInput!): ForwardedAlertResultOutput!
   ForwardedReading(event: ForwardedReadingInput!): ForwardedReadingResultOutput!
   Reading(event: ReadingInput!): ReadingResultOutput!
 }
 
 type Query {
+  AlertMessage(limit: Int = 10, offset: Int = 0): [AlertMessage!]
   ReadingMessage(limit: Int = 10, offset: Int = 0): [ReadingMessage!]
   ReadingRecord(limit: Int = 10, offset: Int = 0): [ReadingRecord!]
 }
@@ -84,6 +116,15 @@ enum _RestMethodType {
 directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
+=== Alert
+ID:          Alert
+Type:        export
+Stage:       flink
+Connector:   kafka-safe
+---
+Inputs:
+ - default_catalog.default_database.ForwardedAlert
+
 === Reading
 ID:          Reading
 Type:        export
@@ -92,6 +133,22 @@ Connector:   kafka-safe
 ---
 Inputs:
  - default_catalog.default_database.ForwardedReading
+
+=== AlertMessage
+ID:          default_catalog.default_database.AlertMessage
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+---
+Schema:
+ - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - message_key: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+Inputs:
+ - default_catalog.default_database._AlertMessage
+Annotations:
+ - sort: [0 ASC-nulls-first]
 
 === ExternalReading
 ID:          default_catalog.default_database.ExternalReading
@@ -107,6 +164,24 @@ Schema:
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.ExternalReading__base
+
+=== ForwardedAlert
+ID:          default_catalog.default_database.ForwardedAlert
+Type:        stream
+Stage:       flink
+Primary key: alert_id
+Timestamp:   event_time
+Row count:   ~1e8
+---
+Schema:
+ - region: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - alert_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.ForwardedAlert__base
+Annotations:
+ - stream-root: ForwardedAlert
 
 === ForwardedReading
 ID:          default_catalog.default_database.ForwardedReading
@@ -170,6 +245,23 @@ Inputs:
  - default_catalog.default_database.Reading
 Annotations:
  - sort: [0 ASC-nulls-first, 1 ASC-nulls-first]
+
+=== _AlertMessage
+ID:          default_catalog.default_database._AlertMessage
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+---
+Schema:
+ - message_key: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - region: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - alert_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database._AlertMessage__base
 
 === _ReadingMessage
 ID:          default_catalog.default_database._ReadingMessage
@@ -287,7 +379,84 @@ CREATE VIEW `ReadingMessage`
 AS
 SELECT `writer`, `sensorid`, `message_key`
 FROM `_ReadingMessage`;
-CREATE TABLE `ReadingMessage_1` (
+CREATE TABLE `Alert` (
+  `region` STRING,
+  `alert_id` STRING NOT NULL,
+  `writer` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'key.fields' = 'region;alert_id',
+  'key.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'key.format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'scan.key-fields.read-from-value' = 'true',
+  'topic' = 'Alert',
+  'value.fields-include' = 'ALL',
+  'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'value.format' = 'flexible-json'
+);
+CREATE TABLE `ForwardedAlert` (
+  `region` STRING,
+  `alert_id` STRING NOT NULL,
+  `writer` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'ForwardedAlert'
+);
+CREATE TABLE `_AlertMessage` (
+  `message_key` STRING,
+  `region` STRING,
+  `alert_id` STRING NOT NULL,
+  `writer` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '1' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'key.fields' = 'message_key',
+  'key.format' = 'raw',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.group.id' = 'alert-message',
+  'scan.startup.mode' = 'earliest-offset',
+  'topic' = 'Alert',
+  'value.fields-include' = 'EXCEPT_KEY',
+  'value.format' = 'flexible-json'
+);
+CREATE VIEW `AlertMessage`
+AS
+SELECT `writer`, REPLACE(`message_key`, `alert_id`, '<alert_id>') AS `message_key`
+FROM `_AlertMessage`;
+CREATE TABLE `AlertMessage_1` (
+  `writer` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `message_key` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'AlertMessage',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `ReadingMessage_2` (
   `writer` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `sensorid` INTEGER NOT NULL,
   `message_key` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
@@ -303,7 +472,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `ReadingRecord_2` (
+CREATE TABLE `ReadingRecord_3` (
   `writer` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `sensorid` INTEGER NOT NULL,
   `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
@@ -319,20 +488,29 @@ WITH (
   'username' = '${POSTGRES_USERNAME}'
 );
 EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`AlertMessage_1`
+SELECT `writer`, `message_key`, `hash_key`(`writer`, `message_key`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`AlertMessage`
+ON CONFLICT DO DEDUPLICATE
+;
 INSERT INTO `default_catalog`.`default_database`.`ReadingWithoutKey_ex1`
 SELECT *
 FROM `default_catalog`.`default_database`.`ExternalReading`
+;
+INSERT INTO `default_catalog`.`default_database`.`Alert`
+SELECT *
+FROM `default_catalog`.`default_database`.`ForwardedAlert`
 ;
 INSERT INTO `default_catalog`.`default_database`.`Reading`
 SELECT *
 FROM `default_catalog`.`default_database`.`ForwardedReading`
 ;
-INSERT INTO `default_catalog`.`default_database`.`ReadingMessage_1`
+INSERT INTO `default_catalog`.`default_database`.`ReadingMessage_2`
 SELECT `writer`, `sensorid`, `message_key`, `hash_key`(`writer`, `sensorid`, `message_key`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`ReadingMessage`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`ReadingRecord_2`
+INSERT INTO `default_catalog`.`default_database`.`ReadingRecord_3`
 SELECT `writer`, `sensorid`, `hash_key`(`writer`, `sensorid`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`ReadingRecord`
 ON CONFLICT DO DEDUPLICATE
@@ -342,9 +520,36 @@ END
 {
   "topics" : [
     {
+      "topicName" : "Alert",
+      "tableName" : "Alert",
+      "logicalName" : "Alert",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [
+        "region",
+        "alert_id"
+      ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
       "topicName" : "ExternalReading",
       "tableName" : "ExternalReading",
       "logicalName" : "ExternalReading",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "ForwardedAlert",
+      "tableName" : "ForwardedAlert",
+      "logicalName" : "ForwardedAlert",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -383,6 +588,7 @@ END
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "AlertMessage" ("writer" TEXT NOT NULL, "message_key" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "ReadingMessage" ("writer" TEXT NOT NULL, "sensorid" INTEGER NOT NULL, "message_key" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "ReadingRecord" ("writer" TEXT NOT NULL, "sensorid" INTEGER NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
 >>>vertx.json
@@ -390,6 +596,31 @@ CREATE TABLE IF NOT EXISTS "ReadingRecord" ("writer" TEXT NOT NULL, "sensorid" I
   "models" : {
     "v1" : {
       "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AlertMessage",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"writer\", \"message_key\"\n  FROM \"AlertMessage\"\n  ORDER BY \"writer\" NULLS FIRST) AS \"t0\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
         {
           "type" : "args",
           "parentType" : "Query",
@@ -444,11 +675,56 @@ CREATE TABLE IF NOT EXISTS "ReadingRecord" ("writer" TEXT NOT NULL, "sensorid" I
       "mutations" : [
         {
           "type" : "kafka",
+          "fieldName" : "Alert",
+          "returnList" : false,
+          "topic" : "Alert",
+          "keyColumns" : [
+            "region",
+            "alert_id"
+          ],
+          "computedColumns" : {
+            "alert_id" : {
+              "metadataType" : "UUID",
+              "name" : "",
+              "required" : true
+            },
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        },
+        {
+          "type" : "kafka",
           "fieldName" : "ExternalReading",
           "returnList" : false,
           "topic" : "ExternalReading",
           "keyColumns" : [ ],
           "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "ForwardedAlert",
+          "returnList" : false,
+          "topic" : "ForwardedAlert",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "alert_id" : {
+              "metadataType" : "UUID",
+              "name" : "",
+              "required" : true
+            },
             "event_time" : {
               "metadataType" : "TIMESTAMP",
               "name" : "",
@@ -495,6 +771,46 @@ CREATE TABLE IF NOT EXISTS "ReadingRecord" ("writer" TEXT NOT NULL, "sensorid" I
       ],
       "subscriptions" : [ ],
       "operations" : [
+        {
+          "function" : {
+            "name" : "GetAlertMessage",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query AlertMessage($limit: Int = 10, $offset: Int = 0) {\nAlertMessage(limit: $limit, offset: $offset) {\nwriter\nmessage_key\n}\n\n}",
+            "queryName" : "AlertMessage",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AlertMessage{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "writer" : {
+                  "type" : "string"
+                },
+                "message_key" : {
+                  "type" : "string"
+                }
+              }
+            }
+          }
+        },
         {
           "function" : {
             "name" : "GetReadingMessage",
@@ -580,6 +896,52 @@ CREATE TABLE IF NOT EXISTS "ReadingRecord" ("writer" TEXT NOT NULL, "sensorid" I
         },
         {
           "function" : {
+            "name" : "AddAlert",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "writer" : {
+                  "type" : "string"
+                },
+                "region" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "writer"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation Alert($region: String, $writer: String!) {\nAlert(event: { region: $region, writer: $writer }) {\nregion\nalert_id\nwriter\nevent_time\n}\n\n}",
+            "queryName" : "Alert",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/Alert",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "region" : {
+                "type" : "string"
+              },
+              "alert_id" : {
+                "type" : "string"
+              },
+              "writer" : {
+                "type" : "string"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        },
+        {
+          "function" : {
             "name" : "AddExternalReading",
             "parameters" : {
               "type" : "object",
@@ -611,6 +973,52 @@ CREATE TABLE IF NOT EXISTS "ReadingRecord" ("writer" TEXT NOT NULL, "sensorid" I
             "properties" : {
               "sensorid" : {
                 "type" : "integer"
+              },
+              "writer" : {
+                "type" : "string"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddForwardedAlert",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "writer" : {
+                  "type" : "string"
+                },
+                "region" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "writer"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation ForwardedAlert($region: String, $writer: String!) {\nForwardedAlert(event: { region: $region, writer: $writer }) {\nregion\nalert_id\nwriter\nevent_time\n}\n\n}",
+            "queryName" : "ForwardedAlert",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/ForwardedAlert",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "region" : {
+                "type" : "string"
+              },
+              "alert_id" : {
+                "type" : "string"
               },
               "writer" : {
                 "type" : "string"
@@ -713,7 +1121,7 @@ CREATE TABLE IF NOT EXISTS "ReadingRecord" ("writer" TEXT NOT NULL, "sensorid" I
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ninput ExternalReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ExternalReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\ninput ForwardedReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ForwardedReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  ExternalReading(event: ExternalReadingInput!): ExternalReadingResultOutput!\n  ForwardedReading(event: ForwardedReadingInput!): ForwardedReadingResultOutput!\n  Reading(event: ReadingInput!): ReadingResultOutput!\n}\n\ntype Query {\n  ReadingMessage(limit: Int = 10, offset: Int = 0): [ReadingMessage!]\n  ReadingRecord(limit: Int = 10, offset: Int = 0): [ReadingRecord!]\n}\n\ninput ReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ReadingMessage {\n  writer: String!\n  sensorid: Int!\n  message_key: String\n}\n\ntype ReadingRecord {\n  writer: String!\n  sensorid: Int!\n}\n\ntype ReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "input AlertInput {\n  region: String\n  writer: String!\n}\n\ntype AlertMessage {\n  writer: String!\n  message_key: String\n}\n\ntype AlertResultOutput {\n  region: String\n  alert_id: String!\n  writer: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ninput ExternalReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ExternalReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\ninput ForwardedAlertInput {\n  region: String\n  writer: String!\n}\n\ntype ForwardedAlertResultOutput {\n  region: String\n  alert_id: String!\n  writer: String!\n  event_time: DateTime!\n}\n\ninput ForwardedReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ForwardedReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  Alert(event: AlertInput!): AlertResultOutput!\n  ExternalReading(event: ExternalReadingInput!): ExternalReadingResultOutput!\n  ForwardedAlert(event: ForwardedAlertInput!): ForwardedAlertResultOutput!\n  ForwardedReading(event: ForwardedReadingInput!): ForwardedReadingResultOutput!\n  Reading(event: ReadingInput!): ReadingResultOutput!\n}\n\ntype Query {\n  AlertMessage(limit: Int = 10, offset: Int = 0): [AlertMessage!]\n  ReadingMessage(limit: Int = 10, offset: Int = 0): [ReadingMessage!]\n  ReadingRecord(limit: Int = 10, offset: Int = 0): [ReadingRecord!]\n}\n\ninput ReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ReadingMessage {\n  writer: String!\n  sensorid: Int!\n  message_key: String\n}\n\ntype ReadingRecord {\n  writer: String!\n  sensorid: Int!\n}\n\ntype ReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
