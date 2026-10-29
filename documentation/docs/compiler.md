@@ -34,6 +34,8 @@ Commands:
               environment.
   exec      Executes an already compiled SQRL script using its existing build
               artifacts.
+  format    Formats SQRL scripts: indents their lines by the structure of their
+              queries and normalizes the spaces between tokens.
   lsp       Runs the SQRL language server for editors, communicating over stdin
               and stdout.
 ```
@@ -460,6 +462,22 @@ Executes an already compiled SQRL script using its existing build artifacts.
 cd my-project
 
 docker run --rm -it -p 8081:8081 -p 8888:8888 -p 9092:9092 -v $PWD:/workspace datasqrl/cmd exec
+```
+
+## Format Command
+
+The `format` command formats the SQRL scripts of a project the same way as the [language server](editors) in your editor: it indents lines by the structure of their queries and normalizes the spaces between tokens.
+It keeps line breaks, comments, literals, templates, and the case of names, and only changes whitespace.
+
+```bash
+docker run --rm -v $PWD:/workspace datasqrl/cmd format
+```
+
+It formats the scripts in the given files and directories, by default the current directory, and skips hidden directories and `build`, `output`, and `node_modules`.
+With `--check`, it changes nothing and fails if a script is not formatted, e.g. in CI:
+
+```bash
+docker run --rm -v $PWD:/workspace datasqrl/cmd format --check
 ```
 
 ## LSP Command
