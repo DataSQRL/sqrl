@@ -1,0 +1,12 @@
+/*+engine(kafka) */
+CREATE TABLE CustomerEvents (
+    customerid BIGINT NOT NULL,
+    name STRING,
+    `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+) PARTITIONED BY (customerid) WITH ('topic.num-partitions' = '6');
+
+/*+engine(kafka) */
+CREATE TABLE OrderEvents (
+    orderid BIGINT NOT NULL,
+    `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
