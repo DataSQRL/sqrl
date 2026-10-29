@@ -33,7 +33,7 @@ import org.eclipse.lsp4j.TextEdit;
  * of names, since names become the fields of the API, and only changes whitespace: a result whose
  * tokens differ from the script's is discarded.
  */
-class ScriptFormatter {
+public class ScriptFormatter {
 
   private static final Set<String> CLAUSES =
       Set.of(
@@ -138,6 +138,7 @@ class ScriptFormatter {
   private enum Scope {
     STATEMENT,
     PARENTHESES,
+    TYPE,
     CASE
   }
 
@@ -160,6 +161,7 @@ class ScriptFormatter {
   private boolean statementStarted;
   private boolean distinctStatement;
   private int typeArguments;
+  private Token lineEnd;
 
   private ScriptFormatter(String indentUnit) {
     this.indentUnit = indentUnit;
@@ -178,7 +180,7 @@ class ScriptFormatter {
   }
 
   /** The formatted script, or none if formatting would change more than whitespace. */
-  static Optional<String> format(String text, String indentUnit) {
+  public static Optional<String> format(String text, String indentUnit) {
     var tokens = tokenize(text);
     var formatted = new ScriptFormatter(indentUnit).layout(tokens, lineSeparator(text));
     return significant(tokens).equals(significant(tokenize(formatted)))
@@ -210,7 +212,7 @@ class ScriptFormatter {
   }
 
   private String layout(List<Token> tokens, String separator) {
-    var lines = new ArrayList<List<Token>>();
+    List<List<Token>> lines = new ArrayList<>();
     var line = new ArrayList<Token>();
     for (var token : tokens) {
       if (token.kind() == Kind.NEWLINE) {
@@ -221,12 +223,13 @@ class ScriptFormatter {
       }
     }
     lines.add(line);
+    lines = joinTables(lines);
 
     contexts.push(new Context(Scope.STATEMENT, 0));
     var out = new ArrayList<String>();
     var pendingComments = new ArrayList<Integer>();
     for (var current : lines) {
-      var code = current.stream().filter(token -> token.kind() != Kind.SPACE).toList();
+      var code = code(current);
       if (code.isEmpty()) {
         out.add("");
       } else if (code.stream().allMatch(Token::isComment)) {
@@ -244,6 +247,10 @@ class ScriptFormatter {
         pendingComments.clear();
         out.add(indent + join(current));
         track(code, level);
+        code.stream()
+            .filter(token -> !token.isComment())
+            .reduce((a, b) -> b)
+            .ifPresent(token -> lineEnd = token);
       }
     }
     var last = indentUnit.repeat(indent(List.of()));
@@ -258,6 +265,55 @@ class ScriptFormatter {
     return out.isEmpty() ? "" : String.join(separator, out) + separator;
   }
 
+  /** Moves the table and alias of a join onto its line, e.g. {@code LEFT JOIN Orders o}. */
+  private static List<List<Token>> joinTables(List<List<Token>> lines) {
+    var joined = new ArrayList<List<Token>>();
+    for (var line : lines) {
+      var previous = joined.isEmpty() ? null : joined.get(joined.size() - 1);
+      var code = code(line);
+      if (previous != null && awaitsTable(code(previous)) && isTableName(code)) {
+        previous.add(new Token(Kind.SPACE, " "));
+        previous.addAll(line.subList(leadingSpace(line).isEmpty() ? 0 : 1, line.size()));
+      } else {
+        joined.add(new ArrayList<>(line));
+      }
+    }
+    return joined;
+  }
+
+  private static List<Token> code(List<Token> line) {
+    return line.stream().filter(token -> token.kind() != Kind.SPACE).toList();
+  }
+
+  private static boolean awaitsTable(List<Token> code) {
+    for (int i = code.size() - 1; i >= 0; i--) {
+      if (code.get(i).isWord("JOIN")) {
+        return code.subList(i + 1, code.size()).stream().allMatch(ScriptFormatter::isNamePart);
+      }
+    }
+    return false;
+  }
+
+  private static boolean isTableName(List<Token> code) {
+    return !code.isEmpty() && code.stream().allMatch(ScriptFormatter::isNamePart);
+  }
+
+  private static boolean isNamePart(Token token) {
+    return switch (token.kind()) {
+      case QUOTED_NAME -> true;
+      case PUNCTUATION, OPERATOR -> token.is(".");
+      case WORD -> {
+        var word = token.upper();
+        yield !CLAUSES.contains(word)
+            && !JOIN_SIDES.contains(word)
+            && !word.equals("ON")
+            && !word.equals("USING")
+            && !word.equals("OUTER");
+      }
+      default -> false;
+    };
+  }
+
   private static String leadingSpace(List<Token> line) {
     return !line.isEmpty() && line.get(0).kind() == Kind.SPACE ? line.get(0).text() : "";
   }
@@ -268,11 +324,12 @@ class ScriptFormatter {
     var top = 0;
     var closed = -1;
     for (var token : code) {
-      if (!token.is(")")) {
+      var scope = closedScope(token);
+      if (scope == null) {
         break;
       }
       var parentheses = top;
-      while (parentheses < open.size() && open.get(parentheses).scope != Scope.PARENTHESES) {
+      while (parentheses < open.size() && open.get(parentheses).scope != scope) {
         parentheses++;
       }
       if (parentheses == open.size()) {
@@ -295,7 +352,8 @@ class ScriptFormatter {
     }
     // Conditions after a line that starts with ON, and the rest of a selected column, are indented
     var nested =
-        !clause
+        first != null
+                && !clause
                 && ((context.onConditions && !first.isWord("ON"))
                     || (context.inSelect && !context.itemEnded))
             ? 1
@@ -304,6 +362,7 @@ class ScriptFormatter {
       case STATEMENT ->
           !statementStarted || first == null || clause || first.is(":=") ? 0 : 1 + nested;
       case PARENTHESES -> context.base + 1 + (context.inClause && !clause ? 1 + nested : 0);
+      case TYPE -> context.base + 1;
       case CASE -> {
         if (first != null && first.isWord("END")) {
           yield context.base;
@@ -312,6 +371,10 @@ class ScriptFormatter {
             + (first != null && (first.isWord("WHEN") || first.isWord("ELSE")) ? 1 : 2);
       }
     };
+  }
+
+  private static Scope closedScope(Token token) {
+    return token.is(")") ? Scope.PARENTHESES : token.is(">") ? Scope.TYPE : null;
   }
 
   private static boolean startsClause(List<Token> code) {
@@ -340,7 +403,7 @@ class ScriptFormatter {
         continue;
       }
       statementStarted = true;
-      if (lineStart && !token.is(")")) {
+      if (lineStart && closedScope(token) == null) {
         lineStart = false;
         var context = contexts.peek();
         if (startsClause(code.subList(i, code.size()))) {
@@ -358,6 +421,10 @@ class ScriptFormatter {
       if (token.is("(")) {
         // Parentheses in conditions and results are indented like them
         contexts.push(new Context(Scope.PARENTHESES, level + (conditions ? 1 : 0)));
+      } else if (token.is("<") && i > 0 && isTypeWithArguments(code.get(i - 1))) {
+        contexts.push(new Context(Scope.TYPE, level));
+      } else if (token.is(">") && contexts.peek().scope == Scope.TYPE) {
+        contexts.pop();
       } else if (token.is(")")) {
         while (contexts.size() > 1 && contexts.peek().scope != Scope.PARENTHESES) {
           contexts.pop();
@@ -414,7 +481,7 @@ class ScriptFormatter {
       }
       updateTypeArguments(previous, token);
       text.append(token.text());
-      beforePrevious = previous;
+      beforePrevious = previous == null ? lineEnd : previous;
       previous = token;
       space = null;
     }
