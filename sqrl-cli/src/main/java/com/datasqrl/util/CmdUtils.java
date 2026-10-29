@@ -21,7 +21,6 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_PASSWORD;
 import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
 import com.datasqrl.deployment.model.JdbcPlanModel;
-import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -34,8 +33,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
@@ -162,14 +159,10 @@ public final class CmdUtils {
         .filter(plan -> !plan.statements().isEmpty());
   }
 
+  // The included topics too, since the projects that own them do not run locally
   private static Set<String> getKafkaTopics(Path planDir) {
     return ConfigLoaderUtils.loadKafkaPhysicalPlan(planDir)
-        .filter(plan -> !plan.isEmpty())
-        .map(
-            plan ->
-                Stream.concat(plan.topics().stream(), plan.testRunnerTopics().stream())
-                    .map(KafkaNewTopicModel::topicName)
-                    .collect(Collectors.toCollection(HashSet::new)))
+        .map(plan -> new HashSet<>(plan.allTopicNames()))
         .orElseGet(HashSet::new);
   }
 

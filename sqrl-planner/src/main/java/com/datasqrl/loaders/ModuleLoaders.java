@@ -29,7 +29,11 @@ import com.datasqrl.loaders.resolver.FileResourceResolver;
 import com.datasqrl.loaders.resolver.ResourceResolver;
 import com.datasqrl.planner.parser.SqrlStatementParser;
 import jakarta.inject.Inject;
+import java.nio.file.Path;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -46,6 +50,7 @@ public final class ModuleLoaders {
   private final ModuleLoader mainLoader;
   private final ModuleLoader rootLoader;
   private final Set<String> includeNamespaces;
+  private final Map<String, Path> standaloneIncludePaths;
 
   @Inject
   public ModuleLoaders(
@@ -73,14 +78,30 @@ public final class ModuleLoaders {
             classpathFunctionLoader,
             udfJarClassLoaders,
             errors);
+    var scriptConfig = packageJson.getScriptConfig();
     includeNamespaces =
-        packageJson.getScriptConfig().getIncludeConfigs().stream()
+        scriptConfig.getIncludeConfigs().stream()
             .map(IncludeConfig::getNamespace)
             .collect(Collectors.toSet());
+    standaloneIncludePaths =
+        scriptConfig.getStandaloneIncludes().stream()
+            .collect(
+                Collectors.toMap(
+                    Function.identity(),
+                    namespace ->
+                        workspacePaths.getIncludePath(namespace).toAbsolutePath().normalize()));
   }
 
   public ModuleLoaders withMainLoader(ModuleLoader mainLoader) {
-    return new ModuleLoaders(mainLoader, rootLoader, includeNamespaces);
+    return new ModuleLoaders(mainLoader, rootLoader, includeNamespaces, standaloneIncludePaths);
+  }
+
+  public Optional<String> getStandaloneInclude(Path scriptPath) {
+    var path = scriptPath.toAbsolutePath().normalize();
+    return standaloneIncludePaths.entrySet().stream()
+        .filter(include -> path.startsWith(include.getValue()))
+        .map(Map.Entry::getKey)
+        .findFirst();
   }
 
   public ModuleContext loadImportModule(NamePath namePath, FileLocation fileLocation) {
