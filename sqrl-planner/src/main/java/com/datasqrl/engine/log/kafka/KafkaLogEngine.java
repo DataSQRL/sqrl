@@ -26,6 +26,7 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.json.FlexibleJsonFlinkFormatTypeMapper;
+import com.datasqrl.deployment.model.KafkaIncludedTopicModel;
 import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -89,6 +90,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final TestRunnerConfiguration testRunnerConfig;
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf mutationConnectorConf;
+  private final List<String> standaloneIncludes;
 
   // === SETTINGS ===
   private final Optional<Duration> defaultTTL;
@@ -111,6 +113,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     this.streamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME);
     this.mutationConnectorConf =
         connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-mutation");
+    this.standaloneIncludes = json.getScriptConfig().getStandaloneIncludes();
     defaultTTL =
         engineConfig
             .getPropertyOptional(DEFAULT_TTL_KEY)
@@ -137,17 +140,14 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      MutationInsertType insertType,
-      Optional<Duration> ttl) {
+      MutationSettings settings) {
     return createInternal(
         stage,
         originalTableName,
         tableBuilder,
         relDataType,
         Optional.empty(),
-        ttl,
-        true,
-        insertType == MutationInsertType.TRANSACTION);
+        Optional.of(settings));
   }
 
   @Override
@@ -163,20 +163,24 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         tableBuilder,
         relDataType,
         Optional.of(tableAnalysis),
-        defaultTTL,
-        false,
-        false);
+        Optional.empty());
   }
 
-  public Table createInternal(
+  private Table createInternal(
       ExecutionStage stage,
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis,
-      Optional<Duration> ttl,
-      boolean isMutation,
-      boolean isTransactional) {
+      Optional<MutationSettings> mutation) {
+
+    boolean isMutation = mutation.isPresent();
+    boolean isTransactional =
+        mutation
+            .map(settings -> settings.insertType() == MutationInsertType.TRANSACTION)
+            .orElse(false);
+    var ttl = mutation.map(MutationSettings::ttl).orElse(defaultTTL);
+    var standaloneInclude = mutation.flatMap(MutationSettings::standaloneInclude);
     var ctxBuilder =
         Context.builder().tableName(originalTableName).tableId(tableBuilder.getTableName());
     var conf = isMutation ? mutationConnectorConf : streamConnectorConf;
@@ -266,7 +270,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         valueFormat,
         messageKey,
         relDataType,
-        topicConfig);
+        topicConfig,
+        standaloneInclude);
   }
 
   @Override
@@ -345,14 +350,20 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
           .function()
           .setExecutableQuery(new KafkaQuery(stagePlan.getStage(), topicName, filterColumns));
     }
-    // Plan topic creation
+    // Plan topic creation. The topics of mutation tables that a standalone included project defines
+    // belong to that project, so they are listed separately, without settings, from the topics this
+    // deployment owns.
+    var mutationsByInclusion =
+        stagePlan.getMutations().stream()
+            .map(Table.class::cast)
+            .collect(Collectors.partitioningBy(table -> table.standaloneInclude().isPresent()));
+
     var topics =
         Streams.concat(
                 stagePlan.getTables().stream()
                     .map(Table.class::cast)
                     .map(t -> createNewTopic(t, KafkaNewTopicModel.Type.SUBSCRIPTION)),
-                stagePlan.getMutations().stream()
-                    .map(Table.class::cast)
+                mutationsByInclusion.get(false).stream()
                     .map(t -> createNewTopic(t, KafkaNewTopicModel.Type.MUTATION)))
             .toList();
 
@@ -361,7 +372,26 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .map(topicName -> new KafkaNewTopic(new KafkaNewTopicModel(topicName, topicName)))
             .toList();
 
-    return new KafkaPhysicalPlan(topics, testRunnerTopics);
+    var includedTopics =
+        mutationsByInclusion.get(true).stream().map(KafkaLogEngine::toIncludedTopic).toList();
+    noticeStandaloneIncludesWithoutTopics(includedTopics);
+
+    return new KafkaPhysicalPlan(topics, testRunnerTopics, includedTopics);
+  }
+
+  private void noticeStandaloneIncludesWithoutTopics(List<KafkaIncludedTopicModel> includedTopics) {
+    var includesWithTopics =
+        includedTopics.stream().map(KafkaIncludedTopicModel::include).collect(Collectors.toSet());
+
+    standaloneIncludes.stream()
+        .filter(include -> !includesWithTopics.contains(include))
+        .forEach(
+            include ->
+                errors.notice(
+                    "Include '%1$s' sets \"standalone\": true, but this project uses no internal"
+                        + " Kafka table that '%1$s' defines, so kafka.json lists no topic of"
+                        + " '%1$s' under \"includedTopics\"",
+                    include));
   }
 
   private void setWatermark(
@@ -415,6 +445,14 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             table.config()));
   }
 
+  private static KafkaIncludedTopicModel toIncludedTopic(Table table) {
+    return new KafkaIncludedTopicModel(
+        table.topicName(),
+        table.tableName(),
+        table.logicalName(),
+        table.standaloneInclude().orElseThrow());
+  }
+
   public record Table(
       String topicName,
       String tableName,
@@ -422,13 +460,21 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       String format,
       List<String> messageKeys,
       RelDataType valueType,
-      Map<String, String> config)
+      Map<String, String> config,
+      Optional<String> standaloneInclude)
       implements MutationCreateTable {
 
     @Override
     public MutationCreateTable withValueType(RelDataType inputValueType) {
       return new Table(
-          topicName, tableName, logicalName, format, messageKeys, inputValueType, config);
+          topicName,
+          tableName,
+          logicalName,
+          format,
+          messageKeys,
+          inputValueType,
+          config,
+          standaloneInclude);
     }
 
     @Override

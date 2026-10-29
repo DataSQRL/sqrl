@@ -147,7 +147,8 @@ Each `include` entry can define `config` overrides for the included project's `s
     "include": {                                    // Include SQRL scripts from other projects
       "data_catalog": {                             // Namespace used in SQRL IMPORT statements
         "package": "../other-project/package.json", // Included project's package file
-        "config": { ... }                           // Optional Mustache template overrides for the included script(s)
+        "config": { ... },                          // Optional Mustache template overrides for the included script(s)
+        "standalone": true                          // Optional: the included project is deployed on its own (see Standalone Includes)
       }
     }
   }
@@ -157,6 +158,8 @@ Each `include` entry can define `config` overrides for the included project's `s
 :::note
 Include namespaces support underscores. Prefer `_` as a separator, such as `data_catalog` instead of `data-catalog`, because dashes can have a different meaning in SQL.
 :::
+
+By default, the current project owns the internal tables of an included project like its own tables. See [Standalone Includes](#standalone-includes) for an included project that is deployed on its own.
 
 #### Include Example
 
@@ -202,6 +205,49 @@ With the example above that would mean:
 ```sql
 IMPORT root.data_catalog.sources;
 ```
+:::
+
+#### Standalone Includes
+
+An included project is either a set of shared definitions or a project that is deployed on its own.
+By default, the current project treats it as shared definitions: it owns the included project's internal tables like its own, so its deployment creates and configures their Kafka topics.
+
+When the included project is deployed on its own, set `"standalone": true` on its include entry.
+That project then owns its internal Kafka tables, also when the current project imports them or exports into them.
+`kafka.json` lists their topics under `includedTopics` instead of `topics`, with only their names and `"include": "<namespace>"`, so the deployment leaves creating and configuring them, including their partition count, to the included project.
+
+Package files are merged, so the package file of a deployment can mark an include standalone that the base package file declares.
+Every include entry requires `package`, so the deployment's entry repeats it.
+For example, `reporting` includes `orders`, and in deployments `orders` is deployed on its own:
+
+```json
+// package.json
+{
+  "script": {
+    "main": "reporting.sqrl",
+    "include": {
+      "orders": { "package": "../orders/package.json" }
+    }
+  }
+}
+```
+
+```json
+// package-deploy.json
+{
+  "script": {
+    "include": {
+      "orders": { "package": "../orders/package.json", "standalone": true }
+    }
+  }
+}
+```
+
+Compiled with only `package.json`, e.g. for local tests, `reporting` owns the topics of the internal tables of `orders`. Compiled with both files, it leaves them to `orders`.
+
+:::important
+The current project still reads and writes the topics of a standalone include through its own `kafka-mutation` [connector template](#connector-templates-connectors), so it must resolve the same topic names and use the same key and value formats as the included project's deployment.
+`standalone` does not cover internal Iceberg tables yet: the current project still owns those.
 :::
 
 ## Test-Runner (`test-runner`)

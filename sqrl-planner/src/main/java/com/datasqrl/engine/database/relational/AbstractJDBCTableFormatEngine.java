@@ -33,13 +33,10 @@ import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
-import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.server.jdbc.DatabaseType;
 import com.google.common.base.Preconditions;
-import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Optional;
 import lombok.NonNull;
 import org.apache.calcite.rel.type.RelDataType;
 
@@ -99,8 +96,7 @@ public abstract class AbstractJDBCTableFormatEngine extends AbstractJDBCEngine
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      MutationInsertType insertType,
-      Optional<Duration> ttl) {
+      MutationSettings settings) {
     var tableAnalysis =
         TableAnalysis.buildPlaceholder()
             .type(tableBuilder.getPrimaryKey().isPresent() ? TableType.STATE : TableType.STREAM)
