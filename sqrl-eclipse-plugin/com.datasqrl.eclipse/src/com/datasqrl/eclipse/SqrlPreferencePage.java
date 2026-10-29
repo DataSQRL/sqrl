@@ -70,5 +70,7 @@ public final class SqrlPreferencePage extends FieldEditorPreferencePage
     addField(
         new BooleanFieldEditor(
             SqrlPreferences.FULL_COMPILE_ON_SAVE, "Run the full &compilation on save", parent));
+    addField(
+        new BooleanFieldEditor(SqrlPreferences.FORMAT_ON_SAVE, "&Format scripts on save", parent));
   }
 }

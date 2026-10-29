@@ -56,6 +56,11 @@ export async function activate(extensionContext: vscode.ExtensionContext): Promi
     vscode.commands.registerCommand('sqrl.selectPackageFiles', selectPackageFiles),
     vscode.commands.registerCommand('sqrl.restartServer', restart),
     vscode.window.onDidChangeActiveTextEditor(() => updateStatus()),
+    vscode.workspace.onWillSaveTextDocument((event) => {
+      if (shouldFormatOnSave(event.document)) {
+        event.waitUntil(format(event.document));
+      }
+    }),
     vscode.workspace.onDidChangeConfiguration(async (event) => {
       if (event.affectsConfiguration('sqrl.server')) {
         await restart();
@@ -91,6 +96,30 @@ function settings(): Record<string, unknown> {
     fullCompileOnSave: config.get('fullCompileOnSave', true),
     selectedPackageFiles: selections(),
   };
+}
+
+/** Unless VS Code formats on save itself, with `editor.formatOnSave` */
+function shouldFormatOnSave(document: vscode.TextDocument): boolean {
+  return (
+    document.languageId === 'sqrl' &&
+    vscode.workspace.getConfiguration('sqrl', document).get('formatOnSave', false) &&
+    !vscode.workspace.getConfiguration('editor', document).get('formatOnSave', false)
+  );
+}
+
+async function format(document: vscode.TextDocument): Promise<vscode.TextEdit[]> {
+  const editor = vscode.window.visibleTextEditors.find((visible) => visible.document === document);
+  const config = vscode.workspace.getConfiguration('editor', document);
+  const options: vscode.FormattingOptions = {
+    tabSize: Number(editor?.options.tabSize ?? config.get('tabSize', 4)),
+    insertSpaces: Boolean(editor?.options.insertSpaces ?? config.get('insertSpaces', true)),
+  };
+  const edits = await vscode.commands.executeCommand<vscode.TextEdit[] | undefined>(
+    'vscode.executeFormatDocumentProvider',
+    document.uri,
+    options,
+  );
+  return edits ?? [];
 }
 
 function selections(): Record<string, string[]> {

@@ -37,6 +37,7 @@ public final class SqrlPreferences extends AbstractPreferenceInitializer {
   static final String PACKAGE_FILES = "packageFiles";
   static final String CHECK_DELAY_MILLIS = "checkDelayMillis";
   static final String FULL_COMPILE_ON_SAVE = "fullCompileOnSave";
+  static final String FORMAT_ON_SAVE = "formatOnSave";
 
   static final String LAUNCHER_DOCKER = "docker";
   static final String LAUNCHER_JAR = "jar";
@@ -61,6 +62,7 @@ public final class SqrlPreferences extends AbstractPreferenceInitializer {
     defaults.setDefault(PACKAGE_FILES, "");
     defaults.setDefault(CHECK_DELAY_MILLIS, 300);
     defaults.setDefault(FULL_COMPILE_ON_SAVE, true);
+    defaults.setDefault(FORMAT_ON_SAVE, false);
   }
 
   /** The settings of the server, which it gets as its initialization options. */

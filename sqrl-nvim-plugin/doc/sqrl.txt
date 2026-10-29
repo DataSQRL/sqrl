@@ -77,6 +77,8 @@ sqrl.setup({opts})
     completion = false,
     -- Whether to show the code lenses that run the tests above test tables
     codelens = true,
+    -- Whether to format scripts when they are written
+    format_on_save = false,
   })
 <
 The server is configured as `sqrl` for |vim.lsp.config()|, so other options

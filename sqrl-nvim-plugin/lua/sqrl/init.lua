@@ -32,6 +32,7 @@ local M = {}
 --- @field inlay_hints boolean Whether to show the types of computed columns
 --- @field completion boolean Whether to complete with the built-in completion of Neovim as you type
 --- @field codelens boolean Whether to show the code lenses that run the tests above test tables
+--- @field format_on_save boolean Whether to format scripts when they are written
 
 --- @type sqrl.Options
 M.defaults = {
@@ -41,6 +42,7 @@ M.defaults = {
   inlay_hints = true,
   completion = false,
   codelens = true,
+  format_on_save = false,
 }
 
 --- The command of the code lenses above test tables, with the URIs of the package files
@@ -77,8 +79,9 @@ function M.setup(opts)
   vim.lsp.config('sqrl', M.config(M.options))
   vim.lsp.enable('sqrl')
 
+  local group = vim.api.nvim_create_augroup('sqrl', { clear = true })
   vim.api.nvim_create_autocmd('LspAttach', {
-    group = vim.api.nvim_create_augroup('sqrl', { clear = true }),
+    group = group,
     callback = function(args)
       local client = vim.lsp.get_client_by_id(args.data.client_id)
       if not client or client.name ~= 'sqrl' then
@@ -96,6 +99,16 @@ function M.setup(opts)
         else
           vim.lsp.codelens.refresh({ bufnr = args.buf })
         end
+      end
+      if M.options.format_on_save and vim.bo[args.buf].filetype == 'sqrl' then
+        vim.api.nvim_clear_autocmds({ group = group, buffer = args.buf, event = 'BufWritePre' })
+        vim.api.nvim_create_autocmd('BufWritePre', {
+          group = group,
+          buffer = args.buf,
+          callback = function()
+            vim.lsp.buf.format({ bufnr = args.buf, id = client.id })
+          end,
+        })
       end
     end,
   })

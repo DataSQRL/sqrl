@@ -146,6 +146,12 @@
           "default": true,
           "description": "Whether the server runs the full compilation when a file is saved, which also validates the API."
         },
+        "sqrl.formatOnSave": {
+          "type": "boolean",
+          "default": false,
+          "scope": "resource",
+          "description": "Whether to format scripts when they are saved."
+        },
         "sqrl.trace.server": {
           "type": "string",
           "enum": [

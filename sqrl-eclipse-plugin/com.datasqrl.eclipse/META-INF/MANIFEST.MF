@@ -7,6 +7,7 @@ Bundle-Version: 0.1.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-21
 Automatic-Module-Name: com.datasqrl.eclipse
 Bundle-ActivationPolicy: lazy
+Service-Component: OSGI-INF/com.datasqrl.eclipse.SqrlFormatRegionsProvider.xml
 Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.core.resources,
  org.eclipse.core.commands,
