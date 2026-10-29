@@ -37,6 +37,8 @@ import org.eclipse.lsp4j.DefinitionParams;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
+import org.eclipse.lsp4j.DocumentFormattingParams;
+import org.eclipse.lsp4j.FormattingOptions;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.InitializeResult;
 import org.eclipse.lsp4j.InlayHint;
@@ -57,6 +59,7 @@ import org.eclipse.lsp4j.TextDocumentClientCapabilities;
 import org.eclipse.lsp4j.TextDocumentContentChangeEvent;
 import org.eclipse.lsp4j.TextDocumentIdentifier;
 import org.eclipse.lsp4j.TextDocumentItem;
+import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.VersionedTextDocumentIdentifier;
 import org.eclipse.lsp4j.WorkspaceClientCapabilities;
 import org.eclipse.lsp4j.WorkspaceSymbol;
@@ -409,6 +412,24 @@ class LanguageFeaturesTest {
                 new CompletionParams(new TextDocumentIdentifier(packageUri), new Position(1, 2)))
             .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
     assertThat(completion.getRight().getItems()).isEmpty();
+  }
+
+  @Test
+  void givenUnformattedScript_whenFormatting_thenReturnsTheFormattedScript() throws Exception {
+    assertThat(initialized.getCapabilities().getDocumentFormattingProvider().getLeft()).isTrue();
+    open(uri, "Totals := SELECT\nid\n  FROM src.Orders;\n");
+
+    var edits =
+        server
+            .getTextDocumentService()
+            .formatting(
+                new DocumentFormattingParams(
+                    new TextDocumentIdentifier(uri), new FormattingOptions(4, true)))
+            .get(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+    assertThat(edits)
+        .extracting(TextEdit::getNewText)
+        .containsExactly("Totals := SELECT\n    id\nFROM src.Orders;\n");
   }
 
   /** A decoded semantic token. */

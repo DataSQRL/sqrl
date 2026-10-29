@@ -12,6 +12,7 @@ The SQRL language server brings the DataSQRL compiler into your editor. It is th
 - Quick fixes for common errors
 - Semantic highlighting of tables, functions, relationships, and columns
 - The outline of a script
+- Formatting of scripts, which indents their lines by the structure of their queries and normalizes the spaces between tokens. It keeps line breaks, comments, literals, templates, and the case of names, and only changes whitespace.
 - Code lenses above test tables that run the tests of the project
 
 ## IntelliJ IDEA
