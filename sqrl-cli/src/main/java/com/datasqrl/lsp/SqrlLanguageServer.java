@@ -176,6 +176,7 @@ public class SqrlLanguageServer implements LanguageServer, LanguageClientAware {
     var capabilities = new ServerCapabilities();
     capabilities.setTextDocumentSync(sync);
     capabilities.setDocumentSymbolProvider(true);
+    capabilities.setDocumentFormattingProvider(true);
     capabilities.setHoverProvider(true);
     capabilities.setDefinitionProvider(true);
     capabilities.setCompletionProvider(
