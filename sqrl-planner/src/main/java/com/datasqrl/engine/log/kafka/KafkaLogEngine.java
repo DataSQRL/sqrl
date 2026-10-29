@@ -48,7 +48,6 @@ import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.collect.Streams;
-import com.google.common.primitives.Ints;
 import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.EnumSet;
@@ -78,7 +77,6 @@ import org.apache.flink.util.TimeUtils;
 public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   public static final String CONNECTOR_TOPIC_KEY = "topic";
-  public static final String TOPIC_NUM_PARTITIONS_KEY = "topic.num-partitions";
   public static final String UPSERT_FORMAT = "upsert-%s";
 
   public static final String DEFAULT_TTL_KEY = "retention";
@@ -254,13 +252,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       connectorConfig.put("properties.isolation.level", "read_committed");
     }
     ttl.ifPresent(duration -> topicConfig.put("retention.ms", String.valueOf(duration.toMillis())));
-    var withOptions = tableBuilder.getConnectorOptions();
-    var topicNumPartitions =
-        Optional.ofNullable(withOptions.remove(TOPIC_NUM_PARTITIONS_KEY))
-            .map(value -> parseNumPartitions(originalTableName, value))
-            .orElse(numPartitions);
     // preserve any existing connector options
-    connectorConfig.putAll(withOptions);
+    connectorConfig.putAll(tableBuilder.getConnectorOptions());
     // after merging, so formats and format options given in WITH are configured as well
     var valueFormat =
         formats.configure(connectorConfig, originalTableName, hasMessageKey, isMutation);
@@ -273,18 +266,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         valueFormat,
         messageKey,
         relDataType,
-        topicNumPartitions,
         topicConfig);
-  }
-
-  private int parseNumPartitions(String tableName, String value) {
-    var parsed = Ints.tryParse(value.trim());
-    if (parsed == null || parsed <= 0) {
-      throw errors.exception(
-          "Invalid '%s' option on Kafka table '%s': expected a positive integer, but got '%s'",
-          TOPIC_NUM_PARTITIONS_KEY, tableName, value);
-    }
-    return parsed;
   }
 
   @Override
@@ -425,7 +407,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             table.tableName(),
             table.logicalName(),
             table.format(),
-            table.numPartitions(),
+            numPartitions,
             replicationFactor,
             type,
             table.messageKeys(),
@@ -440,21 +422,13 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       String format,
       List<String> messageKeys,
       RelDataType valueType,
-      int numPartitions,
       Map<String, String> config)
       implements MutationCreateTable {
 
     @Override
     public MutationCreateTable withValueType(RelDataType inputValueType) {
       return new Table(
-          topicName,
-          tableName,
-          logicalName,
-          format,
-          messageKeys,
-          inputValueType,
-          numPartitions,
-          config);
+          topicName, tableName, logicalName, format, messageKeys, inputValueType, config);
     }
 
     @Override
