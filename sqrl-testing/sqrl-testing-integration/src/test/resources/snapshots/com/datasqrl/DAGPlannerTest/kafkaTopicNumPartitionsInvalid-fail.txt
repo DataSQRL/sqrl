@@ -1,2 +1,0 @@
-[FATAL] Invalid 'topic.num-partitions' option on Kafka table 'CustomerEvents': expected a positive integer, but got 'zero'
-
