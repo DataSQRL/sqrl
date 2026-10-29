@@ -36,6 +36,7 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 
 - Kafka topics are automatically created based on your SQRL table definitions
 - Topic configurations are generated during the compilation process
+- `kafka.json` lists the topics of internal Kafka tables that a [standalone included project](../configuration#include-other-sources) defines under `includedTopics`, with only their names, because that project owns them and decides their settings
 - Retention settings control how long data is stored in Kafka topics
 - Ensure `replication-factor` does not exceed the number of brokers in the target Kafka cluster
 - Watermarks are used for handling late-arriving events in stream processing

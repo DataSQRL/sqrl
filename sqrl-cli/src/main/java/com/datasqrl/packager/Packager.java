@@ -15,7 +15,6 @@
  */
 package com.datasqrl.packager;
 
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SqrlConstants;
@@ -71,7 +70,8 @@ public class Packager {
       for (var include : includes) {
         var includePackage = basePath.resolve(include.getPackage());
         var includePath = includePackage.getParent();
-        preprocessingPipeline.run(includePath, NamePath.of(include.getNamespace()), errors);
+        preprocessingPipeline.run(
+            includePath, workspacePaths.getIncludePath(include.getNamespace()), errors);
       }
 
       preprocessingPipeline.run(basePath, errors);

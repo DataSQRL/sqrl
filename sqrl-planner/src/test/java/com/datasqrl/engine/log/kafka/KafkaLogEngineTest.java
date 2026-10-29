@@ -24,8 +24,14 @@ import static org.mockito.Mockito.when;
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.TestRunnerConfiguration;
+import com.datasqrl.config.TestScriptConfig;
+import com.datasqrl.deployment.model.KafkaIncludedTopicModel;
+import com.datasqrl.deployment.model.KafkaNewTopicModel;
+import com.datasqrl.engine.log.MutationEngine.MutationSettings;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.server.MutationInsertType;
 import java.util.HashMap;
@@ -43,6 +49,8 @@ class KafkaLogEngineTest {
       SCAN_KEY_FIELDS_READ_FROM_VALUE.key();
 
   private final ConnectorConf mutationConnectorConf = mock(ConnectorConf.class);
+  private final PackageJson packageJson = mock(PackageJson.class);
+  private final ConnectorFactoryFactory connectorFactory = mock(ConnectorFactoryFactory.class);
 
   private ErrorCollector errors;
   private KafkaLogEngine engine;
@@ -62,19 +70,20 @@ class KafkaLogEngineTest {
     var engines = mock(PackageJson.EnginesConfig.class);
     when(engines.getEngineConfigOrEmpty(KafkaLogEngineFactory.ENGINE_NAME))
         .thenReturn(engineConfig);
-    var packageJson = mock(PackageJson.class);
     when(packageJson.getEngines()).thenReturn(engines);
+    var testRunnerConfig = mock(TestRunnerConfiguration.class);
+    when(testRunnerConfig.getCreateTopics()).thenReturn(List.of());
+    when(packageJson.getTestConfig()).thenReturn(testRunnerConfig);
 
     var streamConnectorConf = mock(ConnectorConf.class);
     when(streamConnectorConf.toMap()).thenReturn(Map.of("format", "flexible-json"));
-    var connectorFactory = mock(ConnectorFactoryFactory.class);
     when(connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME))
         .thenReturn(streamConnectorConf);
     when(connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-mutation"))
         .thenReturn(mutationConnectorConf);
 
     errors = ErrorCollector.root();
-    engine = new KafkaLogEngine(packageJson, connectorFactory, errors);
+    engine = newEngine(Map.of());
   }
 
   @Test
@@ -128,8 +137,80 @@ class KafkaLogEngineTest {
         .containsEntry("value." + TIMESTAMP_FORMAT, "SQL");
   }
 
+  @Test
+  void givenTableOfStandaloneInclude_whenCreateMutation_thenTableKeepsItsStandaloneInclude() {
+    var table = createMutation("kafka-safe", readingTable(Map.of()), Optional.of("core"));
+
+    assertThat(table.standaloneInclude()).contains("core");
+  }
+
+  @Test
+  void givenOwnAndStandaloneIncludeMutations_whenPlanned_thenOnlyTheOwnTopicHasSettings() {
+    var plan =
+        plan(
+            engine,
+            mutation("Feedback", Optional.empty()),
+            mutation("Order", Optional.of("shared")));
+
+    assertThat(plan.topics())
+        .singleElement()
+        .satisfies(
+            topic -> {
+              assertThat(topic.topic().topicName()).isEqualTo("Feedback");
+              assertThat(topic.topic().numPartitions()).isOne();
+              assertThat(topic.topic().type()).isEqualTo(KafkaNewTopicModel.Type.MUTATION);
+            });
+    assertThat(plan.includedTopics())
+        .containsExactly(new KafkaIncludedTopicModel("Order", "Order_1", "Order", "shared"));
+  }
+
+  @Test
+  void givenStandaloneIncludeWithoutUsedTables_whenPlanned_thenNoticesThatItHasNoIncludedTopics() {
+    var engine = newEngine(Map.of("shared", true, "unused", true, "catalog", false));
+
+    plan(engine, mutation("Order", Optional.of("shared")));
+
+    assertThat(errors.getErrors())
+        .filteredOn(ErrorMessage::isNotice)
+        .extracting(ErrorMessage::getMessage)
+        .singleElement()
+        .asString()
+        .contains("'unused'", "\"standalone\"", "includedTopics");
+  }
+
+  private KafkaLogEngine newEngine(Map<String, Boolean> standaloneByInclude) {
+    when(packageJson.getScriptConfig())
+        .thenReturn(TestScriptConfig.withIncludes(standaloneByInclude));
+    return new KafkaLogEngine(packageJson, connectorFactory, errors);
+  }
+
+  private static KafkaPhysicalPlan plan(KafkaLogEngine engine, KafkaLogEngine.Table... mutations) {
+    var stagePlan = MaterializationStagePlan.builder().mutations(List.of(mutations)).build();
+    return (KafkaPhysicalPlan) engine.plan(stagePlan);
+  }
+
+  private static KafkaLogEngine.Table mutation(String name, Optional<String> standaloneInclude) {
+    return new KafkaLogEngine.Table(
+        name, name + "_1", name, "flexible-json", List.of(), null, Map.of(), standaloneInclude);
+  }
+
   private Map<String, String> createKeyedMutation(
       String connector, Map<String, String> withOptions) {
+    var tableBuilder = readingTable(withOptions);
+    createMutation(connector, tableBuilder, Optional.empty());
+    return tableBuilder.getConnectorOptions();
+  }
+
+  private FlinkTableBuilder readingTable(Map<String, String> withOptions) {
+    var tableBuilder = new FlinkTableBuilder().setName("Reading");
+    tableBuilder.setColumnList(SqlNodeList.EMPTY);
+    tableBuilder.setPartition(List.of("sensorid"));
+    tableBuilder.setConnectorOptions(withOptions);
+    return tableBuilder;
+  }
+
+  private KafkaLogEngine.Table createMutation(
+      String connector, FlinkTableBuilder tableBuilder, Optional<String> standaloneInclude) {
     when(mutationConnectorConf.toMapWithSubstitution(any(ConnectorConf.Context.class)))
         .thenReturn(
             new HashMap<>(
@@ -143,14 +224,13 @@ class KafkaLogEngineTest {
                     "topic",
                     "Reading")));
 
-    var tableBuilder = new FlinkTableBuilder().setName("Reading");
-    tableBuilder.setColumnList(SqlNodeList.EMPTY);
-    tableBuilder.setPartition(List.of("sensorid"));
-    tableBuilder.setConnectorOptions(withOptions);
-
-    engine.createMutation(
-        null, "Reading", tableBuilder, null, MutationInsertType.SINGLE, Optional.empty());
-    return tableBuilder.getConnectorOptions();
+    return (KafkaLogEngine.Table)
+        engine.createMutation(
+            null,
+            "Reading",
+            tableBuilder,
+            null,
+            new MutationSettings(MutationInsertType.SINGLE, Optional.empty(), standaloneInclude));
   }
 
   private List<ErrorMessage> warnings() {

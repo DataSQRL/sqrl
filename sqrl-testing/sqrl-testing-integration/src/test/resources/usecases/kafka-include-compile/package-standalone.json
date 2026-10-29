@@ -1,0 +1,18 @@
+{
+  "version": "1",
+  "script": {
+    "main": "kafka-include.sqrl",
+    "include": {
+      "shared": {
+        "package": "../kafka-include-shared/package.json",
+        "standalone": true
+      }
+    }
+  },
+  "engines": {
+    "kafka": {
+      "num-partitions": 5,
+      "replication-factor": 2
+    }
+  }
+}

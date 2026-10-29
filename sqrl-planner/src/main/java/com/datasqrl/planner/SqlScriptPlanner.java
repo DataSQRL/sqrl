@@ -26,6 +26,7 @@ import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
 import com.datasqrl.engine.log.MutationEngine;
+import com.datasqrl.engine.log.MutationEngine.MutationSettings;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.engine.stream.flink.FlinkEngineFactory;
@@ -38,6 +39,7 @@ import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
+import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.ModuleLoaders;
@@ -184,7 +186,8 @@ public class SqlScriptPlanner {
       ExecutionGoal executionGoal) {
     this.errorCollector = errorCollector;
     this.completeScript = new SqlScriptWriter();
-    this.scriptContext = new ScriptContext(moduleLoaders, FLINK_DEFAULT_DATABASE, true);
+    this.scriptContext =
+        new ScriptContext(moduleLoaders, FLINK_DEFAULT_DATABASE, true, Optional.empty());
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -929,7 +932,10 @@ public class SqlScriptPlanner {
                 importNameModifier,
                 flinkTable.sqlCreateTable,
                 flinkTable.schemaLoader(),
-                getMutationBuilder(importedHintsAndDoc),
+                getMutationBuilder(
+                    importedHintsAndDoc,
+                    scriptContext.isRootContext(),
+                    getStandaloneInclude(object.table())),
                 importedHintsAndDoc);
         importedHintsAndDoc.hints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
@@ -947,11 +953,13 @@ public class SqlScriptPlanner {
       completeScript.append(sqlNode);
     } else if (nsObject instanceof ScriptNamespaceObject scriptObject) {
       final ScriptContext priorContext = scriptContext;
+      var script = scriptObject.getScript();
       scriptContext =
           priorContext.fromImport(
               scriptObject.getModuleLoader(),
               scriptObject.isInline(),
-              importNameModifier.apply(scriptObject.name().getDisplay()));
+              importNameModifier.apply(scriptObject.name().getDisplay()),
+              script.getPath());
 
       if (priorContext.hasDifferentDatabase(scriptContext)) {
         // Switch DB
@@ -963,7 +971,7 @@ public class SqlScriptPlanner {
           hintsAndDoc.hints().isEmpty()
               ? Optional.<PlannerHints>empty()
               : Optional.of(hintsAndDoc.hints());
-      planMain(scriptObject.getScript(), hints, sqrlEnv);
+      planMain(script, hints, sqrlEnv);
 
       if (priorContext.hasDifferentDatabase(scriptContext)) {
         // Switch it back
@@ -976,13 +984,18 @@ public class SqlScriptPlanner {
     }
   }
 
+  private Optional<String> getStandaloneInclude(FlinkTable table) {
+    return scriptContext.moduleLoaders().getStandaloneInclude(table.scriptPath());
+  }
+
   /** Provides connector settings for CREATE TABLE statements managed by a configured engine. */
   private Optional<MutationBuilder> getMutationBuilder(HintsAndDoc hintsAndDoc) {
-    return getMutationBuilder(hintsAndDoc, scriptContext.isRootContext());
+    return getMutationBuilder(
+        hintsAndDoc, scriptContext.isRootContext(), scriptContext.standaloneInclude());
   }
 
   private Optional<MutationBuilder> getMutationBuilder(
-      HintsAndDoc hintsAndDoc, boolean generateAccess) {
+      HintsAndDoc hintsAndDoc, boolean generateAccess, Optional<String> standaloneInclude) {
     var mutationStage =
         hintsAndDoc
             .hints()
@@ -1017,8 +1030,10 @@ public class SqlScriptPlanner {
                   origTableName,
                   tableBuilder,
                   dataType,
-                  insertType,
-                  hintsAndDoc.hints().getHint(TtlHint.class).flatMap(TtlHint::getTtl)));
+                  new MutationSettings(
+                      insertType,
+                      hintsAndDoc.hints().getHint(TtlHint.class).flatMap(TtlHint::getTtl),
+                      standaloneInclude)));
           mutationBuilder.name(Name.system(origTableName));
           mutationBuilder.insertType(insertType);
           mutationBuilder.documentation(hintsAndDoc.getDocumentation());
@@ -1142,7 +1157,7 @@ public class SqlScriptPlanner {
       var mutationBuilder =
           sinkTable.table().external()
               ? Optional.<MutationBuilder>empty()
-              : getMutationBuilder(sinkHintsAndDoc, false);
+              : getMutationBuilder(sinkHintsAndDoc, false, getStandaloneInclude(sinkTable.table()));
       flinkTable
           .errorCollector()
           .checkFatal(
@@ -1278,15 +1293,24 @@ public class SqlScriptPlanner {
    * @param databaseName corresponding database name for the script context
    * @param isRootContext {@code true} if the context refers to the main script or an inline import,
    *     {@code false} for regular imports
+   * @param standaloneInclude the namespace of the standalone included project the script belongs
+   *     to, or empty if the project owns the script's tables
    */
   private record ScriptContext(
-      ModuleLoaders moduleLoaders, String databaseName, boolean isRootContext) {
+      ModuleLoaders moduleLoaders,
+      String databaseName,
+      boolean isRootContext,
+      Optional<String> standaloneInclude) {
 
-    ScriptContext fromImport(ModuleLoader moduleLoader, boolean inline, String databaseName) {
+    ScriptContext fromImport(
+        ModuleLoader moduleLoader, boolean inline, String databaseName, Optional<Path> scriptPath) {
+
+      var importLoaders = moduleLoaders.withMainLoader(moduleLoader);
+      var standaloneInclude = scriptPath.flatMap(moduleLoaders::getStandaloneInclude);
+
       return inline
-          ? new ScriptContext(
-              moduleLoaders.withMainLoader(moduleLoader), this.databaseName, isRootContext)
-          : new ScriptContext(moduleLoaders.withMainLoader(moduleLoader), databaseName, false);
+          ? new ScriptContext(importLoaders, this.databaseName, isRootContext, standaloneInclude)
+          : new ScriptContext(importLoaders, databaseName, false, standaloneInclude);
     }
 
     ModuleLoader mainModuleLoader() {
