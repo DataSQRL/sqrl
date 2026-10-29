@@ -414,7 +414,7 @@ public class ScriptFormatter {
           conditions = CONDITIONS.contains(token.upper());
         } else if (token.isWord("ON") && !(distinctStatement && context.scope == Scope.STATEMENT)) {
           context.onConditions = true;
-        } else if (token.isWord("THEN") || token.isWord("ELSE")) {
+        } else if (token.isWord("WHEN") || token.isWord("THEN") || token.isWord("ELSE")) {
           conditions = true;
         }
       }
@@ -447,7 +447,9 @@ public class ScriptFormatter {
         contexts.peek().itemEnded = true;
       } else if (token.isWord("DISTINCT") && i > 0 && code.get(i - 1).is(":=")) {
         distinctStatement = true;
-      } else if (CLAUSES.contains(token.upper()) && !token.isWord("SELECT")) {
+      } else if (CLAUSES.contains(token.upper())
+          && !token.isWord("SELECT")
+          && !(token.isWord("FROM") && i > 0 && code.get(i - 1).isWord("DISTINCT"))) {
         contexts.peek().inSelect = false;
       }
     }
