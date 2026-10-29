@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright © 2021 DataSQRL (contact@datasqrl.com)
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<feature id="com.datasqrl.eclipse.feature"
+         label="DataSQRL"
+         version="0.1.0.qualifier"
+         provider-name="DataSQRL">
+  <description url="https://docs.datasqrl.com/docs/editors">
+    Support for DataSQRL scripts (.sqrl) from the SQRL compiler: errors as you type, completion,
+    navigation, renaming, quick fixes, syntax highlighting, and running tests from code lenses.
+  </description>
+  <license url="https://www.apache.org/licenses/LICENSE-2.0">
+    Apache License, Version 2.0
+  </license>
+  <requires>
+    <import plugin="org.eclipse.lsp4e"/>
+    <import plugin="org.eclipse.tm4e.ui"/>
+  </requires>
+  <plugin id="com.datasqrl.eclipse" version="0.0.0"/>
+</feature>

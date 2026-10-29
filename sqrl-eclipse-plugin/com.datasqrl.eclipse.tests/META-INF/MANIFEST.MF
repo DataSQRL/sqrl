@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: DataSQRL Tests
+Bundle-Vendor: DataSQRL
+Bundle-SymbolicName: com.datasqrl.eclipse.tests
+Bundle-Version: 0.1.0.qualifier
+Fragment-Host: com.datasqrl.eclipse
+Bundle-RequiredExecutionEnvironment: JavaSE-21
+Automatic-Module-Name: com.datasqrl.eclipse.tests
+Import-Package: org.junit.jupiter.api;version="[5.0.0,7.0.0)",
+ org.assertj.core.api
