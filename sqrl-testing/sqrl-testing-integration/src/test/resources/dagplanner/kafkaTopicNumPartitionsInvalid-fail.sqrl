@@ -1,0 +1,5 @@
+/*+engine(kafka) */
+CREATE TABLE CustomerEvents (
+    customerid BIGINT NOT NULL,
+    `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+) WITH ('topic.num-partitions' = 'zero');

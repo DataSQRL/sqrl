@@ -17,6 +17,7 @@ package com.datasqrl.engine.log.kafka;
 
 import static com.datasqrl.flinkrunner.connector.kafka.KeyFieldsOptions.SCAN_KEY_FIELDS_READ_FROM_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -35,6 +36,8 @@ import java.util.Optional;
 import org.apache.calcite.sql.SqlNodeList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class KafkaLogEngineTest {
 
@@ -46,6 +49,7 @@ class KafkaLogEngineTest {
 
   private ErrorCollector errors;
   private KafkaLogEngine engine;
+  private FlinkTableBuilder tableBuilder;
 
   @BeforeEach
   void setUp() {
@@ -56,7 +60,7 @@ class KafkaLogEngineTest {
     when(engineConfig.getProperty("use-transaction-source-watermark")).thenReturn("false");
     when(engineConfig.getProperty("watermark")).thenReturn("0 ms");
     when(engineConfig.getProperty("transaction-watermark")).thenReturn("0 ms");
-    when(engineConfig.getProperty("num-partitions")).thenReturn("1");
+    when(engineConfig.getProperty("num-partitions")).thenReturn("3");
     when(engineConfig.getProperty("replication-factor")).thenReturn("1");
 
     var engines = mock(PackageJson.EnginesConfig.class);
@@ -128,7 +132,39 @@ class KafkaLogEngineTest {
         .containsEntry("value." + TIMESTAMP_FORMAT, "SQL");
   }
 
+  @Test
+  void givenNumPartitionsInWith_whenCreateMutation_thenOverridesTopicPartitionsAndDropsTheOption() {
+    var table = createMutationTable("kafka-safe", Map.of("topic.num-partitions", "12"));
+
+    assertThat(table.numPartitions()).isEqualTo(12);
+    assertThat(tableBuilder.getConnectorOptions()).doesNotContainKey("topic.num-partitions");
+  }
+
+  @Test
+  void givenNoNumPartitionsInWith_whenCreateMutation_thenUsesTheEngineDefault() {
+    var table = createMutationTable("kafka-safe", Map.of());
+
+    assertThat(table.numPartitions()).isEqualTo(3);
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"0", "-2", "many", ""})
+  void givenInvalidNumPartitionsInWith_whenCreateMutation_thenFails(String value) {
+    assertThatThrownBy(
+            () -> createMutationTable("kafka-safe", Map.of("topic.num-partitions", value)))
+        .hasMessageContaining(
+            "Invalid 'topic.num-partitions' option on Kafka table 'Reading': expected a positive"
+                + " integer, but got '%s'",
+            value);
+  }
+
   private Map<String, String> createKeyedMutation(
+      String connector, Map<String, String> withOptions) {
+    createMutationTable(connector, withOptions);
+    return tableBuilder.getConnectorOptions();
+  }
+
+  private KafkaLogEngine.Table createMutationTable(
       String connector, Map<String, String> withOptions) {
     when(mutationConnectorConf.toMapWithSubstitution(any(ConnectorConf.Context.class)))
         .thenReturn(
@@ -143,14 +179,14 @@ class KafkaLogEngineTest {
                     "topic",
                     "Reading")));
 
-    var tableBuilder = new FlinkTableBuilder().setName("Reading");
+    tableBuilder = new FlinkTableBuilder().setName("Reading");
     tableBuilder.setColumnList(SqlNodeList.EMPTY);
     tableBuilder.setPartition(List.of("sensorid"));
     tableBuilder.setConnectorOptions(withOptions);
 
-    engine.createMutation(
-        null, "Reading", tableBuilder, null, MutationInsertType.SINGLE, Optional.empty());
-    return tableBuilder.getConnectorOptions();
+    return (KafkaLogEngine.Table)
+        engine.createMutation(
+            null, "Reading", tableBuilder, null, MutationInsertType.SINGLE, Optional.empty());
   }
 
   private List<ErrorMessage> warnings() {
