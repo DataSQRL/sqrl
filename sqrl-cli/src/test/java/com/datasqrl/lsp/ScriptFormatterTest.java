@@ -101,8 +101,13 @@ class ScriptFormatterTest {
         Status := SELECT
         CASE
         WHEN status = 5 THEN 'FAILED'
+        WHEN phase IN (
+        'Failing over'
+        ) THEN 'FAILING'
         ELSE 'OK'
-        END AS label
+        END AS label,
+        status IS DISTINCT FROM LAG(status, 1) OVER (ORDER BY ts)
+        AS isChange
         FROM (
         SELECT status
         FROM Updates
@@ -116,8 +121,13 @@ class ScriptFormatterTest {
             Status := SELECT
                 CASE
                     WHEN status = 5 THEN 'FAILED'
+                    WHEN phase IN (
+                            'Failing over'
+                        ) THEN 'FAILING'
                     ELSE 'OK'
-                END AS label
+                END AS label,
+                status IS DISTINCT FROM LAG(status, 1) OVER (ORDER BY ts)
+                    AS isChange
             FROM (
                 SELECT status
                 FROM Updates
