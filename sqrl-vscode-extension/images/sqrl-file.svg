@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!-- Folded File Base (Stroke: 1.25px) -->
+  <path d="M 3 1.5 L 9.5 1.5 L 13 5 L 13 14.5 L 3 14.5 Z" fill="none" stroke="#1D3557" stroke-width="1.25" stroke-linejoin="round" />
+  <!-- Corner Fold -->
+  <path d="M 9.5 1.5 L 9.5 5 L 13 5" fill="none" stroke="#1D3557" stroke-width="1.25" stroke-linejoin="round" />
+  
+  <!-- Acorn Emblem (Foreground Overlay) -->
+  <!-- Stem -->
+  <path d="M 8.5 6.5 L 8.5 7.5" stroke="#D97706" stroke-width="1.25" stroke-linecap="round" />
+  <!-- Acorn Cap -->
+  <path d="M 6.5 7.5 C 6.5 7 10.5 7 10.5 7.5 L 10.5 9 L 6.5 9 Z" fill="#D97706" />
+  <!-- Acorn Body -->
+  <path d="M 6.7 9 C 6.7 11.8 8.5 12.5 8.5 12.5 C 8.5 12.5 10.3 11.8 10.3 9 Z" fill="#F59E0B" />
+</svg>

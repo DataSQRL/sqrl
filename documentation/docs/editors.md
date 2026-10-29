@@ -41,6 +41,56 @@ In **Settings | Languages & Frameworks | DataSQRL**, choose how the plugin start
 
 Tests always run in the Docker image, which has the services that tests need, e.g. Kafka and Postgres. With the jar setting, the image runs the configured jar.
 
+## VS Code
+
+The DataSQRL extension for VS Code 1.91 and later, and editors built on it such as VSCodium and Cursor, starts the language server for the files of DataSQRL projects, and adds:
+- Syntax highlighting of scripts
+- Completion, documentation, and validation of package files with their JSON schema, for package files other than `package.json`, which VS Code maps to the schema of npm
+- Running the tests of a project from the code lenses above its test tables, in a terminal
+- The choice of the package files of a script with **DataSQRL: Select Package Files**, or the package file in the status bar
+
+### Installation
+
+Build the extension in the `sqrl-vscode-extension` directory of the [DataSQRL repository](https://github.com/DataSQRL/sqrl), which needs Node.js 22:
+
+```bash
+npm install
+npm run package
+```
+
+Then install `sqrl-<version>.vsix` with **Extensions: Install from VSIX…**.
+
+### Configuration
+
+The `sqrl.server.launcher` setting chooses how the extension starts the language server:
+- `docker`, the default, in the Docker image of `sqrl.server.dockerImage`, which mounts the workspace folders at their own paths
+- `jar`, from the jar of `sqrl.server.jar`, see [From the Jar](#from-the-jar). The Java executable of `sqrl.server.java` defaults to the one of `JAVA_HOME`, else the one on the `PATH`. On Windows, the extension starts the language server only from the jar.
+- `command`, with the command of `sqrl.server.command`, e.g. `["sqrl", "lsp"]`, which runs the tests with `test` instead of `lsp`
+
+The `sqrl.packageFiles`, `sqrl.checkDelayMillis`, and `sqrl.fullCompileOnSave` settings are the [settings](#settings) of the server.
+
+## Eclipse
+
+The DataSQRL plugin for Eclipse 2026-09 and later starts the language server with LSP4E for the files of DataSQRL projects, which it opens in the Generic Editor, and adds:
+- Syntax highlighting of scripts with TM4E
+- Running the tests of a project from the code lenses above its test tables, in the Console view
+
+Package files are the JSON files with sections of a DataSQRL package file, e.g. `script`, which the plugin tells apart from other JSON files, e.g. the `package.json` of npm.
+
+### Installation
+
+Build the plugin in the `sqrl-eclipse-plugin` directory of the [DataSQRL repository](https://github.com/DataSQRL/sqrl), which needs JDK 21:
+
+```bash
+mvn verify
+```
+
+Then install it with **Help | Install New Software… | Add… | Archive…** from `com.datasqrl.eclipse.site/target/com.datasqrl.eclipse.site-<version>.zip`.
+
+### Configuration
+
+In **Window | Preferences | DataSQRL**, choose how the plugin starts the language server, in the Docker image of the CLI or from its jar, as in [IntelliJ IDEA](#configuration), and the [settings](#settings) of the server. Changes apply when the server starts again.
+
 ## Other Editors
 
 Configure your editor to start the language server for the files of DataSQRL projects:

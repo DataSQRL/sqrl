@@ -1,0 +1,7 @@
+node_modules/
+out/
+*.vsix
+syntaxes/
+schemas/
+language-configuration.json
+LICENSE

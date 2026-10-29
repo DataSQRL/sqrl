@@ -1,0 +1,178 @@
+{
+  "name": "sqrl",
+  "displayName": "DataSQRL",
+  "description": "SQRL language support from the DataSQRL compiler",
+  "version": "0.1.0",
+  "publisher": "datasqrl",
+  "license": "Apache-2.0",
+  "icon": "images/sqrl.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DataSQRL/sqrl"
+  },
+  "homepage": "https://docs.datasqrl.com/docs/editors",
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "engines": {
+    "vscode": "^1.91.0"
+  },
+  "main": "./out/src/extension.js",
+  "activationEvents": [
+    "workspaceContains:**/*.sqrl"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "sqrl",
+        "aliases": [
+          "SQRL",
+          "sqrl"
+        ],
+        "extensions": [
+          ".sqrl"
+        ],
+        "icon": {
+          "light": "./images/sqrl-file.svg",
+          "dark": "./images/sqrl-file_dark.svg"
+        },
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "sqrl",
+        "scopeName": "source.sqrl",
+        "path": "./syntaxes/sqrl.tmLanguage.json"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": [
+          "*package*.json",
+          "!**/package.json",
+          "!**/node_modules/**"
+        ],
+        "url": "./schemas/packageSchema.json"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "sqrl"
+      }
+    ],
+    "commands": [
+      {
+        "command": "sqrl.selectPackageFiles",
+        "title": "Select Package Files",
+        "category": "DataSQRL"
+      },
+      {
+        "command": "sqrl.restartServer",
+        "title": "Restart Language Server",
+        "category": "DataSQRL"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "sqrl.selectPackageFiles",
+          "when": "editorLangId == sqrl"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "DataSQRL",
+      "properties": {
+        "sqrl.server.launcher": {
+          "type": "string",
+          "enum": [
+            "docker",
+            "jar",
+            "command"
+          ],
+          "enumDescriptions": [
+            "Run the language server in the Docker image of the CLI",
+            "Run the language server from the jar of the CLI with Java 17 to 22",
+            "Run the language server with `sqrl.server.command`"
+          ],
+          "default": "docker",
+          "description": "How the language server is started. On Windows, it cannot run in Docker yet."
+        },
+        "sqrl.server.docker": {
+          "type": "string",
+          "default": "docker",
+          "description": "The Docker executable."
+        },
+        "sqrl.server.dockerImage": {
+          "type": "string",
+          "default": "datasqrl/cmd:latest",
+          "description": "The Docker image of the CLI, which also runs the tests."
+        },
+        "sqrl.server.jar": {
+          "type": "string",
+          "default": "",
+          "description": "The jar of the CLI, `sqrl-cli.jar`. Tests run it in the Docker image."
+        },
+        "sqrl.server.java": {
+          "type": "string",
+          "default": "",
+          "description": "The Java executable for the jar, by default the one of `JAVA_HOME` or on the `PATH`."
+        },
+        "sqrl.server.command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "The command that starts the language server, e.g. `[\"sqrl\", \"lsp\"]`. Tests run it with `test` instead of `lsp`."
+        },
+        "sqrl.packageFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "The package files of every project, relative to the project root, if they are named the same in all projects. By default, they are found by their content."
+        },
+        "sqrl.checkDelayMillis": {
+          "type": "number",
+          "default": 300,
+          "description": "How long the server waits after an edit before it checks."
+        },
+        "sqrl.fullCompileOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the server runs the full compilation when a file is saved, which also validates the API."
+        },
+        "sqrl.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Traces the messages between VS Code and the language server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "assets": "node scripts/copy-assets.mjs",
+    "compile": "npm run assets && tsc -p .",
+    "test": "npm run compile && node --test out/test/*.test.js",
+    "package": "npm run compile && vsce package",
+    "vscode:prepublish": "npm run compile"
+  },
+  "dependencies": {
+    "vscode-languageclient": "11.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.1",
+    "@types/vscode": "1.91.0",
+    "@vscode/vsce": "4.1.0",
+    "typescript": "5.9.3"
+  }
+}
