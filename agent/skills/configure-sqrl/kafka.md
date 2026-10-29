@@ -7,7 +7,7 @@
 | `transaction-watermark`            | **string**      | `"0 ms"` | Watermark delay for transactional Kafka tables                                |
 | `use-source-watermark`             | **boolean**     | `false`  | Use Flink `SOURCE_WATERMARK()` for non-transactional Kafka tables             |
 | `use-transaction-source-watermark` | **boolean**     | `false`  | Use Flink `SOURCE_WATERMARK()` for transactional Kafka tables                 |
-| `num-partitions`                   | **integer**     | `1`      | Partition count for generated Kafka topics; override per internal table with `WITH ('topic.num-partitions' = 'N')` |
+| `num-partitions`                   | **integer**     | `1`      | Partition count for generated Kafka topics                                    |
 | `replication-factor`               | **integer**     | `3`      | Replication factor for generated Kafka topics; cannot exceed the broker count |
 
 ## Example Configuration
