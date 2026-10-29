@@ -42,6 +42,8 @@ In **Settings | Languages & Frameworks | DataSQRL**, choose how the plugin start
 
 Tests always run in the Docker image, which has the services that tests need, e.g. Kafka and Postgres. With the jar setting, the image runs the configured jar.
 
+To format scripts on save, enable **Reformat code** in **Settings | Tools | Actions on Save**.
+
 ## VS Code
 
 The DataSQRL extension for VS Code 1.91 and later, and editors built on it such as VSCodium and Cursor, starts the language server for the files of DataSQRL projects, and adds:
@@ -69,6 +71,7 @@ The `sqrl.server.launcher` setting chooses how the extension starts the language
 - `command`, with the command of `sqrl.server.command`, e.g. `["sqrl", "lsp"]`, which runs the tests with `test` instead of `lsp`
 
 The `sqrl.packageFiles`, `sqrl.checkDelayMillis`, and `sqrl.fullCompileOnSave` settings are the [settings](#settings) of the server.
+The `sqrl.formatOnSave` setting formats scripts when they are saved, and is off by default.
 
 ## Eclipse
 
@@ -91,6 +94,7 @@ Then install it with **Help | Install New Software… | Add… | Archive…** fr
 ### Configuration
 
 In **Window | Preferences | DataSQRL**, choose how the plugin starts the language server, in the Docker image of the CLI or from its jar, as in [IntelliJ IDEA](#configuration), and the [settings](#settings) of the server. Changes apply when the server starts again.
+**Format scripts on save**, off by default, applies right away.
 
 ## Other Editors
 
