@@ -69,6 +69,32 @@ class ScriptFormatterTest {
   }
 
   @Test
+  void givenJoinedTableOnOwnLines_whenFormatted_thenMovesItOntoTheJoinLine() {
+    var script =
+        """
+        X := SELECT * FROM Checks r
+        LEFT JOIN
+          _RuntimeExpected
+            e
+          ON r.id = e.id
+        JOIN
+        -- the config
+        Config c ON c.id = r.id;
+        """;
+
+    assertThat(format(script))
+        .isEqualTo(
+            """
+            X := SELECT * FROM Checks r
+            LEFT JOIN _RuntimeExpected e
+                ON r.id = e.id
+            JOIN
+                -- the config
+                Config c ON c.id = r.id;
+            """);
+  }
+
+  @Test
   void givenSubqueryAndCase_whenFormatted_thenIndentsThemUnderTheirLine() {
     var script =
         """
@@ -107,6 +133,10 @@ class ScriptFormatterTest {
         CREATE TABLE Orders (
           id BIGINT NOT NULL,
           tags ARRAY < STRING >,
+          payload ROW<
+          name STRING,
+          scores ARRAY<INT>
+          > NOT NULL,
           event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
         ) WITH (
         'connector' = 'datagen'
@@ -128,6 +158,10 @@ class ScriptFormatterTest {
             CREATE TABLE Orders (
                 id BIGINT NOT NULL,
                 tags ARRAY<STRING>,
+                payload ROW<
+                    name STRING,
+                    scores ARRAY<INT>
+                > NOT NULL,
                 event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
             ) WITH (
                 'connector' = 'datagen'
@@ -153,6 +187,28 @@ class ScriptFormatterTest {
         .isEqualTo(
             "X := SELECT t.*, COUNT(*) AS n, -1 AS m, a + b * 2 AS s, f(x, y) FROM t"
                 + " WHERE a >= -2 AND b <> c;\n");
+  }
+
+  @Test
+  void givenSignsAtLineStarts_whenFormatted_thenSpacesOnlyBinaryOperators() {
+    var script =
+        """
+        X := SELECT
+        -1 AS m,
+        (a)
+        + (b) AS s
+        FROM t;
+        """;
+
+    assertThat(format(script))
+        .isEqualTo(
+            """
+            X := SELECT
+                -1 AS m,
+                (a)
+                    + (b) AS s
+            FROM t;
+            """);
   }
 
   @Test
