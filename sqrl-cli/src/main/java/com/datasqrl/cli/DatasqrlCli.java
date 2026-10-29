@@ -32,6 +32,7 @@ import picocli.CommandLine.Command;
       TestCmd.class,
       RunCmd.class,
       ExecCmd.class,
+      FormatCmd.class,
       LspCmd.class
     })
 @Getter
