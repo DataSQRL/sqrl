@@ -15,8 +15,15 @@ Your tasks are to create the replay overlay, [check it](#check-the-replay-overla
 
 ## When to create a replay overlay
 
-Create `<sub-project>-replay-package.json` for every sub-project that has `flink` in `enabled-engines` and a `<sub-project>-prod-package.json`.
+Create `<sub-project>-replay-package.json` for every sub-project that meets all three conditions:
+
+- It has `flink` in `enabled-engines`.
+- It has a `<sub-project>-prod-package.json`.
+- Its Flink job is a streaming job that runs continuously. The production configuration has no `engines.flink.deployment.schedule`, and it does not set `execution.runtime-mode` to `BATCH`.
+
 The team uses the same file again for each later deployment that starts with empty state.
+
+A batch job gets no replay overlay. A scheduled batch job runs to completion at each fire time, and then DataSQRL Cloud removes its Flink cluster. A batch job without a schedule runs once and then stops. Neither job stays at the newest records, so the team cannot upgrade it in place from a savepoint (see [Scheduled batch jobs](cloud-deployment.md#scheduled-batch-jobs)).
 
 ## Layering
 
@@ -26,7 +33,7 @@ The replay overlay is the last file in the list, after the production configurat
 /opt/agent/cmd.sh compile -r . <project>-shared-package.json <sub-project>-prod-package.json <sub-project>-replay-package.json -b <sub-project>
 ```
 
-Put only the values from [Values for the replay overlay](#values-for-the-replay-overlay) and, if needed, the [source start position](#source-start-position) in the file. All other settings come from the base and the production overlay. Leave `script`, `compiler` and `test-runner` out of the file.
+Put only the values from [Values for the replay overlay](#values-for-the-replay-overlay) in the file. All other settings come from the base and the production overlay. Leave `script`, `compiler` and `test-runner` out of the file.
 
 ## The rule: each operator keeps its id, type and state
 
@@ -82,12 +89,12 @@ Put these values in the base or the production overlay:
 
 ## Source start position
 
-The replay reads the old records only when the source starts at the oldest record. Set the start position in the production connector (see the `/manage-connector` skill) or in the replay overlay:
+The replay reads the old records only when the source starts at the oldest record. Set the start position in the production configuration, not in the replay overlay:
 
-- For Kafka, use `scan.startup.mode: earliest-offset`.
-- For Iceberg, use `starting-strategy: TABLE_SCAN_THEN_INCREMENTAL`.
+- **An external source** gets its connector options from the `WITH (...)` clause of its table in the production source file, for example `sources-prod.sqrl` (see the `/manage-connector` skill). A package overlay cannot change these options. For Kafka, set `'scan.startup.mode' = 'earliest-offset'`. For Iceberg, set `'starting-strategy' = 'TABLE_SCAN_THEN_INCREMENTAL'`.
+- **A table that DataSQRL creates**, for example a mutation table, gets its options from a connector template in the base or the production overlay (see [connector-templates.md](connector-templates.md)). The default `kafka-mutation` template sets `properties.auto.offset.reset: earliest`.
 
-The default `kafka-mutation` template sets `properties.auto.offset.reset: earliest`. The default `kafka` template sets no start position (see [connector-templates.md](connector-templates.md)). The default Iceberg `starting-strategy` is `INCREMENTAL_FROM_LATEST_SNAPSHOT`, so a new job reads only new snapshots and skips the old records (see [iceberg.md](../manage-connector/connectors/iceberg.md)).
+The default Iceberg `starting-strategy` is `INCREMENTAL_FROM_LATEST_SNAPSHOT`, so a new job reads only new snapshots and skips the old records (see [iceberg.md](../manage-connector/connectors/iceberg.md)). An external Kafka source without `scan.startup.mode` uses `group-offsets`, so it starts from the committed offsets of its consumer group (see [kafka.md](../manage-connector/connectors/kafka.md)).
 
 After the upgrade, the job continues from the source position in its state, so the start position has no effect then.
 
