@@ -19,6 +19,7 @@ import static com.datasqrl.planner.parser.StatementParserException.checkFatal;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
@@ -27,6 +28,7 @@ import com.datasqrl.planner.parser.SqrlTableFunctionStatement.ParsedArgument;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -116,41 +118,65 @@ public class SqrlStatementParser {
       Pattern.compile(NEXT_BATCH_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   /**
-   * Main entry point for parsing a script
+   * The statements of a script that could be parsed, the source of those that could not, and the
+   * first error.
+   */
+  public record ParsedScript(
+      List<ParsedStatement> statements,
+      List<ParsedObject<String>> unparsedStatements,
+      Optional<CollectedException> firstError) {}
+
+  /**
+   * Main entry point for parsing a script. Statements that fail to parse are skipped and their
+   * errors are added to the collector, so that the remaining statements can still be planned.
    *
    * @param script
    * @param scriptErrors
-   * @return
+   * @return the parsed statements and the first parse error, if any
    */
-  public List<ParsedStatement> parseScript(String script, ErrorCollector scriptErrors) {
+  public ParsedScript parseScript(String script, ErrorCollector scriptErrors) {
     return parseScript(script, scriptErrors, stmt -> true);
   }
 
   public List<ParsedStatement> parseCreateTables(String script, ErrorCollector scriptErrors) {
-    return parseScript(script, scriptErrors, stmt -> stmt instanceof SqrlCreateTableStatement);
+    var parsed =
+        parseScript(script, scriptErrors, stmt -> stmt instanceof SqrlCreateTableStatement);
+    if (parsed.firstError().isPresent()) {
+      throw parsed.firstError().get();
+    }
+    return parsed.statements();
   }
 
-  private List<ParsedStatement> parseScript(
+  private ParsedScript parseScript(
       String script, ErrorCollector scriptErrors, Predicate<SQLStatement> pred) {
-    var sqlStatements = new ArrayList<ParsedStatement>();
-    var localErrors = scriptErrors;
+    List<ParsedObject<String>> statements;
     try {
-      var statements = SqlScriptStatementSplitter.splitStatements(script);
-      for (ParsedObject<String> statement : statements) {
-        localErrors = scriptErrors.atFile(statement.getFileLocation());
+      statements = SqlScriptStatementSplitter.splitStatements(script);
+    } catch (StatementParserException e) {
+      throw scriptErrors.handle(e);
+    }
 
+    var sqlStatements = new ArrayList<ParsedStatement>();
+    var unparsedStatements = new ArrayList<ParsedObject<String>>();
+    CollectedException firstError = null;
+    for (ParsedObject<String> statement : statements) {
+      try {
         var parsedStmt = parseStatement(statement.getObject());
         if (pred.test(parsedStmt)) {
           sqlStatements.add(
               new ParsedStatement(
                   new ParsedObject<>(parsedStmt, statement.getFileLocation()), statement.get()));
         }
+      } catch (StatementParserException e) {
+        var error = scriptErrors.atFile(statement.getFileLocation()).getCatcher().handle(e);
+        unparsedStatements.add(statement);
+        if (firstError == null) {
+          firstError = error;
+        }
       }
-    } catch (StatementParserException e) {
-      throw localErrors.handle(e);
     }
 
-    return sqlStatements;
+    return new ParsedScript(sqlStatements, unparsedStatements, Optional.ofNullable(firstError));
   }
 
   /**
