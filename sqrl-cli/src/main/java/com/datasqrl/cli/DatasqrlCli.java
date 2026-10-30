@@ -31,7 +31,8 @@ import picocli.CommandLine.Command;
       CompileCmd.class,
       TestCmd.class,
       RunCmd.class,
-      ExecCmd.class
+      ExecCmd.class,
+      LspCmd.class
     })
 @Getter
 public class DatasqrlCli implements Runnable {
