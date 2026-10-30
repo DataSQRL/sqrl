@@ -144,7 +144,8 @@ This definition maps to query endpoint `CustomerByIdRange(fromId: Long!, toId: L
 
 ### Authentication & Authorization
 
-DataSQRL authenticates JWT tokens as configured in the server engine and maps claims to function arguments with `METADATA FROM 'auth.[claim-name]'`.
+DataSQRL authenticates JWT tokens as configured in the server engine and maps claims to function arguments and mutation columns with `METADATA FROM 'auth.[claim-name]'`.
+Use the `/implement-sqrl` skill for the SQRL rules of each claim: where a claim can go, its type, and required and optional claims.
 
 ```sql
 MyUser(customerId BIGINT NOT NULL METADATA FROM 'auth.userId') :=
@@ -154,6 +155,58 @@ MyUser(customerId BIGINT NOT NULL METADATA FROM 'auth.userId') :=
 Maps to query endpoint `MyUser: Customer`; `customerId` is populated from the `userId` claim and is not a caller-supplied API argument.
 
 Read [authorization configuration](authorization.md) to configure OAuth or JWT based authentication and authorization.
+
+With an auth provider, every request needs a valid token, also for a query that reads no claim. So no query of the API can be public.
+
+#### Record the caller of a mutation
+
+Take the owner of a mutation record from the token. Declare the owner column on the mutation table with `METADATA FROM 'auth.<claim>'`. The column is then not part of the mutation input, so a caller cannot write a record for somebody else.
+Add `no_query` to the mutation table, and give callers a claim function that returns their own records. Without `no_query`, the table gets its own query endpoint, and every caller reads every record. The mutation stays.
+
+```sql
+/*+no_query, engine(kafka) */
+CREATE TABLE Reviews (
+  review_id STRING NOT NULL METADATA FROM 'uuid',
+  author_id STRING NOT NULL METADATA FROM 'auth.sub',
+  product_id STRING NOT NULL,
+  rating INT NOT NULL,
+  created_at TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+/** The reviews of the caller. */
+MyReviews(author_id STRING NOT NULL METADATA FROM 'auth.sub') :=
+  SELECT * FROM Reviews WHERE author_id = :author_id;
+```
+
+#### Claims in a custom GraphQL schema
+
+In a hand-written schema, follow the claim columns and arguments of the SQRL script:
+
+- Leave each claim column out of the mutation input type.
+- Add the claim column to the mutation result type when the caller needs it.
+- Leave each claim argument out of the query field.
+
+```graphql
+type Mutation {
+  Reviews(event: ReviewInput!): Review!
+}
+
+input ReviewInput {
+  product_id: String!
+  rating: Int!
+}
+
+type Review {
+  review_id: String!
+  author_id: String!
+  product_id: String!
+  rating: Int!
+}
+
+type Query {
+  MyReviews(limit: Int = 10, offset: Int = 0): [Review!]
+}
+```
 
 ## API Versioning and OpenAPI
 
