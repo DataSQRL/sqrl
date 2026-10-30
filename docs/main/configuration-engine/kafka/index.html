@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.d902c99c.css">
-<script src="/assets/js/runtime~main.36cf21c9.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.fa7db679.js" defer="defer"></script>
 <script src="/assets/js/main.2df9c263.js" defer="defer"></script>
 </head>
 <body>
@@ -27,6 +27,7 @@
 <ul>
 <li class="">Kafka topics are automatically created based on your SQRL table definitions</li>
 <li class="">Topic configurations are generated during the compilation process</li>
+<li class=""><code>kafka.json</code> lists the topics of internal Kafka tables that a <a class="" href="/docs/main/configuration#include-other-sources">standalone included project</a> defines under <code>includedTopics</code>, with only their names, because that project owns them and decides their settings</li>
 <li class="">Retention settings control how long data is stored in Kafka topics</li>
 <li class="">Ensure <code>replication-factor</code> does not exceed the number of brokers in the target Kafka cluster</li>
 <li class="">Watermarks are used for handling late-arriving events in stream processing</li>
