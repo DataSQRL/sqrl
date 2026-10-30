@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: key_col
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - key_col: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - int_col: INTEGER
@@ -17,6 +17,9 @@ LogicalProject(key_col=[$0], int_col=[$1])
   LogicalTableScan(table=[[iceberg, my_database, my_table]])
 SQL:
 CREATE VIEW `Output` AS  SELECT * FROM iceberg.my_database.my_table;
+--- physical ---
+Table Output_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === my_table
 ID:          iceberg.my_database.my_table
@@ -25,7 +28,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - key_col: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - int_col: INTEGER

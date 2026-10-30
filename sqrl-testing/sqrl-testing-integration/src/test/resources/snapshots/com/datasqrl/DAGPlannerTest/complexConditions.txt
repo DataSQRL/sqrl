@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === Orders
 ID:          default_catalog.default_database.Orders
 Type:        stream
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -73,6 +77,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_2 (postgres):
+ - primary key: id, time
+
 === Product
 ID:          default_catalog.default_database.Product
 Type:        stream
@@ -80,7 +88,7 @@ Stage:       flink
 Primary key: productid, name, description, category
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -110,6 +118,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Product_3 (postgres):
+ - primary key: productid, name, description, category
+
 === ProductFilter1
 ID:          default_catalog.default_database.ProductFilter1
 Type:        stream
@@ -117,7 +129,7 @@ Stage:       flink
 Primary key: productid, name, description, category
 Timestamp:   _ingest_time
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -134,6 +146,9 @@ LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _inge
     LogicalTableScan(table=[[default_catalog, default_database, Product]])
 SQL:
 CREATE VIEW `ProductFilter1` AS  SELECT * FROM Product WHERE array_contains(ARRAY[CAST('one' AS String), CAST('two' AS String)], name);
+--- physical ---
+Table ProductFilter1_4 (postgres):
+ - primary key: productid, name, description, category
 
 === ProductFilter2
 ID:          default_catalog.default_database.ProductFilter2
@@ -142,7 +157,7 @@ Stage:       flink
 Primary key: productid, name, description, category
 Timestamp:   _ingest_time
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -159,6 +174,9 @@ LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _inge
     LogicalTableScan(table=[[default_catalog, default_database, Product]])
 SQL:
 CREATE VIEW `ProductFilter2` AS  SELECT * FROM Product WHERE array_contains(split('one, two', ','), name);
+--- physical ---
+Table ProductFilter2_5 (postgres):
+ - primary key: productid, name, description, category
 
 === SelectOrders1
 ID:          default_catalog.default_database.SelectOrders1
@@ -167,7 +185,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -186,6 +204,9 @@ LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
 CREATE VIEW `SelectOrders1` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid > (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+--- physical ---
+Table SelectOrders1_6 (postgres):
+ - primary key: id, time
 
 === SelectOrders2
 ID:          default_catalog.default_database.SelectOrders2
@@ -194,7 +215,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -213,6 +234,9 @@ LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
 CREATE VIEW `SelectOrders2` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+--- physical ---
+Table SelectOrders2_7 (postgres):
+ - primary key: id, time
 
 === SelectOrders3
 ID:          default_catalog.default_database.SelectOrders3
@@ -221,7 +245,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -240,6 +264,9 @@ LogicalProject(customerid=[$0])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
 CREATE VIEW `SelectOrders3` AS  SELECT o.id, o.`time` FROM Orders o WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name = 'foo');
+--- physical ---
+Table SelectOrders3_8 (postgres):
+ - primary key: id, time
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (

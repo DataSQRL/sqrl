@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -35,6 +35,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_1 (postgres):
+ - primary key: id, time
+
 === ProductId
 ID:          default_catalog.default_database.ProductId
 Type:        state
@@ -42,7 +46,7 @@ Stage:       flink
 Primary key: productid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
 Inputs:
@@ -57,6 +61,9 @@ LogicalAggregate(group=[{0}])
           LogicalValues(tuples=[[{ 0 }]])
 SQL:
 CREATE VIEW `ProductId` AS  SELECT DISTINCT productid FROM Orders o CROSS JOIN UNNEST(entries);
+--- physical ---
+Table ProductId_2 (postgres):
+ - primary key: productid
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (

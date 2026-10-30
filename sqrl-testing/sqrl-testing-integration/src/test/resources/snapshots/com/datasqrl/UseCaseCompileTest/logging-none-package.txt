@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: ID
 Timestamp:   TIMESTAMP
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - ID: BIGINT NOT NULL
  - EPOCH_TIMESTAMP: BIGINT NOT NULL
@@ -21,7 +21,7 @@ Annotations:
 ID:          print.DummyLogData
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Data
 

@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -30,11 +30,15 @@ SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`CustomerImport`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid
+
 === CustomerById
 ID:          default_catalog.default_database.CustomerById
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customer
 Annotations:
@@ -55,7 +59,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -86,11 +90,15 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table CustomerImport_2 (postgres):
+ - primary key: customerid, lastUpdated
+
 === LargeOrderSubscription
 ID:          default_catalog.default_database.LargeOrderSubscription
 Type:        query
 Stage:       kafka
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.LargeOrders
 Annotations:
@@ -111,7 +119,7 @@ Stage:       flink
 Primary key: _uuid
 Timestamp:   orderTime
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - orderid: INTEGER
@@ -128,6 +136,9 @@ LogicalProject(_uuid=[$0], orderid=[$1], customerid=[$2], amount=[$3], orderTime
     LogicalTableScan(table=[[default_catalog, default_database, SimpleOrders]])
 SQL:
 CREATE VIEW `LargeOrders` AS  SELECT * FROM SimpleOrders WHERE amount > 100;
+--- physical ---
+Table LargeOrders_3 (postgres):
+ - primary key: _uuid
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -136,7 +147,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -165,6 +176,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_5 (postgres):
+ - primary key: id, time
+
 === SimpleOrders
 ID:          default_catalog.default_database.SimpleOrders
 Type:        stream
@@ -172,7 +187,7 @@ Stage:       flink
 Primary key: _uuid
 Timestamp:   orderTime
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - orderid: INTEGER
@@ -206,6 +221,11 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'kafka-mutation-SimpleOrders'
 )
+--- physical ---
+Table SimpleOrders_6 (postgres):
+ - primary key: _uuid
+ - index SimpleOrders_6_btree_c2c3 (btree): customerid, amount
+
 === UnnestOrders
 ID:          default_catalog.default_database.UnnestOrders
 Type:        stream
@@ -213,7 +233,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -234,13 +254,16 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$4], quantity=[$5
         LogicalValues(tuples=[[{ 0 }]])
 SQL:
 CREATE VIEW `UnnestOrders` AS  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM Orders o CROSS JOIN UNNEST(entries) e;
+--- physical ---
+Table UnnestOrders_8 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === customersink
 ID:          mysink.customersink
 Type:        export
 Stage:       flink
 Connector:   print
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerImport
 
@@ -248,7 +271,7 @@ Inputs:
 ID:          print.Unnestorders
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.UnnestOrders
 

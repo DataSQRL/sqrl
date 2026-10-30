@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -35,6 +35,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === DistinctCustomerWoutTs
 ID:          default_catalog.default_database.DistinctCustomerWoutTs
 Type:        state
@@ -42,7 +46,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   _ingest_time
 Row count:   ~2e6
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -75,6 +79,10 @@ FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `_ingest_time`, ROW_N
       WHERE `lastUpdated` >= `$f5`) AS `t1`
     WHERE `$f5` IS NULL AND `$f6` IS NULL OR `email` <> `$f5` OR `email` IS NULL AND `$f5` IS NOT NULL OR `$f5` IS NULL AND `email` IS NOT NULL OR `name` <> `$f6`) AS `t3`) AS `t4`
 WHERE `$f5` = 1
+--- physical ---
+Table DistinctCustomerWoutTs_2 (postgres):
+ - primary key: customerid
+
 === DistinctOrderFieldsWoutTs
 ID:          default_catalog.default_database.DistinctOrderFieldsWoutTs
 Type:        state
@@ -82,7 +90,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   _ingest_time
 Row count:   ~2e6
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
@@ -114,6 +122,10 @@ FROM (SELECT `id`, `time`, `customerid`, `_ingest_time`, ROW_NUMBER() OVER (PART
       WHERE `time` >= `$f4`) AS `t1`
     WHERE `$f4` IS NULL OR `customerid` <> `$f4`) AS `t3`) AS `t4`
 WHERE `$f4` = 1
+--- physical ---
+Table DistinctOrderFieldsWoutTs_3 (postgres):
+ - primary key: id
+
 === DistinctOrderWithTs
 ID:          default_catalog.default_database.DistinctOrderWithTs
 Type:        state
@@ -121,7 +133,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   _ingest_time
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -145,6 +157,10 @@ SELECT `id`, `customerid`, `time`, `entries`, `_ingest_time`
 FROM (SELECT `id`, `customerid`, `time`, `entries`, `_ingest_time`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `_ingest_time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Orders`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table DistinctOrderWithTs_4 (postgres):
+ - primary key: id
+
 === OrderFields
 ID:          default_catalog.default_database.OrderFields
 Type:        stream
@@ -152,7 +168,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
@@ -167,6 +183,9 @@ LogicalProject(id=[$0], time=[$2], customerid=[$1], _ingest_time=[$4])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
 CREATE VIEW `OrderFields` AS  SELECT id, `time`, customerid, _ingest_time FROM Orders;
+--- physical ---
+Table OrderFields_5 (postgres):
+ - primary key: id, time
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -175,7 +194,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -205,6 +224,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_6 (postgres):
+ - primary key: id, time
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,

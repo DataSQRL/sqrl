@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === Orders
 ID:          default_catalog.default_database.Orders
 Type:        stream
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -59,12 +63,16 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, _Orders]])
 SQL:
 CREATE VIEW `Orders` AS  SELECT * FROM _Orders;
+--- physical ---
+Table Orders_2 (postgres):
+ - primary key: id, time
+ - index Orders_2_btree_c1c2 (btree): customerid, time
 
 === OrdersById
 ID:          default_catalog.default_database.OrdersById
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -82,7 +90,7 @@ CREATE VIEW `OrdersById` AS  SELECT * FROM Orders WHERE ?   = id;
 ID:          default_catalog.default_database.OrdersByTime
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -103,7 +111,7 @@ Stage:       flink
 Primary key: productid, name, description, category
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -119,6 +127,15 @@ LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _inge
   LogicalTableScan(table=[[default_catalog, default_database, _Product]])
 SQL:
 CREATE VIEW `Product` AS  SELECT * FROM _Product;
+--- physical ---
+Table Product_3 (postgres):
+ - primary key: productid, name, description, category
+ - index Product_3_btree_c1c2c3 (btree): name, description, category
+ - index Product_3_btree_c1c3 (btree): name, category
+ - index Product_3_btree_c2c3c4 (btree): description, category, _ingest_time
+ - index Product_3_btree_c2c4c1 (btree): description, _ingest_time, name
+ - index Product_3_btree_c3c4c1 (btree): category, _ingest_time, name
+ - index Product_3_btree_c4c1 (btree): _ingest_time, name
 
 === _Orders
 ID:          default_catalog.default_database._Orders
@@ -127,7 +144,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -163,7 +180,7 @@ Stage:       flink
 Primary key: productid, name, description, category
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

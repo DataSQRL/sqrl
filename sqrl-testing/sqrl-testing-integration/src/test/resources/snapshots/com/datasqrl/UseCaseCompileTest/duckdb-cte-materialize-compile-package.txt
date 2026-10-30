@@ -6,7 +6,7 @@ Stage:       iceberg
 Primary key: -
 Timestamp:   -
 Row count:   ~1
----
+--- definition ---
 Schema:
  - a_00: BIGINT
  - a_01: BIGINT
@@ -94,7 +94,7 @@ Stage:       flink
 Primary key: tenant_id, shard, id
 Timestamp:   -
 Row count:   1e9
----
+--- definition ---
 Schema:
  - tenant_id: BIGINT NOT NULL
  - shard: INTEGER NOT NULL
@@ -112,7 +112,7 @@ Stage:       flink
 Primary key: tenant_id, shard, id
 Timestamp:   -
 Row count:   5e8
----
+--- definition ---
 Schema:
  - tenant_id: BIGINT NOT NULL
  - shard: INTEGER NOT NULL

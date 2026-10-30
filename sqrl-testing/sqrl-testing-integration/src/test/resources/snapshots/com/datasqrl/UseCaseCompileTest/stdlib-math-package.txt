@@ -57,7 +57,7 @@ Stage:       flink
 Primary key: d
 Timestamp:   -
 Row count:   ~1e1
----
+--- definition ---
 Schema:
  - d: DECIMAL(3, 1) NOT NULL
  - b: INTEGER NOT NULL
@@ -73,6 +73,9 @@ Schema:
  - exponential_distribution: DOUBLE
  - normal_distribution: DOUBLE
  - poisson_distribution: DOUBLE
+--- physical ---
+Table MathFunctions (postgres):
+ - primary key: d
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MathFunctions`

@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === CustomerCount
 ID:          default_catalog.default_database.CustomerCount
 Type:        state
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - numEntries: BIGINT
@@ -71,12 +75,16 @@ WITH (
   'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 )
+--- physical ---
+Table CustomerCount_2 (postgres):
+ - primary key: customerid
+
 === CustomerCount
 ID:          default_catalog.default_database.CustomerCount
 Type:        export
 Stage:       flink
 Connector:   upsert-kafka-safe
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerCount_in1
 
@@ -87,7 +95,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - numEntries: BIGINT NOT NULL
@@ -108,7 +116,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -124,6 +132,9 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `CustomerForApi` AS  SELECT * FROM Customer;
+--- physical ---
+Table CustomerForApi_3 (postgres):
+ - primary key: customerid, lastUpdated
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (

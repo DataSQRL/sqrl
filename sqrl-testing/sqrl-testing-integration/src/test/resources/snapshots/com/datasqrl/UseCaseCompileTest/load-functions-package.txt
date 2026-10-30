@@ -45,10 +45,13 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~2
----
+--- definition ---
 Schema:
  - id: INTEGER NOT NULL
  - fct_result: BOOLEAN
+--- physical ---
+Table FunctionApplied (postgres):
+ - primary key: id
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `FunctionApplied`

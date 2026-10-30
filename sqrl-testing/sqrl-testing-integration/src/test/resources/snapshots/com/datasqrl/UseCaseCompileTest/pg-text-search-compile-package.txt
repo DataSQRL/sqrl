@@ -68,7 +68,7 @@ directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY
 ID:          default_catalog.default_database.ArticleSearch
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Articles
 Annotations:
@@ -82,7 +82,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   createdAt
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - title: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -90,12 +90,16 @@ Schema:
  - createdAt: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Articles__base
+--- physical ---
+Table Articles (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index Articles_text_c1 (text): title
 
 === PostSearch
 ID:          default_catalog.default_database.PostSearch
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Posts
 Annotations:
@@ -109,7 +113,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   createdAt
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - title: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -118,6 +122,10 @@ Schema:
  - createdAt: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Posts__base
+--- physical ---
+Table Posts (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index Posts_text_c1c2 (text): title, body
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Articles` (

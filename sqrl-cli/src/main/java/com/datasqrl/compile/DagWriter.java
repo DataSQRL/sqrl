@@ -19,6 +19,7 @@ import com.datasqrl.config.PackageJson.CompilerConfig;
 import com.datasqrl.config.PackageJson.ExplainConfig;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.deployment.model.MutationDatabaseModel;
+import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.plan.global.PipelineDAGExporter;
 import com.datasqrl.planner.dag.PipelineDAG;
 import com.datasqrl.serializer.Deserializer;
@@ -55,8 +56,12 @@ public class DagWriter {
   private final CompilerConfig compilerConfig;
 
   @SneakyThrows
-  void run(PipelineDAG dag, String source, MutationDatabaseModel mutationDatabaseModel) {
-    writeExplain(dag);
+  void run(
+      PipelineDAG dag,
+      PhysicalPlan physicalPlan,
+      String source,
+      MutationDatabaseModel mutationDatabaseModel) {
+    writeExplain(dag, physicalPlan);
     writeFile(workspacePaths.buildDir().resolve(FULL_SOURCE_FILENAME), source);
     writeFile(
         workspacePaths.buildDir().resolve(DATABASE_FILENAME),
@@ -78,7 +83,7 @@ public class DagWriter {
     writeFile(workspacePaths.buildDir().resolve(DATA_MODEL_VISUAL_FILENAME), htmlFile);
   }
 
-  private void writeExplain(PipelineDAG dag) throws IOException {
+  private void writeExplain(PipelineDAG dag, PhysicalPlan physicalPlan) throws IOException {
     ExplainConfig explainConfig = compilerConfig.getExplain();
     // Write Pipeline plan as text
     PipelineDAGExporter exporter =
@@ -89,6 +94,7 @@ public class DagWriter {
             .includeLogicalPlan(explainConfig.isLogical())
             .includeSQL(explainConfig.isSql())
             .includePhysicalPlan(explainConfig.isPhysical())
+            .physicalPlan(physicalPlan)
             .build();
     List<PipelineDAGExporter.Node> nodes = exporter.export(dag);
     if (explainConfig.isSorted()) Collections.sort(nodes); // make order deterministic
@@ -106,6 +112,7 @@ public class DagWriter {
             .includeSQL(true)
             .includeDocumentation(true)
             .includePhysicalPlan(true)
+            .physicalPlan(physicalPlan)
             .build();
     nodes = exporter.export(dag);
     if (explainConfig.isSorted()) Collections.sort(nodes); // make order deterministic

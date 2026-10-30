@@ -22,7 +22,7 @@ The compiler selects the indexes for most served queries. Fix only the queries t
 
 Judge the table size from the requirements and the source data. For the query that you fix:
 
-1. Find the SQL of the query in `deploy/plan/vertx.json`, and the `CREATE INDEX` statements of the table in `deploy/plan/postgres.json`. The primary key also counts as an index. A table that runs in Postgres has no indexes of its own. Its query is part of the SQL of the served query, and the compiler creates its indexes on the stored tables that this query reads.
+1. Find the SQL of the query in `deploy/plan/vertx.json`, and the indexes of the table in `pipeline_explain.txt`, in the `Table` section after the `--- physical ---` line of the table. The section uses the table and index names of the SQL, for example the line `index Orders_2_btree_c1c2 (btree): customerid, time` under `Table Orders_2 (postgres):`. The primary key also counts as an index. A table that runs in Postgres has no indexes of its own and no `Table` section. Its query is part of the SQL of the served query, and the compiler creates its indexes on the stored tables that this query reads.
 2. Compare the columns that the query compares with a parameter or with another table, in the `WHERE` clause, in `JOIN ... ON` conditions and in subqueries, with the leading columns of the indexes. In a correlated subquery that is not part of an `OR`, the column of the outer table counts too: in the `EXISTS` example below, `Orders.customer_id` gets no index.
 3. Make sure that each of these columns stands alone in the SQL. The compiler also creates an index for `day_index + 1 = $1`, but the database cannot use it for that filter. When the filtered column comes from a table that runs in Postgres, find its expression in that table's query. The same rule applies to it: a column that a function computes, such as `CAST("event_time" AS TEXT) AS "t_str"`, gets no index.
 
@@ -60,7 +60,7 @@ Orders := SELECT ... ;
 
 ## Index hints
 
-Add an `index` hint only to a table that needs it. An `index` hint replaces the automatic index selection for its whole table: the compiler then creates only the hinted indexes, the primary key and, when the table backs a paginated query, a `BTREE` index on its row-time column, and no longer warns about that table. So also add to the hint each index of that table in `deploy/plan/postgres.json` that another served query still uses. The row-time index needs no hint. Write it as `index(TYPE, column, ...)` hint, not as the `CREATE INDEX` statement. The hint is not limited to the maximum number of indexes that the full-table-scan warning names.
+Add an `index` hint only to a table that needs it. An `index` hint replaces the automatic index selection for its whole table: the compiler then creates only the hinted indexes, the primary key and, when the table backs a paginated query, a `BTREE` index on its row-time column, and no longer warns about that table. So also add to the hint each index in the `Table` section of that table that another served query still uses. The row-time index needs no hint. Write it as `index(TYPE, column, ...)` hint, not as the `CREATE INDEX` statement: `index Orders_2_btree_c2dc0 (btree): time DESC, id` becomes `index(BTREE, time DESC, id)`. The hint is not limited to the maximum number of indexes that the full-table-scan warning names.
 
 After the compile, check the indexes of the other served queries of that table (see Checking the indexes).
 

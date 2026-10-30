@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -35,6 +35,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_1 (postgres):
+ - primary key: id, time
+
 === SpecialOrderSummary
 ID:          default_catalog.default_database.SpecialOrderSummary
 Type:        state
@@ -42,7 +46,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~5e6
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - num_special_orders: BIGINT NOT NULL
@@ -61,6 +65,9 @@ CREATE VIEW `SpecialOrderSummary` AS  WITH SpecialOrders AS (
 SELECT customerid, COUNT(*) AS num_special_orders
 FROM SpecialOrders
 GROUP BY customerid;
+--- physical ---
+Table SpecialOrderSummary_2 (postgres):
+ - primary key: customerid
 
 === SpecialOrderSummaryDatabase
 ID:          default_catalog.default_database.SpecialOrderSummaryDatabase
@@ -69,7 +76,7 @@ Stage:       postgres
 Primary key: customerid
 Timestamp:   -
 Row count:   ~5e6
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - num_special_orders: BIGINT NOT NULL

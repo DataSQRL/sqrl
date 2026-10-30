@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -30,6 +30,10 @@ SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`CustomerStream`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid
+
 === CustomerStream
 ID:          default_catalog.default_database.CustomerStream
 Type:        stream
@@ -37,7 +41,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -68,6 +72,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table CustomerStream_2 (postgres):
+ - primary key: customerid, lastUpdated
+
 === ObjComplex
 ID:          default_catalog.default_database.ObjComplex
 Type:        state
@@ -75,7 +83,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Inputs:
@@ -95,7 +103,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - agg: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Inputs:
@@ -115,7 +123,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Inputs:
@@ -135,7 +143,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Inputs:
@@ -155,7 +163,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - obj: BOOLEAN
 Inputs:
@@ -175,7 +183,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Inputs:
@@ -195,7 +203,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - agg: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Inputs:
@@ -215,7 +223,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Inputs:
@@ -235,7 +243,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Inputs:
@@ -255,7 +263,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
 Inputs:

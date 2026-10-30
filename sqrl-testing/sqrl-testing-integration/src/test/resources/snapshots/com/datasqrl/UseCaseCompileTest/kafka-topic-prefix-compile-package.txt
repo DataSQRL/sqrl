@@ -70,7 +70,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - userid: BIGINT NOT NULL
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -85,12 +85,15 @@ Stage:       flink
 Primary key: userid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - userid: BIGINT NOT NULL
  - clicks: BIGINT NOT NULL
 Inputs:
  - default_catalog.default_database.Clicks
+--- physical ---
+Table ClicksPerUser (postgres):
+ - primary key: userid
 
 === HomepageClick
 ID:          default_catalog.default_database.HomepageClick
@@ -99,7 +102,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - userid: BIGINT NOT NULL
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

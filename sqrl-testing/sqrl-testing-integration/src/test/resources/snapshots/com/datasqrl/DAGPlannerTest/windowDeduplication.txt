@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === WindowDedupedCustomer
 ID:          default_catalog.default_database.WindowDedupedCustomer
 Type:        stream
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   mini_batch_event_time
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -80,6 +84,9 @@ CREATE VIEW `WindowDedupedCustomer` AS
         FROM TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '1' MINUTES)
     )
     WHERE rownum = 1;
+--- physical ---
+Table WindowDedupedCustomer_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (

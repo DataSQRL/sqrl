@@ -4,7 +4,7 @@ ID:          default_catalog.original_db.ScopeSink
 Type:        export
 Stage:       flink
 Connector:   filesystem
----
+--- definition ---
 Inputs:
  - default_catalog.original_db.ScopeSink_in3
 
@@ -15,7 +15,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - val: INTEGER
 Inputs:
@@ -26,7 +26,7 @@ ID:          default_catalog.original_db.SourceSink
 Type:        export
 Stage:       flink
 Connector:   filesystem
----
+--- definition ---
 Inputs:
  - default_catalog.original_db.SourceSink_in1
 
@@ -37,7 +37,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - val: INTEGER
 Inputs:
@@ -50,7 +50,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - val: INTEGER
 Inputs:
@@ -61,7 +61,7 @@ ID:          default_catalog.original_db.TargetSink
 Type:        export
 Stage:       flink
 Connector:   filesystem
----
+--- definition ---
 Inputs:
  - default_catalog.original_db.TargetSink_in2
 
@@ -72,7 +72,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - val: INTEGER
 Inputs:

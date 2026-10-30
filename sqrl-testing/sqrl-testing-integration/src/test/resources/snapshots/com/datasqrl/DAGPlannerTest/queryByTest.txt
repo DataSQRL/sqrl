@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -35,6 +35,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_1 (postgres):
+ - primary key: id, time
+
 === Orders1
 ID:          default_catalog.default_database.Orders1
 Type:        stream
@@ -42,7 +46,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -57,6 +61,11 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
 CREATE VIEW `Orders1` AS  SELECT * FROM Orders;
+--- physical ---
+Table Orders1_2 (postgres):
+ - primary key: id, time
+ - index Orders1_2_btree_c1c0 (btree): customerid, id
+ - index Orders1_2_btree_c2c1 (btree): time, customerid
 
 === Orders2
 ID:          default_catalog.default_database.Orders2
@@ -65,7 +74,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -80,6 +89,9 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
 CREATE VIEW `Orders2` AS  SELECT * FROM Orders;
+--- physical ---
+Table Orders2_3 (postgres):
+ - primary key: id, time
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (

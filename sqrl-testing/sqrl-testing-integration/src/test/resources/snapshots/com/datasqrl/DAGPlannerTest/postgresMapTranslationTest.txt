@@ -6,7 +6,7 @@ Stage:       postgres
 Primary key: user_id
 Timestamp:   -
 Row count:   ~2
----
+--- definition ---
 Schema:
  - user_id: INTEGER NOT NULL
  - attrs: (VARCHAR(5) CHARACTER SET "UTF-16LE" NOT NULL, VARCHAR(7) CHARACTER SET "UTF-16LE" NOT NULL) MAP NOT NULL
@@ -26,7 +26,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1
----
+--- definition ---
 Schema:
  - num: INTEGER NOT NULL
 Plan:
@@ -34,6 +34,9 @@ LogicalProject(num=[$0])
   LogicalValues(tuples=[[{ 1 }]])
 SQL:
 CREATE VIEW `MyTable` AS  SELECT * FROM (VALUES (1)) AS val(num);
+--- physical ---
+Table MyTable_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `DuckDbTable`

@@ -61,13 +61,16 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - number: BIGINT NOT NULL
  - volume: INTEGER NOT NULL
 Inputs:
  - default_catalog.default_database.Orders
+--- physical ---
+Table OrderCount (postgres):
+ - primary key: id
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -76,7 +79,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   _source_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -87,6 +90,9 @@ Inputs:
  - default_catalog.default_database.Orders__base
 Annotations:
  - features: DENORMALIZE (feature)
+--- physical ---
+Table Orders (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Orders__schema` (

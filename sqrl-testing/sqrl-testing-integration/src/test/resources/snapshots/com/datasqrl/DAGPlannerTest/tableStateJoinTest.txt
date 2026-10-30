@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -30,6 +30,10 @@ SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`_Customer`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid
+
 === OrderCustomer
 ID:          default_catalog.default_database.OrderCustomer
 Type:        state
@@ -37,7 +41,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id: BIGINT NOT NULL
@@ -53,6 +57,9 @@ LogicalProject(time=[$2], id=[$0], name=[$6], customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `OrderCustomer` AS  SELECT o.`time`, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c on o.customerid = c.customerid;
+--- physical ---
+Table OrderCustomer_2 (postgres):
+ - primary key: id
 
 === OrderCustomerConstant
 ID:          default_catalog.default_database.OrderCustomerConstant
@@ -61,7 +68,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   time
 Row count:   ~8e6
----
+--- definition ---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id: BIGINT NOT NULL
@@ -77,6 +84,9 @@ LogicalProject(time=[$2], id=[$0], name=[$6], customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `OrderCustomerConstant` AS  SELECT o.`time`, o.id, c.name, o.customerid FROM Orders o INNER JOIN Customer c ON o.customerid = c.customerid AND c.name = 'Robert' AND o.id > 5;
+--- physical ---
+Table OrderCustomerConstant_3 (postgres):
+ - primary key: id
 
 === OrderCustomerLeft
 ID:          default_catalog.default_database.OrderCustomerLeft
@@ -85,7 +95,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - lastUpdated: BIGINT
  - id: BIGINT NOT NULL
@@ -101,6 +111,9 @@ LogicalProject(lastUpdated=[$7], id=[$0], name=[$6], customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `OrderCustomerLeft` AS  SELECT c.lastUpdated, o.id, c.name, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid;
+--- physical ---
+Table OrderCustomerLeft_4 (postgres):
+ - primary key: id
 
 === OrderCustomerLeftExcluded
 ID:          default_catalog.default_database.OrderCustomerLeftExcluded
@@ -109,7 +122,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   time
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id: BIGINT NOT NULL
@@ -125,6 +138,9 @@ LogicalProject(time=[$2], id=[$0], customerid=[$1])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `OrderCustomerLeftExcluded` AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c on o.customerid = c.customerid WHERE c.customerid IS NULL;
+--- physical ---
+Table OrderCustomerLeftExcluded_5 (postgres):
+ - primary key: id
 
 === OrderCustomerRight
 ID:          default_catalog.default_database.OrderCustomerRight
@@ -133,7 +149,7 @@ Stage:       flink
 Primary key: ouuid, id
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - ouuid: BIGINT NOT NULL
  - id: BIGINT
@@ -149,6 +165,9 @@ LogicalProject(ouuid=[coalesce($0, 0:BIGINT)], id=[$0], name=[$6], customerid=[$
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `OrderCustomerRight` AS  SELECT coalesce(o.id, 0) as ouuid, o.id, c.name, o.customerid  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid;
+--- physical ---
+Table OrderCustomerRight_6 (postgres):
+ - primary key: ouuid
 
 === OrderCustomerRightExcluded
 ID:          default_catalog.default_database.OrderCustomerRightExcluded
@@ -157,7 +176,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - lastUpdated: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -173,6 +192,9 @@ LogicalProject(lastUpdated=[$7], customerid=[$4], name=[$6])
       LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `OrderCustomerRightExcluded` AS  SELECT c.lastUpdated, c.customerid, c.name  FROM Orders o RIGHT JOIN Customer c on o.customerid = c.customerid WHERE o.id IS NULL;
+--- physical ---
+Table OrderCustomerRightExcluded_7 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -181,7 +203,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   time
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -204,6 +226,10 @@ SELECT `id`, `customerid`, `time`, `entries`
 FROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`_Orders`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table Orders_8 (postgres):
+ - primary key: id
+
 === _Customer
 ID:          default_catalog.default_database._Customer
 Type:        stream
@@ -211,7 +237,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -249,7 +275,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL

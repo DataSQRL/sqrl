@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -21,6 +21,9 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, _OrdersStream]])
 SQL:
 CREATE VIEW `OrderMetrics` AS  SELECT * FROM _OrdersStream;
+--- physical ---
+Table OrderMetrics_1 (postgres):
+ - primary key: id, time
 
 === OrderUpdates
 ID:          default_catalog.default_database.OrderUpdates
@@ -29,7 +32,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -44,6 +47,9 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3])
   LogicalTableScan(table=[[default_catalog, default_database, _OrdersStream]])
 SQL:
 CREATE VIEW `OrderUpdates` AS  SELECT * FROM _OrdersStream;
+--- physical ---
+Table OrderUpdates_2 (postgres):
+ - primary key: id, time
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -52,7 +58,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   time
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -75,6 +81,10 @@ SELECT `id`, `customerid`, `time`, `entries`
 FROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`_OrdersStream`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table Orders_3 (postgres):
+ - primary key: id
+
 === _OrdersStream
 ID:          default_catalog.default_database._OrdersStream
 Type:        stream
@@ -82,7 +92,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL

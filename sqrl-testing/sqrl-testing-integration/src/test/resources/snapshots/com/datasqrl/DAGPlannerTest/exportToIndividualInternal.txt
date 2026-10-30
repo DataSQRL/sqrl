@@ -4,7 +4,7 @@ ID:          connectors.sinks.CustomerExportInternal
 Type:        export
 Stage:       flink
 Connector:   kafka-safe
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerSubset
 
@@ -15,7 +15,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -46,6 +46,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === CustomerSubset
 ID:          default_catalog.default_database.CustomerSubset
 Type:        stream
@@ -53,7 +57,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -67,6 +71,9 @@ LogicalProject(customerid=[$0], name=[$2], timestamp=[$4])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `CustomerSubset` AS  SELECT customerid, name, `timestamp` FROM Customer;
+--- physical ---
+Table CustomerSubset_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === DistinctCustomer
 ID:          default_catalog.default_database.DistinctCustomer
@@ -75,7 +82,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -99,6 +106,10 @@ SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Customer`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table DistinctCustomer_4 (postgres):
+ - primary key: customerid
+
 === JoinStream
 ID:          default_catalog.default_database.JoinStream
 Type:        stream
@@ -106,7 +117,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -120,6 +131,9 @@ LogicalProject(id=[$0], name=[$6])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `JoinStream` AS  SELECT o.id, c.name FROM Orders o JOIN Customer c on c.customerid = o.customerid;
+--- physical ---
+Table JoinStream_6 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -128,7 +142,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -157,11 +171,15 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_7 (postgres):
+ - primary key: id, time
+
 === DistinctStream
 ID:          log.DistinctStream
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.DistinctCustomer
 
@@ -169,7 +187,7 @@ Inputs:
 ID:          log.JoinStream
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.JoinStream
 

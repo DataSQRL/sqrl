@@ -899,7 +899,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   -
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -908,6 +908,9 @@ Inputs:
  - default_catalog.default_database._Customer
 Annotations:
  - stream-root: _Customer
+--- physical ---
+Table AnotherCustomer (postgres):
+ - primary key: customerid, lastUpdated
 
 === Customer
 ID:          default_catalog.default_database.Customer
@@ -916,7 +919,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -927,12 +930,16 @@ Inputs:
  - default_catalog.default_database.Customer__base
 Annotations:
  - stream-root: Customer
+--- physical ---
+Table Customer (postgres):
+ - primary key: customerid, lastUpdated
+ - index Customer_btree_c4 (btree): timestamp
 
 === CustomerById
 ID:          default_catalog.default_database.CustomerById
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customer
 Annotations:
@@ -947,7 +954,7 @@ Stage:       flink
 Primary key: customerid, email
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -959,6 +966,9 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: Customer
+--- physical ---
+Table CustomerByMultipleTime (postgres):
+ - primary key: customerid, email
 
 === CustomerByTime2
 ID:          default_catalog.default_database.CustomerByTime2
@@ -967,7 +977,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -979,6 +989,9 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: Customer
+--- physical ---
+Table CustomerByTime2 (postgres):
+ - primary key: customerid
 
 === CustomerFilteredDistinct
 ID:          default_catalog.default_database.CustomerFilteredDistinct
@@ -987,7 +1000,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~2e6
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -998,12 +1011,15 @@ Inputs:
  - default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer
+--- physical ---
+Table CustomerFilteredDistinct (postgres):
+ - primary key: customerid
 
 === CustomerQuery
 ID:          default_catalog.default_database.CustomerQuery
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.AnotherCustomer
 Annotations:
@@ -1018,7 +1034,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -1034,7 +1050,7 @@ Annotations:
 ID:          default_catalog.default_database.CustomerSubscriptionById
 Type:        query
 Stage:       kafka
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customer
 Annotations:
@@ -1049,7 +1065,7 @@ Stage:       flink
 Primary key: window_start, window_end
 Timestamp:   -
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
@@ -1058,6 +1074,9 @@ Inputs:
  - default_catalog.default_database.SelectCustomers
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
+--- physical ---
+Table CustomerTimeWindow (postgres):
+ - primary key: window_start, window_end
 
 === ExplicitDistinct
 ID:          default_catalog.default_database.ExplicitDistinct
@@ -1066,7 +1085,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -1075,6 +1094,9 @@ Inputs:
  - default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer
+--- physical ---
+Table ExplicitDistinct (postgres):
+ - primary key: customerid
 
 === ExternalOrders
 ID:          default_catalog.default_database.ExternalOrders
@@ -1083,7 +1105,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -1094,6 +1116,9 @@ Inputs:
 Annotations:
  - features: DENORMALIZE (feature)
  - stream-root: ExternalOrders
+--- physical ---
+Table ExternalOrders (postgres):
+ - primary key: id, time
 
 === InvalidDistinct
 ID:          default_catalog.default_database.InvalidDistinct
@@ -1102,7 +1127,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -1111,6 +1136,9 @@ Inputs:
  - default_catalog.default_database.Customer
 Annotations:
  - stream-root: Customer
+--- physical ---
+Table InvalidDistinct (postgres):
+ - primary key: customerid
 
 === MissedTemporalJoin
 ID:          default_catalog.default_database.MissedTemporalJoin
@@ -1119,7 +1147,7 @@ Stage:       postgres
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -1138,12 +1166,15 @@ Stage:       flink
 Primary key: orderid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - orderid: INTEGER NOT NULL
  - amount: FLOAT
 Inputs:
  - default_catalog.default_database.Orders__base
+--- physical ---
+Table Orders (postgres):
+ - primary key: orderid
 
 === SelectCustomers
 ID:          default_catalog.default_database.SelectCustomers
@@ -1152,7 +1183,7 @@ Stage:       flink
 Primary key: customerid, name
 Timestamp:   timestamp
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -1164,12 +1195,17 @@ Inputs:
 Annotations:
  - stream-root: Customer
  - sort: [4 DESC-nulls-last]
+--- physical ---
+Table SelectCustomers (postgres):
+ - primary key: customerid, name
+ - index SelectCustomers_btree_c4 (btree): timestamp
+ - index SelectCustomers_hash_c2 (hash): name
 
 === TableFunctionCallsTblFct
 ID:          default_catalog.default_database.TableFunctionCallsTblFct
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerById
 Annotations:
@@ -1185,7 +1221,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~9e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -1199,6 +1235,9 @@ Inputs:
  - default_catalog.default_database.ExternalOrders
 Annotations:
  - stream-root: ExternalOrders
+--- physical ---
+Table TemporalJoin (postgres):
+ - primary key: id, time
 
 === UnnestOrders
 ID:          default_catalog.default_database.UnnestOrders
@@ -1207,7 +1246,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -1220,6 +1259,9 @@ Inputs:
  - default_catalog.default_database.ExternalOrders
 Annotations:
  - stream-root: ExternalOrders
+--- physical ---
+Table UnnestOrders (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === _Customer
 ID:          default_catalog.default_database._Customer
@@ -1228,7 +1270,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -1245,7 +1287,7 @@ ID:          mysink.customersink
 Type:        export
 Stage:       flink
 Connector:   print
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.TemporalJoin
 
@@ -1253,7 +1295,7 @@ Inputs:
 ID:          print.TimeWindow
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerTimeWindow
 

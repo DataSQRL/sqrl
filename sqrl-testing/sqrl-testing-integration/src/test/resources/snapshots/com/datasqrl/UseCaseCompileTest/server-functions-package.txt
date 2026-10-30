@@ -50,7 +50,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -61,12 +61,15 @@ Inputs:
  - default_catalog.default_database.Customers__base
 Annotations:
  - stream-root: Customers
+--- physical ---
+Table Customers (postgres):
+ - primary key: customerid, lastUpdated
 
 === CustomersById
 ID:          default_catalog.default_database.CustomersById
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customers
 Annotations:
@@ -78,7 +81,7 @@ Annotations:
 ID:          default_catalog.default_database.CustomersByName
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customers
 Annotations:
