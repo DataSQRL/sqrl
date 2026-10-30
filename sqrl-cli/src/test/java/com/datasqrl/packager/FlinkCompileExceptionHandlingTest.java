@@ -49,7 +49,8 @@ class FlinkCompileExceptionHandlingTest {
   @BeforeEach
   void setUp() {
     var workspacePaths = new WorkspacePaths(null, tempBuildDir, tempBuildDir, null);
-    packager = new Packager(workspacePaths, packageJson, preprocPipeline, mainScript);
+    packager =
+        new Packager(workspacePaths, packageJson, preprocPipeline, mainScript, new SourceFiles());
   }
 
   @Test

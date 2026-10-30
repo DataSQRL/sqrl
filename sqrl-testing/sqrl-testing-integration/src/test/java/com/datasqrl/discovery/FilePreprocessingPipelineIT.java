@@ -24,6 +24,7 @@ import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.packager.FilePreprocessingPipeline;
+import com.datasqrl.packager.SourceFiles;
 import com.datasqrl.packager.preprocess.CopyStaticDataPreprocessor;
 import com.datasqrl.packager.preprocess.JarPreprocessor;
 import com.datasqrl.packager.preprocess.SqrlPreprocessor;
@@ -67,7 +68,7 @@ class FilePreprocessingPipelineIT {
     // Arrange
     var preprocessingPipeline =
         new FilePreprocessingPipeline(
-            workspacePaths, outputDir, Set.of(new CopyStaticDataPreprocessor()));
+            workspacePaths, outputDir, Set.of(new CopyStaticDataPreprocessor()), new SourceFiles());
 
     // Act
     preprocessingPipeline.run(FILES_DIR, errorCollector);
@@ -104,7 +105,8 @@ class FilePreprocessingPipelineIT {
   void given_jarFile_when_jarPreprocessorRuns_then_processesJarCorrectly() throws Exception {
     // Arrange
     var preprocessingPipeline =
-        new FilePreprocessingPipeline(workspacePaths, outputDir, Set.of(new JarPreprocessor()));
+        new FilePreprocessingPipeline(
+            workspacePaths, outputDir, Set.of(new JarPreprocessor()), new SourceFiles());
 
     // Act
     preprocessingPipeline.run(FILES_DIR, errorCollector);
@@ -137,7 +139,7 @@ class FilePreprocessingPipelineIT {
                 new JarPreprocessor(),
                 new SqrlPreprocessor(new PackageJsonImpl(), ErrorCollector.root())));
     var preprocessingPipeline =
-        new FilePreprocessingPipeline(workspacePaths, outputDir, preprocessors);
+        new FilePreprocessingPipeline(workspacePaths, outputDir, preprocessors, new SourceFiles());
 
     // Act
     preprocessingPipeline.run(FILES_DIR, errorCollector);

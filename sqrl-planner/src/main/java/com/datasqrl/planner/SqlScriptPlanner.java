@@ -34,6 +34,7 @@ import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLabel;
+import com.datasqrl.error.ErrorLocation;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.SchemaConversionResult;
@@ -113,12 +114,14 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
@@ -180,6 +183,9 @@ public class SqlScriptPlanner {
   /** Manages the context of the script that is processed, adjusted for imports */
   private ScriptContext scriptContext;
 
+  /** Notified of the planned statements, tables and queries, e.g. for a language server */
+  @Setter private PlannerListener listener = PlannerListener.NONE;
+
   public SqlScriptPlanner(
       ErrorCollector errorCollector,
       ModuleLoaders moduleLoaders,
@@ -237,6 +243,7 @@ public class SqlScriptPlanner {
 
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
     var parsedScript = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
+    sqrlEnv.setListener(listener);
     List<StackableStatement> statementStack = new ArrayList<>();
     // Statements that failed to parse are skipped, the rest are still planned to report all errors
     CollectedException firstError = parsedScript.firstError().orElse(null);
@@ -258,12 +265,13 @@ public class SqlScriptPlanner {
       }
       var failuresBefore = failedTables.size();
 
+      listener.statementStarted(sourceStmt, lineErrors.getLocation());
       try {
         try {
           planStatement(sqlStatement, statementStack, inheritedHints, sqrlEnv, lineErrors);
 
-        } catch (CollectedException e) {
-          // Already reported
+        } catch (CollectedException | CancellationException e) {
+          // Already reported, or a listener stopped planning, e.g. for an outdated check
           throw e;
 
         } catch (NoLocationStatementParserException e) {
@@ -327,6 +335,8 @@ public class SqlScriptPlanner {
         }
         statementStack = stackAfterFailure(sqlStatement, statementStack);
         continue;
+      } finally {
+        listener.statementFinished();
       }
 
       if (!(sqlStatement instanceof SqrlImportStatement)) {
@@ -410,7 +420,9 @@ public class SqlScriptPlanner {
               getMutationBuilder(hintsAndDocs),
               scriptContext.mainModuleLoader().getSchemaLoader(),
               hintsAndDocs)
-          .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+          .ifPresent(
+              tableAnalysis ->
+                  addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv, errors.getLocation()));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
       var tablePath = sqrlDef.getPath();
@@ -432,9 +444,10 @@ public class SqlScriptPlanner {
             tblNodeOpt.isPresent() && tblNodeOpt.get() instanceof TableNode,
             "Could not find table [%s] but located the stack",
             tablePath);
-        ((SqrlAddColumnStatement) sqrlDef)
-            .setColumnNames(
-                ((TableNode) tblNodeOpt.get()).getAnalysis().getRowType().getFieldNames());
+        var parentTable = ((TableNode) tblNodeOpt.get()).getAnalysis();
+        ((SqrlAddColumnStatement) sqrlDef).setColumnNames(parentTable.getRowType().getFieldNames());
+        listener.tableReferenced(
+            parentTable.getObjectIdentifier(), sqrlDef.getTableName().map(NamePath::popLast));
       }
 
       var isHidden =
@@ -502,6 +515,8 @@ public class SqlScriptPlanner {
               parentNode.get().getClass());
           identifier = scriptContext.toIdentifier(tablePath.toString());
           parentTbl = ((TableNode) parentNode.get()).getTableAnalysis();
+          listener.tableReferenced(
+              parentTbl.getObjectIdentifier(), sqrlDef.getTableName().map(NamePath::popLast));
           checkFatal(
               parentTbl.getOptionalBaseTable().isEmpty(),
               ErrorCode.BASETABLE_ONLY_ERROR,
@@ -598,6 +613,7 @@ public class SqlScriptPlanner {
             "Function or relationship [%s] already exists in catalog",
             tablePath);
         addFunctionToDag(fn, hintsAndDocs);
+        listener.functionDefined(fn, errors.getLocation());
         if (!fn.getVisibility().isAccessOnly()) {
           sqrlEnv.registerSqrlTableFunction(fn);
         }
@@ -610,7 +626,8 @@ public class SqlScriptPlanner {
               hintsAndDocs,
               visibility,
               false,
-              sqrlEnv);
+              sqrlEnv,
+              errors.getLocation());
         }
       }
     } else if (stmt instanceof SqrlNextBatch) {
@@ -634,7 +651,8 @@ public class SqlScriptPlanner {
             hintsAndDocs,
             visibility,
             false,
-            sqrlEnv);
+            sqrlEnv,
+            errors.getLocation());
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv
             .createTable(
@@ -642,7 +660,9 @@ public class SqlScriptPlanner {
                 getMutationBuilder(hintsAndDocs),
                 scriptContext.mainModuleLoader().getSchemaLoader(),
                 hintsAndDocs)
-            .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
+            .ifPresent(
+                tableAnalysis ->
+                    addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv, errors.getLocation()));
       } else if (node instanceof RichSqlInsert insert) {
         addInsert(insert, hintsAndDocs, sqrlEnv, errors);
       } else if (node instanceof SqlAlterTable || node instanceof SqlAlterView) {
@@ -811,9 +831,13 @@ public class SqlScriptPlanner {
    *
    * @param tableAnalysis
    * @param sqrlEnv
+   * @param location where the table is defined
    */
   private void addSourceToDag(
-      TableAnalysis tableAnalysis, HintsAndDoc hintsAndDoc, Sqrl2FlinkSQLTranslator sqrlEnv) {
+      TableAnalysis tableAnalysis,
+      HintsAndDoc hintsAndDoc,
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorLocation location) {
     Preconditions.checkArgument(tableAnalysis.getFromTables().size() == 1);
     var source = (TableAnalysis) tableAnalysis.getFromTables().get(0);
     Preconditions.checkArgument(source.isSourceOrSink());
@@ -826,7 +850,7 @@ public class SqlScriptPlanner {
             false,
             true,
             isHidden);
-    addTableToDag(tableAnalysis, hintsAndDoc, visibility, true, sqrlEnv);
+    addTableToDag(tableAnalysis, hintsAndDoc, visibility, true, sqrlEnv, location);
   }
 
   /**
@@ -837,13 +861,15 @@ public class SqlScriptPlanner {
    * @param hintsAndDoc
    * @param visibility
    * @param sqrlEnv
+   * @param location where the table is defined
    */
   private void addTableToDag(
       TableAnalysis tableAnalysis,
       HintsAndDoc hintsAndDoc,
       AccessVisibility visibility,
       boolean isSource,
-      Sqrl2FlinkSQLTranslator sqrlEnv) {
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorLocation location) {
     // Sources must be processed by the stream stage
     var availableStages =
         isSource ? List.of(streamStage) : determineStages(tableStages, hintsAndDoc.hints());
@@ -854,6 +880,7 @@ public class SqlScriptPlanner {
                 ? getSourceSinkStageAnalysis()
                 : getStageAnalysis(tableAnalysis, availableStages));
     dagBuilder.add(tableNode);
+    listener.tableDefined(tableAnalysis, location);
 
     // Figure out if and what type of access function we should add for this table
     var queryByHint = hintsAndDoc.hints().getQueryByHint();
@@ -962,6 +989,8 @@ public class SqlScriptPlanner {
         var failuresBefore = failedTables.size();
         try {
           addImport(namespaceObject, nameModifier, hintsAndDoc, sqrlEnv);
+        } catch (CancellationException e) {
+          throw e;
         } catch (RuntimeException e) {
           // Import the other objects, so that the statements that use them are still planned
           if (failedTables.size() == failuresBefore) {
@@ -1024,7 +1053,8 @@ public class SqlScriptPlanner {
                 getMutationBuilder(importedHintsAndDoc),
                 importedHintsAndDoc);
         importedHintsAndDoc.hints().updateColumnNamesHints(tableAnalysis::getField);
-        addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
+        addSourceToDag(
+            tableAnalysis, importedHintsAndDoc, sqrlEnv, flinkTable.errorCollector().getLocation());
         completeScript.append(tableAnalysis.getOriginalSql());
       } catch (Throwable e) {
         throw handleTableError(flinkTable.errorCollector, e);
@@ -1182,6 +1212,8 @@ public class SqlScriptPlanner {
                         "Could not find table: %s",
                         tablePath.toString()))
             .unwrap(TableNode.class);
+    listener.tableReferenced(
+        inputNode.getAnalysis().getObjectIdentifier(), exportStmt.getTableIdentifier());
 
     // Set a unique id for the exported table
     Function<String, String> tableNameModifier =
@@ -1325,6 +1357,13 @@ public class SqlScriptPlanner {
     var sinkTableId = sqrlEnv.getInsertTarget(insert);
     var sinkTable = sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId);
     errors.checkFatal(sinkTable != null, "Could not find INSERT target table: %s", sinkTableId);
+    var target = (SqlIdentifier) insert.getTargetTableID();
+    var targetPosition = target.getParserPosition();
+    listener.tableReferenced(
+        sinkTable.getObjectIdentifier(),
+        new ParsedObject<>(
+            NamePath.of(target.names.toArray(String[]::new)),
+            new FileLocation(targetPosition.getLineNum(), targetPosition.getColumnNum())));
 
     var inputTable =
         sqrlEnv.analyzeInsertQuery(

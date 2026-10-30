@@ -63,6 +63,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -71,13 +72,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.SneakyThrows;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelShuttleImpl;
@@ -95,6 +99,7 @@ import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
 import org.apache.calcite.rex.RexSubQuery;
 import org.apache.calcite.schema.FunctionParameter;
+import org.apache.calcite.sql.SqlFunction;
 import org.apache.calcite.sql.SqlFunctionCategory;
 import org.apache.calcite.sql.SqlIdentifier;
 import org.apache.calcite.sql.SqlKind;
@@ -103,7 +108,9 @@ import org.apache.calcite.sql.SqlOperator;
 import org.apache.calcite.sql.SqlOrderBy;
 import org.apache.calcite.sql.SqlSelect;
 import org.apache.calcite.sql.SqlSyntax;
+import org.apache.calcite.sql.advise.SqlAdvisor;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.calcite.sql.validate.SqlMoniker;
 import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.flink.api.common.RuntimeExecutionMode;
@@ -128,7 +135,10 @@ import org.apache.flink.table.catalog.Column.PhysicalColumn;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.catalog.ResolvedSchema;
 import org.apache.flink.table.catalog.UnresolvedIdentifier;
+import org.apache.flink.table.functions.BuiltInFunctionDefinition;
+import org.apache.flink.table.functions.BuiltInFunctionDefinitions;
 import org.apache.flink.table.functions.FunctionDefinition;
+import org.apache.flink.table.functions.UserDefinedFunction;
 import org.apache.flink.table.operations.Operation;
 import org.apache.flink.table.operations.ddl.AlterViewAsOperation;
 import org.apache.flink.table.operations.ddl.CreateCatalogFunctionOperation;
@@ -139,6 +149,7 @@ import org.apache.flink.table.planner.calcite.FlinkRelBuilder;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 import org.apache.flink.table.planner.delegation.PlannerBase;
 import org.apache.flink.table.planner.expressions.RexNodeExpression;
+import org.apache.flink.table.planner.functions.sql.FlinkSqlOperatorTable;
 import org.apache.flink.table.planner.operations.SqlNodeToOperationConversion;
 import org.apache.flink.table.planner.plan.ExecNodeGraphInternalPlan;
 import org.apache.flink.table.planner.utils.RowLevelModificationContextUtils;
@@ -167,6 +178,7 @@ import org.apache.flink.table.types.DataType;
 public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
   private static final String SCHEMA_SUFFIX = "__schema";
+  private static final Pattern FUNCTION_NAME = Pattern.compile("[A-Za-z][A-Za-z0-9_]*");
   private static final String TEMP_VIEW_SUFFIX = "__view";
 
   private final RuntimeExecutionMode executionMode;
@@ -187,6 +199,9 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
   @Getter private final Set<String> createdDatabases = new LinkedHashSet<>();
   @Getter private final TableAnalysisLookup tableLookup = new TableAnalysisLookup();
+
+  /** Notified of each validated query */
+  @Setter private PlannerListener listener = PlannerListener.NONE;
 
   public Sqrl2FlinkSQLTranslator(
       WorkspacePaths workspacePaths, FlinkStreamEngine flink, CompilerConfig compilerConfig) {
@@ -274,6 +289,127 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   }
 
   /**
+   * Suggests how a query can be completed at a position, from the tables and functions that have
+   * been planned.
+   *
+   * @param sql the query
+   * @param cursor the position in the query
+   * @param replaced receives the part of the query before the position that the suggestions
+   *     replace, e.g. a partially typed name
+   * @return the suggested names
+   */
+  public List<SqlMoniker> getCompletionHints(String sql, int cursor, String[] replaced) {
+    var planner = validatorSupplier.get();
+    return new SqlAdvisor(planner.getSqlAdvisorValidator(), planner.config().getParserConfig())
+        .getCompletionHints(sql, cursor, replaced);
+  }
+
+  /** The names of the functions that can be called in SQL, built-in and user-defined. */
+  public List<String> listFunctions() {
+    var names = new TreeSet<String>(String.CASE_INSENSITIVE_ORDER);
+    // Built-in functions are defined by Flink or, for older ones, as Calcite operators. Flink's
+    // definitions of Table API functions (e.g. `lowerCase`) only have a name, not a SQL name.
+    BuiltInFunctionDefinitions.getDefinitions().stream()
+        .filter(definition -> !definition.isInternal())
+        .filter(
+            definition ->
+                !definition.getSqlName().equals(definition.getName().toUpperCase())
+                    || definition.getSqlName().equals(definition.getName()))
+        .map(BuiltInFunctionDefinition::getSqlName)
+        .filter(name -> FUNCTION_NAME.matcher(name).matches() && !name.startsWith("AGG_"))
+        .forEach(names::add);
+    var operators =
+        FlinkSqlOperatorTable.instance(executionMode == RuntimeExecutionMode.BATCH)
+            .getOperatorList();
+    for (var operator : operators) {
+      var syntax = operator.getSyntax();
+      if (operator instanceof SqlFunction
+          && (syntax == SqlSyntax.FUNCTION
+              || syntax == SqlSyntax.FUNCTION_ID
+              || syntax == SqlSyntax.FUNCTION_STAR)
+          && FUNCTION_NAME.matcher(operator.getName()).matches()) {
+        names.add(operator.getName());
+      }
+    }
+    names.addAll(Arrays.asList(tEnv.listUserDefinedFunctions()));
+    return List.copyOf(names);
+  }
+
+  /**
+   * The signatures of a function that can be called in SQL, each as the descriptions of its
+   * parameters, e.g. {@code [<CHARACTER_STRING>, <INTEGER_NUMERIC>]} of {@code LEFT}.
+   */
+  public List<List<String>> functionSignatures(String name) {
+    var signatures = new ArrayList<List<String>>();
+    try {
+      ((PlannerBase) tEnv.getPlanner())
+          .getFlinkContext()
+          .getFunctionCatalog()
+          .lookupFunction(UnresolvedIdentifier.of(name))
+          .ifPresent(
+              function -> {
+                var definition = function.getDefinition();
+                definition
+                    .getTypeInference(catalogManager.getDataTypeFactory())
+                    .getInputTypeStrategy()
+                    .getExpectedSignatures(definition)
+                    .forEach(
+                        signature ->
+                            signatures.add(
+                                signature.getArguments().stream()
+                                    .map(
+                                        argument ->
+                                            argument.getName().map(n -> n + " ").orElse("")
+                                                + argument.getType())
+                                    .toList()));
+              });
+    } catch (RuntimeException e) {
+      // Functions that are only defined as Calcite operators have no type inference
+    }
+    if (!signatures.isEmpty()) {
+      return signatures;
+    }
+    // Calcite describes signatures as e.g. 'LEFT(<CHARACTER>, <INTEGER>)', one per line
+    for (var operator :
+        FlinkSqlOperatorTable.instance(executionMode == RuntimeExecutionMode.BATCH)
+            .getOperatorList()) {
+      if (!(operator instanceof SqlFunction) || !operator.getName().equalsIgnoreCase(name)) {
+        continue;
+      }
+      try {
+        for (var line : operator.getAllowedSignatures().split("\n")) {
+          var start = line.indexOf('(');
+          var end = line.lastIndexOf(')');
+          if (start >= 0 && end > start) {
+            var parameters = line.substring(start + 1, end).strip();
+            signatures.add(
+                parameters.isEmpty()
+                    ? List.of()
+                    : List.of(parameters.split(",\\s*(?![^(<]*[)>])")));
+          }
+        }
+      } catch (RuntimeException e) {
+        // The operator does not describe its signatures
+      }
+      if (!signatures.isEmpty()) {
+        break;
+      }
+    }
+    return signatures.stream().distinct().toList();
+  }
+
+  /** The class of a user-defined function, e.g. {@code com.myudf.MyScalarFunction}. */
+  public Optional<String> functionClass(String name) {
+    return ((PlannerBase) tEnv.getPlanner())
+        .getFlinkContext()
+        .getFunctionCatalog()
+        .lookupFunction(UnresolvedIdentifier.of(name))
+        .map(function -> function.getDefinition())
+        .filter(UserDefinedFunction.class::isInstance)
+        .map(definition -> definition.getClass().getName());
+  }
+
+  /**
    * Builds the statement set and compiles the plan for Flink which is the final component needed
    * for the {@link FlinkPhysicalPlan}.
    *
@@ -337,6 +473,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     }
     var validator = flinkPlanner.getOrCreateSqlValidator();
     var validatedQuery = validator.validate(query);
+    listener.queryValidated(validatedQuery, validator);
     var referencedViews = getReferencedViews(validatedQuery, validator);
     var relRoot = flinkPlanner.rel(validatedQuery);
     var relBuilder = flinkSqlNodePlanner.getRelBuilder(flinkPlanner);
@@ -535,6 +672,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     var flinkPlanner = validatorSupplier.get();
     var validator = flinkPlanner.getOrCreateSqlValidator();
     var validatedQuery = validator.validate(analysisQuery);
+    listener.queryValidated(validatedQuery, validator);
     FlinkSqlNodes.bindTableNames(query, validatedQuery, validator);
     var referencedViews = getReferencedViews(validatedQuery, validator);
     var relRoot = flinkPlanner.rel(validatedQuery);

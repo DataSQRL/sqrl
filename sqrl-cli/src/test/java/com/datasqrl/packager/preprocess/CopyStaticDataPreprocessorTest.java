@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.packager.FilePreprocessingPipeline;
+import com.datasqrl.packager.SourceFiles;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -109,7 +110,12 @@ class CopyStaticDataPreprocessorTest {
 
   private FilePreprocessingPipeline.Context context(ErrorCollector errors) {
     return new FilePreprocessingPipeline.Context(
-        tempDir, tempDir.resolve("build"), tempDir.resolve("lib"), tempDir.resolve("data"), errors);
+        tempDir,
+        tempDir.resolve("build"),
+        tempDir.resolve("lib"),
+        tempDir.resolve("data"),
+        errors,
+        new SourceFiles());
   }
 
   private Path dataFile(String name) {
