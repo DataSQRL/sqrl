@@ -41,6 +41,7 @@ import org.eclipse.lsp4j.DidChangeTextDocumentParams;
 import org.eclipse.lsp4j.DidCloseTextDocumentParams;
 import org.eclipse.lsp4j.DidOpenTextDocumentParams;
 import org.eclipse.lsp4j.DidSaveTextDocumentParams;
+import org.eclipse.lsp4j.DocumentFormattingParams;
 import org.eclipse.lsp4j.DocumentHighlight;
 import org.eclipse.lsp4j.DocumentHighlightParams;
 import org.eclipse.lsp4j.DocumentSymbol;
@@ -66,6 +67,7 @@ import org.eclipse.lsp4j.SignatureHelp;
 import org.eclipse.lsp4j.SignatureHelpParams;
 import org.eclipse.lsp4j.SymbolInformation;
 import org.eclipse.lsp4j.TextDocumentPositionParams;
+import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.WorkspaceEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.eclipse.lsp4j.jsonrpc.messages.Either3;
@@ -184,6 +186,16 @@ class SqrlTextDocumentService implements TextDocumentService {
                             DocumentOutline.of(text, file, checks.symbolsOf(file)).stream()
                                 .map(Either::<SymbolInformation, DocumentSymbol>forRight)
                                 .toList()))
+                .orElse(List.of()));
+  }
+
+  @Override
+  public CompletableFuture<List<? extends TextEdit>> formatting(DocumentFormattingParams params) {
+    return requests.answer(
+        () ->
+            withDocument(
+                    params.getTextDocument().getUri(),
+                    (file, text) -> Optional.of(ScriptFormatter.edits(text, params.getOptions())))
                 .orElse(List.of()));
   }
 
