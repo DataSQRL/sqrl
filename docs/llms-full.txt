@@ -577,8 +577,8 @@ Internal tables are managed by an SQRL engine selected through an `engine(...)` 
 | Watermark spec             | **generated**                                                   | **required**                 |
 | Primary key                | *Unenforced* upsert semantics                                   | Same as Flink                |
 
-With the `kafka` engine, `PARTITIONED BY (col, ...)` on an internal table without a primary key sets the Kafka message key of each record that the server writes for a mutation. Records with the same key go to the same Kafka partition, so their order is kept.
-The Flink source of the table reads every column from the message value and ignores the key. Adding `PARTITIONED BY` to an existing table therefore keeps the records written before the table had a key, also when the pipeline reads the topic again from the earliest offset.
+With the `kafka` engine, `PARTITIONED BY (col, ...)` on an internal table without a primary key sets the Kafka message key of each record, both for the records that the server writes for a mutation and for the records that the pipeline exports into the table. Records with the same key go to the same Kafka partition, so their order is kept. The clause only declares the key; the table is not partitioned in Flink. The key can contain `METADATA FROM 'uuid'` and `METADATA FROM 'auth.<claim>'` columns, which the server fills in before it writes the record, but not the `METADATA FROM 'timestamp'` column, which is only known after the record is written.
+The Flink source of the table reads every column from the message value and ignores the key. Adding `PARTITIONED BY` to an existing table therefore keeps the records written before the table had a key, also when the pipeline reads the topic again from the earliest offset. This relies on the default `kafka-safe` connector; the plain `kafka` connector drops records that have no key.
 A table with a primary key is keyed by its primary key instead, and its upsert source drops records that were written without a key.
 
 ### Internal Example
@@ -839,7 +839,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 
 | Hint                        | Form                                                                                   | Applies to     | Effect                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 |-----------------------------|----------------------------------------------------------------------------------------|----------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **primary_key**             | `primary_key(col, ...)`                                                                | table          | declare PK when optimiser cannot infer                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **primary_key**             | `primary_key(col, ...)`                                                                | table          | declare the primary key, overriding the inferred key. Required when the compile fails with `Could not determine primary key for table [...]`; does not deduplicate                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | **index**                   | `index(type, col [ASC\|DESC], ...)` <br/> Multiple `index(...)` can be comma-separated | table          | override automatic index selection. `type` ∈ `HASH`, `BTREE`, `PBTREE`, `TEXT`, `VECTOR_COSINE`, `VECTOR_EUCLID`. `ASC` is the default. `DESC` is supported only for `BTREE` and `PBTREE` indexes. <br />`index` *alone* disables all automatic indexes                                                                                                                                                                                                     |
 | **partition_key**           | `partition_key(col, ...)`                                                              | table          | define partition columns for sinks that support partitioning                                                                                                                                                                                                                                                                                                                                                                                                |
 | **vector_dim**              | `vector_dim(col, 1536)`                                                                | table          | declare fixed vector length. This is required when using vector indexes.                                                                                                                                                                                                                                                                                                                                                                                    |
@@ -850,16 +850,16 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **ttl**                     | `ttl(duration)`                                                                        | table          | specifies how long the records for this table are retained in the underlying data system before it can be discarded. Expects a duration string with a unit between minute and day, e.g. `30 min`, `36 hours`, `14 days`. For range-partitioned tables, the partition width is derived from the duration and its unit (see the [postgres engine configuration](https://docs.datasqrl.com/docs/configuration-engine/postgres.md#partitioning)). Disabled by default. |
 | **cache**                   | `cache(duration)`                                                                      | table          | how long the results retrieved from this table can be cached on the server before they are refreshed. Expects a duration string like `10 seconds`. Disabled by default.                                                                                                                                                                                                                                                                                     |
 | **filtered_distinct_order** | flag                                                                                   | DISTINCT table | eliminate updates on order column only before dedup                                                                                                                                                                                                                                                                                                                                                                                                         |
-| **engine**                  | `engine(engine_id)`                                                                     | table          | pin execution engine (`process`, `database`, `flink`, ...). `exec` is a deprecated alias of `engine`                                                                                                                                                                                                                                                                                                                                                                                                |
+| **engine**                  | `engine(engine_id)`                                                                     | table          | on a table definition, select the engine that computes the table, such as `flink` or `postgres` (see [DAG Planner](https://docs.datasqrl.com/docs/deepdive.md#dag-planner)). With `flink`, Flink computes the rows and the database stores them, so their columns can be indexed. With `postgres`, the database computes the rows on every request. On a `CREATE TABLE`, name the engine that manages the internal table, such as `kafka` (see [CREATE TABLE](#create-table-internal-vs-external)). `exec` is a deprecated alias of `engine`                                                                                                                                                                                                                                                                                                                                                                                                |
 | **maintenance**             | `maintenance(type)`                                                                    | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                                                                                                                                                                                                                                                                                          |
 | **test**                    | `test` or `test(no_rows)`                                                              | table          | marks test case, only executed with [`test` command](https://docs.datasqrl.com/docs/compiler.md#test-command).                                                                                                                                                                                                                                                                                                                                                                                |
 | **workload**                | `workload`                                                                             | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                                                                                                                                                                                                                                                                                             |
 | **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                              | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                                                                                                                                                                                                                                                                                            |
 
-This example configures a primary key and vector index for the `SensorTempByHour` table:
+This example configures the vector length and a vector index for the `SensorTempByHour` table:
 
 ```sql
-/*+primary_key(sensorid, time_hour), index(VECTOR_COSINE, embedding) */
+/*+vector_dim(embedding, 1536), index(VECTOR_COSINE, embedding) */
 SensorTempByHour := SELECT ... ;
 ```
 
@@ -1493,7 +1493,8 @@ Each `include` entry can define `config` overrides for the included project's `s
     "include": {                                    // Include SQRL scripts from other projects
       "data_catalog": {                             // Namespace used in SQRL IMPORT statements
         "package": "../other-project/package.json", // Included project's package file
-        "config": { ... }                           // Optional Mustache template overrides for the included script(s)
+        "config": { ... },                          // Optional Mustache template overrides for the included script(s)
+        "standalone": true                          // Optional: the included project is deployed on its own (see Standalone Includes)
       }
     }
   }
@@ -1503,6 +1504,8 @@ Each `include` entry can define `config` overrides for the included project's `s
 > **Note**
 >
 > Include namespaces support underscores. Prefer `_` as a separator, such as `data_catalog` instead of `data-catalog`, because dashes can have a different meaning in SQL.
+
+By default, the current project owns the internal tables of an included project like its own tables. See [Standalone Includes](#standalone-includes) for an included project that is deployed on its own.
 
 #### Include Example
 
@@ -1549,6 +1552,49 @@ MyTable :=
 > ```sql
 > IMPORT root.data_catalog.sources;
 > ```
+
+#### Standalone Includes
+
+An included project is either a set of shared definitions or a project that is deployed on its own.
+By default, the current project treats it as shared definitions: it owns the included project's internal tables like its own, so its deployment creates and configures their Kafka topics.
+
+When the included project is deployed on its own, set `"standalone": true` on its include entry.
+That project then owns its internal Kafka tables, also when the current project imports them or exports into them.
+`kafka.json` lists their topics under `includedTopics` instead of `topics`, with only their names and `"include": "<namespace>"`, so the deployment leaves creating and configuring them, including their partition count, to the included project.
+
+Package files are merged, so the package file of a deployment can mark an include standalone that the base package file declares.
+Every include entry requires `package`, so the deployment's entry repeats it.
+For example, `reporting` includes `orders`, and in deployments `orders` is deployed on its own:
+
+```json
+// package.json
+{
+  "script": {
+    "main": "reporting.sqrl",
+    "include": {
+      "orders": { "package": "../orders/package.json" }
+    }
+  }
+}
+```
+
+```json
+// package-deploy.json
+{
+  "script": {
+    "include": {
+      "orders": { "package": "../orders/package.json", "standalone": true }
+    }
+  }
+}
+```
+
+Compiled with only `package.json`, e.g. for local tests, `reporting` owns the topics of the internal tables of `orders`. Compiled with both files, it leaves them to `orders`.
+
+> **Important**
+>
+> The current project still reads and writes the topics of a standalone include through its own `kafka-mutation` [connector template](#connector-templates-connectors), so it must resolve the same topic names and use the same key and value formats as the included project's deployment.
+> `standalone` does not cover internal Iceberg tables yet: the current project still owns those.
 
 ## Test-Runner (`test-runner`)
 
@@ -1727,6 +1773,7 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 
 - Kafka topics are automatically created based on your SQRL table definitions
 - Topic configurations are generated during the compilation process
+- `kafka.json` lists the topics of internal Kafka tables that a [standalone included project](https://docs.datasqrl.com/docs/configuration.md#include-other-sources) defines under `includedTopics`, with only their names, because that project owns them and decides their settings
 - Retention settings control how long data is stored in Kafka topics
 - Ensure `replication-factor` does not exceed the number of brokers in the target Kafka cluster
 - Watermarks are used for handling late-arriving events in stream processing
@@ -1734,6 +1781,27 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
   they generate `WATERMARK FOR <timestamp-column> AS SOURCE_WATERMARK()` instead of using the
   corresponding watermark delay. It is only supported by our `kafka-safe` and `upsert-kafka-safe` connectors.
 - Kafka serves as the messaging backbone between different engines in the pipeline
+
+## Key and Value Formats
+
+The `kafka` and `kafka-mutation` [connector templates](https://docs.datasqrl.com/docs/configuration.md#connector-templates-connectors) set one `format` (`flexible-json` by default) for the message key and value. To use separate formats, set `key.format` and `value.format` in the template, or in the `WITH` options of an internal table:
+
+```json
+{
+  "connectors": {
+    "kafka-mutation": {
+      "key.format": "json",
+      "value.format": "flexible-json"
+    }
+  }
+}
+```
+
+- `key.format` and `value.format` take precedence over `format`, which the default template always contains.
+- Tables with a message key (`PARTITIONED BY` or a primary key) use `key.format` for the key, otherwise `format`, otherwise `value.format`. Tables without a message key drop `key.format`.
+- Options of `format`, such as `flexible-json.timestamp-format.standard`, apply only to the key or value that uses that format. Set an option for one side with a `key.` or `value.` prefix, for example `value.flexible-json.timestamp-format.standard`.
+- When `key.format` and `value.format` are the same, the compiler notes that `format` is enough.
+- The server writes mutations as JSON, so the compiler warns when a mutation table uses a format other than `json` or `flexible-json`.
 
 ### Internal Environment Variables
 
@@ -3756,7 +3824,7 @@ The `build/deploy/flink` folder contains the data files that sources read locall
 
 | File         | Contents                                                                                                                             |
 |--------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `kafka.json` | The topics the pipeline creates, with name, partitions, replication factor, and configuration, plus the topics the test runner uses. |
+| `kafka.json` | The topics the pipeline creates, with name, partitions, replication factor, and configuration, plus the topics the test runner uses. The topics of internal Kafka tables that a standalone included project defines are listed separately under `includedTopics`, by name only, because that project creates them. |
 
 ### PostgreSQL
 
