@@ -28,6 +28,8 @@ For secure APIs with JWT authentication with Vert.x server configuration:
 }
 ```
 
+To turn on the JWT check, set `engines.vertx.config.jwtAuth`. `authKind` is not enough to turn on JWT check.
+
 As these config fields will be mapped to Vert.x Java POJOs, the name of the key fields are very important.
 For `pubSecKeys`, it is also possible to use different algorithms, that requires the key in a different (mostly PEM) format.
 For example, for `ES256`, this would look something like this:
@@ -44,7 +46,7 @@ For example, for `ES256`, this would look something like this:
 
 ## OAuth 2.0 Authentication Configuration
 
-For OAuth 2.0 authentication with providers like Auth0 or Keycloak, use the `oauthConfig` section.
+For OAuth 2.0 authentication with providers like Auth0 or Keycloak, use the `oauthConfig` section. To turn on the OAuth check, set `engines.vertx.config.oauthConfig.oauth2Options.site`.
 This enables MCP (Model Context Protocol) clients like Claude Code to authenticate using OAuth.
 
 ```json
