@@ -24,7 +24,7 @@ The DataSQRL plugin for IntelliJ IDEA 2026.1 and later starts the language serve
 
 ### Installation
 
-Build the plugin in the `sqrl-intellij-plugin` directory of the [DataSQRL repository](https://github.com/DataSQRL/sqrl), which needs JDK 21.
+Build the plugin in the `sqrl-intellij-plugin` directory of the [sqrl-editors repository](https://github.com/DataSQRL/sqrl-editors), which needs JDK 21.
 Pass the version of DataSQRL that you use, so that the plugin starts the Docker image of that version by default:
 
 ```bash
@@ -51,7 +51,7 @@ The DataSQRL extension for VS Code 1.91 and later, and editors built on it such 
 
 ### Installation
 
-Build the extension in the `sqrl-vscode-extension` directory of the [DataSQRL repository](https://github.com/DataSQRL/sqrl), which needs Node.js 22:
+Build the extension in the `sqrl-vscode-extension` directory of the [sqrl-editors repository](https://github.com/DataSQRL/sqrl-editors), which needs Node.js 22:
 
 ```bash
 npm install
@@ -79,7 +79,7 @@ Package files are the JSON files with sections of a DataSQRL package file, e.g. 
 
 ### Installation
 
-Build the plugin in the `sqrl-eclipse-plugin` directory of the [DataSQRL repository](https://github.com/DataSQRL/sqrl), which needs JDK 21:
+Build the plugin in the `sqrl-eclipse-plugin` directory of the [sqrl-editors repository](https://github.com/DataSQRL/sqrl-editors), which needs JDK 21:
 
 ```bash
 mvn verify
