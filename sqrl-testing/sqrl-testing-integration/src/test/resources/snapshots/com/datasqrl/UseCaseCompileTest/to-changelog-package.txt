@@ -46,12 +46,15 @@ Stage:       flink
 Primary key: k, v_sum
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - k: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - v_sum: INTEGER NOT NULL
 Inputs:
  - default_catalog.default_database.InputAgg
+--- physical ---
+Table AppendStream (postgres):
+ - primary key: k, v_sum
 
 === InputAgg
 ID:          default_catalog.default_database.InputAgg
@@ -60,12 +63,15 @@ Stage:       flink
 Primary key: k
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - k: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - v_sum: INTEGER NOT NULL
 Inputs:
  - default_catalog.default_database._InputValues
+--- physical ---
+Table InputAgg (postgres):
+ - primary key: k
 
 === _InputValues
 ID:          default_catalog.default_database._InputValues
@@ -74,7 +80,7 @@ Stage:       flink
 Primary key: k
 Timestamp:   -
 Row count:   ~1e1
----
+--- definition ---
 Schema:
  - k: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - v: INTEGER NOT NULL

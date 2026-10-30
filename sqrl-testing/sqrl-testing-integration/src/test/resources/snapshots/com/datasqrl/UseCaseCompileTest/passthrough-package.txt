@@ -57,7 +57,7 @@ Stage:       flink
 Primary key: employeeid
 Timestamp:   updatedDate
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - employeeid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -67,6 +67,10 @@ Inputs:
  - default_catalog.hr.Employees
 Annotations:
  - mostRecentDistinct: true
+--- physical ---
+Table Employees (postgres):
+ - primary key: employeeid
+ - index Employees_hash_c1 (hash): name
 
 === Reporting
 ID:          default_catalog.default_database.Reporting
@@ -75,7 +79,7 @@ Stage:       flink
 Primary key: employeeid, managerid
 Timestamp:   updatedDate
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - employeeid: BIGINT NOT NULL
  - managerid: BIGINT NOT NULL
@@ -84,6 +88,10 @@ Inputs:
  - default_catalog.hr.Reporting
 Annotations:
  - mostRecentDistinct: true
+--- physical ---
+Table Reporting (postgres):
+ - primary key: employeeid, managerid
+ - index Reporting_hash_c1 (hash): managerid
 
 === Employees
 ID:          default_catalog.hr.Employees
@@ -92,7 +100,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   updatedDate
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - employeeid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -108,7 +116,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   updatedDate
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - employeeid: BIGINT NOT NULL
  - managerid: BIGINT NOT NULL

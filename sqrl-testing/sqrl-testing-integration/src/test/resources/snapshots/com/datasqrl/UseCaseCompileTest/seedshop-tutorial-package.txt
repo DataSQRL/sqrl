@@ -148,7 +148,7 @@ ID:          connectors.local-sink
 Type:        export
 Stage:       flink
 Connector:   filesystem
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerPromotion
 
@@ -159,7 +159,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -180,7 +180,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -195,6 +195,10 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: _CustomersStream
+--- physical ---
+Table Customers (postgres):
+ - primary key: id
+ - index Customers_hash_c3 (hash): email
 
 === CustomersOrderStats
 ID:          default_catalog.default_database.CustomersOrderStats
@@ -203,7 +207,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   first_order
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - first_order: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -212,6 +216,9 @@ Schema:
  - num_orders: BIGINT NOT NULL
 Inputs:
  - default_catalog.default_database.OrdersTotals
+--- physical ---
+Table CustomersOrderStats (postgres):
+ - primary key: customerid
 
 === CustomersPastPurchases
 ID:          default_catalog.default_database.CustomersPastPurchases
@@ -220,7 +227,7 @@ Stage:       flink
 Primary key: customerid, productid
 Timestamp:   -
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - productid: BIGINT NOT NULL
@@ -228,6 +235,9 @@ Schema:
  - total_quantity: BIGINT NOT NULL
 Inputs:
  - default_catalog.default_database.Orders
+--- physical ---
+Table CustomersPastPurchases (postgres):
+ - primary key: customerid, productid
 
 === CustomersSpending
 ID:          default_catalog.default_database.CustomersSpending
@@ -236,7 +246,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   week
 Row count:   ~7e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - week: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -248,6 +258,9 @@ Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
  - stream-root: Orders
  - sort: [1 DESC-nulls-last]
+--- physical ---
+Table CustomersSpending (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -256,7 +269,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -267,6 +280,10 @@ Inputs:
 Annotations:
  - features: DENORMALIZE (feature)
  - stream-root: Orders
+--- physical ---
+Table Orders (postgres):
+ - primary key: id, time
+ - index Orders_hash_c1 (hash): customerid
 
 === OrdersTotals
 ID:          default_catalog.default_database.OrdersTotals
@@ -275,7 +292,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -287,12 +304,16 @@ Inputs:
 Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
  - stream-root: Orders
+--- physical ---
+Table OrdersTotals (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OrdersTotals_hash_c0 (hash): id
 
 === ProductSearch
 ID:          default_catalog.default_database.ProductSearch
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Products
 Annotations:
@@ -304,7 +325,7 @@ Annotations:
 ID:          default_catalog.default_database.ProductSearchWithId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Products
 Annotations:
@@ -319,7 +340,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   updated
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -334,6 +355,10 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: _ProductsStream
+--- physical ---
+Table Products (postgres):
+ - primary key: id
+ - index Products_text_c1c5 (text): name, category
 
 === ProductsByCountry
 ID:          default_catalog.default_database.ProductsByCountry
@@ -342,7 +367,7 @@ Stage:       flink
 Primary key: productid, country
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
  - country: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -353,6 +378,10 @@ Inputs:
  - default_catalog.default_database.Customers
  - default_catalog.default_database.Products
  - default_catalog.default_database._OrderItems
+--- physical ---
+Table ProductsByCountry (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index ProductsByCountry_hash_c0 (hash): productid
 
 === _CustomersStream
 ID:          default_catalog.default_database._CustomersStream
@@ -361,7 +390,7 @@ Stage:       flink
 Primary key: id, changed_on
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -383,7 +412,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -404,7 +433,7 @@ Stage:       flink
 Primary key: id, updated
 Timestamp:   updated
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

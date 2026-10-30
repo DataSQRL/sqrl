@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -30,6 +30,10 @@ SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`CustomerStream`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid
+
 === CustomerStream
 ID:          default_catalog.default_database.CustomerStream
 Type:        stream
@@ -37,7 +41,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -68,6 +72,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table CustomerStream_2 (postgres):
+ - primary key: customerid, lastUpdated
+
 === ObjComplex
 ID:          default_catalog.default_database.ObjComplex
 Type:        state
@@ -75,7 +83,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
@@ -88,6 +96,9 @@ LogicalProject(customerid=[$0], obj=[jsonb_object(CONCAT('application#', $2), $0
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `ObjComplex` AS  SELECT customerid, jsonb_object(concat('application#',CAST(name AS VARCHAR)), customerid) AS obj FROM Customer;
+--- physical ---
+Table ObjComplex_3 (postgres):
+ - primary key: customerid
 
 === jsonArrayAggTable
 ID:          default_catalog.default_database.jsonArrayAggTable
@@ -96,7 +107,7 @@ Stage:       flink
 Primary key: name
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - agg: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
@@ -108,6 +119,9 @@ LogicalAggregate(group=[{0}], agg=[jsonb_array_agg($0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `jsonArrayAggTable` AS  SELECT name, jsonb_array_agg(name) AS agg FROM Customer GROUP BY name;
+--- physical ---
+Table jsonArrayAggTable_4 (postgres):
+ - primary key: name
 
 === jsonArrayTable
 ID:          default_catalog.default_database.jsonArrayTable
@@ -116,7 +130,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
@@ -129,6 +143,9 @@ LogicalProject(customerid=[$0], obj=[jsonb_array($0)])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `jsonArrayTable` AS  SELECT customerid, jsonb_array(customerid) AS obj FROM Customer;
+--- physical ---
+Table jsonArrayTable_5 (postgres):
+ - primary key: customerid
 
 === jsonConcatTable
 ID:          default_catalog.default_database.jsonConcatTable
@@ -137,7 +154,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
@@ -150,6 +167,9 @@ LogicalProject(customerid=[$0], obj=[jsonb_concat(to_jsonb('{"a": true}'), to_js
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `jsonConcatTable` AS  SELECT customerid, jsonb_concat(to_jsonb('{"a": true}'), to_jsonb('{"a": false}')) AS obj FROM Customer;
+--- physical ---
+Table jsonConcatTable_6 (postgres):
+ - primary key: customerid
 
 === jsonExistsTable
 ID:          default_catalog.default_database.jsonExistsTable
@@ -158,7 +178,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - obj: BOOLEAN
@@ -171,6 +191,9 @@ LogicalProject(customerid=[$0], obj=[jsonb_exists(to_jsonb('{"a": true}'), '$.a'
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `jsonExistsTable` AS  SELECT customerid, jsonb_exists(to_jsonb('{"a": true}'), '$.a') AS obj FROM Customer;
+--- physical ---
+Table jsonExistsTable_7 (postgres):
+ - primary key: customerid
 
 === jsonExtractTable
 ID:          default_catalog.default_database.jsonExtractTable
@@ -179,7 +202,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -192,6 +215,9 @@ LogicalProject(customerid=[$0], obj=[jsonb_extract(to_jsonb('{"a": "hello"}'), '
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `jsonExtractTable` AS  SELECT customerid, jsonb_extract(to_jsonb('{"a": "hello"}'), CAST('$.a' AS varchar), CAST('default' AS varchar)) AS obj FROM Customer;
+--- physical ---
+Table jsonExtractTable_8 (postgres):
+ - primary key: customerid
 
 === jsonObjectAggTable
 ID:          default_catalog.default_database.jsonObjectAggTable
@@ -200,7 +226,7 @@ Stage:       flink
 Primary key: name
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - agg: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
@@ -212,6 +238,9 @@ LogicalAggregate(group=[{0}], agg=[jsonb_object_agg($1, $0)])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `jsonObjectAggTable` AS  SELECT name, jsonb_object_agg('key', name) AS agg FROM Customer GROUP BY name;
+--- physical ---
+Table jsonObjectAggTable_9 (postgres):
+ - primary key: name
 
 === jsonQueryTable
 ID:          default_catalog.default_database.jsonQueryTable
@@ -220,7 +249,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -233,6 +262,9 @@ LogicalProject(customerid=[$0], obj=[jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `jsonQueryTable` AS  SELECT customerid, jsonb_query(to_jsonb('{"a": {"b": 1}}'), '$.a') AS obj FROM Customer;
+--- physical ---
+Table jsonQueryTable_10 (postgres):
+ - primary key: customerid
 
 === jsonToStringTable
 ID:          default_catalog.default_database.jsonToStringTable
@@ -241,7 +273,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - obj: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -254,6 +286,9 @@ LogicalProject(customerid=[$0], obj=[jsonb_to_string(to_jsonb('{"a": 1}'))])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `jsonToStringTable` AS  SELECT customerid, jsonb_to_string(to_jsonb('{"a": 1}')) AS obj FROM Customer;
+--- physical ---
+Table jsonToStringTable_11 (postgres):
+ - primary key: customerid
 
 === toJsonTable
 ID:          default_catalog.default_database.toJsonTable
@@ -262,7 +297,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - obj: RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM=')
@@ -275,6 +310,9 @@ LogicalProject(customerid=[$0], obj=[to_jsonb('{"a": 1}')])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `toJsonTable` AS  SELECT customerid, to_jsonb('{"a": 1}') AS obj FROM Customer;
+--- physical ---
+Table toJsonTable_12 (postgres):
+ - primary key: customerid
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `CustomerStream` (

@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -19,6 +19,9 @@ LogicalProject(customerid=[$0], email=[$1])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `AfterAlias` AS  SELECT customerid, email FROM Customer;
+--- physical ---
+Table AfterAlias_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === AfterPassThrough
 ID:          default_catalog.default_database.AfterPassThrough
@@ -27,7 +30,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -40,6 +43,9 @@ LogicalProject(customerid=[$0], name=[$2])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `AfterPassThrough` AS  SELECT customerid, name FROM Customer;
+--- physical ---
+Table AfterPassThrough_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Apostrophe
 ID:          default_catalog.default_database.Apostrophe
@@ -48,7 +54,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -62,6 +68,9 @@ LogicalProject(customerid=[$0], name=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `Apostrophe` AS  SELECT c.customerid, c.`it's` AS name FROM (SELECT customerid, name AS `it's` FROM Customer) AS c;
+--- physical ---
+Table Apostrophe_3 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Customer
 ID:          default_catalog.default_database.Customer
@@ -70,7 +79,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -101,6 +110,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_4 (postgres):
+ - primary key: customerid, lastUpdated
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (
   `customerid` BIGINT NOT NULL,

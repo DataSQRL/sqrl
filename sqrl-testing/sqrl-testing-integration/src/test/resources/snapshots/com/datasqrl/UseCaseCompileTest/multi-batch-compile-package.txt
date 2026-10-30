@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - val: INTEGER NOT NULL
 Inputs:
@@ -17,7 +17,7 @@ ID:          default_catalog.default_database.TableA
 Type:        export
 Stage:       flink
 Connector:   print
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.TableA_in1
 
@@ -28,7 +28,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - val: INTEGER NOT NULL
 Inputs:
@@ -39,7 +39,7 @@ ID:          default_catalog.default_database.TableB
 Type:        export
 Stage:       flink
 Connector:   print
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.TableB_in2
 
@@ -50,7 +50,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~2
----
+--- definition ---
 Schema:
  - val: INTEGER NOT NULL
 Inputs:
@@ -61,7 +61,7 @@ ID:          default_catalog.default_database.TableC
 Type:        export
 Stage:       flink
 Connector:   print
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.TableC_in3
 
@@ -72,7 +72,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - val: INTEGER NOT NULL
 Inputs:
@@ -83,7 +83,7 @@ ID:          tables.sinks.SinkA
 Type:        export
 Stage:       flink
 Connector:   print
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Src
 
@@ -92,7 +92,7 @@ ID:          tables.sinks.SinkB
 Type:        export
 Stage:       flink
 Connector:   print
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Src
 

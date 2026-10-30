@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: name
 Timestamp:   -
 Row count:   ~3
----
+--- definition ---
 Schema:
  - name: VARCHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
  - name_upper: VARCHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
@@ -22,7 +22,7 @@ Schema:
 ID:          print.functions
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.FlinkFunctions
 

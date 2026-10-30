@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: _uuid
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - role: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -19,6 +19,9 @@ Inputs:
 Annotations:
  - features: DENORMALIZE (feature)
  - stream-root: AddChatMessage
+--- physical ---
+Table AddChatMessage (postgres):
+ - primary key: _uuid
 
 === ApplicationAlert
 ID:          default_catalog.default_database.ApplicationAlert
@@ -27,7 +30,7 @@ Stage:       flink
 Primary key: _uuid
 Timestamp:   -
 Row count:   ~4e6
----
+--- definition ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - id: BIGINT NOT NULL
@@ -48,7 +51,7 @@ Stage:       flink
 Primary key: _uuid
 Timestamp:   event_time
 Row count:   ~8e7
----
+--- definition ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -67,6 +70,9 @@ Inputs:
  - default_catalog.default_database.LoanTypes
 Annotations:
  - stream-root: ApplicationUpdates
+--- physical ---
+Table ApplicationStatus (postgres):
+ - primary key: _uuid
 
 === ApplicationUpdates
 ID:          default_catalog.default_database.ApplicationUpdates
@@ -75,7 +81,7 @@ Stage:       flink
 Primary key: _uuid
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - loan_application_id: BIGINT NOT NULL
@@ -86,6 +92,10 @@ Inputs:
  - default_catalog.default_database.ApplicationUpdates__base
 Annotations:
  - stream-root: ApplicationUpdates
+--- physical ---
+Table ApplicationUpdates (postgres):
+ - primary key: _uuid
+ - index ApplicationUpdates_hash_c1 (hash): loan_application_id
 
 === Applications
 ID:          default_catalog.default_database.Applications
@@ -94,7 +104,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   updated_at
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -108,6 +118,10 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: ApplicationsStream
+--- physical ---
+Table Applications (postgres):
+ - primary key: id
+ - index Applications_hash_c1 (hash): customer_id
 
 === ApplicationsStream
 ID:          default_catalog.default_database.ApplicationsStream
@@ -116,7 +130,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -129,6 +143,9 @@ Inputs:
  - default_catalog.sources.ApplicationsStream
 Annotations:
  - stream-root: ApplicationsStream
+--- physical ---
+Table ApplicationsStream (postgres):
+ - primary key: id, updated_at
 
 === CustomerChatMessage
 ID:          default_catalog.default_database.CustomerChatMessage
@@ -137,7 +154,7 @@ Stage:       flink
 Primary key: uuid
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - role: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - content: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -150,6 +167,9 @@ Inputs:
 Annotations:
  - stream-root: AddChatMessage
  - sort: [4 DESC-nulls-last]
+--- physical ---
+Table CustomerChatMessage (postgres):
+ - primary key: uuid
 
 === Customers
 ID:          default_catalog.default_database.Customers
@@ -158,7 +178,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   updated_at
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -173,6 +193,9 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: CustomersStream
+--- physical ---
+Table Customers (postgres):
+ - primary key: id
 
 === CustomersStream
 ID:          default_catalog.default_database.CustomersStream
@@ -181,7 +204,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -195,6 +218,9 @@ Inputs:
  - default_catalog.sources.CustomersStream
 Annotations:
  - stream-root: CustomersStream
+--- physical ---
+Table CustomersStream (postgres):
+ - primary key: id, updated_at
 
 === LoanTypes
 ID:          default_catalog.default_database.LoanTypes
@@ -203,7 +229,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   updated_at
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -219,6 +245,9 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: LoanTypesStream
+--- physical ---
+Table LoanTypes (postgres):
+ - primary key: id
 
 === LoanTypesStream
 ID:          default_catalog.default_database.LoanTypesStream
@@ -227,7 +256,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -242,6 +271,9 @@ Inputs:
  - default_catalog.sources.LoanTypesStream
 Annotations:
  - stream-root: LoanTypesStream
+--- physical ---
+Table LoanTypesStream (postgres):
+ - primary key: id, updated_at
 
 === ApplicationsStream
 ID:          default_catalog.sources.ApplicationsStream
@@ -250,7 +282,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -271,7 +303,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -293,7 +325,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

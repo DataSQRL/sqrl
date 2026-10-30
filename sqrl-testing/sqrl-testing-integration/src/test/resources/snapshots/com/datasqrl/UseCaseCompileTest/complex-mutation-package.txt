@@ -62,7 +62,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - userid: INTEGER NOT NULL
  - tokens: BIGINT NOT NULL
@@ -77,7 +77,7 @@ Stage:       flink
 Primary key: userid
 Timestamp:   window_time
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - userid: INTEGER NOT NULL
  - total_tokens: BIGINT NOT NULL
@@ -95,7 +95,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   window_time
 Row count:   ~7e7
----
+--- definition ---
 Schema:
  - userid: INTEGER NOT NULL
  - total_tokens: BIGINT NOT NULL
@@ -111,7 +111,7 @@ ID:          tables.iceberg.SinkTable
 Type:        export
 Stage:       flink
 Connector:   iceberg
----
+--- definition ---
 Inputs:
  - default_catalog.default_database._UserTokens
 

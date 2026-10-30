@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - log2_example: DOUBLE NOT NULL
  - log_nat_example: DOUBLE NOT NULL
@@ -121,7 +121,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1
----
+--- definition ---
 Schema:
  - dummy: INTEGER NOT NULL
 
@@ -129,7 +129,7 @@ Schema:
 ID:          logger.calls
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.FunctionCalls
 

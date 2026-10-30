@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~9e7
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
@@ -18,12 +18,15 @@ Inputs:
  - default_catalog.default_database._SensorDistinct
 Annotations:
  - sort: [3 ASC-nulls-first]
+--- physical ---
+Table EnrichedSensorReading (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === EnrichedSensorReadingByPlacement
 ID:          default_catalog.default_database.EnrichedSensorReadingByPlacement
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.EnrichedSensorReading
 Annotations:
@@ -37,7 +40,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
@@ -45,6 +48,9 @@ Schema:
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.SensorReading__base
+--- physical ---
+Table SensorReading (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === SensorUpdates
 ID:          default_catalog.default_database.SensorUpdates
@@ -53,13 +59,16 @@ Stage:       flink
 Primary key: sensorid
 Timestamp:   lastUpdated
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - lastUpdated: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.SensorUpdates__base
+--- physical ---
+Table SensorUpdates (postgres):
+ - primary key: sensorid
 
 === _SensorDistinct
 ID:          default_catalog.default_database._SensorDistinct
@@ -68,7 +77,7 @@ Stage:       flink
 Primary key: sensorid
 Timestamp:   lastUpdated
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -80,7 +89,7 @@ Inputs:
 ID:          logger.Result
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.EnrichedSensorReading
 
@@ -88,7 +97,7 @@ Inputs:
 ID:          logger.SensorReading
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.SensorReading
 
@@ -96,7 +105,7 @@ Inputs:
 ID:          logger.SensorUpdates
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.SensorUpdates
 

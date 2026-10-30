@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customer_id: BIGINT
  - customer: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" name, RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" email, RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" street, VARCHAR(2147483647) CHARACTER SET "UTF-16LE" city, RecordType:peek_no_expand(DOUBLE lat, DOUBLE lon, RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" source, INTEGER meters) prec) geo) address) profile)
@@ -27,6 +27,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table NestedCustomers_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `NestedCustomers` (
   `customer_id` BIGINT,

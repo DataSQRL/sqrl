@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -35,6 +35,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_1 (postgres):
+ - primary key: id, time
+
 === _OrdersTotals
 ID:          default_catalog.default_database._OrdersTotals
 Type:        state
@@ -42,7 +46,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - price: DOUBLE NOT NULL
@@ -61,6 +65,9 @@ SQL:
 CREATE VIEW `_OrdersTotals` AS  SELECT id, sum(quantity * unit_price) as price,
                         sum(coalesce(discount, 0.0)) as saving FROM Orders CROSS JOIN UNNEST(entries)
                         GROUP BY id;
+--- physical ---
+Table _OrdersTotals_2 (postgres):
+ - primary key: id
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (

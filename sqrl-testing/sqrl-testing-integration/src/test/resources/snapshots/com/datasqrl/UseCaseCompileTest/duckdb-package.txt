@@ -57,7 +57,7 @@ Stage:       iceberg
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - hello: CHAR(12) CHARACTER SET "UTF-16LE" NOT NULL
@@ -73,7 +73,7 @@ Stage:       iceberg
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - hello: CHAR(12) CHARACTER SET "UTF-16LE" NOT NULL
@@ -89,7 +89,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - hello: CHAR(12) CHARACTER SET "UTF-16LE" NOT NULL
@@ -105,7 +105,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -126,7 +126,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -147,7 +147,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -160,6 +160,10 @@ Inputs:
  - default_catalog.default_database._Applications
 Annotations:
  - stream-root: _Applications
+--- physical ---
+Table _MyApplications2 (postgres):
+ - primary key: id, updated_at
+ - index _MyApplications2_hash_c0 (hash): id
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_Applications__schema` (

@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,11 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+ - index Customer_1_btree_c0c4 (btree): customerid, timestamp
+
 === CustomerMessage
 ID:          default_catalog.default_database.CustomerMessage
 Type:        stream
@@ -44,7 +49,7 @@ Stage:       flink
 Primary key: event_id
 Timestamp:   event_time
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerid: BIGINT NOT NULL
@@ -65,7 +70,7 @@ CREATE VIEW `CustomerMessage` AS  SELECT * FROM _InputData WHERE message <> '';
 ID:          default_catalog.default_database.CustomerMessageStream
 Type:        query
 Stage:       kafka
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerMessage
 Annotations:
@@ -83,7 +88,7 @@ CREATE VIEW `CustomerMessageStream` AS  SELECT * FROM CustomerMessage WHERE cust
 ID:          default_catalog.default_database.CustomersByTime
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customer
 Annotations:
@@ -107,7 +112,7 @@ Stage:       flink
 Primary key: event_id
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerid: BIGINT NOT NULL

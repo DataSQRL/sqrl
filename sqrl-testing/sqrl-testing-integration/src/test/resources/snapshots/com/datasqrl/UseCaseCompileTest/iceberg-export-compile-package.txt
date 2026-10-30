@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -25,7 +25,7 @@ ID:          iceberg.iceberg-sink
 Type:        export
 Stage:       flink
 Connector:   iceberg
----
+--- definition ---
 Inputs:
  - default_catalog.sources.ApplicationsStream
 

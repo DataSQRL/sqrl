@@ -132,7 +132,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1
----
+--- definition ---
 Schema:
  - listagg_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - arrayagg_example: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
@@ -146,7 +146,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customer: RecordType:peek_no_expand(INTEGER NOT NULL customerid, CHAR(5) CHARACTER SET "UTF-16LE" NOT NULL name) NOT NULL
 Inputs:
@@ -159,7 +159,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - log2_example: DOUBLE NOT NULL
  - log_nat_example: DOUBLE NOT NULL
@@ -243,9 +243,12 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~3
----
+--- definition ---
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+--- physical ---
+Table _ArrayData (postgres):
+ - primary key: val
 
 === _CustomerData
 ID:          default_catalog.default_database._CustomerData
@@ -254,10 +257,13 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1
----
+--- definition ---
 Schema:
  - customerid: INTEGER NOT NULL
  - name: CHAR(5) CHARACTER SET "UTF-16LE" NOT NULL
+--- physical ---
+Table _CustomerData (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === _InputData
 ID:          default_catalog.default_database._InputData
@@ -266,9 +272,12 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1
----
+--- definition ---
 Schema:
  - dummy: INTEGER NOT NULL
+--- physical ---
+Table _InputData (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `_InputData`

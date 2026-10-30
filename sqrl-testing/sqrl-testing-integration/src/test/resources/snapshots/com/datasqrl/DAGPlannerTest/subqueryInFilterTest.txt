@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === ExcludedOrders
 ID:          default_catalog.default_database.ExcludedOrders
 Type:        stream
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -65,6 +69,9 @@ LogicalProject(customerid=[$0])
 SQL:
 CREATE VIEW `ExcludedOrders` AS  SELECT o.id, o.customerid, o.`time` FROM Orders o
 WHERE o.customerid NOT IN (SELECT c.customerid FROM Customer c WHERE c.email IS NULL);
+--- physical ---
+Table ExcludedOrders_2 (postgres):
+ - primary key: id, time
 
 === FilteredOrders
 ID:          default_catalog.default_database.FilteredOrders
@@ -73,7 +80,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -94,6 +101,9 @@ SQL:
 CREATE VIEW `FilteredOrders` AS 
 SELECT o.id, o.customerid, o.`time` FROM Orders o
 WHERE o.customerid IN (SELECT c.customerid FROM Customer c WHERE c.name IS NOT NULL);
+--- physical ---
+Table FilteredOrders_3 (postgres):
+ - primary key: id, time
 
 === FilteredOrdersByProduct
 ID:          default_catalog.default_database.FilteredOrdersByProduct
@@ -102,7 +112,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -129,6 +139,9 @@ WHERE o.id IN (
         SELECT p.productid, p.name FROM Product p WHERE p.category = 'electronics'
     ) e
 );
+--- physical ---
+Table FilteredOrdersByProduct_4 (postgres):
+ - primary key: id, time
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -137,7 +150,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -166,6 +179,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_5 (postgres):
+ - primary key: id, time
+
 === Product
 ID:          default_catalog.default_database.Product
 Type:        stream
@@ -173,7 +190,7 @@ Stage:       flink
 Primary key: productid, name, description, category
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -203,6 +220,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Product_6 (postgres):
+ - primary key: productid, name, description, category
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,

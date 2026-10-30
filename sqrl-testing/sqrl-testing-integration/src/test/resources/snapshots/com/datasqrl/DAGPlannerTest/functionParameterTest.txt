@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,11 +37,17 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+ - index Customer_1_btree_c0c4 (btree): customerid, timestamp
+ - index Customer_1_btree_c1c0 (btree): email, customerid
+
 === CustomerByEmail
 ID:          default_catalog.default_database.CustomerByEmail
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customer
 Annotations:
@@ -59,7 +65,7 @@ CREATE VIEW `CustomerByEmail` AS  SELECT * FROM Customer WHERE ?      = email AN
 ID:          default_catalog.default_database.CustomerByIds
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customer
 Annotations:
@@ -81,7 +87,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -102,7 +108,7 @@ CREATE VIEW `CustomerByNothing` AS  SELECT * FROM Customer;
 ID:          default_catalog.default_database.CustomersByTime
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customer
 Annotations:
@@ -123,7 +129,7 @@ CREATE VIEW `CustomersByTime` AS
 ID:          default_catalog.default_database.SelectCustomer
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerByEmail
 Annotations:

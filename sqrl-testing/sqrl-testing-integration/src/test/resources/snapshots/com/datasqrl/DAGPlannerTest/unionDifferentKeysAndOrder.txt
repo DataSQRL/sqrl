@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~2e8
----
+--- definition ---
 Schema:
  - id_a: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -21,6 +21,9 @@ LogicalUnion(all=[true])
     LogicalTableScan(table=[[default_catalog, default_database, source_b]])
 SQL:
 CREATE VIEW `CombinedStream` AS  SELECT id_a, val FROM source_a UNION ALL SELECT val, id_b FROM source_b;
+--- physical ---
+Table CombinedStream_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === source_a
 ID:          default_catalog.default_database.source_a
@@ -29,7 +32,7 @@ Stage:       flink
 Primary key: id_a
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id_a: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -48,6 +51,10 @@ CREATE TABLE `source_a` (
 WITH (
   'connector' = 'datagen'
 )
+--- physical ---
+Table source_a_2 (postgres):
+ - primary key: id_a
+
 === source_b
 ID:          default_catalog.default_database.source_b
 Type:        stream
@@ -55,7 +62,7 @@ Stage:       flink
 Primary key: id_b
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id_b: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -74,6 +81,10 @@ CREATE TABLE `source_b` (
 WITH (
   'connector' = 'datagen'
 )
+--- physical ---
+Table source_b_3 (postgres):
+ - primary key: id_b
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `source_a` (
   `id_a` STRING,

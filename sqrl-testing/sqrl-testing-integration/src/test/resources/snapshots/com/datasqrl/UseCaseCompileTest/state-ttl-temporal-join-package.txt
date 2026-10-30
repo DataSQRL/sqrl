@@ -90,7 +90,7 @@ Stage:       flink
 Primary key: event_id
 Timestamp:   ts
 Row count:   ~9e7
----
+--- definition ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - id: INTEGER NOT NULL
@@ -98,6 +98,9 @@ Schema:
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Inputs:
  - default_catalog.default_database.Enriched
+--- physical ---
+Table Attributed (postgres):
+ - primary key: event_id
 
 === CountsByVal
 ID:          default_catalog.default_database.CountsByVal
@@ -106,13 +109,16 @@ Stage:       flink
 Primary key: val, event_date
 Timestamp:   -
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - event_date: DATE NOT NULL
  - cnt: BIGINT NOT NULL
 Inputs:
  - default_catalog.default_database.Attributed
+--- physical ---
+Table CountsByVal (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Dim
 ID:          default_catalog.default_database.Dim
@@ -121,7 +127,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   updated
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: INTEGER NOT NULL
  - grp: INTEGER NOT NULL
@@ -131,6 +137,9 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: DimStream
+--- physical ---
+Table Dim (postgres):
+ - primary key: id
 
 === DimStream
 ID:          default_catalog.default_database.DimStream
@@ -139,7 +148,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   updated
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: INTEGER NOT NULL
  - grp: INTEGER NOT NULL
@@ -148,6 +157,9 @@ Inputs:
  - default_catalog.default_database.DimStream__base
 Annotations:
  - stream-root: DimStream
+--- physical ---
+Table DimStream (postgres):
+ - primary key: id
 
 === Enriched
 ID:          default_catalog.default_database.Enriched
@@ -156,7 +168,7 @@ Stage:       flink
 Primary key: event_id
 Timestamp:   ts
 Row count:   ~8e7
----
+--- definition ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - id: INTEGER NOT NULL
@@ -166,6 +178,9 @@ Inputs:
  - default_catalog.default_database.Dim
  - default_catalog.default_database.Events
  - default_catalog.default_database.Grp
+--- physical ---
+Table Enriched (postgres):
+ - primary key: event_id
 
 === Events
 ID:          default_catalog.default_database.Events
@@ -174,13 +189,16 @@ Stage:       flink
 Primary key: -
 Timestamp:   ts
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - id: INTEGER NOT NULL
  - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Events__base
+--- physical ---
+Table Events (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Grp
 ID:          default_catalog.default_database.Grp
@@ -189,7 +207,7 @@ Stage:       flink
 Primary key: grp
 Timestamp:   updated
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - grp: INTEGER NOT NULL
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -199,6 +217,9 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: GrpStream
+--- physical ---
+Table Grp (postgres):
+ - primary key: grp
 
 === GrpStream
 ID:          default_catalog.default_database.GrpStream
@@ -207,7 +228,7 @@ Stage:       flink
 Primary key: grp
 Timestamp:   updated
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - grp: INTEGER NOT NULL
  - val: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -216,6 +237,9 @@ Inputs:
  - default_catalog.default_database.GrpStream__base
 Annotations:
  - stream-root: GrpStream
+--- physical ---
+Table GrpStream (postgres):
+ - primary key: grp
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `DimStream` (

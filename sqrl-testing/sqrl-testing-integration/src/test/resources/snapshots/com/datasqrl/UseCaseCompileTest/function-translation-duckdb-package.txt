@@ -161,7 +161,7 @@ Stage:       iceberg
 Primary key: -
 Timestamp:   -
 Row count:   ~1
----
+--- definition ---
 Schema:
  - listagg_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - arrayagg_example: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" ARRAY
@@ -175,7 +175,7 @@ Stage:       iceberg
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - log2_example: DOUBLE NOT NULL
  - log_nat_example: DOUBLE NOT NULL
@@ -300,7 +300,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: INTEGER
  - str_char: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -314,7 +314,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - dummy: INTEGER
 Inputs:

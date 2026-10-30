@@ -45,12 +45,15 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: INTEGER NOT NULL
  - label: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Inputs:
  - default_catalog.src.Foo_raw
+--- physical ---
+Table FooOut (postgres):
+ - primary key: id
 
 === Foo_raw
 ID:          default_catalog.src.Foo_raw
@@ -59,7 +62,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - ts: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
  - id: INTEGER NOT NULL

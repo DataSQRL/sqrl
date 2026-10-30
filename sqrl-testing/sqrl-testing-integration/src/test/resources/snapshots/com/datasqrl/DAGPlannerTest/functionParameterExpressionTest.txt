@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === CustomerVectorEmbed
 ID:          default_catalog.default_database.CustomerVectorEmbed
 Type:        stream
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -59,12 +63,15 @@ LogicalProject(customerid=[$0], name=[$2], name_vector=[vector_embed($2, 'test-m
 SQL:
 CREATE VIEW `CustomerVectorEmbed` AS  SELECT customerid, name, vector_embed(name, 'test-model') AS name_vector
                        FROM Customer;
+--- physical ---
+Table CustomerVectorEmbed_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === CustomersByName
 ID:          default_catalog.default_database.CustomersByName
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customer
 Annotations:
@@ -83,7 +90,7 @@ CREATE VIEW `CustomersByName` AS
 ID:          default_catalog.default_database.CustomersByVector
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerVectorEmbed
 Annotations:

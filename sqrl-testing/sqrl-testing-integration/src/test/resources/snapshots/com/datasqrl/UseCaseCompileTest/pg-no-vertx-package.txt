@@ -6,11 +6,14 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~2
----
+--- definition ---
 Schema:
  - val: INTEGER NOT NULL
 Annotations:
  - sort: [0 ASC-nulls-first]
+--- physical ---
+Table MyView (postgres):
+ - primary key: val
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyView`
