@@ -81,7 +81,7 @@ Stage:       flink
 Primary key: sensorid, timeSec
 Timestamp:   timeSec
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - machineId: BIGINT NOT NULL
  - sensorid: BIGINT NOT NULL
@@ -92,6 +92,9 @@ Inputs:
  - default_catalog.default_database.Sensors
 Annotations:
  - stream-root: SensorReading
+--- physical ---
+Table HighTemp (postgres):
+ - primary key: sensorid, timeSec
 
 === Machine
 ID:          default_catalog.default_database.Machine
@@ -100,7 +103,7 @@ Stage:       flink
 Primary key: machineId
 Timestamp:   -
 Row count:   ~9e6
----
+--- definition ---
 Schema:
  - machineId: BIGINT NOT NULL
  - maxTemp: DOUBLE NOT NULL
@@ -108,6 +111,9 @@ Schema:
 Inputs:
  - default_catalog.default_database.SecReading
  - default_catalog.default_database.Sensors
+--- physical ---
+Table Machine (postgres):
+ - primary key: machineId
 
 === SecReading
 ID:          default_catalog.default_database.SecReading
@@ -116,7 +122,7 @@ Stage:       flink
 Primary key: sensorid, timeSec
 Timestamp:   timeSec
 Row count:   ~7e7
----
+--- definition ---
 Schema:
  - sensorid: BIGINT NOT NULL
  - timeSec: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -127,12 +133,15 @@ Annotations:
  - features: STREAM_WINDOW_AGGREGATION (feature)
  - stream-root: SensorReading
  - sort: [1 DESC-nulls-last]
+--- physical ---
+Table SecReading (postgres):
+ - primary key: sensorid, timeSec
 
 === SecReadingByTemp
 ID:          default_catalog.default_database.SecReadingByTemp
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.SecReading
 Annotations:
@@ -147,7 +156,7 @@ Stage:       flink
 Primary key: sensorid
 Timestamp:   window_time
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - sensorid: BIGINT NOT NULL
  - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -158,6 +167,9 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: SensorReading
+--- physical ---
+Table SensorLastHour (postgres):
+ - primary key: sensorid
 
 === Sensors
 ID:          default_catalog.default_database.Sensors
@@ -166,7 +178,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - machineId: BIGINT NOT NULL
@@ -177,6 +189,10 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: Sensors
+--- physical ---
+Table Sensors (postgres):
+ - primary key: id
+ - index Sensors_hash_c1 (hash): machineId
 
 === _SensorMaxTempWindow
 ID:          default_catalog.default_database._SensorMaxTempWindow
@@ -185,7 +201,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   window_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: BIGINT NOT NULL
  - window_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -204,7 +220,7 @@ Stage:       flink
 Primary key: sensorid, time
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: BIGINT NOT NULL
  - time: BIGINT NOT NULL
@@ -223,7 +239,7 @@ Stage:       flink
 Primary key: id, placed
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - machineId: BIGINT NOT NULL

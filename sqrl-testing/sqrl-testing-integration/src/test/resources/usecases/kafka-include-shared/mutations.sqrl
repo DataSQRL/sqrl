@@ -1,0 +1,6 @@
+/*+engine(kafka) */
+CREATE TABLE CustomerEvent (
+    customerid BIGINT NOT NULL,
+    name STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);

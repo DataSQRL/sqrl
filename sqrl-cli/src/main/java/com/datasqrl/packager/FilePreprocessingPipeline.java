@@ -17,14 +17,12 @@ package com.datasqrl.packager;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.io.schema.TableSchemaFactory;
 import com.datasqrl.packager.preprocess.Preprocessor;
 import com.datasqrl.util.FilenameAnalyzer;
-import com.datasqrl.util.NameUtil;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -65,12 +63,10 @@ public class FilePreprocessingPipeline {
   }
 
   public void run(Path sourceDir, ErrorCollector errors) throws IOException {
-    run(sourceDir, NamePath.ROOT, errors);
+    run(sourceDir, workspacePaths.buildDir(), errors);
   }
 
-  public void run(Path sourceDir, NamePath namePath, ErrorCollector errors) throws IOException {
-    Path buildDir = NameUtil.namepath2Path(workspacePaths.buildDir(), namePath);
-
+  public void run(Path sourceDir, Path buildDir, ErrorCollector errors) throws IOException {
     Files.walkFileTree(
         sourceDir,
         EnumSet.of(FileVisitOption.FOLLOW_LINKS),

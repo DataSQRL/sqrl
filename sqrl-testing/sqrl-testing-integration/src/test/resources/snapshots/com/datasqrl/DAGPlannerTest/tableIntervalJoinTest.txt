@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === OrderCustomer1
 ID:          default_catalog.default_database.OrderCustomer1
 Type:        stream
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -59,6 +63,9 @@ LogicalProject(id=[$0], name=[$6], customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `OrderCustomer1` AS  SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` > c.`timestamp` AND o.`time` <= c.`timestamp` + INTERVAL 31 DAYS;
+--- physical ---
+Table OrderCustomer1_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === OrderCustomer2
 ID:          default_catalog.default_database.OrderCustomer2
@@ -67,7 +74,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -82,6 +89,9 @@ LogicalProject(id=[$0], name=[$6], customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `OrderCustomer2` AS  SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` >= c.`timestamp` + INTERVAL 2 DAYS AND o.`time` <= c.`timestamp` + INTERVAL 31 DAYS;
+--- physical ---
+Table OrderCustomer2_3 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === OrderCustomer3
 ID:          default_catalog.default_database.OrderCustomer3
@@ -90,7 +100,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -105,6 +115,9 @@ LogicalProject(id=[$0], name=[$6], customerid=[$1])
     LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `OrderCustomer3` AS  SELECT o.id, c.name, o.customerid FROM Orders o JOIN Customer c on o.customerid = c.customerid AND o.`time` BETWEEN c.`timestamp` - INTERVAL '4' HOUR AND c.`timestamp`;
+--- physical ---
+Table OrderCustomer3_4 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -113,7 +126,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -142,6 +155,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_5 (postgres):
+ - primary key: id, time
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (
   `customerid` BIGINT NOT NULL,

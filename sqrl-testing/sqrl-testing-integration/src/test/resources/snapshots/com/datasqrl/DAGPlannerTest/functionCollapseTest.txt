@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === CustomerHighCount
 ID:          default_catalog.default_database.CustomerHighCount
 Type:        stream
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: window_start, window_end
 Timestamp:   -
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
@@ -57,6 +61,9 @@ LogicalProject(window_start=[$0], window_end=[$1], unique_email_count=[$2])
     LogicalTableScan(table=[[default_catalog, default_database, CustomerTimeWindow]])
 SQL:
 CREATE VIEW `CustomerHighCount` AS  SELECT * FROM CustomerTimeWindow WHERE unique_email_count > 1;
+--- physical ---
+Table CustomerHighCount_2 (postgres):
+ - primary key: window_start, window_end
 
 === CustomerTimeWindow
 ID:          default_catalog.default_database.CustomerTimeWindow
@@ -65,7 +72,7 @@ Stage:       flink
 Primary key: window_start, window_end
 Timestamp:   -
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
@@ -89,6 +96,9 @@ CREATE VIEW `CustomerTimeWindow` AS  SELECT
                            )
                       GROUP BY
                           window_start, window_end;
+--- physical ---
+Table CustomerTimeWindow_3 (postgres):
+ - primary key: window_start, window_end
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (

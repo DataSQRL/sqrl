@@ -146,7 +146,7 @@ class OsProcessManagerTest {
       // Mock that no services are needed
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(Optional.of(new KafkaPlanModel(List.of(), List.of())));
+          .thenReturn(Optional.of(new KafkaPlanModel(List.of(), List.of(), List.of())));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
@@ -344,7 +344,7 @@ class OsProcessManagerTest {
       var mockTopic = mock(KafkaNewTopicModel.class);
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(Optional.of(new KafkaPlanModel(List.of(mockTopic), List.of())));
+          .thenReturn(Optional.of(new KafkaPlanModel(List.of(mockTopic), List.of(), List.of())));
       configMocked
           .when(() -> ConfigLoaderUtils.loadPostgresPhysicalPlan(mockPlanDir))
           .thenReturn(Optional.empty());
@@ -445,7 +445,7 @@ class OsProcessManagerTest {
       var mockTopic = mock(KafkaNewTopicModel.class);
       configMocked
           .when(() -> ConfigLoaderUtils.loadKafkaPhysicalPlan(mockPlanDir))
-          .thenReturn(Optional.of(new KafkaPlanModel(List.of(mockTopic), List.of())));
+          .thenReturn(Optional.of(new KafkaPlanModel(List.of(mockTopic), List.of(), List.of())));
       var mockStatement =
           new JdbcStatementModel(
               "test", JdbcStatementModel.Type.TABLE, "CREATE TABLE test", null, null);

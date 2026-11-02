@@ -47,7 +47,7 @@ directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY
 ID:          default_catalog.default_database.Discount
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Product
 Annotations:
@@ -62,7 +62,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -74,6 +74,10 @@ Inputs:
  - default_catalog.default_database.Product__base
 Annotations:
  - stream-root: Product
+--- physical ---
+Table Product (postgres):
+ - primary key: id
+ - index Product_hash_c4 (hash): discount
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `Product__schema` (

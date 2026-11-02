@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   updateTime
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - categoryid: INTEGER NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -32,6 +32,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Category_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
 === CategoryDistinct
 ID:          default_catalog.default_database.CategoryDistinct
 Type:        state
@@ -39,7 +43,7 @@ Stage:       flink
 Primary key: categoryid
 Timestamp:   updateTime
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - categoryid: INTEGER NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -61,6 +65,10 @@ SELECT `categoryid`, `name`, `description`, `updateTime`
 FROM (SELECT `categoryid`, `name`, `description`, `updateTime`, ROW_NUMBER() OVER (PARTITION BY `categoryid` ORDER BY `updateTime` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Category`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table CategoryDistinct_2 (postgres):
+ - primary key: categoryid
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Category` (
   `categoryid` INTEGER NOT NULL,

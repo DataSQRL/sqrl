@@ -158,7 +158,8 @@ const config: Config = {
       title: 'DataSQRL',
       logo: {
         alt: 'DataSQRL Logo',
-        src: 'img/logo.svg',
+        src: 'img/logo_light.svg',
+        srcDark: 'img/logo_dark.svg',
       },
       items: [
         {

@@ -1,0 +1,8 @@
+mutation ServerReadings {
+    add1: Reading(event: { sensorid: 1, writer: "server" }) {
+        sensorid
+    }
+    add2: Reading(event: { sensorid: 2, writer: "server" }) {
+        sensorid
+    }
+}

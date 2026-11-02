@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,11 +37,15 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === CustomerById
 ID:          default_catalog.default_database.CustomerById
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerWithEmail
 Annotations:
@@ -62,7 +66,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -78,6 +82,9 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], timesta
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `CustomerWithEmail` AS  SELECT * FROM Customer WHERE email IS NOT NULL;
+--- physical ---
+Table CustomerWithEmail_2 (postgres):
+ - primary key: customerid, lastUpdated
 
 === DistinctCustomer
 ID:          default_catalog.default_database.DistinctCustomer
@@ -86,7 +93,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -110,11 +117,15 @@ SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Customer`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table DistinctCustomer_3 (postgres):
+ - primary key: customerid
+
 === DistinctCustomerById
 ID:          default_catalog.default_database.DistinctCustomerById
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.DistinctCustomer
 Annotations:
@@ -135,7 +146,7 @@ Stage:       flink
 Primary key: productid, name, description, category
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -151,12 +162,16 @@ LogicalProject(productid=[$0], name=[$1], description=[$2], category=[$3], _inge
   LogicalTableScan(table=[[default_catalog, default_database, _Product]])
 SQL:
 CREATE VIEW `Product` AS  SELECT * FROM _Product WHERE name is NOT NULL;
+--- physical ---
+Table Product_4 (postgres):
+ - primary key: productid, name, description, category
+ - index Product_4_hash_c3 (hash): category
 
 === ProductByCategory
 ID:          default_catalog.default_database.ProductByCategory
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Product
 Annotations:
@@ -177,7 +192,7 @@ Stage:       flink
 Primary key: productid, name, description, category
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

@@ -63,10 +63,13 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~3
----
+--- definition ---
 Schema:
  - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - info: CHAR(8) CHARACTER SET "UTF-16LE" NOT NULL
+--- physical ---
+Table Detail (postgres):
+ - primary key: id
 
 === Thing
 ID:          default_catalog.default_database.Thing
@@ -75,11 +78,15 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~3
----
+--- definition ---
 Schema:
  - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - label: CHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+--- physical ---
+Table Thing (postgres):
+ - primary key: id
+ - index Thing_btree_c2 (btree): timestamp
 
 === Tombstone
 ID:          default_catalog.default_database.Tombstone
@@ -88,9 +95,12 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~1
----
+--- definition ---
 Schema:
  - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+--- physical ---
+Table Tombstone (postgres):
+ - primary key: id
 
 === cleanQuery
 ID:          default_catalog.default_database.cleanQuery
@@ -99,13 +109,16 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - label: CHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
  - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Inputs:
  - default_catalog.default_database.Thing
+--- physical ---
+Table cleanQuery (postgres):
+ - primary key: id
 
 === joinQuery
 ID:          default_catalog.default_database.joinQuery
@@ -114,7 +127,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - label: CHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
@@ -122,12 +135,15 @@ Schema:
 Inputs:
  - default_catalog.default_database.Thing
  - default_catalog.default_database.Tombstone
+--- physical ---
+Table joinQuery (postgres):
+ - primary key: id
 
 === sortedQuery
 ID:          default_catalog.default_database.sortedQuery
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Detail
  - default_catalog.default_database.Thing
@@ -142,7 +158,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - id: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - label: CHAR(7) CHARACTER SET "UTF-16LE" NOT NULL
@@ -150,6 +166,9 @@ Schema:
 Inputs:
  - default_catalog.default_database.Thing
  - default_catalog.default_database.Tombstone
+--- physical ---
+Table subqueryQuery (postgres):
+ - primary key: id
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `Thing`

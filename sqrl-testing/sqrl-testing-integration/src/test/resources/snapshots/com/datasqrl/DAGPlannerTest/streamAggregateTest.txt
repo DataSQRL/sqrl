@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customer
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customer: BIGINT NOT NULL
  - order_count: BIGINT NOT NULL
@@ -18,6 +18,9 @@ LogicalAggregate(group=[{0}], order_count=[COUNT()])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
 CREATE VIEW `OrderAgg1` AS  SELECT o.customerid as customer, COUNT(o.id) as order_count FROM Orders o GROUP BY o.customerid;
+--- physical ---
+Table OrderAgg1_1 (postgres):
+ - primary key: customer
 
 === OrderAgg2
 ID:          default_catalog.default_database.OrderAgg2
@@ -26,7 +29,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1
----
+--- definition ---
 Schema:
  - order_count: BIGINT NOT NULL
 Inputs:
@@ -36,6 +39,9 @@ LogicalAggregate(group=[{}], order_count=[COUNT()])
   LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
 CREATE VIEW `OrderAgg2` AS  SELECT COUNT(o.id) as order_count FROM Orders o;
+--- physical ---
+Table OrderAgg2_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -44,7 +50,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -73,6 +79,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_3 (postgres):
+ - primary key: id, time
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,

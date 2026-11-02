@@ -58,18 +58,21 @@ Stage:       flink
 Primary key: category_id
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - category_id: INTEGER NOT NULL
  - center_vector: DOUBLE NOT NULL ARRAY
 Inputs:
  - default_catalog.default_database.VectorData
+--- physical ---
+Table CategoryCentroids (postgres):
+ - primary key: category_id
 
 === DocumentSimilarity
 ID:          default_catalog.default_database.DocumentSimilarity
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.VectorData
 Annotations:
@@ -80,7 +83,7 @@ Annotations:
 ID:          default_catalog.default_database.DocumentSimilarityIndex
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.VectorData
 Annotations:
@@ -94,11 +97,15 @@ Stage:       flink
 Primary key: doc_id
 Timestamp:   -
 Row count:   ~4
----
+--- definition ---
 Schema:
  - doc_id: INTEGER NOT NULL
  - category_id: INTEGER NOT NULL
  - vector: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
+--- physical ---
+Table VectorData (postgres):
+ - primary key: doc_id
+ - index VectorData_vector_cosine_c2 (vector_cosine): vector
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `VectorData`

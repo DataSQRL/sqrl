@@ -1,0 +1,5 @@
+mutation ExternalReadings {
+    add1: ExternalReading(event: { sensorid: 4, writer: "external" }) {
+        sensorid
+    }
+}

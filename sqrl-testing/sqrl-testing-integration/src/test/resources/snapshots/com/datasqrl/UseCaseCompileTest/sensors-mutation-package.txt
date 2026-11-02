@@ -73,7 +73,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: DECIMAL(8, 2) NOT NULL
@@ -82,6 +82,9 @@ Inputs:
  - default_catalog.default_database.SensorReading
 Annotations:
  - sort: [0 DESC-nulls-last]
+--- physical ---
+Table HighTempAlert (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === SensorMaxTemp
 ID:          default_catalog.default_database.SensorMaxTemp
@@ -90,7 +93,7 @@ Stage:       flink
 Primary key: sensorid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - maxTemp: DECIMAL(8, 2) NOT NULL
@@ -98,6 +101,9 @@ Inputs:
  - default_catalog.default_database.SensorReading
 Annotations:
  - sort: [0 DESC-nulls-last]
+--- physical ---
+Table SensorMaxTemp (postgres):
+ - primary key: sensorid
 
 === SensorReading
 ID:          default_catalog.default_database.SensorReading
@@ -106,13 +112,16 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: DECIMAL(8, 2) NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
 Inputs:
  - default_catalog.default_database.SensorReading__base
+--- physical ---
+Table SensorReading (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === SensorReadingSubscription
 ID:          default_catalog.default_database.SensorReadingSubscription
@@ -121,7 +130,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: DECIMAL(8, 2) NOT NULL
@@ -133,7 +142,7 @@ Inputs:
 ID:          default_catalog.default_database.SensorSubscriptionById
 Type:        query
 Stage:       kafka
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.SensorReadingSubscription
 Annotations:

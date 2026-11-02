@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - cnt: BIGINT NOT NULL
@@ -18,6 +18,9 @@ LogicalAggregate(group=[{0}], cnt=[COUNT()])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
 CREATE VIEW `OrderAgg1` AS  SELECT customerid, COUNT(1) as cnt FROM Orders GROUP BY customerid;
+--- physical ---
+Table OrderAgg1_1 (postgres):
+ - primary key: customerid
 
 === OrderAgg2
 ID:          default_catalog.default_database.OrderAgg2
@@ -26,7 +29,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -39,6 +42,9 @@ LogicalAggregate(group=[{0}], timestamp=[MAX($1)], cnt=[COUNT()])
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
 CREATE VIEW `OrderAgg2` AS  SELECT customerid, MAX(`time`) as `timestamp`, COUNT(1) as cnt FROM Orders GROUP BY customerid;
+--- physical ---
+Table OrderAgg2_2 (postgres):
+ - primary key: customerid
 
 === OrderAgg3
 ID:          default_catalog.default_database.OrderAgg3
@@ -47,7 +53,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - cnt: BIGINT NOT NULL
@@ -59,6 +65,9 @@ LogicalAggregate(group=[{0}], cnt=[COUNT()])
     LogicalTableScan(table=[[default_catalog, default_database, OrdersState]])
 SQL:
 CREATE VIEW `OrderAgg3` AS  SELECT customerid, COUNT(1) as cnt FROM OrdersState GROUP BY customerid;
+--- physical ---
+Table OrderAgg3_3 (postgres):
+ - primary key: customerid
 
 === OrderAgg4
 ID:          default_catalog.default_database.OrderAgg4
@@ -67,7 +76,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -80,6 +89,9 @@ LogicalAggregate(group=[{0}], timestamp=[MAX($1)], cnt=[COUNT()])
     LogicalTableScan(table=[[default_catalog, default_database, OrdersState]])
 SQL:
 CREATE VIEW `OrderAgg4` AS  SELECT customerid, MAX(`time`) as `timestamp`, COUNT(1) as cnt FROM OrdersState GROUP BY customerid;
+--- physical ---
+Table OrderAgg4_4 (postgres):
+ - primary key: customerid
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -88,7 +100,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -117,6 +129,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_5 (postgres):
+ - primary key: id, time
+
 === OrdersState
 ID:          default_catalog.default_database.OrdersState
 Type:        state
@@ -124,7 +140,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   time
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -147,6 +163,10 @@ SELECT `id`, `customerid`, `time`, `entries`
 FROM (SELECT `id`, `customerid`, `time`, `entries`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Orders`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table OrdersState_6 (postgres):
+ - primary key: id
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,

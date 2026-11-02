@@ -17,20 +17,44 @@ package com.datasqrl.deployment.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/** The contents of a Kafka deployment file. */
+/**
+ * The contents of a Kafka deployment file.
+ *
+ * @param topics the topics that the deployment owns, so it creates and configures them
+ * @param testRunnerTopics the topics that the test runner creates before the tests start
+ * @param includedTopics the topics of internal Kafka tables that a standalone included project
+ *     ({@code script.include}) defines. That project owns them, so the deployment only uses them.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record KafkaPlanModel(
-    List<KafkaNewTopicModel> topics, List<KafkaNewTopicModel> testRunnerTopics) {
+    List<KafkaNewTopicModel> topics,
+    List<KafkaNewTopicModel> testRunnerTopics,
+    @JsonInclude(JsonInclude.Include.NON_EMPTY) List<KafkaIncludedTopicModel> includedTopics) {
 
   public KafkaPlanModel {
     topics = topics == null ? List.of() : List.copyOf(topics);
     testRunnerTopics = testRunnerTopics == null ? List.of() : List.copyOf(testRunnerTopics);
+    includedTopics = includedTopics == null ? List.of() : List.copyOf(includedTopics);
   }
 
   @JsonIgnore
   public boolean isEmpty() {
-    return topics.isEmpty() && testRunnerTopics.isEmpty();
+    return topics.isEmpty() && testRunnerTopics.isEmpty() && includedTopics.isEmpty();
+  }
+
+  @JsonIgnore
+  public Set<String> allTopicNames() {
+    return Stream.concat(
+            Stream.of(topics, testRunnerTopics)
+                .flatMap(List::stream)
+                .map(KafkaNewTopicModel::topicName),
+            includedTopics.stream().map(KafkaIncludedTopicModel::topicName))
+        .collect(Collectors.toUnmodifiableSet());
   }
 }

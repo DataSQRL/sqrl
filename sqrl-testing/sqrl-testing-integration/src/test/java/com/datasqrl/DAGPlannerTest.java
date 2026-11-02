@@ -25,6 +25,7 @@ import com.datasqrl.util.SnapshotTest.Snapshot;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -102,7 +103,8 @@ public class DAGPlannerTest {
         switch (file.getFileName().toString()) {
           case "pipeline_explain.txt" -> true;
           case "pipeline_mutation_database.json" ->
-              script.getFileName().toString().equals("createTableLike.sqrl");
+              Set.of("createTableLike.sqrl", "partitionedKafkaMutation.sqrl")
+                  .contains(script.getFileName().toString());
           default -> false;
         };
   }

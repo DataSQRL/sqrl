@@ -1,0 +1,24 @@
+-- The package sets 'key.format' and 'value.format' for mutation tables, which take precedence over
+-- the default 'format'
+
+/*+engine(kafka) */
+CREATE TABLE KeyedReading (
+    sensorid INT NOT NULL,
+    temperature FLOAT NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+) PARTITIONED BY (sensorid);
+
+/*+engine(kafka) */
+CREATE TABLE UnkeyedReading (
+    sensorid INT NOT NULL,
+    temperature FLOAT NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+/*+engine(kafka) */
+CREATE TABLE SensorUpdate (
+    sensorid INT NOT NULL,
+    sensor_name STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+    PRIMARY KEY (sensorid) NOT ENFORCED
+);

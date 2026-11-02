@@ -24,8 +24,16 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.TestScriptConfig;
+import com.datasqrl.config.WorkspacePaths;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import com.datasqrl.loaders.resolver.ResourceResolver;
+import com.datasqrl.planner.parser.SqrlStatementParser;
 import com.datasqrl.planner.parser.StatementParserException;
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -36,13 +44,19 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ModuleLoadersTest {
 
+  private static final Path BUILD_DIR = Path.of("build").toAbsolutePath();
+  private static final Set<String> INCLUDES = Set.of("shared", "catalog");
+  private static final Map<String, Path> STANDALONE_INCLUDE_PATHS =
+      Map.of("shared", BUILD_DIR.resolve("shared"));
+
   @Mock private ModuleLoader mainLoader;
   @Mock private ModuleLoader rootLoader;
   @Mock private SqrlModule module;
 
   @Test
   void givenRegularImport_whenLoadImportModule_thenUsesMainLoaderAndPreservesPath() {
-    var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
+    var moduleLoaders =
+        new ModuleLoaders(mainLoader, rootLoader, INCLUDES, STANDALONE_INCLUDE_PATHS);
     when(mainLoader.loadModule(NamePath.of("submodule"))).thenReturn(Optional.of(module));
 
     var loadedModule =
@@ -57,7 +71,8 @@ class ModuleLoadersTest {
 
   @Test
   void givenRootImport_whenLoadImportModule_thenUsesRootLoaderAndRemovesRootPrefix() {
-    var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
+    var moduleLoaders =
+        new ModuleLoaders(mainLoader, rootLoader, INCLUDES, STANDALONE_INCLUDE_PATHS);
     when(rootLoader.loadModule(NamePath.of("shared"))).thenReturn(Optional.of(module));
 
     var loadedModule =
@@ -73,7 +88,8 @@ class ModuleLoadersTest {
   @Test
   void
       givenMissingIncludedScriptImportWithoutRoot_whenLoadImportModule_thenReportsRootPrefixRequirement() {
-    var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
+    var moduleLoaders =
+        new ModuleLoaders(mainLoader, rootLoader, INCLUDES, STANDALONE_INCLUDE_PATHS);
     when(mainLoader.loadModule(NamePath.of("shared"))).thenReturn(Optional.empty());
 
     assertThatThrownBy(
@@ -89,7 +105,8 @@ class ModuleLoadersTest {
   @Test
   void
       givenMissingIncludedScriptExportWithoutRoot_whenLoadExportModule_thenReportsRootPrefixRequirement() {
-    var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
+    var moduleLoaders =
+        new ModuleLoaders(mainLoader, rootLoader, INCLUDES, STANDALONE_INCLUDE_PATHS);
     when(mainLoader.loadModule(NamePath.of("shared"))).thenReturn(Optional.empty());
 
     assertThatThrownBy(
@@ -104,7 +121,8 @@ class ModuleLoadersTest {
 
   @Test
   void givenMissingRegularImport_whenLoadImportModule_thenReportsMissingModule() {
-    var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"));
+    var moduleLoaders =
+        new ModuleLoaders(mainLoader, rootLoader, INCLUDES, STANDALONE_INCLUDE_PATHS);
     when(mainLoader.loadModule(NamePath.of("missing"))).thenReturn(Optional.empty());
 
     assertThatThrownBy(
@@ -120,7 +138,7 @@ class ModuleLoadersTest {
   void givenMainLoaderReplacement_whenLoadImportModule_thenUsesReplacementAndKeepsRootLoader() {
     var replacementLoader = mock(ModuleLoader.class);
     var moduleLoaders =
-        new ModuleLoaders(mainLoader, rootLoader, Set.of("shared"))
+        new ModuleLoaders(mainLoader, rootLoader, INCLUDES, STANDALONE_INCLUDE_PATHS)
             .withMainLoader(replacementLoader);
     when(replacementLoader.loadModule(NamePath.of("local"))).thenReturn(Optional.of(module));
     when(rootLoader.loadModule(NamePath.of("shared"))).thenReturn(Optional.of(module));
@@ -143,10 +161,65 @@ class ModuleLoadersTest {
 
   @Test
   void givenNamePath_whenCheckRootImport_thenOnlyRootHeadMatches() {
-    var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of());
+    var moduleLoaders = new ModuleLoaders(mainLoader, rootLoader, Set.of(), Map.of());
 
     assertThat(moduleLoaders.isRootImport(NamePath.of("root", "shared"))).isTrue();
     assertThat(moduleLoaders.isRootImport(NamePath.of("shared", "root"))).isFalse();
     assertThat(moduleLoaders.isRootImport(NamePath.ROOT)).isFalse();
+  }
+
+  @Test
+  void givenIncludeConfigs_whenCreated_thenOnlyTheStandaloneIncludeOwnsItsScripts() {
+    var packageJson = mock(PackageJson.class);
+    when(packageJson.getScriptConfig())
+        .thenReturn(TestScriptConfig.withIncludes(Map.of("shared", true, "catalog", false)));
+    var buildDir = Path.of("project", "build");
+    var workspacePaths =
+        new WorkspacePaths(
+            Path.of("project"), buildDir, Path.of("project", "target"), Path.of("project"));
+
+    var moduleLoaders =
+        new ModuleLoaders(
+            packageJson,
+            mock(ResourceResolver.class),
+            mock(SqrlStatementParser.class),
+            workspacePaths,
+            mock(ClasspathFunctionLoader.class),
+            mock(UdfJarClassLoaders.class),
+            ErrorCollector.root());
+
+    assertThat(moduleLoaders.getIncludeNamespaces()).containsExactlyInAnyOrder("shared", "catalog");
+    assertThat(moduleLoaders.getStandaloneInclude(buildDir.resolve("shared/sources.sqrl")))
+        .contains("shared");
+    assertThat(moduleLoaders.getStandaloneInclude(buildDir.resolve("catalog/sources.sqrl")))
+        .isEmpty();
+  }
+
+  @Test
+  void givenScriptOfStandaloneInclude_whenGetStandaloneInclude_thenReturnsItsNamespace() {
+    var moduleLoaders =
+        new ModuleLoaders(mainLoader, rootLoader, INCLUDES, STANDALONE_INCLUDE_PATHS);
+
+    assertThat(moduleLoaders.getStandaloneInclude(BUILD_DIR.resolve("shared/tables/sources.sqrl")))
+        .contains("shared");
+  }
+
+  @Test
+  void givenScriptOfIncludeThatIsNotStandalone_whenGetStandaloneInclude_thenReturnsEmpty() {
+    var moduleLoaders =
+        new ModuleLoaders(mainLoader, rootLoader, INCLUDES, STANDALONE_INCLUDE_PATHS);
+
+    assertThat(moduleLoaders.getStandaloneInclude(BUILD_DIR.resolve("catalog/sources.sqrl")))
+        .isEmpty();
+  }
+
+  @Test
+  void givenScriptOfTheProject_whenGetStandaloneInclude_thenReturnsEmpty() {
+    var moduleLoaders =
+        new ModuleLoaders(mainLoader, rootLoader, INCLUDES, STANDALONE_INCLUDE_PATHS);
+
+    assertThat(moduleLoaders.getStandaloneInclude(BUILD_DIR.resolve("main.sqrl"))).isEmpty();
+    assertThat(moduleLoaders.getStandaloneInclude(BUILD_DIR.resolve("shared2/sources.sqrl")))
+        .isEmpty();
   }
 }

@@ -28,6 +28,6 @@
 }
 ```
 
-Most Kafka producer and consumer settings belong in the Kafka connector templates. The package schema does **not** accept an `engines.kafka.config` object. If client settings need adjustment, use the official Kafka [consumer](https://kafka.apache.org/42/configuration/consumer-configs/) or [producer](https://kafka.apache.org/42/configuration/producer-configs/) documentation, then update the appropriate [connector template](connector-templates.md).
+Most Kafka producer and consumer settings belong in the Kafka connector templates. The package schema does **not** accept an `engines.kafka.config` object. If client settings need adjustment, use the official Kafka [consumer](https://kafka.apache.org/42/configuration/consumer-configs/) or [producer](https://kafka.apache.org/42/configuration/producer-configs/) documentation, then update the appropriate [connector template](connector-templates.md). Separate formats for the message key and value are configured there as well (see [Kafka key and value formats](connector-templates.md#kafka-key-and-value-formats)).
 
 Source watermarks apply only to mutation tables with a `timestamp` metadata column and require the `kafka-safe` or `upsert-kafka-safe` connector. When enabled, they generate `WATERMARK FOR <timestamp-column> AS SOURCE_WATERMARK()` instead of applying the corresponding delay.
