@@ -1,0 +1,7 @@
+[FATAL]  Column 'last_updated' not found in any table
+in script:distinctOrderByError-fail.sqrl [5:12]:
+DistinctCustomer := DISTINCT Customer
+  ON customerid
+  ORDER BY last_updated DESC;
+-----------^
+

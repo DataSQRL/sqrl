@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - max_id: BIGINT NOT NULL
@@ -26,7 +26,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - total: BIGINT NOT NULL
@@ -42,6 +42,9 @@ LogicalProject(customerid=[$0], total=[$1], max_id=[$3])
 SQL:
 CREATE VIEW `CustomerSummary` AS  SELECT t.customerid, t.total, m.max_id
     FROM CustomerTotals t JOIN CustomerMax m ON t.customerid = m.customerid;
+--- physical ---
+Table CustomerSummary_1 (postgres):
+ - primary key: customerid
 
 === CustomerTotals
 ID:          default_catalog.default_database.CustomerTotals
@@ -50,7 +53,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - total: BIGINT NOT NULL
@@ -70,7 +73,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -100,6 +103,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_2 (postgres):
+ - primary key: id, time
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,

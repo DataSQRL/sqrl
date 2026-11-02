@@ -1,5 +1,5 @@
 [FATAL] Could not find module [root.nonexistent.*] at path: [nonexistent/*]
-in script:importRootTest-fail.sqrl [1:1]:
+in script:importRootTest-fail.sqrl [1:8]:
 IMPORT root.nonexistent.*;
-^
+-------^
 

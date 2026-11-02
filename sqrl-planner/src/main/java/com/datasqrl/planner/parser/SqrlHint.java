@@ -58,7 +58,7 @@ public record SqrlHint(String name, List<String> options) {
       var arguments = parseArgs(rawArgs, () -> relativeLocation(hint, hintMatcher.start("args")));
       var loc =
           hint.getFileLocation()
-              .add(SqrlStatementParser.computeFileLocation(hint.get(), hintMatcher.start()));
+              .add(SqrlStatementParser.computeFileLocation(hint.get(), hintMatcher.start("name")));
 
       lastMatchEnd = hintMatcher.end();
       hints.add(new ParsedObject<>(new SqrlHint(hintName, arguments), loc));

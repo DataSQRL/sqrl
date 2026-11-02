@@ -16,7 +16,9 @@
 package com.datasqrl.planner.parser;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.datasqrl.error.ErrorLocation.FileLocation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -46,6 +48,32 @@ class SqrlStatementParserTest {
     var parsed = parser.parseStatement("IMPORT mypkg.Datapoints AS Datapoints;");
 
     assertThat(parsed).isInstanceOf(SqrlImportStatement.class);
+  }
+
+  @Test
+  void givenImportStatementWithAlias_whenParseStatement_thenNamesHaveTheirPositions() {
+    var parsed =
+        (SqrlImportStatement) parser.parseStatement("IMPORT   mypkg.Datapoints AS Points;");
+
+    assertThat(parsed.getPackageIdentifier().getFileLocation()).isEqualTo(new FileLocation(1, 10));
+    assertThat(parsed.getAlias().getFileLocation()).isEqualTo(new FileLocation(1, 30));
+  }
+
+  @Test
+  void givenExportStatementWithNewline_whenParseStatement_thenNamesHaveTheirPositions() {
+    var parsed = (SqrlExportStatement) parser.parseStatement("EXPORT\n  Datapoints TO mypkg.sink;");
+
+    assertThat(parsed.getTableIdentifier().getFileLocation()).isEqualTo(new FileLocation(2, 3));
+    assertThat(parsed.getPackageIdentifier().getFileLocation()).isEqualTo(new FileLocation(2, 17));
+  }
+
+  @Test
+  void givenDefinitionWithoutBody_whenParseStatement_thenFailsAtTheName() {
+    assertThatThrownBy(() -> parser.parseStatement("Datapoints := ;"))
+        .isInstanceOfSatisfying(
+            StatementParserException.class,
+            e -> assertThat(e.fileLocation).isEqualTo(new FileLocation(1, 1)))
+        .hasMessage("Missing query or expression after ':=' in the definition of Datapoints");
   }
 
   @Test
