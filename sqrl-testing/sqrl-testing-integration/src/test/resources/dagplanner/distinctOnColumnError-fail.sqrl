@@ -1,0 +1,3 @@
+IMPORT ecommerceTs.customer;
+
+DistinctCustomer := DISTINCT Customer ON customer_id ORDER BY `timestamp` DESC;

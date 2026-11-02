@@ -1,0 +1,7 @@
+[FATAL]  Column 'customer_id' not found in any table
+in script:distinctOnColumnError-fail.sqrl [3:42]:
+IMPORT ecommerceTs.customer;
+
+DistinctCustomer := DISTINCT Customer ON customer_id ORDER BY `timestamp` DESC;
+-----------------------------------------^
+

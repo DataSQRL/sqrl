@@ -16,18 +16,37 @@
 package com.datasqrl.planner.parser;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.sql.parser.SqlParseException;
 import org.apache.calcite.sql.parser.SqlParserPos;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.flink.sql.parser.error.SqlValidateException;
+import org.apache.flink.table.api.ValidationException;
 
 /**
  * Utility for mapping Flink/Calcite parser and planner errors to DataSQRL errors. This means
  * mapping line & column numbers as well as messages.
  */
 public class ParsePosUtil {
+
+  /**
+   * Matches a position at the end of a sentence in a Flink message, e.g. "..., at line 4, column
+   * 17\n", including the separators around it.
+   */
+  private static final Pattern POSITION_IN_MESSAGE =
+      Pattern.compile(
+          "[,\\s]*\\bat line (?<line>\\d+), column (?<column>\\d+)(?<period>\\.?)\\s*",
+          Pattern.CASE_INSENSITIVE);
+
+  private static final Pattern LINE_NUM_AT =
+      Pattern.compile("at line \\d*, column \\d*[:\\s]?", Pattern.CASE_INSENSITIVE);
+
+  private static final Pattern LINE_NUM_FROMTO =
+      Pattern.compile(
+          "from line \\d*, column \\d* to line \\d*, column \\d*[:\\s]?", Pattern.CASE_INSENSITIVE);
 
   public static FileLocation convertPosition(SqlParserPos parsePos) {
     return new FileLocation(parsePos.getLineNum(), parsePos.getColumnNum());
@@ -56,15 +75,38 @@ public class ParsePosUtil {
       var message = removeLineNumbersFromMessage(calciteException.getMessage());
       return Optional.of(new MessageLocation(location, message));
     }
-    return Optional.empty();
+    // Some Flink validation errors (e.g. for CREATE TABLE) only have the position in the message
+    return ExceptionUtils.getThrowableList(e).stream()
+        .filter(ValidationException.class::isInstance)
+        .map(Throwable::getMessage)
+        .filter(Objects::nonNull)
+        .flatMap(message -> extractPositionFromMessage(message).stream())
+        .findFirst();
   }
 
-  private static final Pattern LINE_NUM_AT =
-      Pattern.compile("at line \\d*, column \\d*[:\\s]?", Pattern.CASE_INSENSITIVE);
+  /**
+   * Extracts the position from a Flink message and removes it from the message. If the message
+   * continues after the position, the rest follows as the next sentence on the same line.
+   */
+  private static Optional<MessageLocation> extractPositionFromMessage(String message) {
+    var matcher = POSITION_IN_MESSAGE.matcher(message);
+    if (!matcher.find()) {
+      return Optional.empty();
+    }
 
-  private static final Pattern LINE_NUM_FROMTO =
-      Pattern.compile(
-          "from line \\d*, column \\d* to line \\d*, column \\d*[:\\s]?", Pattern.CASE_INSENSITIVE);
+    var line = Integer.parseInt(matcher.group("line"));
+    if (line < 1) { // Flink uses line 0 when the position is unknown
+      return Optional.empty();
+    }
+
+    var location = new FileLocation(line, Integer.parseInt(matcher.group("column")));
+    var endsMessage = matcher.end() == message.length();
+    var separator = endsMessage ? matcher.group("period") : ". ";
+    var cleaned =
+        message.substring(0, matcher.start()) + separator + message.substring(matcher.end());
+
+    return Optional.of(new MessageLocation(location, cleaned));
+  }
 
   public static String removeLineNumbersFromMessage(String message) {
     var matcher = LINE_NUM_AT.matcher(message);

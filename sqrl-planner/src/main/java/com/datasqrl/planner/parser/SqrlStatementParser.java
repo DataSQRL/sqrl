@@ -167,22 +167,23 @@ public class SqrlStatementParser {
       var directive = importExportMatcher.group("fullmatch");
       var commentEnd = importExportMatcher.end() - directive.length();
       var comment = SqrlComments.parse(parse(statement.substring(0, commentEnd), statement, 0));
-      var body = statement.substring(importExportMatcher.end()).trim();
+      // Match the body in place, so that the matched groups have their positions in the statement
+      var bodyStart = importExportMatcher.end();
 
       if (directive.equalsIgnoreCase("import")) {
-        var subMatcher = IMPORT_PARSER.matcher(body);
+        var subMatcher = IMPORT_PARSER.matcher(statement).region(bodyStart, statement.length());
         checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
         var packageIdentifier = parseNamePath(subMatcher, "package", statement);
         var alias = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_IMPORT, "Missing package path");
         return new SqrlImportStatement(packageIdentifier, alias, comment);
       } else if (directive.equalsIgnoreCase("export")) {
-        var subMatcher = EXPORT_PARSER.matcher(body);
+        var subMatcher = EXPORT_PARSER.matcher(statement).region(bodyStart, statement.length());
         checkFatal(subMatcher.find(), ErrorCode.INVALID_EXPORT, "Could not parse EXPORT statement");
         var packageIdentifier = parseNamePath(subMatcher, "package", statement);
         var tableName = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing package path");
-        checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing table");
+        checkFatal(tableName.isPresent(), ErrorCode.INVALID_EXPORT, "Missing table");
         return new SqrlExportStatement(tableName, packageIdentifier, comment);
       } else {
         // This should not happen
@@ -212,6 +213,12 @@ public class SqrlStatementParser {
       var comment = SqrlComments.parse(parse(statement.substring(0, commentEnd), statement, 0));
       var definitionBody =
           parse(statement.substring(sqrlDefinition.end()), statement, sqrlDefinition.end());
+      checkFatal(
+          !SqlScriptStatementSplitter.removeStatementDelimiter(definitionBody.get()).isBlank(),
+          tableName.getFileLocation(),
+          ErrorCode.INVALID_SQRL_DEFINITION,
+          "Missing query or expression after ':=' in the definition of %s",
+          tableName.get());
 
       var access = AccessModifier.QUERY;
 
