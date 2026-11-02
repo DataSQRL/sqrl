@@ -6,7 +6,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - source_id: INTEGER
 Inputs:
@@ -26,7 +26,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - source_id: INTEGER
 Inputs:
@@ -41,6 +41,10 @@ WITH (
   'connector' = 'datagen',
   'rows-per-second' = '10'
 )
+--- physical ---
+Table Records_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Records` (
   `source_id` INTEGER

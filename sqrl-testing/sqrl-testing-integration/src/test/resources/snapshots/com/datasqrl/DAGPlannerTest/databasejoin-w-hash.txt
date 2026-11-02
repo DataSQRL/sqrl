@@ -6,7 +6,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id1: BIGINT NOT NULL
  - id2: BIGINT NOT NULL
@@ -29,7 +29,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -50,6 +50,10 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], productid=[$4], quantity=[$5
         LogicalValues(tuples=[[{ 0 }]])
 SQL:
 CREATE VIEW `_OrderEntries` AS  SELECT o.id, o.customerid, o.`time`, e.productid, e.quantity, e.discount FROM _Orders o CROSS JOIN UNNEST(entries) e;
+--- physical ---
+Table _OrderEntries_1 (postgres):
+ - primary key: time, __pk_hash (generated hash key)
+ - index _OrderEntries_1_hash_c1 (hash): customerid
 
 === _Orders
 ID:          default_catalog.default_database._Orders
@@ -58,7 +62,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL

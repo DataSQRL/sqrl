@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -35,6 +35,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === CustomerOrdersJoin
 ID:          default_catalog.default_database.CustomerOrdersJoin
 Type:        stream
@@ -42,7 +46,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated, id, time
 Timestamp:   _ingest_time
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -65,6 +69,9 @@ LogicalProject(customerid=[$0], email=[$1], name=[$2], lastUpdated=[$3], _ingest
 SQL:
 CREATE VIEW `CustomerOrdersJoin` AS  SELECT * FROM Customer c JOIN Orders o ON c.customerid = o.customerid
                       AND c._ingest_time < o._ingest_time;
+--- physical ---
+Table CustomerOrdersJoin_2 (postgres):
+ - primary key: customerid, lastUpdated, id, time
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -73,7 +80,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -103,6 +110,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_3 (postgres):
+ - primary key: id, time
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,

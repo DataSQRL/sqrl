@@ -54,7 +54,7 @@ Stage:       postgres
 Primary key: sensorid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - maxTemp: FLOAT NOT NULL
@@ -71,7 +71,7 @@ Stage:       flink
 Primary key: sensorid, event_time
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
@@ -80,12 +80,15 @@ Inputs:
  - default_catalog.default_database.SensorReading__base
 Annotations:
  - stream-root: SensorReading
+--- physical ---
+Table SensorReading (postgres):
+ - primary key: sensorid, event_time
 
 === SensorReadingById
 ID:          default_catalog.default_database.SensorReadingById
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.SensorReading
 Annotations:

@@ -99,13 +99,16 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.KeyedReading__base
+--- physical ---
+Table KeyedReading (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === SensorUpdate
 ID:          default_catalog.default_database.SensorUpdate
@@ -114,13 +117,16 @@ Stage:       flink
 Primary key: sensorid
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - sensor_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.SensorUpdate__base
+--- physical ---
+Table SensorUpdate (postgres):
+ - primary key: sensorid
 
 === UnkeyedReading
 ID:          default_catalog.default_database.UnkeyedReading
@@ -129,13 +135,16 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - temperature: FLOAT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.UnkeyedReading__base
+--- physical ---
+Table UnkeyedReading (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `KeyedReading` (

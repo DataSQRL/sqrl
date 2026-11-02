@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   updateTime
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - categoryid: INTEGER NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -32,6 +32,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Category_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
 === Customer
 ID:          default_catalog.default_database.Customer
 Type:        stream
@@ -39,7 +43,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -70,6 +74,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_2 (postgres):
+ - primary key: customerid, lastUpdated
+
 === CustomerOther
 ID:          default_catalog.default_database.CustomerOther
 Type:        stream
@@ -77,7 +85,7 @@ Stage:       flink
 Primary key: customer_id, last_updated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customer_id: BIGINT NOT NULL
  - full_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -106,6 +114,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table CustomerOther_3 (postgres):
+ - primary key: customer_id, last_updated
+
 === MyEvents
 ID:          default_catalog.default_database.MyEvents
 Type:        stream
@@ -113,7 +125,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - payload: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -150,7 +162,7 @@ Stage:       flink
 Primary key: productid, name, description, category
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -180,11 +192,15 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Product_5 (postgres):
+ - primary key: productid, name, description, category
+
 === myevents
 ID:          logger.myevents
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.MyEvents
 

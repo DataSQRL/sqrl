@@ -6,7 +6,7 @@ Stage:       iceberg
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - rid: CHAR(32) CHARACTER SET "UTF-16LE"
  - original_source_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -22,7 +22,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - source_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - patient_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -37,7 +37,7 @@ Stage:       iceberg
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - source_id: CHAR(32) CHARACTER SET "UTF-16LE"
  - original_source_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"

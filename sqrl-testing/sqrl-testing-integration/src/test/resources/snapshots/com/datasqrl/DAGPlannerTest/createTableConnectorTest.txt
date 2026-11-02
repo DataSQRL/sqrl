@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: BIGINT NOT NULL
@@ -40,6 +40,10 @@ WITH (
   'fields.uuid.kind' = 'random',
   'number-of-rows' = '1000'
 )
+--- physical ---
+Table SensorReading_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
 === SensorTempByHour
 ID:          default_catalog.default_database.SensorTempByHour
 Type:        stream
@@ -47,7 +51,7 @@ Stage:       flink
 Primary key: sensorid, time_hour
 Timestamp:   time_hour
 Row count:   ~7e7
----
+--- definition ---
 Schema:
  - sensorid: BIGINT NOT NULL
  - time_hour: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -67,6 +71,9 @@ SQL:
 CREATE VIEW `SensorTempByHour` AS  SELECT sensorid, window_time as time_hour, AVG(temperature) AS avg_temperature
                      FROM TABLE(TUMBLE(TABLE SensorReading, DESCRIPTOR(`timestamp`), INTERVAL '60' MINUTES))
                      GROUP BY sensorid, window_start, window_end, window_time;
+--- physical ---
+Table SensorTempByHour_2 (postgres):
+ - primary key: sensorid, time_hour
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `SensorReading` (

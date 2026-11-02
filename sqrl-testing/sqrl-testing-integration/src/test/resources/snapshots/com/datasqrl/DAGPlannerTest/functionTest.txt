@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - searchResult: DOUBLE NOT NULL
  - format: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -21,6 +21,9 @@ SQL:
 CREATE VIEW `FunctionCalls` AS  SELECT text_search('garden gnome', category, name) AS searchResult,
                         format('Go buy: %s in %s with id=%s', name, category, CAST(productid AS STRING)) AS format
     FROM Product;
+--- physical ---
+Table FunctionCalls_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Product
 ID:          default_catalog.default_database.Product
@@ -29,7 +32,7 @@ Stage:       flink
 Primary key: productid, name, description, category
 Timestamp:   _ingest_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - productid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -59,6 +62,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Product_2 (postgres):
+ - primary key: productid, name, description, category
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Product` (
   `productid` BIGINT NOT NULL,
