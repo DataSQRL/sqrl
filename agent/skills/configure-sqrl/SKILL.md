@@ -342,7 +342,7 @@ Note that these connector templates apply to table definition managed by DataSQR
 }
 ```
 
-`logger` is `print` or `none`. `extended-scalar-types` enables extended generated GraphQL scalars. `compile-flink-plan` controls Flink physical-plan generation and is not supported for batch pipelines. `cost-model` is `DEFAULT`, `READ`, or `WRITE`.
+`logger` is `print` or `none`. `extended-scalar-types` enables extended generated GraphQL scalars. `compile-flink-plan` controls Flink physical-plan generation and is not supported for batch pipelines. `cost-model` is `DEFAULT`, `READ`, or `WRITE`, and the default is `DEFAULT`. `DEFAULT` favors Flink unless joins make Flink too expensive, `WRITE` always favors Flink, and `READ` always favors the database. The compiler assigns each table to the cheapest engine. An `/*+ engine(...) */` hint limits the engines that the compiler can pick. With `DEFAULT`, Flink and the database can have the same cost for a table. Then the compiler assigns the table to Flink. To see the engine of each table, read its `Stage:` line in `build/pipeline_explain.txt`.
 
 `explain` controls plan output under `build/`: use `sql`, `logical`, or `physical` to include each representation, and `sorted` for deterministic order. Although the current schema accepts `text` and `visual`, the current compiler configuration interface does not consume them; do not rely on those keys.
 
