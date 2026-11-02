@@ -37,6 +37,12 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 - Kafka topics are automatically created based on your SQRL table definitions
 - Topic configurations are generated during the compilation process
 - `kafka.json` lists the topics of internal Kafka tables that a [standalone included project](../configuration#include-other-sources) defines under `includedTopics`, with only their names, because that project owns them and decides their settings
+- A Kafka table that Flink writes never uses the topic of a mutation table that it reads, because
+  Flink would then read its own output in an endless loop. When the `kafka` connector template gives the table such a topic, the compiler uses the topic `<table-name>-subscription` instead. If the template gives the same topic again, for example with a fixed `topic` without
+  `${sqrl:table-name}`, the compile fails with an error.
+  For example, a script defines the mutation table `Events` with `CREATE TABLE` and the
+  `engine(kafka)` hint, and a `SUBSCRIBE` function reads `Events` directly. Flink then copies
+  `Events` into a Kafka table for the subscription. With the default templates, the mutation topic is `Events` and the copy gets the topic `Events-subscription`. All other topics keep the name from the template
 - Retention settings control how long data is stored in Kafka topics
 - Ensure `replication-factor` does not exceed the number of brokers in the target Kafka cluster
 - Watermarks are used for handling late-arriving events in stream processing

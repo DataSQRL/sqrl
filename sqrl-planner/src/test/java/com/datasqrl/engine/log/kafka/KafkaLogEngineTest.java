@@ -17,10 +17,13 @@ package com.datasqrl.engine.log.kafka;
 
 import static com.datasqrl.flinkrunner.connector.kafka.KeyFieldsOptions.SCAN_KEY_FIELDS_READ_FROM_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.PackageJson;
@@ -31,14 +34,22 @@ import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.engine.log.MutationEngine.MutationSettings;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
+import com.datasqrl.planner.dag.plan.MutationTable;
+import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
+import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.server.MutationInsertType;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.flink.table.catalog.ObjectIdentifier;
+import org.apache.flink.table.catalog.ResolvedSchema;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,12 +59,14 @@ class KafkaLogEngineTest {
   private static final String KEY_FIELDS_READ_FROM_VALUE_KEY =
       SCAN_KEY_FIELDS_READ_FROM_VALUE.key();
 
+  private final ConnectorConf streamConnectorConf = mock(ConnectorConf.class);
   private final ConnectorConf mutationConnectorConf = mock(ConnectorConf.class);
   private final PackageJson packageJson = mock(PackageJson.class);
   private final ConnectorFactoryFactory connectorFactory = mock(ConnectorFactoryFactory.class);
 
   private ErrorCollector errors;
   private KafkaLogEngine engine;
+  private FlinkTableBuilder createdTableBuilder;
 
   @BeforeEach
   void setUp() {
@@ -75,7 +88,6 @@ class KafkaLogEngineTest {
     when(testRunnerConfig.getCreateTopics()).thenReturn(List.of());
     when(packageJson.getTestConfig()).thenReturn(testRunnerConfig);
 
-    var streamConnectorConf = mock(ConnectorConf.class);
     when(streamConnectorConf.toMap()).thenReturn(Map.of("format", "flexible-json"));
     when(connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME))
         .thenReturn(streamConnectorConf);
@@ -178,6 +190,53 @@ class KafkaLogEngineTest {
         .contains("'unused'", "\"standalone\"", "includedTopics");
   }
 
+  @Test
+  void givenViewOfMutationTable_whenCreateTableWithMutationTopic_thenUsesSubscriptionTopic() {
+    var table =
+        createTable("${sqrl:table-name}", "Events", view("Events", mutationSource("Events")));
+
+    assertThat(table.topicName()).isEqualTo("Events-subscription");
+    assertThat(createdTableBuilder.getConnectorOptions())
+        .containsEntry(KafkaLogEngine.CONNECTOR_TOPIC_KEY, "Events-subscription");
+  }
+
+  @Test
+  void givenTopicTemplateWithPrefix_whenTableReadsMutationTopic_thenKeepsPrefix() {
+    var table =
+        createTable(
+            "acme-${sqrl:table-name}", "Events", view("Events", mutationSource("acme-Events")));
+
+    assertThat(table.topicName()).isEqualTo("acme-Events-subscription");
+  }
+
+  @Test
+  void givenFunctionThatReadsMutation_whenCreateTableWithMutationTopic_thenUsesSubscriptionTopic() {
+    var function =
+        SqrlTableFunction.builder()
+            .fullPath(NamePath.of("EventsByCustomer"))
+            .functionAnalysis(view("EventsByCustomerView", mutationSource("Events")))
+            .build();
+
+    var table = createTable("${sqrl:table-name}", "Events", view("Events", function));
+
+    assertThat(table.topicName()).isEqualTo("Events-subscription");
+  }
+
+  @Test
+  void givenTableThatDoesNotReadMutation_whenTopicEqualsMutationTopic_thenKeepsTopic() {
+    var table =
+        createTable("${sqrl:table-name}", "Events", view("Events", mutationSource("Orders")));
+
+    assertThat(table.topicName()).isEqualTo("Events");
+  }
+
+  @Test
+  void givenFixedTopicInTemplate_whenTableReadsMutationTopic_thenFailsWithLoopError() {
+    assertThatThrownBy(
+            () -> createTable("Events", "Events", view("Events", mutationSource("Events"))))
+        .hasMessageContaining("reads mutation topic 'Events' and writes into the same topic");
+  }
+
   private KafkaLogEngine newEngine(Map<String, Boolean> standaloneByInclude) {
     when(packageJson.getScriptConfig())
         .thenReturn(TestScriptConfig.withIncludes(standaloneByInclude));
@@ -231,6 +290,58 @@ class KafkaLogEngineTest {
             tableBuilder,
             null,
             new MutationSettings(MutationInsertType.SINGLE, Optional.empty(), standaloneInclude));
+  }
+
+  private KafkaLogEngine.Table createTable(
+      String topicTemplate, String originalTableName, TableAnalysis tableAnalysis) {
+    when(streamConnectorConf.toMapWithSubstitution(any(ConnectorConf.Context.class)))
+        .thenAnswer(
+            invocation -> {
+              ConnectorConf.Context context = invocation.getArgument(0);
+              return new HashMap<>(
+                  Map.of(
+                      "connector",
+                      "kafka-safe",
+                      "format",
+                      "flexible-json",
+                      TIMESTAMP_FORMAT,
+                      "ISO-8601",
+                      "topic",
+                      topicTemplate.replace("${sqrl:table-name}", context.getTableName())));
+            });
+    createdTableBuilder = new FlinkTableBuilder().setName(originalTableName + "_2");
+    createdTableBuilder.setColumnList(SqlNodeList.EMPTY);
+
+    return (KafkaLogEngine.Table)
+        engine.createTable(null, originalTableName, createdTableBuilder, null, tableAnalysis);
+  }
+
+  private static TableAnalysis mutationSource(String mutationTopicName) {
+    var mutationTable =
+        MutationTable.builder()
+            .name(Name.system(mutationTopicName))
+            .createTable(mutation(mutationTopicName, Optional.empty()))
+            .build();
+    return TableAnalysis.builder()
+        .objectIdentifier(tableIdentifier(mutationTopicName))
+        .sourceSinkTable(
+            Optional.of(
+                new SourceSinkTableAnalysis(
+                    new FlinkConnectorConfigWrapper(Map.of(), Optional.empty()),
+                    ResolvedSchema.of(),
+                    mutationTable)))
+        .build();
+  }
+
+  private static TableAnalysis view(String viewName, TableOrFunctionAnalysis fromTable) {
+    return TableAnalysis.builder()
+        .objectIdentifier(tableIdentifier(viewName))
+        .fromTables(List.of(fromTable))
+        .build();
+  }
+
+  private static ObjectIdentifier tableIdentifier(String tableName) {
+    return ObjectIdentifier.of("default_catalog", "default_database", tableName);
   }
 
   private List<ErrorMessage> warnings() {

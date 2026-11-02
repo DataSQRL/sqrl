@@ -40,22 +40,30 @@ import com.datasqrl.flinkrunner.format.json.FlexibleJsonFormat;
 import com.datasqrl.io.schema.avro.AvroToRelDataTypeConverter;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
+import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
+import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.collect.Streams;
 import jakarta.inject.Inject;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -79,6 +87,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   public static final String CONNECTOR_TOPIC_KEY = "topic";
   public static final String UPSERT_FORMAT = "upsert-%s";
+  public static final String SUBSCRIPTION_TOPIC_SUFFIX = "-subscription";
 
   public static final String DEFAULT_TTL_KEY = "retention";
 
@@ -261,8 +270,24 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     // after merging, so formats and format options given in WITH are configured as well
     var valueFormat =
         formats.configure(connectorConfig, originalTableName, hasMessageKey, isMutation);
+    var topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
+    var readMutationTopicNames =
+        tableAnalysis.map(KafkaLogEngine::getReadMutationTopicNames).orElse(Set.of());
+    if (readMutationTopicNames.contains(topicName)) {
+      // Flink would read its own output from the mutation topic, so the table gets its own topic
+      topicName =
+          conf.toMapWithSubstitution(
+                  ctxBuilder.tableName(originalTableName + SUBSCRIPTION_TOPIC_SUFFIX).build())
+              .get(CONNECTOR_TOPIC_KEY);
+      errors.checkFatal(
+          !readMutationTopicNames.contains(topicName),
+          "Kafka table '%s' reads mutation topic '%s' and writes into the same topic. Use"
+              + " '${sqrl:table-name}' in the 'topic' option of the 'kafka' connector.",
+          originalTableName,
+          topicName);
+      connectorConfig.put(CONNECTOR_TOPIC_KEY, topicName);
+    }
     tableBuilder.setConnectorOptions(connectorConfig);
-    String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     return new Table(
         topicName,
         tableBuilder.getTableName(),
@@ -272,6 +297,42 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         relDataType,
         topicConfig,
         standaloneInclude);
+  }
+
+  /**
+   * Returns the topics of the mutation tables that the table reads, directly or through views and
+   * table functions.
+   */
+  private static Set<String> getReadMutationTopicNames(TableAnalysis tableAnalysis) {
+    var mutationTopicNames = new HashSet<String>();
+    // Compares by identity, since a source table and its view have the same object identifier
+    var visitedTables = Collections.<TableAnalysis>newSetFromMap(new IdentityHashMap<>());
+    collectReadMutationTopicNames(tableAnalysis, visitedTables, mutationTopicNames);
+    return mutationTopicNames;
+  }
+
+  private static void collectReadMutationTopicNames(
+      TableAnalysis tableAnalysis,
+      Set<TableAnalysis> visitedTables,
+      Set<String> mutationTopicNames) {
+    // A table can read the same input more than once, for example in a self join
+    if (!visitedTables.add(tableAnalysis)) {
+      return;
+    }
+    tableAnalysis
+        .getSourceSinkTable()
+        .map(SourceSinkTableAnalysis::mutationDefinition)
+        .map(MutationTable::getCreateTable)
+        .filter(Table.class::isInstance)
+        .ifPresent(mutationTable -> mutationTopicNames.add(((Table) mutationTable).topicName()));
+    for (TableOrFunctionAnalysis fromTable : tableAnalysis.getFromTables()) {
+      if (fromTable instanceof TableAnalysis fromTableAnalysis) {
+        collectReadMutationTopicNames(fromTableAnalysis, visitedTables, mutationTopicNames);
+      } else if (fromTable instanceof SqrlTableFunction fromFunction) {
+        collectReadMutationTopicNames(
+            fromFunction.getFunctionAnalysis(), visitedTables, mutationTopicNames);
+      }
+    }
   }
 
   @Override
