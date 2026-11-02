@@ -641,7 +641,7 @@ public class SqlScriptPlanner {
    */
   private Map<ExecutionStage, StageAnalysis> getStageAnalysis(
       TableAnalysis tableAnalysis, List<ExecutionStage> availableStages) {
-    Map<ExecutionStage, StageAnalysis> stageAnalysis = new HashMap<>();
+    Map<ExecutionStage, StageAnalysis> stageAnalysis = new LinkedHashMap<>();
     for (ExecutionStage executionStage : availableStages) {
       List<EngineCapability> unsupported =
           tableAnalysis.getRequiredCapabilities().stream()
