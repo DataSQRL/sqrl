@@ -980,6 +980,7 @@ public class SqlScriptPlanner {
    * errors to the location of the table definition in that file.
    */
   private static RuntimeException handleTableError(ErrorCollector errors, Throwable e) {
+    // Already reported, and it wraps the original error, which would be reported again below
     if (e instanceof CollectedException collected) {
       return collected;
     }
