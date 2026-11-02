@@ -163,6 +163,11 @@ public class SqrlConfig {
     return n != null && n.has(name) && n.get(name).isObject();
   }
 
+  public boolean hasList(String name) {
+    var n = node();
+    return n != null && n.has(name) && n.get(name).isArray();
+  }
+
   public void validateSubConfig(String name) {
     errors.checkFatal(
         hasSubConfig(name), "Missing sub-configuration under key: %s", getFullKey(name));

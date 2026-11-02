@@ -66,6 +66,29 @@ public interface PackageJson {
     String getLogger();
 
     boolean isExtendedScalarTypes();
+
+    /**
+     * The tag definitions under {@code compiler.tags}. Empty when not configured, which disables
+     * tag processing.
+     */
+    Optional<List<TagConfig>> getTags();
+  }
+
+  interface TagConfig {
+
+    String getName();
+
+    /** Allowed values ordered from lowest to highest; empty for boolean tags */
+    List<String> getValues();
+
+    List<RequiredColumnConfig> getRequiredColumns();
+  }
+
+  interface RequiredColumnConfig {
+
+    String getName();
+
+    String getType();
   }
 
   interface CompilerApiConfig {

@@ -21,6 +21,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.calcite.expand.RelationAliasExpander;
 import com.datasqrl.config.PackageJson.CompilerConfig;
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
 import com.datasqrl.engine.stream.flink.FlinkSqlNodePlanner;
@@ -52,6 +53,7 @@ import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.tags.TagDefinitions;
 import com.datasqrl.server.MetadataType;
 import com.datasqrl.server.exec.FlinkExecFunction;
 import com.datasqrl.server.exec.FlinkExecFunctionFactory;
@@ -180,6 +182,10 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   @Getter private final FlinkTypeFactory typeFactory;
   @Getter private final FlinkExecFunctionFactory execFnFactory;
   @Getter private final RelDataTypeParser relDataTypeParser;
+
+  /** The tag definitions from {@code compiler.tags}, {@link TagDefinitions#DISABLED} if absent */
+  @Getter private final TagDefinitions tagDefinitions;
+
   private final FlinkInsertConflictPlanner insertConflictPlanner;
   private final FlinkSqlNodePlanner flinkSqlNodePlanner;
   private final RelationAliasExpander relationAliasExpander;
@@ -189,6 +195,14 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
   public Sqrl2FlinkSQLTranslator(
       WorkspacePaths workspacePaths, FlinkStreamEngine flink, CompilerConfig compilerConfig) {
+    this(workspacePaths, flink, compilerConfig, ErrorCollector.root());
+  }
+
+  public Sqrl2FlinkSQLTranslator(
+      WorkspacePaths workspacePaths,
+      FlinkStreamEngine flink,
+      CompilerConfig compilerConfig,
+      ErrorCollector errors) {
     this.executionMode = flink.getExecutionMode();
     this.compileFlinkPlan = compilerConfig.compileFlinkPlan();
     // Set up a StreamExecution Environment in Flink with configuration and access to jars
@@ -241,6 +255,11 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
     execFnFactory = new FlinkExecFunctionFactory(tEnv.getConfig());
     relDataTypeParser = new RelDataTypeParser(this);
+    tagDefinitions =
+        TagDefinitions.from(
+            compilerConfig.getTags(),
+            this::parseTagColumnType,
+            errors.withConfig(SqrlConstants.PACKAGE_JSON));
 
     // Register SQRL standard library functions
     ServiceLoader<AutoRegisterSystemFunction> standardLibraryFunctions =
@@ -251,6 +270,15 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
                 FunctionUtil.getFunctionName(fct.getClass()).getDisplay(),
                 fct.getClass().getName(),
                 true));
+  }
+
+  /** Parses the type of a required column of a tag definition, throws if it cannot be parsed. */
+  private RelDataType parseTagColumnType(String type) {
+    var fields =
+        relDataTypeParser.parseToRelDataType(
+            new ParsedObject<>("`__tag_column` " + type, FileLocation.START));
+    checkArgument(fields.size() == 1, "Expected a single type: %s", type);
+    return fields.get(0).field().getType();
   }
 
   @Override

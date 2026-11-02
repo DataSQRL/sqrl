@@ -211,10 +211,31 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
   }
 
   public RuntimeException exception(ErrorLabel label, String msg, Object... args) {
+    var errorMessage = recordFatal(label, msg, args);
+    return CollectedException.withTrimmedStackTrace(errorMessage.asException());
+  }
+
+  /**
+   * Records a fatal error without throwing, so the compilation can continue and report further
+   * errors. The compilation still fails since {@link #hasErrors()} returns true.
+   */
+  public void error(String msg, Object... args) {
+    error(ErrorLabel.GENERIC, msg, args);
+  }
+
+  /**
+   * Records a fatal error without throwing, so the compilation can continue and report further
+   * errors. The compilation still fails since {@link #hasErrors()} returns true.
+   */
+  public void error(ErrorLabel label, String msg, Object... args) {
+    recordFatal(label, msg, args);
+  }
+
+  private ErrorMessage recordFatal(ErrorLabel label, String msg, Object... args) {
     ErrorMessage errorMessage =
         new Implementation(label, ErrorMessage.getMessage(msg, args), location, Severity.FATAL);
     addInternal(errorMessage);
-    return CollectedException.withTrimmedStackTrace(errorMessage.asException());
+    return errorMessage;
   }
 
   public void checkFatal(boolean condition, String msg, Object... args) {
