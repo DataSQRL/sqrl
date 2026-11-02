@@ -29,6 +29,7 @@ import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.parser.SqrlStatementParser;
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.Set;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.Configuration;
 import org.junit.jupiter.api.AfterEach;
@@ -171,6 +172,19 @@ class FailedTablesTest {
   }
 
   @Test
+  void givenFailedStarImport_whenStatementUsesTable_thenItIsDependentOnlyIfTableIsNotDefined() {
+    recordFailure("IMPORT ecomerce.*;", null);
+
+    // The tables of the package are unknown, so a table that is not defined may be one of them
+    assertThat(isDependent("EXPORT Customer TO print.Customer;")).isTrue();
+    assertThat(isDependent("INSERT INTO Sink SELECT id FROM Orders;")).isTrue();
+    // A table that is defined is not one of them, so the errors of its statements are reported
+    assertThat(isDependent("Orders.total := amount * 2;", "Orders")).isFalse();
+    assertThat(isDependent("EXPORT Orders TO print.Orders;", "Orders")).isFalse();
+    assertThat(isDependent("INSERT INTO Sink SELECT id FROM Orders;", "Sink")).isFalse();
+  }
+
+  @Test
   void givenFailedCatalog_whenUsed_thenItsErrorIsKnockOnAndTheContextFails() {
     recordFailure("CREATE CATALOG iceberg WITH ('type' = 'iceberg');", null);
 
@@ -211,7 +225,12 @@ class FailedTablesTest {
     return failedTables.isKnockOnError(error, namespace);
   }
 
-  private boolean isDependent(String statement) {
-    return failedTables.isDependent(parser.parseStatement(statement), statement, null);
+  private boolean isDependent(String statement, String... definedTables) {
+    var defined = Set.of(definedTables);
+    return failedTables.isDependent(
+        parser.parseStatement(statement),
+        statement,
+        null,
+        path -> defined.contains(String.join(".", path)));
   }
 }
