@@ -71,7 +71,8 @@ public class CompilationProcess {
         new Sqrl2FlinkSQLTranslator(
             workspacePaths,
             (FlinkStreamEngine) planner.getStreamStage().engine(),
-            config.getCompilerConfig())) {
+            config.getCompilerConfig(),
+            errors)) {
 
       return executeCompilationInternal(testsPath, environment);
     }
@@ -80,7 +81,15 @@ public class CompilationProcess {
   private Pair<PhysicalPlan, TestPlan> executeCompilationInternal(
       Optional<Path> testsPath, Sqrl2FlinkSQLTranslator environment) {
 
+    if (errors.hasErrors()) {
+      return Pair.of(null, null); // configuration errors, e.g. in compiler.tags
+    }
     planner.planMain(mainScript, Optional.empty(), environment);
+    if (errors.hasErrors()) {
+      // Planning recorded errors without aborting (e.g. tag violations), so all of them get
+      // reported. Don't optimize or assemble a plan with known errors; the caller checks errors.
+      return Pair.of(null, null);
+    }
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);

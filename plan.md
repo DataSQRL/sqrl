@@ -22,7 +22,9 @@ All tag logic sits in one class, `TagAnalyzer`, which both call sites (`SQRLLogi
 
 ---
 
-## Step 1: Configuration (R1–R4)
+## Step 1: Configuration (R1–R4) ✅ Completed
+
+> Done. Also includes the `ErrorCollector.error(...)` part and the "stop after planning" part of 3.0, because config validation already needs them. `TagDefinitions` is built in the `Sqrl2FlinkSQLTranslator` constructor (new overload that takes the `ErrorCollector`), and compilation stops before planning when `compiler.tags` has errors. `SqrlConfig.hasList` was added because `hasKey` ignores arrays.
 
 ### 1.1 JSON schema: `sqrl-planner/src/main/resources/jsonSchema/packageSchema.json`
 Add under `compiler.properties`:
