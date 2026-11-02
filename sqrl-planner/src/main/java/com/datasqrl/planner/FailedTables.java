@@ -30,6 +30,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import org.apache.calcite.sql.validate.SqlValidatorException;
 import org.apache.flink.table.catalog.exceptions.CatalogException;
@@ -195,36 +196,50 @@ class FailedTables {
   /**
    * Whether the statement adds to, exports or inserts into a table that failed. The planner reports
    * such an error before the statement is validated, so the statement is skipped instead.
+   *
+   * @param isDefined whether a table, as written in the statement (e.g. {@code sources.Orders}), is
+   *     defined. A table that is defined does not belong to a failed {@code IMPORT package.*},
+   *     whose objects are unknown.
    */
-  boolean isDependent(SQLStatement statement, String statementSource, String namespace) {
+  boolean isDependent(
+      SQLStatement statement,
+      String statementSource,
+      String namespace,
+      Predicate<List<String>> isDefined) {
     if (size() == 0) {
       return false;
     }
-    if (statement instanceof SqrlDefinition definition
-        && !definition.isTable()
-        && isFailed(definition.getPath().getFirst().getDisplay(), namespace)) {
+    if (statement instanceof SqrlDefinition definition && !definition.isTable()) {
       // A column or relationship of a failed table
-      return true;
+      var table = definition.getPath().getFirst().getDisplay();
+      return isFailed(table, namespace, false)
+          || (isFailed(table, namespace, true) && !isDefined.test(List.of(table)));
     }
     if (statement instanceof SqrlPassthroughTableFunctionStatement function) {
       // Its query is not validated, but the planner looks up the tables of its FROM clauses
       return SqlTableNameExtractor.findTableNames(function.getDefinitionBody().get()).stream()
-          .anyMatch(name -> isFailed(name, namespace));
+          .anyMatch(name -> isFailedPath(segments(name), namespace, isDefined));
     }
     if (statement instanceof SqrlExportStatement export) {
-      return isFailedPath(export.getTableIdentifier().get().toStringList(), namespace)
-          || isFailedPath(export.getPackageIdentifier().get().toStringList(), namespace);
+      return isFailedPath(export.getTableIdentifier().get().toStringList(), namespace, isDefined)
+          || isFailedPath(export.getPackageIdentifier().get().toStringList(), namespace, isDefined);
     }
     var insert = INSERT_TARGET.matcher(withoutCommentsAndStrings(statementSource));
-    return insert.find() && isFailedPath(segments(insert.group(1)), namespace);
+    return insert.find() && isFailedPath(segments(insert.group(1)), namespace, isDefined);
   }
 
   /**
-   * Whether a path as written in a statement, e.g. {@code sources.Orders}, names a failed object
+   * Whether a path as written in a statement, e.g. {@code sources.Orders}, names a failed object.
+   * The objects of a failed {@code IMPORT package.*} are unknown, so a path only names one of them
+   * if it is not defined.
    */
-  private boolean isFailedPath(List<String> path, String namespace) {
-    return isFailed(String.join(".", path), path.size() == 1 ? namespace : null)
-        || catalogs.contains(normalize(path.get(0)));
+  private boolean isFailedPath(
+      List<String> path, String namespace, Predicate<List<String>> isDefined) {
+    var name = String.join(".", path);
+    var pathNamespace = path.size() == 1 ? namespace : null;
+    return isFailed(name, pathNamespace, false)
+        || catalogs.contains(normalize(path.get(0)))
+        || (isFailed(name, pathNamespace, true) && !isDefined.test(path));
   }
 
   /**
@@ -232,11 +247,19 @@ class FailedTables {
    * package.*}), or the imported script that it belongs to.
    */
   private boolean isFailed(String name, String namespace) {
+    return isFailed(name, namespace, true);
+  }
+
+  /**
+   * Whether the object failed, or the imported script that it belongs to, or, if {@code
+   * includeAll}, all objects of its namespace (e.g. for a failed {@code IMPORT package.*}).
+   */
+  private boolean isFailed(String name, String namespace, boolean includeAll) {
     var qualified = normalize(namespace == null ? name : namespace + "." + name);
     var lastDot = qualified.lastIndexOf('.');
     var parent = lastDot < 0 ? null : qualified.substring(0, lastDot);
     return names.contains(qualified)
-        || names.contains(parent == null ? ALL : parent + "." + ALL)
+        || (includeAll && names.contains(parent == null ? ALL : parent + "." + ALL))
         || (parent != null && names.contains(parent));
   }
 

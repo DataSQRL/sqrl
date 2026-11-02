@@ -249,7 +249,11 @@ public class SqlScriptPlanner {
       recordUnparsedStatements(unparsedStatements, statement.getFileLocation());
 
       if (failedTables.isContextFailed()
-          || failedTables.isDependent(sqlStatement, sourceStmt.source(), failedTableNamespace())) {
+          || failedTables.isDependent(
+              sqlStatement,
+              sourceStmt.source(),
+              failedTableNamespace(),
+              path -> isDefined(path, sqrlEnv))) {
         // Its errors would only be knock-on errors of a failed table or USE statement, which is
         // already reported
         failedTables.recordSkipped(sqlStatement, sourceStmt.source(), failedTableNamespace());
@@ -361,6 +365,14 @@ public class SqlScriptPlanner {
         && isBefore(unparsedStatements.peek().getFileLocation(), location)) {
       failedTables.recordUnparsed(unparsedStatements.poll().get(), failedTableNamespace());
     }
+  }
+
+  /** Whether a table, as written in a statement (e.g. {@code sources.Orders}), is defined */
+  private boolean isDefined(List<String> path, Sqrl2FlinkSQLTranslator sqrlEnv) {
+    var identifier = scriptContext.toIdentifier(NamePath.of(path.toArray(String[]::new)));
+    return identifier != null
+        && (dagBuilder.getNode(identifier).isPresent()
+            || sqrlEnv.getTableLookup().lookupSourceTable(identifier) != null);
   }
 
   private static boolean isBefore(FileLocation location, FileLocation other) {
