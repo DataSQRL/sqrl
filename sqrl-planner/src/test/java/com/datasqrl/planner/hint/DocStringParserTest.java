@@ -18,7 +18,12 @@ package com.datasqrl.planner.hint;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.canonicalizer.Name;
+import com.datasqrl.planner.tags.InvalidTag;
+import com.datasqrl.planner.tags.TableTags;
+import com.datasqrl.planner.tags.TagDefinition;
+import com.datasqrl.planner.tags.TagDefinitions;
 import com.datasqrl.planner.util.Documented.Documentation;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class DocStringParserTest {
@@ -412,5 +417,65 @@ class DocStringParserTest {
         .isEqualTo("Optional status filter");
     assertThat(result.argumentDocs().get(Name.system("limit")))
         .isEqualTo("Maximum number of orders to return (default: 100)");
+  }
+
+  private static final TagDefinitions TAG_DEFS =
+      TagDefinitions.of(
+          List.of(
+              new TagDefinition("classification", List.of("internal", "secret"), List.of()),
+              new TagDefinition("pii", List.of("masked", "raw"), List.of()),
+              new TagDefinition("gdpr", List.of(), List.of())));
+
+  @Test
+  void givenTags_whenParseWithDefinitions_thenExtractsNormalizedTags() {
+    var docString = "Customer data @PII=Raw @gdpr, contact: user@example.com";
+
+    var result = DocStringParser.parse(docString, TAG_DEFS);
+
+    assertThat(result.tags().toString()).isEqualTo("gdpr=true, pii=raw");
+    assertThat(result.tags().hasInvalidTags()).isFalse();
+    assertThat(result.docString()).isEqualTo(docString);
+  }
+
+  @Test
+  void givenTagsInColumnDocs_whenParseWithDefinitions_thenTagsCountTowardTable() {
+    var docString =
+        """
+        Customers @classification=internal
+
+        # Columns:
+        - email: Email address @pii=raw
+        - ssn: Social security number @classification=secret
+        """;
+
+    var result = DocStringParser.parse(docString, TAG_DEFS);
+
+    assertThat(result.tags().toString()).isEqualTo("classification=secret, pii=raw");
+    assertThat(result.columnDocs().get(Name.system("email"))).isEqualTo("Email address @pii=raw");
+  }
+
+  @Test
+  void givenInvalidTags_whenParseWithDefinitions_thenKeepsInvalidTags() {
+    var result = DocStringParser.parse("@unknown @pii @gdpr=false @pii=masked", TAG_DEFS);
+
+    assertThat(result.tags().toString()).isEqualTo("pii=masked");
+    assertThat(result.tags().getInvalidTags())
+        .extracting(InvalidTag::text)
+        .containsExactly("@unknown", "@pii", "@gdpr=false");
+  }
+
+  @Test
+  void givenTagsAndNoDefinitions_whenParse_thenNoTags() {
+    var result = DocStringParser.parse("Customer data @pii=raw @undefined");
+
+    assertThat(result.tags()).isSameAs(TableTags.EMPTY);
+    assertThat(result.hasTags()).isFalse();
+  }
+
+  @Test
+  void givenTagSuffixes_whenParseTags_thenNameEndsAtFirstInvalidCharacter() {
+    var tags = DocStringParser.parseTags("(@gdpr) @pii=raw.\n@classification=secret,", TAG_DEFS);
+
+    assertThat(tags.toString()).isEqualTo("classification=secret, pii=raw");
   }
 }
