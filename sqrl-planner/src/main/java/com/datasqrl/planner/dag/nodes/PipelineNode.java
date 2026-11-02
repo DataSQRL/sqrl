@@ -79,7 +79,7 @@ public abstract class PipelineNode implements AbstractDAG.Node, Comparable<Pipel
 
   /**
    * Finds the stage with the lowest cost. On a cost tie, the {@link EngineType#PROCESS} stage
-   * (Flink) wins. The map order must not decide the pick, because it changes between compiles.
+   * (Flink) wins, so the map order does not decide the pick.
    */
   public static StageAnalysis.Cost findCheapestStage(
       Map<ExecutionStage, StageAnalysis> stageAnalysis) {
