@@ -1660,6 +1660,13 @@ Configuration options that control the compiler, such as where logging output is
 
 ### Optimizer Configuration
 
+`cost-model` controls how the optimizer assigns each table to an engine. The default is `DEFAULT`.
+- `DEFAULT`: favors Flink, which computes the table at ingestion time, unless joins make Flink too expensive
+- `WRITE`: always favors Flink
+- `READ`: always favors the database, which computes the table at query time
+
+The optimizer assigns each table to the cheapest engine. An `/*+ engine(...) */` hint limits the engines that the optimizer can pick. With `DEFAULT`, Flink and the database can have the same cost for a table. Then the optimizer assigns the table to Flink, so the table gets the same engine on every compile.
+
 Limit predicate pushdown to improve subgraph elimination and reduce the size of the physical computation graph by setting `predicate-pushdown-rules` to:
 - `DEFAULT`: uses the default optimizer rules of the Flink engine
 - `LIMITED_RULES_NO_SOURCE`: strips downstream predicate-pushdown related rules to maximize subgraph elimination
