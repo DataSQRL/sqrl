@@ -1,0 +1,5 @@
+IMPORT ecommerceTs.customer;
+
+DistinctCustomer := DISTINCT Customer
+  ON customerid
+  ORDER BY last_updated DESC;
