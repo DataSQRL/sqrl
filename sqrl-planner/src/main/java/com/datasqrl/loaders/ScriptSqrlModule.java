@@ -97,7 +97,10 @@ public class ScriptSqrlModule implements SqrlModule {
       Supplier<NamespaceObject> nsObjectSupplier =
           () -> {
             var sourceLocation =
-                createTableStmt.mapSqlLocation(parsedCreateTable.statement().getFileLocation());
+                parsedCreateTable
+                    .statement()
+                    .getFileLocation()
+                    .add(createTableStmt.getCreateTable().getFileLocation());
 
             var isExternalTable =
                 FlinkSqlNodes.resolveProperties(createTable.getProperties())
