@@ -43,6 +43,7 @@ import com.datasqrl.planner.analyzer.SQRLLogicalPlanAnalyzer.ViewAnalysis;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable.MutationTableBuilder;
+import com.datasqrl.planner.hint.DocStringParser;
 import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.parser.ParsedObject;
@@ -53,6 +54,7 @@ import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.planner.tags.TagDefinitions;
 import com.datasqrl.server.MetadataType;
 import com.datasqrl.server.exec.FlinkExecFunction;
@@ -814,8 +816,16 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       HintsAndDoc hintsAndDoc) {
     var result = addTable(Function.identity(), tableDefinition, schemaLoader, mutationBuilder);
     hintsAndDoc = updateDocumentationFromLike(result, hintsAndDoc);
+    hintsAndDoc = hintsAndDoc.withColumnTags(getColumnTags(result));
     if (result.isSourceTable()) return Optional.of(addSourceTable(result, hintsAndDoc));
     else return Optional.empty();
+  }
+
+  /** The tags declared in column comments of a created table (R7) */
+  private TableTags getColumnTags(AddTableResult addResult) {
+    return addResult.columnComments().stream()
+        .map(comment -> DocStringParser.parseTags(comment, tagDefinitions))
+        .reduce(TableTags.EMPTY, TableTags::merge);
   }
 
   private HintsAndDoc updateDocumentationFromLike(
@@ -879,7 +889,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       boolean isSourceTable,
       TableAnalysis tableAnalysis,
       SqlCreateTable createdTable,
-      String completeCreateTableSql) {}
+      String completeCreateTableSql,
+      List<String> columnComments) {}
 
   /**
    * Adds a table to Flink and analyzes the table for schema and primary key definition. If the
@@ -1019,13 +1030,20 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             pk);
     tableLookup.registerTable(tableAnalysis);
     completeCreateTableSql += RelToFlinkSql.convertToString(fullTable);
+    // Column comments, including those of columns merged in through LIKE, can declare tags
+    var columnComments =
+        flinkSchema.getColumns().stream()
+            .map(Column::getComment)
+            .flatMap(Optional::stream)
+            .toList();
     return new AddTableResult(
         finalTableName,
         tableId,
         connector.isSourceConnector(),
         tableAnalysis,
         fullTable,
-        completeCreateTableSql);
+        completeCreateTableSql,
+        columnComments);
   }
 
   public ObjectIdentifier createSinkTable(FlinkTableBuilder tableBuilder) {

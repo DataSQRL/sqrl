@@ -95,7 +95,9 @@ public class TableTags {
 
 ---
 
-## Step 2: Parsing tags from doc strings (R5–R9)
+## Step 2: Parsing tags from doc strings (R5–R9) ✅ Completed
+
+> Done. Column comments are read from Flink's resolved schema of the created table (`AddTableResult.columnComments`). That schema already contains the columns merged in through `LIKE` and keeps the redefining statement's comment for redefined columns, so decision 3 needs no separate bookkeeping. `HintsAndDoc` carries the `TagDefinitions` and the column tags (`withColumnTags`). The `TableAnalysis` fields from 2.5 come with step 3, where they are filled.
 
 ### 2.1 `Documented.Documentation`
 Add a component: `record Documentation(String docString, Map<Name,String> columnDocs, Map<Name,String> argumentDocs, TableTags tags)`.

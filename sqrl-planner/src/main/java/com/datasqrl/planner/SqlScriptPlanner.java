@@ -99,6 +99,7 @@ import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.tags.TagDefinitions;
 import com.datasqrl.planner.util.SqlScriptPlannerUtil;
 import com.datasqrl.planner.util.SqlScriptWriter;
 import com.datasqrl.planner.util.SqlTableNameExtractor;
@@ -165,6 +166,10 @@ public class SqlScriptPlanner {
 
   private final SqrlStatementParser sqrlParser;
   private final PackageJson packageJson;
+
+  /** The tag definitions of the compilation, set when planning starts */
+  private TagDefinitions tagDefinitions = TagDefinitions.DISABLED;
+
   private final ExecutionPipeline pipeline;
   private final ExecutionGoal executionGoal;
   private final CostModel costModel;
@@ -233,6 +238,7 @@ public class SqlScriptPlanner {
       Optional<PlannerHints> inheritedHints,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
 
+    this.tagDefinitions = sqrlEnv.getTagDefinitions();
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
     var statements = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
     var statementStack = new ArrayList<StackableStatement>();
@@ -597,7 +603,7 @@ public class SqlScriptPlanner {
                     .map(ParsedObject::get)
                     .map(String::trim)
                     .collect(Collectors.joining("\n")));
-    return new HintsAndDoc(hints, documentation);
+    return new HintsAndDoc(hints, documentation, tagDefinitions);
   }
 
   private boolean shouldExcludeTestTable(PlannerHints hints) {
