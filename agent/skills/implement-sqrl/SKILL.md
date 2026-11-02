@@ -741,6 +741,7 @@ The following produce compile time errors:
 * Malformed or invalid hints (wrong delimiter, other text in the hint block that is not a hint, invalid arguments to a known hint such as `ttl`, or more than one `query_by_*` or `no_query` hint on a table).
 * A column name in a hint that matches no column, or that matches several columns whose names differ only in case (see Hints).
 * Tag violations when `compiler.tags` is configured (see Tags in doc-strings above).
+* A statement without its terminating `;` before the next definition (`Missing ';' at the end of the statement`, reported where the `;` belongs). Both statements are still compiled.
 
 An unknown hint name is **not** an error: the compiler prints the warning `Unrecognized hint: [<name>]` and drops the hint, so a misspelled hint has no effect. Check the compile output for this warning after adding a hint.
 
