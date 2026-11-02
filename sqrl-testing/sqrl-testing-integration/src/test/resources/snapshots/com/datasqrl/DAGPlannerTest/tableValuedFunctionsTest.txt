@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === CustomerCumulate
 ID:          default_catalog.default_database.CustomerCumulate
 Type:        stream
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: window_start, window_end
 Timestamp:   -
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
@@ -63,6 +67,9 @@ SQL:
 CREATE VIEW `CustomerCumulate` AS  SELECT window_start, window_end, COUNT(customerid) AS total
                   FROM TABLE(CUMULATE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '5' MINUTES, INTERVAL '10' MINUTES))
                   GROUP BY window_start, window_end;
+--- physical ---
+Table CustomerCumulate_2 (postgres):
+ - primary key: window_start, window_end
 
 === CustomerHop
 ID:          default_catalog.default_database.CustomerHop
@@ -71,7 +78,7 @@ Stage:       flink
 Primary key: window_start, window_end, window_time
 Timestamp:   window_time
 Row count:   ~9e7
----
+--- definition ---
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
@@ -91,6 +98,9 @@ SQL:
 CREATE VIEW `CustomerHop` AS  SELECT window_start, window_end, window_time, COUNT(customerid) AS total
                   FROM TABLE(HOP(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '5' MINUTES, INTERVAL '10' MINUTES))
                   GROUP BY window_start, window_end, window_time;
+--- physical ---
+Table CustomerHop_3 (postgres):
+ - primary key: window_start, window_end, window_time
 
 === CustomerSession
 ID:          default_catalog.default_database.CustomerSession
@@ -99,7 +109,7 @@ Stage:       flink
 Primary key: window_start, window_end, window_time, customerid
 Timestamp:   window_time
 Row count:   ~7e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - window_start: TIMESTAMP(3) NOT NULL
@@ -122,6 +132,9 @@ SQL:
 CREATE VIEW `CustomerSession` AS  SELECT customerid, window_start, window_end, window_time, COUNT(customerid) AS total
                   FROM TABLE(SESSION(TABLE Customer PARTITION BY customerid, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTES))
                   GROUP BY window_start, window_end, window_time, customerid;
+--- physical ---
+Table CustomerSession_4 (postgres):
+ - primary key: window_start, window_end, window_time, customerid
 
 === CustomerTumble
 ID:          default_catalog.default_database.CustomerTumble
@@ -130,7 +143,7 @@ Stage:       flink
 Primary key: window_start, window_end
 Timestamp:   -
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
@@ -149,6 +162,9 @@ SQL:
 CREATE VIEW `CustomerTumble` AS  SELECT window_start, window_end, COUNT(customerid) AS total
                 FROM TABLE(TUMBLE(TABLE Customer, DESCRIPTOR(`timestamp`), INTERVAL '10' MINUTES))
                 GROUP BY window_start, window_end;
+--- physical ---
+Table CustomerTumble_5 (postgres):
+ - primary key: window_start, window_end
 
 === StreamJoin
 ID:          default_catalog.default_database.StreamJoin
@@ -157,7 +173,7 @@ Stage:       flink
 Primary key: window_start, window_end, window_time, window_start0, window_end0, customerid
 Timestamp:   window_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - window_start: TIMESTAMP(3) NOT NULL
  - window_end: TIMESTAMP(3) NOT NULL
@@ -177,6 +193,9 @@ LogicalProject(window_start=[$0], window_end=[$1], window_time=[$2], total=[$3],
     LogicalTableScan(table=[[default_catalog, default_database, CustomerSession]])
 SQL:
 CREATE VIEW `StreamJoin` AS  SELECT h.*, s.customerid, s.window_start AS window_start0, s.window_end AS window_end0, s.total AS total0 FROM CustomerHop h INNER JOIN CustomerSession s ON s.window_time = h.window_time;
+--- physical ---
+Table StreamJoin_6 (postgres):
+ - primary key: window_start, window_end, window_time, window_start0, window_end0, customerid
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (

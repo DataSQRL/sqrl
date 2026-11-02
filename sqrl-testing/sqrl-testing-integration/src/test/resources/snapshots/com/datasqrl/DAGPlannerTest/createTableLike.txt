@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: BIGINT NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'number-of-rows' = '1000'
 )
 LIKE `_SensorReading_schema`
+--- physical ---
+Table SensorReading_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
 === SensorReadingInput
 ID:          default_catalog.default_database.SensorReadingInput
 Type:        stream
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   recordedTime
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: BIGINT NOT NULL
@@ -60,6 +64,9 @@ LogicalProject(uuid=[$0], sensorid=[$1], epoch_timestamp=[$2], temperature=[$3],
     LogicalTableScan(table=[[default_catalog, default_database, SensorReadingMutation]])
 SQL:
 CREATE VIEW `SensorReadingInput` AS  SELECT * FROM SensorReadingMutation WHERE testField > 0;
+--- physical ---
+Table SensorReadingInput_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === SensorReadingMutation
 ID:          default_catalog.default_database.SensorReadingMutation
@@ -68,7 +75,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   recordedTime
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: BIGINT NOT NULL
@@ -99,6 +106,10 @@ WITH (
   'topic' = 'kafka-mutation-SensorReadingMutation'
 )
 LIKE `_SensorReading_schema`
+--- physical ---
+Table SensorReadingMutation_3 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
 >>>pipeline_mutation_database.json
 {
   "tables" : [ {

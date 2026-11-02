@@ -6,7 +6,7 @@ Stage:       iceberg
 Primary key: id, loan_type_id
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -28,7 +28,7 @@ Stage:       flink
 Primary key: customer_id
 Timestamp:   event_time
 Row count:   ~8e7
----
+--- definition ---
 Schema:
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -52,7 +52,7 @@ Stage:       flink
 Primary key: id, loan_type_id
 Timestamp:   updated_at
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -74,7 +74,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   updated_at
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -98,7 +98,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - loan_application_id: BIGINT NOT NULL
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -114,7 +114,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -135,7 +135,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

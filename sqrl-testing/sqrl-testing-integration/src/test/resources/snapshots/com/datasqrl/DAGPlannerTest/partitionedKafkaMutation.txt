@@ -4,7 +4,7 @@ ID:          CustomerEvents
 Type:        export
 Stage:       flink
 Connector:   kafka-safe
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerSubset
 
@@ -13,7 +13,7 @@ ID:          connectors.sinks.CustomerExportInternalPartitioned
 Type:        export
 Stage:       flink
 Connector:   kafka-safe
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.CustomerSubset
 
@@ -24,7 +24,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -55,6 +55,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === CustomerEvents
 ID:          default_catalog.default_database.CustomerEvents
 Type:        stream
@@ -62,7 +66,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -95,6 +99,10 @@ WITH (
   'value.flexible-json.timestamp-format.standard' = 'SQL',
   'value.format' = 'flexible-json'
 )
+--- physical ---
+Table CustomerEvents_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
 === CustomerSubset
 ID:          default_catalog.default_database.CustomerSubset
 Type:        stream
@@ -102,7 +110,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -116,6 +124,9 @@ LogicalProject(customerid=[$0], name=[$2], timestamp=[$4])
   LogicalTableScan(table=[[default_catalog, default_database, Customer]])
 SQL:
 CREATE VIEW `CustomerSubset` AS  SELECT customerid, name, `timestamp` FROM Customer;
+--- physical ---
+Table CustomerSubset_3 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 >>>pipeline_mutation_database.json
 {

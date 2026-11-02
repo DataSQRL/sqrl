@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === CustomerUpdates
 ID:          default_catalog.default_database.CustomerUpdates
 Type:        stream
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   endOfMin
 Row count:   ~7e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - endOfMin: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -69,6 +73,9 @@ CREATE VIEW `CustomerUpdates` AS  SELECT
                            )
                       GROUP BY
                           customerid, window_start, window_end, window_time;
+--- physical ---
+Table CustomerUpdates_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === DistinctCustomerUpdates
 ID:          default_catalog.default_database.DistinctCustomerUpdates
@@ -77,7 +84,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   endOfMin
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - endOfMin: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -99,6 +106,10 @@ SELECT `customerid`, `endOfMin`, `total`
 FROM (SELECT `customerid`, `endOfMin`, `total`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `endOfMin` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`CustomerUpdates`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table DistinctCustomerUpdates_3 (postgres):
+ - primary key: customerid
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (
   `customerid` BIGINT NOT NULL,

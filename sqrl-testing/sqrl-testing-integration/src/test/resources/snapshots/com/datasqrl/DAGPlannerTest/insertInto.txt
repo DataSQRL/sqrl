@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,12 +37,16 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === customer_id_count
 ID:          default_catalog.default_database.customer_id_count
 Type:        export
 Stage:       flink
 Connector:   blackhole
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.customer_id_count_in1
 
@@ -53,7 +57,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - numEntries: BIGINT NOT NULL

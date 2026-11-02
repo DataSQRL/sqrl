@@ -99,13 +99,16 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.CustomerEvent__base
+--- physical ---
+Table CustomerEvent (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Feedback
 ID:          default_catalog.default_database.Feedback
@@ -114,13 +117,16 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Feedback__base
+--- physical ---
+Table Feedback (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === OrderEvent
 ID:          default_catalog.default_database.OrderEvent
@@ -129,20 +135,23 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - orderid: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
  - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.OrderEvent__base
+--- physical ---
+Table OrderEvent (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === OrderAudit
 ID:          shared.sinks.OrderAudit
 Type:        export
 Stage:       flink
 Connector:   kafka-safe
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.OrderEvent
 

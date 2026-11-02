@@ -121,7 +121,7 @@ ID:          Alert
 Type:        export
 Stage:       flink
 Connector:   kafka-safe
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ForwardedAlert
 
@@ -130,7 +130,7 @@ ID:          Reading
 Type:        export
 Stage:       flink
 Connector:   kafka-safe
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ForwardedReading
 
@@ -141,7 +141,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - message_key: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -149,6 +149,9 @@ Inputs:
  - default_catalog.default_database._AlertMessage
 Annotations:
  - sort: [0 ASC-nulls-first]
+--- physical ---
+Table AlertMessage (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === ExternalReading
 ID:          default_catalog.default_database.ExternalReading
@@ -157,7 +160,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -172,7 +175,7 @@ Stage:       flink
 Primary key: alert_id
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - region: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - alert_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -190,7 +193,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -205,7 +208,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -220,7 +223,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: INTEGER NOT NULL
@@ -229,6 +232,9 @@ Inputs:
  - default_catalog.default_database._ReadingMessage
 Annotations:
  - sort: [0 ASC-nulls-first, 1 ASC-nulls-first]
+--- physical ---
+Table ReadingMessage (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === ReadingRecord
 ID:          default_catalog.default_database.ReadingRecord
@@ -237,7 +243,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - writer: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: INTEGER NOT NULL
@@ -245,6 +251,9 @@ Inputs:
  - default_catalog.default_database.Reading
 Annotations:
  - sort: [0 ASC-nulls-first, 1 ASC-nulls-first]
+--- physical ---
+Table ReadingRecord (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === _AlertMessage
 ID:          default_catalog.default_database._AlertMessage
@@ -253,7 +262,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - message_key: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - region: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
@@ -270,7 +279,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - message_key: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
  - sensorid: INTEGER NOT NULL
@@ -284,7 +293,7 @@ ID:          sinks.ReadingWithoutKey
 Type:        export
 Stage:       flink
 Connector:   kafka
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExternalReading
 

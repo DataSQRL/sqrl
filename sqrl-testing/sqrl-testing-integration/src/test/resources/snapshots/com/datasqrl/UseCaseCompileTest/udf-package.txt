@@ -63,12 +63,15 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~3
----
+--- definition ---
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
  - myFnc: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
 Annotations:
  - sort: [0 ASC-nulls-first]
+--- physical ---
+Table MyAsyncTable (postgres):
+ - primary key: val
 
 === MyTable
 ID:          default_catalog.default_database.MyTable
@@ -77,12 +80,15 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~1e1
----
+--- definition ---
 Schema:
  - val: INTEGER NOT NULL
  - myFnc: BIGINT
 Annotations:
  - sort: [0 ASC-nulls-first]
+--- physical ---
+Table MyTable (postgres):
+ - primary key: val
 
 === MyTableAnother
 ID:          default_catalog.default_database.MyTableAnother
@@ -91,12 +97,15 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~2
----
+--- definition ---
 Schema:
  - val: INTEGER NOT NULL
  - myFnc: BIGINT
 Annotations:
  - sort: [0 ASC-nulls-first]
+--- physical ---
+Table MyTableAnother (postgres):
+ - primary key: val
 
 === MyTableDifferentCase
 ID:          default_catalog.default_database.MyTableDifferentCase
@@ -105,12 +114,15 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~2
----
+--- definition ---
 Schema:
  - val: INTEGER NOT NULL
  - fn: BIGINT
 Annotations:
  - sort: [0 ASC-nulls-first]
+--- physical ---
+Table MyTableDifferentCase (postgres):
+ - primary key: val
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`
