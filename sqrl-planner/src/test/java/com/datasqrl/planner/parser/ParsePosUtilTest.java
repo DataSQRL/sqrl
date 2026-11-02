@@ -41,9 +41,36 @@ class ParsePosUtilTest {
               assertThat(messageLocation.location()).isEqualTo(new FileLocation(4, 17));
               assertThat(messageLocation.message())
                   .isEqualTo(
-                      "The rowtime attribute field 'ordertime' is not defined in the table schema,"
+                      "The rowtime attribute field 'ordertime' is not defined in the table schema."
                           + " Available fields: ['id', 'order_time']");
             });
+  }
+
+  @Test
+  void givenValidationErrorWithPositionInSentence_whenConvert_thenRemovesPositionFromMessage() {
+    var error =
+        new ValidationException(
+            "A column with the same name `id` has been defined at line 2, column 3.");
+
+    assertThat(ParsePosUtil.convertFlinkParserException(error))
+        .contains(
+            new ParsePosUtil.MessageLocation(
+                new FileLocation(2, 3), "A column with the same name `id` has been defined."));
+  }
+
+  @Test
+  void givenPositionBeforePeriodAndNextLine_whenConvert_thenJoinsSentencesOnOneLine() {
+    var error =
+        new ValidationException(
+            "Could not create a PRIMARY KEY with column 'id' at line 3, column 15.\n"
+                + "A PRIMARY KEY constraint must be declared on physical columns.");
+
+    assertThat(ParsePosUtil.convertFlinkParserException(error))
+        .contains(
+            new ParsePosUtil.MessageLocation(
+                new FileLocation(3, 15),
+                "Could not create a PRIMARY KEY with column 'id'. A PRIMARY KEY constraint must be"
+                    + " declared on physical columns."));
   }
 
   @Test
