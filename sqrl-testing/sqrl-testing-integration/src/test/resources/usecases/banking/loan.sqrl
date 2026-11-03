@@ -26,7 +26,7 @@ CustomersStream := SELECT * FROM sources.CustomersStream;
 ApplicationsStream := SELECT * FROM sources.ApplicationsStream;
 LoanTypesStream := SELECT * FROM sources.LoanTypesStream;
 
-/** Most recent version of each customer @pii=raw @classification=confidential */
+-- No doc string: takes the doc string and tags of its source table CustomersStream
 Customers := DISTINCT CustomersStream ON id ORDER BY updated_at DESC;
 /** Most recent version of each loan application @financial @classification=internal */
 Applications := DISTINCT ApplicationsStream ON id ORDER BY updated_at DESC;

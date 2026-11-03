@@ -45,6 +45,7 @@ import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.planner.tags.TagAnalyzer;
 import com.datasqrl.planner.tags.TagAnalyzer.TagResult;
 import com.datasqrl.planner.tags.TagContext;
+import com.datasqrl.planner.util.Documented;
 import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
@@ -150,6 +151,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
    * ordered by rowtime desc)
    */
   private boolean hasMostRecentDistinct = false;
+
+  /** Whether this query deduplicates its input by filtering on a partitioned row number */
+  private boolean isDeduplication = false;
 
   /** Whether this query preserves a base table from the input (FROM) */
   private boolean preservesBaseTable = true;
@@ -303,25 +307,17 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
     // The base table is the right-most table in the relational tree that has the same type as the
     // result
-    Optional<TableAnalysis> baseTable = Optional.empty();
-    Documentation documentation = hintsAndDoc.getDocumentation();
-    if (preservesBaseTable && !sourceTables.isEmpty()) {
-      baseTable =
-          Lists.reverse(sourceTables).stream()
-              .filter(AbstractAnalysis::hasRowType)
-              .filter(tbl -> tbl.getRowType().equals(originalRelnode.getRowType()))
-              .findFirst()
-              .map(TableOrFunctionAnalysis::getBaseTable);
-
-      // We inherit doc even if basetable is hidden
-      if (documentation.isEmpty() && baseTable.isPresent()) {
-        // Invalid tags are reported on the base table, not again on this table
-        var baseDoc = baseTable.get().getDocumentation();
-        documentation = baseDoc.withTags(baseDoc.tags().withoutInvalidTags());
-      }
-
-      baseTable = baseTable.filter(tbl -> !Name.isHiddenString(tbl.getName()));
-    }
+    var sameRowTypeSource =
+        Lists.reverse(sourceTables).stream()
+            .filter(AbstractAnalysis::hasRowType)
+            .filter(tbl -> tbl.getRowType().equals(originalRelnode.getRowType()))
+            .findFirst();
+    Optional<TableAnalysis> baseTable =
+        sameRowTypeSource
+            .filter(tbl -> preservesBaseTable)
+            .map(TableOrFunctionAnalysis::getBaseTable)
+            .filter(tbl -> !Name.isHiddenString(tbl.getName()));
+    var documentation = passThroughDocumentation(hintsAndDoc.getDocumentation(), sameRowTypeSource);
 
     var tagResult = analyzeTags(documentation, hints, analysis.getRowType());
 
@@ -346,6 +342,26 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .errors(errors);
 
     return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis, hasMostRecentDistinct);
+  }
+
+  /**
+   * A table without a doc string of its own passes through the documentation, and with it the tags,
+   * of the table it selects from: when it returns the same columns as that table and keeps its
+   * rows, either filtered (e.g. {@code SELECT * FROM Customers WHERE ...}) or deduplicated (e.g.
+   * {@code DISTINCT CustomersStream ON id ORDER BY updated_at DESC}). The documentation is passed
+   * through even if the source table is hidden.
+   */
+  private Documentation passThroughDocumentation(
+      Documentation documentation, Optional<TableOrFunctionAnalysis> sameRowTypeSource) {
+    if (!documentation.isEmpty() || !(preservesBaseTable || isDeduplication)) {
+      return documentation;
+    }
+    return sameRowTypeSource
+        .filter(Documented.class::isInstance)
+        .map(source -> ((Documented) source).getDocumentation())
+        // Invalid tags are reported on the source table, not again on this table
+        .map(doc -> doc.withTags(doc.tags().withoutInvalidTags()))
+        .orElse(documentation);
   }
 
   /** Computes the tags of this table from its input tables and validates them. */
@@ -633,6 +649,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             newPk = null; // Not all partition RexNodes are input refs
             isMostRecentDistinct = false;
           }
+          isDeduplication |= newPk != null;
           if (window.orderKeys.isEmpty()) {
             isMostRecentDistinct = false;
           } else {
