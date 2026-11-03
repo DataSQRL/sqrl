@@ -31,8 +31,10 @@ import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.util.CalciteHacks;
 import com.datasqrl.util.StreamUtil;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -103,6 +105,7 @@ public class PipelineDAGExporter {
                   .type(NodeType.IMPORTS.getName())
                   .connector(source.connectorConfig().options())
                   .stage(stage)
+                  .tags(getTags(table.getTags()))
                   .documentation(getDocumentation(tableNode))
                   .build());
         } else {
@@ -113,6 +116,7 @@ public class PipelineDAGExporter {
                   .name(table.getName())
                   .type(NodeType.from(table.getType()).getName())
                   .stage(stage)
+                  .tags(getTags(table.getTags()))
                   .documentation(getDocumentation(tableNode))
                   .inputs(inputs)
                   .plan(explain(table.getCollapsedRelnode()))
@@ -166,6 +170,7 @@ public class PipelineDAGExporter {
                 .name(fct.getFullPath().toString())
                 .type(NodeType.QUERY.getName())
                 .stage(stage)
+                .tags(getTags(fct.getTags()))
                 .documentation(getDocumentation(fctNode))
                 .plan(explain(fct.getFunctionAnalysis().getCollapsedRelnode()))
                 .sql(getSql(fct.getFunctionAnalysis()))
@@ -177,6 +182,11 @@ public class PipelineDAGExporter {
       }
     }
     return result;
+  }
+
+  /** Tags sorted by name with their values, null when there are none so they are omitted */
+  private static Map<String, String> getTags(TableTags tags) {
+    return tags.isEmpty() ? null : tags.toValueMap();
   }
 
   private String getDocumentation(PlannedNode node) {
@@ -356,6 +366,11 @@ public class PipelineDAGExporter {
     String type;
     String stage;
     String documentation;
+
+    /** The effective tags of the table or function, mapped from tag name to value */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    Map<String, String> tags;
+
     List<String> inputs;
     List<Annotation> annotations;
 
@@ -378,6 +393,15 @@ public class PipelineDAGExporter {
               + "Stage:       "
               + stage
               + LINEBREAK;
+
+      if (tags != null && !tags.isEmpty()) {
+        header +=
+            "Tags:        "
+                + tags.entrySet().stream()
+                    .map(e -> e.getKey() + "=" + e.getValue())
+                    .collect(Collectors.joining(", "))
+                + LINEBREAK;
+      }
 
       if (StringUtils.isNotBlank(documentation)) {
         header += "Docs:       " + documentation + LINEBREAK;
