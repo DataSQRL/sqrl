@@ -18,6 +18,8 @@ package com.datasqrl;
 import static com.datasqrl.SnapshotTestSupport.getResourcesDirectory;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.deployment.model.JdbcPlanModel;
+import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.util.ArgumentsProviders;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -26,7 +28,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -166,6 +170,59 @@ public class UseCaseCompileTest {
     var hook = snapshotExtension.execute(useCase, "compile", "package.json");
     assertThat(hook.isSuccess()).as(hook.getMessages()).isTrue();
     return Files.readString(snapshotExtension.getPlanDir().resolve("flink-sql-no-functions.sql"));
+  }
+
+  @Test
+  void givenTagConfiguration_whenCompile_thenTagsAreWrittenToDeploymentAssets() throws IOException {
+    var hook = snapshotExtension.execute(USECASE_DIR.resolve("banking"), "compile", "package.json");
+    assertThat(hook.isSuccess()).as(hook.getMessages()).isTrue();
+
+    var statements = readJdbcStatements("postgres.json");
+    assertThat(statements).containsKeys("Customers", "CustomerNameCounts", "LoanTypes");
+    // effective tags of tables and views, written as tag name -> value
+    assertThat(statements.get("Customers"))
+        .containsExactlyInAnyOrderEntriesOf(Map.of("pii", "raw", "classification", "confidential"));
+    assertThat(statements.get("LoanTotals"))
+        .containsExactlyInAnyOrderEntriesOf(
+            Map.of("financial", "true", "classification", "confidential"));
+    assertThat(statements.get("LoanTypeStatusCounts"))
+        .containsExactlyInAnyOrderEntriesOf(
+            Map.of("financial", "true", "classification", "internal"));
+    assertThat(statements.get("CustomerNameCounts")).isNull();
+    assertThat(statements.get("LoanTypes")).isNull();
+
+    var explain = Files.readString(snapshotExtension.getBuildDir().resolve("pipeline_explain.txt"));
+    assertThat(explain).contains("Tags:        classification=confidential, pii=raw");
+  }
+
+  @Test
+  void givenNoTagConfiguration_whenCompile_thenTagsAreNotAnalyzed() throws IOException {
+    var hook =
+        snapshotExtension.execute(USECASE_DIR.resolve("sensors-doc"), "compile", "package.json");
+    assertThat(hook.isSuccess()).as(hook.getMessages()).isTrue();
+
+    assertThat(readJdbcStatements("postgres.json"))
+        .isNotEmpty()
+        .allSatisfy((name, tags) -> assertThat(tags).isNull());
+    assertThat(Files.readString(snapshotExtension.getBuildDir().resolve("pipeline_explain.txt")))
+        .doesNotContain("Tags:");
+    assertThat(Files.readString(snapshotExtension.getBuildDir().resolve("pipeline_explain.json")))
+        .doesNotContain("\"tags\"");
+  }
+
+  /** Reads the statements of a JDBC deployment plan, mapping the name to its tags */
+  private Map<String, Map<String, String>> readJdbcStatements(String planFile) throws IOException {
+    var plan =
+        SqrlObjectMapper.INSTANCE.readValue(
+            snapshotExtension.getPlanDir().resolve(planFile).toFile(), JdbcPlanModel.class);
+    var result = new HashMap<String, Map<String, String>>();
+    plan.statements().stream()
+        .filter(
+            s ->
+                s.type() == JdbcStatementModel.Type.TABLE
+                    || s.type() == JdbcStatementModel.Type.VIEW)
+        .forEach(s -> result.put(s.logicalName() != null ? s.logicalName() : s.name(), s.tags()));
+    return result;
   }
 
   @Test

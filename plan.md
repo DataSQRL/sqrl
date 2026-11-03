@@ -221,7 +221,15 @@ Also make `addSqrlTableFunction` (~L670, internal access functions over a base t
 
 ---
 
-## Step 5: Use-case tests
+## Step 5: Use-case tests ✅ Completed
+
+> Done. Deviations and findings:
+> - `DISTINCT` doesn't take over its input's doc string, so `Customers` declares its tags explicitly. Doc-string inheritance is covered by `CustomersWithEmail := SELECT * FROM Customers WHERE ...` without a doc string.
+> - Column-comment tags are covered in banking (`ApplicationUpdates.message`, `AddChatMessage.content`), and `LIKE` inheritance in `tags-fail` (`ContactEventsCopy`).
+> - The failing use case is `usecases/tags-fail` (snapshot `tags-fail-package.txt`), including R10 (a table reading `Customers` only in an `IN` subquery).
+> - The banking snapshot doesn't include `postgres.json`, so `givenTagConfiguration_whenCompile_thenTagsAreWrittenToDeploymentAssets` checks the JDBC plan tags explicitly. `givenNoTagConfiguration_whenCompile_thenTagsAreNotAnalyzed` checks `sensors-doc`.
+> - Found and fixed a bug from 3.0, committed separately as `fix: Fail the compile command when errors are recorded without aborting`. With recorded errors, the CLI reported success to its status hook but exited with 1. Compilation now raises recorded errors with `ErrorCollector.abortOnErrors()`, right after loading the configuration and right after planning.
+> - To update snapshots, pass `-Dsnapshots.update=true`. The `update-snapshots` profile property doesn't reach the test JVM when a single module is built with `-pl`.
 
 ### 5.1 Banking: positive propagation and declassification
 `sqrl-testing/sqrl-testing-integration/src/test/resources/usecases/banking/package.json`: add
