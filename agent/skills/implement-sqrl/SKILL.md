@@ -121,7 +121,7 @@ Internal tables are managed by SQRL through an engine hint (`kafka` or `iceberg`
 |-------------------|---------------------------------------------------------------------|--------------------------------|
 | Connector options | **omitted**; other engine-specific `WITH (...)` options are allowed | **required**                   |
 | Engine hint       | **required**                                                        | Not used to select a connector |
-| Metadata columns  | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner     | Passed through                 |
+| Metadata columns  | `METADATA FROM 'uuid'`, `'timestamp'`, `'auth.<claim>'`; any other alias fails the compile | Passed through                 |
 | Watermark spec    | **generated**                                                       | **required**                   |
 | Primary key       | *Unenforced* upsert semantics                                       | Same as Flink                  |
 
@@ -347,16 +347,47 @@ CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
 
 #### Accessing JWT payload
 
-To access the JWT payload included in the Authorization HTTP header, you can use the `METADATA` expression within the
-function definition. The JWT payload is available via the auth object, and nested fields can be accessed directly.
-In the example below, the JWT payload contains a val field, which is an integer.
+`METADATA FROM 'auth.<claim>'` fills a value with a claim of the JWT in the `Authorization` HTTP header.
+The server sets the value, so it is not part of the API: a client cannot send it or change it.
+Use it to give each caller only their own data, and to record who sent a mutation.
+The server checks the token only when the package configures an auth provider (`jwtAuth` or `oauthConfig`). Use the `/configure-sqrl` skill to set it. The compile fails when a script reads claims without one.
 
 ```sql
-AuthFilter(mySecretId BIGINT NOT NULL METADATA FROM 'auth.val') :=
-  SELECT c.* 
-  FROM Customer c 
-  WHERE c.customerId = :mySecretId;
+/** The orders of the caller. */
+MyOrders(customer_id STRING NOT NULL METADATA FROM 'auth.sub') :=
+  SELECT * FROM Orders WHERE customer_id = :customer_id;
 ```
+
+A claim can fill four things:
+
+- A function argument, as in `MyOrders` above.
+- A relationship argument: `Regions.myOrders(customer_id STRING NOT NULL METADATA FROM 'auth.sub') := SELECT * FROM Orders o WHERE o.region = this.region AND o.customer_id = :customer_id;` Each region then shows only the orders of the caller.
+- A `SUBSCRIBE` function argument, so that each caller receives only their own new records.
+- A column of a mutation table (`/*+engine(kafka)*/ CREATE TABLE`). The server writes the claim into each record. The column is not part of the mutation input, and the mutation returns it in its result.
+
+```sql
+/*+no_query, engine(kafka) */
+CREATE TABLE OrderRequests (
+  customer_id STRING NOT NULL METADATA FROM 'auth.sub',
+  item STRING NOT NULL,
+  requested_at TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+/** The order requests of the caller. */
+MyOrderRequests(customer_id STRING NOT NULL METADATA FROM 'auth.sub') :=
+  SELECT * FROM OrderRequests WHERE customer_id = :customer_id;
+```
+
+Add `no_query` to each table that holds the rows of all callers, such as `OrderRequests` above. Without it, the table gets its own query endpoint, and every caller reads every row. The mutation stays.
+
+Follow these rules for each claim. An argument is a function, relationship or `SUBSCRIBE` argument. A column is a mutation table column.
+
+- **Name** (argument and column): `'auth.sub'` reads the top-level claim `sub`. `'auth.org.id'` reads the field `id` of the object claim `org`. The server first looks for a top-level claim with the full name, so a namespaced claim such as `'auth.https://example.com/org_id'` also works.
+- **Type** (argument and column): declare the SQL type of the JSON value: a string is `STRING`, an integer is `BIGINT`, a boolean is `BOOLEAN`, and an array of strings is `ARRAY<STRING>`. The server does not convert types. For an argument, the claim `"tier": "2"` fails a `BIGINT` field. For a column, the server writes the wrong value, and the Flink job that reads the table fails.
+- **Required claim** (argument and column): `NOT NULL` makes the claim required. A missing claim fails the field or the mutation with `Forbidden`, and a `null` claim fails it with `Claim '<name>' must not be null`. A failed mutation writes no record.
+- **Optional claim** (argument and column): without `NOT NULL`, a missing claim gives `NULL`, and a mutation writes `null` into the column. For a function or relationship argument, Postgres cannot find the type of a `NULL` argument, so cast the argument at each use: `WHERE CAST(:tier AS BIGINT) IS NULL OR price < 100 * CAST(:tier AS BIGINT)`.
+- **More than one use** (function and relationship argument): cast a claim argument at each use when the query uses it more than once. Without the casts, Postgres fails with `inconsistent types deduced for parameter`.
+- **Roles** (function and relationship argument): check an array claim with `array_contains(CAST(:roles AS ARRAY<STRING>), 'admin')`.
 
 ### Relationship definition
 
@@ -523,6 +554,7 @@ Applying `no_query` to a `_`-prefixed table is illogical. Pick one: `_` for a pi
 
 CREATE TABLE statements that define an internal data source are exposed as topics in the log, or GraphQL mutations in the server.
 The input type is defined by mapping all column types to native data types of the interface schema. Computed and metadata columns are not included in the input type since those are computed on insert.
+The mutation returns the metadata columns in its result, so a caller sees the `auth.<claim>` values that the server wrote.
 
 ## EXPORT statement
 

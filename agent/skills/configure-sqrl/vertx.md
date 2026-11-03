@@ -2,7 +2,7 @@
 
 | Key        | Type       | Default   | Notes                                                 |
 |------------|------------|-----------|-------------------------------------------------------|
-| `authKind` | **array**  | `[]`      | List of auth methods: `"JWT"`, `"OAUTH"`, or both     |
+| `authKind` | **array**  | `[]`      | List of auth methods: `"JWT"`, `"OAUTH"`, or both. It does not turn on a method: `config.jwtAuth` or `config.oauthConfig` does |
 | `config`   | **object** | see below | Vert.x-specific configuration including auth settings |
 
 ## Server Configuration Overrides
@@ -81,7 +81,8 @@ Make an educated guess for each threshold from how the API is used. The values i
 
 ## JWT Authentication
 
-Set `authKind` to include `JWT` and provide a `jwtAuth` object. Its field names map to Vert.x Java POJOs and are case-sensitive.
+To turn on the JWT check, set `engines.vertx.config.jwtAuth`, and include `JWT` in `authKind`. The `jwtAuth` field names map to Vert.x Java POJOs and are case-sensitive.
+With the check on, every request needs a valid token.
 
 ```json
 {
@@ -111,7 +112,7 @@ For asymmetric algorithms such as `ES256`, `buffer` must contain the appropriate
 
 ## OAuth 2.0 Authentication
 
-Set `authKind` to include `OAUTH` and configure `oauthConfig`. OAuth enables MCP clients to discover the authorization server at `/.well-known/oauth-protected-resource`.
+To turn on the OAuth check, set `engines.vertx.config.oauthConfig.oauth2Options.site`, and include `OAUTH` in `authKind`. OAuth enables MCP clients to discover the authorization server at `/.well-known/oauth-protected-resource`.
 
 ```json
 {
