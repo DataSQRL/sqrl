@@ -2,7 +2,7 @@ name: Agent PR Review
 
 on:
   pull_request_target:
-    types: [ opened, ready_for_review, labeled ]
+    types: [ labeled ]
 
 permissions:
   contents: read
@@ -11,23 +11,17 @@ permissions:
 
 jobs:
   pr-review:
-    # pull_request_target runs with secrets even for fork PRs, and this agent reads the PR's
-    # untrusted text. Run it automatically only for branches in this repo; a fork PR runs only
-    # after a maintainer reads it and applies the `agent-review` label (needs triage access).
-    if: |
-      (
-        github.event.pull_request.head.repo.full_name == github.repository
-        && (
-          (github.event.action == 'opened' && github.event.pull_request.draft == false)
-          || github.event.action == 'ready_for_review'
-        )
-      )
-      || github.event.label.name == 'agent-review'
+    # pull_request_target runs with secrets and this agent checks out the PR head and runs a
+    # shell-capable agent on it. Never run it automatically: a maintainer reads the PR first and
+    # applies the `agent-review` label (needs triage access).
+    if: github.event.label.name == 'agent-review'
     runs-on: ubuntu-latest
     steps:
       - name: Run PR Review
-        # Third-party action: pinned to a fixed commit, not the moving main branch.
-        uses: OpenHands/extensions/plugins/pr-review@60f8f85c253314c7d815adf96ff5a7d41376ddcc # main as of 2026-11-03
+        # Third-party action pinned to a commit older than the 14-day supply-chain cooldown.
+        # Its own nested actions (checkout, setup-python, setup-uv, upload-artifact) are still tag
+        # references upstream, so this pin does not freeze everything that runs.
+        uses: OpenHands/extensions/plugins/pr-review@d008b81c44ae4d56d319e3b8f28ca35fc40aacbc # main, 2026-10-07
         with:
           llm-model: openai/gpt-5.6-terra
           llm-api-key: ${{ secrets.LLM_API_KEY }}
