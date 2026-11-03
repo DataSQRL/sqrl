@@ -339,7 +339,8 @@ public class SqlScriptPlanner {
               statement.toSql(),
               getMutationBuilder(hintsAndDocs),
               scriptContext.mainModuleLoader().getSchemaLoader(),
-              hintsAndDocs)
+              hintsAndDocs,
+              errors)
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
@@ -503,6 +504,7 @@ public class SqlScriptPlanner {
                   passthroughStmt.getReturnType(),
                   fromTables,
                   hintsAndDocs,
+                  !isHidden && !tblFnStmt.isRelationship(),
                   errors);
         } else {
           fnBuilder =
@@ -512,6 +514,7 @@ public class SqlScriptPlanner {
                   new ArrayList<>(arguments.values()),
                   argumentIndexMap,
                   hintsAndDocs,
+                  !isHidden && !tblFnStmt.isRelationship(),
                   errors);
         }
         fnBuilder.fullPath(tblFnStmt.getPath());
@@ -536,7 +539,7 @@ public class SqlScriptPlanner {
 
         if (!shouldExcludeTestTable(hints)) {
           addTableToDag(
-              sqrlEnv.addView(originalSql, hintsAndDocs, errors),
+              sqrlEnv.addView(originalSql, hintsAndDocs, !isHidden, errors),
               hintsAndDocs,
               visibility,
               false,
@@ -571,7 +574,8 @@ public class SqlScriptPlanner {
                 flinkStmt.sql().get(),
                 getMutationBuilder(hintsAndDocs),
                 scriptContext.mainModuleLoader().getSchemaLoader(),
-                hintsAndDocs)
+                hintsAndDocs,
+                errors)
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
         addInsert(insert, hintsAndDocs, sqrlEnv, errors);
@@ -941,7 +945,8 @@ public class SqlScriptPlanner {
                     importedHintsAndDoc,
                     scriptContext.isRootContext(),
                     getStandaloneInclude(object.table())),
-                importedHintsAndDoc);
+                importedHintsAndDoc,
+                flinkTable.errorCollector());
         importedHintsAndDoc.hints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());

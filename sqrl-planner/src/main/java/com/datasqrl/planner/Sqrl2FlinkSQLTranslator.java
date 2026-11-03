@@ -55,6 +55,9 @@ import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.tags.TableTags;
+import com.datasqrl.planner.tags.TagAnalyzer;
+import com.datasqrl.planner.tags.TagAnalyzer.TagResult;
+import com.datasqrl.planner.tags.TagContext;
 import com.datasqrl.planner.tags.TagDefinitions;
 import com.datasqrl.server.MetadataType;
 import com.datasqrl.server.exec.FlinkExecFunction;
@@ -347,6 +350,23 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    */
   public ViewAnalysis analyzeView(
       SqlNode viewDef, boolean removeTopLevelSort, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
+    return analyzeView(
+        viewDef,
+        removeTopLevelSort,
+        hintsAndDoc,
+        new TagContext(tagDefinitions, null, true, null),
+        errors);
+  }
+
+  /**
+   * @param tagContext how the tags of the analyzed table are computed and validated
+   */
+  public ViewAnalysis analyzeView(
+      SqlNode viewDef,
+      boolean removeTopLevelSort,
+      HintsAndDoc hintsAndDoc,
+      TagContext tagContext,
+      ErrorCollector errors) {
     var flinkPlanner = this.validatorSupplier.get();
 
     var validated = flinkPlanner.validate(viewDef);
@@ -394,7 +414,14 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
     var analyzer =
         new SQRLLogicalPlanAnalyzer(
-            relNode, tableLookup, viewName, referencedViews, relBuilder, flinkPlanner, errors);
+            relNode,
+            tableLookup,
+            viewName,
+            referencedViews,
+            relBuilder,
+            flinkPlanner,
+            tagContext,
+            errors);
 
     var viewAnalysis = analyzer.analyze(hintsAndDoc);
     viewAnalysis.tableAnalysis().topLevelSort(topLevelSort);
@@ -506,6 +533,17 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    * @return
    */
   public TableAnalysis addView(String originalSql, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
+    return addView(originalSql, hintsAndDoc, true, errors);
+  }
+
+  /**
+   * @param validateDeclaredTags whether the view is public and must declare the tags it inherits
+   */
+  public TableAnalysis addView(
+      String originalSql,
+      HintsAndDoc hintsAndDoc,
+      boolean validateDeclaredTags,
+      ErrorCollector errors) {
     var viewDef = parseSQL(originalSql);
     checkArgument(
         viewDef instanceof SqlCreateView || viewDef instanceof SqlAlterViewAs,
@@ -538,7 +576,13 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
      NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
     */
     var viewDef2 = parseSQL(originalSql);
-    var viewAnalysis = analyzeView(viewDef2, removedSort, hintsAndDoc, errors);
+    var viewAnalysis =
+        analyzeView(
+            viewDef2,
+            removedSort,
+            hintsAndDoc,
+            new TagContext(tagDefinitions, null, validateDeclaredTags, null),
+            errors);
     var tableAnalysis =
         viewAnalysis.tableAnalysis().objectIdentifier(identifier).originalSql(originalSql).build();
     tableLookup.registerTable(tableAnalysis);
@@ -607,12 +651,19 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       List<ParsedArgument> arguments,
       Map<Integer, Integer> argumentIndexMap,
       HintsAndDoc hintsAndDoc,
+      boolean validateDeclaredTags,
       ErrorCollector errors) {
 
     var parameters = getFunctionParameters(arguments);
     // Analyze Query
     var funcDef2 = parseSQL(originalSql);
-    var viewAnalysis = analyzeView(funcDef2, false, hintsAndDoc, errors);
+    var viewAnalysis =
+        analyzeView(
+            funcDef2,
+            false,
+            hintsAndDoc,
+            new TagContext(tagDefinitions, identifier.getObjectName(), validateDeclaredTags, null),
+            errors);
     // Remap parameters in query so the RexDynamicParam point directly at the function parameter by
     // index
     var updateParameters =
@@ -636,6 +687,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       ParsedObject<String> returnType,
       List<TableOrFunctionAnalysis> fromTables,
       HintsAndDoc hintsAndDoc,
+      boolean validateDeclaredTags,
       ErrorCollector errors) {
 
     var parameters = getFunctionParameters(arguments);
@@ -647,8 +699,27 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             .build();
     // use values relnode from return type
     var values = flinkSqlNodePlanner.getRelBuilder(null).values(returnDataType).build();
+    // The pass-through query isn't analyzed, so the tags come from the referenced tables
+    var tagResult = new TagResult(TableTags.EMPTY, TableTags.EMPTY);
+    if (tagDefinitions.isEnabled()) {
+      var declared = hintsAndDoc.getDocumentation().tags();
+      var declassified = TagAnalyzer.getDeclassified(hintsAndDoc.hints());
+      tagResult = TagAnalyzer.compute(fromTables, declared, declassified);
+      TagAnalyzer.validate(
+          identifier.getObjectName(),
+          tagDefinitions,
+          tagResult,
+          declared,
+          declassified,
+          fromTables,
+          returnDataType,
+          validateDeclaredTags,
+          errors);
+    }
     var tableAnalysis =
         TableAnalysis.builder()
+            .tags(tagResult.effective())
+            .inheritedTags(tagResult.inherited())
             .objectIdentifier(identifier)
             .originalSql(originalSql)
             .originalRelnode(values)
@@ -710,6 +781,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             .fromTables(List.of(baseTable))
             .hints(baseTable.getHints())
             .documentation(baseTable.getDocumentation())
+            .tags(baseTable.getTags())
             .errors(baseTable.getErrors())
             .tableStatistic(baseTable.getTableStatistic())
             .collapsedRelnode(relNode)
@@ -795,9 +867,10 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       String tableDefinition,
       SchemaLoader schemaLoader,
       Optional<MutationBuilder> mutationBuilder,
-      HintsAndDoc hintsAndDoc) {
-    return addSourceTable(
-        addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder), hintsAndDoc);
+      HintsAndDoc hintsAndDoc,
+      ErrorCollector errors) {
+    var result = addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder);
+    return addSourceTable(result, hintsAndDoc.withColumnTags(getColumnTags(result)), errors);
   }
 
   public AddTableResult addExternalExport(
@@ -814,10 +887,20 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       Optional<MutationBuilder> mutationBuilder,
       SchemaLoader schemaLoader,
       HintsAndDoc hintsAndDoc) {
+    return createTable(
+        tableDefinition, mutationBuilder, schemaLoader, hintsAndDoc, ErrorCollector.root());
+  }
+
+  public Optional<TableAnalysis> createTable(
+      String tableDefinition,
+      Optional<MutationBuilder> mutationBuilder,
+      SchemaLoader schemaLoader,
+      HintsAndDoc hintsAndDoc,
+      ErrorCollector errors) {
     var result = addTable(Function.identity(), tableDefinition, schemaLoader, mutationBuilder);
     hintsAndDoc = updateDocumentationFromLike(result, hintsAndDoc);
     hintsAndDoc = hintsAndDoc.withColumnTags(getColumnTags(result));
-    if (result.isSourceTable()) return Optional.of(addSourceTable(result, hintsAndDoc));
+    if (result.isSourceTable()) return Optional.of(addSourceTable(result, hintsAndDoc, errors));
     else return Optional.empty();
   }
 
@@ -867,10 +950,19 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    * @param addResult
    * @return
    */
-  private TableAnalysis addSourceTable(AddTableResult addResult, HintsAndDoc hintsAndDoc) {
+  private TableAnalysis addSourceTable(
+      AddTableResult addResult, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
     var view =
         createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
-    var viewAnalysis = analyzeView(view, false, hintsAndDoc, ErrorCollector.root());
+    // Source tables don't inherit tags, so only declared tags and required columns are validated
+    // The scan view is internal, so only tag errors are reported to the statement's collector
+    var viewAnalysis =
+        analyzeView(
+            view,
+            false,
+            hintsAndDoc,
+            new TagContext(tagDefinitions, addResult.tableName, true, errors),
+            ErrorCollector.root());
     TableAnalysis.TableAnalysisBuilder tbBuilder = viewAnalysis.tableAnalysis();
     tbBuilder
         .objectIdentifier(addResult.baseTableIdentifier)

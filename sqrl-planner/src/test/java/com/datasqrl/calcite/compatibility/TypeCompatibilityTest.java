@@ -22,6 +22,8 @@ import org.apache.calcite.rel.type.RelDataTypeFactory;
 import org.apache.calcite.rel.type.RelDataTypeSystem;
 import org.apache.calcite.sql.type.SqlTypeFactoryImpl;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -596,6 +598,46 @@ class TypeCompatibilityTest {
 
       assertThat(TypeCompatibility.isBackwardsCompatible(intArray, map)).isFalse();
       assertThat(TypeCompatibility.isBackwardsCompatible(map, intArray)).isFalse();
+    }
+  }
+
+  @Nested
+  class CallSiteTests {
+
+    private final FlinkTypeFactory flinkTypes =
+        new FlinkTypeFactory(getClass().getClassLoader(), FlinkTypeSystem.INSTANCE);
+
+    @Test
+    void givenWiderNumericType_whenCheckCallSite_thenReturnsTrue() {
+      var intType = flinkTypes.createSqlType(SqlTypeName.INTEGER);
+      var bigintType = flinkTypes.createSqlType(SqlTypeName.BIGINT);
+
+      assertThat(TypeCompatibility.isCallSiteCompatible(intType, bigintType)).isTrue();
+    }
+
+    @Test
+    void givenStringForInt_whenCheckCallSite_thenReturnsFalse() {
+      var stringType = flinkTypes.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
+      var intType = flinkTypes.createSqlType(SqlTypeName.INTEGER);
+
+      assertThat(TypeCompatibility.isCallSiteCompatible(stringType, intType)).isFalse();
+    }
+
+    @Test
+    void givenVarcharForString_whenCheckCallSite_thenReturnsTrue() {
+      var varcharType = flinkTypes.createSqlType(SqlTypeName.VARCHAR, 10);
+      var stringType = flinkTypes.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
+
+      assertThat(TypeCompatibility.isCallSiteCompatible(varcharType, stringType)).isTrue();
+    }
+
+    @Test
+    void givenNullableActual_whenCheckCallSite_thenNullabilityIsIgnored() {
+      var nullableInt =
+          flinkTypes.createTypeWithNullability(flinkTypes.createSqlType(SqlTypeName.INTEGER), true);
+      var intType = flinkTypes.createSqlType(SqlTypeName.INTEGER);
+
+      assertThat(TypeCompatibility.isCallSiteCompatible(nullableInt, intType)).isTrue();
     }
   }
 }
