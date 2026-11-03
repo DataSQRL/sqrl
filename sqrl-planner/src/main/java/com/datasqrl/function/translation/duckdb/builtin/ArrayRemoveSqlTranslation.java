@@ -37,17 +37,17 @@ public class ArrayRemoveSqlTranslation extends DuckDbSqlTranslation {
     var arr = call.operand(0);
     var elemToRemove = call.operand(1);
 
-    // Non-null elem to remove: list_filter(arr, x -> x <> elem_to_remove);
-    // Null as elem to remove:  list_filter(arr, x -> x IS NOT NULL);
+    // Non-null elem to remove: list_filter(arr, lambda x: x <> elem_to_remove);
+    // Null as elem to remove:  list_filter(arr, lambda x: x IS NOT NULL);
     var listFilter = writer.startFunCall("list_filter");
     arr.unparse(writer, 0, 0);
     writer.sep(",", true);
 
     if (isNullLiteral(elemToRemove)) {
-      writer.print("x -> x IS NOT NULL");
+      writer.print("lambda x: x IS NOT NULL");
 
     } else {
-      writer.print("x -> x <> ");
+      writer.print("lambda x: x <> ");
       elemToRemove.unparse(writer, 0, 0);
     }
 
