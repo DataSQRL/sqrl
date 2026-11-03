@@ -59,4 +59,29 @@ class ErrorCollectorTest {
     assertThatThrownBy(() -> errors.fatal("problem")).isInstanceOf(CollectedException.class);
     assertThat(errors.hasErrors()).isTrue();
   }
+
+  @Test
+  void givenRecordedErrors_whenAbortOnErrors_thenThrowsFirstErrorWithoutRecordingAgain() {
+    var errors = ErrorCollector.root();
+    errors.warn("warning");
+    errors.error("first problem");
+    errors.error("second problem");
+
+    assertThatThrownBy(errors::abortOnErrors)
+        .isInstanceOf(CollectedException.class)
+        .hasMessageContaining("first problem");
+    var messages = new ArrayList<ErrorMessage>();
+    errors.forEach(messages::add);
+    assertThat(messages).hasSize(3);
+  }
+
+  @Test
+  void givenOnlyWarnings_whenAbortOnErrors_thenDoesNotThrow() {
+    var errors = ErrorCollector.root();
+    errors.warn("warning");
+
+    errors.abortOnErrors();
+
+    assertThat(errors.hasErrors()).isFalse();
+  }
 }

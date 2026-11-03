@@ -231,6 +231,19 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     recordFatal(label, msg, args);
   }
 
+  /**
+   * Aborts with the first recorded fatal error if any errors were recorded, e.g. with {@link
+   * #error(String, Object...)}. This makes recorded errors fail like errors thrown by {@link
+   * #fatal(String, Object...)}. The error is not recorded again.
+   */
+  public void abortOnErrors() {
+    for (var message : this) {
+      if (message.isFatal()) {
+        throw CollectedException.withTrimmedStackTrace(message.asException());
+      }
+    }
+  }
+
   private ErrorMessage recordFatal(ErrorLabel label, String msg, Object... args) {
     ErrorMessage errorMessage =
         new Implementation(label, ErrorMessage.getMessage(msg, args), location, Severity.FATAL);
