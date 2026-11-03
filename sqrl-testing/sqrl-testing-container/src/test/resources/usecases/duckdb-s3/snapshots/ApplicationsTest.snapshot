@@ -1,0 +1,17 @@
+{
+  "data" : {
+    "ApplicationsTest" : [ {
+      "id" : 21,
+      "customer_id" : 1,
+      "amount" : 2500
+    }, {
+      "id" : 22,
+      "customer_id" : 2,
+      "amount" : 13176.46
+    }, {
+      "id" : 23,
+      "customer_id" : 1,
+      "amount" : 480.75
+    } ]
+  }
+}

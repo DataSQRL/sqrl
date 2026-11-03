@@ -40,14 +40,14 @@ public class ArrayJoinSqlTranslation extends DuckDbSqlTranslation {
     var sep = call.operand(1);
     var nullRepl = call.operand(2);
 
-    // array_to_string(list_transform(arr, x -> coalesce(x, null_repl)), sep)
+    // array_to_string(list_transform(arr, lambda x: coalesce(x, null_repl)), sep)
     var arrayToString = writer.startFunCall("ARRAY_TO_STRING");
 
     var listTransform = writer.startFunCall("LIST_TRANSFORM");
     arr.unparse(writer, 0, 0);
     writer.sep(",", true);
 
-    writer.print("x -> ");
+    writer.print("lambda x: ");
     var coalesce = writer.startFunCall("COALESCE");
     writer.print("x");
     writer.sep(",", true);

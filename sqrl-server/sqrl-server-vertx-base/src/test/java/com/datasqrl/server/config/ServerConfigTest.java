@@ -270,4 +270,64 @@ class ServerConfigTest {
     assertThat(serverConfig.hasOAuthProvider()).isEqualTo(expectedOAuthProvider);
     assertThat(serverConfig.hasAuthProvider()).isEqualTo(expectedAuthProvider);
   }
+
+  @Test
+  void given_duckDbConfigWithoutSpillKeys_when_parsed_then_usesSpillDefaults() {
+    var duckDbConfig = parseDuckDbConfig(Map.of("url", "jdbc:duckdb:"));
+
+    assertThat(duckDbConfig.getTempDirectory()).isNull();
+    assertThat(duckDbConfig.getMaxTempDirectorySize()).isEqualTo("4GB");
+  }
+
+  @Test
+  void given_duckDbConfigWithSpillKeys_when_parsed_then_setsThem() {
+    var duckDbConfig =
+        parseDuckDbConfig(
+            Map.of(
+                "url",
+                "jdbc:duckdb:",
+                "temp-directory",
+                "/data/spill",
+                "max-temp-directory-size",
+                "10GB"));
+
+    assertThat(duckDbConfig.getTempDirectory()).isEqualTo("/data/spill");
+    assertThat(duckDbConfig.getMaxTempDirectorySize()).isEqualTo("10GB");
+  }
+
+  @Test
+  void given_duckDbConfigWithoutPoolSize_when_parsed_then_poolSizeIsOne() {
+    var duckDbConfig = parseDuckDbConfig(Map.of("url", "jdbc:duckdb:"));
+
+    assertThat(duckDbConfig.getPoolSize()).isEqualTo(1);
+  }
+
+  @Test
+  void given_duckDbConfigWithPoolSize_when_parsed_then_setsIt() {
+    var duckDbConfig = parseDuckDbConfig(Map.of("url", "jdbc:duckdb:", "pool-size", 8));
+
+    assertThat(duckDbConfig.getPoolSize()).isEqualTo(8);
+  }
+
+  @Test
+  void given_duckDbConfigWithCredentialChain_when_parsed_then_flagIsTrue() {
+    assertThat(parseDuckDbConfig(Map.of("url", "jdbc:duckdb:")).isUseCredentialChain()).isFalse();
+
+    var duckDbConfig =
+        parseDuckDbConfig(Map.of("url", "jdbc:duckdb:", "use-credential-chain", true));
+
+    assertThat(duckDbConfig.isUseCredentialChain()).isTrue();
+  }
+
+  @Test
+  void given_duckDbConfigWithS3Endpoint_when_parsed_then_setsIt() {
+    var duckDbConfig =
+        parseDuckDbConfig(Map.of("url", "jdbc:duckdb:", "s3-endpoint", "http://s3mock:9090"));
+
+    assertThat(duckDbConfig.getS3Endpoint()).isEqualTo("http://s3mock:9090");
+  }
+
+  private static JdbcConfig.DuckDbConfig parseDuckDbConfig(Map<String, Object> duckDbConfig) {
+    return ServerConfigUtil.fromConfigMap(Map.of("duckDbConfig", duckDbConfig)).getDuckDbConfig();
+  }
 }
