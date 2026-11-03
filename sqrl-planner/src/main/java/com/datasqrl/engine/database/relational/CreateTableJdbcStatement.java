@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.Preconditions;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 
@@ -99,6 +100,12 @@ public class CreateTableJdbcStatement implements JdbcStatement {
   @Override
   public Type getType() {
     return Type.TABLE;
+  }
+
+  @Override
+  @JsonIgnore
+  public Map<String, String> getTags() {
+    return JdbcStatement.getEngineTableTags(engineTable);
   }
 
   @Override

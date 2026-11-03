@@ -140,6 +140,34 @@ class PlanModelSerializationTest {
   }
 
   @Test
+  void givenViewWithTags_whenMapped_thenModelListsTagsAndSerializesThem() throws Exception {
+    var view =
+        new GenericJdbcStatement(
+            "Customers",
+            Type.VIEW,
+            "CREATE VIEW Customers",
+            null,
+            null,
+            List.of(),
+            null,
+            null,
+            Map.of("classification", "secret", "gdpr", "true"));
+    var untagged = new GenericJdbcStatement("Orders", Type.VIEW, "CREATE VIEW Orders");
+    var plan =
+        JdbcPhysicalPlan.builder().statement(view).statement(untagged).tableIdMap(Map.of()).build();
+
+    var model = plan.toModel();
+
+    assertThat(model.statements().get(0).tags())
+        .containsExactlyInAnyOrderEntriesOf(Map.of("classification", "secret", "gdpr", "true"));
+    assertThat(model.statements().get(1).tags()).isNull();
+    var json = SqrlObjectMapper.INSTANCE.writeValueAsString(model);
+    assertThat(json).contains("\"tags\":{").containsOnlyOnce("\"tags\"");
+    var roundTrip = SqrlObjectMapper.INSTANCE.readValue(json, JdbcPlanModel.class);
+    assertThat(roundTrip.statements().get(0).tags()).isEqualTo(model.statements().get(0).tags());
+  }
+
+  @Test
   void givenFlinkPhysicalPlan_whenMapped_thenReturnsFlinkPlanModel() {
     var plan =
         FlinkPhysicalPlan.builder()

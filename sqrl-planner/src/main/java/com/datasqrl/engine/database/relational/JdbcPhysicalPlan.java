@@ -113,7 +113,8 @@ public record JdbcPhysicalPlan(
           createTable.getTtl(),
           logicalName,
           role,
-          statement.getReferencedTables());
+          statement.getReferencedTables(),
+          statement.getTags());
     }
     return new JdbcStatementModel(
         statement.getName(),
@@ -128,7 +129,8 @@ public record JdbcPhysicalPlan(
         null,
         logicalName,
         role,
-        statement.getReferencedTables());
+        statement.getReferencedTables(),
+        statement.getTags());
   }
 
   private static String toSql(List<JdbcStatement> statements) {

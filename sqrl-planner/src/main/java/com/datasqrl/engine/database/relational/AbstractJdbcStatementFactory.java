@@ -109,7 +109,15 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         withView,
         getTableNameMapping(tableIdMap),
         withView ? getReferencedTables(query.relNode(), tableIdMap) : null,
-        query.function().getDocumentation());
+        getViewDocumentation(query));
+  }
+
+  /**
+   * The documentation of the query's function with its effective tags, which are written to the
+   * view statement.
+   */
+  protected static Documented.Documentation getViewDocumentation(Query query) {
+    return query.function().getDocumentation().withTags(query.function().getTags());
   }
 
   /**
@@ -136,6 +144,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   public QueryResult createPassthroughQuery(Query query, boolean withView) {
     var passthroughSql = query.function().getFunctionAnalysis().getOriginalSql();
     var description = query.function().getDocumentation().getDocString(null);
+    var tags = JdbcStatement.toTagMap(query.function().getTags());
 
     // Replace all argument references
     var formattedSql =
@@ -158,8 +167,12 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
             Type.VIEW,
             viewSql,
             description,
+            null,
             getColumns(
-                rowType.getFieldList(), PlannerHints.EMPTY, query.function().getDocumentation()));
+                rowType.getFieldList(), PlannerHints.EMPTY, query.function().getDocumentation()),
+            null,
+            null,
+            tags);
 
     return new QueryResult(qBuilder, view);
   }
@@ -371,7 +384,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         null,
         getColumns(rowType.getFieldList(), PlannerHints.EMPTY, documentation),
         null,
-        referencedTables);
+        referencedTables,
+        JdbcStatement.toTagMap(documentation.tags()));
   }
 
   @RequiredArgsConstructor

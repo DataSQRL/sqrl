@@ -203,7 +203,9 @@ Also make `addSqrlTableFunction` (~L670, internal access functions over a base t
 
 ---
 
-## Step 4: Output (R21)
+## Step 4: Output (R21) ✅ Completed
+
+> Done. Tags appear as a `Tags:` header line on each node in `pipeline_explain.txt` and as `tags` in `pipeline_explain.json`/`pipeline_visual.html`. In the JDBC plan, tables read their tags from their engine table's `TableAnalysis`. This also covers `GenericJdbcStatement` tables such as Snowflake's, through `JdbcStatement.getEngineTableTags`. Views get the effective tags of their function: the factory passes them along in the view's `Documentation` (`getViewDocumentation`), so no factory signatures changed. Existing snapshots are unchanged, because tags are omitted when empty.
 
 ### 4.1 `PipelineDAGExporter` (`sqrl-planner/.../plan/global/PipelineDAGExporter.java`), used by `DagWriter`
 - Add `Map<String,String> tags` (`@JsonInclude(NON_EMPTY)`) to `Node`, filled from `TableTags.toValueMap()` (sorted, value names rather than offsets), and populate it for `Table`, `SourceOrSink` (imports: the source scan view's tags) and `Query` (function tags).

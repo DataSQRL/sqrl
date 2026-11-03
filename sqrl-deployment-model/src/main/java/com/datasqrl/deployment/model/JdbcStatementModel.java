@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A rendered statement in a JDBC deployment file.
@@ -29,6 +30,8 @@ import java.util.List;
  * @param role for tables, whether the table stores a mutation or a table the pipeline materializes
  * @param referencedTables for views, the sorted names of the {@code TABLE} statements the view
  *     reads; not set when the compiler cannot determine them, such as for pass-through views
+ * @param tags for tables and views, the effective tags of the SQRL table or function, mapped from
+ *     tag name to value ({@code true} for boolean tags); not set when there are no tags
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -45,7 +48,8 @@ public record JdbcStatementModel(
     Duration ttl,
     String logicalName,
     Role role,
-    List<String> referencedTables) {
+    List<String> referencedTables,
+    Map<String, String> tags) {
 
   public JdbcStatementModel(
       String name, Type type, String sql, String description, List<Field> fields) {
@@ -104,6 +108,37 @@ public record JdbcStatementModel(
         ttl,
         logicalName,
         role,
+        null);
+  }
+
+  public JdbcStatementModel(
+      String name,
+      Type type,
+      String sql,
+      String description,
+      List<Field> fields,
+      List<String> primaryKey,
+      List<String> partitionKey,
+      PartitionType partitionType,
+      Integer numPartitions,
+      Duration ttl,
+      String logicalName,
+      Role role,
+      List<String> referencedTables) {
+    this(
+        name,
+        type,
+        sql,
+        description,
+        fields,
+        primaryKey,
+        partitionKey,
+        partitionType,
+        numPartitions,
+        ttl,
+        logicalName,
+        role,
+        referencedTables,
         null);
   }
 
