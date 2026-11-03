@@ -1,0 +1,19 @@
+<configuration>
+  <!-- Points the Iceberg Hadoop catalog that Flink writes with at S3Mock -->
+  <property>
+    <name>fs.s3a.aws.credentials.provider</name>
+    <value>com.amazonaws.auth.DefaultAWSCredentialsProviderChain</value>
+  </property>
+  <property>
+    <name>fs.s3a.endpoint</name>
+    <value>http://s3mock:9090</value>
+  </property>
+  <property>
+    <name>fs.s3a.path.style.access</name>
+    <value>true</value>
+  </property>
+  <property>
+    <name>fs.s3a.connection.ssl.enabled</name>
+    <value>false</value>
+  </property>
+</configuration>

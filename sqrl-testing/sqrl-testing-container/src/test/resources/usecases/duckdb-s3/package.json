@@ -1,0 +1,31 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "iceberg", "duckdb", "vertx"],
+  "script": {
+    "main": "duckdb-s3.sqrl"
+  },
+  "engines": {
+    "duckdb": {
+      "url": "jdbc:duckdb:",
+      "use-credential-chain": true,
+      "s3-endpoint": "http://s3mock:9090"
+    },
+    "flink": {
+      "config": {
+        "parallelism.default": "1",
+        "table.exec.source.idle-timeout": "1 ms",
+        "execution.checkpointing.interval": "8 s",
+        "execution.checkpointing.min-pause": "2 s"
+      }
+    }
+  },
+  "connectors": {
+    "iceberg": {
+      "warehouse": "s3a://warehouse/iceberg"
+    }
+  },
+  "test-runner": {
+    "delay-sec": -1,
+    "required-checkpoints": 1
+  }
+}
