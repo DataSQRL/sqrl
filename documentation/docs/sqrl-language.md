@@ -169,6 +169,7 @@ DistinctTbl := DISTINCT SourceTbl
 
 * Deduplicates a **STREAM** of changelog data into a **VERSIONED_STATE** table.
 * Hint `/*+filtered_distinct_order*/` (see [hints](#hints)) may precede the statement to push filters before deduplication for optimization.
+* Without a doc string of its own, the table takes the doc string (including [tags](configuration#tags-compilertags)) of the source table.
 
 ```sql
 DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
