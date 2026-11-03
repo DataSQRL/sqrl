@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk-noble@sha256:30df3b90dc99b30e663c44e74c42f0a942360718b189558e1fe6692504c69a17
+FROM eclipse-temurin:24-jdk-noble@sha256:dacac8e9a0df0d2bd24e702b4431132875c249930b70555ebd7ca285b5bee684
 
 ENV DUCKDB_EXTENSIONS_DIR=/opt/duckdb_extensions
 
