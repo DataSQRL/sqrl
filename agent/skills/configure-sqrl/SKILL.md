@@ -14,6 +14,7 @@ For projects that need multiple deployment profiles, split configuration into a 
 
 - **`<project>-shared-package.json`** is the base config file that includes common settings to every environment which could be `version`, `enabled-engines`, `script.main`, `script.api`, and the `engines`/`compiler` settings.
 - **`<project>-<env>-package.json`** (one per environment `-test`, `-prod`, `-local`, `-dev`) — add or overwrite ONLY what differs from the base configuration file (e.g. `script.config.environment`, `test-runner`, an engine override). Note that `-dev` is a local development environment, like `-local`.
+- **`<project>-replay-package.json`** — a third layer on top of the `-prod` overlay, for the first deployment that replays the source history. Every Flink streaming project or sub-project with a `-prod` overlay gets one. See [Replay Overlay](#replay-overlay).
 
 Example for the base config and environment overlays:
 The `lending360` project with a test and a production environment:
@@ -107,6 +108,7 @@ Every sub-project has **its own per-environment overlays** and layers them under
 | `<project>-shared-package.json` | shared base — only what is common to **every** sub-project layering under it (`version`, common `engines`/`compiler` settings, `enabled-engines` if identical). Whatever differs — at least `script.main` — is declared in the sub-project's own files, so the base stays valid for each of them. |
 | `<sub-project>-test-package.json` | test overlay — `test-runner` with its **own** `snapshot-folder`, plus test-only overwrites |
 | `<sub-project>-prod-package.json` | production overlay — production `script.config`, API protocols, deployment sizing and prod-only overwrites |
+| `<sub-project>-replay-package.json` | replay overlay — layered after the production overlay; only the replay values from [replay-deployment-config.md](replay-deployment-config.md) |
 
 An available examples directory may include a useful multi-deployment reference. For example, `healthcare-study/` in `datasqrl-examples` illustrates separate stream, API, and analytics deployments alongside a shared data catalog; use it only when it is present and relevant.
 
@@ -210,6 +212,12 @@ Important rules:
 The `deployment` section under each `engines` configuration specifies what resources (i.e. instance type and number of instances) to use for deploying a DataSQRL pipeline in DataSQRL Cloud.
 
 Always read [Cloud Deployment Configuration](cloud-deployment.md) when configuring deployment size and resources, or when upgrading an existing deployment to a new DataSQRL version.
+
+### Replay Overlay
+
+Every project or sub-project that has `flink` in `enabled-engines`, a `-prod` overlay and a continuous streaming job MUST have a replay overlay, `<project-or-sub-project>-replay-package.json`. The first deployment uses it to process the source history fast, and the upgrade without it gives the steady-state deployment. A batch job, with or without a `schedule`, gets no replay overlay.
+
+**Before you create or change a replay overlay, or change the `-prod` overlay it sits on, ALWAYS read [replay-deployment-config.md](replay-deployment-config.md).** Every operator of the compiled Flink plan must keep its id, type and state. That page lists the allowed values, the values that stay out, and the compile check.
 
 ## Script (`script`)
 
