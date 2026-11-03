@@ -414,7 +414,8 @@ public class SqlScriptPlanner {
               statement.toSql(),
               getMutationBuilder(hintsAndDocs),
               scriptContext.mainModuleLoader().getSchemaLoader(),
-              hintsAndDocs)
+              hintsAndDocs,
+              errors)
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
@@ -588,6 +589,7 @@ public class SqlScriptPlanner {
                   passthroughStmt.getReturnType(),
                   fromTables,
                   hintsAndDocs,
+                  !isHidden && !tblFnStmt.isRelationship(),
                   errors);
         } else {
           fnBuilder =
@@ -597,6 +599,7 @@ public class SqlScriptPlanner {
                   new ArrayList<>(arguments.values()),
                   argumentIndexMap,
                   hintsAndDocs,
+                  !isHidden && !tblFnStmt.isRelationship(),
                   errors);
         }
         fnBuilder.fullPath(tblFnStmt.getPath());
@@ -625,7 +628,7 @@ public class SqlScriptPlanner {
         var visibility = new AccessVisibility(access, hints.isTest(), true, isHidden);
 
         if (!shouldExcludeTestTable(hints)) {
-          addViewToDag(originalSql, hintsAndDocs, visibility, subscribingInclude, errors, sqrlEnv);
+          addViewToDag(originalSql, hintsAndDocs, !isHidden, visibility, subscribingInclude, errors, sqrlEnv);
         }
       }
     } else if (stmt instanceof SqrlNextBatch) {
@@ -645,14 +648,15 @@ public class SqlScriptPlanner {
         var visibility =
             new AccessVisibility(adjustAccess(AccessModifier.QUERY), false, true, false);
         addViewToDag(
-            flinkStmt.sql().get(), hintsAndDocs, visibility, Optional.empty(), errors, sqrlEnv);
+            flinkStmt.sql().get(), hintsAndDocs, true, visibility, Optional.empty(), errors, sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv
             .createTable(
                 flinkStmt.sql().get(),
                 getMutationBuilder(hintsAndDocs),
                 scriptContext.mainModuleLoader().getSchemaLoader(),
-                hintsAndDocs)
+                hintsAndDocs,
+                errors)
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
         addInsert(insert, hintsAndDocs, sqrlEnv, errors);
@@ -680,11 +684,12 @@ public class SqlScriptPlanner {
   private void addViewToDag(
       String viewSql,
       HintsAndDoc hintsAndDoc,
+      boolean validateDeclaredTags,
       AccessVisibility visibility,
       Optional<String> subscribingInclude,
       ErrorCollector errors,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
-    var tableAnalysis = sqrlEnv.addView(viewSql, hintsAndDoc, errors);
+    var tableAnalysis = sqrlEnv.addView(viewSql, hintsAndDoc, validateDeclaredTags, errors);
     try {
       addTableToDag(tableAnalysis, hintsAndDoc, visibility, subscribingInclude, false, sqrlEnv);
     } catch (RuntimeException e) {
@@ -1068,7 +1073,8 @@ public class SqlScriptPlanner {
                     importedHintsAndDoc,
                     scriptContext.isRootContext(),
                     getStandaloneInclude(object.table())),
-                importedHintsAndDoc);
+                importedHintsAndDoc,
+                flinkTable.errorCollector());
         importedHintsAndDoc.hints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());

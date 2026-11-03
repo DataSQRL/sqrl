@@ -132,7 +132,15 @@ Add `default TableTags getTags()` (returning `EMPTY`) to `TableOrFunctionAnalysi
 
 ---
 
-## Step 3: Propagation, declassification and validation (R10–R19)
+## Step 3: Propagation, declassification and validation (R10–R19) ✅ Completed
+
+> Done. Notes on the implementation:
+> - The tag settings for one analysis are bundled in a `TagContext` record: definitions, table name for messages, `validateDeclared`, and an optional error collector for tag errors.
+> - `validateDeclared` is `!isHidden` from `SqlScriptPlanner` (and `!isRelationship` for functions). `isHidden` also covers test tables outside `sqrl test` and workload tables.
+> - The internal scan view of a `CREATE TABLE` keeps its silent `ErrorCollector.root()`, so no unrelated existing warnings change. Only its tag errors go to the statement's collector through `TagContext.errors`. This replaces "pass the statement's collector to `analyzeView`" from 3.0.
+> - When a table inherits its base table's documentation, the base table's invalid tags are dropped, so they are reported once.
+> - INSERT queries are analyzed without tags (`TagContext.DISABLED`).
+> - Verified end to end with a smoke compile of the failing case drafted for 5.2: all violations are reported in one compile, and a table that reads `Customers` only in an `IN` subquery inherits its tags (R10). All 86 `UseCaseCompileTest` snapshots are unchanged.
 
 ### 3.0 Non-throwing errors in `ErrorCollector` (R16)
 Today `fatal(label, msg, args)` (`sqrl-planner/.../error/ErrorCollector.java` L202–L207) records a `FATAL` message and throws a `CollectedException` when `abortOnFatal` is set, which is the default (`DEFAULT_ABORT_ON_FATAL = true`). `SqlScriptPlanner.planMain` (~L248) rethrows that exception, so a compile currently stops at the first error.

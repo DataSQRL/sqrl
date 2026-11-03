@@ -37,9 +37,14 @@ import com.datasqrl.planner.TableAnalysisLookup;
 import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.analyzer.cost.JoinCostAnalysis;
 import com.datasqrl.planner.hint.HintsAndDoc;
+import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.PrimaryKeyHint;
 import com.datasqrl.planner.hint.RowCountHint;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.tags.TableTags;
+import com.datasqrl.planner.tags.TagAnalyzer;
+import com.datasqrl.planner.tags.TagAnalyzer.TagResult;
+import com.datasqrl.planner.tags.TagContext;
 import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
@@ -149,6 +154,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   /** Whether this query preserves a base table from the input (FROM) */
   private boolean preservesBaseTable = true;
 
+  private final TagContext tagContext;
+
   protected RelNodeAnalysis intermediateAnalysis = null;
 
   public SQRLLogicalPlanAnalyzer(
@@ -159,6 +166,30 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       FlinkRelBuilder relBuilder,
       FlinkPlannerImpl flinkPlanner,
       ErrorCollector errors) {
+    this(
+        relNode,
+        tableLookup,
+        viewName,
+        referencedViews,
+        relBuilder,
+        flinkPlanner,
+        TagContext.DISABLED,
+        errors);
+  }
+
+  /**
+   * @param tagContext how the tags of the analyzed table are computed and validated
+   */
+  public SQRLLogicalPlanAnalyzer(
+      RelNode relNode,
+      TableAnalysisLookup tableLookup,
+      String viewName,
+      Set<ObjectIdentifier> referencedViews,
+      FlinkRelBuilder relBuilder,
+      FlinkPlannerImpl flinkPlanner,
+      TagContext tagContext,
+      ErrorCollector errors) {
+    this.tagContext = tagContext;
     this.originalRelnode = relNode;
     this.rexUtil = new SqrlRexUtil(relNode.getCluster().getRexBuilder());
     this.tableLookup = tableLookup;
@@ -284,14 +315,20 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
       // We inherit doc even if basetable is hidden
       if (documentation.isEmpty() && baseTable.isPresent()) {
-        documentation = baseTable.get().getDocumentation();
+        // Invalid tags are reported on the base table, not again on this table
+        var baseDoc = baseTable.get().getDocumentation();
+        documentation = baseDoc.withTags(baseDoc.tags().withoutInvalidTags());
       }
 
       baseTable = baseTable.filter(tbl -> !Name.isHiddenString(tbl.getName()));
     }
 
+    var tagResult = analyzeTags(documentation, hints, analysis.getRowType());
+
     var tableAnalysis =
         TableAnalysis.builder()
+            .tags(tagResult.effective())
+            .inheritedTags(tagResult.inherited())
             .collapsedRelnode(analysis.relNode)
             .originalRelnode(tableLookup.normalizeRelnode(originalRelnode))
             .type(analysis.getType())
@@ -309,6 +346,28 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .errors(errors);
 
     return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis, hasMostRecentDistinct);
+  }
+
+  /** Computes the tags of this table from its input tables and validates them. */
+  private TagResult analyzeTags(
+      Documentation documentation, PlannerHints hints, RelDataType rowType) {
+    if (!tagContext.isEnabled()) {
+      return new TagResult(TableTags.EMPTY, TableTags.EMPTY);
+    }
+    var declared = documentation.tags();
+    var declassified = TagAnalyzer.getDeclassified(hints);
+    var result = TagAnalyzer.compute(sourceTables, declared, declassified);
+    TagAnalyzer.validate(
+        tagContext.tableName() == null ? viewName : tagContext.tableName(),
+        tagContext.definitions(),
+        result,
+        declared,
+        declassified,
+        sourceTables,
+        rowType,
+        tagContext.validateDeclared(),
+        tagContext.errors() == null ? errors : tagContext.errors());
+    return result;
   }
 
   /**
