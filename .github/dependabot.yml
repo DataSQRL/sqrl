@@ -6,6 +6,9 @@
 version: 2
 updates:
   - package-ecosystem: "maven"
+    # Supply-chain policy: only take releases that have been public for 14 days.
+    cooldown:
+      default-days: 14
     directory: "/"
     schedule:
       interval: "weekly"
@@ -15,6 +18,12 @@ updates:
     open-pull-requests-limit: 20
 
   - package-ecosystem: "docker"
+
+    # Supply-chain policy: only take releases that have been public for 14 days.
+
+    cooldown:
+
+      default-days: 14
     directory: "/sqrl-cli"
     schedule:
       interval: "weekly"
@@ -23,6 +32,12 @@ updates:
       timezone: "UTC"
 
   - package-ecosystem: "docker"
+
+    # Supply-chain policy: only take releases that have been public for 14 days.
+
+    cooldown:
+
+      default-days: 14
     directory: "/"
     schedule:
       interval: "weekly"
@@ -31,6 +46,12 @@ updates:
       timezone: "UTC"
 
   - package-ecosystem: "npm"
+
+    # Supply-chain policy: only take releases that have been public for 14 days.
+
+    cooldown:
+
+      default-days: 14
     directory: "/documentation"
     schedule:
       interval: "monthly"
@@ -41,3 +62,15 @@ updates:
       docusaurus:
         patterns:
           - "@docusaurus/*"
+
+  # Keeps the actions pinned to commit SHAs in .github/workflows up to date.
+  - package-ecosystem: "github-actions"
+    # Supply-chain policy: only take releases that have been public for 14 days.
+    cooldown:
+      default-days: 14
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "UTC"
