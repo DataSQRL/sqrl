@@ -471,8 +471,19 @@ jobs:
             echo "default-key $(gpg --list-keys --with-colons | grep pub | cut -d':' -f5)" >> ~/.gnupg/gpg.conf
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
-          name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease}
+          name: Deploy Maven artifacts
+          command: |
+            if [ -n "$CIRCLE_TAG" ]; then
+              # Releases go to Maven Central as a single bundle through the central-publishing-maven-plugin
+              mvn -U clean -T1C -B deploy -DonlyJars -Prelease
+            else
+              # Snapshots go to GitHub Packages, which intermittently fails parallel uploads with HTTP 5xx.
+              # Upload each module's files sequentially and retry those errors too (Resolver only retries 429 and 503 by default).
+              mvn -U clean -T1C -B deploy -DonlyJars \
+                -Daether.connector.basic.parallelPut=false \
+                -Daether.transport.http.retryHandler.count=5 \
+                -Daether.transport.http.retryHandler.serviceUnavailable=429,500,502,503,504
+            fi
 
   build-images:
     # use a full VM so we can run Docker / Buildx
