@@ -46,6 +46,20 @@ public interface ExportEngine extends ExecutionEngine {
       TableAnalysis tableAnalysis);
 
   /**
+   * Creates the sink table of an {@code EXPORT} statement, whose name the user chose. The
+   * parameters are the same as for {@link #createTable}. Engines that treat such a table like any
+   * other sink table keep this default.
+   */
+  default EngineCreateTable createTableForExportStatement(
+      ExecutionStage stage,
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      TableAnalysis tableAnalysis) {
+    return createTable(stage, originalTableName, tableBuilder, relDataType, tableAnalysis);
+  }
+
+  /**
    * Returns whether the generated Flink sink accepts {@code ON CONFLICT} clauses.
    *
    * <p>This is distinct from whether the target system can merge records by primary key. Flink must

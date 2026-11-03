@@ -1,0 +1,14 @@
+/*+engine(kafka) */
+CREATE TABLE Orders (
+    order_id BIGINT NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+/*+engine(kafka) */
+CREATE TABLE Events (
+    event_id BIGINT NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+-- The default kafka template gives this export the topic of the mutation table Events
+EXPORT Orders TO log.Events;

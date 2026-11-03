@@ -40,26 +40,20 @@ import com.datasqrl.flinkrunner.format.json.FlexibleJsonFormat;
 import com.datasqrl.io.schema.avro.AvroToRelDataTypeConverter;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.planner.analyzer.TableAnalysis;
-import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
-import com.datasqrl.planner.dag.plan.MutationTable;
 import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
-import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
-import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.collect.Streams;
 import jakarta.inject.Inject;
 import java.time.Duration;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -100,6 +94,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf mutationConnectorConf;
   private final List<String> standaloneIncludes;
+  // Filled by createMutation, which runs for every mutation before the planner calls createTable
+  private final Set<String> mutationTopicNames = new HashSet<>();
 
   // === SETTINGS ===
   private final Optional<Duration> defaultTTL;
@@ -156,7 +152,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         tableBuilder,
         relDataType,
         Optional.empty(),
-        Optional.of(settings));
+        Optional.of(settings),
+        false);
   }
 
   @Override
@@ -172,7 +169,25 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         tableBuilder,
         relDataType,
         Optional.of(tableAnalysis),
-        Optional.empty());
+        Optional.empty(),
+        false);
+  }
+
+  @Override
+  public EngineCreateTable createTableForExportStatement(
+      ExecutionStage stage,
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      TableAnalysis tableAnalysis) {
+    return createInternal(
+        stage,
+        originalTableName,
+        tableBuilder,
+        relDataType,
+        Optional.of(tableAnalysis),
+        Optional.empty(),
+        true);
   }
 
   private Table createInternal(
@@ -181,7 +196,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis,
-      Optional<MutationSettings> mutation) {
+      Optional<MutationSettings> mutation,
+      boolean isExportStatement) {
 
     boolean isMutation = mutation.isPresent();
     boolean isTransactional =
@@ -271,17 +287,24 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     var valueFormat =
         formats.configure(connectorConfig, originalTableName, hasMessageKey, isMutation);
     var topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
-    var readMutationTopicNames =
-        tableAnalysis.map(KafkaLogEngine::getReadMutationTopicNames).orElse(Set.of());
-    if (readMutationTopicNames.contains(topicName)) {
-      // Flink would read its own output from the mutation topic, so the table gets its own topic
+    if (isMutation) {
+      mutationTopicNames.add(topicName);
+    } else if (mutationTopicNames.contains(topicName)) {
+      // Only the mutation table writes its topic: another writer mixes its rows into the
+      // mutation, and a writer that reads the mutation reads its own output in an endless loop
+      errors.checkFatal(
+          !isExportStatement,
+          "Kafka table '%s' of an EXPORT statement writes into the topic '%s' of a mutation"
+              + " table. Use a different table name in the EXPORT statement.",
+          originalTableName,
+          topicName);
       topicName =
           conf.toMapWithSubstitution(
                   ctxBuilder.tableName(originalTableName + SUBSCRIPTION_TOPIC_SUFFIX).build())
               .get(CONNECTOR_TOPIC_KEY);
       errors.checkFatal(
-          !readMutationTopicNames.contains(topicName),
-          "Kafka table '%s' reads mutation topic '%s' and writes into the same topic. Use"
+          !mutationTopicNames.contains(topicName),
+          "Kafka table '%s' writes into the topic '%s' of a mutation table. Use"
               + " '${sqrl:table-name}' in the 'topic' option of the 'kafka' connector.",
           originalTableName,
           topicName);
@@ -297,42 +320,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         relDataType,
         topicConfig,
         standaloneInclude);
-  }
-
-  /**
-   * Returns the topics of the mutation tables that the table reads, directly or through views and
-   * table functions.
-   */
-  private static Set<String> getReadMutationTopicNames(TableAnalysis tableAnalysis) {
-    var mutationTopicNames = new HashSet<String>();
-    // Compares by identity, since a source table and its view have the same object identifier
-    var visitedTables = Collections.<TableAnalysis>newSetFromMap(new IdentityHashMap<>());
-    collectReadMutationTopicNames(tableAnalysis, visitedTables, mutationTopicNames);
-    return mutationTopicNames;
-  }
-
-  private static void collectReadMutationTopicNames(
-      TableAnalysis tableAnalysis,
-      Set<TableAnalysis> visitedTables,
-      Set<String> mutationTopicNames) {
-    // A table can read the same input more than once, for example in a self join
-    if (!visitedTables.add(tableAnalysis)) {
-      return;
-    }
-    tableAnalysis
-        .getSourceSinkTable()
-        .map(SourceSinkTableAnalysis::mutationDefinition)
-        .map(MutationTable::getCreateTable)
-        .filter(Table.class::isInstance)
-        .ifPresent(mutationTable -> mutationTopicNames.add(((Table) mutationTable).topicName()));
-    for (TableOrFunctionAnalysis fromTable : tableAnalysis.getFromTables()) {
-      if (fromTable instanceof TableAnalysis fromTableAnalysis) {
-        collectReadMutationTopicNames(fromTableAnalysis, visitedTables, mutationTopicNames);
-      } else if (fromTable instanceof SqrlTableFunction fromFunction) {
-        collectReadMutationTopicNames(
-            fromFunction.getFunctionAnalysis(), visitedTables, mutationTopicNames);
-      }
-    }
   }
 
   @Override
