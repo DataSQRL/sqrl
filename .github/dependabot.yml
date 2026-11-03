@@ -3,74 +3,30 @@
 # Please see the documentation for all configuration options:
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
 
+# Supply-chain policy: every entry only takes releases that have been public for 14 days (cooldown).
 version: 2
 updates:
   - package-ecosystem: "maven"
-    # Supply-chain policy: only take releases that have been public for 14 days.
-    cooldown:
-      default-days: 14
     directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "10:00"
-      timezone: "UTC"
+    schedule: { interval: "weekly", time: "10:00" }
+    cooldown: { default-days: 14 }
     open-pull-requests-limit: 20
 
   - package-ecosystem: "docker"
-
-    # Supply-chain policy: only take releases that have been public for 14 days.
-
-    cooldown:
-
-      default-days: 14
-    directory: "/sqrl-cli"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "10:00"
-      timezone: "UTC"
-
-  - package-ecosystem: "docker"
-
-    # Supply-chain policy: only take releases that have been public for 14 days.
-
-    cooldown:
-
-      default-days: 14
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "10:00"
-      timezone: "UTC"
+    directories: ["/", "/sqrl-cli"]
+    schedule: { interval: "weekly", time: "10:00" }
+    cooldown: { default-days: 14 }
 
   - package-ecosystem: "npm"
-
-    # Supply-chain policy: only take releases that have been public for 14 days.
-
-    cooldown:
-
-      default-days: 14
     directory: "/documentation"
-    schedule:
-      interval: "monthly"
-      day: "monday"
-      time: "10:00"
-      timezone: "UTC"
+    schedule: { interval: "monthly", time: "10:00" }
+    cooldown: { default-days: 14 }
     groups:
       docusaurus:
-        patterns:
-          - "@docusaurus/*"
+        patterns: ["@docusaurus/*"]
 
   # Keeps the actions pinned to commit SHAs in .github/workflows up to date.
   - package-ecosystem: "github-actions"
-    # Supply-chain policy: only take releases that have been public for 14 days.
-    cooldown:
-      default-days: 14
     directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "10:00"
-      timezone: "UTC"
+    schedule: { interval: "weekly", time: "10:00" }
+    cooldown: { default-days: 14 }
