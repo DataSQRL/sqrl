@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.d902c99c.css">
-<script src="/assets/js/runtime~main.a7787ec3.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.23e0c1e2.js" defer="defer"></script>
 <script src="/assets/js/main.b677d575.js" defer="defer"></script>
 </head>
 <body>
@@ -107,6 +107,13 @@ For streaming pipelines, set <code>delay-sec</code> to <code>-1</code> so the te
 <p><code>compiler.api.protocols</code> controls which public API routes are registered. The default enables <code>GRAPHQL</code>, <code>REST</code>, and <code>MCP</code>. Omitting <code>GRAPHQL</code> removes the versioned GraphQL HTTP, WebSocket, and GraphiQL routes while retaining the internal GraphQL execution engine used by REST and MCP. <code>REST</code> and <code>MCP</code> only register endpoints for operations that support those protocols.</p>
 <p><code>compiler.api.endpoints</code> controls operation generation and GraphQL flexibility. <code>FULL</code> generates operations from every query and mutation, <code>GRAPHQL</code> keeps the GraphQL endpoint flexible but exposes only explicitly defined REST and MCP operations, and <code>OPS_ONLY</code> accepts only explicitly defined named operations through a public GraphQL endpoint.</p>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="optimizer-configuration">Optimizer Configuration<a href="#optimizer-configuration" class="hash-link" aria-label="Direct link to Optimizer Configuration" title="Direct link to Optimizer Configuration" translate="no">​</a></h3>
+<p><code>cost-model</code> controls how the optimizer assigns each table to an engine. The default is <code>DEFAULT</code>.</p>
+<ul>
+<li class=""><code>DEFAULT</code>: favors Flink, which computes the table at ingestion time, unless joins make Flink too expensive</li>
+<li class=""><code>WRITE</code>: always favors Flink</li>
+<li class=""><code>READ</code>: always favors the database, which computes the table at query time</li>
+</ul>
+<p>The optimizer assigns each table to the cheapest engine. An <code>/*+ engine(...) */</code> hint limits the engines that the optimizer can pick. With <code>DEFAULT</code>, Flink and the database can have the same cost for a table. Then the optimizer assigns the table to Flink, so the table gets the same engine on every compile.</p>
 <p>Limit predicate pushdown to improve subgraph elimination and reduce the size of the physical computation graph by setting <code>predicate-pushdown-rules</code> to:</p>
 <ul>
 <li class=""><code>DEFAULT</code>: uses the default optimizer rules of the Flink engine</li>
