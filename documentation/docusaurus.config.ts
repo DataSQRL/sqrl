@@ -113,13 +113,12 @@ const config: Config = {
         theme: {
           customCss: './src/css/custom.css',
         },
-        gtag: {
-          trackingID: 'G-Y4XLW4QZYX',
-          anonymizeIP: false,
-        },
       } satisfies Preset.Options,
     ],
   ],
+
+  // Google Analytics and Ads, loaded only after cookie consent (shared with www.datasqrl.com)
+  clientModules: ['./src/consent.ts'],
 
   plugins: [
     [
@@ -216,6 +215,13 @@ const config: Config = {
             {
               label: 'File an Issue',
               href: 'https://github.com/DataSQRL/sqrl/issues/new',
+            },
+            {
+              label: 'Cookie Notice',
+              href: 'https://www.datasqrl.com/cookie-notice',
+            },
+            {
+              html: '<button type="button" class="footer__link-item dsq-consent__open" data-consent-open>Cookie Settings</button>',
             },
           ],
         },
