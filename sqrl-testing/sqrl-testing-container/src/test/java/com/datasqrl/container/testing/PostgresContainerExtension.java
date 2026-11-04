@@ -23,6 +23,7 @@ import static com.datasqrl.env.EnvVariableNames.POSTGRES_USERNAME;
 
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
 import lombok.Getter;
@@ -81,12 +82,16 @@ public class PostgresContainerExtension implements AfterEachCallback {
   }
 
   public void compileAndStartServerWithDatabase() {
-    compileAndStartServerWithDatabase(null);
+    compileAndStartServerWithDatabase("package.json");
   }
 
   public void compileAndStartServerWithDatabase(@Nullable String packageFile) {
+    compileAndStartServerWithDatabase(List.of(packageFile != null ? packageFile : "package.json"));
+  }
+
+  public void compileAndStartServerWithDatabase(List<String> packageFiles) {
     startPostgreSQLContainer();
-    sqrl.compileSqrlProject(packageFile);
+    sqrl.compileSqrlProject(packageFiles);
 
     sqrl.startGraphQLServer(
         container ->

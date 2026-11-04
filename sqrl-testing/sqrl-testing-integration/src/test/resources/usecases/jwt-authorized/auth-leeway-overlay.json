@@ -1,0 +1,11 @@
+{
+  "engines" : {
+    "vertx" : {
+      "config": {
+        "auth": {
+          "leeway": 300
+        }
+      }
+    }
+  }
+}

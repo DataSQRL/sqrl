@@ -5,24 +5,25 @@
   },
   "engines" : {
     "vertx" : {
-      "authKind": ["JWT"],
       "config": {
         "httpServerOptions": {
           "compressionContentSizeThreshold": 0
         },
-        "jwtAuth": {
-          "pubSecKeys": [
+        "auth": {
+          "algorithms": ["HS256"],
+          "leeway": 30,
+          "issuers": [
             {
-              "algorithm": "HS256",
-              "buffer": "dGVzdFNlY3JldFRoYXRJc0F0TGVhc3QyNTZCaXRzTG9uZzMyQ2hhcnM="
+              "issuer": "my-test-issuer",
+              "audiences": ["my-test-audience"],
+              "keys": [
+                {
+                  "kty": "oct",
+                  "k": "dGVzdFNlY3JldFRoYXRJc0F0TGVhc3QyNTZCaXRzTG9uZzMyQ2hhcnM"
+                }
+              ]
             }
-          ],
-          "jwtOptions": {
-            "issuer": "my-test-issuer",
-            "audience": ["my-test-audience"],
-            "expiresInSeconds": 3600,
-            "leeway": 30
-          }
+          ]
         }
       }
     }
