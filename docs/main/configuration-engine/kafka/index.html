@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y4XLW4QZYX"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-Y4XLW4QZYX",{})</script><link rel="stylesheet" href="/assets/css/styles.d902c99c.css">
-<script src="/assets/js/runtime~main.57168ff5.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.987851e4.js" defer="defer"></script>
 <script src="/assets/js/main.b677d575.js" defer="defer"></script>
 </head>
 <body>
@@ -28,6 +28,7 @@
 <li class="">Kafka topics are automatically created based on your SQRL table definitions</li>
 <li class="">Topic configurations are generated during the compilation process</li>
 <li class=""><code>kafka.json</code> lists the topics of internal Kafka tables that a <a class="" href="/docs/main/configuration#include-other-sources">standalone included project</a> defines under <code>includedTopics</code>, with only their names, because that project owns them and decides their settings</li>
+<li class="">Only the mutation table writes its Kafka topic. Another writer mixes its rows into the mutation, and a writer that reads the mutation reads its own output in an endless loop. When the <code>kafka</code> connector template gives a Kafka table that the compiler creates for Flink the topic of a mutation table, the compiler puts <code>&lt;table-name&gt;-subscription</code> in place of <code>${sqrl:table-name}</code> in the template&#x27;s <code>topic</code> instead, so <code>acme-${sqrl:table-name}</code> gives <code>acme-Events-subscription</code>. If the template gives a mutation topic again, for example with a fixed <code>topic</code> without <code>${sqrl:table-name}</code>, the compile fails with an error. For example, a script defines the mutation table <code>Events</code> with <code>CREATE TABLE</code> and the <code>engine(kafka)</code> hint, and a <code>SUBSCRIBE</code> function reads <code>Events</code> directly. Flink then copies <code>Events</code> into a Kafka table for the subscription. With the default templates, the mutation topic is <code>Events</code> and the copy gets the topic <code>Events-subscription</code>. An <code>EXPORT</code> statement to <code>log.&lt;name&gt;</code> or <code>logger.&lt;name&gt;</code> that gets the topic of a mutation table fails with an error, for example <code>EXPORT Orders TO log.Events</code> when <code>Events</code> is a mutation table. Use a different name in the <code>EXPORT</code> statement. All other topics keep the name from the template. The compiler does not check an <code>EXPORT</code> statement that writes directly into a mutation table, such as <code>EXPORT _Echo TO Events</code>. When the exported query reads that mutation table, the export loops</li>
 <li class="">Retention settings control how long data is stored in Kafka topics</li>
 <li class="">Ensure <code>replication-factor</code> does not exceed the number of brokers in the target Kafka cluster</li>
 <li class="">Watermarks are used for handling late-arriving events in stream processing</li>
