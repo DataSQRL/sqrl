@@ -15,6 +15,8 @@
  */
 package com.datasqrl.server.config;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datasqrl.env.EnvVariableNames;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.util.JsonUtils;
@@ -27,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
@@ -34,6 +37,7 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -46,6 +50,10 @@ import lombok.SneakyThrows;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServerConfig {
+
+  private static final String JWT_OPTIONS = "jwtOptions";
+  private static final String ISSUER = "issuer";
+  private static final String ISSUERS = "issuers";
 
   @Getter(AccessLevel.NONE)
   private final ObjectMapper MAPPER = JsonUtils.getMapperWithEnvVarResolver(null);
@@ -106,6 +114,8 @@ public class ServerConfig {
       duckDbConfig.validateConfig();
     }
 
+    getJwtAuthOptions();
+
     return this;
   }
 
@@ -116,15 +126,39 @@ public class ServerConfig {
    */
   @JsonIgnore
   @SneakyThrows
-  public JWTAuthOptions getJwtAuthOptions() {
+  public List<JWTAuthOptions> getJwtAuthOptions() {
     if (jwtAuth == null) {
-      return null;
+      return List.of();
     }
 
     var jsonStr = MAPPER.writeValueAsString(jwtAuth);
     var jsonObj = MAPPER.readValue(jsonStr, JsonObject.class);
+    var jwtOptions = jsonObj.getJsonObject(JWT_OPTIONS);
+    if (jwtOptions == null || !jwtOptions.containsKey(ISSUERS)) {
+      return List.of(new JWTAuthOptions(jsonObj));
+    }
 
-    return new JWTAuthOptions(jsonObj);
+    checkArgument(
+        !jwtOptions.containsKey(ISSUER),
+        "jwtAuth.jwtOptions must set either '%s' or '%s', not both",
+        ISSUER,
+        ISSUERS);
+    var issuers = jwtOptions.getValue(ISSUERS);
+    checkArgument(
+        issuers instanceof JsonArray array
+            && !array.isEmpty()
+            && array.stream().allMatch(issuer -> issuer instanceof String str && !str.isBlank()),
+        "jwtAuth.jwtOptions.%s must be a non-empty array of non-blank strings",
+        ISSUERS);
+
+    return ((JsonArray) issuers)
+        .stream().map(issuer -> withIssuer(jsonObj, (String) issuer)).toList();
+  }
+
+  private static JWTAuthOptions withIssuer(JsonObject jwtAuth, String issuer) {
+    var options = new JWTAuthOptions(jwtAuth.copy());
+    options.getJWTOptions().setIssuer(issuer);
+    return options;
   }
 
   ////////////////////////////////////////////////////////////////////////////////

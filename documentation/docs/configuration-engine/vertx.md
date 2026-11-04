@@ -84,6 +84,17 @@ For secure APIs with JWT authentication:
 }
 ```
 
+To accept tokens from more than one issuer signed by the same keys (for example, user logins from a custom domain and
+machine-to-machine tokens from the identity provider's tenant domain), replace `issuer` with an `issuers` array:
+```json
+"jwtOptions": {
+  "issuers": ["https://login.example.com/", "https://tenant.auth0.com/"],
+  "audience": ["<jwt-audience>"]
+}
+```
+A token is accepted when its `iss` claim matches any listed issuer; every other option applies to all of them.
+Tokens without an `iss` claim are rejected. Setting both `issuer` and `issuers` is a configuration error.
+
 As these config fields will be mapped to Vert.x Java POJOs, the name of the key fields are very important.
 For `pubSecKeys`, it is also possible to use different algorithms, that requires the key in a different (mostly PEM) format.
 For example, for `ES256`, this would look something like this:

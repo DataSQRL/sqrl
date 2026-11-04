@@ -167,7 +167,8 @@ class GraphQLJwtHandlerIT {
     var authProviders =
         List.of(
             (io.vertx.ext.auth.authentication.AuthenticationProvider)
-                io.vertx.ext.auth.jwt.JWTAuth.create(vertx, serverConfig.getJwtAuthOptions()));
+                io.vertx.ext.auth.jwt.JWTAuth.create(
+                    vertx, serverConfig.getJwtAuthOptions().get(0)));
     graphQLServerVerticle =
         new GraphQLServerVerticle(
             router, serverConfig, "v1", model, authProviders, Optional.empty());
@@ -204,7 +205,7 @@ class GraphQLJwtHandlerIT {
 
   @Test
   void jwtAuthentication(VertxTestContext testContext) {
-    var provider = JWTAuth.create(vertx, this.serverConfig.getJwtAuthOptions());
+    var provider = JWTAuth.create(vertx, this.serverConfig.getJwtAuthOptions().get(0));
 
     // Generate token
     var token = provider.generateToken(new JsonObject(), new JWTOptions().setExpiresInSeconds(60));

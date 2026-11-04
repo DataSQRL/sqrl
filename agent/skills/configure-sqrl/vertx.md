@@ -107,6 +107,17 @@ Set `authKind` to include `JWT` and provide a `jwtAuth` object. Its field names 
 }
 ```
 
+To accept tokens from more than one issuer signed by the same keys (for example, user logins from a custom domain and
+machine-to-machine tokens from the identity provider's tenant domain), replace `issuer` with an `issuers` array:
+```json
+"jwtOptions": {
+  "issuers": ["https://login.example.com/", "https://tenant.auth0.com/"],
+  "audience": ["<jwt-audience>"]
+}
+```
+A token is accepted when its `iss` claim matches any listed issuer; every other option applies to all of them.
+Tokens without an `iss` claim are rejected. Setting both `issuer` and `issuers` is a configuration error.
+
 For asymmetric algorithms such as `ES256`, `buffer` must contain the appropriately formatted public key (normally PEM).
 
 ## OAuth 2.0 Authentication

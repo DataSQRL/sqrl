@@ -17,7 +17,9 @@ package com.datasqrl.server.config;
 
 import static com.datasqrl.util.JsonUtils.MAPPER;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -194,5 +196,103 @@ class ServerConfigTest {
     assertThat(serverConfig.getCorsHandlerOptions().getAllowedMethods())
         .containsExactlyInAnyOrder("POST", "GET", "OPTIONS");
     assertThat(serverConfig.getCorsHandlerOptions().getAllowedHeaders()).containsExactly("*");
+  }
+
+  @Test
+  void givenJwtIssuers_whenConfigParsed_thenOneAuthOptionsPerIssuerSharingTheRest() {
+    var serverConfig =
+        ServerConfigUtil.fromConfigMap(
+            jwtAuthConfig(
+                Map.of(
+                    "issuers",
+                    List.of("https://login.example.com/", "https://tenant.example.com/"),
+                    "audience",
+                    List.of("my-api"),
+                    "leeway",
+                    30)));
+
+    var options = serverConfig.getJwtAuthOptions();
+
+    assertThat(options)
+        .extracting(o -> o.getJWTOptions().getIssuer())
+        .containsExactly("https://login.example.com/", "https://tenant.example.com/");
+    assertThat(options)
+        .allSatisfy(
+            o -> {
+              assertThat(o.getJWTOptions().getAudience()).containsExactly("my-api");
+              assertThat(o.getJWTOptions().getLeeway()).isEqualTo(30);
+              assertThat(o.getPubSecKeys()).hasSize(1);
+            });
+  }
+
+  @Test
+  void givenSingleJwtIssuer_whenConfigParsed_thenOneAuthOptionsWithThatIssuer() {
+    var serverConfig =
+        ServerConfigUtil.fromConfigMap(
+            jwtAuthConfig(Map.of("issuer", "https://login.example.com/")));
+
+    assertThat(serverConfig.getJwtAuthOptions())
+        .singleElement()
+        .extracting(o -> o.getJWTOptions().getIssuer())
+        .isEqualTo("https://login.example.com/");
+  }
+
+  @Test
+  void givenJwtWithoutIssuer_whenConfigParsed_thenOneAuthOptionsWithoutIssuer() {
+    var serverConfig = ServerConfigUtil.fromConfigMap(jwtAuthConfig(Map.of("leeway", 5)));
+
+    assertThat(serverConfig.getJwtAuthOptions())
+        .singleElement()
+        .extracting(o -> o.getJWTOptions().getIssuer())
+        .isNull();
+  }
+
+  @Test
+  void givenBothJwtIssuerAndIssuers_whenConfigParsed_thenRejected() {
+    var config =
+        jwtAuthConfig(
+            Map.of(
+                "issuer", "https://a.example.com/", "issuers", List.of("https://b.example.com/")));
+
+    assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(config))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("jwtAuth.jwtOptions must set either 'issuer' or 'issuers', not both");
+  }
+
+  @Test
+  void givenEmptyJwtIssuers_whenConfigParsed_thenRejected() {
+    var config = jwtAuthConfig(Map.of("issuers", List.of()));
+
+    assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(config))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("jwtAuth.jwtOptions.issuers must be a non-empty array of non-blank strings");
+  }
+
+  @Test
+  void givenNonArrayJwtIssuers_whenConfigParsed_thenRejected() {
+    var config = jwtAuthConfig(Map.of("issuers", "https://a.example.com/"));
+
+    assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(config))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("jwtAuth.jwtOptions.issuers must be a non-empty array of non-blank strings");
+  }
+
+  @Test
+  void givenBlankJwtIssuer_whenConfigParsed_thenRejected() {
+    var config = jwtAuthConfig(Map.of("issuers", List.of("https://a.example.com/", " ")));
+
+    assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(config))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("jwtAuth.jwtOptions.issuers must be a non-empty array of non-blank strings");
+  }
+
+  private static Map<String, Object> jwtAuthConfig(Map<String, Object> jwtOptions) {
+    return Map.of(
+        "jwtAuth",
+        Map.of(
+            "pubSecKeys",
+            List.of(Map.of("algorithm", "HS256", "buffer", "dGVzdA==")),
+            "jwtOptions",
+            jwtOptions));
   }
 }

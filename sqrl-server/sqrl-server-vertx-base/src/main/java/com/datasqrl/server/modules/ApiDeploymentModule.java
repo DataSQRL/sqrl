@@ -169,12 +169,14 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
               .map(provider -> (AuthenticationProvider) provider));
     }
 
-    if (context.config().getJwtAuth() != null) {
-      log.info("Configuring JWT authentication");
-      providerFutures.add(
-          Future.succeededFuture(
-              (AuthenticationProvider)
-                  JWTAuth.create(context.vertx(), context.config().getJwtAuthOptions())));
+    var jwtAuthOptions = context.config().getJwtAuthOptions();
+    if (!jwtAuthOptions.isEmpty()) {
+      log.info("Configuring {} JWT authentication provider(s)", jwtAuthOptions.size());
+      jwtAuthOptions.forEach(
+          options ->
+              providerFutures.add(
+                  Future.succeededFuture(
+                      (AuthenticationProvider) JWTAuth.create(context.vertx(), options))));
     }
 
     if (providerFutures.isEmpty()) {
