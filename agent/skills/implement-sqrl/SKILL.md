@@ -121,9 +121,11 @@ Internal tables are managed by SQRL through an engine hint (`kafka` or `iceberg`
 |-------------------|---------------------------------------------------------------------|--------------------------------|
 | Connector options | **omitted**; other engine-specific `WITH (...)` options are allowed | **required**                   |
 | Engine hint       | **required**                                                        | Not used to select a connector |
-| Metadata columns  | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner     | Passed through                 |
+| Metadata columns  | `METADATA FROM 'uuid'`, `'timestamp'`, `'auth.<claim>'` only        | Passed through                 |
 | Watermark spec    | **generated**                                                       | **required**                   |
 | Primary key       | *Unenforced* upsert semantics                                       | Same as Flink                  |
+
+On an internal table, use only the metadata keys `'uuid'`, `'timestamp'` and `'auth.<claim>'`. A `METADATA` column without `FROM` uses its column name as the key. Any other key stops the compile with an `Unknown metadata key` error, for example `'auht.sub'` or the Flink Kafka key `'offset'`. If you see that error, correct the key to one of the three supported keys.
 
 Example (internal): An internal table managed by DataSQRL as a Kafka topic carries the `engine(kafka)` hint (see the `/manage-connector` skill):
 

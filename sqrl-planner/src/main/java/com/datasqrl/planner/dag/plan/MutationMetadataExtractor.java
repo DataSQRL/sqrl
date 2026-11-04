@@ -19,28 +19,41 @@ import com.datasqrl.planner.parser.SqrlTableFunctionStatement;
 import com.datasqrl.planner.tables.MetadataExtractor;
 import com.datasqrl.server.MetadataType;
 import com.datasqrl.server.ResolvedMetadata;
+import java.util.Optional;
 
 public final class MutationMetadataExtractor implements MetadataExtractor {
 
   public static final String UUID_METADATA = "uuid";
   public static final String TIMESTAMP_METADATA = "timestamp";
+  public static final String SUPPORTED_METADATA_ALIASES = "'uuid', 'timestamp' or 'auth.<claim>'";
 
+  /**
+   * Resolves the metadata alias of a mutation column. Only 'uuid', 'timestamp' and 'auth.<claim>'
+   * are supported, any other alias resolves to empty.
+   */
   @Override
-  public ResolvedMetadata extract(String metadataAlias, boolean nullable) {
+  public Optional<ResolvedMetadata> extract(String metadataAlias, boolean nullable) {
     if (metadataAlias.equalsIgnoreCase(UUID_METADATA)) {
-      return new ResolvedMetadata(MetadataType.UUID, !nullable);
+      return Optional.of(new ResolvedMetadata(MetadataType.UUID, !nullable));
     }
 
     if (metadataAlias.equalsIgnoreCase(TIMESTAMP_METADATA)) {
-      return new ResolvedMetadata(MetadataType.TIMESTAMP, !nullable);
+      return Optional.of(new ResolvedMetadata(MetadataType.TIMESTAMP, !nullable));
     }
 
-    return SqrlTableFunctionStatement.parseMetadata(metadataAlias, !nullable).orElse(null);
+    // parseMetadata also accepts 'uuid.<x>' and 'timestamp.<x>', which a mutation does not support
+    return SqrlTableFunctionStatement.parseMetadata(metadataAlias, !nullable)
+        .filter(metadata -> metadata.metadataType() == MetadataType.AUTH);
   }
 
   @Override
   public boolean removeMetadata(String metadataAlias) {
     // Remove for all but timestamp
     return !metadataAlias.equalsIgnoreCase(TIMESTAMP_METADATA);
+  }
+
+  @Override
+  public String supportedAliases() {
+    return SUPPORTED_METADATA_ALIASES;
   }
 }

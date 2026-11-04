@@ -1,0 +1,6 @@
+[FATAL] Unknown metadata key 'offset' on column 'kafka_offset' of table 'Clicks'. Use 'uuid', 'timestamp' or 'auth.<claim>'.
+in script:mutationKafkaConnectorMetadataKey-fail.sqrl [2:1]:
+-- 'offset' is a metadata key of the Flink Kafka connector, but not of a DataSQRL mutation.
+/*+engine(kafka) */
+^
+

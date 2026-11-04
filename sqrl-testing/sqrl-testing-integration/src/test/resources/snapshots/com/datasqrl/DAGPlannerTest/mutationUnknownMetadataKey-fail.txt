@@ -1,0 +1,7 @@
+[FATAL] Unknown metadata key 'auht.sub' on column 'customer_id' of table 'OrderRequests'. Use 'uuid', 'timestamp' or 'auth.<claim>'.
+Unknown metadata key 'uuid.id' on column 'request_id' of table 'OrderRequests'. Use 'uuid', 'timestamp' or 'auth.<claim>'.
+in script:mutationUnknownMetadataKey-fail.sqrl [2:1]:
+-- 'auht.sub' is a typing error for 'auth.sub', and 'uuid.id' is not a mutation metadata key.
+/*+engine(kafka) */
+^
+

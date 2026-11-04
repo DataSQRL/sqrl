@@ -1,0 +1,306 @@
+>>>pipeline_explain.txt
+=== Clicks
+ID:          default_catalog.default_database.Clicks
+Type:        stream
+Stage:       flink
+Primary key: uuid
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+Inputs:
+ - default_catalog.default_database.Clicks__base
+Annotations:
+ - stream-root: Clicks
+Plan:
+LogicalProject(url=[$0], uuid=[$1], timestamp=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, Clicks, metadata=[timestamp]]])
+SQL:
+CREATE TABLE `Clicks` (
+  `url` STRING NOT NULL,
+  `uuid` STRING NOT NULL,
+  `timestamp` TIMESTAMP_LTZ(3) NOT NULL METADATA
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-Clicks'
+)
+--- physical ---
+Table Clicks_1 (postgres):
+ - primary key: uuid
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Clicks` (
+  `url` STRING NOT NULL,
+  `uuid` STRING NOT NULL,
+  `timestamp` TIMESTAMP_LTZ(3) NOT NULL METADATA
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'kafka-mutation-Clicks'
+);
+CREATE TABLE `Clicks_1` (
+  `url` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `timestamp` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  PRIMARY KEY (`uuid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Clicks_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Clicks_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`Clicks`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "kafka-mutation-Clicks",
+      "tableName" : "Clicks",
+      "logicalName" : "Clicks",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Clicks_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Clicks_1\" (\"url\" TEXT NOT NULL, \"uuid\" TEXT NOT NULL, \"timestamp\" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY (\"uuid\"))",
+      "fields" : [
+        {
+          "name" : "url",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "uuid",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "primaryKey" : [
+        "uuid"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "Clicks",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "Clicks",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Clicks\"(\"url\", \"uuid\", \"timestamp\") AS SELECT *\nFROM \"Clicks_1\"",
+      "fields" : [
+        {
+          "name" : "url",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "uuid",
+          "type" : "TEXT",
+          "nullable" : false
+        },
+        {
+          "name" : "timestamp",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "Clicks_1"
+      ]
+    }
+  ],
+  "standaloneExtensionStatements" : [ ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Clicks",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Clicks_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "Clicks",
+          "returnList" : false,
+          "topic" : "kafka-mutation-Clicks",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "uuid" : {
+              "metadataType" : "UUID",
+              "name" : "",
+              "required" : true
+            },
+            "timestamp" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetClicks",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Clicks($limit: Int = 10, $offset: Int = 0) {\nClicks(limit: $limit, offset: $offset) {\nurl\nuuid\ntimestamp\n}\n\n}",
+            "queryName" : "Clicks",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Clicks{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "url" : {
+                  "type" : "string"
+                },
+                "uuid" : {
+                  "type" : "string"
+                },
+                "timestamp" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddClicks",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "url" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "url"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation Clicks($url: String!) {\nClicks(event: { url: $url }) {\nurl\nuuid\ntimestamp\n}\n\n}",
+            "queryName" : "Clicks",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/Clicks",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "url" : {
+                "type" : "string"
+              },
+              "uuid" : {
+                "type" : "string"
+              },
+              "timestamp" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type Clicks {\n  url: String!\n  uuid: String!\n  timestamp: DateTime!\n}\n\ninput ClicksInput {\n  url: String!\n}\n\ntype ClicksResultOutput {\n  url: String!\n  uuid: String!\n  timestamp: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  Clicks(event: ClicksInput!): ClicksResultOutput!\n}\n\ntype Query {\n  Clicks(limit: Int = 10, offset: Int = 0): [Clicks!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
