@@ -195,4 +195,67 @@ class ServerConfigTest {
         .containsExactlyInAnyOrder("POST", "GET", "OPTIONS");
     assertThat(serverConfig.getCorsHandlerOptions().getAllowedHeaders()).containsExactly("*");
   }
+
+  @Test
+  void given_emptyJson_when_authProvidersChecked_then_noProviderIsConfigured() {
+    var json = MAPPER.createObjectNode();
+
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
+
+    assertThat(serverConfig.isJwtAuthConfigured()).isFalse();
+    assertThat(serverConfig.isOAuthConfigured()).isFalse();
+  }
+
+  @Test
+  void given_jwtAuth_when_authProvidersChecked_then_onlyJwtAuthIsConfigured() {
+    var json = MAPPER.createObjectNode();
+    json.set("jwtAuth", MAPPER.createObjectNode().put("algorithm", "HS256"));
+
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
+
+    assertThat(serverConfig.isJwtAuthConfigured()).isTrue();
+    assertThat(serverConfig.isOAuthConfigured()).isFalse();
+  }
+
+  @Test
+  void given_oauthConfigWithSite_when_authProvidersChecked_then_onlyOAuthIsConfigured() {
+    var json = MAPPER.createObjectNode();
+    json.set(
+        "oauthConfig",
+        MAPPER
+            .createObjectNode()
+            .set(
+                "oauth2Options",
+                MAPPER.createObjectNode().put("site", "https://auth.example.com")));
+
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
+
+    assertThat(serverConfig.isJwtAuthConfigured()).isFalse();
+    assertThat(serverConfig.isOAuthConfigured()).isTrue();
+  }
+
+  @Test
+  void given_oauthConfigWithoutSite_when_authProvidersChecked_then_oauthIsNotConfigured() {
+    var json = MAPPER.createObjectNode();
+    json.set(
+        "oauthConfig", MAPPER.createObjectNode().set("oauth2Options", MAPPER.createObjectNode()));
+
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
+
+    assertThat(serverConfig.isOAuthConfigured()).isFalse();
+  }
+
+  @Test
+  void given_jwtAuth_when_serialized_then_authProviderChecksAreNotWritten() throws Exception {
+    var json = MAPPER.createObjectNode();
+    json.set("jwtAuth", MAPPER.createObjectNode().put("algorithm", "HS256"));
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
+
+    var serializedConfig = MAPPER.readTree(MAPPER.writeValueAsString(serverConfig));
+
+    assertThat(serializedConfig.has("jwtAuth")).isTrue();
+    assertThat(serializedConfig.has("jwtAuthConfigured")).isFalse();
+    assertThat(serializedConfig.has("oAuthConfigured")).isFalse();
+    assertThat(serializedConfig.has("oauthConfigured")).isFalse();
+  }
 }

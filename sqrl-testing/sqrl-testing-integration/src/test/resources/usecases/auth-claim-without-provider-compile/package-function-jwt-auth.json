@@ -1,0 +1,27 @@
+{
+  "version": "1",
+  "script": {
+    "main": "claims.sqrl"
+  },
+  "compiler": {
+    "compile-flink-plan": false
+  },
+  "engines": {
+    "vertx": {
+      "config": {
+        "jwtAuth": {
+          "pubSecKeys": [
+            {
+              "algorithm": "HS256",
+              "buffer": "dGVzdFNlY3JldFRoYXRJc0F0TGVhc3QyNTZCaXRzTG9uZzMyQ2hhcnM="
+            }
+          ],
+          "jwtOptions": {
+            "issuer": "my-test-issuer",
+            "audience": ["my-test-audience"]
+          }
+        }
+      }
+    }
+  }
+}
