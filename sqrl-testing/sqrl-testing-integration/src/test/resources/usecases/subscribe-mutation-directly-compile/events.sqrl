@@ -1,0 +1,20 @@
+/*+no_query, engine(kafka) */
+CREATE TABLE Events (
+    event_id STRING NOT NULL METADATA FROM 'uuid',
+    customer_id STRING NOT NULL,
+    item STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+_EventsCopy := SELECT * FROM Events WHERE item IS NOT NULL;
+
+/** Each new event of one customer, read directly from the mutation table. */
+DirectStream(customer_id STRING NOT NULL) :=
+    SUBSCRIBE SELECT * FROM Events WHERE customer_id = :customer_id;
+
+/** Each new event of one customer, read from an intermediate table. */
+CopyStream(customer_id STRING NOT NULL) :=
+    SUBSCRIBE SELECT * FROM _EventsCopy WHERE customer_id = :customer_id;
+
+/** The number of events. */
+EventCount := SELECT COUNT(*) AS n FROM Events;
