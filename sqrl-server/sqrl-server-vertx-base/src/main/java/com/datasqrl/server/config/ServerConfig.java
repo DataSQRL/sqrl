@@ -29,7 +29,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.vertx.core.http.HttpServerOptions;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
@@ -39,21 +38,20 @@ import io.vertx.sqlclient.PoolOptions;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Getter
 @Setter
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ServerConfig {
-
-  private static final String JWT_OPTIONS = "jwtOptions";
-  private static final String ISSUER = "issuer";
-  private static final String ISSUERS = "issuers";
 
   @Getter(AccessLevel.NONE)
   private final ObjectMapper MAPPER = JsonUtils.getMapperWithEnvVarResolver(null);
@@ -75,6 +73,7 @@ public class ServerConfig {
   private GraphQLTailSampleTracingConfig graphQLTailSampleTracingConfig =
       new GraphQLTailSampleTracingConfig();
   private GraphQLParserConfig graphQLParserConfig = new GraphQLParserConfig();
+  private Map<String, Object> auth;
   private Map<String, Object> jwtAuth;
   private OAuthConfig oauthConfig;
   private boolean logForwardedClientAddress = true;
@@ -114,9 +113,67 @@ public class ServerConfig {
       duckDbConfig.validateConfig();
     }
 
-    getJwtAuthOptions();
+    validateAuth();
 
     return this;
+  }
+
+  private void validateAuth() {
+    if (auth != null) {
+      checkArgument(
+          jwtAuth == null && oauthConfig == null,
+          "'auth' cannot be combined with the deprecated 'jwtAuth' or 'oauthConfig'; "
+              + "set them to null in the configuration layer that introduces 'auth'");
+      getAuthConfig();
+    }
+    if (jwtAuth != null) {
+      log.warn("'jwtAuth' is deprecated and will be removed, configure 'auth' instead");
+    }
+    if (oauthConfig != null) {
+      log.warn("'oauthConfig' is deprecated and will be removed, configure 'auth' instead");
+    }
+  }
+
+  /** Returns the {@code auth} block with environment variables resolved, or null if not set. */
+  @JsonIgnore
+  @SneakyThrows
+  public AuthConfig getAuthConfig() {
+    if (auth == null) {
+      return null;
+    }
+
+    var jsonStr = MAPPER.writeValueAsString(auth);
+    return AuthConfig.parse(MAPPER.readValue(jsonStr, JsonObject.class));
+  }
+
+  @JsonIgnore
+  public Optional<ProtectedResourceMetadata> getProtectedResourceMetadata() {
+    var authConfig = getAuthConfig();
+    if (authConfig != null) {
+      return Optional.of(
+          new ProtectedResourceMetadata(
+              authConfig.getAuthorizationServers(),
+              authConfig.getResource(),
+              authConfig.getScopesSupported()));
+    }
+    if (oauthConfig != null && oauthConfig.getSite() != null) {
+      var scopes = oauthConfig.getScopesSupported();
+      return Optional.of(
+          new ProtectedResourceMetadata(
+              List.of(oauthConfig.getEffectiveAuthorizationServer()),
+              oauthConfig.getResource(),
+              scopes != null ? scopes : AuthConfig.DEFAULT_SCOPES));
+    }
+    return Optional.empty();
+  }
+
+  @JsonIgnore
+  public String getConfiguredResource() {
+    var authConfig = getAuthConfig();
+    if (authConfig != null) {
+      return authConfig.getResource();
+    }
+    return oauthConfig != null ? oauthConfig.getResource() : null;
   }
 
   /**
@@ -126,39 +183,15 @@ public class ServerConfig {
    */
   @JsonIgnore
   @SneakyThrows
-  public List<JWTAuthOptions> getJwtAuthOptions() {
+  public JWTAuthOptions getJwtAuthOptions() {
     if (jwtAuth == null) {
-      return List.of();
+      return null;
     }
 
     var jsonStr = MAPPER.writeValueAsString(jwtAuth);
     var jsonObj = MAPPER.readValue(jsonStr, JsonObject.class);
-    var jwtOptions = jsonObj.getJsonObject(JWT_OPTIONS);
-    if (jwtOptions == null || !jwtOptions.containsKey(ISSUERS)) {
-      return List.of(new JWTAuthOptions(jsonObj));
-    }
 
-    checkArgument(
-        !jwtOptions.containsKey(ISSUER),
-        "jwtAuth.jwtOptions must set either '%s' or '%s', not both",
-        ISSUER,
-        ISSUERS);
-    var issuers = jwtOptions.getValue(ISSUERS);
-    checkArgument(
-        issuers instanceof JsonArray array
-            && !array.isEmpty()
-            && array.stream().allMatch(issuer -> issuer instanceof String str && !str.isBlank()),
-        "jwtAuth.jwtOptions.%s must be a non-empty array of non-blank strings",
-        ISSUERS);
-
-    return ((JsonArray) issuers)
-        .stream().map(issuer -> withIssuer(jsonObj, (String) issuer)).toList();
-  }
-
-  private static JWTAuthOptions withIssuer(JsonObject jwtAuth, String issuer) {
-    var options = new JWTAuthOptions(jwtAuth.copy());
-    options.getJWTOptions().setIssuer(issuer);
-    return options;
+    return new JWTAuthOptions(jsonObj);
   }
 
   ////////////////////////////////////////////////////////////////////////////////

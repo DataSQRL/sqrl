@@ -16,6 +16,7 @@
 package com.datasqrl.engine.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.ServerConfigConverter;
@@ -23,6 +24,7 @@ import com.datasqrl.server.config.ServerConfigUtil;
 import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -39,16 +41,15 @@ class GenericJavaServerEngineTest {
     var config = getConfigMap();
 
     var defaultConfig = underTest.readDefaultConfig();
-    assertThat(defaultConfig.getJwtAuthOptions()).isEmpty();
+    assertThat(defaultConfig.getJwtAuthOptions()).isNull();
 
     var result = ServerConfigUtil.mergeConfigs(defaultConfig, config);
 
     assertThat(result).isNotNull();
-    assertThat(result.getJwtAuthOptions()).hasSize(1);
-    var jwtAuthOptions = result.getJwtAuthOptions().get(0);
-    assertThat(jwtAuthOptions.getPubSecKeys()).isNotNull().isNotEmpty();
-    assertThat(jwtAuthOptions.getJWTOptions()).isNotNull();
-    assertThat(jwtAuthOptions.getJWTOptions().getIssuer()).isEqualTo("my-test-issuer");
+    assertThat(result.getJwtAuthOptions()).isNotNull();
+    assertThat(result.getJwtAuthOptions().getPubSecKeys()).isNotNull().isNotEmpty();
+    assertThat(result.getJwtAuthOptions().getJWTOptions()).isNotNull();
+    assertThat(result.getJwtAuthOptions().getJWTOptions().getIssuer()).isEqualTo("my-test-issuer");
   }
 
   @Test
@@ -103,6 +104,31 @@ class GenericJavaServerEngineTest {
     var jwtAuth = Map.of("pubSecKeys", List.of(pubSecKey), "jwtOptions", jwtOptions);
 
     return Map.of("jwtAuth", jwtAuth);
+  }
+
+  @Test
+  void givenAuthConfig_whenMergedWithDefaultTemplate_thenTrustedIssuersAreParsed() {
+    var result =
+        ServerConfigUtil.mergeConfigs(underTest.readDefaultConfig(), Map.of("auth", authBlock()));
+
+    assertThat(result.getAuthConfig().getAuthorizationServers()).containsExactly("https://a/");
+    assertThat(result.getJwtAuth()).isNull();
+  }
+
+  @Test
+  void givenAuthAndDeprecatedJwtAuth_whenMergedAtCompileTime_thenRejected() {
+    var config = new HashMap<String, Object>(getConfigMap());
+    config.put("auth", authBlock());
+    var defaultConfig = underTest.readDefaultConfig();
+
+    assertThatThrownBy(() -> ServerConfigUtil.mergeConfigs(defaultConfig, config))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageStartingWith(
+            "'auth' cannot be combined with the deprecated 'jwtAuth' or 'oauthConfig'");
+  }
+
+  private static Map<String, Object> authBlock() {
+    return Map.of("issuers", List.of(Map.of("issuer", "https://a/", "audiences", List.of("x"))));
   }
 
   private static class DummyConverter implements ServerConfigConverter {

@@ -1,4 +1,63 @@
-## JWT Authentication Configuration
+## Authentication Configuration
+
+Configure `auth` with the list of trusted token issuers. Each issuer carries its own audiences and signing keys, and a
+token is accepted only when its `iss`, `aud` and signature all match the same issuer.
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "config": {
+        "auth": {
+          "issuers": [
+            {
+              "issuer": "https://login.example.com/",
+              "audiences": ["https://app.example.com", "https://admin.example.com"]
+            },
+            {
+              "issuer": "https://<tenant>.us.auth0.com/",
+              "audiences": ["https://api.example.com/"]
+            }
+          ],
+          "resource": "https://api.example.com/v1/mcp"
+        }
+      }
+    }
+  }
+}
+```
+
+| Key                       | Required | Default                          | Meaning                                                                          |
+|---------------------------|----------|----------------------------------|----------------------------------------------------------------------------------|
+| `issuers`                 | Yes      |                                  | Non-empty array of trusted issuers                                               |
+| `leeway`                  | No       | `60`                             | Clock skew in seconds; resolution order is `issuers[].leeway`, `leeway`, 60      |
+| `algorithms`              | No       | `["RS256"]`                      | Allowed signature algorithms; an issuer's own `algorithms` overrides it          |
+| `resource`                | No       | derived from the request         | Public MCP endpoint URL for RFC 9728 metadata                                    |
+| `scopesSupported`         | No       | `["mcp:tools", "mcp:resources"]` | Scopes advertised to MCP clients                                                 |
+| `issuers[].issuer`        | Yes      |                                  | Exact `iss` value, including a trailing slash; unique                            |
+| `issuers[].audiences`     | Yes      |                                  | Non-empty; the token's `aud` must contain one of them                            |
+| `issuers[].keys`          | No       |                                  | Inline JWKs (RFC 7517); cannot rotate, so prefer discovery                       |
+| `issuers[].jwksUri`       | No       |                                  | JWK Set URL; set at most one of `keys` and `jwksUri`                             |
+| `issuers[].leeway`        | No       | `auth.leeway`                    | Per-issuer leeway; negative values are rejected                                  |
+| `issuers[].algorithms`    | No       | `auth.algorithms`                | Per-issuer allowed algorithms                                                    |
+
+With neither `keys` nor `jwksUri`, keys come from OIDC discovery at `<issuer>/.well-known/openid-configuration`. Keys
+are fetched once at startup; the server fails to start if they cannot be fetched, and must be restarted after a key
+rotation. A token signed with an algorithm the issuer does not allow is rejected. Unknown keys, duplicate issuers and
+the other invalid shapes are compile errors. The MCP discovery endpoint `/.well-known/oauth-protected-resource`
+advertises the issuers as `authorization_servers`.
+
+For a shared secret (tests), use `"algorithms": ["HS256"]` and `"keys": [{ "kty": "oct", "k": "<base64url secret>" }]`.
+
+Package layers merge objects key by key but replace arrays whole: a later layer can patch `auth.leeway` alone, but a
+layer that sets `auth.issuers` must list every issuer of its environment. `auth` cannot be combined with `jwtAuth` or
+`oauthConfig`, even across layers; set the old block to `null` in the layer that introduces `auth`.
+
+## JWT Authentication Configuration (deprecated)
+
+`jwtAuth` is deprecated; use `auth` above. To migrate, move `jwtOptions.issuer` and `jwtOptions.audience` to one
+`issuers` entry, replace `pubSecKeys` with `keys` (an HS256 `buffer` becomes `{ "kty": "oct", "k": "<base64url secret>" }`
+with `"algorithms": ["HS256"]`), and move `leeway` to `auth.leeway`.
 
 For secure APIs with JWT authentication with Vert.x server configuration:
 
@@ -28,17 +87,6 @@ For secure APIs with JWT authentication with Vert.x server configuration:
 }
 ```
 
-To accept tokens from more than one issuer signed by the same keys (for example, user logins from a custom domain and
-machine-to-machine tokens from the identity provider's tenant domain), replace `issuer` with an `issuers` array:
-```json
-"jwtOptions": {
-  "issuers": ["https://login.example.com/", "https://tenant.auth0.com/"],
-  "audience": ["<jwt-audience>"]
-}
-```
-A token is accepted when its `iss` claim matches any listed issuer; every other option applies to all of them.
-Tokens without an `iss` claim are rejected. Setting both `issuer` and `issuers` is a configuration error.
-
 As these config fields will be mapped to Vert.x Java POJOs, the name of the key fields are very important.
 For `pubSecKeys`, it is also possible to use different algorithms, that requires the key in a different (mostly PEM) format.
 For example, for `ES256`, this would look something like this:
@@ -53,7 +101,12 @@ For example, for `ES256`, this would look something like this:
 }
 ```
 
-## OAuth 2.0 Authentication Configuration
+## OAuth 2.0 Authentication Configuration (deprecated)
+
+`oauthConfig` is deprecated: it checks neither the `iss` nor the `aud` claim. To migrate, add an `issuers` entry with
+`oauth2Options.site` as `issuer` (keep the trailing slash the identity provider uses in `iss`) and the API identifier as
+`audiences`, and move `resource` and `scopesSupported` to `auth`. `authorizationServerUrl` has no equivalent; the
+issuers are the advertised authorization servers.
 
 For OAuth 2.0 authentication with providers like Auth0 or Keycloak, use the `oauthConfig` section.
 This enables MCP (Model Context Protocol) clients like Claude Code to authenticate using OAuth.
@@ -189,8 +242,28 @@ Set that encoded value as the `buffer` in the `package.json` `vertx` config sect
 }
 ```
 
+With `auth`, use the **base64url** encoding (no padding) as the `k` of an `oct` key instead:
+
+```sh
+printf '%s' 'mySuperSecretSignerStringThatIsLongEnough' | base64 | tr '+/' '-_' | tr -d '='
+# -> bXlTdXBlclNlY3JldFNpZ25lclN0cmluZ1RoYXRJc0xvbmdFbm91Z2g
+```
+
+```json
+"auth": {
+  "algorithms": ["HS256"],
+  "issuers": [
+    {
+      "issuer": "<jwt-issuer>",
+      "audiences": ["<jwt-audience>"],
+      "keys": [{ "kty": "oct", "k": "bXlTdXBlclNlY3JldFNpZ25lclN0cmluZ1RoYXRJc0xvbmdFbm91Z2g" }]
+    }
+  ]
+}
+```
+
 Then mint a token by passing the **raw** secret and the claims (shaped to your
-test's needs; `iss` / `aud` must match the `jwtOptions` configured above):
+test's needs; `iss` / `aud` must match an `auth.issuers` entry, or the deprecated `jwtOptions`):
 
 ```sh
 jwt encode --secret 'mySuperSecretSignerStringThatIsLongEnough' --alg HS256 \

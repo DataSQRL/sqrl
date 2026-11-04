@@ -56,8 +56,7 @@ public class OAuthFailureHandler implements Handler<RoutingContext> {
             .setStatusCode(statusCode != -1 ? statusCode : 401)
             .putHeader("Content-Type", "application/json");
 
-    var oauthConfig = config.getOauthConfig();
-    if (oauthConfig != null && oauthConfig.getSite() != null) {
+    if (config.getProtectedResourceMetadata().isPresent()) {
       var resourceMetadataUrl = ProtectedResourceUrls.metadataUrl(config, ctx.request());
       response.putHeader(
           "WWW-Authenticate",

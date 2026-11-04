@@ -35,7 +35,7 @@ class ProtectedResourceUrls {
 
   /** Returns the configured resource, or the MCP endpoint URL derived from the request. */
   String resource(ServerConfig config, HttpServerRequest request) {
-    var resource = config.getOauthConfig().getResource();
+    var resource = config.getConfiguredResource();
     if (StringUtils.isNotBlank(resource)) {
       return resource;
     }
@@ -52,7 +52,7 @@ class ProtectedResourceUrls {
   }
 
   private Optional<String> configuredResourceOrigin(ServerConfig config) {
-    var resource = config.getOauthConfig().getResource();
+    var resource = config.getConfiguredResource();
     if (StringUtils.isBlank(resource)) {
       return Optional.empty();
     }

@@ -20,6 +20,7 @@ import static com.datasqrl.server.openapi.OpenApiService.OPENAPI_JSON_ARTIFACT_N
 import com.datasqrl.server.GraphQLServerVerticle;
 import com.datasqrl.server.McpBridgeVerticle;
 import com.datasqrl.server.RestBridgeVerticle;
+import com.datasqrl.server.auth.AuthProviderFactory;
 import com.datasqrl.server.auth.OAuth2AuthFactory;
 import com.datasqrl.server.exec.FlinkExecFunctionPlan;
 import com.datasqrl.server.graphql.RootGraphQLModel;
@@ -159,6 +160,12 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
 
   private Future<List<AuthenticationProvider>> createAuthProviders(
       VertxServerModuleContext context) {
+    var authConfig = context.config().getAuthConfig();
+    if (authConfig != null) {
+      log.info("Configuring {} trusted issuer(s)", authConfig.getIssuers().size());
+      return AuthProviderFactory.createAuthProviders(context.vertx(), authConfig);
+    }
+
     List<Future<AuthenticationProvider>> providerFutures = new ArrayList<>();
 
     if (context.config().getOauthConfig() != null
@@ -169,14 +176,12 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
               .map(provider -> (AuthenticationProvider) provider));
     }
 
-    var jwtAuthOptions = context.config().getJwtAuthOptions();
-    if (!jwtAuthOptions.isEmpty()) {
-      log.info("Configuring {} JWT authentication provider(s)", jwtAuthOptions.size());
-      jwtAuthOptions.forEach(
-          options ->
-              providerFutures.add(
-                  Future.succeededFuture(
-                      (AuthenticationProvider) JWTAuth.create(context.vertx(), options))));
+    if (context.config().getJwtAuth() != null) {
+      log.info("Configuring JWT authentication");
+      providerFutures.add(
+          Future.succeededFuture(
+              (AuthenticationProvider)
+                  JWTAuth.create(context.vertx(), context.config().getJwtAuthOptions())));
     }
 
     if (providerFutures.isEmpty()) {

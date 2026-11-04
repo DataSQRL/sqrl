@@ -27,11 +27,14 @@ import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.server.config.AuthConfig;
+import com.datasqrl.server.config.ServerConfigUtil;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import lombok.SneakyThrows;
 import org.apache.flink.configuration.Configuration;
 import org.junit.jupiter.api.BeforeEach;
@@ -537,6 +540,99 @@ class ConfigLoaderUtilsTest {
     // Then
     assertThat(result).isPresent();
     assertThat(result.get().statements()).isEmpty();
+  }
+
+  @Test
+  void givenLaterLayerWithIssuers_whenMerged_thenIssuersArrayIsReplacedWhole() {
+    var authConfig =
+        mergedAuthConfig(
+            "{\"leeway\":30,\"issuers\":["
+                + issuer("https://a/")
+                + ","
+                + issuer("https://b/")
+                + "]}",
+            "{\"issuers\":[" + issuer("https://c/") + "]}");
+
+    assertThat(authConfig.getAuthorizationServers()).containsExactly("https://c/");
+    assertThat(authConfig.getIssuers().get(0).getLeeway()).isEqualTo(30);
+  }
+
+  @Test
+  void givenLaterLayerWithOnlyLeeway_whenMerged_thenIssuersKeptAndLeewayAppliesWithoutOverride() {
+    var authConfig =
+        mergedAuthConfig(
+            "{\"issuers\":["
+                + issuer("https://a/")
+                + ",{\"issuer\":\"https://b/\",\"audiences\":[\"y\"],\"leeway\":5}]}",
+            "{\"leeway\":90}");
+
+    assertThat(authConfig.getAuthorizationServers()).containsExactly("https://a/", "https://b/");
+    assertThat(authConfig.getIssuers())
+        .extracting(AuthConfig.Issuer::getLeeway)
+        .containsExactly(90, 5);
+  }
+
+  @Test
+  void givenEarlierOauthConfigLayer_whenLaterLayerSetsAuth_thenMixingIsRejected() {
+    var vertxConfig =
+        mergedVertxConfig(
+            "{\"oauthConfig\":{\"oauth2Options\":{\"site\":\"https://other-idp.example.com\"}}}",
+            "{\"auth\":{\"issuers\":[" + issuer("https://a/") + "]}}");
+
+    assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(vertxConfig))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageStartingWith(
+            "'auth' cannot be combined with the deprecated 'jwtAuth' or 'oauthConfig'");
+  }
+
+  @Test
+  void givenEarlierJwtAuthLayer_whenLaterLayerSetsAuth_thenMixingIsRejected() {
+    var vertxConfig =
+        mergedVertxConfig(
+            "{\"jwtAuth\":{\"pubSecKeys\":[{\"algorithm\":\"HS256\",\"buffer\":\"dGVzdA==\"}]}}",
+            "{\"auth\":{\"issuers\":[" + issuer("https://a/") + "]}}");
+
+    assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(vertxConfig))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageStartingWith(
+            "'auth' cannot be combined with the deprecated 'jwtAuth' or 'oauthConfig'");
+  }
+
+  @Test
+  void givenEarlierOauthConfigLayer_whenLaterLayerSetsAuthAndNullsOauthConfig_thenAuthIsUsed() {
+    var vertxConfig =
+        mergedVertxConfig(
+            "{\"oauthConfig\":{\"oauth2Options\":{\"site\":\"https://other-idp.example.com\"}}}",
+            "{\"oauthConfig\":null,\"auth\":{\"issuers\":[" + issuer("https://a/") + "]}}");
+
+    var serverConfig = ServerConfigUtil.fromConfigMap(vertxConfig);
+
+    assertThat(serverConfig.getOauthConfig()).isNull();
+    assertThat(serverConfig.getAuthConfig().getAuthorizationServers())
+        .containsExactly("https://a/");
+  }
+
+  private AuthConfig mergedAuthConfig(String baseAuth, String overlayAuth) {
+    var vertxConfig =
+        mergedVertxConfig("{\"auth\":" + baseAuth + "}", "{\"auth\":" + overlayAuth + "}");
+    return ServerConfigUtil.fromConfigMap(vertxConfig).getAuthConfig();
+  }
+
+  @SneakyThrows
+  private Map<String, Object> mergedVertxConfig(String baseConfig, String overlayConfig) {
+    var base = tempDir.resolve("package.json");
+    var overlay = tempDir.resolve("package-deploy.json");
+    Files.writeString(base, "{\"engines\":{\"vertx\":{\"config\":" + baseConfig + "}}}");
+    Files.writeString(overlay, "{\"engines\":{\"vertx\":{\"config\":" + overlayConfig + "}}}");
+
+    var merged = ConfigLoaderUtils.loadUnresolvedConfig(errors, List.of(base, overlay), List.of());
+
+    assertThat(errors).isEmpty();
+    return merged.getEngines().getEngineConfigOrEmpty("vertx").getConfig();
+  }
+
+  private static String issuer(String issuer) {
+    return "{\"issuer\":\"" + issuer + "\",\"audiences\":[\"x\"]}";
   }
 
   @SneakyThrows
