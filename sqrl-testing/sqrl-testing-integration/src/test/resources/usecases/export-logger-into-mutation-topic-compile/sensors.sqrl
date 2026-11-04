@@ -1,0 +1,9 @@
+/*+engine(kafka) */
+CREATE TABLE SensorReading (
+    sensorid BIGINT NOT NULL,
+    temperature DOUBLE NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+-- The kafka logger gives this export the topic of the mutation table SensorReading
+EXPORT SensorReading TO logger.SensorReading;

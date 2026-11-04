@@ -53,9 +53,11 @@ import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -79,6 +81,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   public static final String CONNECTOR_TOPIC_KEY = "topic";
   public static final String UPSERT_FORMAT = "upsert-%s";
+  public static final String SUBSCRIPTION_TOPIC_SUFFIX = "-subscription";
 
   public static final String DEFAULT_TTL_KEY = "retention";
 
@@ -91,6 +94,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf mutationConnectorConf;
   private final List<String> standaloneIncludes;
+  // Filled by createMutation, which runs for every mutation before the planner calls createTable
+  private final Set<String> mutationTopicNames = new HashSet<>();
 
   // === SETTINGS ===
   private final Optional<Duration> defaultTTL;
@@ -147,7 +152,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         tableBuilder,
         relDataType,
         Optional.empty(),
-        Optional.of(settings));
+        Optional.of(settings),
+        false);
   }
 
   @Override
@@ -163,7 +169,25 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         tableBuilder,
         relDataType,
         Optional.of(tableAnalysis),
-        Optional.empty());
+        Optional.empty(),
+        false);
+  }
+
+  @Override
+  public EngineCreateTable createTableForExportStatement(
+      ExecutionStage stage,
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      TableAnalysis tableAnalysis) {
+    return createInternal(
+        stage,
+        originalTableName,
+        tableBuilder,
+        relDataType,
+        Optional.of(tableAnalysis),
+        Optional.empty(),
+        true);
   }
 
   private Table createInternal(
@@ -172,7 +196,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis,
-      Optional<MutationSettings> mutation) {
+      Optional<MutationSettings> mutation,
+      boolean isExportStatement) {
 
     boolean isMutation = mutation.isPresent();
     boolean isTransactional =
@@ -261,8 +286,31 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     // after merging, so formats and format options given in WITH are configured as well
     var valueFormat =
         formats.configure(connectorConfig, originalTableName, hasMessageKey, isMutation);
+    var topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
+    if (isMutation) {
+      mutationTopicNames.add(topicName);
+    } else if (mutationTopicNames.contains(topicName)) {
+      // Only the mutation table writes its topic: another writer mixes its rows into the
+      // mutation, and a writer that reads the mutation reads its own output in an endless loop
+      errors.checkFatal(
+          !isExportStatement,
+          "Kafka table '%s' of an EXPORT statement writes into the topic '%s' of a mutation"
+              + " table. Use a different table name in the EXPORT statement.",
+          originalTableName,
+          topicName);
+      topicName =
+          conf.toMapWithSubstitution(
+                  ctxBuilder.tableName(originalTableName + SUBSCRIPTION_TOPIC_SUFFIX).build())
+              .get(CONNECTOR_TOPIC_KEY);
+      errors.checkFatal(
+          !mutationTopicNames.contains(topicName),
+          "Kafka table '%s' writes into the topic '%s' of a mutation table. Use"
+              + " '${sqrl:table-name}' in the 'topic' option of the 'kafka' connector.",
+          originalTableName,
+          topicName);
+      connectorConfig.put(CONNECTOR_TOPIC_KEY, topicName);
+    }
     tableBuilder.setConnectorOptions(connectorConfig);
-    String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     return new Table(
         topicName,
         tableBuilder.getTableName(),

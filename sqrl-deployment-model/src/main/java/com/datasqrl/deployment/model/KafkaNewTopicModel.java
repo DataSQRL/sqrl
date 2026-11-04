@@ -24,8 +24,10 @@ import java.util.Map;
  * A Kafka topic definition in a deployment file.
  *
  * @param tableName the internal table id the planner assigned, e.g. {@code Orders_3}
- * @param logicalName the SQRL table name substituted for {@code ${sqrl:table-name}} in the topic
- *     template; null for topics no SQRL table backs, such as test-runner topics
+ * @param logicalName the SQRL table name; a mutation table and the Kafka table Flink writes for it
+ *     share it, so key on {@code (logicalName, type)}. The topic is the template resolved for this
+ *     name, unless that gives the topic of a mutation table: then the compiler substitutes {@code
+ *     <logicalName>-subscription}; null for topics no SQRL table backs, such as test-runner topics
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)

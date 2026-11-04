@@ -17,6 +17,7 @@ package com.datasqrl.engine.log.kafka;
 
 import static com.datasqrl.flinkrunner.connector.kafka.KeyFieldsOptions.SCAN_KEY_FIELDS_READ_FROM_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -31,6 +32,7 @@ import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.engine.log.MutationEngine.MutationSettings;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.server.MutationInsertType;
@@ -39,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.apache.calcite.sql.SqlNodeList;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -48,12 +51,14 @@ class KafkaLogEngineTest {
   private static final String KEY_FIELDS_READ_FROM_VALUE_KEY =
       SCAN_KEY_FIELDS_READ_FROM_VALUE.key();
 
+  private final ConnectorConf streamConnectorConf = mock(ConnectorConf.class);
   private final ConnectorConf mutationConnectorConf = mock(ConnectorConf.class);
   private final PackageJson packageJson = mock(PackageJson.class);
   private final ConnectorFactoryFactory connectorFactory = mock(ConnectorFactoryFactory.class);
 
   private ErrorCollector errors;
   private KafkaLogEngine engine;
+  private FlinkTableBuilder createdTableBuilder;
 
   @BeforeEach
   void setUp() {
@@ -75,7 +80,6 @@ class KafkaLogEngineTest {
     when(testRunnerConfig.getCreateTopics()).thenReturn(List.of());
     when(packageJson.getTestConfig()).thenReturn(testRunnerConfig);
 
-    var streamConnectorConf = mock(ConnectorConf.class);
     when(streamConnectorConf.toMap()).thenReturn(Map.of("format", "flexible-json"));
     when(connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME))
         .thenReturn(streamConnectorConf);
@@ -178,6 +182,64 @@ class KafkaLogEngineTest {
         .contains("'unused'", "\"standalone\"", "includedTopics");
   }
 
+  @Test
+  void givenMutationTopic_whenPlannerCreatesTableWithThatTopic_thenUsesSubscriptionTopic() {
+    createMutationWithTopic("Events");
+
+    var table = createTable("${sqrl:table-name}", "Events", false);
+
+    assertThat(table.topicName()).isEqualTo("Events-subscription");
+    assertThat(createdTableBuilder.getConnectorOptions())
+        .containsEntry(KafkaLogEngine.CONNECTOR_TOPIC_KEY, "Events-subscription");
+  }
+
+  @Test
+  void givenTopicTemplateWithPrefix_whenPlannerCreatesTableWithMutationTopic_thenKeepsPrefix() {
+    createMutationWithTopic("acme-Events");
+
+    var table = createTable("acme-${sqrl:table-name}", "Events", false);
+
+    assertThat(table.topicName()).isEqualTo("acme-Events-subscription");
+  }
+
+  @Test
+  void givenTopicTemplateWithSuffix_whenPlannerCreatesTableWithMutationTopic_thenSubstitutesName() {
+    createMutationWithTopic("Events-v1");
+
+    var table = createTable("${sqrl:table-name}-v1", "Events", false);
+
+    assertThat(table.topicName()).isEqualTo("Events-subscription-v1");
+  }
+
+  @Test
+  void givenMutationTopic_whenExportStatementWritesIntoIt_thenFailsWithExportError() {
+    createMutationWithTopic("Events");
+
+    assertThatThrownBy(() -> createTable("${sqrl:table-name}", "Events", true))
+        .hasMessageContaining(
+            "Kafka table 'Events' of an EXPORT statement writes into the topic 'Events' of a"
+                + " mutation table");
+  }
+
+  @Test
+  void givenTopicOfNoMutation_whenTwoExportStatementsWriteIntoIt_thenBothKeepTheTopic() {
+    createMutationWithTopic("Orders");
+
+    var firstTable = createTable("${sqrl:table-name}", "Alerts", true);
+    var secondTable = createTable("${sqrl:table-name}", "Alerts", true);
+
+    assertThat(firstTable.topicName()).isEqualTo("Alerts");
+    assertThat(secondTable.topicName()).isEqualTo("Alerts");
+  }
+
+  @Test
+  void givenFixedTopicInTemplate_whenPlannerCreatesTableWithMutationTopic_thenFailsWithError() {
+    createMutationWithTopic("Events");
+
+    assertThatThrownBy(() -> createTable("Events", "Events", false))
+        .hasMessageContaining("Kafka table 'Events' writes into the topic 'Events' of a mutation");
+  }
+
   private KafkaLogEngine newEngine(Map<String, Boolean> standaloneByInclude) {
     when(packageJson.getScriptConfig())
         .thenReturn(TestScriptConfig.withIncludes(standaloneByInclude));
@@ -231,6 +293,63 @@ class KafkaLogEngineTest {
             tableBuilder,
             null,
             new MutationSettings(MutationInsertType.SINGLE, Optional.empty(), standaloneInclude));
+  }
+
+  private void createMutationWithTopic(String mutationTopicName) {
+    when(mutationConnectorConf.toMapWithSubstitution(any(ConnectorConf.Context.class)))
+        .thenReturn(
+            new HashMap<>(
+                Map.of(
+                    "connector",
+                    "kafka-safe",
+                    "format",
+                    "flexible-json",
+                    TIMESTAMP_FORMAT,
+                    "ISO-8601",
+                    "topic",
+                    mutationTopicName)));
+    var tableBuilder = new FlinkTableBuilder().setName(mutationTopicName);
+    tableBuilder.setColumnList(SqlNodeList.EMPTY);
+
+    engine.createMutation(
+        null,
+        mutationTopicName,
+        tableBuilder,
+        null,
+        new MutationSettings(MutationInsertType.SINGLE, Optional.empty(), Optional.empty()));
+  }
+
+  private KafkaLogEngine.Table createTable(
+      String topicTemplate, String originalTableName, boolean isExportStatement) {
+    when(streamConnectorConf.toMapWithSubstitution(any(ConnectorConf.Context.class)))
+        .thenAnswer(
+            invocation -> {
+              ConnectorConf.Context context = invocation.getArgument(0);
+              return new HashMap<>(
+                  Map.of(
+                      "connector",
+                      "kafka-safe",
+                      "format",
+                      "flexible-json",
+                      TIMESTAMP_FORMAT,
+                      "ISO-8601",
+                      "topic",
+                      topicTemplate.replace("${sqrl:table-name}", context.getTableName())));
+            });
+    createdTableBuilder = new FlinkTableBuilder().setName(originalTableName + "_2");
+    createdTableBuilder.setColumnList(SqlNodeList.EMPTY);
+    var tableAnalysis =
+        TableAnalysis.builder()
+            .objectIdentifier(
+                ObjectIdentifier.of("default_catalog", "default_database", originalTableName))
+            .build();
+
+    return (KafkaLogEngine.Table)
+        (isExportStatement
+            ? engine.createTableForExportStatement(
+                null, originalTableName, createdTableBuilder, null, tableAnalysis)
+            : engine.createTable(
+                null, originalTableName, createdTableBuilder, null, tableAnalysis));
   }
 
   private List<ErrorMessage> warnings() {

@@ -1,0 +1,2 @@
+[FATAL] Kafka table 'Events' of an EXPORT statement writes into the topic 'Events' of a mutation table. Use a different table name in the EXPORT statement.
+

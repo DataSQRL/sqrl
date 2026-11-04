@@ -1,0 +1,2 @@
+[FATAL] Kafka table 'SensorReading' of an EXPORT statement writes into the topic 'SensorReading' of a mutation table. Use a different table name in the EXPORT statement.
+
