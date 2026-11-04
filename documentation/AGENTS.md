@@ -96,7 +96,7 @@ npm run swizzle
 The site uses Docusaurus's classic theme with:
 - Dark mode as default with toggle support
 - Custom CSS in `src/css/custom.css`
-- Google Analytics integration (G-Y4XLW4QZYX)
+- Google Analytics (G-Y4XLW4QZYX) and Google Ads (AW-17038638522) behind cookie consent: `src/consent.ts` (a client module) shows the banner and loads the Google tag only after a category is accepted. The choice is the `dsq_consent` cookie on `.datasqrl.com`, shared with www.datasqrl.com (DataSQRL/datasqrl-sales `website/src/scripts/consent.ts`); keep the two in step. The Cookie Notice lives on www.datasqrl.com
 - Custom logo and favicon
 
 ## Development Workflow
