@@ -46,10 +46,12 @@ const BANNER = `
     <label><input type="checkbox" name="marketing" /><span><strong>Marketing</strong> Google Ads: which ads lead to contact requests</span></label>
   </fieldset>
   <div class="dsq-consent__actions">
-    <button type="button" class="button button--primary button--sm" data-consent-all="denied">Reject all</button>
     <button type="button" class="button button--primary button--sm" data-consent-all="granted">Accept all</button>
-    <button type="button" class="button button--outline button--primary button--sm dsq-consent__wide" data-consent-save hidden>Save choices</button>
-    <button type="button" class="dsq-consent__link dsq-consent__wide" data-consent-customize>Choose cookies</button>
+    <button type="button" class="button button--outline button--primary button--sm" data-consent-save hidden>Save choices</button>
+    <div class="dsq-consent__links">
+      <button type="button" class="dsq-consent__link" data-consent-all="denied">Reject all</button>
+      <button type="button" class="dsq-consent__link" data-consent-customize>Choose cookies</button>
+    </div>
   </div>`;
 
 function init() {
