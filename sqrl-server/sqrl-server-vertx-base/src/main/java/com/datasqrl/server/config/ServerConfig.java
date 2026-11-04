@@ -208,6 +208,21 @@ public class ServerConfig {
     return MAPPER.readValue(MAPPER.writeValueAsString(block), JsonObject.class);
   }
 
+  /** Returns true when {@code jwtAuth} is set, so the server creates a JWT auth provider. */
+  @JsonIgnore
+  public boolean isJwtAuthConfigured() {
+    return jwtAuth != null;
+  }
+
+  /**
+   * Returns true when {@code oauthConfig} has a site URL, so the server creates an OAuth auth
+   * provider.
+   */
+  @JsonIgnore
+  public boolean isOAuthConfigured() {
+    return oauthConfig != null && oauthConfig.getSite() != null;
+  }
+
   ////////////////////////////////////////////////////////////////////////////////
   // Custom JSON setters for Jackson deserialization of Vert.x classes
   ////////////////////////////////////////////////////////////////////////////////

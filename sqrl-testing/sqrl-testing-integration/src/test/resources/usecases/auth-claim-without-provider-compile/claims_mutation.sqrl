@@ -1,0 +1,9 @@
+/*+no_query, engine(kafka) */
+CREATE TABLE OrderRequests (
+    customer_id STRING NOT NULL METADATA FROM 'auth.sub',
+    item STRING NOT NULL,
+    requested_at TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+/** The number of order requests. */
+RequestCount := SELECT COUNT(*) AS n FROM OrderRequests;

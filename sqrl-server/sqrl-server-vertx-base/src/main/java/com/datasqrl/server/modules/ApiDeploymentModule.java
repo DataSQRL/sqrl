@@ -167,15 +167,14 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
 
     List<Future<AuthenticationProvider>> providerFutures = new ArrayList<>();
 
-    if (context.config().getOauthConfig() != null
-        && context.config().getOauthConfig().getSite() != null) {
+    if (context.config().isOAuthConfigured()) {
       log.info("Configuring OAuth authentication with JWKS");
       providerFutures.add(
           OAuth2AuthFactory.createAuthProvider(context.vertx(), context.config().getOauthConfig())
               .map(provider -> (AuthenticationProvider) provider));
     }
 
-    if (context.config().getJwtAuth() != null) {
+    if (context.config().isJwtAuthConfigured()) {
       log.info("Configuring JWT authentication");
       providerFutures.add(
           AuthProviderFactory.createJwtAuth(context.vertx(), context.config().getJwtAuthOptions())
