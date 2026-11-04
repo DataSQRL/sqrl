@@ -35,9 +35,8 @@ declare global {
 const BANNER = `
   <p id="dsq-consent-title" class="dsq-consent__title">Cookies</p>
   <p class="dsq-consent__text">
-    With your consent, we use cookies on datasqrl.com and docs.datasqrl.com for analytics, to see which pages are
-    useful, and for marketing, to measure which Google ads bring people who get in touch. Nothing is sent to Google
-    unless you accept. <a href="${NOTICE}">Cookie notice</a>
+    We’d like to use cookies to see how our sites are used and to measure our ads. Your choice applies to
+    datasqrl.com and our docs. See the <a href="${NOTICE}">Cookie Notice</a> for details.
   </p>
   <p class="dsq-consent__text" data-consent-status role="status"></p>
   <fieldset class="dsq-consent__choices" data-consent-choices hidden>
