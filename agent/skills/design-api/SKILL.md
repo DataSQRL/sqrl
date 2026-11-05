@@ -144,7 +144,7 @@ This definition maps to query endpoint `CustomerByIdRange(fromId: Long!, toId: L
 
 ### Authentication & Authorization
 
-DataSQRL authenticates JWT tokens as configured in the server engine and maps claims to function arguments with `METADATA FROM 'auth.[claim-name]'`.
+DataSQRL authenticates JWT tokens as configured in the server engine and maps claims to function arguments with `METADATA FROM 'auth.[claim-name]'`. A dot in the claim name steps into a nested object claim: `'auth.org.id'` reads the field `id` of the claim `org`.
 
 ```sql
 MyUser(customerId BIGINT NOT NULL METADATA FROM 'auth.userId') :=
