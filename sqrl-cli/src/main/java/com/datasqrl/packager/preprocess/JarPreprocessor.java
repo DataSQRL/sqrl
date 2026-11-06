@@ -17,27 +17,21 @@ package com.datasqrl.packager.preprocess;
 
 import com.datasqrl.packager.FilePreprocessingPipeline;
 import java.nio.file.Path;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /*
  * Reads a jar and creates sqrl manifest entries in the build directory
  */
 @Component
-@Slf4j
 public class JarPreprocessor extends UdfManifestPreprocessor {
 
   @Override
   public void process(Path path, FilePreprocessingPipeline.Context ctx) {
-    if (!path.getFileName().toString().endsWith(".jar")) {
+    // JBang JARs are registered by the JBangPreprocessor
+    if (!path.getFileName().toString().endsWith(".jar") || JBangJars.isJBangJar(path)) {
       return;
     }
 
-    var udfCount = createUdfManifests(path, ctx);
-    if (udfCount < 1) {
-      log.warn("No UDFs found in JAR file: {}", path.getFileName());
-    }
-
-    ctx.copyToLib(path);
+    registerUdfJar(path, path.getFileName().toString(), ctx);
   }
 }

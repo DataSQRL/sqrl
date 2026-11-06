@@ -15,7 +15,7 @@
  */
 package com.datasqrl.util;
 
-import static com.datasqrl.packager.preprocess.JBangPreprocessor.JBANG_FILE_SHA256;
+import static com.datasqrl.packager.preprocess.JBangJars.JBANG_FILE_SHA256;
 
 import com.datasqrl.packager.preprocess.JBangPreprocessor.JBangFileInfo;
 import java.io.ByteArrayOutputStream;
@@ -116,7 +116,7 @@ public class JBangRunner {
    *       loads the UDF JAR.
    * </ol>
    */
-  void rebuildFatJar(Path fatJar, List<JBangFileInfo> jBangFiles) throws IOException {
+  public void rebuildFatJar(Path fatJar, List<JBangFileInfo> jBangFiles) throws IOException {
     var tempJar = fatJar.resolveSibling(fatJar.getFileName().toString() + ".tmp");
     var addedEntries = new HashSet<String>();
     var serviceEntries =

@@ -35,6 +35,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -63,15 +64,23 @@ public class FilePreprocessingPipeline {
   }
 
   public void run(Path sourceDir, ErrorCollector errors) throws IOException {
-    run(sourceDir, workspacePaths.buildDir(), errors);
+    run(sourceDir, workspacePaths.buildDir(), Optional.empty(), errors);
   }
 
-  public void run(Path sourceDir, Path buildDir, ErrorCollector errors) throws IOException {
+  /** Preprocesses an included project into the build directory of its namespace. */
+  public void runInclude(Path includeDir, String namespace, ErrorCollector errors)
+      throws IOException {
+    run(includeDir, workspacePaths.getIncludePath(namespace), Optional.of(namespace), errors);
+  }
+
+  private void run(
+      Path sourceDir, Path buildDir, Optional<String> includeNamespace, ErrorCollector errors)
+      throws IOException {
     Files.walkFileTree(
         sourceDir,
         EnumSet.of(FileVisitOption.FOLLOW_LINKS),
         Integer.MAX_VALUE,
-        new PathVisitor(sourceDir, buildBaseDir, buildDir, errors));
+        new PathVisitor(sourceDir, buildBaseDir, buildDir, includeNamespace, errors));
     preprocessors.forEach(Preprocessor::complete);
   }
 
@@ -95,6 +104,7 @@ public class FilePreprocessingPipeline {
     private final Path sourceDir;
     private final Path buildBaseDir;
     private final Path buildDir;
+    private final Optional<String> includeNamespace;
     private final ErrorCollector errors;
 
     @Override
@@ -111,6 +121,7 @@ public class FilePreprocessingPipeline {
                 buildDir,
                 workspacePaths.getUdfPath(),
                 workspacePaths.getDataPath(),
+                includeNamespace,
                 errors);
       }
 
@@ -143,7 +154,12 @@ public class FilePreprocessingPipeline {
   }
 
   public record Context(
-      Path sourceDir, Path buildDir, Path libDir, Path dataDir, ErrorCollector errorCollector) {
+      Path sourceDir,
+      Path buildDir,
+      Path libDir,
+      Path dataDir,
+      Optional<String> includeNamespace,
+      ErrorCollector errorCollector) {
 
     private Path getRelativeBuildPath(Path srcPath) {
       checkArgument(Files.isDirectory(srcPath));
@@ -171,7 +187,12 @@ public class FilePreprocessingPipeline {
 
     public Context getSubContext(Path newSourceDir) {
       return new Context(
-          newSourceDir, getRelativeBuildPath(newSourceDir), libDir, dataDir, errorCollector);
+          newSourceDir,
+          getRelativeBuildPath(newSourceDir),
+          libDir,
+          dataDir,
+          includeNamespace,
+          errorCollector);
     }
 
     public Path copyToBuild(Path file) {
@@ -183,13 +204,17 @@ public class FilePreprocessingPipeline {
       copy(file, dataDir);
     }
 
-    public void copyToLib(Path file) {
-      copy(file, libDir);
+    public void copyToLib(Path file, String fileName) {
+      copy(file, libDir, fileName);
+    }
+
+    private Path copy(Path file, Path targetDir) {
+      return copy(file, targetDir, file.getFileName().toString());
     }
 
     @SneakyThrows
-    private Path copy(Path file, Path targetDir) {
-      var copyPath = targetDir.resolve(file.getFileName());
+    private Path copy(Path file, Path targetDir, String fileName) {
+      var copyPath = targetDir.resolve(fileName);
       ensureDirectoryExists(targetDir);
 
       return Files.copy(file, copyPath, StandardCopyOption.REPLACE_EXISTING);

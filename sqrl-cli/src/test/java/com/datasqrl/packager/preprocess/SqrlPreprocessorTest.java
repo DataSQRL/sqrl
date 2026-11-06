@@ -30,6 +30,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,6 +64,7 @@ class SqrlPreprocessorTest {
             buildDir,
             tempDir.resolve("lib"),
             tempDir.resolve("data"),
+            Optional.empty(),
             ErrorCollector.root());
 
     underTest = new SqrlPreprocessor(packageJson, ErrorCollector.root());
