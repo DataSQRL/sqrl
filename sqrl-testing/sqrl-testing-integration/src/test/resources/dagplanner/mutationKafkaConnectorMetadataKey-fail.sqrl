@@ -1,7 +1,0 @@
--- 'offset' is a metadata key of the Flink Kafka connector, but not of a DataSQRL mutation.
-/*+engine(kafka) */
-CREATE TABLE Clicks (
-    url STRING NOT NULL,
-    kafka_offset BIGINT METADATA FROM 'offset',
-    clicked_at TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
-);

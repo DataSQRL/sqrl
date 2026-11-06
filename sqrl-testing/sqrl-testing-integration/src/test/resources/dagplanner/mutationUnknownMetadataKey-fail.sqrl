@@ -1,8 +1,10 @@
--- 'auht.sub' is a typing error for 'auth.sub', and 'uuid.id' is not a mutation metadata key.
+-- 'auht.sub' is a typing error for 'auth.sub', 'uuid.id' is not a mutation metadata key,
+-- and 'offset' is a metadata key of the Flink Kafka connector, but not of a DataSQRL mutation.
 /*+engine(kafka) */
 CREATE TABLE OrderRequests (
     customer_id STRING NOT NULL METADATA FROM 'auht.sub',
     request_id STRING NOT NULL METADATA FROM 'uuid.id',
+    kafka_offset BIGINT METADATA FROM 'offset',
     item STRING NOT NULL,
     requested_at TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
 );
