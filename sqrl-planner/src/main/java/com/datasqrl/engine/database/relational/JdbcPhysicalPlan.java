@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -99,6 +100,12 @@ public record JdbcPhysicalPlan(
     var logicalName = engineTable == null ? null : engineTable.logicalName();
     var role =
         engineTable == null ? null : JdbcStatementModel.Role.valueOf(engineTable.role().name());
+    // A table has the tags of the table it materializes, a view those of the function it serves
+    var tags =
+        Optional.ofNullable(engineTable)
+            .map(JdbcEngineCreateTable::tableAnalysis)
+            .<Map<String, String>>map(table -> table.getTags().toValueMap())
+            .orElseGet(statement::getTags);
     if (statement instanceof CreateTableJdbcStatement createTable) {
       return new JdbcStatementModel(
           statement.getName(),
@@ -113,7 +120,8 @@ public record JdbcPhysicalPlan(
           createTable.getTtl(),
           logicalName,
           role,
-          statement.getReferencedTables());
+          statement.getReferencedTables(),
+          tags);
     }
     return new JdbcStatementModel(
         statement.getName(),
@@ -128,7 +136,8 @@ public record JdbcPhysicalPlan(
         null,
         logicalName,
         role,
-        statement.getReferencedTables());
+        statement.getReferencedTables(),
+        tags);
   }
 
   private static String toSql(List<JdbcStatement> statements) {

@@ -20,6 +20,7 @@ import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.List;
+import java.util.Map;
 
 @JsonDeserialize(as = GenericJdbcStatement.class)
 public interface JdbcStatement {
@@ -42,6 +43,12 @@ public interface JdbcStatement {
   /** For views, the names of the tables the view reads - null when unknown */
   @JsonIgnore
   default List<String> getReferencedTables() {
+    return null;
+  }
+
+  /** For views, the effective tags of the function the view serves, by tag name - nullable */
+  @JsonIgnore
+  default Map<String, String> getTags() {
     return null;
   }
 }

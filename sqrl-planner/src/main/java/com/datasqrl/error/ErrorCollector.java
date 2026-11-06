@@ -217,6 +217,18 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
     return CollectedException.withTrimmedStackTrace(errorMessage.asException());
   }
 
+  /**
+   * Throws the first fatal error if any was recorded, e.g. by a collector that does not {@link
+   * #abortOnFatal(boolean) abort on fatal} errors. The error is not recorded again.
+   */
+  public void abortOnErrors() {
+    for (var message : this) {
+      if (message.isFatal()) {
+        throw CollectedException.withTrimmedStackTrace(message.asException());
+      }
+    }
+  }
+
   public void checkFatal(boolean condition, String msg, Object... args) {
     if (!condition) {
       fatal(ErrorLabel.GENERIC, msg, args);

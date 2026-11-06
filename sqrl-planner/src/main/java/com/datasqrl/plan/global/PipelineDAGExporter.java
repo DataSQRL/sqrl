@@ -33,6 +33,7 @@ import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.util.CalciteHacks;
 import com.datasqrl.util.StreamUtil;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -103,6 +104,7 @@ public class PipelineDAGExporter {
                   .type(NodeType.IMPORTS.getName())
                   .connector(source.connectorConfig().options())
                   .stage(stage)
+                  .tags(table.getTags().toValueMap())
                   .documentation(getDocumentation(tableNode))
                   .build());
         } else {
@@ -113,6 +115,7 @@ public class PipelineDAGExporter {
                   .name(table.getName())
                   .type(NodeType.from(table.getType()).getName())
                   .stage(stage)
+                  .tags(table.getTags().toValueMap())
                   .documentation(getDocumentation(tableNode))
                   .inputs(inputs)
                   .plan(explain(table.getCollapsedRelnode()))
@@ -166,6 +169,7 @@ public class PipelineDAGExporter {
                 .name(fct.getFullPath().toString())
                 .type(NodeType.QUERY.getName())
                 .stage(stage)
+                .tags(fct.getTags().toValueMap())
                 .documentation(getDocumentation(fctNode))
                 .plan(explain(fct.getFunctionAnalysis().getCollapsedRelnode()))
                 .sql(getSql(fct.getFunctionAnalysis()))
@@ -356,6 +360,12 @@ public class PipelineDAGExporter {
     String type;
     String stage;
     String documentation;
+
+    /** The effective tags of the table or function, mapped from tag name to value */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @Builder.Default
+    Map<String, String> tags = Map.of();
+
     List<String> inputs;
     List<Annotation> annotations;
 
@@ -378,6 +388,15 @@ public class PipelineDAGExporter {
               + "Stage:       "
               + stage
               + LINEBREAK;
+
+      if (!tags.isEmpty()) {
+        header +=
+            "Tags:        "
+                + tags.entrySet().stream()
+                    .map(e -> e.getKey() + "=" + e.getValue())
+                    .collect(Collectors.joining(", "))
+                + LINEBREAK;
+      }
 
       if (StringUtils.isNotBlank(documentation)) {
         header += "Docs:       " + documentation + LINEBREAK;

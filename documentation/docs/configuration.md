@@ -303,6 +303,10 @@ Configuration options that control the compiler, such as where logging output is
       "max-result-depth": 3,       // maximum depth of graph traversal when generating operations from a schema
       "default-limit": 10,         // default query result limit
       "paginated-results": false   // wrap generated query results in a page with pagination metadata
+    },
+
+    "tags": {                      // tag definitions by name; tags are validated and propagated when present (see Tags)
+      "pii": { "values": ["masked", "raw"] }
     }
   }
 }
@@ -326,6 +330,86 @@ Limit predicate pushdown to improve subgraph elimination and reduce the size of 
 - `LIMITED_RULES_NO_SOURCE`: strips downstream predicate-pushdown related rules to maximize subgraph elimination
 - `LIMITED_RULES`: additionally strips table source pushdown rules
 This setting only applies for Flink streaming when `compile-flink-plan` is enabled.
+
+### Tags (`compiler.tags`)
+
+Tags such as `@pii` mark tables in their doc strings. When `compiler.tags` is configured, the compiler validates every tag against these definitions, propagates tags from the tables a query reads to the table it defines, and checks that each table in the API declares the tags it inherits. When `compiler.tags` is absent, tags are not analyzed and doc strings are plain text.
+
+The compiler only checks that tags are defined, valid, and propagated correctly. It does not judge whether a tag or a declassification is appropriate.
+
+```json
+{
+  "compiler": {
+    "tags": {
+      "classification": { "values": ["unclassified", "secret", "top_secret"] },
+      "pii": { "values": ["masked", "raw", "sensitive"] },
+      "gdpr": {},
+      "jurisdiction": { "required-columns": { "jurisdiction": "STRING" } }
+    }
+  }
+}
+```
+
+Each key is a tag name, and its definition has these optional fields:
+
+| Field              | Meaning |
+|--------------------|---------|
+| `values`           | The allowed values, ordered from **lowest to highest**. |
+| `required-columns` | The columns, by name, with their type, that every table carrying the tag must have. |
+
+Tag names and values may only contain letters, digits, underscores and dashes, and are case-insensitive. Values must be unique within a tag, and each required column type must be a valid column type. When several package files are combined, their tag definitions are merged per tag.
+
+There are two kinds of tags:
+- **Boolean tag**: has no `values`, e.g. `"gdpr": {}`. Its only value is `true`.
+- **Ordered tag**: has `values`. When two values meet, the higher one wins: `top_secret` is higher than `secret`.
+
+#### Declaring tags in doc strings
+
+Write a tag as `@name` or `@name=value` in the doc string of a table, preceded by whitespace or at the start of the doc string, so `user@example.com` is not a tag. `@name` means `@name=true`, which is only valid for boolean tags; ordered tags need a value. A tag that is not defined, or has a value that is not allowed, is a compile error.
+
+```sql
+/** Customer profiles @pii=raw @classification=secret
+ * # Columns:
+ * - email: The contact email @gdpr
+ */
+CustomerProfiles := SELECT id, email, state FROM Customers;
+```
+
+A table's declared tags are all tags in its doc string, including column documentation, and in the comments of its columns in `CREATE TABLE` (e.g. `email STRING COMMENT 'Contact email @gdpr'`). A `CREATE TABLE ... LIKE` also gets the tags in the comments of the columns it copies. Tags count toward the whole table, also when they are written on a column. If a tag appears more than once, the highest value counts. Tags stay part of the doc string, so they also appear in the generated API documentation.
+
+#### Propagation and validation
+
+A table **inherits** the tags of every table its definition reads, including tables that are only joined, filtered on, or referenced in a subquery. When several inputs carry the same tag, the highest value is inherited. Tables created with `CREATE TABLE` or imported from a source inherit nothing.
+
+A table's **effective** tags are its inherited tags combined with its declared tags, taking the highest value per tag. A doc string can raise a tag's value but not lower it. The effective tags are what downstream tables inherit, also through hidden tables.
+
+The compiler checks:
+- Every table and function in the API declares each tag it inherits with the same or a higher value. A table without a doc string of its own that returns the same columns as the table it selects from (e.g. `SELECT * FROM Customers WHERE ...`), or a `DISTINCT` table (e.g. `Customers := DISTINCT CustomersStream ON id ORDER BY updated_at DESC`), takes the doc string of the table it selects from, and with it its tags. A [column-addition statement](sqrl-language#column-addition-statement) keeps the doc string of the table definition it extends.
+- These tables need not declare their inherited tags, but still carry them: hidden tables, relationships (e.g. `Customers.orders := ...`), which return rows of their target table, [test tables](sqrl-language#testing), which are never deployed, and views defined with Flink SQL `CREATE VIEW`, which have no doc string.
+- A table that `INSERT INTO` or `EXPORT` writes into, and that other tables read, declares the tags of the written data, since its readers only inherit its declared tags.
+- Every table, hidden or public, whose effective tags include a tag with `required-columns` has those columns, with a type that is accepted wherever a function parameter of the required type is expected.
+
+The compiler reports all violations in one compile, with the table, the tag, the required and found values, and the input tables the tag comes from.
+
+#### Declassification
+
+The `declassify` hint lists tag names, without the `@`, that a table may drop or lower:
+
+```sql
+/*+declassify(pii, gdpr, classification) */
+/** Customers per state @classification=unclassified */
+CustomerCountsByState := SELECT state, COUNT(*) AS num_customers FROM CustomerProfiles GROUP BY state;
+```
+
+The table does not inherit the listed tags, so its value for each of them is the value its doc string declares, or no value if it declares none. Downstream tables inherit that value. In the example, `CustomerCountsByState` drops `pii` and `gdpr` and lowers `classification` to `unclassified`. Listing a tag that is not defined is a compile error; listing a tag the table does not inherit is a warning. `declassify` also works on hidden tables.
+
+#### Tags in the build output
+
+The compiler writes the effective tags of every table and view, hidden or public, to the build output:
+- `build/pipeline_explain.txt` lists them under `Tags:` for each node, and `build/pipeline_explain.json` and the pipeline visualization under `tags`.
+- The database deployment plan (e.g. `build/deploy/plan/postgres.json`) lists them under `tags` for each table and view, mapped from tag name to value (`true` for boolean tags).
+
+For a table that must declare its inherited tags and passes validation, the effective tags are exactly its declared tags.
 
 ## Connector Templates (`connectors`)
 

@@ -63,11 +63,13 @@ class Sqrl2FlinkSQLTranslatorTest {
           "CREATE TABLE SourceTable (val INT) WITH ('connector'='datagen')",
           Optional.empty(),
           mock(SchemaLoader.class),
-          HintsAndDoc.EMPTY);
+          HintsAndDoc.EMPTY,
+          ErrorCollector.root());
       var view =
           translator.addView(
               "CREATE VIEW SourceView AS SELECT val FROM SourceTable",
               HintsAndDoc.EMPTY,
+              false,
               ErrorCollector.root());
       var insert =
           (RichSqlInsert) translator.parseSQL("INSERT INTO Sink SELECT val FROM SourceView");
@@ -99,7 +101,7 @@ class Sqrl2FlinkSQLTranslatorTest {
     when(flink.getStreamingSpecificConfig()).thenReturn(new Configuration());
     var config = mock(CompilerConfig.class);
     when(config.predicatePushdownRules()).thenReturn(PredicatePushdownRules.DEFAULT);
-    return new Sqrl2FlinkSQLTranslator(paths, flink, config);
+    return new Sqrl2FlinkSQLTranslator(paths, flink, config, ErrorCollector.root());
   }
 
   @Test
@@ -113,7 +115,8 @@ class Sqrl2FlinkSQLTranslatorTest {
     var compilerConfig = mock(CompilerConfig.class);
     when(compilerConfig.predicatePushdownRules()).thenReturn(PredicatePushdownRules.DEFAULT);
 
-    var translator = new Sqrl2FlinkSQLTranslator(workspacePaths, flink, compilerConfig);
+    var translator =
+        new Sqrl2FlinkSQLTranslator(workspacePaths, flink, compilerConfig, ErrorCollector.root());
     assertThatThrownBy(() -> translator.addUserDefinedFunction("missing", "no.such.Udf", true))
         .isInstanceOf(Exception.class);
     assertThat(openFiles()).contains(jar);

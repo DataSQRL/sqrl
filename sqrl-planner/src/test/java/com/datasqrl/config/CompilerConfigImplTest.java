@@ -17,8 +17,13 @@ package com.datasqrl.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
 
 import com.datasqrl.error.CollectedException;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.util.ConfigLoaderUtils;
+import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -64,5 +69,30 @@ class CompilerConfigImplTest {
         .isInstanceOf(CollectedException.class)
         .hasMessageContaining(
             "String \"read\": not one of the values accepted for Enum class: [DEFAULT, READ, WRITE]");
+  }
+
+  @Test
+  void givenNoTags_whenGetTags_thenReturnsEmpty() {
+    var compilerConfig = new CompilerConfigImpl(config);
+
+    assertThat(compilerConfig.getTags()).isEmpty();
+  }
+
+  @Test
+  void givenTags_whenGetTags_thenReturnsTagConfigs() {
+    var errors = ErrorCollector.root();
+    var packageJson =
+        ConfigLoaderUtils.loadUnresolvedConfig(
+            errors, List.of(Path.of("src/test/resources/config/package/compilerTags.json")));
+
+    var tags = packageJson.getCompilerConfig().getTags().orElseThrow();
+
+    assertThat(tags).containsOnlyKeys("classification", "pii", "gdpr", "jurisdiction");
+    assertThat(tags.get("classification").getValues())
+        .containsExactly("unclassified", "secret", "top_secret");
+    assertThat(tags.get("gdpr").getValues()).isEmpty();
+    assertThat(tags.get("gdpr").getRequiredColumns()).isEmpty();
+    assertThat(tags.get("jurisdiction").getRequiredColumns())
+        .containsExactly(entry("jurisdiction", "STRING"));
   }
 }

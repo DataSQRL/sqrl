@@ -20,9 +20,21 @@ import lombok.NoArgsConstructor;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.sql.type.SqlTypeUtil;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.types.logical.utils.LogicalTypeCasts;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TypeCompatibility {
+
+  /**
+   * Checks if a value of type {@code actual} is accepted where a function parameter of type {@code
+   * required} is expected, i.e. it can be implicitly cast. Nullability is ignored.
+   */
+  public static boolean isCallSiteCompatible(RelDataType actual, RelDataType required) {
+    return LogicalTypeCasts.supportsImplicitCast(
+        FlinkTypeFactory.toLogicalType(actual).copy(true),
+        FlinkTypeFactory.toLogicalType(required).copy(true));
+  }
 
   /** Checks if newType can read data produced by oldType. */
   public static boolean isBackwardsCompatible(RelDataType newType, RelDataType oldType) {

@@ -32,6 +32,10 @@ import com.datasqrl.engine.database.relational.JdbcEngineCreateTable.Role;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.log.kafka.KafkaNewTopic;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.tags.TableTags;
+import com.datasqrl.planner.tags.TagDefinition;
+import com.datasqrl.planner.tags.TagValue;
 import com.datasqrl.util.SqrlObjectMapper;
 import java.time.Duration;
 import java.util.List;
@@ -129,7 +133,8 @@ class PlanModelSerializationTest {
             null,
             List.of(),
             null,
-            List.of("dev_customerspend_1", "dev_orders_2"));
+            List.of("dev_customerspend_1", "dev_orders_2"),
+            null);
     var plan = JdbcPhysicalPlan.builder().statement(view).tableIdMap(Map.of()).build();
 
     var viewModel = plan.toModel().statements().get(0);
@@ -137,6 +142,34 @@ class PlanModelSerializationTest {
     assertThat(viewModel.referencedTables()).containsExactly("dev_customerspend_1", "dev_orders_2");
     assertThat(viewModel.logicalName()).isNull();
     assertThat(viewModel.role()).isNull();
+  }
+
+  @Test
+  void givenViewWithTags_whenMapped_thenModelListsTagsAndSerializesThem() throws Exception {
+    var view =
+        new GenericJdbcStatement(
+            "Customers",
+            Type.VIEW,
+            "CREATE VIEW Customers",
+            null,
+            null,
+            List.of(),
+            null,
+            null,
+            Map.of("classification", "secret", "gdpr", "true"));
+    var untagged = new GenericJdbcStatement("Orders", Type.VIEW, "CREATE VIEW Orders");
+    var plan =
+        JdbcPhysicalPlan.builder().statement(view).statement(untagged).tableIdMap(Map.of()).build();
+
+    var model = plan.toModel();
+
+    assertThat(model.statements().get(0).tags())
+        .containsExactlyInAnyOrderEntriesOf(Map.of("classification", "secret", "gdpr", "true"));
+    assertThat(model.statements().get(1).tags()).isNull();
+    var json = SqrlObjectMapper.INSTANCE.writeValueAsString(model);
+    assertThat(json).contains("\"tags\":{").containsOnlyOnce("\"tags\"");
+    var roundTrip = SqrlObjectMapper.INSTANCE.readValue(json, JdbcPlanModel.class);
+    assertThat(roundTrip.statements().get(0).tags()).isEqualTo(model.statements().get(0).tags());
   }
 
   @Test
@@ -212,6 +245,32 @@ class PlanModelSerializationTest {
     assertThat(json.get("name").asText()).isEqualTo("sqrl_dev_orders");
     assertThat(json.get("logicalName").asText()).isEqualTo("Orders");
     assertThat(json.get("role").asText()).isEqualTo("MUTATION");
+  }
+
+  @Test
+  void givenCreateTableOfTaggedTable_whenMapped_thenModelListsTheTableTags() {
+    var pii = TagDefinition.of("pii", List.of("masked", "raw"), List.of());
+    var tableAnalysis =
+        TableAnalysis.buildPlaceholder().tags(TableTags.of(List.of(new TagValue(pii, 1)))).build();
+    var engineTable =
+        new JdbcEngineCreateTable(
+            "sqrl_dev_orders", "Orders", Role.MATERIALIZATION, null, null, tableAnalysis);
+    var createTable =
+        new GenericJdbcStatement(
+            "sqrl_dev_orders",
+            Type.TABLE,
+            "CREATE TABLE sqrl_dev_orders",
+            null,
+            null,
+            null,
+            engineTable,
+            null,
+            null);
+    var plan = JdbcPhysicalPlan.builder().statement(createTable).tableIdMap(Map.of()).build();
+
+    var model = plan.toModel();
+
+    assertThat(model.statements().get(0).tags()).containsExactly(Map.entry("pii", "raw"));
   }
 
   @Test
@@ -357,6 +416,7 @@ class PlanModelSerializationTest {
             null,
             null,
             engineTable,
+            null,
             null);
     var plan = JdbcPhysicalPlan.builder().statement(table).tableIdMap(Map.of()).build();
 

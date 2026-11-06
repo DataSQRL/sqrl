@@ -35,7 +35,7 @@ import com.datasqrl.planner.hint.PartitionKeyHint;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.TtlHint;
 import com.datasqrl.planner.parser.SqrlStatementParser;
-import com.datasqrl.planner.util.Documented;
+import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.sql.DatabaseTypeExtension;
 import com.datasqrl.util.CalciteUtil;
@@ -109,7 +109,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         withView,
         getTableNameMapping(tableIdMap),
         withView ? getReferencedTables(query.relNode(), tableIdMap) : null,
-        query.function().getDocumentation());
+        query.function());
   }
 
   /**
@@ -135,7 +135,6 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
   @Override
   public QueryResult createPassthroughQuery(Query query, boolean withView) {
     var passthroughSql = query.function().getFunctionAnalysis().getOriginalSql();
-    var description = query.function().getDocumentation().getDocString(null);
 
     // Replace all argument references
     var formattedSql =
@@ -152,14 +151,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     var rowType = query.relNode().getRowType();
     var viewSql =
         getCreateViewDdlFactory().createView(viewName, rowType.getFieldNames(), passthroughSql);
-    var view =
-        new GenericJdbcStatement(
-            viewName,
-            Type.VIEW,
-            viewSql,
-            description,
-            getColumns(
-                rowType.getFieldList(), PlannerHints.EMPTY, query.function().getDocumentation()));
+    var view = createViewStatement(viewName, rowType, viewSql, null, query.function());
 
     return new QueryResult(qBuilder, view);
   }
@@ -170,7 +162,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       boolean withView,
       Map<String, SqlIdentifier> tableNameMapping,
       List<String> referencedTables,
-      Documented.Documentation documentation) {
+      SqrlTableFunction function) {
     var rewrittenRelNode = dialectCallConverter.convert(relNode);
     var sqlNode = sqlConverters.convert(rewrittenRelNode, tableNameMapping);
     var sql = sqlConverters.convert(sqlNode);
@@ -179,9 +171,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
 
     JdbcStatement view = null;
     if (withView) {
-      view =
-          getViewStatement(
-              viewName, relNode.getRowType(), sqlNode, referencedTables, documentation);
+      view = getViewStatement(viewName, relNode.getRowType(), sqlNode, referencedTables, function);
     }
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
   }
@@ -198,7 +188,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       boolean withView,
       String sql,
       List<String> referencedTables,
-      Documented.Documentation documentation) {
+      SqrlTableFunction function) {
     var qBuilder = ExecutableJdbcReadQuery.builder();
     qBuilder.sql(sql);
 
@@ -206,7 +196,7 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
     if (withView) {
       var viewSql = getCreateViewDdlFactory().createView(viewName, rowType.getFieldNames(), sql);
 
-      view = createViewStatement(viewName, rowType, viewSql, referencedTables, documentation);
+      view = createViewStatement(viewName, rowType, viewSql, referencedTables, function);
     }
     return new JdbcStatementFactory.QueryResult(qBuilder, view);
   }
@@ -346,23 +336,24 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
       RelDataType rowType,
       SqlNode sqlNode,
       List<String> referencedTables,
-      Documented.Documentation documentation) {
+      SqrlTableFunction function) {
     var viewDdlFactory = getCreateViewDdlFactory();
     var viewNameIdentifier = viewDdlFactory.getViewIdentifier(viewName);
     var viewSql =
         viewDdlFactory.createView(
             viewNameIdentifier, rowType.getFieldNames(), sqlConverters.convert(sqlNode));
 
-    return createViewStatement(viewName, rowType, viewSql, referencedTables, documentation);
+    return createViewStatement(viewName, rowType, viewSql, referencedTables, function);
   }
 
+  /** Creates the statement of a view that the function's queries read, with its tags. */
   private JdbcStatement createViewStatement(
       String viewName,
       RelDataType rowType,
       String viewSql,
       List<String> referencedTables,
-      Documented.Documentation documentation) {
-
+      SqrlTableFunction function) {
+    var documentation = function.getDocumentation();
     return new GenericJdbcStatement(
         viewName,
         Type.VIEW,
@@ -371,7 +362,8 @@ public abstract class AbstractJdbcStatementFactory implements JdbcStatementFacto
         null,
         getColumns(rowType.getFieldList(), PlannerHints.EMPTY, documentation),
         null,
-        referencedTables);
+        referencedTables,
+        function.getTags().toValueMap());
   }
 
   @RequiredArgsConstructor

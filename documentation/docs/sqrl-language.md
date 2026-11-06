@@ -171,6 +171,7 @@ DistinctTbl := DISTINCT SourceTbl
 
 * Deduplicates a **STREAM** of changelog data into a **VERSIONED_STATE** table.
 * Hint `/*+filtered_distinct_order*/` (see [hints](#hints)) may precede the statement to push filters before deduplication for optimization.
+* Without a doc string of its own, the table takes the doc string (including [tags](configuration#tags-compilertags)) of the source table.
 
 ```sql
 DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
@@ -224,7 +225,7 @@ Customer.highValueOrders(minAmount BIGINT) := SELECT * FROM Orders o WHERE o.cus
 TableName.new_col := expression;
 ```
 
-Must appear **immediately after** the table definition it extends, and may reference previously added columns of the same table. Cannot be applied after `CREATE TABLE` statements.
+Must appear **immediately after** the table definition it extends, and may reference previously added columns of the same table. Cannot be applied after `CREATE TABLE` statements. The table keeps the hints and doc string (including [tags](configuration#tags-compilertags)) of the definition it extends.
 
 ### Relation Alias As ROW
 
@@ -393,6 +394,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **maintenance**             | `maintenance(type)`                                                                    | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                                                                                                                                                                                                                                                                                          |
 | **test**                    | `test` or `test(no_rows)`                                                              | table          | marks test case, only executed with [`test` command](compiler#test-command).                                                                                                                                                                                                                                                                                                                                                                                |
 | **workload**                | `workload`                                                                             | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                                                                                                                                                                                                                                                                                             |
+| **declassify**              | `declassify(tag, ...)`                                                                 | table          | lets the table drop or lower the listed inherited tags: each listed tag takes the value the doc string declares, or no value. Only applies when tags are configured (see [Tags](configuration#tags-compilertags))                                                                                                                                                                                                                                       |
 | **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                              | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                                                                                                                                                                                                                                                                                            |
 
 This example configures the vector length and a vector index for the `SensorTempByHour` table:

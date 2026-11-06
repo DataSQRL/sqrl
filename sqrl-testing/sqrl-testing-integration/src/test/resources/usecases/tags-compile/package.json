@@ -1,0 +1,21 @@
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
+  "compiler": {
+    "tags": {
+      "pii": { "values": ["masked", "raw"] },
+      "classification": { "values": ["internal", "confidential"] },
+      "financial": {},
+      "gdpr": {},
+      "jurisdiction": { "required-columns": { "jurisdiction": "STRING" } }
+    }
+  },
+  "script": {
+    "main": "tags.sqrl",
+    "include": {
+      "banking_catalog": {
+        "package": "../banking-shared/package-shared.json"
+      }
+    }
+  }
+}

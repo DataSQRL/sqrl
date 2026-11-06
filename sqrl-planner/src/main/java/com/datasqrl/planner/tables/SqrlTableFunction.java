@@ -21,6 +21,7 @@ import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.table.Multiplicity;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
+import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.planner.util.Documented;
 import com.google.common.base.Preconditions;
 import java.lang.reflect.Type;
@@ -139,6 +140,11 @@ public class SqrlTableFunction implements TableFunction, TableOrFunctionAnalysis
   @Override
   public TableAnalysis getBaseTable() {
     return functionAnalysis.getBaseTable();
+  }
+
+  @Override
+  public TableTags getTags() {
+    return functionAnalysis.getTags();
   }
 
   /**

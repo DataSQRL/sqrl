@@ -1,3 +1,5 @@
+/** Readings of temperature sensors @pii=raw @undefined_tag=xyz
+ Tags are plain text because this project does not configure compiler.tags */
 /*+engine(kafka), no_query */
 CREATE TABLE SensorReading (
     uuid STRING NOT NULL METADATA FROM 'uuid',
@@ -20,7 +22,7 @@ _SensorMaxTempLastMinWindow := SELECT sensorid, window_time as endOfMin,
 
 SensorMaxTempLastMin := DISTINCT _SensorMaxTempLastMinWindow ON sensorid ORDER BY endOfMin DESC;
 
-/*+no_query */
+/*+no_query, declassify(pii) */
 SensorAnalysis := SELECT sensorid, AVG(temperature) AS avg_temperatures,
                            MAX(temperature) AS max_temperature
                     FROM SensorReading GROUP BY sensorid ORDER BY sensorid DESC;
