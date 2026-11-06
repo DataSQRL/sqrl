@@ -299,7 +299,6 @@ class FailedTables {
     } else {
       recordCreated(withoutComments, namespace);
     }
-    return false;
   }
 
   /** Records the object defined by a statement that was skipped because it uses one that failed. */
@@ -337,6 +336,7 @@ class FailedTables {
     } else {
       recordCreated(withoutComments, namespace);
     }
+    return false;
   }
 
   /**
