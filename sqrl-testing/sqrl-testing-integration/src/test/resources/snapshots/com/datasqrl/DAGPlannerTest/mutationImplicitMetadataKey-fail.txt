@@ -1,4 +1,4 @@
-[FATAL] Unknown metadata key 'offset' on column 'offset' of table 'Clicks'. The column has no FROM clause, so its name is the metadata key. Use 'uuid', 'timestamp' or 'auth.<claim>'.
+[FATAL] Unknown metadata key on table 'Clicks': 'offset' on column 'offset' (the column has no FROM clause, so its name is the metadata key). Use 'uuid', 'timestamp' or 'auth.<claim>'.
 in script:mutationImplicitMetadataKey-fail.sqrl [3:1]:
 -- Without a FROM clause, the column name is the metadata key: 'offset' is not a mutation metadata key.
 /*+engine(kafka) */

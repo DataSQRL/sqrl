@@ -449,7 +449,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       boolean isTransactional) {
 
     var timestampMetadata =
-        metadataCol.getMetadataAlias().filter(s -> s.equalsIgnoreCase("timestamp")).isPresent();
+        FlinkTableBuilder.metadataKey(metadataCol).equalsIgnoreCase("timestamp");
 
     if (!timestampMetadata || tableBuilder.hasWatermark()) {
       return;

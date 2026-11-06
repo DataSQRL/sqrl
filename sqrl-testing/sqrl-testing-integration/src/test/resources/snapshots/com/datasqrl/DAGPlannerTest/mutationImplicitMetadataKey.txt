@@ -4,25 +4,27 @@ ID:          default_catalog.default_database.Clicks
 Type:        stream
 Stage:       flink
 Primary key: uuid
-Timestamp:   -
+Timestamp:   timestamp
 Row count:   ~1e8
 --- definition ---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - timestamp: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
+ - timestamp: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Clicks__base
 Annotations:
  - stream-root: Clicks
 Plan:
-LogicalProject(url=[$0], uuid=[$1], timestamp=[$2])
-  LogicalTableScan(table=[[default_catalog, default_database, Clicks, metadata=[timestamp]]])
+LogicalWatermarkAssigner(rowtime=[timestamp], watermark=[-($2, 0:INTERVAL SECOND)])
+  LogicalProject(url=[$0], uuid=[$1], timestamp=[CAST($2):TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL])
+    LogicalTableScan(table=[[default_catalog, default_database, Clicks, metadata=[timestamp]]])
 SQL:
 CREATE TABLE `Clicks` (
   `url` STRING NOT NULL,
   `uuid` STRING NOT NULL,
-  `timestamp` TIMESTAMP_LTZ(3) NOT NULL METADATA
+  `timestamp` TIMESTAMP_LTZ(3) NOT NULL METADATA,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.0' SECOND
 )
 WITH (
   'connector' = 'kafka-safe',
@@ -42,7 +44,8 @@ Table Clicks_1 (postgres):
 CREATE TABLE `Clicks` (
   `url` STRING NOT NULL,
   `uuid` STRING NOT NULL,
-  `timestamp` TIMESTAMP_LTZ(3) NOT NULL METADATA
+  `timestamp` TIMESTAMP_LTZ(3) NOT NULL METADATA,
+  WATERMARK FOR `timestamp` AS `timestamp` - INTERVAL '0.0' SECOND
 )
 WITH (
   'connector' = 'kafka-safe',
