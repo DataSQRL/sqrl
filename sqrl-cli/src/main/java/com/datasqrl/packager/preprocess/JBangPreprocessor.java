@@ -15,8 +15,14 @@
  */
 package com.datasqrl.packager.preprocess;
 
+import static com.datasqrl.packager.preprocess.JBangJars.JBANG_JAR_NAME;
+import static com.datasqrl.packager.preprocess.JBangJars.isJBangJar;
+import static com.datasqrl.packager.preprocess.JBangJars.libJarName;
+import static com.datasqrl.packager.preprocess.JBangJars.udfDigests;
+
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.packager.FilePreprocessingPipeline;
+import com.datasqrl.util.DirectoryUtils;
 import com.datasqrl.util.FilenameAnalyzer;
 import com.datasqrl.util.JBangRunner;
 import com.google.common.hash.Hashing;
@@ -26,10 +32,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.StringJoiner;
-import java.util.jar.JarFile;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -37,14 +44,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.exec.ExecuteException;
 import org.springframework.stereotype.Component;
 
+/**
+ * Builds the JBang UDF scripts of a preprocessing run, i.e. of the project or of an included
+ * project, into one fat JAR, and registers each function next to its script.
+ *
+ * <p>The JAR is cached as {@value JBangJars#JBANG_JAR_NAME} in the deepest directory that contains
+ * all the scripts, and reused as long as it matches them. Every {@value JBangJars#JBANG_JAR_NAME}
+ * is registered by this preprocessor instead of the {@link JarPreprocessor}.
+ */
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class JBangPreprocessor extends UdfManifestPreprocessor {
-
-  public static final String JBANG_FILE_SHA256 = "SHA-256-Digest";
-
-  static final String JBANG_JAR_NAME = "jbang-udfs.jar";
 
   private static final FilenameAnalyzer JBANG_FILES = FilenameAnalyzer.of("java");
 
@@ -53,15 +64,21 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
       Pattern.compile("public\\s+class\\s+(\\w+)\\s+extends\\s+(\\w+)", Pattern.DOTALL);
   private static final String JBANG_SHEBANG = "///usr/bin/env jbang \"$0\" \"$@\" ; exit $?";
 
-  private final Deque<JBangFileInfo> collectedFiles = new ArrayDeque<>();
+  // State of the current pipeline run, reset by complete()
+  private final Map<JBangFileInfo, FilePreprocessingPipeline.Context> sources =
+      new LinkedHashMap<>();
+  private final Map<Path, FilePreprocessingPipeline.Context> jBangJars = new LinkedHashMap<>();
 
   private final JBangRunner jBangRunner;
   private final ErrorCollector errorCollector;
 
-  private FilePreprocessingPipeline.Context ctx;
-
   @Override
   public void process(Path file, FilePreprocessingPipeline.Context ctx) {
+    if (isJBangJar(file)) {
+      jBangJars.put(file, ctx);
+      return;
+    }
+
     if (!jBangRunner.isJBangAvailable() || !isJBangFile(file)) {
       return;
     }
@@ -73,44 +90,69 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
       return;
     }
 
-    this.ctx = ctx;
-    collectedFiles.addLast(udfClass);
+    sources.put(udfClass, ctx);
   }
 
   @Override
   public void complete() {
-    if (collectedFiles.isEmpty()) {
-      return;
-    }
-
-    var allClassNames = collectedFiles.stream().map(JBangFileInfo::udfClassName).toList();
-    var srcPath = collectedFiles.peekFirst().file().getParent();
-    var cachedJarPath = srcPath.resolve(JBANG_JAR_NAME);
-
-    if (isJBangJarExistsAnValid(cachedJarPath, List.copyOf(collectedFiles))) {
-      errorCollector.notice(
-          "Skip preprocessing JBang UDFs, as a valid JBang JAR is already present."
-              + " To rebuild, delete the '%s' file from your project.",
-          cachedJarPath);
-      return;
-    }
-
-    var targetPath = ctx.libDir().resolve(JBANG_JAR_NAME);
     try {
-      jBangRunner.exportFatJar(collectedFiles, targetPath);
-      createUdfManifests(allClassNames, JBANG_JAR_NAME, ctx);
+      if (sources.isEmpty()) {
+        // Nothing to build, e.g. prebuilt JARs only, so register them as plain UDF JARs
+        jBangJars.forEach(
+            (jar, ctx) -> registerUdfJar(jar, libJarName(ctx.includeNamespace()), ctx));
+      } else {
+        buildOrReuseJar();
+      }
+    } finally {
+      // The same instance serves every pipeline run: included projects first, then the project
+      sources.clear();
+      jBangJars.clear();
+    }
+  }
+
+  private void buildOrReuseJar() {
+    var fileInfos =
+        sources.keySet().stream().sorted(Comparator.comparing(JBangFileInfo::file)).toList();
+    var ctx = sources.values().iterator().next(); // all sources share the lib dir and namespace
+    var libJarName = libJarName(ctx.includeNamespace());
+    var cachedJar = cachedJar(fileInfos);
+
+    if (isJBangJarExistsAnValid(cachedJar, fileInfos)) {
+      errorCollector.notice(
+          "Skip building JBang UDFs, as a valid JBang JAR is already present."
+              + " To rebuild, delete the '%s' file from your project.",
+          cachedJar);
+      ctx.copyToLib(cachedJar, libJarName);
+    } else {
+      buildJar(fileInfos, ctx.libDir().resolve(libJarName), cachedJar);
+    }
+
+    sources.forEach(
+        (fileInfo, sourceCtx) -> createUdfManifest(fileInfo.udfClassName(), libJarName, sourceCtx));
+  }
+
+  /** Caches in the deepest directory of all scripts, as it does not depend on the walk order. */
+  private static Path cachedJar(List<JBangFileInfo> fileInfos) {
+    var files = fileInfos.stream().map(fileInfo -> fileInfo.file().toAbsolutePath()).toList();
+    return DirectoryUtils.deepestCommonSubDir(files).resolve(JBANG_JAR_NAME);
+  }
+
+  private void buildJar(List<JBangFileInfo> fileInfos, Path libJar, Path cachedJar) {
+    var classNames = fileInfos.stream().map(JBangFileInfo::udfClassName).toList();
+    try {
+      jBangRunner.exportFatJar(new ArrayDeque<>(fileInfos), libJar);
 
     } catch (ExecuteException e) {
       throw errorCollector.exception(
-          "Failed to build JBang UDF(s) %s. %s", allClassNames, e.getMessage());
+          "Failed to build JBang UDF(s) %s. %s", classNames, e.getMessage());
 
     } catch (IOException e) {
       throw errorCollector.exception(
-          "Failed to execute JBang export for UDF(s) %s: %s", allClassNames, e.getMessage());
+          "Failed to execute JBang export for UDF(s) %s: %s", classNames, e.getMessage());
     }
 
     try {
-      Files.copy(targetPath, srcPath.resolve(JBANG_JAR_NAME), StandardCopyOption.REPLACE_EXISTING);
+      Files.copy(libJar, cachedJar, StandardCopyOption.REPLACE_EXISTING);
     } catch (Exception e) {
       log.warn("Failed to copy JBang JAR to source directory", e);
     }
@@ -131,19 +173,12 @@ public class JBangPreprocessor extends UdfManifestPreprocessor {
       return false;
     }
 
-    try (var jar = new JarFile(jbangJar.toFile())) {
-      var manifest = jar.getManifest();
-      if (manifest == null) {
-        return false;
-      }
-
+    try {
+      var udfDigests = udfDigests(jbangJar);
       return jBangFiles.stream()
           .allMatch(
-              jBangFile -> {
-                var attributes = manifest.getAttributes(jBangFile.udfClassName());
-                return attributes != null
-                    && jBangFile.sha256Digest().equals(attributes.getValue(JBANG_FILE_SHA256));
-              });
+              jBangFile ->
+                  jBangFile.sha256Digest().equals(udfDigests.get(jBangFile.udfClassName())));
 
     } catch (IOException e) {
       log.warn("Failed to read JBang file hashes from JBang JAR '{}', rebuilding...", jbangJar);

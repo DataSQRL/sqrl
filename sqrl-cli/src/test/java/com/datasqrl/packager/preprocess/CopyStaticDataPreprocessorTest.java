@@ -25,6 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.StreamSupport;
 import java.util.zip.GZIPOutputStream;
 import org.junit.jupiter.api.Test;
@@ -109,7 +110,12 @@ class CopyStaticDataPreprocessorTest {
 
   private FilePreprocessingPipeline.Context context(ErrorCollector errors) {
     return new FilePreprocessingPipeline.Context(
-        tempDir, tempDir.resolve("build"), tempDir.resolve("lib"), tempDir.resolve("data"), errors);
+        tempDir,
+        tempDir.resolve("build"),
+        tempDir.resolve("lib"),
+        tempDir.resolve("data"),
+        Optional.empty(),
+        errors);
   }
 
   private Path dataFile(String name) {

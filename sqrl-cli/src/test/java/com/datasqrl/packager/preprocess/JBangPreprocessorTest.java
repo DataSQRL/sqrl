@@ -15,7 +15,8 @@
  */
 package com.datasqrl.packager.preprocess;
 
-import static com.datasqrl.packager.preprocess.JBangPreprocessor.JBANG_FILE_SHA256;
+import static com.datasqrl.packager.preprocess.JBangJars.JBANG_FILE_SHA256;
+import static com.datasqrl.packager.preprocess.JBangJars.JBANG_JAR_NAME;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -114,7 +115,8 @@ class JBangPreprocessorTest {
   }
 
   @Test
-  void givenJbangJarWithMatchingFileHash_whenProcess_thenSkipsExport() throws IOException {
+  void givenJbangJarWithMatchingFileHash_whenProcess_thenSkipsExportAndRegistersCachedJar()
+      throws IOException {
     var content = validScalarFunctionContent();
     var javaFile = createJavaFile("TestClass.java", content);
     createJbangJar("SimpleUDF", sha256Hash(content));
@@ -123,6 +125,8 @@ class JBangPreprocessorTest {
     underTest.complete();
 
     verify(jBangRunner, never()).exportFatJar(any(), any());
+    verify(context).createNewBuildFile(Path.of("SimpleUDF.function.json"));
+    verify(context).copyToLib(tempDir.resolve(JBANG_JAR_NAME), JBANG_JAR_NAME);
   }
 
   @Test
@@ -414,8 +418,7 @@ class JBangPreprocessorTest {
     attributes.putValue(JBANG_FILE_SHA256, sha256Hash);
     manifest.getEntries().put(udfClassName, attributes);
     try (var ignored =
-        new JarOutputStream(
-            Files.newOutputStream(tempDir.resolve(JBangPreprocessor.JBANG_JAR_NAME)), manifest)) {
+        new JarOutputStream(Files.newOutputStream(tempDir.resolve(JBANG_JAR_NAME)), manifest)) {
       // The manifest is sufficient for JBang JAR validity checks.
     }
   }
