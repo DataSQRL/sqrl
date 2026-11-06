@@ -84,10 +84,13 @@ public class FullUseCaseIT {
       return "package.json";
     }
 
+    /** Use cases that are only compiled, or expected to fail compilation, can't be run */
     @Override
     protected boolean testModifierFilter(Path packagePath) {
+      var modifier = TestNameModifier.of(packagePath.getParent());
       return super.testModifierFilter(packagePath)
-          && TestNameModifier.of(packagePath.getParent()) != TestNameModifier.compile;
+          && modifier != TestNameModifier.compile
+          && modifier != TestNameModifier.fail;
     }
 
     @Override
