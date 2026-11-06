@@ -110,13 +110,6 @@ CustomerJurisdictions := SELECT id, 1 AS jurisdiction FROM Customers;
 /*+engine(kafka) */
 ^
 
-[FATAL] Tag [@pii=unknown] has an invalid value: allowed values are [masked, raw]
-in script:tags.sqrl [42:1]:
-);
-
-/*+engine(kafka) */
-^
-
 [NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.ContactEventsCopy[event_time]
 in script:tags.sqrl [47:1]:
 ) LIKE ContactEvents;

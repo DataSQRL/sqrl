@@ -111,6 +111,7 @@ import org.apache.calcite.sql.validate.SqlNameMatchers;
 import org.apache.calcite.sql.validate.SqlValidator;
 import org.apache.flink.api.common.RuntimeExecutionMode;
 import org.apache.flink.configuration.PipelineOptions;
+import org.apache.flink.sql.parser.ddl.SqlTableColumn;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
 import org.apache.flink.sql.parser.ddl.table.SqlTableLike;
@@ -920,7 +921,11 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     // Remove trivial LogicalProject so that subsequent references match
     RelNode relNode = tbBuilder.build().getOriginalRelnode();
     if (CalciteUtil.isTrivialProject(relNode)) relNode = relNode.getInput(0);
-    addResult.columnComments().forEach(comment -> tagAnalyzer.validateTags(comment, errors));
+    // Validate the comments of the declared columns only, since the comments that a LIKE clause
+    // copies are validated on the table that declares them
+    addResult.createdTable().getColumnList().stream()
+        .map(column -> ((SqlTableColumn) column).getComment())
+        .forEach(comment -> tagAnalyzer.validateTags(comment, errors));
     var tableAnalysis =
         buildWithTags(
             tbBuilder.originalRelnode(relNode).collapsedRelnode(relNode),
