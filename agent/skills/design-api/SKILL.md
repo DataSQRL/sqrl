@@ -153,7 +153,7 @@ MyUser(customerId BIGINT NOT NULL METADATA FROM 'auth.userId') :=
 
 Maps to query endpoint `MyUser: Customer`; `customerId` is populated from the `userId` claim and is not a caller-supplied API argument.
 
-Read [authorization configuration](authorization.md) to configure OAuth or JWT based authentication and authorization.
+Read [authorization configuration](authorization.md) to configure authentication with the `auth` block and to generate test tokens.
 
 ## API Versioning and OpenAPI
 

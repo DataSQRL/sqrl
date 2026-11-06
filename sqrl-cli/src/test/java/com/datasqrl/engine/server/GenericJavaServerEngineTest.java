@@ -111,7 +111,7 @@ class GenericJavaServerEngineTest {
     var result =
         ServerConfigUtil.mergeConfigs(underTest.readDefaultConfig(), Map.of("auth", authBlock()));
 
-    assertThat(result.getAuthConfig().getAuthorizationServers()).containsExactly("https://a/");
+    assertThat(result.getAuthConfig().authorizationServers()).containsExactly("https://a/");
     assertThat(result.getJwtAuth()).isNull();
   }
 

@@ -15,6 +15,7 @@
  */
 package com.datasqrl.container.testing;
 
+import static com.datasqrl.container.testing.McpAssertions.assertMcpAuthorizationStatus;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -23,10 +24,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
-import io.modelcontextprotocol.client.transport.McpHttpClientTransportAuthorizationException;
 import io.modelcontextprotocol.spec.McpSchema;
 import java.nio.file.Files;
-import java.security.KeyPairGenerator;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.Duration;
@@ -36,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 import org.junit.jupiter.api.Test;
@@ -44,10 +42,10 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 
 /**
  * Runs the {@code auth} block with inline keys through the real server image. The package is
- * layered: {@code package-base-auth.json} trusts two issuers with {@code leeway: 0}, and {@code
- * auth-leeway-overlay.json} patches only {@code auth.leeway}.
+ * layered: {@code auth-base.json} trusts two issuers with {@code leeway: 0}, and {@code
+ * auth-leeway-overlay.json} patches only {@code auth.leeway}. The issuer, audience and key pairing
+ * itself is covered by {@code TrustedIssuerAuthTest}.
  */
-@Slf4j
 class AuthInlineKeysContainerIT {
 
   @RegisterExtension
@@ -59,7 +57,7 @@ class AuthInlineKeysContainerIT {
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static final List<String> PACKAGE_FILES =
-      List.of("package-base-auth.json", "auth-leeway-overlay.json");
+      List.of("auth-base.json", "auth-leeway-overlay.json");
   private static final String TYPENAME_QUERY = "{\"query\":\"query { __typename }\"}";
   private static final String AUTH_QUERY =
       "{\"query\":\"query { AuthMyTable(limit: 5) { val } }\"}";
@@ -96,7 +94,7 @@ class AuthInlineKeysContainerIT {
 
   @Test
   @SneakyThrows
-  void givenTwoInlineIssuers_whenTokensPresented_thenOnlyMatchingIssuerAudienceAndKeyAccepted() {
+  void givenLayeredInlineIssuers_whenTokensPresented_thenBothIssuersAndOverlayLeewayApply() {
     sqrl.compileSqrlProject(PACKAGE_FILES);
     sqrl.startGraphQLServer();
 
@@ -107,16 +105,9 @@ class AuthInlineKeysContainerIT {
     assertThat(status(token(SECOND_ISSUER, SECOND_AUDIENCE, SECOND_SECRET, 3600)))
         .as("second issuer")
         .isEqualTo(200);
-    assertThat(status(token(FIRST_ISSUER, SECOND_AUDIENCE, FIRST_SECRET, 3600)))
-        .as("first issuer, second audience")
-        .isEqualTo(401);
     assertThat(status(token(SECOND_ISSUER, SECOND_AUDIENCE, FIRST_SECRET, 3600)))
         .as("second issuer signed with first key")
         .isEqualTo(401);
-    assertThat(status(token("unknown-issuer", FIRST_AUDIENCE, FIRST_SECRET, 3600)))
-        .as("unknown issuer")
-        .isEqualTo(401);
-    assertThat(status(rs256Token())).as("RS256 token").isEqualTo(401);
     assertThat(status(token(FIRST_ISSUER, FIRST_AUDIENCE, FIRST_SECRET, -120)))
         .as("expired 120s ago, within the overlay leeway of 300s")
         .isEqualTo(200);
@@ -145,7 +136,7 @@ class AuthInlineKeysContainerIT {
             .requestTimeout(Duration.ofSeconds(10))
             .build();
     assertThatThrownBy(unauthenticated::initialize)
-        .satisfies(ex -> assertThat(mcpAuthorizationStatus(ex)).isEqualTo(401));
+        .satisfies(ex -> assertMcpAuthorizationStatus(ex, 401));
     unauthenticated.close();
 
     var transport =
@@ -193,28 +184,5 @@ class AuthInlineKeysContainerIT {
         .claim("val", 1)
         .signWith(new SecretKeySpec(secret.getBytes(UTF_8), "HmacSHA256"))
         .compact();
-  }
-
-  @SneakyThrows
-  private static String rs256Token() {
-    var generator = KeyPairGenerator.getInstance("RSA");
-    generator.initialize(2048);
-    return Jwts.builder()
-        .issuer(FIRST_ISSUER)
-        .audience()
-        .add(FIRST_AUDIENCE)
-        .and()
-        .expiration(Date.from(Instant.now().plusSeconds(3600)))
-        .signWith(generator.generateKeyPair().getPrivate(), Jwts.SIG.RS256)
-        .compact();
-  }
-
-  private static Integer mcpAuthorizationStatus(Throwable ex) {
-    for (var current = ex; current != null; current = current.getCause()) {
-      if (current instanceof McpHttpClientTransportAuthorizationException authException) {
-        return authException.getResponseInfo().statusCode();
-      }
-    }
-    return null;
   }
 }

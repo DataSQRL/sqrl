@@ -162,7 +162,7 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
       VertxServerModuleContext context) {
     var authConfig = context.config().getAuthConfig();
     if (authConfig != null) {
-      log.info("Configuring {} trusted issuer(s)", authConfig.getIssuers().size());
+      log.info("Configuring {} trusted issuer(s)", authConfig.issuers().size());
       return AuthProviderFactory.createAuthProviders(context.vertx(), authConfig);
     }
 

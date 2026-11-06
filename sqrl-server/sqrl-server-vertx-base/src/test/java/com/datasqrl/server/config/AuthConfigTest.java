@@ -34,54 +34,59 @@ class AuthConfigTest {
   void givenMinimalIssuer_whenParsed_thenDefaultsApply() {
     var authConfig = parse(Map.of("issuers", List.of(issuer("https://a/"))));
 
-    var issuer = authConfig.getIssuers().get(0);
-    assertThat(issuer.getLeeway()).isEqualTo(60);
-    assertThat(issuer.getAlgorithms()).containsExactly("RS256");
-    assertThat(issuer.getKeys()).isNull();
-    assertThat(issuer.getJwksUri()).isNull();
-    assertThat(authConfig.getScopesSupported()).containsExactly("mcp:tools", "mcp:resources");
-    assertThat(authConfig.getResource()).isNull();
+    var issuer = authConfig.issuers().get(0);
+    assertThat(issuer.leeway()).isEqualTo(60);
+    assertThat(issuer.keys()).isNull();
+    assertThat(issuer.jwksUri()).isNull();
+    assertThat(authConfig.scopesSupported()).containsExactly("mcp:tools", "mcp:resources");
+    assertThat(authConfig.resource()).isNull();
   }
 
   @Test
   void givenAuthLevelDefaultsAndIssuerOverrides_whenParsed_thenIssuerValueWins() {
     var overriding = issuer("https://b/");
     overriding.put("leeway", 5);
-    overriding.put("algorithms", List.of("ES256"));
 
     var authConfig =
-        parse(
-            Map.of(
-                "leeway",
-                30,
-                "algorithms",
-                List.of("PS256"),
-                "issuers",
-                List.of(issuer("https://a/"), overriding)));
+        parse(Map.of("leeway", 30, "issuers", List.of(issuer("https://a/"), overriding)));
 
-    assertThat(authConfig.getIssuers())
-        .extracting(AuthConfig.Issuer::getLeeway)
-        .containsExactly(30, 5);
-    assertThat(authConfig.getIssuers())
-        .extracting(AuthConfig.Issuer::getAlgorithms)
-        .containsExactly(List.of("PS256"), List.of("ES256"));
+    assertThat(authConfig.issuers()).extracting(AuthConfig.Issuer::leeway).containsExactly(30, 5);
   }
 
   @Test
-  void givenIssuers_whenParsed_thenAuthorizationServersAreTheIssuers() {
+  void givenIssuersWithEachKeySource_whenParsed_thenInlineKeyIssuersAreNotAuthorizationServers() {
+    var inlineKeys = issuer("my-backend");
+    inlineKeys.put("keys", List.of(KEY));
+    var jwksUri = issuer("https://c/");
+    jwksUri.put("jwksUri", "https://c/jwks");
+
     var authConfig =
         parse(
             Map.of(
                 "issuers",
-                List.of(issuer("https://a/"), issuer("https://b/")),
+                List.of(issuer("https://a/"), inlineKeys, jwksUri, issuer("https://b/")),
                 "resource",
                 "https://api.example.com/v1/mcp",
                 "scopesSupported",
                 List.of("mcp:tools")));
 
-    assertThat(authConfig.getAuthorizationServers()).containsExactly("https://a/", "https://b/");
-    assertThat(authConfig.getResource()).isEqualTo("https://api.example.com/v1/mcp");
-    assertThat(authConfig.getScopesSupported()).containsExactly("mcp:tools");
+    assertThat(authConfig.authorizationServers())
+        .containsExactly("https://a/", "https://c/", "https://b/");
+    assertThat(authConfig.resource()).isEqualTo("https://api.example.com/v1/mcp");
+    assertThat(authConfig.scopesSupported()).containsExactly("mcp:tools");
+  }
+
+  @Test
+  void givenUnresolvedPlaceholders_whenParsed_thenUrlChecksAreLeftToStartup() {
+    var jwksUri = issuer("${UNSET_AUTH_TEST_ISSUER_B}");
+    jwksUri.put("jwksUri", "${UNSET_AUTH_TEST_JWKS_URI}");
+
+    var authConfig =
+        parse(Map.of("issuers", List.of(issuer("${UNSET_AUTH_TEST_ISSUER_A}"), jwksUri)));
+
+    assertThat(authConfig.issuers())
+        .extracting(AuthConfig.Issuer::issuer)
+        .containsExactly("${UNSET_AUTH_TEST_ISSUER_A}", "${UNSET_AUTH_TEST_ISSUER_B}");
   }
 
   static List<Arguments> invalidConfigs() {
@@ -100,8 +105,8 @@ class AuthConfigTest {
     unknownIssuerKey.put("audience", List.of("x"));
     var negativeIssuerLeeway = issuer("https://a/");
     negativeIssuerLeeway.put("leeway", -1);
-    var noneAlgorithm = issuer("https://a/");
-    noneAlgorithm.put("algorithms", List.of("none"));
+    var relativeJwksUri = issuer("https://a/");
+    relativeJwksUri.put("jwksUri", "/jwks");
 
     return List.of(
         Arguments.of(Map.of(), "auth.issuers must be a non-empty array"),
@@ -125,12 +130,12 @@ class AuthConfigTest {
             "auth.issuers lists issuer 'https://a/' more than once"),
         Arguments.of(
             Map.of("issuers", List.of(unknownIssuerKey)),
-            "auth.issuers[0] has unknown key(s) [audience], supported keys are [algorithms,"
-                + " audiences, issuer, jwksUri, keys, leeway]"),
+            "auth.issuers[0] has unknown key(s) [audience], supported keys are [audiences,"
+                + " issuer, jwksUri, keys, leeway]"),
         Arguments.of(
             Map.of("issuers", List.of(issuer("https://a/")), "issuer", "https://a/"),
-            "auth has unknown key(s) [issuer], supported keys are [algorithms, issuers, leeway,"
-                + " resource, scopesSupported]"),
+            "auth has unknown key(s) [issuer], supported keys are [issuers, leeway, resource,"
+                + " scopesSupported]"),
         Arguments.of(
             Map.of("issuers", List.of(issuer("https://a/")), "leeway", -5),
             "auth.leeway must not be negative"),
@@ -141,10 +146,12 @@ class AuthConfigTest {
             Map.of("issuers", List.of(issuer("https://a/")), "leeway", "60"),
             "auth.leeway must be an integer number of seconds"),
         Arguments.of(
-            Map.of("issuers", List.of(noneAlgorithm)),
-            "auth.issuers[0].algorithms has unsupported value(s) [none], supported are [ES256,"
-                + " ES384, ES512, EdDSA, HS256, HS384, HS512, PS256, PS384, PS512, RS256, RS384,"
-                + " RS512]"));
+            Map.of("issuers", List.of(issuer("my-issuer"))),
+            "auth.issuers[0].issuer must be an absolute http(s) URL to discover its keys, or set"
+                + " 'keys' or 'jwksUri'"),
+        Arguments.of(
+            Map.of("issuers", List.of(relativeJwksUri)),
+            "auth.issuers[0].jwksUri must be an absolute http(s) URL"));
   }
 
   @ParameterizedTest
@@ -204,7 +211,18 @@ class AuthConfigTest {
                 List.of("https://a/", "https://b/"),
                 "https://api.example.com/v1/mcp",
                 List.of("mcp:tools", "mcp:resources")));
-    assertThat(serverConfig.getConfiguredResource()).isEqualTo("https://api.example.com/v1/mcp");
+  }
+
+  @Test
+  void givenAuthWithOnlyInlineKeyIssuers_whenServerConfigLoaded_thenNoProtectedResourceMetadata() {
+    var inlineKeys = issuer("my-backend");
+    inlineKeys.put("keys", List.of(KEY));
+
+    var serverConfig =
+        ServerConfigUtil.fromConfigMap(Map.of("auth", Map.of("issuers", List.of(inlineKeys))));
+
+    assertThat(serverConfig.getAuthConfig().issuers()).hasSize(1);
+    assertThat(serverConfig.getProtectedResourceMetadata()).isEmpty();
   }
 
   @Test

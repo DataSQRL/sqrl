@@ -15,7 +15,7 @@
  */
 package com.datasqrl.server.auth;
 
-import com.datasqrl.server.config.ServerConfig;
+import com.datasqrl.server.config.ProtectedResourceMetadata;
 import io.vertx.core.http.HttpServerRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,25 +34,26 @@ class ProtectedResourceUrls {
   static final String METADATA_PATH = "/.well-known/oauth-protected-resource";
 
   /** Returns the configured resource, or the MCP endpoint URL derived from the request. */
-  String resource(ServerConfig config, HttpServerRequest request) {
-    var resource = config.getConfiguredResource();
+  String resource(
+      ProtectedResourceMetadata metadata, String mcpEndpoint, HttpServerRequest request) {
+    var resource = metadata.resource();
     if (StringUtils.isNotBlank(resource)) {
       return resource;
     }
 
-    return requestOrigin(request) + config.getServletConfig().getMcpEndpoint("v1");
+    return requestOrigin(request) + mcpEndpoint;
   }
 
   /**
    * Returns the protected resource metadata URL on the origin of the configured resource, or on the
    * origin of the request if no resource is configured.
    */
-  String metadataUrl(ServerConfig config, HttpServerRequest request) {
-    return configuredResourceOrigin(config).orElseGet(() -> requestOrigin(request)) + METADATA_PATH;
+  String metadataUrl(ProtectedResourceMetadata metadata, HttpServerRequest request) {
+    return configuredResourceOrigin(metadata.resource()).orElseGet(() -> requestOrigin(request))
+        + METADATA_PATH;
   }
 
-  private Optional<String> configuredResourceOrigin(ServerConfig config) {
-    var resource = config.getConfiguredResource();
+  private Optional<String> configuredResourceOrigin(String resource) {
     if (StringUtils.isBlank(resource)) {
       return Optional.empty();
     }

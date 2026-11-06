@@ -17,19 +17,24 @@ package com.datasqrl.server.auth;
 
 import static com.datasqrl.server.auth.ProtectedResourceUrlsTest.request;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.datasqrl.server.config.ServerConfig;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.oauth2.OAuth2Options;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.client.HttpResponse;
 import io.vertx.ext.web.client.WebClient;
 import java.util.List;
 import java.util.Map;
@@ -82,19 +87,32 @@ class OAuthDiscoveryHandlerTest {
 
   @Test
   void givenAuthIssuers_whenAuthFails_thenWwwAuthenticatePointsToMetadata() {
-    var request = request("http", "api.example.com", "http");
-    var response = mock(HttpServerResponse.class, RETURNS_SELF);
-    var ctx = mock(RoutingContext.class);
-    when(ctx.statusCode()).thenReturn(401);
-    when(ctx.request()).thenReturn(request);
-    when(ctx.response()).thenReturn(response);
-
-    new OAuthFailureHandler(authConfig()).handle(ctx);
+    var response = failAuthentication(authConfig());
 
     verify(response)
         .putHeader(
             "WWW-Authenticate",
             "Bearer resource_metadata=\"https://api.example.com/.well-known/oauth-protected-resource\"");
+  }
+
+  @Test
+  void givenOnlyInlineKeyIssuers_whenDiscoveryAndAuthFailure_thenNoMetadataAndNoWwwAuthenticate() {
+    var config = new ServerConfig();
+    config.setAuth(
+        Map.of(
+            "issuers",
+            List.of(
+                Map.of(
+                    "issuer",
+                    "my-backend",
+                    "audiences",
+                    List.of("api"),
+                    "keys",
+                    List.of(Map.of("kty", "oct", "k", "c2VjcmV0"))))));
+    config.validated();
+
+    assertThat(metadataResponse(config).statusCode()).isEqualTo(404);
+    verify(failAuthentication(config), never()).putHeader(eq("WWW-Authenticate"), anyString());
   }
 
   private static ServerConfig authConfig() {
@@ -112,18 +130,33 @@ class OAuthDiscoveryHandlerTest {
     return config.validated();
   }
 
+  private static HttpServerResponse failAuthentication(ServerConfig config) {
+    var request = request("http", "api.example.com", "http");
+    var response = mock(HttpServerResponse.class, RETURNS_SELF);
+    var ctx = mock(RoutingContext.class);
+    when(ctx.statusCode()).thenReturn(401);
+    when(ctx.request()).thenReturn(request);
+    when(ctx.response()).thenReturn(response);
+
+    new OAuthFailureHandler(config.getProtectedResourceMetadata().orElse(null)).handle(ctx);
+    return response;
+  }
+
   private JsonObject fetchMetadata(ServerConfig config) {
+    var response = metadataResponse(config);
+    assertThat(response.statusCode()).isEqualTo(200);
+    return response.bodyAsJsonObject();
+  }
+
+  private HttpResponse<Buffer> metadataResponse(ServerConfig config) {
     var router = Router.router(vertx);
     new OAuthDiscoveryHandler(config).registerRoutes(router);
     var server = await(vertx.createHttpServer().requestHandler(router).listen(0));
 
-    var response =
-        await(
-            WebClient.create(vertx)
-                .get(server.actualPort(), "localhost", ProtectedResourceUrls.METADATA_PATH)
-                .send());
-    assertThat(response.statusCode()).isEqualTo(200);
-    return response.bodyAsJsonObject();
+    return await(
+        WebClient.create(vertx)
+            .get(server.actualPort(), "localhost", ProtectedResourceUrls.METADATA_PATH)
+            .send());
   }
 
   @SneakyThrows

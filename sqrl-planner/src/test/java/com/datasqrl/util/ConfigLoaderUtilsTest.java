@@ -553,8 +553,8 @@ class ConfigLoaderUtilsTest {
                 + "]}",
             "{\"issuers\":[" + issuer("https://c/") + "]}");
 
-    assertThat(authConfig.getAuthorizationServers()).containsExactly("https://c/");
-    assertThat(authConfig.getIssuers().get(0).getLeeway()).isEqualTo(30);
+    assertThat(authConfig.authorizationServers()).containsExactly("https://c/");
+    assertThat(authConfig.issuers().get(0).leeway()).isEqualTo(30);
   }
 
   @Test
@@ -566,10 +566,8 @@ class ConfigLoaderUtilsTest {
                 + ",{\"issuer\":\"https://b/\",\"audiences\":[\"y\"],\"leeway\":5}]}",
             "{\"leeway\":90}");
 
-    assertThat(authConfig.getAuthorizationServers()).containsExactly("https://a/", "https://b/");
-    assertThat(authConfig.getIssuers())
-        .extracting(AuthConfig.Issuer::getLeeway)
-        .containsExactly(90, 5);
+    assertThat(authConfig.authorizationServers()).containsExactly("https://a/", "https://b/");
+    assertThat(authConfig.issuers()).extracting(AuthConfig.Issuer::leeway).containsExactly(90, 5);
   }
 
   @Test
@@ -608,8 +606,7 @@ class ConfigLoaderUtilsTest {
     var serverConfig = ServerConfigUtil.fromConfigMap(vertxConfig);
 
     assertThat(serverConfig.getOauthConfig()).isNull();
-    assertThat(serverConfig.getAuthConfig().getAuthorizationServers())
-        .containsExactly("https://a/");
+    assertThat(serverConfig.getAuthConfig().authorizationServers()).containsExactly("https://a/");
   }
 
   private AuthConfig mergedAuthConfig(String baseAuth, String overlayAuth) {

@@ -134,27 +134,29 @@ public class ServerConfig {
     }
   }
 
-  /** Returns the {@code auth} block with environment variables resolved, or null if not set. */
+  /**
+   * Parses the {@code auth} block with environment variables resolved, or returns null if not set.
+   * It parses on every call, so call it at startup, not per request.
+   */
   @JsonIgnore
-  @SneakyThrows
   public AuthConfig getAuthConfig() {
-    if (auth == null) {
-      return null;
-    }
-
-    var jsonStr = MAPPER.writeValueAsString(auth);
-    return AuthConfig.parse(MAPPER.readValue(jsonStr, JsonObject.class));
+    return auth == null ? null : AuthConfig.parse(resolveEnvVars(auth));
   }
 
+  /**
+   * Returns the RFC 9728 protected resource metadata, or empty if no OAuth authorization server is
+   * configured. With {@code auth}, issuers with inline keys are not advertised.
+   */
   @JsonIgnore
   public Optional<ProtectedResourceMetadata> getProtectedResourceMetadata() {
     var authConfig = getAuthConfig();
     if (authConfig != null) {
-      return Optional.of(
-          new ProtectedResourceMetadata(
-              authConfig.getAuthorizationServers(),
-              authConfig.getResource(),
-              authConfig.getScopesSupported()));
+      var authorizationServers = authConfig.authorizationServers();
+      return authorizationServers.isEmpty()
+          ? Optional.empty()
+          : Optional.of(
+              new ProtectedResourceMetadata(
+                  authorizationServers, authConfig.resource(), authConfig.scopesSupported()));
     }
     if (oauthConfig != null && oauthConfig.getSite() != null) {
       var scopes = oauthConfig.getScopesSupported();
@@ -167,31 +169,23 @@ public class ServerConfig {
     return Optional.empty();
   }
 
-  @JsonIgnore
-  public String getConfiguredResource() {
-    var authConfig = getAuthConfig();
-    if (authConfig != null) {
-      return authConfig.getResource();
-    }
-    return oauthConfig != null ? oauthConfig.getResource() : null;
-  }
-
   /**
    * Returns the JWT authentication options with environment variables resolved. This custom getter
    * exists because {@code jwtAuth} is stored as a raw JSON string to defer environment variable
    * resolution before runtime, causing init failure in {@link JWTAuthOptions}.
    */
   @JsonIgnore
-  @SneakyThrows
   public JWTAuthOptions getJwtAuthOptions() {
-    if (jwtAuth == null) {
-      return null;
-    }
+    return jwtAuth == null ? null : new JWTAuthOptions(resolveEnvVars(jwtAuth));
+  }
 
-    var jsonStr = MAPPER.writeValueAsString(jwtAuth);
-    var jsonObj = MAPPER.readValue(jsonStr, JsonObject.class);
-
-    return new JWTAuthOptions(jsonObj);
+  /**
+   * Converts a raw config block to JSON with environment variables resolved. Blocks are kept raw so
+   * that the compiled {@code vertx-config.json} keeps their {@code ${VAR}} placeholders.
+   */
+  @SneakyThrows
+  private JsonObject resolveEnvVars(Map<String, Object> block) {
+    return MAPPER.readValue(MAPPER.writeValueAsString(block), JsonObject.class);
   }
 
   ////////////////////////////////////////////////////////////////////////////////

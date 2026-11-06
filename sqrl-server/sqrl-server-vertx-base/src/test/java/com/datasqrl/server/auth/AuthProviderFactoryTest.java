@@ -164,15 +164,27 @@ class AuthProviderFactoryTest {
   }
 
   @Test
-  void givenKeysUnusableWithAllowedAlgorithms_whenCreated_thenFailsFast() {
-    var hmac = TestJwtKeys.hmac(vertx, "a-secret-that-is-long-enough-for-hs256");
+  void givenInlineKeyVertxCannotLoad_whenCreated_thenFailsInsteadOfAcceptingUnsignedTokens() {
     var entry = issuer("https://issuer.example.com/");
-    entry.put("keys", List.of(hmac.publicJwk().getMap()));
+    entry.put("keys", List.of(Map.of("kty", "RSA")));
 
     assertThatThrownBy(() -> singleProvider(entry))
-        .hasMessageContaining(
-            "no signing key of issuer 'https://issuer.example.com/' is usable with algorithms"
-                + " [RS256]");
+        .hasMessage(
+            "Cannot configure trusted issuer 'https://issuer.example.com/': none of its keys can"
+                + " verify signatures, so it would accept unsigned tokens");
+  }
+
+  @Test
+  void givenFetchedEncryptionKeysOnly_whenCreated_thenFailsInsteadOfAcceptingUnsignedTokens() {
+    responses.put(
+        "/jwks",
+        new JsonObject()
+            .put("keys", new JsonArray().add(rsa.publicJwk().copy().put("use", "enc"))));
+    var entry = issuer("https://issuer.example.com/");
+    entry.put("jwksUri", idpUrl("/jwks"));
+
+    assertThatThrownBy(() -> singleProvider(entry))
+        .hasMessageContaining("none of its keys can verify signatures");
   }
 
   @Test

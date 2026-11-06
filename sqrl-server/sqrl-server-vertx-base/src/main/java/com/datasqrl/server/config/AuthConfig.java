@@ -19,56 +19,59 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.IntStream;
-import lombok.Value;
 
 /**
  * The {@code auth} block of the server config: the issuers whose tokens this server trusts. Each
- * issuer is validated with its own keys, audiences, leeway and algorithms.
+ * issuer is validated with its own keys, audiences and leeway.
+ *
+ * @param issuers the trusted issuers, never empty
+ * @param resource the public URL of the MCP endpoint for RFC 9728 metadata, or null to derive it
+ *     from each request
+ * @param scopesSupported the scopes advertised to MCP clients
  */
-@Value
-public class AuthConfig {
+public record AuthConfig(List<Issuer> issuers, String resource, List<String> scopesSupported) {
 
   public static final int DEFAULT_LEEWAY_SECONDS = 60;
-  public static final List<String> DEFAULT_ALGORITHMS = List.of("RS256");
   public static final List<String> DEFAULT_SCOPES = List.of("mcp:tools", "mcp:resources");
 
-  static final Set<String> SUPPORTED_ALGORITHMS =
-      Set.of(
-          "HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256",
-          "ES384", "ES512", "EdDSA");
-
   private static final Set<String> AUTH_KEYS =
-      Set.of("issuers", "leeway", "algorithms", "resource", "scopesSupported");
+      Set.of("issuers", "leeway", "resource", "scopesSupported");
   private static final Set<String> ISSUER_KEYS =
-      Set.of("issuer", "audiences", "keys", "jwksUri", "leeway", "algorithms");
+      Set.of("issuer", "audiences", "keys", "jwksUri", "leeway");
 
-  List<Issuer> issuers;
-  String resource;
-  List<String> scopesSupported;
+  /**
+   * One trusted issuer. At most one of {@code keys} and {@code jwksUri} is set; with neither, the
+   * keys come from OIDC discovery of {@code issuer}. Each key verifies tokens signed with its own
+   * {@code alg}, or with the default for its {@code kty} when it has none.
+   *
+   * @param issuer the exact {@code iss} value
+   * @param audiences the accepted audiences, never empty
+   * @param keys inline JWKs, or null
+   * @param jwksUri the JWK Set URL, or null
+   * @param leeway the allowed clock skew in seconds
+   */
+  public record Issuer(
+      String issuer, List<String> audiences, List<JsonObject> keys, String jwksUri, int leeway) {}
 
-  @Value
-  public static class Issuer {
-    String issuer;
-    List<String> audiences;
-    List<JsonObject> keys;
-    String jwksUri;
-    int leeway;
-    List<String> algorithms;
-  }
-
-  public List<String> getAuthorizationServers() {
-    return issuers.stream().map(Issuer::getIssuer).toList();
+  /**
+   * Returns the issuers to advertise as RFC 9728 authorization servers. Issuers with inline {@code
+   * keys} are left out: they sign their own tokens (a backend or a test secret) and are not OAuth
+   * servers an MCP client could use.
+   */
+  public List<String> authorizationServers() {
+    return issuers.stream().filter(issuer -> issuer.keys() == null).map(Issuer::issuer).toList();
   }
 
   public static AuthConfig parse(JsonObject json) {
     checkKnownKeys("auth", json, AUTH_KEYS);
     var leeway = leeway("auth", json, DEFAULT_LEEWAY_SECONDS);
-    var algorithms = algorithms("auth", json, DEFAULT_ALGORITHMS);
 
     checkArgument(
         json.getValue("issuers") instanceof JsonArray array && !array.isEmpty(),
@@ -76,19 +79,16 @@ public class AuthConfig {
     var issuerArray = json.getJsonArray("issuers");
     var issuers =
         IntStream.range(0, issuerArray.size())
-            .mapToObj(
-                i ->
-                    parseIssuer(
-                        "auth.issuers[" + i + "]", issuerArray.getValue(i), leeway, algorithms))
+            .mapToObj(i -> parseIssuer("auth.issuers[" + i + "]", issuerArray.getValue(i), leeway))
             .toList();
 
     var seen = new HashSet<String>();
     issuers.forEach(
         issuer ->
             checkArgument(
-                seen.add(issuer.getIssuer()),
+                seen.add(issuer.issuer()),
                 "auth.issuers lists issuer '%s' more than once",
-                issuer.getIssuer()));
+                issuer.issuer()));
 
     var scopes = stringList("auth.scopesSupported", json.getValue("scopesSupported"), true);
     return new AuthConfig(
@@ -97,8 +97,7 @@ public class AuthConfig {
         scopes == null ? DEFAULT_SCOPES : scopes);
   }
 
-  private static Issuer parseIssuer(
-      String path, Object value, int defaultLeeway, List<String> defaultAlgorithms) {
+  private static Issuer parseIssuer(String path, Object value, int defaultLeeway) {
     checkArgument(value instanceof JsonObject, "%s must be a JSON object", path);
     var json = (JsonObject) value;
     checkKnownKeys(path, json, ISSUER_KEYS);
@@ -112,6 +111,7 @@ public class AuthConfig {
         "%s must set at most one of 'keys' and 'jwksUri'",
         path);
 
+    var jwksUri = optionalString(path + ".jwksUri", json, "jwksUri");
     List<JsonObject> keys = null;
     if (json.getValue("keys") != null) {
       checkArgument(
@@ -121,15 +121,34 @@ public class AuthConfig {
           "%s.keys must be a non-empty array of JWK objects",
           path);
       keys = json.getJsonArray("keys").stream().map(JsonObject.class::cast).toList();
+    } else if (jwksUri != null) {
+      checkArgument(isHttpUrl(jwksUri), "%s.jwksUri must be an absolute http(s) URL", path);
+    } else {
+      checkArgument(
+          isHttpUrl(issuer),
+          "%s.issuer must be an absolute http(s) URL to discover its keys, or set 'keys' or"
+              + " 'jwksUri'",
+          path);
     }
 
-    return new Issuer(
-        issuer,
-        audiences,
-        keys,
-        optionalString(path + ".jwksUri", json, "jwksUri"),
-        leeway(path, json, defaultLeeway),
-        algorithms(path, json, defaultAlgorithms));
+    return new Issuer(issuer, audiences, keys, jwksUri, leeway(path, json, defaultLeeway));
+  }
+
+  /**
+   * Whether the value is an absolute http(s) URL. A value with an unresolved {@code ${...}}
+   * placeholder passes: it is checked again at server startup, once the variable is set.
+   */
+  private static boolean isHttpUrl(String value) {
+    if (value.contains("${")) {
+      return true;
+    }
+    try {
+      var uri = new URI(value);
+      return ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme()))
+          && uri.getHost() != null;
+    } catch (URISyntaxException e) {
+      return false;
+    }
   }
 
   private static int leeway(String path, JsonObject json, int defaultLeeway) {
@@ -140,23 +159,6 @@ public class AuthConfig {
     checkArgument(value instanceof Integer, "%s.leeway must be an integer number of seconds", path);
     checkArgument((Integer) value >= 0, "%s.leeway must not be negative", path);
     return (Integer) value;
-  }
-
-  private static List<String> algorithms(
-      String path, JsonObject json, List<String> defaultAlgorithms) {
-    var algorithms = stringList(path + ".algorithms", json.getValue("algorithms"), false);
-    if (algorithms == null) {
-      return defaultAlgorithms;
-    }
-    var unsupported = new TreeSet<>(algorithms);
-    unsupported.removeAll(SUPPORTED_ALGORITHMS);
-    checkArgument(
-        unsupported.isEmpty(),
-        "%s.algorithms has unsupported value(s) %s, supported are %s",
-        path,
-        unsupported,
-        new TreeSet<>(SUPPORTED_ALGORITHMS));
-    return algorithms;
   }
 
   private static List<String> stringList(String path, Object value, boolean allowEmpty) {

@@ -7,7 +7,6 @@
     "vertx" : {
       "config": {
         "auth": {
-          "algorithms": ["HS256"],
           "leeway": 0,
           "issuers": [
             {
