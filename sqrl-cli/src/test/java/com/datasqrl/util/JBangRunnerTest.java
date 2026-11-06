@@ -15,7 +15,7 @@
  */
 package com.datasqrl.util;
 
-import static com.datasqrl.packager.preprocess.JBangPreprocessor.JBANG_FILE_SHA256;
+import static com.datasqrl.packager.preprocess.JBangJars.JBANG_FILE_SHA256;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
