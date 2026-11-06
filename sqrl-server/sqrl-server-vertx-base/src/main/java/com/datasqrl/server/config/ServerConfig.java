@@ -15,6 +15,8 @@
  */
 package com.datasqrl.server.config;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datasqrl.env.EnvVariableNames;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.util.JsonUtils;
@@ -34,13 +36,17 @@ import io.vertx.ext.web.handler.graphql.GraphiQLHandlerOptions;
 import io.vertx.pgclient.PgConnectOptions;
 import io.vertx.sqlclient.PoolOptions;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Getter
 @Setter
 @NoArgsConstructor
@@ -67,6 +73,7 @@ public class ServerConfig {
   private GraphQLTailSampleTracingConfig graphQLTailSampleTracingConfig =
       new GraphQLTailSampleTracingConfig();
   private GraphQLParserConfig graphQLParserConfig = new GraphQLParserConfig();
+  private Map<String, Object> auth;
   private Map<String, Object> jwtAuth;
   private OAuthConfig oauthConfig;
   private boolean logForwardedClientAddress = true;
@@ -106,7 +113,60 @@ public class ServerConfig {
       duckDbConfig.validateConfig();
     }
 
+    validateAuth();
+
     return this;
+  }
+
+  private void validateAuth() {
+    if (auth != null) {
+      checkArgument(
+          jwtAuth == null && oauthConfig == null,
+          "'auth' cannot be combined with the deprecated 'jwtAuth' or 'oauthConfig'; "
+              + "set them to null in the configuration layer that introduces 'auth'");
+      getAuthConfig();
+    }
+    if (jwtAuth != null) {
+      log.warn("'jwtAuth' is deprecated and will be removed, configure 'auth' instead");
+    }
+    if (oauthConfig != null) {
+      log.warn("'oauthConfig' is deprecated and will be removed, configure 'auth' instead");
+    }
+  }
+
+  /**
+   * Parses the {@code auth} block with environment variables resolved, or returns null if not set.
+   * It parses on every call, so call it at startup, not per request.
+   */
+  @JsonIgnore
+  public AuthConfig getAuthConfig() {
+    return auth == null ? null : AuthConfig.parse(resolveEnvVars(auth));
+  }
+
+  /**
+   * Returns the RFC 9728 protected resource metadata, or empty if no OAuth authorization server is
+   * configured. With {@code auth}, issuers with inline keys are not advertised.
+   */
+  @JsonIgnore
+  public Optional<ProtectedResourceMetadata> getProtectedResourceMetadata() {
+    var authConfig = getAuthConfig();
+    if (authConfig != null) {
+      var authorizationServers = authConfig.authorizationServers();
+      return authorizationServers.isEmpty()
+          ? Optional.empty()
+          : Optional.of(
+              new ProtectedResourceMetadata(
+                  authorizationServers, authConfig.resource(), authConfig.scopesSupported()));
+    }
+    if (oauthConfig != null && oauthConfig.getSite() != null) {
+      var scopes = oauthConfig.getScopesSupported();
+      return Optional.of(
+          new ProtectedResourceMetadata(
+              List.of(oauthConfig.getEffectiveAuthorizationServer()),
+              oauthConfig.getResource(),
+              scopes != null ? scopes : AuthConfig.DEFAULT_SCOPES));
+    }
+    return Optional.empty();
   }
 
   /**
@@ -115,16 +175,17 @@ public class ServerConfig {
    * resolution before runtime, causing init failure in {@link JWTAuthOptions}.
    */
   @JsonIgnore
-  @SneakyThrows
   public JWTAuthOptions getJwtAuthOptions() {
-    if (jwtAuth == null) {
-      return null;
-    }
+    return jwtAuth == null ? null : new JWTAuthOptions(resolveEnvVars(jwtAuth));
+  }
 
-    var jsonStr = MAPPER.writeValueAsString(jwtAuth);
-    var jsonObj = MAPPER.readValue(jsonStr, JsonObject.class);
-
-    return new JWTAuthOptions(jsonObj);
+  /**
+   * Converts a raw config block to JSON with environment variables resolved. Blocks are kept raw so
+   * that the compiled {@code vertx-config.json} keeps their {@code ${VAR}} placeholders.
+   */
+  @SneakyThrows
+  private JsonObject resolveEnvVars(Map<String, Object> block) {
+    return MAPPER.readValue(MAPPER.writeValueAsString(block), JsonObject.class);
   }
 
   ////////////////////////////////////////////////////////////////////////////////
