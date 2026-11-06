@@ -143,7 +143,7 @@ layer that sets `auth.issuers` must list every issuer of its environment. `auth`
 
 ## JWT Authentication (deprecated)
 
-`jwtAuth` is deprecated; use `auth`. Its field names map to Vert.x Java POJOs and are case-sensitive.
+`jwtAuth` is deprecated; use `auth`. Its field names map to Vert.x Java POJOs and are case-sensitive. The server does not start if none of its keys can verify signatures (for example with no `pubSecKeys` or `jwks`); the same applies to the keys `oauthConfig` discovers.
 
 ```json
 {

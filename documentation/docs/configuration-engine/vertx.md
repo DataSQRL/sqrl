@@ -246,6 +246,10 @@ issuer.
 `jwtAuth` is deprecated. Use [`auth`](#authentication-configuration) instead, see [Migrating from `jwtAuth` and `oauthConfig`](#migrating-from-jwtauth-and-oauthconfig).
 :::
 
+The server does not start if none of the configured keys can verify signatures, for example when `jwtAuth` has no
+`pubSecKeys` or `jwks`, because such a configuration would accept unsigned tokens. The same applies to the keys that
+`oauthConfig` discovers.
+
 For secure APIs with JWT authentication:
 
 ```json

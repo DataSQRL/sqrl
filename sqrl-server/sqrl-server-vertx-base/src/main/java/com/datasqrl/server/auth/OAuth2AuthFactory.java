@@ -19,7 +19,6 @@ import com.datasqrl.server.config.OAuthConfig;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
-import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.client.WebClient;
 import io.vertx.ext.web.client.WebClientOptions;
@@ -66,13 +65,10 @@ public class OAuth2AuthFactory {
         .compose(
             discovery ->
                 AuthProviderFactory.fetchJwks(webClient, AuthProviderFactory.jwksUri(discovery)))
-        .map(
+        .compose(
             jwks -> {
-              var jwtAuth = JWTAuth.create(vertx, new JWTAuthOptions().setJwks(jwks));
-              log.info(
-                  "JWTAuth provider created successfully with {} keys from OIDC discovery",
-                  jwks.size());
-              return (AuthenticationProvider) jwtAuth;
+              log.info("Creating JWTAuth provider with {} keys from OIDC discovery", jwks.size());
+              return AuthProviderFactory.createJwtAuth(vertx, new JWTAuthOptions().setJwks(jwks));
             })
         .onComplete(ignored -> webClient.close())
         .recover(

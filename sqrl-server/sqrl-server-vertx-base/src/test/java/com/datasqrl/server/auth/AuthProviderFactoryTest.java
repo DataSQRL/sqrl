@@ -20,13 +20,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.server.config.AuthConfig;
+import com.datasqrl.server.config.OAuthConfig;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.authentication.TokenCredentials;
+import io.vertx.ext.auth.jwt.JWTAuthOptions;
+import io.vertx.ext.auth.oauth2.OAuth2Options;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -170,8 +174,8 @@ class AuthProviderFactoryTest {
 
     assertThatThrownBy(() -> singleProvider(entry))
         .hasMessage(
-            "Cannot configure trusted issuer 'https://issuer.example.com/': none of its keys can"
-                + " verify signatures, so it would accept unsigned tokens");
+            "Cannot configure trusted issuer 'https://issuer.example.com/': no key can verify"
+                + " signatures, so unsigned tokens would be accepted");
   }
 
   @Test
@@ -184,7 +188,50 @@ class AuthProviderFactoryTest {
     entry.put("jwksUri", idpUrl("/jwks"));
 
     assertThatThrownBy(() -> singleProvider(entry))
-        .hasMessageContaining("none of its keys can verify signatures");
+        .hasMessageContaining("no key can verify signatures");
+  }
+
+  @Test
+  void
+      givenDeprecatedJwtAuthWithoutUsableKeys_whenCreated_thenFailsInsteadOfAcceptingUnsignedTokens() {
+    var jwtOptions = new JsonObject().put("issuer", "my-issuer").put("audience", List.of("api"));
+    var withoutKeys = new JWTAuthOptions(new JsonObject().put("jwtOptions", jwtOptions));
+    var unloadableKeys =
+        new JWTAuthOptions(
+            new JsonObject()
+                .put("jwks", List.of(Map.of("kty", "RSA")))
+                .put("jwtOptions", jwtOptions));
+
+    assertThatThrownBy(() -> awaitOrThrow(AuthProviderFactory.createJwtAuth(vertx, withoutKeys)))
+        .hasMessage("no key can verify signatures, so unsigned tokens would be accepted");
+    assertThatThrownBy(() -> awaitOrThrow(AuthProviderFactory.createJwtAuth(vertx, unloadableKeys)))
+        .hasMessage("no key can verify signatures, so unsigned tokens would be accepted");
+  }
+
+  @Test
+  void givenUsableKey_whenJwtAuthCreated_thenSignedTokensAreAccepted() {
+    var options =
+        new JWTAuthOptions()
+            .addJwk(rsa.publicJwk())
+            .setJWTOptions(new JWTOptions().setIssuer("my-issuer").setAudience(List.of(AUDIENCE)));
+
+    var provider = awaitOrThrow(AuthProviderFactory.createJwtAuth(vertx, options));
+
+    assertThat(authenticates(provider, rsa.token(claims("my-issuer", AUDIENCE)))).isTrue();
+  }
+
+  @Test
+  void givenDeprecatedOauthConfigIdpWithEncryptionKeysOnly_whenCreated_thenFails() {
+    serveDiscovery("/.well-known/openid-configuration", idpUrl("/"), idpUrl("/jwks"));
+    responses.put(
+        "/jwks",
+        new JsonObject()
+            .put("keys", new JsonArray().add(rsa.publicJwk().copy().put("use", "enc"))));
+    var oauthConfig = new OAuthConfig();
+    oauthConfig.setOauth2Options(new OAuth2Options().setSite(idpUrl("/")));
+
+    assertThatThrownBy(() -> awaitOrThrow(OAuth2AuthFactory.createAuthProvider(vertx, oauthConfig)))
+        .hasMessage("no key can verify signatures, so unsigned tokens would be accepted");
   }
 
   @Test

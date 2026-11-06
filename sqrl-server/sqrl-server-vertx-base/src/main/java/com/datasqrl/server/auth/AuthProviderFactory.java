@@ -72,7 +72,7 @@ public class AuthProviderFactory {
   private Future<AuthenticationProvider> createAuthProvider(
       Vertx vertx, WebClient webClient, Issuer issuer) {
     return loadKeys(webClient, issuer)
-        .map(
+        .compose(
             jwks -> {
               var jwtOptions =
                   new JWTOptions()
@@ -84,11 +84,9 @@ public class AuthProviderFactory {
                   issuer.issuer(),
                   issuer.audiences(),
                   jwks.size());
-              return (AuthenticationProvider)
-                  JWTAuth.create(
-                      vertx, new JWTAuthOptions().setJwks(jwks).setJWTOptions(jwtOptions));
+              return createJwtAuth(
+                  vertx, new JWTAuthOptions().setJwks(jwks).setJWTOptions(jwtOptions));
             })
-        .compose(provider -> rejectingUnsignedTokens(provider, issuer))
         .recover(
             err ->
                 Future.failedFuture(
@@ -99,17 +97,21 @@ public class AuthProviderFactory {
   }
 
   /**
-   * Fails unless the provider rejects an unsigned token for its issuer. Vert.x skips every key it
-   * cannot use with only a warning, and a {@link JWTAuth} left without keys accepts unsigned
-   * tokens. Probing the provider is the one check that sees which keys Vert.x actually loaded.
+   * Creates a {@link JWTAuth} and makes sure it verifies signatures. Vert.x skips every key it
+   * cannot load with only a warning, and a {@link JWTAuth} left without keys accepts unsigned
+   * tokens. So the new provider is probed with an unsigned token that passes its issuer, audience
+   * and expiry checks, and the returned future fails if the provider accepts it.
    */
-  private Future<AuthenticationProvider> rejectingUnsignedTokens(
-      AuthenticationProvider provider, Issuer issuer) {
-    var claims =
-        new JsonObject()
-            .put("iss", issuer.issuer())
-            .put("aud", new JsonArray(issuer.audiences()))
-            .put("exp", Instant.now().plusSeconds(60).getEpochSecond());
+  public Future<AuthenticationProvider> createJwtAuth(Vertx vertx, JWTAuthOptions options) {
+    var provider = JWTAuth.create(vertx, options);
+    var jwtOptions = options.getJWTOptions();
+    var claims = new JsonObject().put("exp", Instant.now().plusSeconds(60).getEpochSecond());
+    if (jwtOptions.getIssuer() != null) {
+      claims.put("iss", jwtOptions.getIssuer());
+    }
+    if (jwtOptions.getAudience() != null) {
+      claims.put("aud", new JsonArray(jwtOptions.getAudience()));
+    }
     var unsignedToken = base64Url(new JsonObject().put("alg", "none")) + "." + base64Url(claims);
     return provider
         .authenticate(new TokenCredentials(unsignedToken))
@@ -118,8 +120,7 @@ public class AuthProviderFactory {
                 probe.succeeded()
                     ? Future.failedFuture(
                         new IllegalStateException(
-                            "none of its keys can verify signatures, so it would accept unsigned"
-                                + " tokens"))
+                            "no key can verify signatures, so unsigned tokens would be accepted"))
                     : Future.succeededFuture(provider));
   }
 
