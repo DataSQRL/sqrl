@@ -129,14 +129,10 @@ public class TableAnalysis implements TableOrFunctionAnalysis, Documented {
   @Builder.Default Documentation documentation = Documented.EMPTY;
 
   /**
-   * The effective tags of this table: the inherited tags combined with the declared tags, after
-   * declassification. These are the tags downstream tables inherit and that are written to the
-   * deployment assets.
+   * The effective tags of this table, which downstream tables inherit and the deployment assets
+   * list, see {@link com.datasqrl.planner.tags.TagAnalyzer}
    */
-  @Builder.Default TableTags tags = TableTags.EMPTY;
-
-  /** The tags inherited from the input tables, before declassification */
-  @Builder.Default @Exclude TableTags inheritedTags = TableTags.EMPTY;
+  @NonNull @Builder.Default TableTags tags = TableTags.EMPTY;
 
   /**
    * The statistics for the table, either estimated by planner or provided as hints on the

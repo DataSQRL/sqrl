@@ -223,7 +223,7 @@ Customer.highValueOrders(minAmount BIGINT) := SELECT * FROM Orders o WHERE o.cus
 TableName.new_col := expression;
 ```
 
-Must appear **immediately after** the table definition it extends, and may reference previously added columns of the same table. Cannot be applied after `CREATE TABLE` statements.
+Must appear **immediately after** the table definition it extends, and may reference previously added columns of the same table. Cannot be applied after `CREATE TABLE` statements. The table keeps the hints and doc string (including [tags](configuration#tags-compilertags)) of the definition it extends.
 
 ### Relation Alias As ROW
 

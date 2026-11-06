@@ -1,0 +1,66 @@
+IMPORT `banking_catalog`.`sources`;
+
+/** Customer records @pii=raw @classification=confidential */
+CustomersStream := SELECT * FROM sources.CustomersStream;
+
+-- A DISTINCT table without a doc string takes the doc string and tags of its source table
+Customers := DISTINCT CustomersStream ON id ORDER BY updated_at DESC;
+
+-- A filtered table without a doc string takes the doc string and tags of its source table
+CustomersWithEmail := SELECT * FROM Customers WHERE email IS NOT NULL;
+
+/** Loan applications @financial @classification=internal */
+ApplicationsStream := SELECT * FROM sources.ApplicationsStream;
+-- A column expression keeps the doc string and tags of the table definition it extends
+ApplicationsStream.amount_thousands := amount / 1000;
+
+Applications := DISTINCT ApplicationsStream ON id ORDER BY updated_at DESC;
+
+-- Relationships return rows of their target table, which declares the tags
+Customers.applications := SELECT * FROM Applications a WHERE this.id = a.customer_id;
+
+/** Applications of the given customer @financial @classification=internal */
+CustomerApplications(customerId BIGINT NOT NULL) := SELECT * FROM Applications WHERE customer_id = :customerId;
+
+/** Large applications of customers with a known last name @financial @classification=confidential @pii=raw */
+LargeApplications := SELECT * FROM Applications
+                     WHERE amount > 10000 AND customer_id IN (SELECT id FROM Customers WHERE last_name IS NOT NULL);
+
+-- Hidden tables carry the tags of their inputs without declaring them
+_ApplicationsByCustomer := SELECT a.loan_type_id, a.amount, c.id AS customer_id
+                           FROM Applications a JOIN Customers c ON a.customer_id = c.id;
+
+/*+declassify(pii) */
+/** Loan totals per loan type @financial @classification=confidential */
+LoanTotals := SELECT loan_type_id, SUM(amount) AS total_amount, COUNT(*) AS num_loans
+              FROM _ApplicationsByCustomer GROUP BY loan_type_id;
+
+/*+declassify(pii, classification) */
+_CustomerNameCounts := SELECT first_name, COUNT(*) AS num_customers FROM Customers GROUP BY first_name;
+
+/** Number of customers per first name */
+CustomerNameCounts := SELECT first_name, num_customers FROM _CustomerNameCounts;
+
+/*+declassify(pii, classification) */
+/** Number of customers per jurisdiction @jurisdiction */
+CustomersByJurisdiction := SELECT address AS jurisdiction, COUNT(*) AS num_customers
+                           FROM Customers GROUP BY address;
+
+-- A Flink SQL view has no doc string, so it carries the inherited tags without declaring them
+CREATE VIEW CustomerEmails AS SELECT id, email FROM Customers;
+
+/** Contacts written from the customers @pii=raw @classification=confidential */
+CREATE TABLE CustomerContacts (
+  id BIGINT NOT NULL,
+  email STRING COMMENT 'Contact email @gdpr'
+) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/tags-compile/contacts',
+  'format' = 'csv'
+);
+
+-- The table declares the tags of the data written into it
+INSERT INTO CustomerContacts SELECT id, email FROM CustomersStream;
+
+/** Contacts with an email @pii=raw @classification=confidential @gdpr */
+ContactEmails := SELECT id, email FROM CustomerContacts WHERE email IS NOT NULL;

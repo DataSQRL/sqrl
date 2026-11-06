@@ -49,7 +49,7 @@ public record JdbcStatementModel(
     String logicalName,
     Role role,
     List<String> referencedTables,
-    Map<String, String> tags) {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY) Map<String, String> tags) {
 
   public JdbcStatementModel(
       String name, Type type, String sql, String description, List<Field> fields) {

@@ -1,67 +1,67 @@
-[FATAL] Table [CustomerEmails] must declare tag [@classification=confidential] inherited from [Customers]: add it to the doc string or declassify it with /*+declassify(classification) */
+[FATAL] Table [CustomerEmails] must declare tag [@classification=confidential] inherited from [Customers]: declare it in the doc string or declassify it with /*+declassify(classification) */
 in script:tags.sqrl [9:1]:
 Applications := DISTINCT sources.ApplicationsStream ON id ORDER BY updated_at DESC;
 
 /** Missing the inherited pii tag, declares a lower classification */
 ^
 
-[FATAL] Table [CustomerEmails] must declare tag [@pii=raw] inherited from [Customers]: add it to the doc string or declassify it with /*+declassify(pii) */
+[FATAL] Table [CustomerEmails] must declare tag [@pii=raw] inherited from [Customers]: declare it in the doc string or declassify it with /*+declassify(pii) */
 in script:tags.sqrl [9:1]:
 Applications := DISTINCT sources.ApplicationsStream ON id ORDER BY updated_at DESC;
 
 /** Missing the inherited pii tag, declares a lower classification */
 ^
 
-[FATAL] Table [CustomerApplications] declares tag [@classification=internal] which is lower than [@classification=confidential] inherited from [Customers]: raise it or declassify it with /*+declassify(classification) */
+[FATAL] Table [CustomerApplications] declares tag [@classification=internal] which is lower than [@classification=confidential] inherited from [Customers]: declare it in the doc string or declassify it with /*+declassify(classification) */
 in script:tags.sqrl [12:1]:
 CustomerEmails := SELECT id, email FROM Customers WHERE email IS NOT NULL;
 
 /** Reads customers only in a subquery @financial @classification=internal */
 ^
 
-[FATAL] Table [CustomerApplications] must declare tag [@pii=raw] inherited from [Customers]: add it to the doc string or declassify it with /*+declassify(pii) */
+[FATAL] Table [CustomerApplications] must declare tag [@pii=raw] inherited from [Customers]: declare it in the doc string or declassify it with /*+declassify(pii) */
 in script:tags.sqrl [12:1]:
 CustomerEmails := SELECT id, email FROM Customers WHERE email IS NOT NULL;
 
 /** Reads customers only in a subquery @financial @classification=internal */
 ^
 
-[FATAL] Invalid tag on table [InvalidTags]: Tag [@unknown] is not defined in compiler.tags
+[FATAL] Tag [@unknown] is not defined in compiler.tags
 in script:tags.sqrl [16:1]:
                         WHERE customer_id IN (SELECT id FROM Customers);
 
 /** Invalid tags @unknown @pii=secret @classification @financial=yes */
 ^
 
-[FATAL] Invalid tag on table [InvalidTags]: Invalid value in tag [@pii=secret]: allowed values are [masked, raw]
+[FATAL] Tag [@pii=secret] has an invalid value: allowed values are [masked, raw]
 in script:tags.sqrl [16:1]:
                         WHERE customer_id IN (SELECT id FROM Customers);
 
 /** Invalid tags @unknown @pii=secret @classification @financial=yes */
 ^
 
-[FATAL] Invalid tag on table [InvalidTags]: Tag [@classification] requires a value: allowed values are [internal, confidential]
+[FATAL] Tag [@classification] requires a value: allowed values are [internal, confidential]
 in script:tags.sqrl [16:1]:
                         WHERE customer_id IN (SELECT id FROM Customers);
 
 /** Invalid tags @unknown @pii=secret @classification @financial=yes */
 ^
 
-[FATAL] Invalid tag on table [InvalidTags]: Tag [@financial=yes] is a boolean tag and only accepts the value [true]
+[FATAL] Tag [@financial=yes] has an invalid value: allowed values are [true]
 in script:tags.sqrl [16:1]:
                         WHERE customer_id IN (SELECT id FROM Customers);
 
 /** Invalid tags @unknown @pii=secret @classification @financial=yes */
 ^
 
-[FATAL] Table [InvalidTags] must declare tag [@classification=confidential] inherited from [Customers]: add it to the doc string or declassify it with /*+declassify(classification) */
+[FATAL] Table [InvalidTags] must declare tag [@classification=confidential] inherited from [Customers]: declare it in the doc string or declassify it with /*+declassify(classification) */
 in script:tags.sqrl [16:1]:
                         WHERE customer_id IN (SELECT id FROM Customers);
 
 /** Invalid tags @unknown @pii=secret @classification @financial=yes */
 ^
 
-[FATAL] Table [InvalidTags] must declare tag [@pii=raw] inherited from [Customers]: add it to the doc string or declassify it with /*+declassify(pii) */
+[FATAL] Table [InvalidTags] must declare tag [@pii=raw] inherited from [Customers]: declare it in the doc string or declassify it with /*+declassify(pii) */
 in script:tags.sqrl [16:1]:
                         WHERE customer_id IN (SELECT id FROM Customers);
 
@@ -82,7 +82,7 @@ InvalidTags := SELECT id FROM Customers;
 /*+declassify(pii, undefined_tag, financial) */
 ^
 
-[FATAL] Table [CustomerNames] declares tag [@classification=internal] which is lower than [@classification=confidential] inherited from [Customers]: raise it or declassify it with /*+declassify(classification) */
+[FATAL] Table [CustomerNames] declares tag [@classification=internal] which is lower than [@classification=confidential] inherited from [Customers]: declare it in the doc string or declassify it with /*+declassify(classification) */
 in script:tags.sqrl [23:1]:
 CustomerCount := SELECT COUNT(*) AS num_customers FROM Customers;
 
@@ -103,17 +103,59 @@ CustomerRegions := SELECT id, address AS region FROM Customers;
 /*+declassify(pii, classification) */
 ^
 
+[FATAL] Tag [@pii=unknown] has an invalid value: allowed values are [masked, raw]
+in script:tags.sqrl [34:1]:
+CustomerJurisdictions := SELECT id, 1 AS jurisdiction FROM Customers;
+
+/*+engine(kafka) */
+^
+
+[FATAL] Tag [@pii=unknown] has an invalid value: allowed values are [masked, raw]
+in script:tags.sqrl [42:1]:
+);
+
+/*+engine(kafka) */
+^
+
 [NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.ContactEventsCopy[event_time]
-in script:tags.sqrl [46:1]:
+in script:tags.sqrl [47:1]:
 ) LIKE ContactEvents;
 
 /** Missing the pii tag of the email column comment that LIKE copies */
 ^
 
-[FATAL] Table [ContactEmails] must declare tag [@pii=raw] inherited from [ContactEventsCopy]: add it to the doc string or declassify it with /*+declassify(pii) */
-in script:tags.sqrl [46:1]:
+[FATAL] Table [ContactEmails] must declare tag [@pii=raw] inherited from [ContactEventsCopy]: declare it in the doc string or declassify it with /*+declassify(pii) */
+in script:tags.sqrl [47:1]:
 ) LIKE ContactEvents;
 
 /** Missing the pii tag of the email column comment that LIKE copies */
+^
+
+[FATAL] Table [CustomerContacts] must declare tag [@classification=confidential] inherited from [Customers]: declare it in the doc string of the table
+in script:tags.sqrl [60:1]:
+);
+
+INSERT INTO CustomerContacts SELECT id, email FROM Customers;
+^
+
+[FATAL] Table [CustomerContacts] must declare tag [@pii=raw] inherited from [Customers]: declare it in the doc string of the table
+in script:tags.sqrl [60:1]:
+);
+
+INSERT INTO CustomerContacts SELECT id, email FROM Customers;
+^
+
+[FATAL] Table [CustomerContacts] must declare tag [@classification=internal] inherited from [ApplicationContacts]: declare it in the doc string of the table
+in script:tags.sqrl [65:1]:
+ApplicationContacts := SELECT customer_id AS id, CAST(NULL AS STRING) AS email FROM Applications;
+
+EXPORT ApplicationContacts TO CustomerContacts;
+^
+
+[FATAL] Table [CustomerContacts] must declare tag [@financial] inherited from [ApplicationContacts]: declare it in the doc string of the table
+in script:tags.sqrl [65:1]:
+ApplicationContacts := SELECT customer_id AS id, CAST(NULL AS STRING) AS email FROM Applications;
+
+EXPORT ApplicationContacts TO CustomerContacts;
 ^
 

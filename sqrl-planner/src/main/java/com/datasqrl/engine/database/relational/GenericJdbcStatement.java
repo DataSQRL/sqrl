@@ -56,26 +56,8 @@ public class GenericJdbcStatement implements JdbcStatement {
   /** For VIEW statements, the names of the tables the view reads - nullable */
   @JsonIgnore List<String> referencedTables;
 
-  /** For TABLE and VIEW statements, the effective tags - nullable */
+  /** For VIEW statements, the effective tags by tag name - nullable */
   @JsonIgnore Map<String, String> tags;
-
-  public GenericJdbcStatement(
-      String name,
-      Type type,
-      String sql,
-      String description,
-      RelDataType dataType,
-      List<Field> fields,
-      JdbcEngineCreateTable engineTable,
-      List<String> referencedTables) {
-    this(name, type, sql, description, dataType, fields, engineTable, referencedTables, null);
-  }
-
-  /** The tags of the statement, or of its engine table for TABLE statements without tags */
-  @Override
-  public Map<String, String> getTags() {
-    return tags != null ? tags : JdbcStatement.getEngineTableTags(engineTable);
-  }
 
   public GenericJdbcStatement(String name, Type type, String sql) {
     this(name, type, sql, null, null);
@@ -88,7 +70,7 @@ public class GenericJdbcStatement implements JdbcStatement {
       String description,
       RelDataType dataType,
       List<Field> fields) {
-    this(name, type, sql, description, dataType, fields, null, null);
+    this(name, type, sql, description, dataType, fields, null, null, null);
   }
 
   @JsonCreator

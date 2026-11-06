@@ -1,13 +1,6 @@
 {
   "version": "1",
   "enabled-engines": ["vertx", "postgres", "kafka", "flink"],
-  "compiler": {
-    "tags": [
-      { "name": "pii", "values": ["masked", "raw"] },
-      { "name": "classification", "values": ["internal", "confidential"] },
-      { "name": "financial" }
-    ]
-  },
   "engines": {
     "flink": {
       "config": {

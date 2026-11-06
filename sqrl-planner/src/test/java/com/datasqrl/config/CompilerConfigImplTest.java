@@ -17,6 +17,7 @@ package com.datasqrl.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
 
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
@@ -84,21 +85,14 @@ class CompilerConfigImplTest {
         ConfigLoaderUtils.loadUnresolvedConfig(
             errors, List.of(Path.of("src/test/resources/config/package/compilerTags.json")));
 
-    var tags = packageJson.getCompilerConfig().getTags();
+    var tags = packageJson.getCompilerConfig().getTags().orElseThrow();
 
-    assertThat(tags).isPresent();
-    assertThat(tags.get())
-        .extracting(PackageJson.TagConfig::getName)
-        .containsExactly("classification", "pii", "gdpr", "jurisdiction");
-    assertThat(tags.get().get(0).getValues())
+    assertThat(tags).containsOnlyKeys("classification", "pii", "gdpr", "jurisdiction");
+    assertThat(tags.get("classification").getValues())
         .containsExactly("unclassified", "secret", "top_secret");
-    assertThat(tags.get().get(2).getValues()).isEmpty();
-    assertThat(tags.get().get(3).getRequiredColumns())
-        .singleElement()
-        .satisfies(
-            column -> {
-              assertThat(column.getName()).isEqualTo("jurisdiction");
-              assertThat(column.getType()).isEqualTo("STRING");
-            });
+    assertThat(tags.get("gdpr").getValues()).isEmpty();
+    assertThat(tags.get("gdpr").getRequiredColumns()).isEmpty();
+    assertThat(tags.get("jurisdiction").getRequiredColumns())
+        .containsExactly(entry("jurisdiction", "STRING"));
   }
 }

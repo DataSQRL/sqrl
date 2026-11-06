@@ -51,6 +51,7 @@ public class SnowflakeStatementFactory extends AbstractJdbcStatementFactory {
         null,
         null,
         createTable,
+        null,
         null);
   }
 

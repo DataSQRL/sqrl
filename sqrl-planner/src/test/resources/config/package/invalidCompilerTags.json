@@ -1,8 +1,9 @@
 {
   "version": "1",
   "compiler": {
-    "tags": [
-      { "name": "has space", "values": ["a=b"] }
-    ]
+    "tags": {
+      "has space": { "values": ["a=b"] },
+      "pii": { "value": ["masked", "raw"] }
+    }
   }
 }

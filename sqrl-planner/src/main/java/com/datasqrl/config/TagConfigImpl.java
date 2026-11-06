@@ -15,46 +15,23 @@
  */
 package com.datasqrl.config;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
-import lombok.Value;
+import java.util.Map;
+import lombok.AllArgsConstructor;
 
-/** A tag definition under {@code compiler.tags}, mapped from the package configuration. */
-@Value
-@JsonIgnoreProperties(ignoreUnknown = true)
+/** A tag definition under {@code compiler.tags.<name>}. */
+@AllArgsConstructor
 public class TagConfigImpl implements PackageJson.TagConfig {
 
-  String name;
-  List<String> values;
-  List<PackageJson.RequiredColumnConfig> requiredColumns;
+  private final SqrlConfig sqrlConfig;
 
-  @JsonCreator
-  public TagConfigImpl(
-      @JsonProperty("name") String name,
-      @JsonProperty("values") List<String> values,
-      @JsonProperty("required-columns") List<RequiredColumnConfigImpl> requiredColumns) {
-    this.name = name;
-    this.values = values == null ? List.of() : List.copyOf(values);
-    this.requiredColumns =
-        requiredColumns == null
-            ? List.of()
-            : List.<PackageJson.RequiredColumnConfig>copyOf(requiredColumns);
+  @Override
+  public List<String> getValues() {
+    return sqrlConfig.asList("values", String.class).get();
   }
 
-  @Value
-  @JsonIgnoreProperties(ignoreUnknown = true)
-  public static class RequiredColumnConfigImpl implements PackageJson.RequiredColumnConfig {
-
-    String name;
-    String type;
-
-    @JsonCreator
-    public RequiredColumnConfigImpl(
-        @JsonProperty("name") String name, @JsonProperty("type") String type) {
-      this.name = name;
-      this.type = type;
-    }
+  @Override
+  public Map<String, String> getRequiredColumns() {
+    return sqrlConfig.asMap("required-columns", String.class).get();
   }
 }

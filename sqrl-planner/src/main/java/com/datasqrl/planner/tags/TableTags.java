@@ -15,212 +15,77 @@
  */
 package com.datasqrl.planner.tags;
 
-import com.datasqrl.planner.tags.InvalidTag.Reason;
-import com.google.common.base.Preconditions;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalInt;
+import java.util.Optional;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NonNull;
 
-/**
- * The tag set of a table. It references the {@link TagDefinitions} and maps each normalized tag
- * name to the offset of its value in the tag's configured values ({@link
- * TagDefinition#BOOLEAN_OFFSET} for boolean tags), so combining tag sets is a maximum over
- * integers.
- *
- * <p>Tags written in doc strings that don't resolve to a defined tag and value are kept as {@link
- * #getInvalidTags() invalid tags} so validation can report them.
- *
- * <p>Instances are immutable.
- */
-@Getter
+/** The tags of a table, with one value per tag. Instances are immutable. */
 @EqualsAndHashCode
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TableTags {
 
-  public static final TableTags EMPTY = new TableTags(TagDefinitions.DISABLED, Map.of(), List.of());
+  public static final TableTags EMPTY = new TableTags(new TreeMap<>());
 
-  @NonNull @EqualsAndHashCode.Exclude private final TagDefinitions definitions;
+  /** The tag values by tag name, sorted by name */
+  private final SortedMap<String, TagValue> tags;
 
-  /** Normalized tag name to the offset into the tag's values. */
-  @NonNull private final Map<String, Integer> offsets;
+  private TableTags(SortedMap<String, TagValue> tags) {
+    this.tags = Collections.unmodifiableSortedMap(tags);
+  }
 
-  /** Tags from doc strings that don't resolve to a defined tag and value. */
-  @NonNull private final List<InvalidTag> invalidTags;
-
-  public static Builder builder(TagDefinitions definitions) {
-    return new Builder(definitions);
+  /** The tag set of the given values, keeping the highest value of each tag. */
+  public static TableTags of(Collection<TagValue> values) {
+    var tags = new TreeMap<String, TagValue>();
+    values.forEach(value -> tags.merge(value.name(), value, TableTags::max));
+    return new TableTags(tags);
   }
 
   public boolean isEmpty() {
-    return offsets.isEmpty() && invalidTags.isEmpty();
+    return tags.isEmpty();
   }
 
-  public boolean hasInvalidTags() {
-    return !invalidTags.isEmpty();
+  public Optional<TagValue> get(String name) {
+    return Optional.ofNullable(tags.get(name));
   }
 
-  public OptionalInt get(String tag) {
-    var offset = offsets.get(TagDefinitions.normalize(tag));
-    return offset == null ? OptionalInt.empty() : OptionalInt.of(offset);
+  /** The tag values, sorted by tag name. */
+  public Collection<TagValue> values() {
+    return tags.values();
   }
 
-  public boolean contains(String tag) {
-    return offsets.containsKey(TagDefinitions.normalize(tag));
-  }
-
-  public Set<String> names() {
-    return Collections.unmodifiableSet(offsets.keySet());
-  }
-
-  /** Returns the value name of the given tag; the tag must be contained in this set. */
-  public String valueOf(String tag) {
-    return definitions.getOrThrow(tag).valueAt(get(tag).orElseThrow());
-  }
-
-  /** The union of both tag sets with the maximum value per tag. Invalid tags are kept. */
+  /** The union of both tag sets, with the highest value per tag. */
   public TableTags merge(TableTags other) {
-    if (other.isEmpty()) {
-      return this;
-    }
-    if (this.isEmpty()) {
-      return other;
-    }
-    checkSameDefinitions(other);
-    var merged = new HashMap<>(offsets);
-    other.offsets.forEach((tag, offset) -> merged.merge(tag, offset, Math::max));
-    var invalid = new ArrayList<>(invalidTags);
-    invalid.addAll(other.invalidTags);
-    return new TableTags(definitions, Map.copyOf(merged), List.copyOf(invalid));
+    var merged = new TreeMap<>(tags);
+    other.tags.forEach((name, value) -> merged.merge(name, value, TableTags::max));
+    return new TableTags(merged);
   }
 
-  /**
-   * Declassifies the given tags: each tag gets its value from {@code declared}, or is removed if
-   * {@code declared} doesn't contain it.
-   */
-  public TableTags declassify(Set<String> tags, TableTags declared) {
-    if (tags.isEmpty() || offsets.isEmpty()) {
-      return this;
-    }
-    if (!declared.isEmpty()) {
-      checkSameDefinitions(declared);
-    }
-    var result = new HashMap<>(offsets);
-    for (var tag : tags) {
-      var name = TagDefinitions.normalize(tag);
-      var declaredOffset = declared.offsets.get(name);
-      if (declaredOffset == null) {
-        result.remove(name);
-      } else if (result.containsKey(name)) {
-        result.put(name, declaredOffset);
-      }
-    }
-    return new TableTags(definitions, Map.copyOf(result), invalidTags);
+  /** This tag set without the given tags. */
+  public TableTags without(Set<String> names) {
+    var remaining = new TreeMap<>(tags);
+    remaining.keySet().removeAll(names);
+    return new TableTags(remaining);
   }
 
-  /** Returns this tag set without its invalid tags. */
-  public TableTags withoutInvalidTags() {
-    if (invalidTags.isEmpty()) {
-      return this;
-    }
-    if (offsets.isEmpty()) {
-      return EMPTY;
-    }
-    return new TableTags(definitions, offsets, List.of());
-  }
-
-  /** Maps each tag name to its value name ({@code true} for boolean tags), sorted by name. */
+  /** Maps each tag name to its value ({@code true} for boolean tags), sorted by name. */
   public SortedMap<String, String> toValueMap() {
-    var result = new TreeMap<String, String>();
-    offsets.forEach((tag, offset) -> result.put(tag, definitions.getOrThrow(tag).valueAt(offset)));
-    return Collections.unmodifiableSortedMap(result);
+    return tags.values().stream()
+        .collect(
+            Collectors.toMap(
+                TagValue::name, TagValue::value, (a, b) -> a, TreeMap<String, String>::new));
   }
 
-  /** Renders the tags sorted by name, e.g. {@code classification=secret, pii=raw}. */
+  /** Renders the tags as written in doc strings, e.g. {@code @classification=secret @gdpr}. */
   @Override
   public String toString() {
-    return toValueMap().entrySet().stream()
-        .map(e -> e.getKey() + "=" + e.getValue())
-        .collect(Collectors.joining(", "));
+    return tags.values().stream().map(TagValue::toString).collect(Collectors.joining(" "));
   }
 
-  private void checkSameDefinitions(TableTags other) {
-    Preconditions.checkArgument(
-        definitions == other.definitions, "Cannot combine tags of different tag definitions");
-  }
-
-  /** Builds the tag set of a doc string. */
-  public static final class Builder {
-
-    private final TagDefinitions definitions;
-    private final Map<String, Integer> offsets = new HashMap<>();
-    private final List<InvalidTag> invalidTags = new ArrayList<>();
-
-    private Builder(TagDefinitions definitions) {
-      this.definitions = definitions;
-    }
-
-    /**
-     * Adds a tag as written in a doc string. Names and values are normalized to lower case, a
-     * missing value means {@code true}, and the maximum value is kept for duplicate tags. Tags that
-     * don't resolve to a defined tag and value are recorded as invalid tags. Does nothing if tags
-     * are disabled.
-     *
-     * @param name the tag name
-     * @param value the tag value, or null if none was given
-     */
-    public Builder add(String name, String value) {
-      if (!definitions.isEnabled()) {
-        return this;
-      }
-      var tag = TagDefinitions.normalize(name);
-      var normalizedValue = TagDefinitions.normalize(value);
-      var text = "@" + tag + (normalizedValue == null ? "" : "=" + normalizedValue);
-      var definition = definitions.get(tag);
-      if (definition.isEmpty()) {
-        invalidTags.add(new InvalidTag(text, tag, Reason.UNDEFINED_TAG));
-        return this;
-      }
-      var def = definition.get();
-      if (!def.isBoolean() && normalizedValue == null) {
-        invalidTags.add(new InvalidTag(text, tag, Reason.MISSING_VALUE));
-        return this;
-      }
-      var offset = def.offsetOf(normalizedValue == null ? TagDefinition.TRUE : normalizedValue);
-      if (offset.isEmpty()) {
-        invalidTags.add(
-            new InvalidTag(
-                text, tag, def.isBoolean() ? Reason.NON_TRUE_BOOLEAN : Reason.INVALID_VALUE));
-        return this;
-      }
-      offsets.merge(tag, offset.getAsInt(), Math::max);
-      return this;
-    }
-
-    /** Adds a tag by its value offset; used to build tag sets programmatically. */
-    public Builder addOffset(String name, int offset) {
-      var def = definitions.getOrThrow(name);
-      def.valueAt(offset); // validates the offset
-      offsets.merge(def.name(), offset, Math::max);
-      return this;
-    }
-
-    public TableTags build() {
-      if (offsets.isEmpty() && invalidTags.isEmpty()) {
-        return EMPTY;
-      }
-      return new TableTags(definitions, Map.copyOf(offsets), List.copyOf(invalidTags));
-    }
+  private static TagValue max(TagValue a, TagValue b) {
+    return a.isLowerThan(b) ? b : a;
   }
 }

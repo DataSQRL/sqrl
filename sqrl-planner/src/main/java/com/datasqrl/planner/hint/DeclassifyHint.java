@@ -15,20 +15,18 @@
  */
 package com.datasqrl.planner.hint;
 
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
+import com.datasqrl.planner.parser.StatementParserException;
+import com.datasqrl.planner.tags.TagDefinitions;
 import com.google.auto.service.AutoService;
-import com.google.common.base.Preconditions;
-import java.util.LinkedHashSet;
-import java.util.Locale;
-import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.List;
 import lombok.Getter;
 
 /**
- * Declassifies the listed tags, e.g. {@code /*+declassify(pii, classification) *\/}: the table's
- * value for each listed tag is what its doc string declares, or no value if it declares none, and
- * the listed tags are not validated against the inherited tags.
+ * Declassifies the listed tags, e.g. {@code /*+declassify(pii, classification) *\/}: the table does
+ * not inherit them, so it carries only the values its doc string declares for them.
  */
 @Getter
 public class DeclassifyHint extends PlannerHint {
@@ -36,15 +34,12 @@ public class DeclassifyHint extends PlannerHint {
   public static final String HINT_NAME = "declassify";
 
   /** The normalized names of the declassified tags */
-  private final Set<String> tagNames;
+  private final List<String> tagNames;
 
   protected DeclassifyHint(ParsedObject<SqrlHint> source) {
     super(source, Type.ANALYZER);
     this.tagNames =
-        source.get().options().stream()
-            .map(String::trim)
-            .map(name -> name.toLowerCase(Locale.ROOT))
-            .collect(Collectors.toCollection(LinkedHashSet::new));
+        source.get().options().stream().map(String::trim).map(TagDefinitions::normalize).toList();
   }
 
   @AutoService(Factory.class)
@@ -52,9 +47,12 @@ public class DeclassifyHint extends PlannerHint {
 
     @Override
     public PlannerHint create(ParsedObject<SqrlHint> source) {
-      Preconditions.checkArgument(
-          !source.get().options().isEmpty(),
-          "declassify hint requires at least one tag name, e.g. /*+declassify(pii) */");
+      if (source.get().options().isEmpty()) {
+        throw new StatementParserException(
+            ErrorLabel.GENERIC,
+            source.getFileLocation(),
+            "The declassify hint requires at least one tag name, e.g. /*+declassify(pii) */");
+      }
       return new DeclassifyHint(source);
     }
 
