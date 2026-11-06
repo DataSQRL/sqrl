@@ -299,6 +299,7 @@ class FailedTables {
     } else {
       recordCreated(withoutComments, namespace);
     }
+    return false;
   }
 
   /** Records the object defined by a statement that was skipped because it uses one that failed. */
@@ -309,8 +310,11 @@ class FailedTables {
   /**
    * Records the object defined by a statement that failed to parse, as far as its source tells,
    * e.g. {@code Customer} for {@code Customer := DISTINCT CustomerUpdates ON id;}.
+   *
+   * @return whether the statement adds a column, which keeps the statement stack, unlike any other
+   *     statement
    */
-  void recordUnparsed(String statementSource, String namespace) {
+  boolean recordUnparsed(String statementSource, String namespace) {
     var withoutComments = withoutCommentsAndStrings(statementSource);
     var definition = DEFINITION.matcher(withoutComments);
     var importMatcher = IMPORT.matcher(withoutComments);
@@ -321,6 +325,7 @@ class FailedTables {
       } else if (path.size() == 2) {
         // A column, or a relationship that can't be told apart from one, but no query selects it
         columns.add(normalize(path.get(1)));
+        return true;
       }
     } else if (importMatcher.find()) {
       var path = segments(importMatcher.group(1));

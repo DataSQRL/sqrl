@@ -249,7 +249,10 @@ public class SqlScriptPlanner {
       var statement = sourceStmt.statement();
       var lineErrors = scriptErrors.atFile(statement.getFileLocation());
       var sqlStatement = statement.get();
-      recordUnparsedStatements(unparsedStatements, statement.getFileLocation());
+      if (recordUnparsedStatements(unparsedStatements, statement.getFileLocation())) {
+        // A statement that failed to parse ends the stack, like one that failed to plan
+        statementStack = new ArrayList<>();
+      }
 
       if (failedTables.isContextFailed()
           || failedTables.isDependent(
@@ -353,21 +356,32 @@ public class SqlScriptPlanner {
       }
     }
 
+    // Also the statements after the last parsed one, so that an importing script knows which of
+    // its objects failed instead of failing the whole import
+    recordUnparsedStatements(unparsedStatements, null);
+
     if (firstError != null) {
       throw firstError;
     }
   }
 
   /**
-   * Records the statements that failed to parse before the location, in the order of the script, so
-   * that the knock-on errors of the tables they define are not reported.
+   * Records the statements that failed to parse before the location, or all remaining ones when it
+   * is null, in the order of the script, so that the knock-on errors of the tables they define are
+   * not reported.
+   *
+   * @return whether one of them is not a column, so that it ends the statement stack
    */
-  private void recordUnparsedStatements(
+  private boolean recordUnparsedStatements(
       Deque<ParsedObject<String>> unparsedStatements, FileLocation location) {
+    var endsStack = false;
     while (!unparsedStatements.isEmpty()
-        && isBefore(unparsedStatements.peek().getFileLocation(), location)) {
-      failedTables.recordUnparsed(unparsedStatements.poll().get(), failedTableNamespace());
+        && (location == null || isBefore(unparsedStatements.peek().getFileLocation(), location))) {
+      if (!failedTables.recordUnparsed(unparsedStatements.poll().get(), failedTableNamespace())) {
+        endsStack = true;
+      }
     }
+    return endsStack;
   }
 
   /** Whether a table, as written in a statement (e.g. {@code sources.Orders}), is defined */

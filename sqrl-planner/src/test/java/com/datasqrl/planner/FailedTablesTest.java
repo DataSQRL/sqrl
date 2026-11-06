@@ -139,6 +139,15 @@ class FailedTablesTest {
   }
 
   @Test
+  void givenStatementsThatFailedToParse_whenRecorded_thenOnlyColumnsKeepTheStatementStack() {
+    assertThat(failedTables.recordUnparsed("Orders.total := ;", null)).isTrue();
+    assertThat(failedTables.recordUnparsed("Broken := DISTINCT Orders ON id junk;", null))
+        .isFalse();
+    assertThat(failedTables.recordUnparsed("IMPORT ecommerce.Product extra;", null)).isFalse();
+    assertThat(failedTables.recordUnparsed("CREATE TABLE junk", null)).isFalse();
+  }
+
+  @Test
   void givenFailedTableOfDatabase_whenUsedByQualifiedName_thenItsErrorIsKnockOn() {
     translator.executeSQL("CREATE DATABASE mydb");
     recordFailure("CREATE TABLE `mydb`.`Totals` (id INT) WITH ('connector' = 'x');", null);
