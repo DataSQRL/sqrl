@@ -1,0 +1,10 @@
+{
+  "data" : {
+    "add1" : {
+      "sensorid" : 1
+    },
+    "add2" : {
+      "sensorid" : 2
+    }
+  }
+}

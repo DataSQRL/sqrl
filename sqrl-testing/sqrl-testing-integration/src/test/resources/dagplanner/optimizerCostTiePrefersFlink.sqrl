@@ -1,0 +1,10 @@
+IMPORT ecommerce.orders;
+
+/*+no_query */
+CustomerTotals := SELECT customerid, SUM(id) AS total FROM Orders GROUP BY customerid;
+/*+no_query */
+CustomerMax := SELECT customerid, MAX(id) AS max_id FROM Orders GROUP BY customerid;
+
+-- Flink and Postgres have the same cost for this join, so the tie rule picks Flink
+CustomerSummary := SELECT t.customerid, t.total, m.max_id
+    FROM CustomerTotals t JOIN CustomerMax m ON t.customerid = m.customerid;

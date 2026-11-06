@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - updates: BIGINT NOT NULL
@@ -17,6 +17,9 @@ LogicalProject(customerid=[$0], updates=[$1])
   LogicalTableScan(table=[[default_catalog, sources, CustomerAggregate]])
 SQL:
 CREATE VIEW `CustomerAggregate1` AS  SELECT customerid, num_updates * 1 AS updates FROM sources.CustomerAggregate;
+--- physical ---
+Table CustomerAggregate1_1 (postgres):
+ - primary key: customerid
 
 === CustomerAggregate2
 ID:          default_catalog.default_database.CustomerAggregate2
@@ -25,7 +28,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - updates: BIGINT NOT NULL
@@ -36,6 +39,9 @@ LogicalProject(customerid=[$0], updates=[*($1, 2)])
   LogicalTableScan(table=[[default_catalog, mysources, CustomerAggregate]])
 SQL:
 CREATE VIEW `CustomerAggregate2` AS  SELECT customerid, num_updates * 2 AS updates FROM mysources.CustomerAggregate;
+--- physical ---
+Table CustomerAggregate2_2 (postgres):
+ - primary key: customerid
 
 === Customer
 ID:          default_catalog.mysources.Customer
@@ -44,7 +50,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -82,7 +88,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - num_updates: BIGINT NOT NULL
@@ -102,7 +108,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -140,7 +146,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - num_updates: BIGINT NOT NULL

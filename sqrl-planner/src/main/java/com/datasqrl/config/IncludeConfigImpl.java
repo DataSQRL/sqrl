@@ -40,4 +40,9 @@ public class IncludeConfigImpl implements IncludeConfig {
   public Map<String, Object> getConfig() {
     return sqrlConfig.getSubConfig(CONFIG_KEY).toMap();
   }
+
+  @Override
+  public boolean isStandalone() {
+    return sqrlConfig.asBool("standalone").withDefault(false).get();
+  }
 }

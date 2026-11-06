@@ -6,10 +6,13 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~4
----
+--- definition ---
 Schema:
  - id: INTEGER NOT NULL
  - int_array: INTEGER NOT NULL ARRAY NOT NULL
+--- physical ---
+Table IntArray (postgres):
+ - primary key: id
 
 === NestedArray
 ID:          default_catalog.default_database.NestedArray
@@ -18,10 +21,13 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~2
----
+--- definition ---
 Schema:
  - id: INTEGER NOT NULL
  - nested_array: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL ARRAY NOT NULL
+--- physical ---
+Table NestedArray (postgres):
+ - primary key: id
 
 === StringArray
 ID:          default_catalog.default_database.StringArray
@@ -30,16 +36,19 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~4
----
+--- definition ---
 Schema:
  - id: INTEGER NOT NULL
  - string_array: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL ARRAY NOT NULL
+--- physical ---
+Table StringArray (postgres):
+ - primary key: id
 
 === StringArrayFn
 ID:          default_catalog.default_database.StringArrayFn
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.StringVals
 Annotations:
@@ -53,9 +62,12 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~3
----
+--- definition ---
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
+--- physical ---
+Table StringVals (postgres):
+ - primary key: val
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `IntArray`

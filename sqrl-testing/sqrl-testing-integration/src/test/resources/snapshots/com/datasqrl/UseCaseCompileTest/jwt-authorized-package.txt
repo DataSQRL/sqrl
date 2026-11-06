@@ -78,7 +78,7 @@ Stage:       flink
 Primary key: event_id
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - val: BIGINT NOT NULL
@@ -93,7 +93,7 @@ Annotations:
 ID:          default_catalog.default_database.AuthMyTable
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.MyTable
 Annotations:
@@ -104,7 +104,7 @@ Annotations:
 ID:          default_catalog.default_database.AuthMyTableValues
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.MyTable
 Annotations:
@@ -115,7 +115,7 @@ Annotations:
 ID:          default_catalog.default_database.AuthStringMyTableValues
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.MyStringTable
 Annotations:
@@ -126,7 +126,7 @@ Annotations:
 ID:          default_catalog.default_database.MessageSubscription
 Type:        query
 Stage:       kafka
----
+--- definition ---
 Inputs:
  - default_catalog.default_database._Messages
 Annotations:
@@ -141,11 +141,14 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~4
----
+--- definition ---
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
 Annotations:
  - sort: [0 ASC-nulls-first]
+--- physical ---
+Table MyStringTable (postgres):
+ - primary key: val
 
 === MyTable
 ID:          default_catalog.default_database.MyTable
@@ -154,11 +157,14 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~1e1
----
+--- definition ---
 Schema:
  - val: INTEGER NOT NULL
 Annotations:
  - sort: [0 ASC-nulls-first]
+--- physical ---
+Table MyTable (postgres):
+ - primary key: val
 
 === _Messages
 ID:          default_catalog.default_database._Messages
@@ -167,7 +173,7 @@ Stage:       flink
 Primary key: event_id
 Timestamp:   event_time
 Row count:   ~9e7
----
+--- definition ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - val: BIGINT NOT NULL

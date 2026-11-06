@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,11 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+ - index Customer_1_btree_c0c2 (btree): customerid, name
+
 === OrderCustomer
 ID:          default_catalog.default_database.OrderCustomer
 Type:        stream
@@ -44,7 +49,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -67,7 +72,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   time
 Row count:   ~8e6
----
+--- definition ---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id: BIGINT NOT NULL
@@ -91,7 +96,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - cid: BIGINT NOT NULL
  - ctime: BIGINT NOT NULL
@@ -116,7 +121,7 @@ Stage:       postgres
 Primary key: id, time
 Timestamp:   time
 Row count:   ~6e6
----
+--- definition ---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id: BIGINT NOT NULL
@@ -140,7 +145,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
  - id: BIGINT NOT NULL
@@ -157,6 +162,9 @@ LogicalProject(time=[$2], id=[$0], customerid=[$1])
 SQL:
 CREATE VIEW `OrderCustomerLeftExcludedTimeBound` AS  SELECT o.`time`, o.id, o.customerid  FROM Orders o LEFT JOIN Customer c ON o.customerid = c.customerid AND (c.`timestamp` BETWEEN o.`time` AND o.`time` + INTERVAL 1 DAY)
                                                                                                                  WHERE c.customerid IS NOT NULL AND c.lastUpdated IS NULL;
+--- physical ---
+Table OrderCustomerLeftExcludedTimeBound_2 (postgres):
+ - primary key: id, time
 
 === OrderCustomerRight
 ID:          default_catalog.default_database.OrderCustomerRight
@@ -165,7 +173,7 @@ Stage:       postgres
 Primary key: -
 Timestamp:   otime
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - ouuid: BIGINT NOT NULL
  - otime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -190,7 +198,7 @@ Stage:       postgres
 Primary key: lastUpdated
 Timestamp:   -
 Row count:   ~6e6
----
+--- definition ---
 Schema:
  - lastUpdated: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -214,7 +222,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -243,6 +251,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_3 (postgres):
+ - primary key: id, time
+
 === VerifyStream
 ID:          default_catalog.default_database.VerifyStream
 Type:        stream
@@ -250,7 +262,7 @@ Stage:       flink
 Primary key: window_start, window_end
 Timestamp:   -
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - total: BIGINT NOT NULL
  - total_id: BIGINT NOT NULL
@@ -281,6 +293,9 @@ CREATE VIEW `VerifyStream` AS  SELECT
                           )
                        )
                   GROUP BY window_start, window_end;
+--- physical ---
+Table VerifyStream_4 (postgres):
+ - primary key: window_start, window_end
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (

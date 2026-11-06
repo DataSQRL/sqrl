@@ -15,6 +15,7 @@
  */
 package com.datasqrl.planner.dag.nodes;
 
+import com.datasqrl.config.EngineType;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.plan.global.StageAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable;
@@ -76,11 +77,17 @@ public abstract class PipelineNode implements AbstractDAG.Node, Comparable<Pipel
         > 0;
   }
 
+  /**
+   * Finds the stage with the lowest cost. On a cost tie, the {@link EngineType#PROCESS} stage
+   * (Flink) wins, so the map order does not decide the pick.
+   */
   public static StageAnalysis.Cost findCheapestStage(
       Map<ExecutionStage, StageAnalysis> stageAnalysis) {
     var stage =
         StreamUtil.filterByClass(stageAnalysis.values(), StageAnalysis.Cost.class)
-            .sorted(Comparator.comparing(StageAnalysis.Cost::getCost))
+            .sorted(
+                Comparator.comparing(StageAnalysis.Cost::getCost)
+                    .thenComparing(cost -> cost.getStage().getType() != EngineType.PROCESS))
             .findFirst();
     Preconditions.checkArgument(stage.isPresent());
     return stage.get();

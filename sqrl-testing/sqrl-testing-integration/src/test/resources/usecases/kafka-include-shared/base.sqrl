@@ -1,0 +1,9 @@
+-- An individual import of a table that another script of this package defines
+IMPORT mutations.CustomerEvent;
+
+/*+engine(kafka) */
+CREATE TABLE OrderEvent (
+    orderid BIGINT NOT NULL,
+    customerid BIGINT NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);

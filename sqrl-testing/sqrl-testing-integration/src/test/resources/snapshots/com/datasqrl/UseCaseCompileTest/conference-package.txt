@@ -115,13 +115,16 @@ Stage:       flink
 Primary key: eventid
 Timestamp:   -
 Row count:   ~3e6
----
+--- definition ---
 Schema:
  - eventid: BIGINT NOT NULL
  - num: BIGINT NOT NULL
  - test: BIGINT NOT NULL
 Inputs:
  - default_catalog.default_database._UserLikes
+--- physical ---
+Table EventLikeCount (postgres):
+ - primary key: eventid
 
 === Events
 ID:          default_catalog.default_database.Events
@@ -130,7 +133,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   last_updated
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -150,12 +153,16 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: _EventStream
+--- physical ---
+Table Events (postgres):
+ - primary key: id
+ - index Events_text_c3c4 (text): title, abstract
 
 === EventsLiked
 ID:          default_catalog.default_database.EventsLiked
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Events
  - default_catalog.default_database._UserLikes
@@ -167,7 +174,7 @@ Annotations:
 ID:          default_catalog.default_database.PersonalizedEventSearch
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Events
  - default_catalog.default_database._UserInterests
@@ -179,7 +186,7 @@ Annotations:
 ID:          default_catalog.default_database.RecommendedEvents
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Events
  - default_catalog.default_database._UserInterests
@@ -194,7 +201,7 @@ Stage:       flink
 Primary key: _uuid
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - userid: BIGINT NOT NULL
@@ -213,7 +220,7 @@ Stage:       flink
 Primary key: _uuid
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - userid: BIGINT NOT NULL
@@ -231,7 +238,7 @@ Stage:       flink
 Primary key: url, last_updated
 Timestamp:   last_updated
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -254,7 +261,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - userid: BIGINT NOT NULL
  - embedding: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
@@ -275,7 +282,7 @@ Stage:       flink
 Primary key: _uuid
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - userid: BIGINT NOT NULL
@@ -294,7 +301,7 @@ Stage:       flink
 Primary key: url, last_updated
 Timestamp:   last_updated
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - url: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - date: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -321,7 +328,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~2e8
----
+--- definition ---
 Schema:
  - userid: BIGINT NOT NULL
  - embedding: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
@@ -337,12 +344,15 @@ Stage:       flink
 Primary key: userid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - userid: BIGINT NOT NULL
  - interestVector: RAW('com.datasqrl.flinkrunner.stdlib.vector.FlinkVectorType', 'AEhjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLnZlY3Rvci5GbGlua1ZlY3RvclR5cGVTZXJpYWxpemVyU25hcHNob3QAAAAD')
 Inputs:
  - default_catalog.default_database._UserInterestVectors
+--- physical ---
+Table _UserInterests (postgres):
+ - primary key: userid
 
 === _UserLikes
 ID:          default_catalog.default_database._UserLikes
@@ -351,7 +361,7 @@ Stage:       flink
 Primary key: userid, eventid
 Timestamp:   event_time
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - _uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - userid: BIGINT NOT NULL
@@ -363,6 +373,9 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: _Likes
+--- physical ---
+Table _UserLikes (postgres):
+ - primary key: userid, eventid
 
 >>>flink-sql-no-functions.sql
 CREATE TEMPORARY TABLE `_EventStream__schema` (

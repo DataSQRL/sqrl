@@ -15,3 +15,10 @@ CREATE TABLE CustomerExportInternal (
     name STRING,
     `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
 );
+
+/*+ engine(kafka) */
+CREATE TABLE CustomerExportInternalPartitioned (
+    customerid BIGINT,
+    name STRING,
+    `timestamp` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+) PARTITIONED BY (customerid);

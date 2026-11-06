@@ -3,7 +3,7 @@
 ID:          default_catalog.default_database.AdminOrderCustomers
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customer
  - default_catalog.default_database._SpecialOrders
@@ -31,7 +31,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -62,11 +62,15 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === CustomerOrderCount
 ID:          default_catalog.default_database.CustomerOrderCount
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customer
  - default_catalog.default_database.Orders
@@ -94,7 +98,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~3e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -116,6 +120,9 @@ LogicalFilter(condition=[=($cor1.customerid, $1)])
 SQL:
 CREATE VIEW `CustomerWithOrders` AS  SELECT * FROM Customer c
 WHERE EXISTS (SELECT o.id FROM Orders o WHERE c.customerid = o.customerid);
+--- physical ---
+Table CustomerWithOrders_2 (postgres):
+ - primary key: customerid, lastUpdated
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -124,7 +131,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -153,11 +160,15 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_3 (postgres):
+ - primary key: id, time
+
 === SimilarOrders
 ID:          default_catalog.default_database.SimilarOrders
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Customer
  - default_catalog.default_database.Orders
@@ -186,7 +197,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -203,6 +214,9 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], isSpecialorder
     LogicalTableScan(table=[[default_catalog, default_database, Orders]])
 SQL:
 CREATE VIEW `_SpecialOrders` AS  SELECT *, id > 1000 AS isSpecialorder FROM Orders WHERE id < 1000000;
+--- physical ---
+Table _SpecialOrders_4 (postgres):
+ - primary key: id, time
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (

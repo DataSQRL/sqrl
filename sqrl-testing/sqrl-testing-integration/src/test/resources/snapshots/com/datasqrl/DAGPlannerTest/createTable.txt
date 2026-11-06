@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~9e7
----
+--- definition ---
 Schema:
  - sensorid: INTEGER
  - temperature: FLOAT
@@ -27,6 +27,9 @@ LogicalProject(sensorid=[$1], temperature=[$2], event_time=[$3], machineid=[$5])
 SQL:
 CREATE VIEW `MachineReading` AS  SELECT r.sensorid, r.temperature, r.event_time, s.machineid
                   FROM _SensorReading r JOIN _Sensors FOR SYSTEM_TIME AS OF r.event_time s ON r.sensorid = s.sensorid;
+--- physical ---
+Table MachineReading_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === MachineTempByHour
 ID:          default_catalog.default_database.MachineTempByHour
@@ -35,7 +38,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   time_hour
 Row count:   ~7e7
----
+--- definition ---
 Schema:
  - machineid: INTEGER
  - time_hour: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -56,6 +59,9 @@ SQL:
 CREATE VIEW `MachineTempByHour` AS  SELECT machineid, window_time as time_hour, AVG(temperature) AS avg_temperature
                      FROM TABLE(TUMBLE(TABLE MachineReading, DESCRIPTOR(event_time), INTERVAL '60' MINUTES))
                      GROUP BY machineid, window_start, window_end, window_time;
+--- physical ---
+Table MachineTempByHour_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === _SensorReading
 ID:          default_catalog.default_database._SensorReading
@@ -64,7 +70,7 @@ Stage:       flink
 Primary key: event_id
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - event_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: INTEGER
@@ -103,7 +109,7 @@ Stage:       flink
 Primary key: sensorid
 Timestamp:   updatedTime
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - machineid: INTEGER

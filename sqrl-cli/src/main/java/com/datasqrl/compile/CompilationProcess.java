@@ -82,7 +82,6 @@ public class CompilationProcess {
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);
     var mutationDatabase = physicalPlan.getMutationDatabase(environment);
-    dagWriter.run(dag, planner.getCompleteScript().toString(), mutationDatabase);
 
     TestPlan testPlan = null;
     // There can only be a single server plan
@@ -139,6 +138,9 @@ public class CompilationProcess {
 
     var rewriters = ServiceLoaderDiscovery.getAll(PhysicalPlanRewriter.class);
     physicalPlan = physicalPlan.applyRewriting(rewriters, environment, errors);
+
+    // Write out the DAG after the physical plan is final
+    dagWriter.run(dag, physicalPlan, planner.getCompleteScript().toString(), mutationDatabase);
 
     // Read database file if configured and check compatibility
     mainScript

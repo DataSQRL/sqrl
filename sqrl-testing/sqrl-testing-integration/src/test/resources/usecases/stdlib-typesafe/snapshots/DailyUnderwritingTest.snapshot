@@ -1,0 +1,17 @@
+{
+  "data" : {
+    "DailyUnderwritingTest" : [ {
+      "window_start" : "2026-01-05T00:00:00.000Z",
+      "window_end" : "2026-01-06T00:00:00.000Z",
+      "applications" : 5,
+      "errors" : 1,
+      "verified_income" : 2
+    }, {
+      "window_start" : "2026-01-06T00:00:00.000Z",
+      "window_end" : "2026-01-07T00:00:00.000Z",
+      "applications" : 1,
+      "errors" : 0,
+      "verified_income" : 1
+    } ]
+  }
+}

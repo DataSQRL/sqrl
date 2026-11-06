@@ -1,0 +1,10 @@
+CREATE TABLE ReadingWithoutKey (
+    sensorid INT NOT NULL,
+    writer STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+) WITH (
+    'connector' = 'kafka',
+    'topic' = 'Reading',
+    'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+    'format' = 'flexible-json'
+);

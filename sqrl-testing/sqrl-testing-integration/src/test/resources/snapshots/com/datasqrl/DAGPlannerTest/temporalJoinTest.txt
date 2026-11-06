@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: customerid, lastUpdated
 Timestamp:   timestamp
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -37,6 +37,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Customer_1 (postgres):
+ - primary key: customerid, lastUpdated
+
 === DistinctCustomer
 ID:          default_catalog.default_database.DistinctCustomer
 Type:        state
@@ -44,7 +48,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   timestamp
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -68,6 +72,10 @@ SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`
 FROM (SELECT `customerid`, `email`, `name`, `lastUpdated`, `timestamp`, ROW_NUMBER() OVER (PARTITION BY `customerid` ORDER BY `timestamp` DESC NULLS LAST) AS `__sqrlinternal_rownum`
   FROM `default_catalog`.`default_database`.`Customer`) AS `t`
 WHERE `__sqrlinternal_rownum` = 1
+--- physical ---
+Table DistinctCustomer_2 (postgres):
+ - primary key: customerid
+
 === Orders
 ID:          default_catalog.default_database.Orders
 Type:        stream
@@ -75,7 +83,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -104,6 +112,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_3 (postgres):
+ - primary key: id, time
+
 === TemporalJoin
 ID:          default_catalog.default_database.TemporalJoin
 Type:        stream
@@ -111,7 +123,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~9e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -136,6 +148,9 @@ LogicalProject(id=[$0], customerid=[$1], time=[$2], entries=[$3], customerid0=[$
         LogicalTableScan(table=[[default_catalog, default_database, DistinctCustomer]])
 SQL:
 CREATE VIEW `TemporalJoin` AS  SELECT * FROM Orders o JOIN DistinctCustomer FOR SYSTEM_TIME AS OF `time` c ON o.customerid = c.customerid;
+--- physical ---
+Table TemporalJoin_4 (postgres):
+ - primary key: id, time
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Customer` (

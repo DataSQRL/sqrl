@@ -339,8 +339,15 @@ public class DAGPlanner {
                 var datatype = relBuilder.peek().getRowType();
                 tblBuilder.setColumns(datatype);
                 var createdTable =
-                    exportEngine.createTable(
-                        exportStage, originalTableName, tblBuilder, datatype, originalNodeTable);
+                    downstream instanceof ExportNode
+                        ? exportEngine.createTableForExportStatement(
+                            exportStage, originalTableName, tblBuilder, datatype, originalNodeTable)
+                        : exportEngine.createTable(
+                            exportStage,
+                            originalTableName,
+                            tblBuilder,
+                            datatype,
+                            originalNodeTable);
                 exportPlans.get(exportStage).table(createdTable);
                 targetTable = sqrlEnv.createSinkTable(tblBuilder);
                 streamTableMapping.put(

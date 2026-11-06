@@ -1,0 +1,16 @@
+{
+  "data" : {
+    "add1" : {
+      "writer" : "server-region"
+    },
+    "add2" : {
+      "writer" : "server-omitted-region"
+    },
+    "add3" : {
+      "writer" : "server-null-region"
+    },
+    "add4" : {
+      "writer" : "flink-omitted-region"
+    }
+  }
+}

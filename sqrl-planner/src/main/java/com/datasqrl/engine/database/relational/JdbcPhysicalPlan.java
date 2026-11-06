@@ -20,6 +20,8 @@ import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.util.StreamUtil;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +56,13 @@ public record JdbcPhysicalPlan(
 
   public List<JdbcStatement> getStatementsForType(Type type) {
     return statements.stream().filter(statement -> statement.getType() == type).toList();
+  }
+
+  /** The indexes this plan creates, grouped by the name of their table */
+  public Map<String, List<IndexDefinition>> getIndexesByTable() {
+    return StreamUtil.filterByClass(statements.stream(), CreateIndexJdbcStatement.class)
+        .map(CreateIndexJdbcStatement::getIndex)
+        .collect(Collectors.groupingBy(IndexDefinition::getTableName));
   }
 
   public List<DeploymentArtifact> getDeploymentArtifacts() {

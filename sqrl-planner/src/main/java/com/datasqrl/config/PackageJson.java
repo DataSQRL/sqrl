@@ -104,6 +104,13 @@ public interface PackageJson {
 
     List<IncludeConfig> getIncludeConfigs();
 
+    default List<String> getStandaloneIncludes() {
+      return getIncludeConfigs().stream()
+          .filter(IncludeConfig::isStandalone)
+          .map(IncludeConfig::getNamespace)
+          .toList();
+    }
+
     List<ScriptApiConfig> getScriptApiConfigs();
 
     Optional<String> getGraphql();
@@ -126,6 +133,8 @@ public interface PackageJson {
     String getPackage();
 
     Map<String, Object> getConfig();
+
+    boolean isStandalone();
   }
 
   interface ScriptApiConfig {

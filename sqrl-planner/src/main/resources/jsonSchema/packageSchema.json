@@ -180,6 +180,9 @@
                   "type": "object",
                   "minProperties": 1,
                   "additionalProperties": true
+                },
+                "standalone": {
+                  "type": "boolean"
                 }
               },
               "additionalProperties": false,
