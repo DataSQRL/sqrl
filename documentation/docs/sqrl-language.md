@@ -109,9 +109,11 @@ Internal tables support `kafka` and `iceberg` engines.
 | Connector option           | **omitted**                                                     | **required**                 |
 | Other `WITH (...)` options | Optional engine-specific options                                | Connector configuration      |
 | Engine hint                | **required**                                                    | Not used to select connector |
-| Metadata columns           | `METADATA FROM 'uuid'`, `'timestamp'` are recognised by planner | Passed through               |
+| Metadata columns           | `METADATA FROM 'uuid'`, `'timestamp'`, `'auth.<claim>'` only    | Passed through               |
 | Watermark spec             | **generated**                                                   | **required**                 |
 | Primary key                | *Unenforced* upsert semantics                                   | Same as Flink                |
+
+On an internal table, use only the metadata keys `'uuid'`, `'timestamp'` and `'auth.<claim>'`. DataSQRL fills in these columns, so they are not fields of the mutation input. A `METADATA` column without `FROM` uses its column name as the key. Any other key stops the compile with an `Unknown metadata key` error, for example a typing error such as `'auht.sub'` or a key of the Flink Kafka connector such as `'offset'`. Without this check, the column becomes a field of the mutation input and the client sets its value.
 
 With the `kafka` engine, `PARTITIONED BY (col, ...)` on an internal table without a primary key sets the Kafka message key of each record, both for the records that the server writes for a mutation and for the records that the pipeline exports into the table. Records with the same key go to the same Kafka partition, so their order is kept. The clause only declares the key; the table is not partitioned in Flink. The key can contain `METADATA FROM 'uuid'` and `METADATA FROM 'auth.<claim>'` columns, which the server fills in before it writes the record, but not the `METADATA FROM 'timestamp'` column, which is only known after the record is written.
 The Flink source of the table reads every column from the message value and ignores the key. Adding `PARTITIONED BY` to an existing table therefore keeps the records written before the table had a key, also when the pipeline reads the topic again from the earliest offset. This relies on the default `kafka-safe` connector; the plain `kafka` connector drops records that have no key.

@@ -17,6 +17,7 @@ package com.datasqrl.planner.tables;
 
 import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
+import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.server.ResolvedMetadata;
 import com.datasqrl.util.StreamUtil;
 import com.google.common.base.Preconditions;
@@ -96,20 +97,36 @@ public class FlinkTableBuilder {
     return this;
   }
 
+  /** Without a FROM clause, Flink uses the column name as the metadata key. */
+  public static String metadataKey(SqlTableColumn.SqlMetadataColumn metadataColumn) {
+    return metadataColumn.getMetadataAlias().orElse(metadataColumn.getName().getSimple());
+  }
+
   public Map<String, ResolvedMetadata> extractMetadataColumns(MetadataExtractor extractor) {
     Preconditions.checkArgument(columnList != null, "Need to initialize columns first");
     Map<String, ResolvedMetadata> convertedColumns = new HashMap<>();
+    List<String> unknownMetadataColumns = new ArrayList<>();
     for (var i = 0; i < columnList.size(); i++) {
       var column = columnList.get(i);
       if (column instanceof SqlTableColumn.SqlMetadataColumn columnMetadata) {
-        columnMetadata
-            .getMetadataAlias()
-            .map(alias -> extractor.extract(alias, columnMetadata.getType().getNullable()))
-            .ifPresent(
-                metadata -> convertedColumns.put(columnMetadata.getName().getSimple(), metadata));
+        var columnName = columnMetadata.getName().getSimple();
+        var metadataAlias = metadataKey(columnMetadata);
+        var resolvedMetadata =
+            extractor.extract(metadataAlias, columnMetadata.getType().getNullable());
+        if (resolvedMetadata.isEmpty()) {
+          var missingFromClauseNote =
+              columnMetadata.getMetadataAlias().isEmpty()
+                  ? " (the column has no FROM clause, so its name is the metadata key)"
+                  : "";
+          // Collect all unknown aliases of the table, so a single error reports all of them
+          unknownMetadataColumns.add(
+              "'%s' on column '%s'%s".formatted(metadataAlias, columnName, missingFromClauseNote));
+          continue;
+        }
+        convertedColumns.put(columnName, resolvedMetadata.get());
 
         // Remove metadata if extractor says so
-        if (columnMetadata.getMetadataAlias().map(extractor::removeMetadata).orElse(false)) {
+        if (extractor.removeMetadata(metadataAlias)) {
           var regularColumn =
               new SqlRegularColumn(
                   columnMetadata.getParserPosition(),
@@ -120,6 +137,15 @@ public class FlinkTableBuilder {
           columnList.set(i, regularColumn);
         }
       }
+    }
+    if (!unknownMetadataColumns.isEmpty()) {
+      throw new NoLocationStatementParserException(
+          "Unknown metadata %s on table '%s': %s. Use %s."
+              .formatted(
+                  unknownMetadataColumns.size() == 1 ? "key" : "keys",
+                  getTableName(),
+                  String.join(", ", unknownMetadataColumns),
+                  extractor.supportedAliases()));
     }
     return convertedColumns;
   }
