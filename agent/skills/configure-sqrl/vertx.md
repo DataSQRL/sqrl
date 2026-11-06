@@ -112,6 +112,7 @@ token is accepted only when its `iss`, `aud` and signature all match the same is
 |---------------------------|----------|----------------------------------|----------------------------------------------------------------------------------|
 | `issuers`                 | Yes      |                                  | Non-empty array of trusted issuers                                               |
 | `leeway`                  | No       | `60`                             | Clock skew in seconds; resolution order is `issuers[].leeway`, `leeway`, 60      |
+| `algorithms`              | No       | no restriction                   | Allowed signature algorithms; an issuer's own `algorithms` overrides it          |
 | `resource`                | No       | derived from the request         | Public MCP endpoint URL for RFC 9728 metadata                                    |
 | `scopesSupported`         | No       | `["mcp:tools", "mcp:resources"]` | Scopes advertised to MCP clients                                                 |
 | `issuers[].issuer`        | Yes      |                                  | Exact `iss` value, including a trailing slash; unique                            |
@@ -119,13 +120,17 @@ token is accepted only when its `iss`, `aud` and signature all match the same is
 | `issuers[].keys`          | No       |                                  | Inline JWKs (RFC 7517); cannot rotate, so prefer discovery                       |
 | `issuers[].jwksUri`       | No       |                                  | JWK Set URL; set at most one of `keys` and `jwksUri`                             |
 | `issuers[].leeway`        | No       | `auth.leeway`                    | Per-issuer leeway; negative values are rejected                                  |
+| `issuers[].algorithms`    | No       | `auth.algorithms`                | Per-issuer allowed algorithms                                                    |
 
 With neither `keys` nor `jwksUri`, keys come from OIDC discovery at `<issuer>/.well-known/openid-configuration`, so
 `issuer` must then be an absolute http(s) URL. Keys are fetched once at startup; the server fails to start if they cannot
 be fetched, and must be restarted after a key rotation. Each key verifies tokens signed with its own `alg`, or with the
 default for its type (`RS256` for `RSA`, `ES256` for `EC`, `EdDSA` for `OKP`, `HS256` for `oct`); tokens signed with
-any other algorithm are rejected. The server does not start if none of an issuer's keys can verify signatures. Unknown
-keys, duplicate issuers and the other invalid shapes are compile errors.
+any other algorithm are rejected. Set `algorithms` to restrict this, or to use keys without `alg` for other algorithms:
+a key whose `alg` is not listed is ignored, and a key without `alg` is used with each listed algorithm of its type (for
+example `"algorithms": ["PS256"]` for an RSA key without `alg` that signs `PS256`). The server does not start if none
+of an issuer's keys can verify signatures. Unknown keys, duplicate issuers, unsupported algorithms and the other invalid
+shapes are compile errors.
 
 The MCP discovery endpoint `/.well-known/oauth-protected-resource` advertises the issuers without inline `keys` as
 `authorization_servers`. Issuers with inline `keys` sign their own tokens and are not advertised; when every issuer has

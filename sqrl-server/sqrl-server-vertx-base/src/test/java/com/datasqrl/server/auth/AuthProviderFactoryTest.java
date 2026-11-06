@@ -179,6 +179,16 @@ class AuthProviderFactoryTest {
   }
 
   @Test
+  void givenAlgorithmsThatFitNoKey_whenCreated_thenFailsInsteadOfAcceptingUnsignedTokens() {
+    var entry = issuer("https://issuer.example.com/");
+    entry.put("keys", List.of(rsa.publicJwk().getMap()));
+    entry.put("algorithms", List.of("HS256"));
+
+    assertThatThrownBy(() -> singleProvider(entry))
+        .hasMessageContaining("no key can verify signatures");
+  }
+
+  @Test
   void givenFetchedEncryptionKeysOnly_whenCreated_thenFailsInsteadOfAcceptingUnsignedTokens() {
     responses.put(
         "/jwks",

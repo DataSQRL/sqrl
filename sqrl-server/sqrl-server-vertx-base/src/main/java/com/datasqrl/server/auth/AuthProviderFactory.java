@@ -72,6 +72,7 @@ public class AuthProviderFactory {
   private Future<AuthenticationProvider> createAuthProvider(
       Vertx vertx, WebClient webClient, Issuer issuer) {
     return loadKeys(webClient, issuer)
+        .map(issuer::keysForAlgorithms)
         .compose(
             jwks -> {
               var jwtOptions =

@@ -36,16 +36,27 @@ import lombok.SneakyThrows;
 public record TestJwtKeys(JsonObject publicJwk, JWTAuth signer, String algorithm) {
 
   public static TestJwtKeys hmac(Vertx vertx, String secret) {
+    return hmac(vertx, secret, "HS256");
+  }
+
+  /** An {@code oct} key without {@code alg}, and a signer that signs with the given algorithm. */
+  public static TestJwtKeys hmac(Vertx vertx, String secret, String algorithm) {
     var jwk =
         new JsonObject()
             .put("kty", "oct")
             .put("k", base64Url(secret.getBytes(StandardCharsets.UTF_8)));
-    var signer = JWTAuth.create(vertx, new JWTAuthOptions().addJwk(jwk.copy().put("alg", "HS256")));
-    return new TestJwtKeys(jwk, signer, "HS256");
+    var signer =
+        JWTAuth.create(vertx, new JWTAuthOptions().addJwk(jwk.copy().put("alg", algorithm)));
+    return new TestJwtKeys(jwk, signer, algorithm);
   }
 
-  @SneakyThrows
   public static TestJwtKeys rsa(Vertx vertx) {
+    return rsa(vertx, "RS256");
+  }
+
+  /** An RSA key without {@code alg}, and a signer that signs with the given algorithm. */
+  @SneakyThrows
+  public static TestJwtKeys rsa(Vertx vertx, String algorithm) {
     var generator = KeyPairGenerator.getInstance("RSA");
     generator.initialize(2048);
     var keyPair = generator.generateKeyPair();
@@ -63,8 +74,8 @@ public record TestJwtKeys(JsonObject publicJwk, JWTAuth signer, String algorithm
         JWTAuth.create(
             vertx,
             new JWTAuthOptions()
-                .addPubSecKey(new PubSecKeyOptions().setAlgorithm("RS256").setBuffer(pem)));
-    return new TestJwtKeys(jwk, signer, "RS256");
+                .addPubSecKey(new PubSecKeyOptions().setAlgorithm(algorithm).setBuffer(pem)));
+    return new TestJwtKeys(jwk, signer, algorithm);
   }
 
   public static Map<String, Object> claims(String issuer, String audience) {

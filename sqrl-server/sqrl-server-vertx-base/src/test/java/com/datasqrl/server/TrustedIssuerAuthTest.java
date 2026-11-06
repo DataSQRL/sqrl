@@ -136,6 +136,23 @@ class TrustedIssuerAuthTest {
   }
 
   @Test
+  void givenAlgorithms_whenKeysHaveNoAlg_thenEachKeyVerifiesTheListedAlgorithmsOnly() {
+    var secret = "a-secret-long-enough-for-hs512-a-secret-long-enough-for-hs512-xx";
+    var ps256 = TestJwtKeys.rsa(vertx, "PS256");
+    var hs512 = TestJwtKeys.hmac(vertx, secret, "HS512");
+    var rsaIssuer = issuer(ISSUER_A, AUDIENCE_X, ps256);
+    var hmacIssuer = issuer(ISSUER_B, AUDIENCE_Y, hs512);
+    hmacIssuer.put("algorithms", List.of("HS512"));
+    startServer(auth(Map.of("algorithms", List.of("PS256")), rsaIssuer, hmacIssuer));
+
+    assertThat(queryStatus(ps256.token(claims(ISSUER_A, AUDIENCE_X)))).isEqualTo(200);
+    assertThat(queryStatus(hs512.token(claims(ISSUER_B, AUDIENCE_Y)))).isEqualTo(200);
+    assertThat(queryStatus(TestJwtKeys.hmac(vertx, secret).token(claims(ISSUER_B, AUDIENCE_Y))))
+        .as("HS256 token with the same secret, HS256 not listed")
+        .isEqualTo(401);
+  }
+
+  @Test
   void givenTrustedIssuer_whenUnsignedTokenPresented_thenRejected() {
     startServer(auth(Map.of(), issuer(ISSUER_A, AUDIENCE_X, keyA)));
     var encoder = Base64.getUrlEncoder().withoutPadding();

@@ -18,6 +18,7 @@ package com.datasqrl.server.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.vertx.core.json.JsonObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,7 @@ class AuthConfigTest {
 
     var issuer = authConfig.issuers().get(0);
     assertThat(issuer.leeway()).isEqualTo(60);
+    assertThat(issuer.algorithms()).as("no algorithm restriction").isNull();
     assertThat(issuer.keys()).isNull();
     assertThat(issuer.jwksUri()).isNull();
     assertThat(authConfig.scopesSupported()).containsExactly("mcp:tools", "mcp:resources");
@@ -46,11 +48,36 @@ class AuthConfigTest {
   void givenAuthLevelDefaultsAndIssuerOverrides_whenParsed_thenIssuerValueWins() {
     var overriding = issuer("https://b/");
     overriding.put("leeway", 5);
+    overriding.put("algorithms", List.of("ES256"));
 
     var authConfig =
-        parse(Map.of("leeway", 30, "issuers", List.of(issuer("https://a/"), overriding)));
+        parse(
+            Map.of(
+                "leeway",
+                30,
+                "algorithms",
+                List.of("PS256"),
+                "issuers",
+                List.of(issuer("https://a/"), overriding)));
 
     assertThat(authConfig.issuers()).extracting(AuthConfig.Issuer::leeway).containsExactly(30, 5);
+    assertThat(authConfig.issuers())
+        .extracting(AuthConfig.Issuer::algorithms)
+        .containsExactly(List.of("PS256"), List.of("ES256"));
+  }
+
+  @Test
+  void givenAlgorithms_whenKeysApplied_thenKeysWithoutAlgUseEachListedAlgorithmOfTheirType() {
+    var rsaWithoutAlg = new JsonObject(KEY);
+    var ecWithUnlistedAlg = new JsonObject().put("kty", "EC").put("alg", "ES256");
+    var restricted = issuerWithAlgorithms(List.of("RS256", "PS256", "HS256"));
+
+    assertThat(restricted.keysForAlgorithms(List.of(rsaWithoutAlg, ecWithUnlistedAlg)))
+        .extracting(key -> key.getString("alg"))
+        .containsExactly("RS256", "PS256");
+    assertThat(issuerWithAlgorithms(null).keysForAlgorithms(List.of(rsaWithoutAlg)))
+        .as("no restriction")
+        .containsExactly(rsaWithoutAlg);
   }
 
   @Test
@@ -101,6 +128,8 @@ class AuthConfigTest {
     twoKeySources.put("jwksUri", "https://a/jwks");
     var emptyKeys = issuer("https://a/");
     emptyKeys.put("keys", List.of());
+    var noneAlgorithm = issuer("https://a/");
+    noneAlgorithm.put("algorithms", List.of("none"));
     var unknownIssuerKey = issuer("https://a/");
     unknownIssuerKey.put("audience", List.of("x"));
     var negativeIssuerLeeway = issuer("https://a/");
@@ -130,12 +159,12 @@ class AuthConfigTest {
             "auth.issuers lists issuer 'https://a/' more than once"),
         Arguments.of(
             Map.of("issuers", List.of(unknownIssuerKey)),
-            "auth.issuers[0] has unknown key(s) [audience], supported keys are [audiences,"
-                + " issuer, jwksUri, keys, leeway]"),
+            "auth.issuers[0] has unknown key(s) [audience], supported keys are [algorithms,"
+                + " audiences, issuer, jwksUri, keys, leeway]"),
         Arguments.of(
             Map.of("issuers", List.of(issuer("https://a/")), "issuer", "https://a/"),
-            "auth has unknown key(s) [issuer], supported keys are [issuers, leeway, resource,"
-                + " scopesSupported]"),
+            "auth has unknown key(s) [issuer], supported keys are [algorithms, issuers, leeway,"
+                + " resource, scopesSupported]"),
         Arguments.of(
             Map.of("issuers", List.of(issuer("https://a/")), "leeway", -5),
             "auth.leeway must not be negative"),
@@ -145,6 +174,14 @@ class AuthConfigTest {
         Arguments.of(
             Map.of("issuers", List.of(issuer("https://a/")), "leeway", "60"),
             "auth.leeway must be an integer number of seconds"),
+        Arguments.of(
+            Map.of("issuers", List.of(noneAlgorithm)),
+            "auth.issuers[0].algorithms has unsupported value(s) [none], supported are [ES256,"
+                + " ES384, ES512, EdDSA, HS256, HS384, HS512, PS256, PS384, PS512, RS256, RS384,"
+                + " RS512]"),
+        Arguments.of(
+            Map.of("issuers", List.of(issuer("https://a/")), "algorithms", List.of()),
+            "auth.algorithms must be a non-empty array of non-blank strings"),
         Arguments.of(
             Map.of("issuers", List.of(issuer("my-issuer"))),
             "auth.issuers[0].issuer must be an absolute http(s) URL to discover its keys, or set"
@@ -231,6 +268,10 @@ class AuthConfigTest {
 
     assertThat(serverConfig.getAuthConfig()).isNull();
     assertThat(serverConfig.getProtectedResourceMetadata()).isEmpty();
+  }
+
+  private static AuthConfig.Issuer issuerWithAlgorithms(List<String> algorithms) {
+    return new AuthConfig.Issuer("https://a/", List.of("api"), null, null, 60, algorithms);
   }
 
   private static AuthConfig parse(Map<String, Object> auth) {

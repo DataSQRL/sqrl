@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 /**
  * The {@code auth} block of the server config: the issuers whose tokens this server trusts. Each
@@ -41,24 +42,48 @@ public record AuthConfig(List<Issuer> issuers, String resource, List<String> sco
   public static final int DEFAULT_LEEWAY_SECONDS = 60;
   public static final List<String> DEFAULT_SCOPES = List.of("mcp:tools", "mcp:resources");
 
+  static final Set<String> SUPPORTED_ALGORITHMS =
+      Set.of(
+          "HS256", "HS384", "HS512", "RS256", "RS384", "RS512", "PS256", "PS384", "PS512", "ES256",
+          "ES384", "ES512", "EdDSA");
+
   private static final Set<String> AUTH_KEYS =
-      Set.of("issuers", "leeway", "resource", "scopesSupported");
+      Set.of("issuers", "leeway", "algorithms", "resource", "scopesSupported");
   private static final Set<String> ISSUER_KEYS =
-      Set.of("issuer", "audiences", "keys", "jwksUri", "leeway");
+      Set.of("issuer", "audiences", "keys", "jwksUri", "leeway", "algorithms");
 
   /**
    * One trusted issuer. At most one of {@code keys} and {@code jwksUri} is set; with neither, the
-   * keys come from OIDC discovery of {@code issuer}. Each key verifies tokens signed with its own
-   * {@code alg}, or with the default for its {@code kty} when it has none.
+   * keys come from OIDC discovery of {@code issuer}.
    *
    * @param issuer the exact {@code iss} value
    * @param audiences the accepted audiences, never empty
    * @param keys inline JWKs, or null
    * @param jwksUri the JWK Set URL, or null
    * @param leeway the allowed clock skew in seconds
+   * @param algorithms the allowed signature algorithms, or null for no restriction
    */
   public record Issuer(
-      String issuer, List<String> audiences, List<JsonObject> keys, String jwksUri, int leeway) {}
+      String issuer,
+      List<String> audiences,
+      List<JsonObject> keys,
+      String jwksUri,
+      int leeway,
+      List<String> algorithms) {
+
+    /**
+     * Applies {@code algorithms} to the issuer's keys. Without it, the keys are returned as they
+     * are, and each key verifies tokens signed with its own {@code alg}, or with the default for
+     * its {@code kty} when it has none. With it, a key with an {@code alg} is kept only if that
+     * algorithm is listed, and a key without one is used once for each listed algorithm its {@code
+     * kty} supports.
+     */
+    public List<JsonObject> keysForAlgorithms(List<JsonObject> keys) {
+      return algorithms == null
+          ? keys
+          : keys.stream().flatMap(key -> withAllowedAlgorithms(key, algorithms)).toList();
+    }
+  }
 
   /**
    * Returns the issuers to advertise as RFC 9728 authorization servers. Issuers with inline {@code
@@ -72,6 +97,7 @@ public record AuthConfig(List<Issuer> issuers, String resource, List<String> sco
   public static AuthConfig parse(JsonObject json) {
     checkKnownKeys("auth", json, AUTH_KEYS);
     var leeway = leeway("auth", json, DEFAULT_LEEWAY_SECONDS);
+    var algorithms = algorithms("auth", json, null);
 
     checkArgument(
         json.getValue("issuers") instanceof JsonArray array && !array.isEmpty(),
@@ -79,7 +105,10 @@ public record AuthConfig(List<Issuer> issuers, String resource, List<String> sco
     var issuerArray = json.getJsonArray("issuers");
     var issuers =
         IntStream.range(0, issuerArray.size())
-            .mapToObj(i -> parseIssuer("auth.issuers[" + i + "]", issuerArray.getValue(i), leeway))
+            .mapToObj(
+                i ->
+                    parseIssuer(
+                        "auth.issuers[" + i + "]", issuerArray.getValue(i), leeway, algorithms))
             .toList();
 
     var seen = new HashSet<String>();
@@ -97,7 +126,8 @@ public record AuthConfig(List<Issuer> issuers, String resource, List<String> sco
         scopes == null ? DEFAULT_SCOPES : scopes);
   }
 
-  private static Issuer parseIssuer(String path, Object value, int defaultLeeway) {
+  private static Issuer parseIssuer(
+      String path, Object value, int defaultLeeway, List<String> defaultAlgorithms) {
     checkArgument(value instanceof JsonObject, "%s must be a JSON object", path);
     var json = (JsonObject) value;
     checkKnownKeys(path, json, ISSUER_KEYS);
@@ -131,7 +161,13 @@ public record AuthConfig(List<Issuer> issuers, String resource, List<String> sco
           path);
     }
 
-    return new Issuer(issuer, audiences, keys, jwksUri, leeway(path, json, defaultLeeway));
+    return new Issuer(
+        issuer,
+        audiences,
+        keys,
+        jwksUri,
+        leeway(path, json, defaultLeeway),
+        algorithms(path, json, defaultAlgorithms));
   }
 
   /**
@@ -149,6 +185,44 @@ public record AuthConfig(List<Issuer> issuers, String resource, List<String> sco
     } catch (URISyntaxException e) {
       return false;
     }
+  }
+
+  private static Stream<JsonObject> withAllowedAlgorithms(JsonObject key, List<String> algorithms) {
+    var kty = key.getString("kty");
+    var alg = key.getString("alg");
+    if (alg != null) {
+      return algorithms.contains(alg) ? Stream.of(key) : Stream.empty();
+    }
+    return algorithms.stream()
+        .filter(candidate -> fitsKeyType(kty, candidate))
+        .map(candidate -> key.copy().put("alg", candidate));
+  }
+
+  private static boolean fitsKeyType(String kty, String alg) {
+    return switch (kty == null ? "" : kty) {
+      case "RSA" -> alg.startsWith("RS") || alg.startsWith("PS");
+      case "EC" -> alg.startsWith("ES");
+      case "oct" -> alg.startsWith("HS");
+      case "OKP" -> alg.equals("EdDSA");
+      default -> false;
+    };
+  }
+
+  private static List<String> algorithms(
+      String path, JsonObject json, List<String> defaultAlgorithms) {
+    var algorithms = stringList(path + ".algorithms", json.getValue("algorithms"), false);
+    if (algorithms == null) {
+      return defaultAlgorithms;
+    }
+    var unsupported = new TreeSet<>(algorithms);
+    unsupported.removeAll(SUPPORTED_ALGORITHMS);
+    checkArgument(
+        unsupported.isEmpty(),
+        "%s.algorithms has unsupported value(s) %s, supported are %s",
+        path,
+        unsupported,
+        new TreeSet<>(SUPPORTED_ALGORITHMS));
+    return algorithms;
   }
 
   private static int leeway(String path, JsonObject json, int defaultLeeway) {

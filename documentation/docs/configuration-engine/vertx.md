@@ -96,6 +96,7 @@ MCP clients it publishes the issuers without inline `keys` as `authorization_ser
 |-------------------|-------------|----------|--------------------------------|-----------------------------------------------------------------------------------------------------|
 | `issuers`         | **array**   | Yes      |                                | The trusted issuers, see below. Must not be empty                                                   |
 | `leeway`          | **integer** | No       | `60`                           | Allowed clock skew in seconds for `exp`, `nbf` and `iat`, for every issuer that does not set its own |
+| `algorithms`      | **array**   | No       | no restriction                 | Accepted signature algorithms, for every issuer that does not set its own                           |
 | `resource`        | **string**  | No       | derived from the request       | Public URL of the MCP endpoint (RFC 9728), e.g. `https://api.example.com/v1/mcp`                    |
 | `scopesSupported` | **array**   | No       | `["mcp:tools", "mcp:resources"]` | Scopes advertised in the protected resource metadata                                              |
 
@@ -108,6 +109,7 @@ Each entry of `issuers`:
 | `keys`       | **array**   | No       | Inline signing keys as JWK objects (RFC 7517)                                                                |
 | `jwksUri`    | **string**  | No       | URL of a JWK Set to fetch the signing keys from                                                              |
 | `leeway`     | **integer** | No       | Overrides `auth.leeway` for this issuer                                                                      |
+| `algorithms` | **array**   | No       | Overrides `auth.algorithms` for this issuer                                                                  |
 
 The effective leeway of an issuer is its own `leeway`, else `auth.leeway`, else 60 seconds. Negative values are rejected.
 
@@ -123,12 +125,20 @@ provider rotates its signing keys.
 Each key verifies tokens signed with its own `alg`, or, when it has none, with the default for its type: `RS256` for
 `RSA`, `ES256` for `EC`, `EdDSA` for `OKP` and `HS256` for `oct`. A token signed with any other algorithm finds no key
 and is rejected, so for example an `HS256` token cannot be accepted by an issuer that has only RSA keys. Keys marked
-`"use": "enc"` are ignored. The server does not start if none of an issuer's keys can verify signatures.
+`"use": "enc"` are ignored.
+
+Set `algorithms` to restrict this, or to use keys without `alg` for other algorithms: a key whose `alg` is not listed
+is ignored, and a key without `alg` is used with each listed algorithm that fits its type (`RSA` for `RS*`/`PS*`, `EC`
+for `ES*`, `oct` for `HS*`, `OKP` for `EdDSA`). For example, `"algorithms": ["PS256"]` lets an RSA key without `alg`
+verify `PS256` tokens. Supported algorithms are `HS256`, `HS384`, `HS512`, `RS256`, `RS384`, `RS512`, `PS256`,
+`PS384`, `PS512`, `ES256`, `ES384`, `ES512` and `EdDSA`.
+
+The server does not start if none of an issuer's keys can verify signatures.
 
 The server rejects these configurations at compile time and at startup: a missing or empty `issuers`, an issuer
 without `issuer` or `audiences`, an empty `audiences` or `keys`, both `keys` and `jwksUri`, a `jwksUri` or a discovery
-`issuer` that is not an absolute http(s) URL, a duplicate issuer, a negative leeway, and any unknown key in `auth` or in
-an issuer entry. A value with an unresolved `${...}` environment variable skips the URL check at compile time and is
+`issuer` that is not an absolute http(s) URL, a duplicate issuer, an unsupported algorithm, a negative leeway, and any
+unknown key in `auth` or in an issuer entry. A value with an unresolved `${...}` environment variable skips the URL check at compile time and is
 checked at startup.
 
 For symmetric keys, for example in tests, use an `oct` JWK whose `k` is the base64url-encoded secret:
@@ -171,7 +181,7 @@ Auth0 issuers end with a trailing slash; keep it, because `issuer` must match th
 ### Layered Package Files
 
 Package files merge objects key by key, but an array in a later file replaces the earlier array whole. A later layer
-can therefore change `auth.leeway` alone and keep the earlier `issuers`, but it cannot change one
+can therefore change `auth.leeway` or `auth.algorithms` alone and keep the earlier `issuers`, but it cannot change one
 field of one issuer: a layer that sets `auth.issuers` must list every issuer of that environment.
 
 `auth` cannot be combined with the deprecated `jwtAuth` or `oauthConfig`, including when they come from different
