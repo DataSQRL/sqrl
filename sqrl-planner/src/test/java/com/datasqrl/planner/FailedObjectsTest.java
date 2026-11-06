@@ -61,13 +61,14 @@ class FailedObjectsTest {
     when(flink.getStreamingSpecificConfig()).thenReturn(new Configuration());
     var config = mock(CompilerConfig.class);
     when(config.predicatePushdownRules()).thenReturn(PredicatePushdownRules.DEFAULT);
-    translator = new Sqrl2FlinkSQLTranslator(paths, flink, config);
+    translator = new Sqrl2FlinkSQLTranslator(paths, flink, config, ErrorCollector.root());
     translator.createTable(
         "CREATE TABLE Orders (id INT, customer STRING, amount DOUBLE)"
             + " WITH ('connector'='datagen')",
         Optional.empty(),
         mock(SchemaLoader.class),
-        HintsAndDoc.EMPTY);
+        HintsAndDoc.EMPTY,
+        ErrorCollector.root());
   }
 
   @AfterEach
@@ -164,7 +165,10 @@ class FailedObjectsTest {
   void givenFailedColumn_whenUsedThroughTableThatSelectsAllOfItsColumns_thenItsErrorIsKnockOn() {
     record(failures, "Orders.total := amount * missing;");
     translator.addView(
-        "CREATE VIEW OrderView AS SELECT * FROM Orders", HintsAndDoc.EMPTY, ErrorCollector.root());
+        "CREATE VIEW OrderView AS SELECT * FROM Orders",
+        HintsAndDoc.EMPTY,
+        false,
+        ErrorCollector.root());
 
     assertThat(isKnockOn("SELECT id, total FROM OrderView")).isTrue();
   }
@@ -256,7 +260,7 @@ class FailedObjectsTest {
         catchThrowable(
             () ->
                 translator.addView(
-                    "CREATE VIEW Q AS " + query, HintsAndDoc.EMPTY, ErrorCollector.root()));
+                    "CREATE VIEW Q AS " + query, HintsAndDoc.EMPTY, false, ErrorCollector.root()));
     assertThat(error).as(query).isNotNull();
     return scriptFailures.isKnockOnError(error);
   }

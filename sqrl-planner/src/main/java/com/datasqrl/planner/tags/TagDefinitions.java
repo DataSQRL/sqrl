@@ -20,28 +20,29 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.tags.TagDefinition.RequiredColumn;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import org.apache.calcite.rel.type.RelDataType;
 
 /**
- * The tag definitions configured under {@code compiler.tags}. When tags are not configured, {@link
- * #DISABLED} is used and tag processing is turned off.
- *
- * <p>Instances are compared by identity: there is a single instance per compilation.
+ * The tags defined under {@code compiler.tags}. Tag names and values are case-insensitive. When
+ * {@code compiler.tags} is absent, tags are {@link #DISABLED} and doc strings are plain text.
  */
 public final class TagDefinitions {
 
   public static final TagDefinitions DISABLED = new TagDefinitions(false, Map.of());
 
-  static final Pattern NAME_PATTERN = Pattern.compile("[A-Za-z0-9_-]+");
+  /**
+   * A tag in a doc string is {@code @name} or {@code @name=value}, preceded by whitespace or the
+   * start of the text, so {@code user@example.com} is not a tag.
+   */
+  private static final Pattern TAG_PATTERN =
+      Pattern.compile("(?<!\\S)@([A-Za-z0-9_-]+)(?:=([A-Za-z0-9_-]+))?");
 
   private final boolean enabled;
   private final Map<String, TagDefinition> definitions;
@@ -51,103 +52,115 @@ public final class TagDefinitions {
     this.definitions = definitions;
   }
 
-  /** Creates enabled tag definitions; mostly used in tests. */
   public static TagDefinitions of(Collection<TagDefinition> definitions) {
-    var map = new LinkedHashMap<String, TagDefinition>();
-    definitions.forEach(def -> map.put(def.name(), def));
-    return new TagDefinitions(true, Map.copyOf(map));
+    var byName = new LinkedHashMap<String, TagDefinition>();
+    definitions.forEach(definition -> byName.put(definition.name(), definition));
+    return new TagDefinitions(true, byName);
   }
 
   /**
-   * Builds the tag definitions from the configuration and reports configuration errors.
+   * Builds the tag definitions from the configuration. The package schema validates the syntax, so
+   * this only checks what the schema cannot: duplicates that differ in case only, and the required
+   * column types. Records all configuration errors without aborting.
    *
-   * @param configs the configured tags, empty when tags are not configured
-   * @param typeParser parses a required-column type, throws if the type cannot be parsed
-   * @param errors the error collector for configuration errors
-   * @return the tag definitions, or {@link #DISABLED} if tags are not configured
+   * @param configs the configured tags by name, empty when tags are not configured
+   * @param typeParser parses a required column type, throws if the type is invalid
    */
   public static TagDefinitions from(
-      Optional<List<TagConfig>> configs,
+      Optional<Map<String, TagConfig>> configs,
       Function<String, RelDataType> typeParser,
       ErrorCollector errors) {
     if (configs.isEmpty()) {
       return DISABLED;
     }
-    var result = new LinkedHashMap<String, TagDefinition>();
-    for (var config : configs.get()) {
-      var name = normalize(config.getName());
-      if (name == null || !NAME_PATTERN.matcher(name).matches()) {
-        errors.error(
-            "Invalid tag name [%s] in compiler.tags: only letters, digits, underscores and dashes"
-                + " are allowed",
-            config.getName());
-        continue;
-      }
-      if (result.containsKey(name)) {
-        errors.error("Duplicate tag [%s] in compiler.tags", name);
+    errors = errors.abortOnFatal(false);
+    var definitions = new LinkedHashMap<String, TagDefinition>();
+    for (var entry : configs.get().entrySet()) {
+      var name = normalize(entry.getKey());
+      if (definitions.containsKey(name)) {
+        errors.fatal("Duplicate tag [%s] in compiler.tags: tag names are case-insensitive", name);
         continue;
       }
       var values = new ArrayList<String>();
-      for (var value : config.getValues()) {
-        var normalized = normalize(value);
-        if (normalized == null || !NAME_PATTERN.matcher(normalized).matches()) {
-          errors.error(
-              "Invalid value [%s] for tag [%s] in compiler.tags: only letters, digits, underscores"
-                  + " and dashes are allowed",
+      for (var value : entry.getValue().getValues()) {
+        if (values.contains(normalize(value))) {
+          errors.fatal(
+              "Duplicate value [%s] of tag [%s] in compiler.tags: values are case-insensitive",
               value, name);
-        } else if (values.contains(normalized)) {
-          errors.error("Duplicate value [%s] for tag [%s] in compiler.tags", normalized, name);
         } else {
-          values.add(normalized);
+          values.add(normalize(value));
         }
       }
       var columns = new ArrayList<RequiredColumn>();
-      var columnNames = new HashSet<String>();
-      for (var column : config.getRequiredColumns()) {
-        if (!columnNames.add(column.getName().toLowerCase(Locale.ROOT))) {
-          errors.error(
-              "Duplicate required column [%s] for tag [%s] in compiler.tags",
-              column.getName(), name);
-          continue;
-        }
+      for (var column : entry.getValue().getRequiredColumns().entrySet()) {
         try {
           columns.add(
               new RequiredColumn(
-                  column.getName(), column.getType(), typeParser.apply(column.getType())));
+                  column.getKey(), column.getValue(), typeParser.apply(column.getValue())));
         } catch (Exception e) {
-          errors.error(
-              "Invalid type [%s] for required column [%s] of tag [%s] in compiler.tags: %s",
-              column.getType(), column.getName(), name, e.getMessage());
+          errors.fatal(
+              "Invalid type [%s] of required column [%s] of tag [%s] in compiler.tags: %s",
+              column.getValue(), column.getKey(), name, e.getMessage());
         }
       }
-      result.put(name, new TagDefinition(name, List.copyOf(values), List.copyOf(columns)));
+      definitions.put(name, TagDefinition.of(name, values, columns));
     }
-    return new TagDefinitions(true, Collections.unmodifiableMap(result));
+    return new TagDefinitions(true, definitions);
   }
 
   public boolean isEnabled() {
     return enabled;
   }
 
-  /** Looks up the definition of the given tag name, case-insensitive. */
   public Optional<TagDefinition> get(String name) {
     return Optional.ofNullable(definitions.get(normalize(name)));
   }
 
-  public TagDefinition getOrThrow(String name) {
-    return get(name).orElseThrow(() -> new IllegalArgumentException("Undefined tag: " + name));
+  /**
+   * Resolves the tags written in a text, such as a doc string or column comment, against the
+   * definitions. Returns {@link TableTags#EMPTY} when tags are disabled.
+   *
+   * @param text the text, may be null
+   * @param onInvalid receives a message for each tag that is undefined or has an invalid value;
+   *     such tags are not part of the result
+   */
+  public TableTags parse(String text, Consumer<String> onInvalid) {
+    if (!enabled || text == null) {
+      return TableTags.EMPTY;
+    }
+    var values = new ArrayList<TagValue>();
+    var matcher = TAG_PATTERN.matcher(text);
+    while (matcher.find()) {
+      resolve(matcher.group(), matcher.group(1), matcher.group(2), onInvalid)
+          .ifPresent(values::add);
+    }
+    return TableTags.of(values);
   }
 
-  public Collection<TagDefinition> getAll() {
-    return definitions.values();
+  private Optional<TagValue> resolve(
+      String tag, String name, String value, Consumer<String> onInvalid) {
+    var definition = get(name);
+    if (definition.isEmpty()) {
+      onInvalid.accept("Tag [%s] is not defined in compiler.tags".formatted(tag));
+      return Optional.empty();
+    }
+    var def = definition.get();
+    if (value == null && !def.isBoolean()) {
+      onInvalid.accept(
+          "Tag [%s] requires a value: allowed values are %s".formatted(tag, def.values()));
+      return Optional.empty();
+    }
+    var level = def.values().indexOf(value == null ? TagDefinition.TRUE : normalize(value));
+    if (level < 0) {
+      onInvalid.accept(
+          "Tag [%s] has an invalid value: allowed values are %s".formatted(tag, def.values()));
+      return Optional.empty();
+    }
+    return Optional.of(new TagValue(def, level));
   }
 
-  static String normalize(String s) {
-    return s == null ? null : s.trim().toLowerCase(Locale.ROOT);
-  }
-
-  @Override
-  public String toString() {
-    return enabled ? "TagDefinitions" + definitions.keySet() : "TagDefinitions[disabled]";
+  /** Tag names and values are case-insensitive, so they are compared in lower case. */
+  public static String normalize(String nameOrValue) {
+    return nameOrValue.toLowerCase(Locale.ROOT);
   }
 }

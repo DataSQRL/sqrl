@@ -15,57 +15,39 @@
  */
 package com.datasqrl.planner.tags;
 
-import com.google.common.base.Preconditions;
 import java.util.List;
-import java.util.OptionalInt;
 import org.apache.calcite.rel.type.RelDataType;
 
 /**
- * The definition of a tag from {@code compiler.tags}. Names and values are normalized to lower
- * case.
+ * A tag defined under {@code compiler.tags}, with its name and values normalized to lower case.
  *
- * <p>A tag without values is a boolean tag whose only value is {@code true}, represented by the
- * offset {@link #BOOLEAN_OFFSET}. For ordered tags, a value is represented by its offset into
- * {@link #values()}, so higher offsets are higher values.
+ * <p>The values are ordered from lowest to highest, so the index of a value is its level. A boolean
+ * tag has the single value {@code true} and is written without a value.
  *
- * @param name normalized tag name
- * @param values allowed values ordered from lowest to highest, empty for boolean tags
- * @param requiredColumns columns every table carrying this tag must have
+ * @param name the tag name
+ * @param values the allowed values, ordered from lowest to highest
+ * @param isBoolean whether the tag is a boolean tag
+ * @param requiredColumns the columns every table carrying the tag must have
  */
 public record TagDefinition(
-    String name, List<String> values, List<RequiredColumn> requiredColumns) {
+    String name, List<String> values, boolean isBoolean, List<RequiredColumn> requiredColumns) {
 
   public static final String TRUE = "true";
-  public static final int BOOLEAN_OFFSET = 1;
 
-  public boolean isBoolean() {
-    return values.isEmpty();
-  }
-
-  /** Returns the offset for the given normalized value, or empty if the value is not valid. */
-  public OptionalInt offsetOf(String value) {
-    if (isBoolean()) {
-      return TRUE.equals(value) ? OptionalInt.of(BOOLEAN_OFFSET) : OptionalInt.empty();
-    }
-    var offset = values.indexOf(value);
-    return offset < 0 ? OptionalInt.empty() : OptionalInt.of(offset);
-  }
-
-  /** Returns the value name for the given offset. */
-  public String valueAt(int offset) {
-    if (isBoolean()) {
-      Preconditions.checkArgument(offset == BOOLEAN_OFFSET, "Invalid boolean tag offset");
-      return TRUE;
-    }
-    return values.get(offset);
+  /** Creates a boolean tag if there are no values, and an ordered tag otherwise. */
+  public static TagDefinition of(
+      String name, List<String> values, List<RequiredColumn> requiredColumns) {
+    return values.isEmpty()
+        ? new TagDefinition(name, List.of(TRUE), true, requiredColumns)
+        : new TagDefinition(name, List.copyOf(values), false, requiredColumns);
   }
 
   /**
    * A column that every table carrying the tag must have.
    *
    * @param name the column name
-   * @param typeDefinition the type as configured
+   * @param typeName the type as configured
    * @param type the parsed type
    */
-  public record RequiredColumn(String name, String typeDefinition, RelDataType type) {}
+  public record RequiredColumn(String name, String typeName, RelDataType type) {}
 }

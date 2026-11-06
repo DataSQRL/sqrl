@@ -16,11 +16,9 @@
 package com.datasqrl.planner.hint;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.planner.tags.TableTags;
-import com.datasqrl.planner.tags.TagDefinitions;
-import com.datasqrl.planner.util.Documented;
 import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -54,13 +52,6 @@ public final class DocStringParser {
   private static final Pattern LIST_ITEM_PATTERN =
       Pattern.compile("^\\s*[-*]\\s*([\\w]+)\\s*:\\s*(.+)$");
 
-  /**
-   * A tag is {@code @name} or {@code @name=value}, preceded by the start of the doc string or by
-   * whitespace. Name and value end at the first character outside {@code [A-Za-z0-9_-]}.
-   */
-  private static final Pattern TAG_PATTERN =
-      Pattern.compile("(?<!\\S)@([A-Za-z0-9_-]+)(?:=([A-Za-z0-9_-]+))?");
-
   private enum SectionType {
     NONE,
     COLUMN,
@@ -75,22 +66,8 @@ public final class DocStringParser {
    *     docs
    */
   public static Documentation parse(String docString) {
-    return parse(docString, TagDefinitions.DISABLED);
-  }
-
-  /**
-   * Parses a docstring to extract column and argument documentation as well as tags. Tags are
-   * extracted from the full doc string, including column and argument documentation, and are left
-   * in the doc string.
-   *
-   * @param docString the raw documentation string to parse
-   * @param tagDefinitions the tag definitions; no tags are extracted when disabled
-   * @return a Documentation record containing the remaining docString, extracted column/argument
-   *     docs, and the declared tags
-   */
-  public static Documentation parse(String docString, TagDefinitions tagDefinitions) {
     if (docString == null || docString.isBlank()) {
-      return Documented.EMPTY;
+      return new Documentation(null, Map.of(), Map.of());
     }
 
     var columnDocs = new LinkedHashMap<Name, String>();
@@ -144,29 +121,7 @@ public final class DocStringParser {
     var finalDocString = remainingDoc.toString().trim();
 
     return new Documentation(
-        finalDocString.isEmpty() ? null : finalDocString,
-        columnDocs,
-        argumentDocs,
-        parseTags(docString, tagDefinitions));
-  }
-
-  /**
-   * Extracts the tags from the given text. Returns {@link TableTags#EMPTY} when tags are disabled.
-   *
-   * @param text the text to extract tags from, may be null
-   * @param tagDefinitions the tag definitions
-   * @return the declared tags, including invalid tags for validation
-   */
-  public static TableTags parseTags(String text, TagDefinitions tagDefinitions) {
-    if (text == null || !tagDefinitions.isEnabled()) {
-      return TableTags.EMPTY;
-    }
-    var builder = TableTags.builder(tagDefinitions);
-    var matcher = TAG_PATTERN.matcher(text);
-    while (matcher.find()) {
-      builder.add(matcher.group(1), matcher.group(2));
-    }
-    return builder.build();
+        finalDocString.isEmpty() ? null : finalDocString, columnDocs, argumentDocs);
   }
 
   private static SectionType detectSectionHeader(String line) {

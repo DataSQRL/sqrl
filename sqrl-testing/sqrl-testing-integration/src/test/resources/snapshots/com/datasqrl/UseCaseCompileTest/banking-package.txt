@@ -3,7 +3,6 @@
 ID:          default_catalog.default_database.AddChatMessage
 Type:        stream
 Stage:       flink
-Tags:        pii=raw
 Primary key: _uuid
 Timestamp:   event_time
 Row count:   ~1e8
@@ -28,7 +27,6 @@ Table AddChatMessage (postgres):
 ID:          default_catalog.default_database.ApplicationAlert
 Type:        stream
 Stage:       flink
-Tags:        classification=confidential, financial=true
 Primary key: _uuid
 Timestamp:   -
 Row count:   ~4e6
@@ -50,7 +48,6 @@ Annotations:
 ID:          default_catalog.default_database.ApplicationStatus
 Type:        stream
 Stage:       flink
-Tags:        classification=confidential, financial=true
 Primary key: _uuid
 Timestamp:   event_time
 Row count:   ~8e7
@@ -81,7 +78,6 @@ Table ApplicationStatus (postgres):
 ID:          default_catalog.default_database.ApplicationUpdates
 Type:        stream
 Stage:       flink
-Tags:        classification=internal, financial=true
 Primary key: _uuid
 Timestamp:   event_time
 Row count:   ~1e8
@@ -105,7 +101,6 @@ Table ApplicationUpdates (postgres):
 ID:          default_catalog.default_database.Applications
 Type:        state
 Stage:       flink
-Tags:        classification=internal, financial=true
 Primary key: id
 Timestamp:   updated_at
 Row count:   ~2e7
@@ -132,7 +127,6 @@ Table Applications (postgres):
 ID:          default_catalog.default_database.ApplicationsStream
 Type:        stream
 Stage:       flink
-Tags:        classification=internal, financial=true
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
@@ -153,24 +147,10 @@ Annotations:
 Table ApplicationsStream (postgres):
  - primary key: id, updated_at
 
-=== CustomerApplications
-ID:          default_catalog.default_database.CustomerApplications
-Type:        query
-Stage:       postgres
-Tags:        classification=internal, financial=true
---- definition ---
-Inputs:
- - default_catalog.default_database.Applications
-Annotations:
- - stream-root: ApplicationsStream
- - parameters: customerId
- - base-table: Applications
-
 === CustomerChatMessage
 ID:          default_catalog.default_database.CustomerChatMessage
 Type:        stream
 Stage:       flink
-Tags:        pii=raw
 Primary key: uuid
 Timestamp:   timestamp
 Row count:   ~1e8
@@ -191,28 +171,10 @@ Annotations:
 Table CustomerChatMessage (postgres):
  - primary key: uuid
 
-=== CustomerNameCounts
-ID:          default_catalog.default_database.CustomerNameCounts
-Type:        state
-Stage:       flink
-Primary key: first_name
-Timestamp:   -
-Row count:   ~1e8
---- definition ---
-Schema:
- - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - num_customers: BIGINT NOT NULL
-Inputs:
- - default_catalog.default_database._CustomerNameCounts
---- physical ---
-Table CustomerNameCounts (postgres):
- - primary key: first_name
-
 === Customers
 ID:          default_catalog.default_database.Customers
 Type:        state
 Stage:       flink
-Tags:        classification=confidential, pii=raw
 Primary key: id
 Timestamp:   updated_at
 Row count:   ~2e7
@@ -239,7 +201,6 @@ Table Customers (postgres):
 ID:          default_catalog.default_database.CustomersStream
 Type:        stream
 Stage:       flink
-Tags:        classification=confidential, pii=raw
 Primary key: id, updated_at
 Timestamp:   updated_at
 Row count:   ~1e8
@@ -260,97 +221,6 @@ Annotations:
 --- physical ---
 Table CustomersStream (postgres):
  - primary key: id, updated_at
-
-=== CustomersWithEmail
-ID:          default_catalog.default_database.CustomersWithEmail
-Type:        state
-Stage:       flink
-Tags:        classification=confidential, pii=raw
-Primary key: id
-Timestamp:   updated_at
-Row count:   ~1e8
---- definition ---
-Schema:
- - id: BIGINT NOT NULL
- - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - last_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - phone: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - address: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - date_of_birth: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Inputs:
- - default_catalog.default_database.Customers
-Annotations:
- - stream-root: CustomersStream
---- physical ---
-Table CustomersWithEmail (postgres):
- - primary key: id
-
-=== LargeApplications
-ID:          default_catalog.default_database.LargeApplications
-Type:        state
-Stage:       flink
-Tags:        classification=confidential, financial=true, pii=raw
-Primary key: id
-Timestamp:   updated_at
-Row count:   ~3e7
---- definition ---
-Schema:
- - id: BIGINT NOT NULL
- - customer_id: BIGINT NOT NULL
- - loan_type_id: BIGINT NOT NULL
- - amount: DOUBLE NOT NULL
- - duration: BIGINT NOT NULL
- - application_date: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
- - updated_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
-Inputs:
- - default_catalog.default_database.Applications
- - default_catalog.default_database.Customers
-Annotations:
- - stream-root: ApplicationsStream
---- physical ---
-Table LargeApplications (postgres):
- - primary key: id
-
-=== LoanTotals
-ID:          default_catalog.default_database.LoanTotals
-Type:        state
-Stage:       flink
-Tags:        classification=confidential, financial=true
-Primary key: loan_type_id
-Timestamp:   -
-Row count:   ~1e7
---- definition ---
-Schema:
- - loan_type_id: BIGINT NOT NULL
- - total_amount: DOUBLE NOT NULL
- - num_loans: BIGINT NOT NULL
-Inputs:
- - default_catalog.default_database._ApplicationsByCustomer
---- physical ---
-Table LoanTotals (postgres):
- - primary key: loan_type_id
-
-=== LoanTypeStatusCounts
-ID:          default_catalog.default_database.LoanTypeStatusCounts
-Type:        state
-Stage:       flink
-Tags:        classification=internal, financial=true
-Primary key: loan_type_id
-Timestamp:   -
-Row count:   ~1e7
---- definition ---
-Schema:
- - loan_type_id: BIGINT NOT NULL
- - num_updates: BIGINT NOT NULL
-Inputs:
- - default_catalog.default_database.ApplicationStatus
-Annotations:
- - stream-root: ApplicationUpdates
---- physical ---
-Table LoanTypeStatusCounts (postgres):
- - primary key: loan_type_id
 
 === LoanTypes
 ID:          default_catalog.default_database.LoanTypes
@@ -404,37 +274,6 @@ Annotations:
 --- physical ---
 Table LoanTypesStream (postgres):
  - primary key: id, updated_at
-
-=== _ApplicationsByCustomer
-ID:          default_catalog.default_database._ApplicationsByCustomer
-Type:        state
-Stage:       flink
-Tags:        classification=confidential, financial=true, pii=raw
-Primary key: -
-Timestamp:   -
-Row count:   ~1e8
---- definition ---
-Schema:
- - loan_type_id: BIGINT NOT NULL
- - amount: DOUBLE NOT NULL
- - customer_id: BIGINT NOT NULL
-Inputs:
- - default_catalog.default_database.Applications
- - default_catalog.default_database.Customers
-
-=== _CustomerNameCounts
-ID:          default_catalog.default_database._CustomerNameCounts
-Type:        state
-Stage:       flink
-Primary key: first_name
-Timestamp:   -
-Row count:   ~1e7
---- definition ---
-Schema:
- - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
- - num_customers: BIGINT NOT NULL
-Inputs:
- - default_catalog.default_database.Customers
 
 === ApplicationsStream
 ID:          default_catalog.sources.ApplicationsStream
@@ -600,7 +439,7 @@ CREATE TABLE `ApplicationUpdates` (
   `_uuid` STRING NOT NULL,
   `loan_application_id` BIGINT NOT NULL,
   `status` STRING NOT NULL,
-  `message` STRING COMMENT 'Status message for the applicant @classification=internal',
+  `message` STRING,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
   WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
 )
@@ -618,7 +457,7 @@ WITH (
 CREATE TABLE `AddChatMessage` (
   `_uuid` STRING NOT NULL,
   `role` STRING NOT NULL,
-  `content` STRING NOT NULL COMMENT 'The message text written by the customer @pii=raw',
+  `content` STRING NOT NULL,
   `name` STRING,
   `context` ROW(`customerid` INTEGER) NOT NULL,
   `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
@@ -679,42 +518,6 @@ CREATE VIEW `CustomerChatMessage`
 AS
 SELECT `role`, `content`, `name`, `c`.`context`.`customerid`, `event_time` AS `timestamp`, `_uuid` AS `uuid`
 FROM `AddChatMessage` AS `c`;
-CREATE VIEW `_ApplicationsByCustomer`
-AS
-SELECT `a`.`loan_type_id`, `a`.`amount`, `c`.`id` AS `customer_id`
-FROM `Applications` AS `a`
- INNER JOIN `Customers` AS `c` ON `a`.`customer_id` = `c`.`id`;
-CREATE VIEW `LoanTotals`
-AS
-SELECT `loan_type_id`, SUM(`amount`) AS `total_amount`, COUNT(*) AS `num_loans`
-FROM `_ApplicationsByCustomer`
-GROUP BY `loan_type_id`;
-CREATE VIEW `LoanTypeStatusCounts`
-AS
-SELECT `loan_type_id`, COUNT(*) AS `num_updates`
-FROM `ApplicationStatus`
-GROUP BY `loan_type_id`;
-CREATE VIEW `_CustomerNameCounts`
-AS
-SELECT `first_name`, COUNT(*) AS `num_customers`
-FROM `Customers`
-GROUP BY `first_name`;
-CREATE VIEW `CustomerNameCounts`
-AS
-SELECT `first_name`, `num_customers`
-FROM `_CustomerNameCounts`;
-CREATE VIEW `CustomersWithEmail`
-AS
-SELECT *
-FROM `Customers`
-WHERE `email` IS NOT NULL;
-CREATE VIEW `LargeApplications`
-AS
-SELECT *
-FROM `Applications`
-WHERE `amount` > 10000 AND `customer_id` IN (SELECT `id`
-   FROM `Customers`
-   WHERE `last_name` IS NOT NULL);
 CREATE TABLE `AddChatMessage_1` (
   `_uuid` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `role` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -848,20 +651,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `CustomerNameCounts_8` (
-  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `num_customers` BIGINT NOT NULL,
-  PRIMARY KEY (`first_name`) NOT ENFORCED
-)
-WITH (
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'password' = '${POSTGRES_PASSWORD}',
-  'table-name' = 'CustomerNameCounts',
-  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
-  'username' = '${POSTGRES_USERNAME}'
-);
-CREATE TABLE `Customers_9` (
+CREATE TABLE `Customers_8` (
   `id` BIGINT NOT NULL,
   `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -882,7 +672,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `CustomersStream_10` (
+CREATE TABLE `CustomersStream_9` (
   `id` BIGINT NOT NULL,
   `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -902,75 +692,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `CustomersWithEmail_11` (
-  `id` BIGINT NOT NULL,
-  `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `address` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `date_of_birth` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`) NOT ENFORCED
-)
-WITH (
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'password' = '${POSTGRES_PASSWORD}',
-  'sink.on-conflict.action' = 'TIMESTAMP',
-  'sink.on-conflict.timestamp-column' = 'updated_at',
-  'table-name' = 'CustomersWithEmail',
-  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
-  'username' = '${POSTGRES_USERNAME}'
-);
-CREATE TABLE `LargeApplications_12` (
-  `id` BIGINT NOT NULL,
-  `customer_id` BIGINT NOT NULL,
-  `loan_type_id` BIGINT NOT NULL,
-  `amount` DOUBLE NOT NULL,
-  `duration` BIGINT NOT NULL,
-  `application_date` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  `updated_at` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
-  PRIMARY KEY (`id`) NOT ENFORCED
-)
-WITH (
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'password' = '${POSTGRES_PASSWORD}',
-  'sink.on-conflict.action' = 'TIMESTAMP',
-  'sink.on-conflict.timestamp-column' = 'updated_at',
-  'table-name' = 'LargeApplications',
-  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
-  'username' = '${POSTGRES_USERNAME}'
-);
-CREATE TABLE `LoanTotals_13` (
-  `loan_type_id` BIGINT NOT NULL,
-  `total_amount` DOUBLE NOT NULL,
-  `num_loans` BIGINT NOT NULL,
-  PRIMARY KEY (`loan_type_id`) NOT ENFORCED
-)
-WITH (
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'password' = '${POSTGRES_PASSWORD}',
-  'table-name' = 'LoanTotals',
-  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
-  'username' = '${POSTGRES_USERNAME}'
-);
-CREATE TABLE `LoanTypeStatusCounts_14` (
-  `loan_type_id` BIGINT NOT NULL,
-  `num_updates` BIGINT NOT NULL,
-  PRIMARY KEY (`loan_type_id`) NOT ENFORCED
-)
-WITH (
-  'connector' = 'jdbc-sqrl',
-  'driver' = 'org.postgresql.Driver',
-  'password' = '${POSTGRES_PASSWORD}',
-  'table-name' = 'LoanTypeStatusCounts',
-  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
-  'username' = '${POSTGRES_USERNAME}'
-);
-CREATE TABLE `LoanTypes_15` (
+CREATE TABLE `LoanTypes_10` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -992,7 +714,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `LoanTypesStream_16` (
+CREATE TABLE `LoanTypesStream_11` (
   `id` BIGINT NOT NULL,
   `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `description` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -1047,46 +769,21 @@ SELECT *
 FROM `default_catalog`.`default_database`.`CustomerChatMessage`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`CustomerNameCounts_8`
+INSERT INTO `default_catalog`.`default_database`.`Customers_8`
 SELECT *
-FROM `default_catalog`.`default_database`.`CustomerNameCounts`
+FROM `default_catalog`.`default_database`.`CustomersStream`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`Customers_9`
-SELECT *
-FROM `default_catalog`.`default_database`.`Customers`
-ON CONFLICT DO DEDUPLICATE
-;
-INSERT INTO `default_catalog`.`default_database`.`CustomersStream_10`
+INSERT INTO `default_catalog`.`default_database`.`CustomersStream_9`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomersStream`
 ;
-INSERT INTO `default_catalog`.`default_database`.`CustomersWithEmail_11`
-SELECT *
-FROM `default_catalog`.`default_database`.`CustomersWithEmail`
-ON CONFLICT DO DEDUPLICATE
-;
-INSERT INTO `default_catalog`.`default_database`.`LargeApplications_12`
-SELECT *
-FROM `default_catalog`.`default_database`.`LargeApplications`
-ON CONFLICT DO DEDUPLICATE
-;
-INSERT INTO `default_catalog`.`default_database`.`LoanTotals_13`
-SELECT *
-FROM `default_catalog`.`default_database`.`LoanTotals`
-ON CONFLICT DO DEDUPLICATE
-;
-INSERT INTO `default_catalog`.`default_database`.`LoanTypeStatusCounts_14`
-SELECT *
-FROM `default_catalog`.`default_database`.`LoanTypeStatusCounts`
-ON CONFLICT DO DEDUPLICATE
-;
-INSERT INTO `default_catalog`.`default_database`.`LoanTypes_15`
+INSERT INTO `default_catalog`.`default_database`.`LoanTypes_10`
 SELECT *
 FROM `default_catalog`.`default_database`.`LoanTypes`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`LoanTypesStream_16`
+INSERT INTO `default_catalog`.`default_database`.`LoanTypesStream_11`
 SELECT *
 FROM `default_catalog`.`default_database`.`LoanTypesStream`
 ;
@@ -1140,13 +837,8 @@ CREATE TABLE IF NOT EXISTS "ApplicationUpdates" ("_uuid" TEXT NOT NULL, "loan_ap
 CREATE TABLE IF NOT EXISTS "Applications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "ApplicationsStream" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"));
 CREATE TABLE IF NOT EXISTS "CustomerChatMessage" ("role" TEXT NOT NULL, "content" TEXT NOT NULL, "name" TEXT, "customerid" INTEGER, "timestamp" TIMESTAMP WITH TIME ZONE, "uuid" TEXT NOT NULL, PRIMARY KEY ("uuid"));
-CREATE TABLE IF NOT EXISTS "CustomerNameCounts" ("first_name" TEXT NOT NULL, "num_customers" BIGINT NOT NULL, PRIMARY KEY ("first_name"));
 CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "CustomersStream" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"));
-CREATE TABLE IF NOT EXISTS "CustomersWithEmail" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "LargeApplications" ("id" BIGINT NOT NULL, "customer_id" BIGINT NOT NULL, "loan_type_id" BIGINT NOT NULL, "amount" DOUBLE PRECISION NOT NULL, "duration" BIGINT NOT NULL, "application_date" TIMESTAMP WITH TIME ZONE NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
-CREATE TABLE IF NOT EXISTS "LoanTotals" ("loan_type_id" BIGINT NOT NULL, "total_amount" DOUBLE PRECISION NOT NULL, "num_loans" BIGINT NOT NULL, PRIMARY KEY ("loan_type_id"));
-CREATE TABLE IF NOT EXISTS "LoanTypeStatusCounts" ("loan_type_id" BIGINT NOT NULL, "num_updates" BIGINT NOT NULL, PRIMARY KEY ("loan_type_id"));
 CREATE TABLE IF NOT EXISTS "LoanTypes" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "LoanTypesStream" ("id" BIGINT NOT NULL, "name" TEXT NOT NULL, "description" TEXT NOT NULL, "interest_rate" DOUBLE PRECISION NOT NULL, "max_amount" DOUBLE PRECISION NOT NULL, "min_amount" DOUBLE PRECISION NOT NULL, "max_duration" BIGINT NOT NULL, "min_duration" BIGINT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id","updated_at"));
 

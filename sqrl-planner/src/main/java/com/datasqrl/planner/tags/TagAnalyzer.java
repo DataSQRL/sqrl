@@ -17,183 +17,194 @@ package com.datasqrl.planner.tags;
 
 import com.datasqrl.calcite.type.TypeCompatibility;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.hint.DeclassifyHint;
-import com.datasqrl.planner.hint.PlannerHints;
-import java.util.LinkedHashSet;
+import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.function.Function;
 import java.util.stream.Collectors;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-import org.apache.calcite.rel.type.RelDataType;
+import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 
 /**
- * Computes how tags propagate from the input tables of a table definition and validates them.
+ * Propagates tags from the input tables of a table to the table and validates them:
  *
  * <ul>
- *   <li>Inherited tags: the union of the effective tags of all input tables, taking the maximum
- *       value per tag.
- *   <li>Effective tags: the inherited tags combined with the declared tags (maximum per tag), where
- *       each declassified tag takes its declared value or is removed if it is not declared.
+ *   <li>The <b>inherited</b> tags are the tags of all input tables, with the highest value per tag.
+ *   <li>The <b>declared</b> tags are the tags in the table's documentation and, for a created
+ *       table, in its column comments.
+ *   <li>The <b>effective</b> tags are the inherited tags that are not declassified with the {@code
+ *       declassify} hint, combined with the declared tags, with the highest value per tag.
+ *       Downstream tables inherit the effective tags, and the deployment assets list them.
  * </ul>
  *
- * Validation checks that declared tags are valid, that declassified tags are defined, that public
- * tables declare the tags they inherit (unless declassified), and that tables carrying a tag have
- * the columns the tag requires.
+ * <p>All violations are recorded without aborting, so that a compilation reports all of them.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class TagAnalyzer {
+@RequiredArgsConstructor
+public class TagAnalyzer {
+
+  private final TagDefinitions definitions;
 
   /**
-   * @param inherited the tags inherited from the input tables
-   * @param effective the effective tags of the table
+   * Reports each tag in a doc string or column comment that is undefined or has an invalid value.
+   * Texts are validated once where they are written, and {@link #analyze} ignores invalid tags, so
+   * documentation that a table takes from another table doesn't report them again.
    */
-  public record TagResult(TableTags inherited, TableTags effective) {}
-
-  /** The normalized tag names declassified by the {@code declassify} hints */
-  public static Set<String> getDeclassified(PlannerHints hints) {
-    return hints
-        .getHints(DeclassifyHint.class)
-        .flatMap(hint -> hint.getTagNames().stream())
-        .collect(Collectors.toCollection(LinkedHashSet::new));
+  public void validateTags(String text, ErrorCollector errors) {
+    var collector = errors.abortOnFatal(false);
+    definitions.parse(text, message -> collector.fatal("%s", message));
   }
 
   /**
-   * Computes the inherited and effective tags of a table.
+   * Computes the effective tags of a table, function, or relationship and validates that it
+   * declares the tags it inherits and has the columns its tags require.
    *
-   * @param fromTables the input tables of the table definition
-   * @param declared the declared tags of the table
-   * @param declassified the declassified tag names
-   * @return the inherited and effective tags
+   * @param table the analyzed table
+   * @param columnComments the column comments of a created table, which declare tags too
+   * @param mustDeclare whether the table must declare the tags it inherits
+   * @return the effective tags of the table
    */
-  public static TagResult compute(
-      List<? extends TableOrFunctionAnalysis> fromTables,
-      TableTags declared,
-      Set<String> declassified) {
-    var inherited =
-        fromTables.stream()
-            .map(TableOrFunctionAnalysis::getTags)
-            .map(TableTags::withoutInvalidTags)
-            .reduce(TableTags.EMPTY, TableTags::merge);
-    var validDeclared = declared.withoutInvalidTags();
-    var effective = inherited.merge(validDeclared).declassify(declassified, validDeclared);
-    return new TagResult(inherited, effective);
-  }
-
-  /**
-   * Validates the tags of a table and records all violations as errors without aborting, so all
-   * violations are reported in one compilation.
-   *
-   * @param tableName the name of the table for error messages
-   * @param definitions the tag definitions
-   * @param result the computed tags of the table
-   * @param declared the declared tags of the table, including invalid tags
-   * @param declassified the declassified tag names
-   * @param fromTables the input tables, to name where an inherited tag comes from
-   * @param rowType the row type of the table, to check required columns; null to skip the check
-   * @param validateDeclared whether to check that inherited tags are declared (public tables)
-   * @param errors the error collector
-   */
-  public static void validate(
-      String tableName,
-      TagDefinitions definitions,
-      TagResult result,
-      TableTags declared,
-      Set<String> declassified,
-      List<? extends TableOrFunctionAnalysis> fromTables,
-      RelDataType rowType,
-      boolean validateDeclared,
+  public TableTags analyze(
+      TableAnalysis table,
+      List<String> columnComments,
+      boolean mustDeclare,
       ErrorCollector errors) {
-    // Declared tags must be defined and have valid values
-    for (var invalid : declared.getInvalidTags()) {
-      errors.error("Invalid tag on table [%s]: %s", tableName, invalid.message(definitions));
+    if (!definitions.isEnabled()) {
+      return TableTags.EMPTY;
     }
-    // Declassified tags must be defined and should be inherited
-    for (var tag : declassified.stream().sorted().toList()) {
+    errors = errors.abortOnFatal(false);
+    var declared = declaredTags(table.getDocumentation(), columnComments);
+    var inherited = inheritedTags(table.getFromTables());
+    var required = inherited.without(declassifiedTags(table, inherited, errors));
+    if (mustDeclare) {
+      checkDeclared(table.getName(), required, declared, table.getFromTables(), true, errors);
+    }
+    var effective = required.merge(declared);
+    checkRequiredColumns(table, effective, errors);
+    return effective;
+  }
+
+  /**
+   * Validates that a table declares the tags of the data that {@code INSERT INTO} or {@code EXPORT}
+   * writes into it, since the tables reading from it only inherit its declared tags.
+   *
+   * @param target the table that is written into
+   * @param inputs the tables the written data is computed from
+   */
+  public void checkWrite(
+      TableAnalysis target, List<? extends TableOrFunctionAnalysis> inputs, ErrorCollector errors) {
+    if (definitions.isEnabled()) {
+      checkDeclared(
+          target.getName(),
+          inheritedTags(inputs),
+          target.getTags(),
+          inputs,
+          false,
+          errors.abortOnFatal(false));
+    }
+  }
+
+  private TableTags declaredTags(Documentation documentation, List<String> columnComments) {
+    return Stream.of(
+            Stream.ofNullable(documentation.docString()),
+            documentation.columnDocs().values().stream(),
+            documentation.argumentDocs().values().stream(),
+            columnComments.stream())
+        .flatMap(Function.identity())
+        .map(text -> definitions.parse(text, invalidTag -> {}))
+        .reduce(TableTags.EMPTY, TableTags::merge);
+  }
+
+  private static TableTags inheritedTags(List<? extends TableOrFunctionAnalysis> inputs) {
+    return inputs.stream()
+        .map(TableOrFunctionAnalysis::getTags)
+        .reduce(TableTags.EMPTY, TableTags::merge);
+  }
+
+  /** The tags of the table's declassify hints, which must be defined and should be inherited. */
+  private Set<String> declassifiedTags(
+      TableAnalysis table, TableTags inherited, ErrorCollector errors) {
+    var declassified =
+        table
+            .getHints()
+            .getHints(DeclassifyHint.class)
+            .flatMap(hint -> hint.getTagNames().stream())
+            .collect(Collectors.toCollection(TreeSet::new));
+    for (var tag : declassified) {
       if (definitions.get(tag).isEmpty()) {
-        errors.error(
+        errors.fatal(
             "Table [%s] declassifies tag [%s] which is not defined in compiler.tags",
-            tableName, tag);
-      } else if (!result.inherited().contains(tag)) {
+            table.getName(), tag);
+      } else if (inherited.get(tag).isEmpty()) {
         errors.warn(
             "Table [%s] declassifies tag [%s] which it does not inherit from its input tables",
-            tableName, tag);
+            table.getName(), tag);
       }
     }
-    // Public tables must declare the tags they inherit, at the same or a higher value
-    if (validateDeclared) {
-      for (var tag : result.inherited().names().stream().sorted().toList()) {
-        if (declassified.contains(tag)) {
-          continue;
-        }
-        var def = definitions.getOrThrow(tag);
-        var required = result.inherited().get(tag).getAsInt();
-        var found = declared.get(tag);
-        var sources = getSources(fromTables, tag, required);
-        if (found.isEmpty()) {
-          errors.error(
-              "Table [%s] must declare tag [%s] inherited from [%s]: add it to the doc string or"
-                  + " declassify it with /*+declassify(%s) */",
-              tableName, render(def, required), sources, tag);
-        } else if (found.getAsInt() < required) {
-          errors.error(
-              "Table [%s] declares tag [%s] which is lower than [%s] inherited from [%s]: raise it"
-                  + " or declassify it with /*+declassify(%s) */",
-              tableName, render(def, found.getAsInt()), render(def, required), sources, tag);
-        }
-      }
-    }
-    // Tables carrying a tag must have the columns the tag requires
-    if (rowType != null) {
-      for (var tag : result.effective().names().stream().sorted().toList()) {
-        var def = definitions.getOrThrow(tag);
-        for (var column : def.requiredColumns()) {
-          var field = rowType.getField(column.name(), false, false);
-          if (field == null) {
-            errors.error(
-                "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the column is"
-                    + " missing",
-                tableName,
-                render(def, result.effective().get(tag).getAsInt()),
-                column.name(),
-                column.typeDefinition());
-          } else if (!TypeCompatibility.isCallSiteCompatible(field.getType(), column.type())) {
-            errors.error(
-                "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the column"
-                    + " has type [%s]",
-                tableName,
-                render(def, result.effective().get(tag).getAsInt()),
-                column.name(),
-                column.typeDefinition(),
-                typeName(field.getType()));
-          }
-        }
+    return declassified;
+  }
+
+  private static void checkDeclared(
+      String table,
+      TableTags required,
+      TableTags declared,
+      List<? extends TableOrFunctionAnalysis> inputs,
+      boolean canDeclassify,
+      ErrorCollector errors) {
+    for (var tag : required.values()) {
+      var found = declared.get(tag.name());
+      var fix =
+          canDeclassify
+              ? "declare it in the doc string or declassify it with /*+declassify(%s) */"
+                  .formatted(tag.name())
+              : "declare it in the doc string of the table";
+      if (found.isEmpty()) {
+        errors.fatal(
+            "Table [%s] must declare tag [%s] inherited from [%s]: %s",
+            table, tag, sourcesOf(tag, inputs), fix);
+      } else if (found.get().isLowerThan(tag)) {
+        errors.fatal(
+            "Table [%s] declares tag [%s] which is lower than [%s] inherited from [%s]: %s",
+            table, found.get(), tag, sourcesOf(tag, inputs), fix);
       }
     }
   }
 
-  private static String getSources(
-      List<? extends TableOrFunctionAnalysis> fromTables, String tag, int offset) {
-    return fromTables.stream()
-        .filter(tbl -> tbl.getTags().get(tag).orElse(-1) == offset)
-        .map(tbl -> tbl.getIdentifier().objectIdentifier().getObjectName())
+  /** The names of the input tables that carry the tag with the given value. */
+  private static String sourcesOf(TagValue tag, List<? extends TableOrFunctionAnalysis> inputs) {
+    return inputs.stream()
+        .filter(input -> input.getTags().get(tag.name()).filter(tag::equals).isPresent())
+        .map(input -> input.getIdentifier().objectIdentifier().getObjectName())
         .distinct()
         .sorted()
         .collect(Collectors.joining(", "));
   }
 
-  /** Renders a tag as written in a doc string, e.g. {@code @pii=raw} or {@code @gdpr} */
-  static String render(TagDefinition def, int offset) {
-    return def.isBoolean() ? "@" + def.name() : "@" + def.name() + "=" + def.valueAt(offset);
-  }
-
-  private static String typeName(RelDataType type) {
-    try {
-      return FlinkTypeFactory.toLogicalType(type).asSummaryString();
-    } catch (Exception e) {
-      return type.getFullTypeString();
+  private static void checkRequiredColumns(
+      TableAnalysis table, TableTags tags, ErrorCollector errors) {
+    for (var tag : tags.values()) {
+      for (var column : tag.definition().requiredColumns()) {
+        var field = table.getField(column.name());
+        if (field == null) {
+          errors.fatal(
+              "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the column is"
+                  + " missing",
+              table.getName(), tag, column.name(), column.typeName());
+        } else if (!TypeCompatibility.isCallSiteCompatible(field.getType(), column.type())) {
+          errors.fatal(
+              "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the column has"
+                  + " type [%s]",
+              table.getName(),
+              tag,
+              column.name(),
+              column.typeName(),
+              FlinkTypeFactory.toLogicalType(field.getType()).asSummaryString());
+        }
+      }
     }
   }
 }

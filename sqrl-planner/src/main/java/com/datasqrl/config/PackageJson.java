@@ -68,27 +68,19 @@ public interface PackageJson {
     boolean isExtendedScalarTypes();
 
     /**
-     * The tag definitions under {@code compiler.tags}. Empty when not configured, which disables
-     * tag processing.
+     * The tag definitions under {@code compiler.tags}, keyed by tag name. Empty when not
+     * configured, which disables tag processing.
      */
-    Optional<List<TagConfig>> getTags();
+    Optional<Map<String, TagConfig>> getTags();
   }
 
   interface TagConfig {
 
-    String getName();
-
     /** Allowed values ordered from lowest to highest; empty for boolean tags */
     List<String> getValues();
 
-    List<RequiredColumnConfig> getRequiredColumns();
-  }
-
-  interface RequiredColumnConfig {
-
-    String getName();
-
-    String getType();
+    /** The type of each column that every table carrying the tag must have, keyed by column */
+    Map<String, String> getRequiredColumns();
   }
 
   interface CompilerApiConfig {

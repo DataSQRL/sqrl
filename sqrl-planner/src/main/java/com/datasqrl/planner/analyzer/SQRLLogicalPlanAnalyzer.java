@@ -37,14 +37,9 @@ import com.datasqrl.planner.TableAnalysisLookup;
 import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.analyzer.cost.JoinCostAnalysis;
 import com.datasqrl.planner.hint.HintsAndDoc;
-import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.hint.PrimaryKeyHint;
 import com.datasqrl.planner.hint.RowCountHint;
 import com.datasqrl.planner.tables.SqrlTableFunction;
-import com.datasqrl.planner.tags.TableTags;
-import com.datasqrl.planner.tags.TagAnalyzer;
-import com.datasqrl.planner.tags.TagAnalyzer.TagResult;
-import com.datasqrl.planner.tags.TagContext;
 import com.datasqrl.planner.util.Documented;
 import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.util.CalciteUtil;
@@ -158,8 +153,6 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
   /** Whether this query preserves a base table from the input (FROM) */
   private boolean preservesBaseTable = true;
 
-  private final TagContext tagContext;
-
   protected RelNodeAnalysis intermediateAnalysis = null;
 
   public SQRLLogicalPlanAnalyzer(
@@ -170,30 +163,6 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
       FlinkRelBuilder relBuilder,
       FlinkPlannerImpl flinkPlanner,
       ErrorCollector errors) {
-    this(
-        relNode,
-        tableLookup,
-        viewName,
-        referencedViews,
-        relBuilder,
-        flinkPlanner,
-        TagContext.DISABLED,
-        errors);
-  }
-
-  /**
-   * @param tagContext how the tags of the analyzed table are computed and validated
-   */
-  public SQRLLogicalPlanAnalyzer(
-      RelNode relNode,
-      TableAnalysisLookup tableLookup,
-      String viewName,
-      Set<ObjectIdentifier> referencedViews,
-      FlinkRelBuilder relBuilder,
-      FlinkPlannerImpl flinkPlanner,
-      TagContext tagContext,
-      ErrorCollector errors) {
-    this.tagContext = tagContext;
     this.originalRelnode = relNode;
     this.rexUtil = new SqrlRexUtil(relNode.getCluster().getRexBuilder());
     this.tableLookup = tableLookup;
@@ -307,24 +276,30 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
     // The base table is the right-most table in the relational tree that has the same type as the
     // result
-    var sameRowTypeSource =
+    var sameTypeSource =
         Lists.reverse(sourceTables).stream()
             .filter(AbstractAnalysis::hasRowType)
             .filter(tbl -> tbl.getRowType().equals(originalRelnode.getRowType()))
             .findFirst();
     Optional<TableAnalysis> baseTable =
-        sameRowTypeSource
+        sameTypeSource
             .filter(tbl -> preservesBaseTable)
             .map(TableOrFunctionAnalysis::getBaseTable)
             .filter(tbl -> !Name.isHiddenString(tbl.getName()));
-    var documentation = passThroughDocumentation(hintsAndDoc.getDocumentation(), sameRowTypeSource);
 
-    var tagResult = analyzeTags(documentation, hints, analysis.getRowType());
+    // A table without a doc string of its own that keeps the rows of its source table, filtered or
+    // deduplicated, takes the documentation (and tags) of the source, even if it is hidden
+    Documentation documentation = hintsAndDoc.getDocumentation();
+    if (documentation.isEmpty() && (preservesBaseTable || isDeduplication)) {
+      documentation =
+          sameTypeSource
+              .filter(Documented.class::isInstance)
+              .map(source -> ((Documented) source).getDocumentation())
+              .orElse(documentation);
+    }
 
     var tableAnalysis =
         TableAnalysis.builder()
-            .tags(tagResult.effective())
-            .inheritedTags(tagResult.inherited())
             .collapsedRelnode(analysis.relNode)
             .originalRelnode(tableLookup.normalizeRelnode(originalRelnode))
             .type(analysis.getType())
@@ -342,48 +317,6 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .errors(errors);
 
     return new ViewAnalysis(analysis.relNode, relBuilder, tableAnalysis, hasMostRecentDistinct);
-  }
-
-  /**
-   * A table without a doc string of its own passes through the documentation, and with it the tags,
-   * of the table it selects from: when it returns the same columns as that table and keeps its
-   * rows, either filtered (e.g. {@code SELECT * FROM Customers WHERE ...}) or deduplicated (e.g.
-   * {@code DISTINCT CustomersStream ON id ORDER BY updated_at DESC}). The documentation is passed
-   * through even if the source table is hidden.
-   */
-  private Documentation passThroughDocumentation(
-      Documentation documentation, Optional<TableOrFunctionAnalysis> sameRowTypeSource) {
-    if (!documentation.isEmpty() || !(preservesBaseTable || isDeduplication)) {
-      return documentation;
-    }
-    return sameRowTypeSource
-        .filter(Documented.class::isInstance)
-        .map(source -> ((Documented) source).getDocumentation())
-        // Invalid tags are reported on the source table, not again on this table
-        .map(doc -> doc.withTags(doc.tags().withoutInvalidTags()))
-        .orElse(documentation);
-  }
-
-  /** Computes the tags of this table from its input tables and validates them. */
-  private TagResult analyzeTags(
-      Documentation documentation, PlannerHints hints, RelDataType rowType) {
-    if (!tagContext.isEnabled()) {
-      return new TagResult(TableTags.EMPTY, TableTags.EMPTY);
-    }
-    var declared = documentation.tags();
-    var declassified = TagAnalyzer.getDeclassified(hints);
-    var result = TagAnalyzer.compute(sourceTables, declared, declassified);
-    TagAnalyzer.validate(
-        tagContext.tableName() == null ? viewName : tagContext.tableName(),
-        tagContext.definitions(),
-        result,
-        declared,
-        declassified,
-        sourceTables,
-        rowType,
-        tagContext.validateDeclared(),
-        tagContext.errors() == null ? errors : tagContext.errors());
-    return result;
   }
 
   /**

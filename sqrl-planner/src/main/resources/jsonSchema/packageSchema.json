@@ -53,46 +53,35 @@
           "type": "boolean"
         },
         "tags": {
-          "description": "Tag definitions. Tags are validated and propagated through the pipeline when this is present.",
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "pattern": "^[A-Za-z0-9_-]+$"
-              },
-              "values": {
-                "description": "Allowed values ordered from lowest to highest. A tag without values is a boolean tag.",
-                "type": "array",
-                "minItems": 1,
-                "uniqueItems": true,
-                "items": {
-                  "type": "string",
-                  "pattern": "^[A-Za-z0-9_-]+$"
-                }
-              },
-              "required-columns": {
-                "description": "Columns every table carrying this tag must have.",
-                "type": "array",
-                "items": {
+          "description": "Tag definitions keyed by tag name. Tags in doc strings are validated and propagated through the pipeline when this is present.",
+          "type": "object",
+          "patternProperties": {
+            "^[A-Za-z0-9_-]+$": {
+              "type": "object",
+              "properties": {
+                "values": {
+                  "description": "Allowed values ordered from lowest to highest. A tag without values is a boolean tag.",
+                  "type": "array",
+                  "minItems": 1,
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  }
+                },
+                "required-columns": {
+                  "description": "The type of each column that every table carrying this tag must have, keyed by column name.",
                   "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "type": {
-                      "type": "string"
-                    }
-                  },
-                  "required": ["name", "type"],
-                  "additionalProperties": false
+                  "minProperties": 1,
+                  "additionalProperties": {
+                    "type": "string"
+                  }
                 }
-              }
-            },
-            "required": ["name"],
-            "additionalProperties": true
-          }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
         },
         "cost-model": {
           "type": "string",

@@ -16,132 +16,141 @@
 package com.datasqrl.planner.tags;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.config.PackageJson.TagConfig;
-import com.datasqrl.config.TagConfigImpl;
-import com.datasqrl.config.TagConfigImpl.RequiredColumnConfigImpl;
 import com.datasqrl.error.ErrorCollector;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
-import org.apache.calcite.jdbc.JavaTypeFactoryImpl;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.sql.type.SqlTypeName;
+import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
+import org.apache.flink.table.planner.calcite.FlinkTypeSystem;
 import org.junit.jupiter.api.Test;
 
 class TagDefinitionsTest {
 
-  private static final JavaTypeFactoryImpl TYPE_FACTORY = new JavaTypeFactoryImpl();
+  private static final FlinkTypeFactory TYPES =
+      new FlinkTypeFactory(TagDefinitionsTest.class.getClassLoader(), FlinkTypeSystem.INSTANCE);
 
-  private static final Function<String, RelDataType> TYPE_PARSER =
-      type -> TYPE_FACTORY.createSqlType(SqlTypeName.valueOf(type));
+  private static final RelDataType STRING =
+      TYPES.createSqlType(SqlTypeName.VARCHAR, Integer.MAX_VALUE);
+
+  private static final TagDefinitions DEFINITIONS =
+      TagDefinitions.of(
+          List.of(
+              TagDefinition.of("classification", List.of("secret", "top_secret"), List.of()),
+              TagDefinition.of("gdpr", List.of(), List.of())));
+
+  private final ErrorCollector errors = ErrorCollector.root();
 
   @Test
   void givenNoConfig_whenFrom_thenDisabled() {
-    var defs = TagDefinitions.from(Optional.empty(), TYPE_PARSER, ErrorCollector.root());
+    var definitions = TagDefinitions.from(Optional.empty(), this::parseType, errors);
 
-    assertThat(defs).isSameAs(TagDefinitions.DISABLED);
-    assertThat(defs.isEnabled()).isFalse();
+    assertThat(definitions.isEnabled()).isFalse();
+    assertThat(definitions.parse("@pii=raw @undefined", invalid -> {}).isEmpty()).isTrue();
   }
 
   @Test
-  void givenValidConfig_whenFrom_thenNormalizedDefinitions() {
-    var errors = ErrorCollector.root();
+  void givenConfig_whenFrom_thenDefinesNormalizedTags() {
+    var configs = new LinkedHashMap<String, TagConfig>();
+    configs.put("Classification", config(List.of("Secret", "TOP_SECRET"), Map.of()));
+    configs.put("jurisdiction", config(List.of(), Map.of("jurisdiction", "STRING")));
 
-    var defs =
-        TagDefinitions.from(
-            configs(
-                tag("Classification", "Unclassified", "SECRET"),
-                tag("gdpr"),
-                new TagConfigImpl(
-                    "jurisdiction",
-                    null,
-                    List.of(new RequiredColumnConfigImpl("jurisdiction", "VARCHAR")))),
-            TYPE_PARSER,
-            errors);
+    var definitions = TagDefinitions.from(Optional.of(configs), this::parseType, errors);
 
     assertThat(errors.hasErrors()).isFalse();
-    assertThat(defs.isEnabled()).isTrue();
-    var classification = defs.get("CLASSIFICATION").orElseThrow();
-    assertThat(classification.values()).containsExactly("unclassified", "secret");
-    assertThat(classification.isBoolean()).isFalse();
-    assertThat(defs.get("gdpr").orElseThrow().isBoolean()).isTrue();
-    assertThat(defs.get("jurisdiction").orElseThrow().requiredColumns())
-        .singleElement()
+    assertThat(definitions.get("CLASSIFICATION").orElseThrow())
         .satisfies(
-            column -> {
-              assertThat(column.name()).isEqualTo("jurisdiction");
-              assertThat(column.type().getSqlTypeName()).isEqualTo(SqlTypeName.VARCHAR);
+            tag -> {
+              assertThat(tag.name()).isEqualTo("classification");
+              assertThat(tag.values()).containsExactly("secret", "top_secret");
+              assertThat(tag.isBoolean()).isFalse();
             });
-    assertThat(defs.get("unknown")).isEmpty();
+    assertThat(definitions.get("jurisdiction").orElseThrow())
+        .satisfies(
+            tag -> {
+              assertThat(tag.values()).containsExactly(TagDefinition.TRUE);
+              assertThat(tag.isBoolean()).isTrue();
+              assertThat(tag.requiredColumns())
+                  .singleElement()
+                  .satisfies(column -> assertThat(column.type()).isEqualTo(STRING));
+            });
   }
 
   @Test
-  void givenInvalidConfig_whenFrom_thenReportsAllErrors() {
-    var errors = ErrorCollector.root();
+  void givenDuplicatesDifferingInCaseAndInvalidType_whenFrom_thenReportsAllErrors() {
+    var configs = new LinkedHashMap<String, TagConfig>();
+    configs.put("pii", config(List.of("raw", "RAW"), Map.of("id", "NOT A TYPE")));
+    configs.put("PII", config(List.of(), Map.of()));
 
-    TagDefinitions.from(
-        configs(
-            tag("pii", "raw", "RAW"),
-            tag("PII"),
-            tag("has space"),
-            tag("ok", "a=b"),
-            new TagConfigImpl(
-                "jurisdiction",
-                null,
-                List.of(
-                    new RequiredColumnConfigImpl("jurisdiction", "NOT_A_TYPE"),
-                    new RequiredColumnConfigImpl("Jurisdiction", "VARCHAR")))),
-        TYPE_PARSER,
-        errors);
+    var definitions = TagDefinitions.from(Optional.of(configs), this::parseType, errors);
 
-    assertThat(messages(errors))
+    assertThat(messages())
         .containsExactly(
-            "Duplicate value [raw] for tag [pii] in compiler.tags",
-            "Duplicate tag [pii] in compiler.tags",
-            "Invalid tag name [has space] in compiler.tags: only letters, digits, underscores and"
-                + " dashes are allowed",
-            "Invalid value [a=b] for tag [ok] in compiler.tags: only letters, digits, underscores"
-                + " and dashes are allowed",
-            "Invalid type [NOT_A_TYPE] for required column [jurisdiction] of tag [jurisdiction] in"
-                + " compiler.tags: No enum constant org.apache.calcite.sql.type.SqlTypeName"
-                + ".NOT_A_TYPE",
-            "Duplicate required column [Jurisdiction] for tag [jurisdiction] in compiler.tags");
+            "Duplicate value [RAW] of tag [pii] in compiler.tags: values are case-insensitive",
+            "Invalid type [NOT A TYPE] of required column [id] of tag [pii] in compiler.tags:"
+                + " Unknown type",
+            "Duplicate tag [pii] in compiler.tags: tag names are case-insensitive");
+    assertThat(definitions.get("pii").orElseThrow().values()).containsExactly("raw");
   }
 
   @Test
-  void givenOrderedTag_whenOffsetOf_thenReturnsIndex() {
-    var def = new TagDefinition("pii", List.of("masked", "raw"), List.of());
+  void givenTextWithTags_whenParse_thenResolvesTagsCaseInsensitively() {
+    var tags =
+        DEFINITIONS.parse(
+            "Customers @CLASSIFICATION=secret, contact user@example.com @gdpr.\n"
+                + "@classification=Top_Secret",
+            invalid -> {});
 
-    assertThat(def.offsetOf("masked")).hasValue(0);
-    assertThat(def.offsetOf("raw")).hasValue(1);
-    assertThat(def.offsetOf("true")).isEmpty();
-    assertThat(def.valueAt(1)).isEqualTo("raw");
+    assertThat(tags).hasToString("@classification=top_secret @gdpr");
   }
 
   @Test
-  void givenBooleanTag_whenOffsetOf_thenOnlyTrueIsValid() {
-    var def = new TagDefinition("gdpr", List.of(), List.of());
+  void givenInvalidTags_whenParse_thenReportsEachAndIgnoresIt() {
+    var invalid = new ArrayList<String>();
 
-    assertThat(def.offsetOf("true")).hasValue(TagDefinition.BOOLEAN_OFFSET);
-    assertThat(def.offsetOf("false")).isEmpty();
-    assertThat(def.valueAt(TagDefinition.BOOLEAN_OFFSET)).isEqualTo("true");
-    assertThatThrownBy(() -> def.valueAt(0)).isInstanceOf(IllegalArgumentException.class);
+    var tags =
+        DEFINITIONS.parse(
+            "@undefined @classification=public @classification @gdpr=yes @gdpr=true", invalid::add);
+
+    assertThat(invalid)
+        .containsExactly(
+            "Tag [@undefined] is not defined in compiler.tags",
+            "Tag [@classification=public] has an invalid value: allowed values are [secret,"
+                + " top_secret]",
+            "Tag [@classification] requires a value: allowed values are [secret, top_secret]",
+            "Tag [@gdpr=yes] has an invalid value: allowed values are [true]");
+    assertThat(tags).hasToString("@gdpr");
   }
 
-  private static TagConfig tag(String name, String... values) {
-    return new TagConfigImpl(name, List.of(values), null);
+  private RelDataType parseType(String type) {
+    if (!type.equals("STRING")) {
+      throw new IllegalArgumentException("Unknown type");
+    }
+    return STRING;
   }
 
-  private static Optional<List<TagConfig>> configs(TagConfig... configs) {
-    return Optional.of(List.of(configs));
+  private static TagConfig config(List<String> values, Map<String, String> requiredColumns) {
+    return new TagConfig() {
+      @Override
+      public List<String> getValues() {
+        return values;
+      }
+
+      @Override
+      public Map<String, String> getRequiredColumns() {
+        return requiredColumns;
+      }
+    };
   }
 
-  private static List<String> messages(ErrorCollector errors) {
+  private List<String> messages() {
     var result = new ArrayList<String>();
-    errors.forEach(msg -> result.add(msg.getMessage()));
+    errors.forEach(message -> result.add(message.getMessage()));
     return result;
   }
 }

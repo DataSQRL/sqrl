@@ -19,14 +19,13 @@ import com.datasqrl.planner.PredicatePushdownRules;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel.Type;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
 public class CompilerConfigImpl implements PackageJson.CompilerConfig {
-
-  private static final String TAGS_KEY = "tags";
 
   SqrlConfig sqrlConfig;
 
@@ -68,13 +67,15 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   }
 
   @Override
-  public Optional<List<PackageJson.TagConfig>> getTags() {
-    if (!sqrlConfig.hasList(TAGS_KEY)) {
+  public Optional<Map<String, PackageJson.TagConfig>> getTags() {
+    if (!sqrlConfig.hasSubConfig("tags")) {
       return Optional.empty();
     }
-    return Optional.of(
-        sqrlConfig.asList(TAGS_KEY, TagConfigImpl.class).get().stream()
-            .map(PackageJson.TagConfig.class::cast)
-            .toList());
+    var tagsConfig = sqrlConfig.getSubConfig("tags");
+    var tags = new LinkedHashMap<String, PackageJson.TagConfig>();
+    tagsConfig
+        .getKeys()
+        .forEach(name -> tags.put(name, new TagConfigImpl(tagsConfig.getSubConfig(name))));
+    return Optional.of(tags);
   }
 }

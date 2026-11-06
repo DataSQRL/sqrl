@@ -16,13 +16,12 @@
 package com.datasqrl.planner.util;
 
 import com.datasqrl.canonicalizer.Name;
-import com.datasqrl.planner.tags.TableTags;
 import java.util.Map;
 import java.util.Optional;
 
 public interface Documented {
 
-  Documentation EMPTY = new Documentation(null, Map.of(), Map.of(), TableTags.EMPTY);
+  Documentation EMPTY = new Documentation(null, Map.of(), Map.of());
 
   Lookup NO_LOOKUP = name -> Optional.empty();
 
@@ -33,30 +32,8 @@ public interface Documented {
     Optional<String> getDocsFor(String name);
   }
 
-  /**
-   * @param docString the remaining doc string after column and argument docs are extracted
-   * @param columnDocs documentation per column
-   * @param argumentDocs documentation per function argument
-   * @param tags the tags declared in the doc string (and column docs), empty if tags are disabled
-   */
   record Documentation(
-      String docString,
-      Map<Name, String> columnDocs,
-      Map<Name, String> argumentDocs,
-      TableTags tags) {
-
-    public Documentation(
-        String docString, Map<Name, String> columnDocs, Map<Name, String> argumentDocs) {
-      this(docString, columnDocs, argumentDocs, TableTags.EMPTY);
-    }
-
-    public boolean hasTags() {
-      return !tags.isEmpty();
-    }
-
-    public Documentation withTags(TableTags tags) {
-      return new Documentation(docString, columnDocs, argumentDocs, tags);
-    }
+      String docString, Map<Name, String> columnDocs, Map<Name, String> argumentDocs) {
 
     public String getColumn(String columnName, String defaultValue) {
       return columnDocs.getOrDefault(Name.system(columnName), defaultValue);

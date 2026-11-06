@@ -81,11 +81,9 @@ public class CompilationProcess {
   private Pair<PhysicalPlan, TestPlan> executeCompilationInternal(
       Optional<Path> testsPath, Sqrl2FlinkSQLTranslator environment) {
 
-    // Configuration errors, e.g. in compiler.tags, are recorded without aborting
-    errors.abortOnErrors();
     planner.planMain(mainScript, Optional.empty(), environment);
-    // Planning records some errors without aborting (e.g. tag violations) so that all of them are
-    // reported. Don't optimize or assemble a plan with known errors.
+    // Tag violations, including those in the tag configuration, are recorded without aborting so
+    // that all of them are reported. Don't optimize or assemble a plan with known errors.
     errors.abortOnErrors();
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());

@@ -718,8 +718,9 @@ Put requirement IDs and other maintainer notes in `--` or `/* */` comments.
 When the package configuration defines tags under `compiler.tags`, the `@name` and `@name=value` words in a doc-string are tags that the compiler validates (see the [configuration documentation](https://docs.datasqrl.com/docs/configuration#tags-compilertags)):
 
 * Use only the tags and values defined in `compiler.tags`. A boolean tag is written `@name`; an ordered tag needs a value, e.g. `@pii=raw`.
-* A table inherits the tags of every table it reads, including joined and subquery tables. A public table must repeat each inherited tag in its doc-string with the same or a higher value, or the compile fails. Copy the tags from the compile error's `inherited from [...]` tables.
+* A table inherits the tags of every table it reads, including joined and subquery tables. A public table or function must repeat each inherited tag in its doc-string with the same or a higher value, or the compile fails. Copy the tags from the compile error's `inherited from [...]` tables. Hidden tables, relationships and test tables carry their inherited tags without declaring them.
 * Tags in `# Columns:` notes and in `CREATE TABLE` column `COMMENT`s count toward the whole table.
+* A `CREATE TABLE` that `INSERT INTO` or `EXPORT` writes into, and that other tables read, must declare the tags of the written data.
 * To drop or lower an inherited tag, e.g. for an aggregate that no longer contains personal data, add `/*+declassify(tag, ...) */` and declare the lower value or none. Only declassify when the requirements say the data allows it.
 
 ## Validation rules

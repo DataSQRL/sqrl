@@ -211,30 +211,15 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
   }
 
   public RuntimeException exception(ErrorLabel label, String msg, Object... args) {
-    var errorMessage = recordFatal(label, msg, args);
+    ErrorMessage errorMessage =
+        new Implementation(label, ErrorMessage.getMessage(msg, args), location, Severity.FATAL);
+    addInternal(errorMessage);
     return CollectedException.withTrimmedStackTrace(errorMessage.asException());
   }
 
   /**
-   * Records a fatal error without throwing, so the compilation can continue and report further
-   * errors. The compilation still fails since {@link #hasErrors()} returns true.
-   */
-  public void error(String msg, Object... args) {
-    error(ErrorLabel.GENERIC, msg, args);
-  }
-
-  /**
-   * Records a fatal error without throwing, so the compilation can continue and report further
-   * errors. The compilation still fails since {@link #hasErrors()} returns true.
-   */
-  public void error(ErrorLabel label, String msg, Object... args) {
-    recordFatal(label, msg, args);
-  }
-
-  /**
-   * Aborts with the first recorded fatal error if any errors were recorded, e.g. with {@link
-   * #error(String, Object...)}. This makes recorded errors fail like errors thrown by {@link
-   * #fatal(String, Object...)}. The error is not recorded again.
+   * Throws the first fatal error if any was recorded, e.g. by a collector that does not {@link
+   * #abortOnFatal(boolean) abort on fatal} errors. The error is not recorded again.
    */
   public void abortOnErrors() {
     for (var message : this) {
@@ -242,13 +227,6 @@ public class ErrorCollector implements Iterable<ErrorMessage>, Serializable {
         throw CollectedException.withTrimmedStackTrace(message.asException());
       }
     }
-  }
-
-  private ErrorMessage recordFatal(ErrorLabel label, String msg, Object... args) {
-    ErrorMessage errorMessage =
-        new Implementation(label, ErrorMessage.getMessage(msg, args), location, Severity.FATAL);
-    addInternal(errorMessage);
-    return errorMessage;
   }
 
   public void checkFatal(boolean condition, String msg, Object... args) {

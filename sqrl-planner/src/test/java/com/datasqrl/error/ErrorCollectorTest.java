@@ -16,63 +16,25 @@
 package com.datasqrl.error;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.datasqrl.error.ErrorMessage.Severity;
-import java.util.ArrayList;
 import org.junit.jupiter.api.Test;
 
 class ErrorCollectorTest {
 
   @Test
-  void givenCollector_whenError_thenRecordsFatalWithoutThrowing() {
-    var errors = ErrorCollector.root();
-
-    errors.error("first %s", "problem");
-    errors.error("second problem");
-
-    assertThat(errors.hasErrors()).isTrue();
-    var messages = new ArrayList<ErrorMessage>();
-    errors.forEach(messages::add);
-    assertThat(messages)
-        .extracting(ErrorMessage::getMessage)
-        .containsExactly("first problem", "second problem");
-    assertThat(messages).extracting(ErrorMessage::getSeverity).containsOnly(Severity.FATAL);
-  }
-
-  @Test
-  void givenOnlyErrorsCollector_whenError_thenErrorIsKept() {
-    var errors = ErrorCollector.root().onlyErrors();
-
-    errors.error("problem");
-    errors.warn("warning");
-
-    var messages = new ArrayList<ErrorMessage>();
-    errors.forEach(messages::add);
-    assertThat(messages).extracting(ErrorMessage::getMessage).containsExactly("problem");
-  }
-
-  @Test
-  void givenCollector_whenFatal_thenThrows() {
-    var errors = ErrorCollector.root();
-
-    assertThatThrownBy(() -> errors.fatal("problem")).isInstanceOf(CollectedException.class);
-    assertThat(errors.hasErrors()).isTrue();
-  }
-
-  @Test
   void givenRecordedErrors_whenAbortOnErrors_thenThrowsFirstErrorWithoutRecordingAgain() {
     var errors = ErrorCollector.root();
     errors.warn("warning");
-    errors.error("first problem");
-    errors.error("second problem");
+    var collector = errors.abortOnFatal(false);
+    collector.fatal("first problem");
+    collector.fatal("second problem");
 
     assertThatThrownBy(errors::abortOnErrors)
         .isInstanceOf(CollectedException.class)
         .hasMessageContaining("first problem");
-    var messages = new ArrayList<ErrorMessage>();
-    errors.forEach(messages::add);
-    assertThat(messages).hasSize(3);
+    assertThat(errors).hasSize(3);
   }
 
   @Test
@@ -80,8 +42,7 @@ class ErrorCollectorTest {
     var errors = ErrorCollector.root();
     errors.warn("warning");
 
-    errors.abortOnErrors();
-
+    assertThatCode(errors::abortOnErrors).doesNotThrowAnyException();
     assertThat(errors.hasErrors()).isFalse();
   }
 }

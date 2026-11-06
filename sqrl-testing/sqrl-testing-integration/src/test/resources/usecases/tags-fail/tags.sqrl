@@ -35,6 +35,7 @@ CustomerJurisdictions := SELECT id, 1 AS jurisdiction FROM Customers;
 CREATE TABLE ContactEvents (
   id BIGINT NOT NULL,
   email STRING COMMENT 'Contact email @pii=raw',
+  phone STRING COMMENT 'Contact phone @pii=unknown',
   event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
 );
 
@@ -45,3 +46,20 @@ CREATE TABLE ContactEventsCopy (
 
 /** Missing the pii tag of the email column comment that LIKE copies */
 ContactEmails := SELECT id, email FROM ContactEventsCopy;
+
+/** Customer contacts that don't declare the tags of the data written into them */
+CREATE TABLE CustomerContacts (
+  id BIGINT NOT NULL,
+  email STRING
+) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/tags-fail/contacts',
+  'format' = 'csv'
+);
+
+INSERT INTO CustomerContacts SELECT id, email FROM Customers;
+
+/** Applications to write into the contacts @financial @classification=internal */
+ApplicationContacts := SELECT customer_id AS id, CAST(NULL AS STRING) AS email FROM Applications;
+
+EXPORT ApplicationContacts TO CustomerContacts;

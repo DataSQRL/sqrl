@@ -104,7 +104,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
           true,
           getTableNameMapping(tableIdMap),
           referencedTables,
-          getViewDocumentation(query));
+          query.function());
     }
 
     var tableNameMapping = new HashMap<>(getTableNameMapping(tableIdMap));
@@ -136,7 +136,7 @@ public class DuckDbStatementFactory extends AbstractJdbcStatementFactory {
         true,
         "WITH %s %s".formatted(cteSql, querySql),
         referencedTables,
-        getViewDocumentation(query));
+        query.function());
   }
 
   private String toSql(RelNode relNode, Map<String, SqlIdentifier> tableNameMapping) {
