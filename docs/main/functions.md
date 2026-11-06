@@ -111,7 +111,7 @@ public class TitleCase extends ScalarFunction {
 }
 ```
 
-DataSQRL compiles all eligible JBang scripts in the project into a deployable JAR and discovers their functions automatically. No `@AutoService` annotation or manual JAR build is required. It caches the result as `jbang-udfs.jar` in the UDF script directory and rebuilds it when a script changes. Delete `jbang-udfs.jar` to force a rebuild.
+DataSQRL compiles all eligible JBang scripts in the project into a deployable JAR and discovers their functions automatically. No `@AutoService` annotation or manual JAR build is required. It caches the result as `jbang-udfs.jar` in the deepest directory that contains all JBang scripts of the project and rebuilds it when a script changes. Delete `jbang-udfs.jar` to force a rebuild. An [included project](https://docs.datasqrl.com/docs/main/configuration.md#include-other-sources) with JBang scripts gets its own JAR, deployed as `jbang-udfs-<namespace>.jar`. Since each JAR bundles its own dependencies, the compiler warns when the project and its included projects outside of the project folder deploy more than one JBang JAR, as different versions of the same dependency can cause failures at runtime. The compilation fails if two projects define different JBang UDFs with the same class name, because only one of them can be loaded at runtime, so give them distinct names or packages.
 
 ### Java Projects
 
