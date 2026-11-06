@@ -15,11 +15,10 @@
  */
 package com.datasqrl.server.jdbc;
 
+import com.datasqrl.server.config.JdbcConfig;
 import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.util.DuckDbInitializer;
 import com.google.common.collect.ImmutableMap;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import io.vertx.core.Vertx;
 import io.vertx.jdbcclient.JDBCConnectOptions;
 import io.vertx.jdbcclient.JDBCPool;
@@ -86,26 +85,26 @@ public class JdbcClientsConfig {
       return Optional.empty();
     }
 
-    // No need for Class.forName() - DuckDB JDBC driver auto-registers via JDBC 4.0+ ServiceLoader
-    var url = duckDbConf.getUrl();
-    var initSql = new DuckDbInitializer(duckDbConf).buildInitSql();
+    return Optional.of(createDuckDbPool(vertx, duckDbConf, this.config.getPoolOptions()));
+  }
 
-    var hikariCfg = new HikariConfig();
-    hikariCfg.setJdbcUrl(url);
-    initSql.ifPresent(
-        isql -> {
-          log.debug("DuckDB init SQL: {}", isql);
-          hikariCfg.setConnectionInitSql(isql);
-        });
+  /**
+   * Creates a pool of {@code pool-size} duplicated connections to one DuckDB database, so queries
+   * run concurrently and share the database's settings and {@code memory_limit}.
+   */
+  static Pool createDuckDbPool(Vertx vertx, JdbcConfig.DuckDbConfig conf, PoolOptions base) {
+    // No need for Class.forName() - DuckDB JDBC driver auto-registers via JDBC 4.0+ ServiceLoader
+    var initSql = new DuckDbInitializer(conf).buildInitSql();
+    initSql.ifPresent(isql -> log.debug("DuckDB init SQL: {}", isql));
 
     var poolOptions =
-        new PoolOptions(this.config.getPoolOptions())
+        new PoolOptions(base)
             .setName("duckdb-pool")
-            .setMaxSize(1)
+            .setMaxSize(conf.getPoolSize())
             .setMaxLifetime(0)
             .setIdleTimeout(0);
 
-    return Optional.of(JDBCPool.pool(vertx, new HikariDataSource(hikariCfg), poolOptions));
+    return JDBCPool.pool(vertx, new DuckDbDataSource(conf.getUrl(), initSql), poolOptions);
   }
 
   private SqlClient initPostgresSqlClient() {

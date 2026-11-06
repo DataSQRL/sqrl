@@ -46,7 +46,28 @@ public class JdbcConfig {
     @JsonProperty("use-version-guessing")
     private boolean useVersionGuessing;
 
+    /** Creates an S3 secret from the AWS credential provider chain that DuckDB refreshes. */
+    @JsonProperty("use-credential-chain")
+    private boolean useCredentialChain;
+
+    /** URL of an S3-compatible store such as S3Mock, for example {@code http://localhost:9090}. */
+    @JsonProperty("s3-endpoint")
+    private String s3Endpoint;
+
     @JsonProperty("memory-limit")
     private String memoryLimit;
+
+    /** Number of duplicated connections, so the number of queries DuckDB runs at once. */
+    @JsonProperty("pool-size")
+    private int poolSize = 4;
+
+    /**
+     * Directory DuckDB spills to; {@code null} means a {@code sqrl-duckdb} dir in java.io.tmpdir.
+     */
+    @JsonProperty("temp-directory")
+    private String tempDirectory;
+
+    @JsonProperty("max-temp-directory-size")
+    private String maxTempDirectorySize = "4GB";
   }
 }

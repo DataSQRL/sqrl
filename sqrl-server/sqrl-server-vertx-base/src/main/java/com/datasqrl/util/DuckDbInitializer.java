@@ -18,6 +18,10 @@ package com.datasqrl.util;
 import static com.datasqrl.env.EnvVariableNames.DUCKDB_EXTENSIONS_DIR;
 
 import com.datasqrl.server.config.JdbcConfig;
+import jakarta.annotation.Nullable;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.StringJoiner;
 import lombok.RequiredArgsConstructor;
@@ -28,37 +32,99 @@ import org.apache.commons.lang3.StringUtils;
 @Slf4j
 public final class DuckDbInitializer {
 
-  private final StringJoiner joiner = new StringJoiner(";", "", ";");
+  /**
+   * DuckDB's own default is {@code .tmp} under the working directory, which is the read-only config
+   * mount in the server image.
+   */
+  public static final String DEFAULT_TEMP_DIRECTORY =
+      Path.of(System.getProperty("java.io.tmpdir"), "sqrl-duckdb").toString();
+
+  private static final String INVALID_S3_ENDPOINT =
+      "s3-endpoint must be an http:// or https:// URL, for example http://localhost:9090";
+
+  private static final String CREDENTIAL_CHAIN_SECRET_OPTIONS =
+      "TYPE S3, PROVIDER credential_chain, REFRESH auto";
 
   private final JdbcConfig.DuckDbConfig config;
 
   public Optional<String> buildInitSql() {
-    if (StringUtils.isNotBlank(config.getMemoryLimit())) {
-      joiner.add("SET memory_limit='" + config.getMemoryLimit() + "'");
-    }
-
-    initExtensions();
-
-    if (joiner.length() > 1) {
-      return Optional.of(joiner.toString());
-    }
-
-    return Optional.empty();
-  }
-
-  private void initExtensions() {
     var extensionDir = System.getenv(DUCKDB_EXTENSIONS_DIR);
 
     if (StringUtils.isBlank(extensionDir)) {
       log.warn(
           "Environment variable {} is not set, extensions will not be loaded.",
           DUCKDB_EXTENSIONS_DIR);
-      return;
+      extensionDir = null;
     }
 
-    joiner.add("SET extension_directory='" + extensionDir + "'");
+    return Optional.of(buildInitSql(extensionDir));
+  }
+
+  /** Builds the init SQL; a {@code null} extension directory skips loading extensions. */
+  String buildInitSql(@Nullable String extensionDir) {
+    var s3EndpointOptions = s3EndpointOptions();
+    var joiner = new StringJoiner(";", "", ";");
+
+    if (StringUtils.isNotBlank(config.getMemoryLimit())) {
+      joiner.add("SET memory_limit=" + sqlString(config.getMemoryLimit()));
+    }
+
+    var tempDirectory =
+        StringUtils.isNotBlank(config.getTempDirectory())
+            ? config.getTempDirectory()
+            : DEFAULT_TEMP_DIRECTORY;
+    joiner.add("SET temp_directory=" + sqlString(tempDirectory));
+    joiner.add("SET max_temp_directory_size=" + sqlString(config.getMaxTempDirectorySize()));
+
+    if (extensionDir != null) {
+      addExtensions(joiner, extensionDir, s3EndpointOptions);
+    }
+
+    return joiner.toString();
+  }
+
+  /** Secret options for {@code s3-endpoint}, or an empty string when it is not set. */
+  private String s3EndpointOptions() {
+    var endpoint = config.getS3Endpoint();
+    if (StringUtils.isBlank(endpoint)) {
+      return "";
+    }
+    if (!config.isUseCredentialChain()) {
+      throw new IllegalArgumentException("s3-endpoint requires use-credential-chain");
+    }
+
+    URI uri;
+    try {
+      uri = new URI(endpoint);
+    } catch (URISyntaxException e) {
+      throw new IllegalArgumentException(INVALID_S3_ENDPOINT, e);
+    }
+    var scheme = uri.getScheme();
+    if (!("http".equals(scheme) || "https".equals(scheme)) || uri.getAuthority() == null) {
+      throw new IllegalArgumentException(INVALID_S3_ENDPOINT);
+    }
+
+    return ", ENDPOINT "
+        + sqlString(uri.getAuthority())
+        + ", URL_STYLE 'path', USE_SSL "
+        + "https".equals(scheme);
+  }
+
+  private void addExtensions(StringJoiner joiner, String extensionDir, String s3EndpointOptions) {
+    joiner.add("SET extension_directory=" + sqlString(extensionDir));
     joiner.add("LOAD iceberg");
     joiner.add("LOAD httpfs");
+
+    if (config.isUseCredentialChain()) {
+      // The default chain covers environment variables, profiles and the EKS IRSA web-identity
+      // token. With REFRESH auto, DuckDB re-runs the chain when S3 rejects expired credentials.
+      joiner.add("LOAD aws");
+      joiner.add(
+          "CREATE OR REPLACE SECRET sqrl_s3_credential_chain ("
+              + CREDENTIAL_CHAIN_SECRET_OPTIONS
+              + s3EndpointOptions
+              + ")");
+    }
 
     if (config.isUseDiskCache()) {
       joiner.add("LOAD cache_httpfs");
@@ -67,5 +133,9 @@ public final class DuckDbInitializer {
     if (config.isUseVersionGuessing()) {
       joiner.add("SET unsafe_enable_version_guessing = true");
     }
+  }
+
+  private static String sqlString(String value) {
+    return "'" + value.replace("'", "''") + "'";
   }
 }

@@ -231,6 +231,10 @@
             "url": {
               "type": "string"
             },
+            "pool-size": {
+              "type": "integer",
+              "minimum": 1
+            },
             "memory-limit": {
               "type": "string"
             },
@@ -239,6 +243,18 @@
             },
             "use-version-guessing": {
               "type": "boolean"
+            },
+            "use-credential-chain": {
+              "type": "boolean"
+            },
+            "s3-endpoint": {
+              "type": "string"
+            },
+            "temp-directory": {
+              "type": "string"
+            },
+            "max-temp-directory-size": {
+              "type": "string"
             },
             "scan-cte-cardinality-divisor": {
               "type": "integer",
