@@ -349,8 +349,16 @@ CustomerByEmail(email STRING) := SELECT * FROM Customer WHERE email = :email;
 
 #### Accessing JWT payload
 
-To access the JWT payload included in the Authorization HTTP header, you can use the `METADATA` expression within the
-function definition. The JWT payload is available via the auth object, and nested fields can be accessed directly.
+To access the JWT payload included in the Authorization HTTP header, you can use the `METADATA` expression within the function definition. The text after `auth.` is the name of a claim in the JWT payload:
+
+* `'auth.val'` reads the top-level claim `val`.
+* `'auth.org.id'` reads the field `id` of the object claim `org`. Each dot steps one level into an object, so a path can go to any depth, for example `'auth.org.location.zip'`.
+* A claim name can contain dots, for example the namespaced claim `https://example.com/org`. The server uses the longest claim name that it finds in the token, and then follows the rest of the path. So `'auth.https://example.com/org_id'` reads a top-level claim, and `'auth.https://example.com/org.id'` reads the field `id` of the claim `https://example.com/org`.
+* A path can end on an array. In the SQRL script, declare the function argument with an `ARRAY<...>` type, for example `roles ARRAY<STRING> NOT NULL METADATA FROM 'auth.realm_access.roles'`.
+* Array indexing does not work. For example, `'auth.realm_access.roles.0'` does not read the first role. The server treats it as a missing claim. To check for one item, read the full array and use `array_contains` in the query.
+* Give each segment of the path a name. A key with an empty segment, such as `'auth.org.'` or `'auth.org..id'`, stops the compile with an `Invalid metadata key` or `Unknown metadata key` error.
+* When the token has no claim at the path, a request fails with `403 Forbidden` for a `NOT NULL` argument. A nullable argument gets `null`.
+
 In the example below, the JWT payload contains a val field, which is an integer.
 
 ```sql

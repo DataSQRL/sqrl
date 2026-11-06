@@ -24,6 +24,11 @@ JWT CONFIGURATION:
 SQRL FUNCTIONS:
     - AuthMyTable(val BIGINT): Expects JWT claim "val" with single integer value
     - AuthMyTableValues(val ARRAY<BIGINT>): Expects JWT claim "values" with array of integers
+    - AuthNestedClaimMyTable(val BIGINT): Expects JWT claim "org" with integer field "val"
+    - AuthNamespacedNestedClaimMyTable(val BIGINT): Expects JWT claim "https://example.com/org"
+      with integer field "val"
+    - AuthNestedArrayClaimMyTable(vals ARRAY<BIGINT>): Expects JWT claim "org" with array field
+      "values"
 
 EXAMPLES:
     # For AuthMyTable with val=73, edit PAYLOAD to:

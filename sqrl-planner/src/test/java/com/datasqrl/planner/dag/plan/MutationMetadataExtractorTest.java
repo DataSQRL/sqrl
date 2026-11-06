@@ -45,8 +45,25 @@ class MutationMetadataExtractorTest {
         .contains(new ResolvedMetadata(MetadataType.AUTH, "sub", true));
   }
 
+  @Test
+  void givenNestedAuthClaimAlias_whenExtract_thenReturnsAuthMetadataWithClaimPath() {
+    assertThat(extractor.extract("auth.org.id", false))
+        .contains(new ResolvedMetadata(MetadataType.AUTH, "org.id", true));
+  }
+
   @ParameterizedTest
-  @ValueSource(strings = {"auht.sub", "offset", "uuid.id", "timestamp.ts", "auth", "auth."})
+  @ValueSource(
+      strings = {
+        "auht.sub",
+        "offset",
+        "uuid.id",
+        "timestamp.ts",
+        "auth",
+        "auth.",
+        "auth.org.",
+        "auth..id",
+        "auth.org..id"
+      })
   void givenUnsupportedAlias_whenExtract_thenReturnsEmpty(String metadataAlias) {
     assertThat(extractor.extract(metadataAlias, false)).isEmpty();
   }
