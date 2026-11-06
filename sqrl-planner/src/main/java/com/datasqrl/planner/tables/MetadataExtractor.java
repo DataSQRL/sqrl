@@ -16,10 +16,15 @@
 package com.datasqrl.planner.tables;
 
 import com.datasqrl.server.ResolvedMetadata;
+import java.util.Optional;
 
 public interface MetadataExtractor {
 
-  ResolvedMetadata extract(String metadataAlias, boolean nullable);
+  /** Resolves the metadata alias, or returns empty when the alias is not supported. */
+  Optional<ResolvedMetadata> extract(String metadataAlias, boolean nullable);
 
   boolean removeMetadata(String metadataAlias);
+
+  /** The supported metadata aliases, shown in the error for an unsupported alias. */
+  String supportedAliases();
 }

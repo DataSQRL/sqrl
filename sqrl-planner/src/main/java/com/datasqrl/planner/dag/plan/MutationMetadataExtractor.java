@@ -19,28 +19,37 @@ import com.datasqrl.planner.parser.SqrlTableFunctionStatement;
 import com.datasqrl.planner.tables.MetadataExtractor;
 import com.datasqrl.server.MetadataType;
 import com.datasqrl.server.ResolvedMetadata;
+import java.util.Optional;
 
 public final class MutationMetadataExtractor implements MetadataExtractor {
 
   public static final String UUID_METADATA = "uuid";
   public static final String TIMESTAMP_METADATA = "timestamp";
 
+  /**
+   * Resolves the metadata alias of a mutation column, or returns empty for an unsupported alias.
+   */
   @Override
-  public ResolvedMetadata extract(String metadataAlias, boolean nullable) {
+  public Optional<ResolvedMetadata> extract(String metadataAlias, boolean nullable) {
     if (metadataAlias.equalsIgnoreCase(UUID_METADATA)) {
-      return new ResolvedMetadata(MetadataType.UUID, !nullable);
+      return Optional.of(new ResolvedMetadata(MetadataType.UUID, !nullable));
     }
 
     if (metadataAlias.equalsIgnoreCase(TIMESTAMP_METADATA)) {
-      return new ResolvedMetadata(MetadataType.TIMESTAMP, !nullable);
+      return Optional.of(new ResolvedMetadata(MetadataType.TIMESTAMP, !nullable));
     }
 
-    return SqrlTableFunctionStatement.parseMetadata(metadataAlias, !nullable).orElse(null);
+    return SqrlTableFunctionStatement.parseMetadata(metadataAlias, !nullable);
   }
 
   @Override
   public boolean removeMetadata(String metadataAlias) {
     // Remove for all but timestamp
     return !metadataAlias.equalsIgnoreCase(TIMESTAMP_METADATA);
+  }
+
+  @Override
+  public String supportedAliases() {
+    return "'uuid', 'timestamp' or 'auth.<claim>'";
   }
 }

@@ -84,11 +84,11 @@ public class SqrlTableFunctionStatement extends SqrlDefinition {
       return Optional.empty();
     }
     String[] parts = metadata.split("\\.", 2);
-    try {
-      MetadataType type = MetadataType.valueOf(parts[0].toUpperCase());
-      return Optional.of(new ResolvedMetadata(type, parts[1], isRequired));
-    } catch (IllegalArgumentException e) {
+    // Only 'auth' takes a name after the dot, the server has no reader for the other types.
+    // A key such as 'auth.' has no name after the dot.
+    if (!parts[0].equalsIgnoreCase("auth") || parts[1].isBlank()) {
       return Optional.empty();
     }
+    return Optional.of(new ResolvedMetadata(MetadataType.AUTH, parts[1], isRequired));
   }
 }

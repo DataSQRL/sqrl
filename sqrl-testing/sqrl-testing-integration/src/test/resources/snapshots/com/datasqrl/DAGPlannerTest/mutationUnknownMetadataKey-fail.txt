@@ -1,0 +1,7 @@
+[FATAL] Unknown metadata keys on table 'OrderRequests': 'auht.sub' on column 'customer_id', 'uuid.id' on column 'request_id', 'offset' on column 'kafka_offset'. Use 'uuid', 'timestamp' or 'auth.<claim>'.
+in script:mutationUnknownMetadataKey-fail.sqrl [4:1]:
+-- and 'offset' is a metadata key of the Flink Kafka connector, but not of a DataSQRL mutation.
+/*+engine(kafka) */
+CREATE TABLE OrderRequests (
+^
+

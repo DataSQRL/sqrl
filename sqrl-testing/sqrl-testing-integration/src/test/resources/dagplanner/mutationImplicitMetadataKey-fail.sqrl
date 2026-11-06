@@ -1,0 +1,7 @@
+-- Without a FROM clause, the column name is the metadata key: 'offset' is not a mutation metadata key.
+/*+engine(kafka) */
+CREATE TABLE Clicks (
+    url STRING NOT NULL,
+    `offset` BIGINT METADATA,
+    clicked_at TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
