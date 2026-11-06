@@ -19,6 +19,7 @@ import com.datasqrl.config.EngineFactory;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.ServerConfigConverter;
 import com.datasqrl.engine.IExecutionEngine;
+import com.datasqrl.error.ErrorCollector;
 import com.google.auto.service.AutoService;
 import jakarta.inject.Inject;
 import java.util.List;
@@ -41,11 +42,15 @@ public class VertxEngineFactory extends GenericJavaServerEngineFactory {
   public static class VertxEngine extends GenericJavaServerEngine {
 
     @Inject
-    public VertxEngine(PackageJson packageJson, List<ServerConfigConverter> configConverters) {
+    public VertxEngine(
+        PackageJson packageJson,
+        List<ServerConfigConverter> configConverters,
+        ErrorCollector errorCollector) {
       super(
           ENGINE_NAME,
           packageJson.getEngines().getEngineConfigOrEmpty(ENGINE_NAME),
-          configConverters);
+          configConverters,
+          errorCollector);
     }
   }
 }

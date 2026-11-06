@@ -360,6 +360,8 @@ AuthFilter(mySecretId BIGINT NOT NULL METADATA FROM 'auth.val') :=
   WHERE c.customerId = :mySecretId;
 ```
 
+A script that reads a claim, in a function argument or in a mutation column, needs `jwtAuth` or `oauthConfig` in `engines.vertx.config`. Without one of them, the server checks no token, so the compile fails with the error `The script reads JWT claims (...), but engines.vertx.config has no jwtAuth and no oauthConfig.` If you see that error, add `jwtAuth` or `oauthConfig` with the `/configure-sqrl` skill, and keep the `METADATA FROM 'auth.<claim>'` columns.
+
 ### Relationship definition
 
 ```

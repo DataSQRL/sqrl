@@ -1,0 +1,2 @@
+[FATAL] The script reads JWT claims (OrderRequests.customer_id from 'auth.sub'), but engines.vertx.config has no jwtAuth and no oauthConfig. Add jwtAuth or oauthConfig, so the server can check the token.
+

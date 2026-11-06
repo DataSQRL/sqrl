@@ -1,0 +1,289 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Mutation {
+  OrderRequests(event: OrderRequestsInput!): OrderRequestsResultOutput!
+}
+
+input OrderRequestsInput {
+  item: String!
+}
+
+type OrderRequestsResultOutput {
+  customer_id: String!
+  item: String!
+  requested_at: DateTime!
+}
+
+type Query {
+  "The number of order requests."
+  RequestCount(limit: Int = 10, offset: Int = 0): [RequestCount!]
+}
+
+"The number of order requests."
+type RequestCount {
+  n: Long!
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== OrderRequests
+ID:          default_catalog.default_database.OrderRequests
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   requested_at
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - customer_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - item: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - requested_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrderRequests__base
+
+=== RequestCount
+ID:          default_catalog.default_database.RequestCount
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1
+--- definition ---
+Schema:
+ - n: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.OrderRequests
+--- physical ---
+Table RequestCount (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `OrderRequests` (
+  `customer_id` STRING NOT NULL,
+  `item` STRING NOT NULL,
+  `requested_at` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `requested_at` AS `requested_at` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'OrderRequests'
+);
+CREATE VIEW `RequestCount`
+AS
+SELECT COUNT(*) AS `n`
+FROM `OrderRequests`;
+CREATE TABLE `RequestCount_1` (
+  `n` BIGINT NOT NULL,
+  `__pk_hash` INTEGER NOT NULL,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'RequestCount',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`RequestCount_1`
+SELECT `n`, 1 AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`RequestCount`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "OrderRequests",
+      "tableName" : "OrderRequests",
+      "logicalName" : "OrderRequests",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "RequestCount" ("n" BIGINT NOT NULL, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "RequestCount",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"n\"\nFROM \"RequestCount\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "OrderRequests",
+          "returnList" : false,
+          "topic" : "OrderRequests",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "customer_id" : {
+              "metadataType" : "AUTH",
+              "name" : "sub",
+              "required" : true
+            },
+            "requested_at" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetRequestCount",
+            "description" : "The number of order requests.",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query RequestCount($limit: Int = 10, $offset: Int = 0) {\nRequestCount(limit: $limit, offset: $offset) {\nn\n}\n\n}",
+            "queryName" : "RequestCount",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/RequestCount{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "n" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddOrderRequests",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "item" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "item"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation OrderRequests($item: String!) {\nOrderRequests(event: { item: $item }) {\ncustomer_id\nitem\nrequested_at\n}\n\n}",
+            "queryName" : "OrderRequests",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/OrderRequests",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "customer_id" : {
+                "type" : "string"
+              },
+              "item" : {
+                "type" : "string"
+              },
+              "requested_at" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  OrderRequests(event: OrderRequestsInput!): OrderRequestsResultOutput!\n}\n\ninput OrderRequestsInput {\n  item: String!\n}\n\ntype OrderRequestsResultOutput {\n  customer_id: String!\n  item: String!\n  requested_at: DateTime!\n}\n\ntype Query {\n  \"The number of order requests.\"\n  RequestCount(limit: Int = 10, offset: Int = 0): [RequestCount!]\n}\n\n\"The number of order requests.\"\ntype RequestCount {\n  n: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}
