@@ -214,6 +214,8 @@ See [Compilation Output](compilation-output) to learn more about the files the c
 
 The compiler reports all errors of a script in one run, each with its position, so you can fix them together. Compilation fails if there is any error.
 
+If a statement is missing its `;` and the next line starts a definition (`Name :=`), the compiler reports `Missing ';' at the end of the statement` where the `;` belongs and still compiles both statements, so their other errors are reported as well.
+
 To avoid knock-on errors, the compiler does not report the errors that only follow from a failed statement:
 - If a table, column or function is not found because its definition failed, that error is not reported. The other errors of the statement are still reported.
 - If the package of an `IMPORT package.*` cannot be loaded, no table or function is reported as not found, since the compiler cannot tell which ones the package has. If only some of its tables fail, the others are still imported.

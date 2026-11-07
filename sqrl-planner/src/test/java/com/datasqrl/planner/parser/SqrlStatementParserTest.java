@@ -92,6 +92,59 @@ class SqrlStatementParserTest {
   }
 
   @Test
+  void givenDefinitionsMissingDelimiter_whenParseCreateTables_thenTablesAreParsed() {
+    var script =
+        """
+        CREATE TABLE Orders (id INT) WITH ('connector' = 'datagen');
+        A := SELECT 1
+        B := SELECT 2;
+        """;
+    var errors = ErrorCollector.root();
+
+    var tables = parser.parseCreateTables(script, errors);
+
+    assertThat(tables)
+        .singleElement()
+        .satisfies(
+            table ->
+                assertThat(table.statement().get()).isInstanceOf(SqrlCreateTableStatement.class));
+    assertThat(errors.hasErrors()).isFalse();
+  }
+
+  @Test
+  void givenDefinitionMissingDelimiter_whenParseScript_thenReportsItAtTheEndOfTheStatement() {
+    var script =
+        """
+        A := SELECT 1
+        B := SELECT 2;
+        """;
+    var errors = ErrorCollector.root().withScript("test.sqrl", script);
+
+    var parsed = parser.parseScript(script, errors);
+
+    assertThat(parsed.statements())
+        .extracting(ParsedStatement::statement)
+        .satisfiesExactly(
+            a -> {
+              assertThat(a.get()).isInstanceOf(SqrlTableDefinition.class);
+              assertThat(a.getFileLocation()).isEqualTo(new FileLocation(1, 1));
+            },
+            b -> {
+              assertThat(b.get()).isInstanceOf(SqrlTableDefinition.class);
+              assertThat(b.getFileLocation()).isEqualTo(new FileLocation(2, 1));
+            });
+    assertThat(parsed.unparsedStatements()).isEmpty();
+    assertThat(parsed.firstError()).isPresent();
+    assertThat(errors)
+        .singleElement()
+        .satisfies(
+            error -> {
+              assertThat(error.getMessage()).isEqualTo("Missing ';' at the end of the statement");
+              assertThat(error.getLocation().getFileLocation()).isEqualTo(new FileLocation(1, 14));
+            });
+  }
+
+  @Test
   void givenDefinitionThatFailsToParse_whenParseScript_thenItsSourceIsKept() {
     var script =
         """
