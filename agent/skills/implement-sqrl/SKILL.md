@@ -715,6 +715,14 @@ The following produce compile time errors:
 * Basetable inference failure for relationships.
 * Invalid or malformed hints (unknown name, wrong delimiter).
 
+A compile reports all errors of the script at once, each with its position, so fix all of them before you compile again. It leaves out the errors that only follow from another error:
+* A table, column or function whose definition failed is not reported again as not found where it is used.
+* After an `IMPORT package.*` whose package cannot be loaded, no table or function is reported as not found.
+* A statement that adds a column to, exports or inserts into a table whose definition failed is skipped.
+* After a `USE` statement fails, the rest of the script is skipped.
+
+So a fix can bring up new errors in the statements that were skipped or used the failed object. Compile again until no errors are left.
+
 ## Additional pattern guides
 For additional patterns, read these guides:
 * [Stream Enrichment](guides/stream-enrichment.md): How to enrich a data stream with dimensional information or state consistently, and how to carry the whole dimension row as one nested object.

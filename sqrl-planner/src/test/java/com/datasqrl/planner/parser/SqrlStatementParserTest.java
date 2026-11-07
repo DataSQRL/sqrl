@@ -18,6 +18,7 @@ package com.datasqrl.planner.parser;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -88,5 +89,27 @@ class SqrlStatementParserTest {
     var parsed = parser.parseStatement("EXPORT\n  Datapoints TO mypkg.sink;");
 
     assertThat(parsed).isInstanceOf(SqrlExportStatement.class);
+  }
+
+  @Test
+  void givenDefinitionThatFailsToParse_whenParseScript_thenItsSourceIsKept() {
+    var script =
+        """
+        A := SELECT 1;
+        B := DISTINCT A ON id;
+        C := SELECT 2;
+        """;
+
+    var parsed = parser.parseScript(script, ErrorCollector.root().withScript("test.sqrl", script));
+
+    assertThat(parsed.statements()).hasSize(2);
+    assertThat(parsed.unparsedStatements())
+        .singleElement()
+        .satisfies(
+            statement -> {
+              assertThat(statement.get()).startsWith("B := DISTINCT A ON id;");
+              assertThat(statement.getFileLocation()).isEqualTo(new FileLocation(2, 1));
+            });
+    assertThat(parsed.firstError()).isPresent();
   }
 }

@@ -1,0 +1,120 @@
+[FATAL] Could not parse [DISTINCT] statement.
+in script:knockOnErrors-fail.sqrl [29:1]:
+
+-- The knock-on errors of a table that failed to parse are not reported
+OrderIds := DISTINCT Orders ON id;
+^
+Invalid SQRL definition. Expected one of SELECT, DISTINCT, or column expression.
+
+To define a table use:
+```
+Table := SELECT * FROM AnotherTable;
+```
+To deduplicate a stream use:
+```
+DistinctCustomers := DISTINCT Customers ON customerId ORDER BY lastUpdated DESC;
+```
+To define a table function use:
+```
+OlderCustomers(age INT) := SELECT * FROM Customers WHERE age >= :age;
+```
+To define a relationship use:
+```
+Customers.orders := SELECT * FROM Orders o WHERE o.customerid = this.id ORDER BY o.orderTime DESC;
+```
+To add a column to an existing table that is defined immediately above, use:
+```
+Customers.full_name := CONCAT(first_name, last_name);
+```
+[FATAL] Could not find module [ecomerceTs.customer] at path: [ecomerceTs/customer]
+in script:knockOnErrors-fail.sqrl [3:8]:
+IMPORT ecommerceTs.orders;
+-- Fails because of the typo
+IMPORT ecomerceTs.customer;
+-------^
+
+[FATAL]  Column 'missing_name' not found in any table
+in script:sources.sqrl [13:37]:
+
+-- Fails, and the knock-on errors of the script and of the main script are not reported
+CustomerNames := SELECT customerid, missing_name FROM Customer;
+------------------------------------^
+
+[FATAL]  Unknown identifier 'NOT_A_TYPE'
+in script:alerts.table.sql [3:11]:
+CREATE TABLE Alerts (
+  `id` BIGINT NOT NULL,
+  `level` NOT_A_TYPE NOT NULL
+----------^
+
+[FATAL]  Column 'missing_column' not found in any table
+in script:knockOnErrors-fail.sqrl [14:50]:
+
+-- A column that is named like the failed import is not confused with it, so its error is reported
+OrderCustomers := SELECT customerid AS customer, missing_column FROM Orders;
+-------------------------------------------------^
+
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.Orders[time]
+in script:knockOnErrors-fail.sqrl [18:1]:
+-- The knock-on errors of a column that failed are not reported, and the next column still
+-- directly follows its table
+OrderTotals := SELECT id, customerid FROM Orders;
+^
+
+[FATAL]  Column 'missing_factor' not found in any table
+in script:knockOnErrors-fail.sqrl [19:27]:
+-- directly follows its table
+OrderTotals := SELECT id, customerid FROM Orders;
+OrderTotals.total := id * missing_factor;
+--------------------------^
+
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.Orders[time]
+in script:knockOnErrors-fail.sqrl [20:1]:
+OrderTotals := SELECT id, customerid FROM Orders;
+OrderTotals.total := id * missing_factor;
+OrderTotals.half := id / 2;
+^
+
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.Orders[time]
+in script:knockOnErrors-fail.sqrl [24:1]:
+
+-- A column must directly follow its table, also if a statement in between failed
+OrderIdList := SELECT id FROM Orders;
+^
+
+[FATAL]  Column 'missing_between' not found in any table
+in script:knockOnErrors-fail.sqrl [25:27]:
+-- A column must directly follow its table, also if a statement in between failed
+OrderIdList := SELECT id FROM Orders;
+FailedInBetween := SELECT missing_between FROM Orders;
+--------------------------^
+
+[FATAL] Column expression must directly follow the definition of table [OrderIdList]
+in script:knockOnErrors-fail.sqrl [26:1]:
+OrderIdList := SELECT id FROM Orders;
+FailedInBetween := SELECT missing_between FROM Orders;
+OrderIdList.doubled := id * 2;
+^
+Adding a column to an existing table requires that the table is defined immediately
+prior to the column definition. 
+Adding multiple columns in a row is supported.
+Adding columns to imported or created tables is not supported.
+
+Example definition of an additional column on a previously defined `Customer` table:
+```
+Customers.full_name := CONCAT(first_name, last_name);
+```
+[FATAL]  Column 'missing_amount' not found in any table
+in script:knockOnErrors-fail.sqrl [37:30]:
+-- Only the knock-on errors of the table of the package that failed are not reported
+AlertCount := SELECT COUNT(*) AS num FROM Alerts;
+PaymentAmounts := SELECT id, missing_amount FROM Payments;
+-----------------------------^
+
+[FATAL]  Object 'Ordrs' not found
+in script:knockOnErrors-fail.sqrl [40:33]:
+
+-- The other errors are reported
+MistypedOrders := SELECT * FROM Ordrs;
+--------------------------------^
+
