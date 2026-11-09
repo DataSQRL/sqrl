@@ -79,6 +79,21 @@ Make an educated guess for each threshold from how the API is used. The values i
 
 - Keep every threshold well below the client request timeout. The server writes the log line after a request ends, and it does not stop the request. A threshold below the timeout logs the requests that are slow but still succeed.
 
+## Streaming Large Results
+
+The server streams the result of a simple list query from a PostgreSQL cursor straight into a chunked HTTP response, instead of holding every row and the whole response in memory. A request is streamed when it is a GraphQL `POST` with a JSON body that holds a single query operation selecting one table or table function backed by PostgreSQL, without the `OFFSET_PAGE_INFO` page wrapper, and only scalar columns of it: no relationships, fragments or directives. Any other request runs as before. Requests over REST and MCP are not streamed.
+
+A streamed response has the same bytes as the regular one. When the query fails after the first rows were sent, the response keeps those rows and adds an `errors` entry, with status `200`.
+
+All keys go under `engines.vertx.config.graphQLStreamingConfig`:
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `enabled` | `true` | Set to `false` to build every response in memory |
+| `fetchSize` | `1000` | Rows fetched from the cursor per round trip |
+
+A streamed request holds its database connection until the client has read the last row, so a slow client keeps a connection from the pool for longer. Size `poolOptions.maxSize` for the number of large results read at the same time.
+
 ## JWT Authentication
 
 Set `authKind` to include `JWT` and provide a `jwtAuth` object. Its field names map to Vert.x Java POJOs and are case-sensitive.

@@ -67,6 +67,7 @@ public class ServerConfig {
   private GraphQLTailSampleTracingConfig graphQLTailSampleTracingConfig =
       new GraphQLTailSampleTracingConfig();
   private GraphQLParserConfig graphQLParserConfig = new GraphQLParserConfig();
+  private GraphQLStreamingConfig graphQLStreamingConfig = new GraphQLStreamingConfig();
   private Map<String, Object> jwtAuth;
   private OAuthConfig oauthConfig;
   private boolean logForwardedClientAddress = true;
@@ -195,6 +196,14 @@ public class ServerConfig {
         options == null
             ? new GraphQLParserConfig()
             : MAPPER.convertValue(options, GraphQLParserConfig.class);
+  }
+
+  @JsonSetter("graphQLStreamingConfig")
+  public void setGraphQLStreamingConfigFromJson(Map<String, Object> options) {
+    this.graphQLStreamingConfig =
+        options == null
+            ? new GraphQLStreamingConfig()
+            : MAPPER.convertValue(options, GraphQLStreamingConfig.class);
   }
 
   private JsonObject getJsonObjectOrEmpty(Map<String, Object> options) {

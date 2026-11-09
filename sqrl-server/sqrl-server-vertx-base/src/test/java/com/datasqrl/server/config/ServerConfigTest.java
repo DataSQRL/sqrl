@@ -43,6 +43,8 @@ class ServerConfigTest {
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig().isEnabled()).isFalse();
     assertThat(serverConfig.getGraphQLParserConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLParserConfig().getMaxTokens()).isNull();
+    assertThat(serverConfig.getGraphQLStreamingConfig().isEnabled()).isTrue();
+    assertThat(serverConfig.getGraphQLStreamingConfig().getFetchSize()).isEqualTo(1000);
     assertThat(serverConfig.getKafkaMutationConfig()).isNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNull();
     assertThat(serverConfig.isLogForwardedClientAddress()).isTrue();
@@ -85,6 +87,9 @@ class ServerConfigTest {
             .put("captureLineComments", true)
             .put("readerTrackData", false)
             .put("redactTokenParserErrorMessages", true));
+    json.set(
+        "graphQLStreamingConfig",
+        MAPPER.createObjectNode().put("enabled", false).put("fetchSize", 250));
 
     var kafkaMutationConfig = MAPPER.createObjectNode();
     kafkaMutationConfig.put("bootstrap.servers", "localhost:9092");
@@ -124,6 +129,8 @@ class ServerConfigTest {
     assertThat(serverConfig.getGraphQLParserConfig().getCaptureLineComments()).isTrue();
     assertThat(serverConfig.getGraphQLParserConfig().getReaderTrackData()).isFalse();
     assertThat(serverConfig.getGraphQLParserConfig().getRedactTokenParserErrorMessages()).isTrue();
+    assertThat(serverConfig.getGraphQLStreamingConfig().isEnabled()).isFalse();
+    assertThat(serverConfig.getGraphQLStreamingConfig().getFetchSize()).isEqualTo(250);
     assertThat(serverConfig.getKafkaMutationConfig()).isNotNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNotNull();
     assertThat(serverConfig.isLogForwardedClientAddress()).isFalse();
@@ -142,6 +149,7 @@ class ServerConfigTest {
     json.putNull("openApiConfig");
     json.putNull("graphQLTailSampleTracingConfig");
     json.putNull("graphQLParserConfig");
+    json.putNull("graphQLStreamingConfig");
     json.putNull("kafkaMutationConfig");
     json.putNull("kafkaSubscriptionConfig");
 
@@ -156,6 +164,7 @@ class ServerConfigTest {
     assertThat(serverConfig.getOpenApiConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLParserConfig()).isNotNull();
+    assertThat(serverConfig.getGraphQLStreamingConfig().isEnabled()).isTrue();
 
     // PgConnectOptions uses empty default when null
     assertThat(serverConfig.getPgConnectOptions()).isNotNull();

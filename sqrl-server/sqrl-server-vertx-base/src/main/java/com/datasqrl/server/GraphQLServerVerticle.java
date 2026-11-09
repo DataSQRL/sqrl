@@ -16,6 +16,7 @@
 package com.datasqrl.server;
 
 import static com.datasqrl.server.config.ServerConfigUtil.createVersionedGraphiQLHandlerOptions;
+import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.server.auth.AuthMetadataReader;
 import com.datasqrl.server.auth.JwtFailureHandler;
@@ -33,6 +34,8 @@ import com.datasqrl.server.jdbc.JdbcClientsConfig;
 import com.datasqrl.server.jdbc.VertxJdbcClient;
 import com.datasqrl.server.jdbc.VertxParamArgumentTypeMapper;
 import com.datasqrl.server.operation.ApiOperation;
+import com.datasqrl.server.stream.StreamEligibility;
+import com.datasqrl.server.stream.StreamingGraphQLHandler;
 import com.google.common.collect.ImmutableMap;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
 import graphql.GraphQL;
@@ -50,6 +53,7 @@ import io.vertx.ext.web.handler.graphql.GraphQLHandler;
 import io.vertx.ext.web.handler.graphql.GraphiQLHandler;
 import io.vertx.ext.web.handler.graphql.ws.GraphQLWSHandler;
 import io.vertx.micrometer.backends.BackendRegistries;
+import io.vertx.sqlclient.Pool;
 import io.vertx.sqlclient.SqlClient;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,6 +80,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
   private final Optional<FlinkExecFunctionPlan> execFunctionPlan;
 
   @Getter @Nullable private GraphQL graphQLEngine;
+  private Map<DatabaseType, SqlClient> dbClients = Map.of();
 
   @Override
   public void start(Promise<Void> startPromise) {
@@ -113,7 +118,7 @@ public class GraphQLServerVerticle extends AbstractVerticle {
 
   protected GraphQL createGraphQLEngine(SubscriptionConfigurationImpl subscriptionConfig) {
     var jdbcConfig = new JdbcClientsConfig(vertx, config);
-    var dbClients = jdbcConfig.createClients();
+    dbClients = jdbcConfig.createClients();
     return createGraphQL(
         dbClients,
         subscriptionConfig,
@@ -144,9 +149,27 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       handler.failureHandler(new JwtFailureHandler());
     }
 
-    handler
-        .handler(GraphQLWSHandler.create(this.graphQLEngine))
-        .handler(GraphQLHandler.create(this.graphQLEngine, this.config.getGraphQLHandlerOptions()));
+    handler.handler(GraphQLWSHandler.create(this.graphQLEngine));
+    createStreamingHandler().ifPresent(handler::handler);
+    handler.handler(
+        GraphQLHandler.create(this.graphQLEngine, this.config.getGraphQLHandlerOptions()));
+  }
+
+  private Optional<StreamingGraphQLHandler> createStreamingHandler() {
+    var streamingConfig = config.getGraphQLStreamingConfig();
+    if (!streamingConfig.isEnabled()
+        || !(dbClients.get(DatabaseType.POSTGRES) instanceof Pool postgres)) {
+      return Optional.empty();
+    }
+    checkArgument(
+        streamingConfig.getFetchSize() > 0, "graphQLStreamingConfig.fetchSize must be > 0");
+    log.info(
+        "Streaming eligible GraphQL list queries with fetch size {}",
+        streamingConfig.getFetchSize());
+    var eligibility = new StreamEligibility(graphQLEngine.getGraphQLSchema(), model.getQueries());
+    return Optional.of(
+        new StreamingGraphQLHandler(
+            graphQLEngine, eligibility, postgres, streamingConfig.getFetchSize()));
   }
 
   private Map<MetadataType, MetadataReader> createMetadataReaders() {

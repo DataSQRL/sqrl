@@ -194,6 +194,10 @@
     "readerTrackData" : null,
     "redactTokenParserErrorMessages" : null
   },
+  "graphQLStreamingConfig" : {
+    "enabled" : true,
+    "fetchSize" : 1000
+  },
   "jwtAuth" : null,
   "oauthConfig" : null,
   "logForwardedClientAddress" : false,

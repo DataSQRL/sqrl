@@ -21,6 +21,7 @@ import com.datasqrl.server.graphql.RootGraphQLModel.Argument;
 import com.datasqrl.server.graphql.RootGraphQLModel.ResolvedSqlQuery;
 import com.datasqrl.server.graphql.RootGraphQLModel.SqlQuery;
 import com.datasqrl.server.jdbc.PageRequest.BoundQuery;
+import com.datasqrl.server.stream.PendingStream;
 import graphql.schema.DataFetchingEnvironment;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
@@ -86,6 +87,12 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
 
   /** Completes with the rows themselves: no page wrapper, no metadata. */
   private void runRowQuery(ResolvedSqlQuery resolvedQuery, BoundQuery boundQuery, boolean isList) {
+    var pendingStream = PendingStream.of(environment);
+    if (pendingStream.isPresent()) {
+      pendingStream.get().bind(boundQuery.sql(), boundQuery.params());
+      cf.complete(List.of());
+      return;
+    }
     execute(resolvedQuery, boundQuery)
         .map(rows -> unboxList(toJson(rows), isList))
         .onSuccess(cf::complete)
