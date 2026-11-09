@@ -6,7 +6,7 @@ Eclipse Vert.x is a reactive server framework that serves as the GraphQL API ser
 
 | Key        | Type      | Default | Notes                                                    |
 |------------|-----------|---------|----------------------------------------------------------|
-| `authKind` | **array** | `[]`    | List of auth methods: `"JWT"`, `"OAUTH"`, or both        |
+| `authKind` | **array** | `[]`    | Not read by the server; `auth` needs no `authKind`       |
 | `config`   | **object**| see below| Vert.x-specific configuration including auth settings   |
 
 ## Basic Configuration
@@ -14,9 +14,7 @@ Eclipse Vert.x is a reactive server framework that serves as the GraphQL API ser
 ```json
 {
   "engines": {
-    "vertx": {
-      "authKind": []
-    }
+    "vertx": {}
   }
 }
 ```
@@ -87,8 +85,8 @@ audiences.
 ```
 
 The server creates one JWT validator per issuer and accepts a request when any of them accepts its bearer token. For
-MCP clients it publishes the issuers as `authorization_servers` at `/.well-known/oauth-protected-resource` (see
-[OAuth Discovery Endpoint](#oauth-discovery-endpoint)).
+MCP clients it publishes the issuers without inline `keys` whose `issuer` is a URL as `authorization_servers` at
+`/.well-known/oauth-protected-resource` (see [OAuth Discovery Endpoint](#oauth-discovery-endpoint)).
 
 ### `auth` Reference
 
@@ -96,7 +94,7 @@ MCP clients it publishes the issuers as `authorization_servers` at `/.well-known
 |-------------------|-------------|----------|--------------------------------|-----------------------------------------------------------------------------------------------------|
 | `issuers`         | **array**   | Yes      |                                | The trusted issuers, see below. Must not be empty                                                   |
 | `leeway`          | **integer** | No       | `60`                           | Allowed clock skew in seconds for `exp`, `nbf` and `iat`, for every issuer that does not set its own |
-| `algorithms`      | **array**   | No       | `["RS256"]`                    | Accepted signature algorithms, for every issuer that does not set its own                           |
+| `algorithms`      | **array**   | No       | no restriction                 | Accepted signature algorithms, for every issuer that does not set its own                           |
 | `resource`        | **string**  | No       | derived from the request       | Public URL of the MCP endpoint (RFC 9728), e.g. `https://api.example.com/v1/mcp`                    |
 | `scopesSupported` | **array**   | No       | `["mcp:tools", "mcp:resources"]` | Scopes advertised in the protected resource metadata                                              |
 
@@ -113,30 +111,42 @@ Each entry of `issuers`:
 
 The effective leeway of an issuer is its own `leeway`, else `auth.leeway`, else 60 seconds. Negative values are rejected.
 
-Set at most one of `keys` and `jwksUri`. With neither, the server uses OpenID Connect discovery: it fetches
-`<issuer>/.well-known/openid-configuration` (a trailing slash on the issuer is not doubled), checks that the document
-names the same `issuer`, and fetches the keys from its `jwks_uri`. Keys are fetched once at startup, and the server does
-not start if they cannot be fetched.
+Set at most one of `keys` and `jwksUri`. With neither, `issuer` must be an absolute http(s) URL, and the server uses
+OpenID Connect discovery: it fetches `<issuer>/.well-known/openid-configuration` (a trailing slash on the issuer is not
+doubled), checks that the document names the same `issuer`, and fetches the keys from its `jwks_uri`. Keys are fetched
+once at startup, and the server does not start if they cannot be fetched.
 
 Prefer discovery or `jwksUri`: inline `keys` cannot rotate, so every key change needs a configuration change and a
 redeploy. Keys fetched at startup are not refreshed while the server runs, so restart the server after the identity
 provider rotates its signing keys.
 
-A key is only used with the algorithms the issuer allows: a key whose `alg` is not listed is ignored, and a key without
-`alg` is used with each listed algorithm that fits its type (`RSA` for `RS*`/`PS*`, `EC` for `ES*`, `oct` for `HS*`,
-`OKP` for `EdDSA`). A token signed with any other algorithm is rejected, so for example an `HS256` token cannot be
-accepted by an issuer that only allows `RS256`. Supported algorithms are `HS256`, `HS384`, `HS512`, `RS256`, `RS384`,
-`RS512`, `PS256`, `PS384`, `PS512`, `ES256`, `ES384`, `ES512` and `EdDSA`.
+Each key verifies tokens signed with its own `alg`, or, when it has none, with the default for its type: `RS256` for
+`RSA`, `ES256` for `EC`, `EdDSA` for `OKP` and `HS256` for `oct`. A token signed with any other algorithm finds no key
+and is rejected, so for example an `HS256` token cannot be accepted by an issuer that has only RSA keys. Keys marked
+`"use": "enc"` are ignored.
+
+Set `algorithms` to restrict this, or to use keys without `alg` for other algorithms: a key whose `alg` is not listed
+is ignored, and a key without `alg` is used with each listed algorithm that fits its type (`RSA` for `RS*`/`PS*`, `EC`
+for `ES*`, `oct` for `HS*`, `OKP` for `EdDSA`). For example, `"algorithms": ["PS256"]` lets an RSA key without `alg`
+verify `PS256` tokens. Supported algorithms are `HS256`, `HS384`, `HS512`, `RS256`, `RS384`, `RS512`, `PS256`,
+`PS384`, `PS512`, `ES256`, `ES384`, `ES512` and `EdDSA`.
+
+`sqrl compile` fails if none of an issuer's inline `keys` can verify signatures, because that issuer would accept
+unsigned tokens. Keys from a `jwksUri` or discovery are only known at startup, so the server runs the same check then
+and does not start.
 
 The server rejects these configurations at compile time and at startup: a missing or empty `issuers`, an issuer
-without `issuer` or `audiences`, an empty `audiences` or `keys`, both `keys` and `jwksUri`, a duplicate issuer, an
-unsupported algorithm, a negative leeway, and any unknown key in `auth` or in an issuer entry.
+without `issuer` or `audiences`, an empty `audiences` or `keys`, both `keys` and `jwksUri`, a `jwksUri` or a discovery
+`issuer` that is not an absolute http(s) URL, a duplicate issuer, an unsupported algorithm, a negative leeway, and any
+unknown key in `auth` or in an issuer entry. A value with an unresolved `${...}` environment variable skips the URL
+check at compile time. At startup a resolved value is checked, and a variable that is still unset fails when its keys
+are fetched.
 
-For symmetric keys, for example in tests, use an `oct` JWK whose `k` is the base64url-encoded secret, and allow `HS256`:
+For symmetric keys, for example in tests, use an inline `oct` JWK whose `k` is the base64url-encoded secret. A `k` in
+a fetched JWK Set is ignored, because a JWK Set is public:
 
 ```json
 "auth": {
-  "algorithms": ["HS256"],
   "issuers": [
     {
       "issuer": "my-test-issuer",
@@ -169,6 +179,39 @@ and let both discover their keys:
 ```
 
 Auth0 issuers end with a trailing slash; keep it, because `issuer` must match the `iss` claim exactly.
+
+### OAuth Discovery Endpoint
+
+When `auth` has an issuer to advertise (or the deprecated `oauthConfig` is configured), the server exposes a discovery endpoint at `/.well-known/oauth-protected-resource` per RFC 9728.
+This enables MCP clients to discover the authorization server and scopes. With `auth`, the advertised `authorization_servers` are the issuers that use discovery, and the issuers with a `jwksUri` whose `issuer` is a URL. Issuers with inline `keys` sign their own tokens, are not OAuth authorization servers, and are not advertised.
+When an MCP request has no valid token, the server responds with `401` and a `WWW-Authenticate: Bearer resource_metadata="..."` header that points MCP clients to this endpoint.
+When `auth` has no issuer to advertise, the endpoint is not served and the `401` carries no `WWW-Authenticate` header.
+
+If `resource` is not set, the server derives both the `resource` value in the discovery metadata and the `resource_metadata` URL from each request: the scheme from the `X-Forwarded-Proto` header (or the request scheme), and the host from the `Host` header.
+If `resource` is set, the discovery metadata returns it unchanged, and the `resource_metadata` URL uses its origin.
+For example, `"resource": "https://api.example.com/v1/mcp"` makes the `401` header point to `https://api.example.com/.well-known/oauth-protected-resource`.
+
+Set `resource` when the server runs behind a reverse proxy or load balancer that terminates TLS, so MCP clients always receive `https` URLs.
+Use the exact URL MCP clients connect to: RFC 9728 requires clients to reject discovery metadata whose `resource` does not match that URL.
+The proxy must also route `/.well-known/oauth-protected-resource` on the same origin to the server.
+
+### Environment Variable Support
+
+You can use environment variables in string values of `auth` (and of the deprecated `oauthConfig`). They are
+resolved when the server starts:
+
+```json
+{
+  "auth": {
+    "issuers": [
+      {
+        "issuer": "${AUTH0_ISSUER}",
+        "audiences": ["${AUTH0_AUDIENCE}"]
+      }
+    ]
+  }
+}
+```
 
 ### Layered Package Files
 
@@ -205,7 +248,6 @@ becomes (note that `k` is base64url, not base64):
 
 ```json
 "auth": {
-  "algorithms": ["HS256"],
   "leeway": 30,
   "issuers": [
     {
@@ -238,9 +280,10 @@ becomes the following, where `audiences` is the API identifier your tokens are i
 }
 ```
 
-`authorizationServerUrl` has no equivalent: the authorization servers advertised to MCP clients are the issuers. If the
-server cannot reach the issuer URL itself (for example inside a Docker network), set `jwksUri` to a URL it can reach. A
-configuration with both `jwtAuth` and `oauthConfig` becomes one `auth` block with one entry per issuer.
+`authorizationServerUrl` has no equivalent: the authorization servers advertised to MCP clients are the issuers without
+inline `keys` whose `issuer` is a URL. If the server cannot reach the issuer URL itself (for example inside a Docker network), set `jwksUri` to a
+URL it can reach. A configuration with both `jwtAuth` and `oauthConfig` becomes one `auth` block with one entry per
+issuer.
 
 ## JWT Authentication Configuration (deprecated)
 
@@ -248,13 +291,16 @@ configuration with both `jwtAuth` and `oauthConfig` becomes one `auth` block wit
 `jwtAuth` is deprecated. Use [`auth`](#authentication-configuration) instead, see [Migrating from `jwtAuth` and `oauthConfig`](#migrating-from-jwtauth-and-oauthconfig).
 :::
 
+`sqrl compile` fails if `jwtAuth` has no key that can verify signatures, for example with no `pubSecKeys`, `jwks` or
+`keyStore`, because such a configuration would accept unsigned tokens. The keys that `oauthConfig` discovers are only
+known at startup, so the server does not start if none of them can verify signatures.
+
 For secure APIs with JWT authentication:
 
 ```json
 {
   "engines": {
     "vertx": {
-      "authKind": ["JWT"],
       "config": {
         "jwtAuth": {
           "pubSecKeys": [
@@ -303,7 +349,6 @@ This enables MCP (Model Context Protocol) clients like Claude Code to authentica
 {
   "engines": {
     "vertx": {
-      "authKind": ["OAUTH"],
       "config": {
         "oauthConfig": {
           "oauth2Options": {
@@ -328,7 +373,6 @@ prefer one `auth` block that lists every issuer with its audiences:
 {
   "engines": {
     "vertx": {
-      "authKind": ["JWT", "OAUTH"],
       "config": {
         "jwtAuth": { ... },
         "oauthConfig": { ... }
@@ -357,35 +401,6 @@ The `oauth2Options` object uses Vert.x's OAuth2Options class:
 |------------|------------|----------|-------------------------------------------------------|
 | `site`     | **string** | Yes      | OAuth issuer URL (e.g., `https://tenant.auth0.com`)   |
 | `clientId` | **string** | No       | OAuth client ID (defaults to `datasqrl-mcp`)          |
-
-### OAuth Discovery Endpoint
-
-When `auth` (or the deprecated `oauthConfig`) is configured, the server exposes a discovery endpoint at `/.well-known/oauth-protected-resource` per RFC 9728.
-This enables MCP clients to discover the authorization server and scopes. With `auth`, the advertised `authorization_servers` are the configured issuers.
-When an MCP request has no valid token, the server responds with `401` and a `WWW-Authenticate: Bearer resource_metadata="..."` header that points MCP clients to this endpoint.
-
-If `resource` is not set, the server derives both the `resource` value in the discovery metadata and the `resource_metadata` URL from each request: the scheme from the `X-Forwarded-Proto` header (or the request scheme), and the host from the `Host` header.
-If `resource` is set, the discovery metadata returns it unchanged, and the `resource_metadata` URL uses its origin.
-For example, `"resource": "https://api.example.com/v1/mcp"` makes the `401` header point to `https://api.example.com/.well-known/oauth-protected-resource`.
-
-Set `resource` when the server runs behind a reverse proxy or load balancer that terminates TLS, so MCP clients always receive `https` URLs.
-Use the exact URL MCP clients connect to: RFC 9728 requires clients to reject discovery metadata whose `resource` does not match that URL.
-The proxy must also route `/.well-known/oauth-protected-resource` on the same origin to the server.
-
-### Environment Variable Support
-
-You can use environment variables in the OAuth configuration:
-
-```json
-{
-  "oauthConfig": {
-    "oauth2Options": {
-      "site": "${AUTH0_ISSUER}"
-    },
-    "authorizationServerUrl": "${AUTH0_EXTERNAL_URL}"
-  }
-}
-```
 
 ### OAuth 2.0 with Auth0
 
@@ -432,7 +447,6 @@ The Auth0 tenant URL ends with a trailing slash, and Auth0 uses it with the slas
 {
   "engines": {
     "vertx": {
-      "authKind": ["OAUTH"],
       "config": {
         "oauthConfig": {
           "oauth2Options": {
@@ -453,7 +467,6 @@ Using environment variables (recommended so credentials stay out of source contr
 {
   "engines": {
     "vertx": {
-      "authKind": ["OAUTH"],
       "config": {
         "oauthConfig": {
           "oauth2Options": {

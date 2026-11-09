@@ -28,7 +28,6 @@ import com.datasqrl.server.operation.ApiOperation;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
-import io.vertx.ext.auth.jwt.JWTAuth;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -162,7 +161,7 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
       VertxServerModuleContext context) {
     var authConfig = context.config().getAuthConfig();
     if (authConfig != null) {
-      log.info("Configuring {} trusted issuer(s)", authConfig.getIssuers().size());
+      log.info("Configuring {} trusted issuer(s)", authConfig.issuers().size());
       return AuthProviderFactory.createAuthProviders(context.vertx(), authConfig);
     }
 
@@ -179,9 +178,12 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
     if (context.config().getJwtAuth() != null) {
       log.info("Configuring JWT authentication");
       providerFutures.add(
-          Future.succeededFuture(
-              (AuthenticationProvider)
-                  JWTAuth.create(context.vertx(), context.config().getJwtAuthOptions())));
+          AuthProviderFactory.createJwtAuth(context.vertx(), context.config().getJwtAuthOptions())
+              .recover(
+                  err ->
+                      Future.failedFuture(
+                          new IllegalStateException(
+                              "Cannot configure 'jwtAuth': " + err.getMessage(), err))));
     }
 
     if (providerFutures.isEmpty()) {

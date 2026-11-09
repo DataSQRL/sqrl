@@ -19,6 +19,8 @@ import static com.google.common.base.Preconditions.checkState;
 
 import com.datasqrl.server.config.AuthConfig;
 import com.datasqrl.server.config.AuthConfig.Issuer;
+import com.google.common.collect.Sets;
+import io.vertx.core.CompositeFuture;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.DecodeException;
@@ -26,38 +28,43 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.JWTOptions;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
+import io.vertx.ext.auth.authentication.TokenCredentials;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.client.WebClient;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Creates one {@link JWTAuth} per trusted issuer of the {@code auth} config, each bound to that
- * issuer's own keys, audiences, leeway and algorithms. Keys are loaded once at startup; any failure
- * fails the returned future so the server does not start.
+ * issuer's own keys, audiences and leeway. Keys are loaded once at startup; any failure fails the
+ * returned future so the server does not start.
  */
 @Slf4j
 @UtilityClass
 public class AuthProviderFactory {
 
   private static final String OIDC_DISCOVERY_PATH = "/.well-known/openid-configuration";
-  private static final Set<String> JWK_KEYS =
-      Set.of("kty", "use", "kid", "alg", "n", "e", "x", "y", "crv", "k");
-  private static final long FETCH_TIMEOUT_MS = 10_000;
+  private static final Set<String> PUBLIC_JWK_FIELDS =
+      Set.of("kty", "use", "kid", "alg", "n", "e", "x", "y", "crv");
+  private static final Set<String> INLINE_JWK_FIELDS = Sets.union(PUBLIC_JWK_FIELDS, Set.of("k"));
+  private static final Duration KEY_LOAD_TIMEOUT = Duration.ofSeconds(10);
 
   public Future<List<AuthenticationProvider>> createAuthProviders(
       Vertx vertx, AuthConfig authConfig) {
     var webClient = WebClient.create(vertx);
     var providers =
-        authConfig.getIssuers().stream()
+        authConfig.issuers().stream()
             .map(issuer -> createAuthProvider(vertx, webClient, issuer))
             .toList();
     return Future.all(providers)
-        .map(composite -> composite.<AuthenticationProvider>list())
+        .map(CompositeFuture::<AuthenticationProvider>list)
         .onComplete(ignored -> webClient.close());
   }
 
@@ -66,74 +73,107 @@ public class AuthProviderFactory {
     return base + OIDC_DISCOVERY_PATH;
   }
 
-  List<JsonObject> keysForAlgorithms(Issuer issuer, List<JsonObject> keys) {
-    var usable =
-        keys.stream()
-            .filter(key -> !"enc".equals(key.getString("use")))
-            .flatMap(key -> withAllowedAlgorithms(key, issuer.getAlgorithms()))
-            .toList();
-    checkState(
-        !usable.isEmpty(),
-        "no signing key of issuer '%s' is usable with algorithms %s",
-        issuer.getIssuer(),
-        issuer.getAlgorithms());
-    return usable;
-  }
-
   private Future<AuthenticationProvider> createAuthProvider(
       Vertx vertx, WebClient webClient, Issuer issuer) {
     return loadKeys(webClient, issuer)
-        .map(
-            keys -> {
-              var jwks = keysForAlgorithms(issuer, keys);
+        .timeout(KEY_LOAD_TIMEOUT)
+        .map(issuer::keysForAlgorithms)
+        .compose(
+            jwks -> {
               var jwtOptions =
                   new JWTOptions()
-                      .setIssuer(issuer.getIssuer())
-                      .setAudience(issuer.getAudiences())
-                      .setLeeway(issuer.getLeeway());
+                      .setIssuer(issuer.issuer())
+                      .setAudience(issuer.audiences())
+                      .setLeeway(issuer.leeway());
               log.info(
                   "Trusting issuer {} for audiences {} with {} key(s)",
-                  issuer.getIssuer(),
-                  issuer.getAudiences(),
+                  issuer.issuer(),
+                  issuer.audiences(),
                   jwks.size());
-              return (AuthenticationProvider)
-                  JWTAuth.create(
-                      vertx, new JWTAuthOptions().setJwks(jwks).setJWTOptions(jwtOptions));
+              return createJwtAuth(
+                  vertx, new JWTAuthOptions().setJwks(jwks).setJWTOptions(jwtOptions));
             })
         .recover(
             err ->
                 Future.failedFuture(
                     new IllegalStateException(
                         "Cannot configure trusted issuer '%s': %s"
-                            .formatted(issuer.getIssuer(), err.getMessage()),
+                            .formatted(issuer.issuer(), err.getMessage()),
                         err)));
   }
 
-  private Future<List<JsonObject>> loadKeys(WebClient webClient, Issuer issuer) {
-    if (issuer.getKeys() != null) {
-      return Future.succeededFuture(
-          issuer.getKeys().stream().map(AuthProviderFactory::publicJwk).toList());
-    }
-    if (issuer.getJwksUri() != null) {
-      return fetchJwks(webClient, issuer.getJwksUri());
+  /**
+   * Creates a {@link JWTAuth} and makes sure it verifies signatures. Vert.x skips every key it
+   * cannot load with only a warning, and a {@link JWTAuth} left without keys accepts unsigned
+   * tokens. So the new provider is probed with an unsigned token that passes its issuer, audience
+   * and expiry checks, and the returned future fails if the provider accepts it.
+   */
+  public Future<AuthenticationProvider> createJwtAuth(Vertx vertx, JWTAuthOptions options) {
+    var provider = JWTAuth.create(vertx, options);
+    var jwtOptions = options.getJWTOptions();
+    var claims = new JsonObject().put("exp", Instant.now().plusSeconds(60).getEpochSecond());
+
+    if (jwtOptions.getIssuer() != null) {
+      claims.put("iss", jwtOptions.getIssuer());
     }
 
-    return fetchJson(webClient, discoveryUrl(issuer.getIssuer()))
+    if (jwtOptions.getAudience() != null) {
+      claims.put("aud", new JsonArray(jwtOptions.getAudience()));
+    }
+
+    var unsignedToken = base64Url(new JsonObject().put("alg", "none")) + "." + base64Url(claims);
+
+    return provider
+        .authenticate(new TokenCredentials(unsignedToken))
+        .transform(
+            probe ->
+                probe.succeeded()
+                    ? Future.failedFuture(
+                        new IllegalStateException(
+                            "no key can verify signatures, so unsigned tokens would be accepted"))
+                    : Future.succeededFuture(provider));
+  }
+
+  private String base64Url(JsonObject json) {
+    return Base64.getUrlEncoder()
+        .withoutPadding()
+        .encodeToString(json.encode().getBytes(StandardCharsets.UTF_8));
+  }
+
+  private Future<List<JsonObject>> loadKeys(WebClient webClient, Issuer issuer) {
+    if (issuer.keys() != null) {
+      return Future.succeededFuture(
+          issuer.keys().stream().map(key -> verificationJwk(key, INLINE_JWK_FIELDS)).toList());
+    }
+
+    if (issuer.jwksUri() != null) {
+      return fetchJwks(webClient, issuer.jwksUri());
+    }
+
+    return fetchJson(webClient, discoveryUrl(issuer.issuer()))
         .compose(
             discovery -> {
               checkState(
-                  issuer.getIssuer().equals(discovery.getValue("issuer")),
+                  issuer.issuer().equals(discovery.getValue("issuer")),
                   "OIDC discovery document names issuer '%s'",
                   discovery.getValue("issuer"));
-              var jwksUri = discovery.getValue("jwks_uri");
-              checkState(
-                  jwksUri instanceof String uri && !uri.isBlank(),
-                  "OIDC discovery document has no jwks_uri");
-              return fetchJwks(webClient, (String) jwksUri);
+              return fetchJwks(webClient, jwksUri(discovery));
             });
   }
 
-  private Future<List<JsonObject>> fetchJwks(WebClient webClient, String jwksUri) {
+  /** Returns the {@code jwks_uri} of an OIDC discovery document. */
+  String jwksUri(JsonObject discovery) {
+    var jwksUri = discovery.getValue("jwks_uri");
+    checkState(
+        jwksUri instanceof String uri && !uri.isBlank(), "OIDC discovery document has no jwks_uri");
+    return (String) jwksUri;
+  }
+
+  /**
+   * Fetches a JWK Set and returns its keys, reduced to their public fields. A JWK Set is public, so
+   * a symmetric key's {@code k} is never used from one.
+   */
+  Future<List<JsonObject>> fetchJwks(WebClient webClient, String jwksUri) {
     return fetchJson(webClient, jwksUri)
         .map(
             jwks -> {
@@ -144,15 +184,15 @@ public class AuthProviderFactory {
                   "JWKS at %s has no keys",
                   jwksUri);
               return jwks.getJsonArray("keys").stream()
-                  .map(key -> publicJwk((JsonObject) key))
+                  .map(key -> verificationJwk((JsonObject) key, PUBLIC_JWK_FIELDS))
                   .toList();
             });
   }
 
-  private Future<JsonObject> fetchJson(WebClient webClient, String url) {
+  /** GETs the URL and returns its body as a JSON object, failing on any other status or body. */
+  Future<JsonObject> fetchJson(WebClient webClient, String url) {
     return webClient
         .getAbs(url)
-        .timeout(FETCH_TIMEOUT_MS)
         .send()
         .map(
             response -> {
@@ -172,32 +212,13 @@ public class AuthProviderFactory {
             });
   }
 
-  private JsonObject publicJwk(JsonObject source) {
+  /**
+   * Keeps the given JWK fields and drops the rest, such as private RSA or EC parameters and {@code
+   * x5c} certificate chains.
+   */
+  private JsonObject verificationJwk(JsonObject source, Set<String> fields) {
     var jwk = new JsonObject();
-    JWK_KEYS.stream()
-        .filter(source::containsKey)
-        .forEach(key -> jwk.put(key, source.getValue(key)));
+    fields.stream().filter(source::containsKey).forEach(key -> jwk.put(key, source.getValue(key)));
     return jwk;
-  }
-
-  private Stream<JsonObject> withAllowedAlgorithms(JsonObject key, List<String> algorithms) {
-    var kty = key.getString("kty");
-    var alg = key.getString("alg");
-    if (alg != null) {
-      return algorithms.contains(alg) && isCompatible(kty, alg) ? Stream.of(key) : Stream.empty();
-    }
-    return algorithms.stream()
-        .filter(candidate -> isCompatible(kty, candidate))
-        .map(candidate -> key.copy().put("alg", candidate));
-  }
-
-  private boolean isCompatible(String kty, String alg) {
-    return switch (kty == null ? "" : kty) {
-      case "RSA" -> alg.startsWith("RS") || alg.startsWith("PS");
-      case "EC" -> alg.startsWith("ES");
-      case "oct" -> alg.startsWith("HS");
-      case "OKP" -> alg.equals("EdDSA");
-      default -> false;
-    };
   }
 }

@@ -2,7 +2,7 @@
 
 | Key        | Type       | Default   | Notes                                                 |
 |------------|------------|-----------|-------------------------------------------------------|
-| `authKind` | **array**  | `[]`      | List of auth methods: `"JWT"`, `"OAUTH"`, or both     |
+| `authKind` | **array**  | `[]`      | Not read by the server; `auth` needs no `authKind`    |
 | `config`   | **object** | see below | Vert.x-specific configuration including auth settings |
 
 ## Server Configuration Overrides
@@ -112,7 +112,7 @@ token is accepted only when its `iss`, `aud` and signature all match the same is
 |---------------------------|----------|----------------------------------|----------------------------------------------------------------------------------|
 | `issuers`                 | Yes      |                                  | Non-empty array of trusted issuers                                               |
 | `leeway`                  | No       | `60`                             | Clock skew in seconds; resolution order is `issuers[].leeway`, `leeway`, 60      |
-| `algorithms`              | No       | `["RS256"]`                      | Allowed signature algorithms; an issuer's own `algorithms` overrides it          |
+| `algorithms`              | No       | no restriction                   | Allowed signature algorithms; an issuer's own `algorithms` overrides it          |
 | `resource`                | No       | derived from the request         | Public MCP endpoint URL for RFC 9728 metadata                                    |
 | `scopesSupported`         | No       | `["mcp:tools", "mcp:resources"]` | Scopes advertised to MCP clients                                                 |
 | `issuers[].issuer`        | Yes      |                                  | Exact `iss` value, including a trailing slash; unique                            |
@@ -122,13 +122,26 @@ token is accepted only when its `iss`, `aud` and signature all match the same is
 | `issuers[].leeway`        | No       | `auth.leeway`                    | Per-issuer leeway; negative values are rejected                                  |
 | `issuers[].algorithms`    | No       | `auth.algorithms`                | Per-issuer allowed algorithms                                                    |
 
-With neither `keys` nor `jwksUri`, keys come from OIDC discovery at `<issuer>/.well-known/openid-configuration`. Keys
-are fetched once at startup; the server fails to start if they cannot be fetched, and must be restarted after a key
-rotation. A token signed with an algorithm the issuer does not allow is rejected. Unknown keys, duplicate issuers and
-the other invalid shapes are compile errors. The MCP discovery endpoint `/.well-known/oauth-protected-resource`
-advertises the issuers as `authorization_servers`.
+With neither `keys` nor `jwksUri`, keys come from OIDC discovery at `<issuer>/.well-known/openid-configuration`, so
+`issuer` must then be an absolute http(s) URL. Keys are fetched once at startup; the server fails to start if they cannot
+be fetched, and must be restarted after a key rotation. Each key verifies tokens signed with its own `alg`, or with the
+default for its type (`RS256` for `RSA`, `ES256` for `EC`, `EdDSA` for `OKP`, `HS256` for `oct`); tokens signed with
+any other algorithm are rejected. Set `algorithms` to restrict this, or to use keys without `alg` for other algorithms:
+a key whose `alg` is not listed is ignored, and a key without `alg` is used with each listed algorithm of its type (for
+example `"algorithms": ["PS256"]` for an RSA key without `alg` that signs `PS256`). Compilation fails if none of an issuer's inline
+`keys` can verify signatures, because it would accept unsigned tokens; for keys from a `jwksUri` or discovery, the server
+does not start. Unknown keys, duplicate issuers, unsupported algorithms and the other invalid
+shapes are compile errors.
 
-For a shared secret (tests), use `"algorithms": ["HS256"]` and `"keys": [{ "kty": "oct", "k": "<base64url secret>" }]`.
+The MCP discovery endpoint `/.well-known/oauth-protected-resource` advertises the issuers without inline `keys` whose
+`issuer` is a URL as `authorization_servers`. Issuers with inline `keys` sign their own tokens and are not advertised;
+when no issuer is advertised, the endpoint is not served and MCP `401` responses carry no `WWW-Authenticate` header.
+
+For a shared secret (tests), use inline `"keys": [{ "kty": "oct", "k": "<base64url secret>" }]`; the `/design-api` skill's
+[authorization.md](../design-api/authorization.md#generating-tokens) shows how to encode it.
+
+String values can reference environment variables, e.g. `"issuer": "${AUTH_ISSUER}"`. They are resolved when the
+server starts.
 
 Package layers merge objects key by key but replace arrays whole: a later layer can patch `auth.leeway` alone, but a
 layer that sets `auth.issuers` must list every issuer of its environment. `auth` cannot be combined with `jwtAuth` or
@@ -136,13 +149,12 @@ layer that sets `auth.issuers` must list every issuer of its environment. `auth`
 
 ## JWT Authentication (deprecated)
 
-`jwtAuth` is deprecated; use `auth`. Set `authKind` to include `JWT` and provide a `jwtAuth` object. Its field names map to Vert.x Java POJOs and are case-sensitive.
+`jwtAuth` is deprecated; use `auth`. Its field names map to Vert.x Java POJOs and are case-sensitive. Compilation fails if it has no key that can verify signatures (for example with no `pubSecKeys`, `jwks` or `keyStore`). If none of the keys `oauthConfig` discovers can verify signatures, the server does not start.
 
 ```json
 {
   "engines": {
     "vertx": {
-      "authKind": ["JWT"],
       "config": {
         "jwtAuth": {
           "pubSecKeys": [{
@@ -166,13 +178,12 @@ For asymmetric algorithms such as `ES256`, `buffer` must contain the appropriate
 
 ## OAuth 2.0 Authentication (deprecated)
 
-`oauthConfig` is deprecated because it checks neither `iss` nor `aud`; use `auth`. Set `authKind` to include `OAUTH` and configure `oauthConfig`. OAuth enables MCP clients to discover the authorization server at `/.well-known/oauth-protected-resource`.
+`oauthConfig` is deprecated because it checks neither `iss` nor `aud`; use `auth`. OAuth enables MCP clients to discover the authorization server at `/.well-known/oauth-protected-resource`.
 
 ```json
 {
   "engines": {
     "vertx": {
-      "authKind": ["OAUTH"],
       "config": {
         "oauthConfig": {
           "oauth2Options": {
@@ -189,6 +200,6 @@ For asymmetric algorithms such as `ES256`, `buffer` must contain the appropriate
 }
 ```
 
-`oauth2Options.site` is required. `clientId` defaults to `datasqrl-mcp`; `authorizationServerUrl`, `scopesSupported`, and `resource` are optional. Use `["JWT", "OAUTH"]` and provide both configuration blocks to enable both methods.
+`oauth2Options.site` is required. `clientId` defaults to `datasqrl-mcp`; `authorizationServerUrl`, `scopesSupported`, and `resource` are optional. Both deprecated blocks can be set together, but then a token that either one accepts is accepted; use one `auth` block that lists every issuer with its audiences instead.
 
 `resource` is the public URL of the MCP endpoint. Without it, the server derives the discovery `resource` and the `WWW-Authenticate: Bearer resource_metadata="..."` URL of `401` responses from each request (`X-Forwarded-Proto` or the request scheme, plus `Host`). With it, the discovery metadata returns it unchanged, and `resource_metadata` points to `/.well-known/oauth-protected-resource` on its origin. Set it behind a proxy that terminates TLS, so MCP clients always receive `https` URLs.

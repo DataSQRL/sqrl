@@ -18,6 +18,7 @@ package com.datasqrl.server.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import io.vertx.core.json.JsonObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,18 +30,22 @@ import org.junit.jupiter.params.provider.MethodSource;
 class AuthConfigTest {
 
   private static final Map<String, Object> KEY = Map.of("kty", "RSA", "n", "AQAB", "e", "AQAB");
+  private static final String NO_VERIFYING_KEY =
+      "auth.issuers[0].keys has no key that can verify signatures, so the server would accept"
+          + " unsigned tokens. A key needs its public material (RSA: n and e, EC: crv, x and y,"
+          + " OKP: x, oct: k), its \"use\" must be sig if set, and it must fit 'algorithms'";
 
   @Test
   void givenMinimalIssuer_whenParsed_thenDefaultsApply() {
     var authConfig = parse(Map.of("issuers", List.of(issuer("https://a/"))));
 
-    var issuer = authConfig.getIssuers().get(0);
-    assertThat(issuer.getLeeway()).isEqualTo(60);
-    assertThat(issuer.getAlgorithms()).containsExactly("RS256");
-    assertThat(issuer.getKeys()).isNull();
-    assertThat(issuer.getJwksUri()).isNull();
-    assertThat(authConfig.getScopesSupported()).containsExactly("mcp:tools", "mcp:resources");
-    assertThat(authConfig.getResource()).isNull();
+    var issuer = authConfig.issuers().get(0);
+    assertThat(issuer.leeway()).isEqualTo(60);
+    assertThat(issuer.algorithms()).as("no algorithm restriction").isNull();
+    assertThat(issuer.keys()).isNull();
+    assertThat(issuer.jwksUri()).isNull();
+    assertThat(authConfig.scopesSupported()).containsExactly("mcp:tools", "mcp:resources");
+    assertThat(authConfig.resource()).isNull();
   }
 
   @Test
@@ -59,29 +64,67 @@ class AuthConfigTest {
                 "issuers",
                 List.of(issuer("https://a/"), overriding)));
 
-    assertThat(authConfig.getIssuers())
-        .extracting(AuthConfig.Issuer::getLeeway)
-        .containsExactly(30, 5);
-    assertThat(authConfig.getIssuers())
-        .extracting(AuthConfig.Issuer::getAlgorithms)
+    assertThat(authConfig.issuers()).extracting(AuthConfig.Issuer::leeway).containsExactly(30, 5);
+    assertThat(authConfig.issuers())
+        .extracting(AuthConfig.Issuer::algorithms)
         .containsExactly(List.of("PS256"), List.of("ES256"));
   }
 
   @Test
-  void givenIssuers_whenParsed_thenAuthorizationServersAreTheIssuers() {
+  void givenAlgorithms_whenKeysApplied_thenKeysWithoutAlgUseEachListedAlgorithmOfTheirType() {
+    var rsaWithoutAlg = new JsonObject(KEY);
+    var ecWithUnlistedAlg = new JsonObject().put("kty", "EC").put("alg", "ES256");
+    var restricted = issuerWithAlgorithms(List.of("RS256", "PS256", "HS256"));
+
+    assertThat(restricted.keysForAlgorithms(List.of(rsaWithoutAlg, ecWithUnlistedAlg)))
+        .extracting(key -> key.getString("alg"))
+        .containsExactly("RS256", "PS256");
+    assertThat(issuerWithAlgorithms(null).keysForAlgorithms(List.of(rsaWithoutAlg)))
+        .as("no restriction")
+        .containsExactly(rsaWithoutAlg);
+  }
+
+  @Test
+  void givenIssuersWithEachKeySource_whenParsed_thenInlineKeyIssuersAreNotAuthorizationServers() {
+    var inlineKeys = issuer("my-backend");
+    inlineKeys.put("keys", List.of(KEY));
+    var jwksUri = issuer("https://c/");
+    jwksUri.put("jwksUri", "https://c/jwks");
+    var jwksUriWithoutUrlIssuer = issuer("my-other-backend");
+    jwksUriWithoutUrlIssuer.put("jwksUri", "https://d/jwks");
+
     var authConfig =
         parse(
             Map.of(
                 "issuers",
-                List.of(issuer("https://a/"), issuer("https://b/")),
+                List.of(
+                    issuer("https://a/"),
+                    inlineKeys,
+                    jwksUri,
+                    jwksUriWithoutUrlIssuer,
+                    issuer("https://b/")),
                 "resource",
                 "https://api.example.com/v1/mcp",
                 "scopesSupported",
                 List.of("mcp:tools")));
 
-    assertThat(authConfig.getAuthorizationServers()).containsExactly("https://a/", "https://b/");
-    assertThat(authConfig.getResource()).isEqualTo("https://api.example.com/v1/mcp");
-    assertThat(authConfig.getScopesSupported()).containsExactly("mcp:tools");
+    assertThat(authConfig.authorizationServers())
+        .containsExactly("https://a/", "https://c/", "https://b/");
+    assertThat(authConfig.resource()).isEqualTo("https://api.example.com/v1/mcp");
+    assertThat(authConfig.scopesSupported()).containsExactly("mcp:tools");
+  }
+
+  @Test
+  void givenUnresolvedPlaceholders_whenParsed_thenUrlChecksAreLeftToStartup() {
+    var jwksUri = issuer("${UNSET_AUTH_TEST_ISSUER_B}");
+    jwksUri.put("jwksUri", "${UNSET_AUTH_TEST_JWKS_URI}");
+
+    var authConfig =
+        parse(Map.of("issuers", List.of(issuer("${UNSET_AUTH_TEST_ISSUER_A}"), jwksUri)));
+
+    assertThat(authConfig.issuers())
+        .extracting(AuthConfig.Issuer::issuer)
+        .containsExactly("${UNSET_AUTH_TEST_ISSUER_A}", "${UNSET_AUTH_TEST_ISSUER_B}");
   }
 
   static List<Arguments> invalidConfigs() {
@@ -96,12 +139,22 @@ class AuthConfigTest {
     twoKeySources.put("jwksUri", "https://a/jwks");
     var emptyKeys = issuer("https://a/");
     emptyKeys.put("keys", List.of());
+    var noneAlgorithm = issuer("https://a/");
+    noneAlgorithm.put("algorithms", List.of("none"));
     var unknownIssuerKey = issuer("https://a/");
     unknownIssuerKey.put("audience", List.of("x"));
     var negativeIssuerLeeway = issuer("https://a/");
     negativeIssuerLeeway.put("leeway", -1);
-    var noneAlgorithm = issuer("https://a/");
-    noneAlgorithm.put("algorithms", List.of("none"));
+    var keyWithoutMaterial = issuer("my-backend");
+    keyWithoutMaterial.put("keys", List.of(Map.of("kty", "RSA")));
+    var encryptionKeyOnly = issuer("my-backend");
+    encryptionKeyOnly.put(
+        "keys", List.of(Map.of("kty", "RSA", "n", "AQAB", "e", "AQAB", "use", "enc")));
+    var keyFittingNoAlgorithm = issuer("my-backend");
+    keyFittingNoAlgorithm.put("keys", List.of(Map.of("kty", "oct", "k", "c2VjcmV0")));
+    keyFittingNoAlgorithm.put("algorithms", List.of("RS256"));
+    var relativeJwksUri = issuer("https://a/");
+    relativeJwksUri.put("jwksUri", "/jwks");
 
     return List.of(
         Arguments.of(Map.of(), "auth.issuers must be a non-empty array"),
@@ -144,7 +197,20 @@ class AuthConfigTest {
             Map.of("issuers", List.of(noneAlgorithm)),
             "auth.issuers[0].algorithms has unsupported value(s) [none], supported are [ES256,"
                 + " ES384, ES512, EdDSA, HS256, HS384, HS512, PS256, PS384, PS512, RS256, RS384,"
-                + " RS512]"));
+                + " RS512]"),
+        Arguments.of(
+            Map.of("issuers", List.of(issuer("https://a/")), "algorithms", List.of()),
+            "auth.algorithms must be a non-empty array of non-blank strings"),
+        Arguments.of(
+            Map.of("issuers", List.of(issuer("my-issuer"))),
+            "auth.issuers[0].issuer must be an absolute http(s) URL to discover its keys, or set"
+                + " 'keys' or 'jwksUri'"),
+        Arguments.of(
+            Map.of("issuers", List.of(relativeJwksUri)),
+            "auth.issuers[0].jwksUri must be an absolute http(s) URL"),
+        Arguments.of(Map.of("issuers", List.of(keyWithoutMaterial)), NO_VERIFYING_KEY),
+        Arguments.of(Map.of("issuers", List.of(encryptionKeyOnly)), NO_VERIFYING_KEY),
+        Arguments.of(Map.of("issuers", List.of(keyFittingNoAlgorithm)), NO_VERIFYING_KEY));
   }
 
   @ParameterizedTest
@@ -156,29 +222,53 @@ class AuthConfigTest {
         .hasMessage(expectedMessage);
   }
 
-  @Test
-  void givenAuthWithDeprecatedJwtAuth_whenServerConfigLoaded_thenRejected() {
-    Map<String, Object> config =
-        Map.of(
-            "auth",
-            Map.of("issuers", List.of(issuer("https://a/"))),
-            "jwtAuth",
-            Map.of("pubSecKeys", List.of()));
-
-    assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(config))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageStartingWith(
-            "'auth' cannot be combined with the deprecated 'jwtAuth' or 'oauthConfig'");
+  static List<Map<String, Object>> jwtAuthBlocksWithoutVerificationKey() {
+    return List.of(
+        Map.of("jwtOptions", Map.of("issuer", "my-issuer")),
+        Map.of("pubSecKeys", List.of()),
+        Map.of("jwks", List.of(Map.of("kty", "RSA"))),
+        Map.of("jwks", List.of(Map.of("kty", "oct", "k", "c2VjcmV0", "use", "enc"))));
   }
 
-  @Test
-  void givenAuthWithDeprecatedOauthConfig_whenServerConfigLoaded_thenRejected() {
+  @ParameterizedTest
+  @MethodSource("jwtAuthBlocksWithoutVerificationKey")
+  void givenJwtAuthWithoutVerificationKey_whenServerConfigLoaded_thenRejected(
+      Map<String, Object> jwtAuth) {
+    assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(Map.of("jwtAuth", jwtAuth)))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage(
+            "'jwtAuth' has no key that can verify signatures, so the server would accept unsigned"
+                + " tokens. Set 'pubSecKeys', 'jwks' or 'keyStore', or migrate to 'auth'");
+  }
+
+  static List<Map<String, Object>> jwtAuthBlocksWithVerificationKey() {
+    return List.of(
+        Map.of("pubSecKeys", List.of(Map.of("algorithm", "HS256", "buffer", "${UNSET_AUTH_KEY}"))),
+        Map.of("jwks", List.of(Map.of("kty", "oct", "k", "${UNSET_AUTH_KEY}"))),
+        Map.of("keyStore", Map.of("path", "keystore.jceks")));
+  }
+
+  @ParameterizedTest
+  @MethodSource("jwtAuthBlocksWithVerificationKey")
+  void givenJwtAuthWithVerificationKey_whenServerConfigLoaded_thenAccepted(
+      Map<String, Object> jwtAuth) {
+    assertThat(ServerConfigUtil.fromConfigMap(Map.of("jwtAuth", jwtAuth)).getJwtAuth())
+        .isEqualTo(jwtAuth);
+  }
+
+  static List<Arguments> deprecatedAuthBlocks() {
+    return List.of(
+        Arguments.of("jwtAuth", Map.of("pubSecKeys", List.of())),
+        Arguments.of(
+            "oauthConfig", Map.of("oauth2Options", Map.of("site", "https://idp.example"))));
+  }
+
+  @ParameterizedTest
+  @MethodSource("deprecatedAuthBlocks")
+  void givenAuthWithDeprecatedBlock_whenServerConfigLoaded_thenRejected(
+      String block, Map<String, Object> value) {
     Map<String, Object> config =
-        Map.of(
-            "auth",
-            Map.of("issuers", List.of(issuer("https://a/"))),
-            "oauthConfig",
-            Map.of("oauth2Options", Map.of("site", "https://idp.example.com")));
+        Map.of("auth", Map.of("issuers", List.of(issuer("https://a/"))), block, value);
 
     assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(config))
         .isInstanceOf(IllegalArgumentException.class)
@@ -204,7 +294,18 @@ class AuthConfigTest {
                 List.of("https://a/", "https://b/"),
                 "https://api.example.com/v1/mcp",
                 List.of("mcp:tools", "mcp:resources")));
-    assertThat(serverConfig.getConfiguredResource()).isEqualTo("https://api.example.com/v1/mcp");
+  }
+
+  @Test
+  void givenAuthWithOnlyInlineKeyIssuers_whenServerConfigLoaded_thenNoProtectedResourceMetadata() {
+    var inlineKeys = issuer("my-backend");
+    inlineKeys.put("keys", List.of(KEY));
+
+    var serverConfig =
+        ServerConfigUtil.fromConfigMap(Map.of("auth", Map.of("issuers", List.of(inlineKeys))));
+
+    assertThat(serverConfig.getAuthConfig().issuers()).hasSize(1);
+    assertThat(serverConfig.getProtectedResourceMetadata()).isEmpty();
   }
 
   @Test
@@ -213,6 +314,10 @@ class AuthConfigTest {
 
     assertThat(serverConfig.getAuthConfig()).isNull();
     assertThat(serverConfig.getProtectedResourceMetadata()).isEmpty();
+  }
+
+  private static AuthConfig.Issuer issuerWithAlgorithms(List<String> algorithms) {
+    return new AuthConfig.Issuer("https://a/", List.of("api"), null, null, 60, algorithms);
   }
 
   private static AuthConfig parse(Map<String, Object> auth) {

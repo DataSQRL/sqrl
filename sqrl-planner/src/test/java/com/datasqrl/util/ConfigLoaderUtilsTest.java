@@ -40,6 +40,8 @@ import org.apache.flink.configuration.Configuration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class ConfigLoaderUtilsTest {
 
@@ -553,8 +555,8 @@ class ConfigLoaderUtilsTest {
                 + "]}",
             "{\"issuers\":[" + issuer("https://c/") + "]}");
 
-    assertThat(authConfig.getAuthorizationServers()).containsExactly("https://c/");
-    assertThat(authConfig.getIssuers().get(0).getLeeway()).isEqualTo(30);
+    assertThat(authConfig.authorizationServers()).containsExactly("https://c/");
+    assertThat(authConfig.issuers().get(0).leeway()).isEqualTo(30);
   }
 
   @Test
@@ -566,31 +568,20 @@ class ConfigLoaderUtilsTest {
                 + ",{\"issuer\":\"https://b/\",\"audiences\":[\"y\"],\"leeway\":5}]}",
             "{\"leeway\":90}");
 
-    assertThat(authConfig.getAuthorizationServers()).containsExactly("https://a/", "https://b/");
-    assertThat(authConfig.getIssuers())
-        .extracting(AuthConfig.Issuer::getLeeway)
-        .containsExactly(90, 5);
+    assertThat(authConfig.authorizationServers()).containsExactly("https://a/", "https://b/");
+    assertThat(authConfig.issuers()).extracting(AuthConfig.Issuer::leeway).containsExactly(90, 5);
   }
 
-  @Test
-  void givenEarlierOauthConfigLayer_whenLaterLayerSetsAuth_thenMixingIsRejected() {
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "{\"oauthConfig\":{\"oauth2Options\":{\"site\":\"https://other-idp.example.com\"}}}",
+        "{\"jwtAuth\":{\"pubSecKeys\":[{\"algorithm\":\"HS256\",\"buffer\":\"dGVzdA==\"}]}}"
+      })
+  void givenEarlierDeprecatedAuthLayer_whenLaterLayerSetsAuth_thenMixingIsRejected(
+      String earlierLayer) {
     var vertxConfig =
-        mergedVertxConfig(
-            "{\"oauthConfig\":{\"oauth2Options\":{\"site\":\"https://other-idp.example.com\"}}}",
-            "{\"auth\":{\"issuers\":[" + issuer("https://a/") + "]}}");
-
-    assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(vertxConfig))
-        .isInstanceOf(IllegalArgumentException.class)
-        .hasMessageStartingWith(
-            "'auth' cannot be combined with the deprecated 'jwtAuth' or 'oauthConfig'");
-  }
-
-  @Test
-  void givenEarlierJwtAuthLayer_whenLaterLayerSetsAuth_thenMixingIsRejected() {
-    var vertxConfig =
-        mergedVertxConfig(
-            "{\"jwtAuth\":{\"pubSecKeys\":[{\"algorithm\":\"HS256\",\"buffer\":\"dGVzdA==\"}]}}",
-            "{\"auth\":{\"issuers\":[" + issuer("https://a/") + "]}}");
+        mergedVertxConfig(earlierLayer, "{\"auth\":{\"issuers\":[" + issuer("https://a/") + "]}}");
 
     assertThatThrownBy(() -> ServerConfigUtil.fromConfigMap(vertxConfig))
         .isInstanceOf(IllegalArgumentException.class)
@@ -608,8 +599,7 @@ class ConfigLoaderUtilsTest {
     var serverConfig = ServerConfigUtil.fromConfigMap(vertxConfig);
 
     assertThat(serverConfig.getOauthConfig()).isNull();
-    assertThat(serverConfig.getAuthConfig().getAuthorizationServers())
-        .containsExactly("https://a/");
+    assertThat(serverConfig.getAuthConfig().authorizationServers()).containsExactly("https://a/");
   }
 
   private AuthConfig mergedAuthConfig(String baseAuth, String overlayAuth) {

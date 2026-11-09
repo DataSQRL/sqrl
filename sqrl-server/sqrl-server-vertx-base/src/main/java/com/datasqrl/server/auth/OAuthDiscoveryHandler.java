@@ -35,8 +35,8 @@ public class OAuthDiscoveryHandler {
   private final ServerConfig config;
 
   /**
-   * Registers OAuth discovery routes on the router. Only registers if OAuth configuration is
-   * present.
+   * Registers OAuth discovery routes on the router. Only registers if an OAuth authorization server
+   * is configured.
    */
   public void registerRoutes(Router router) {
     var metadata = config.getProtectedResourceMetadata();
@@ -60,7 +60,9 @@ public class OAuthDiscoveryHandler {
    */
   private void handleProtectedResourceMetadata(
       RoutingContext ctx, ProtectedResourceMetadata metadata) {
-    var resource = ProtectedResourceUrls.resource(config, ctx.request());
+    var resource =
+        ProtectedResourceUrls.resource(
+            metadata, config.getServletConfig().getMcpEndpoint("v1"), ctx.request());
 
     var body =
         new JsonObject()

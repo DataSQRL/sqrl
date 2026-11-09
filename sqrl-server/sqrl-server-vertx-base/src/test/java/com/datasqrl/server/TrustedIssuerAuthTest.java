@@ -93,10 +93,7 @@ class TrustedIssuerAuthTest {
   void givenTwoTrustedIssuers_whenTokenPresented_thenIssuerAudienceAndKeyMustAllMatchOneIssuer(
       String issuer, String audience, String signedBy, int expectedStatus) {
     startServer(
-        auth(
-            Map.of("algorithms", List.of("HS256")),
-            issuer(ISSUER_A, AUDIENCE_X, keyA),
-            issuer(ISSUER_B, AUDIENCE_Y, keyB)));
+        auth(Map.of(), issuer(ISSUER_A, AUDIENCE_X, keyA), issuer(ISSUER_B, AUDIENCE_Y, keyB)));
     var key = "A".equals(signedBy) ? keyA : keyB;
 
     assertThat(queryStatus(key.token(claims(issuer, audience)))).isEqualTo(expectedStatus);
@@ -116,7 +113,7 @@ class TrustedIssuerAuthTest {
                     Base64.getEncoder().encodeToString(secret.getBytes(UTF_8)))));
     var legacySigner = JWTAuth.create(vertx, new JWTAuthOptions(new JsonObject(legacyJwtAuth)));
     var entry = issuer(ISSUER_A, AUDIENCE_X, TestJwtKeys.hmac(vertx, secret));
-    startServer(auth(Map.of("algorithms", List.of("HS256")), entry));
+    startServer(auth(Map.of(), entry));
 
     var token =
         legacySigner.generateToken(
@@ -126,25 +123,46 @@ class TrustedIssuerAuthTest {
   }
 
   @Test
-  void givenDefaultAlgorithms_whenHs256TokenSignedWithTrustedSecret_thenRejected() {
+  void givenIssuersWithRsaAndOctKeys_whenTokensPresented_thenEachKeyVerifiesOnlyItsOwnAlgorithm() {
     var rsa = TestJwtKeys.rsa(vertx);
-    var entry = issuer(ISSUER_A, AUDIENCE_X, rsa);
-    entry.put("keys", List.of(rsa.publicJwk().getMap(), keyA.publicJwk().getMap()));
-    startServer(auth(Map.of(), entry));
-
-    assertThat(queryStatus(rsa.token(claims(ISSUER_A, AUDIENCE_X)))).isEqualTo(200);
-    assertThat(queryStatus(keyA.token(claims(ISSUER_A, AUDIENCE_X)))).isEqualTo(401);
-  }
-
-  @Test
-  void givenIssuerAlgorithmsOverride_whenTokensPresented_thenEachIssuerUsesItsOwnAlgorithms() {
-    var rsa = TestJwtKeys.rsa(vertx);
-    var hmacIssuer = issuer(ISSUER_B, AUDIENCE_Y, keyB);
-    hmacIssuer.put("algorithms", List.of("HS256"));
-    startServer(auth(Map.of(), issuer(ISSUER_A, AUDIENCE_X, rsa), hmacIssuer));
+    startServer(
+        auth(Map.of(), issuer(ISSUER_A, AUDIENCE_X, rsa), issuer(ISSUER_B, AUDIENCE_Y, keyB)));
 
     assertThat(queryStatus(rsa.token(claims(ISSUER_A, AUDIENCE_X)))).isEqualTo(200);
     assertThat(queryStatus(keyB.token(claims(ISSUER_B, AUDIENCE_Y)))).isEqualTo(200);
+    assertThat(queryStatus(keyA.token(claims(ISSUER_A, AUDIENCE_X))))
+        .as("HS256 token for an issuer with only an RSA key")
+        .isEqualTo(401);
+  }
+
+  @Test
+  void givenAlgorithms_whenKeysHaveNoAlg_thenEachKeyVerifiesTheListedAlgorithmsOnly() {
+    var secret = "a-secret-long-enough-for-hs512-a-secret-long-enough-for-hs512-xx";
+    var ps256 = TestJwtKeys.rsa(vertx, "PS256");
+    var hs512 = TestJwtKeys.hmac(vertx, secret, "HS512");
+    var rsaIssuer = issuer(ISSUER_A, AUDIENCE_X, ps256);
+    var hmacIssuer = issuer(ISSUER_B, AUDIENCE_Y, hs512);
+    hmacIssuer.put("algorithms", List.of("HS512"));
+    startServer(auth(Map.of("algorithms", List.of("PS256")), rsaIssuer, hmacIssuer));
+
+    assertThat(queryStatus(ps256.token(claims(ISSUER_A, AUDIENCE_X)))).isEqualTo(200);
+    assertThat(queryStatus(hs512.token(claims(ISSUER_B, AUDIENCE_Y)))).isEqualTo(200);
+    assertThat(queryStatus(TestJwtKeys.hmac(vertx, secret).token(claims(ISSUER_B, AUDIENCE_Y))))
+        .as("HS256 token with the same secret, HS256 not listed")
+        .isEqualTo(401);
+  }
+
+  @Test
+  void givenTrustedIssuer_whenUnsignedTokenPresented_thenRejected() {
+    startServer(auth(Map.of(), issuer(ISSUER_A, AUDIENCE_X, keyA)));
+    var encoder = Base64.getUrlEncoder().withoutPadding();
+    var unsignedToken =
+        encoder.encodeToString("{\"alg\":\"none\"}".getBytes(UTF_8))
+            + "."
+            + encoder.encodeToString(
+                new JsonObject(claims(ISSUER_A, AUDIENCE_X)).encode().getBytes(UTF_8));
+
+    assertThat(queryStatus(unsignedToken)).isEqualTo(401);
   }
 
   @ParameterizedTest(name = "auth.leeway={0} issuer.leeway={1} expiredSecondsAgo={2} -> {3}")
@@ -159,7 +177,6 @@ class TrustedIssuerAuthTest {
   void givenLeewaySettings_whenExpiredTokenPresented_thenIssuerThenAuthThenDefaultLeewayApplies(
       Integer authLeeway, Integer issuerLeeway, int expiredSecondsAgo, int expectedStatus) {
     var defaults = new HashMap<String, Object>();
-    defaults.put("algorithms", List.of("HS256"));
     if (authLeeway != null) {
       defaults.put("leeway", authLeeway);
     }

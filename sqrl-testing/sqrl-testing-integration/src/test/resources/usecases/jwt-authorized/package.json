@@ -10,7 +10,6 @@
           "compressionContentSizeThreshold": 0
         },
         "auth": {
-          "algorithms": ["HS256"],
           "leeway": 30,
           "issuers": [
             {

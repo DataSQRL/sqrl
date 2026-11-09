@@ -111,7 +111,7 @@ class GenericJavaServerEngineTest {
     var result =
         ServerConfigUtil.mergeConfigs(underTest.readDefaultConfig(), Map.of("auth", authBlock()));
 
-    assertThat(result.getAuthConfig().getAuthorizationServers()).containsExactly("https://a/");
+    assertThat(result.getAuthConfig().authorizationServers()).containsExactly("https://a/");
     assertThat(result.getJwtAuth()).isNull();
   }
 
@@ -125,6 +125,17 @@ class GenericJavaServerEngineTest {
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageStartingWith(
             "'auth' cannot be combined with the deprecated 'jwtAuth' or 'oauthConfig'");
+  }
+
+  @Test
+  void givenJwtAuthWithoutKeys_whenMergedAtCompileTime_thenRejected() {
+    var defaultConfig = underTest.readDefaultConfig();
+    Map<String, Object> config =
+        Map.of("jwtAuth", Map.of("jwtOptions", Map.of("issuer", "my-issuer")));
+
+    assertThatThrownBy(() -> ServerConfigUtil.mergeConfigs(defaultConfig, config))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageStartingWith("'jwtAuth' has no key that can verify signatures");
   }
 
   private static Map<String, Object> authBlock() {

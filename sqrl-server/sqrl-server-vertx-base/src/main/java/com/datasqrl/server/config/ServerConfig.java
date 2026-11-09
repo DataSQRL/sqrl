@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.handler.graphql.GraphQLHandlerOptions;
@@ -126,36 +127,54 @@ public class ServerConfig {
               + "set them to null in the configuration layer that introduces 'auth'");
       getAuthConfig();
     }
+
     if (jwtAuth != null) {
       log.warn("'jwtAuth' is deprecated and will be removed, configure 'auth' instead");
+      checkArgument(
+          hasVerificationKey(new JsonObject(jwtAuth)),
+          "'jwtAuth' has no key that can verify signatures, so the server would accept unsigned"
+              + " tokens. Set 'pubSecKeys', 'jwks' or 'keyStore', or migrate to 'auth'");
     }
+
     if (oauthConfig != null) {
       log.warn("'oauthConfig' is deprecated and will be removed, configure 'auth' instead");
     }
   }
 
-  /** Returns the {@code auth} block with environment variables resolved, or null if not set. */
-  @JsonIgnore
-  @SneakyThrows
-  public AuthConfig getAuthConfig() {
-    if (auth == null) {
-      return null;
-    }
-
-    var jsonStr = MAPPER.writeValueAsString(auth);
-    return AuthConfig.parse(MAPPER.readValue(jsonStr, JsonObject.class));
+  private static boolean hasVerificationKey(JsonObject jwtAuth) {
+    return jwtAuth.getValue("keyStore") != null
+        || jwtAuth.getValue("pubSecKeys") instanceof JsonArray pemKeys && !pemKeys.isEmpty()
+        || jwtAuth.getValue("jwks") instanceof JsonArray jwks
+            && jwks.stream()
+                .anyMatch(
+                    jwk -> jwk instanceof JsonObject key && AuthConfig.canVerifySignatures(key));
   }
 
+  /**
+   * Parses the {@code auth} block with environment variables resolved, or returns null if not set.
+   * It parses on every call, so call it at startup, not per request.
+   */
+  @JsonIgnore
+  public AuthConfig getAuthConfig() {
+    return auth == null ? null : AuthConfig.parse(resolveEnvVars(auth));
+  }
+
+  /**
+   * Returns the RFC 9728 protected resource metadata, or empty if no OAuth authorization server is
+   * configured. With {@code auth}, issuers with inline keys are not advertised.
+   */
   @JsonIgnore
   public Optional<ProtectedResourceMetadata> getProtectedResourceMetadata() {
     var authConfig = getAuthConfig();
     if (authConfig != null) {
-      return Optional.of(
-          new ProtectedResourceMetadata(
-              authConfig.getAuthorizationServers(),
-              authConfig.getResource(),
-              authConfig.getScopesSupported()));
+      var authorizationServers = authConfig.authorizationServers();
+      return authorizationServers.isEmpty()
+          ? Optional.empty()
+          : Optional.of(
+              new ProtectedResourceMetadata(
+                  authorizationServers, authConfig.resource(), authConfig.scopesSupported()));
     }
+
     if (oauthConfig != null && oauthConfig.getSite() != null) {
       var scopes = oauthConfig.getScopesSupported();
       return Optional.of(
@@ -164,16 +183,8 @@ public class ServerConfig {
               oauthConfig.getResource(),
               scopes != null ? scopes : AuthConfig.DEFAULT_SCOPES));
     }
-    return Optional.empty();
-  }
 
-  @JsonIgnore
-  public String getConfiguredResource() {
-    var authConfig = getAuthConfig();
-    if (authConfig != null) {
-      return authConfig.getResource();
-    }
-    return oauthConfig != null ? oauthConfig.getResource() : null;
+    return Optional.empty();
   }
 
   /**
@@ -182,16 +193,19 @@ public class ServerConfig {
    * resolution before runtime, causing init failure in {@link JWTAuthOptions}.
    */
   @JsonIgnore
-  @SneakyThrows
   public JWTAuthOptions getJwtAuthOptions() {
-    if (jwtAuth == null) {
-      return null;
-    }
+    return jwtAuth == null ? null : new JWTAuthOptions(resolveEnvVars(jwtAuth));
+  }
 
-    var jsonStr = MAPPER.writeValueAsString(jwtAuth);
-    var jsonObj = MAPPER.readValue(jsonStr, JsonObject.class);
-
-    return new JWTAuthOptions(jsonObj);
+  /**
+   * Converts a raw config block to JSON with environment variables resolved, for use in memory
+   * only. Do not store the result on this object: the raw blocks are what gets serialized, so the
+   * compiled {@code vertx-config.json} keeps its {@code ${VAR}} placeholders and resolved values
+   * never leak into a deployment artifact.
+   */
+  @SneakyThrows
+  private JsonObject resolveEnvVars(Map<String, Object> block) {
+    return MAPPER.readValue(MAPPER.writeValueAsString(block), JsonObject.class);
   }
 
   ////////////////////////////////////////////////////////////////////////////////

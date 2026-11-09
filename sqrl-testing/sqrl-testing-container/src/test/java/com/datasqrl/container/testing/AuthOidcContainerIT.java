@@ -15,6 +15,7 @@
  */
 package com.datasqrl.container.testing;
 
+import static com.datasqrl.container.testing.KeycloakContainerExtension.issuer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,77 +24,41 @@ import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTranspor
 import java.time.Duration;
 import java.util.function.Consumer;
 import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
-import org.testcontainers.utility.DockerImageName;
 
 /**
  * Runs the {@code auth} block with OIDC discovery against Keycloak through the real server image.
  * Two realms are two issuers, each with its own signing keys; the server trusts realm alpha for
  * {@code sqrl-api-alpha} and realm beta for {@code sqrl-api-beta}.
  */
-@Slf4j
 class AuthOidcContainerIT {
 
   @RegisterExtension
   static SqrlContainerExtension sqrl = new SqrlContainerExtension("oauth-authorized-compile");
 
-  private static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:26.0";
-  private static final String KEYCLOAK_URL = "http://keycloak:8080";
-  private static final String ISSUER_ALPHA = KEYCLOAK_URL + "/realms/alpha";
-  private static final String ISSUER_BETA = KEYCLOAK_URL + "/realms/beta";
+  @RegisterExtension
+  static KeycloakContainerExtension keycloak = new KeycloakContainerExtension(sqrl);
+
   private static final String TYPENAME_QUERY = "{\"query\":\"query { __typename }\"}";
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
-  private static GenericContainer<?> keycloak;
-  private static String keycloakHostUrl;
-
   @BeforeAll
-  @SneakyThrows
-  static void startKeycloak() {
-    keycloak =
-        new GenericContainer<>(DockerImageName.parse(KEYCLOAK_IMAGE))
-            .withNetwork(sqrl.getNetwork())
-            .withNetworkAliases("keycloak")
-            .withExposedPorts(8080)
-            .withEnv("KC_BOOTSTRAP_ADMIN_USERNAME", "admin")
-            .withEnv("KC_BOOTSTRAP_ADMIN_PASSWORD", "admin")
-            .withEnv("KC_HOSTNAME", KEYCLOAK_URL)
-            .withCommand("start-dev")
-            .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("keycloak"))
-            .waitingFor(
-                Wait.forHttp("/realms/master")
-                    .forPort(8080)
-                    .withStartupTimeout(Duration.ofMinutes(2)));
-    keycloak.start();
-    keycloakHostUrl = "http://localhost:" + keycloak.getMappedPort(8080);
-
-    var adminToken = adminToken();
-    createRealm(
-        adminToken,
-        "alpha",
-        client("app", "sqrl-api-alpha"),
-        client("wrong-audience", "unrelated-api"),
-        client("cross-audience", "sqrl-api-beta"));
-    createRealm(adminToken, "beta", client("app", "sqrl-api-beta"));
-  }
-
-  @AfterAll
-  static void stopKeycloak() {
-    if (keycloak != null) {
-      keycloak.stop();
-    }
+  static void createRealms() {
+    keycloak.createRealm(
+        realm(
+            "alpha",
+            client("app", "sqrl-api-alpha"),
+            client("wrong-audience", "unrelated-api"),
+            client("cross-audience", "sqrl-api-beta")));
+    keycloak.createRealm(realm("beta", client("app", "sqrl-api-beta")));
   }
 
   @Test
@@ -123,7 +88,7 @@ class AuthOidcContainerIT {
       assertThat(response.getStatusLine().getStatusCode()).isEqualTo(200);
       var metadata = MAPPER.readTree(EntityUtils.toString(response.getEntity()));
       assertThat(MAPPER.convertValue(metadata.get("authorization_servers"), String[].class))
-          .containsExactly(ISSUER_ALPHA, ISSUER_BETA);
+          .containsExactly(issuer("alpha"), issuer("beta"));
       assertThat(metadata.get("resource").asText()).endsWith("/v1/mcp");
     }
 
@@ -158,9 +123,9 @@ class AuthOidcContainerIT {
   private void startServer() {
     Consumer<GenericContainer<?>> env =
         c ->
-            c.withEnv("KEYCLOAK_ISSUER_ALPHA", ISSUER_ALPHA)
-                .withEnv("KEYCLOAK_ISSUER_BETA", ISSUER_BETA);
-    sqrl.compileSqrlProject("package-auth.json", env);
+            c.withEnv("KEYCLOAK_ISSUER_ALPHA", issuer("alpha"))
+                .withEnv("KEYCLOAK_ISSUER_BETA", issuer("beta"));
+    sqrl.compileSqrlProject("auth-oidc.json", env);
     sqrl.startGraphQLServer(env);
   }
 
@@ -169,6 +134,13 @@ class AuthOidcContainerIT {
     try (var response = sqrl.executeGraphQLQuery(TYPENAME_QUERY, token)) {
       return response.getStatusLine().getStatusCode();
     }
+  }
+
+  private static String realm(String realm, String... clients) {
+    return """
+        { "realm": "%s", "enabled": true, "sslRequired": "none", "clients": [%s] }
+        """
+        .formatted(realm, String.join(",", clients));
   }
 
   private static String client(String clientId, String audience) {
@@ -196,44 +168,10 @@ class AuthOidcContainerIT {
         .formatted(clientId, clientId, audience);
   }
 
-  @SneakyThrows
-  private static void createRealm(String adminToken, String realm, String... clients) {
-    var request = new HttpPost(keycloakHostUrl + "/admin/realms");
-    request.setHeader("Authorization", "Bearer " + adminToken);
-    request.setEntity(
-        new StringEntity(
-            """
-            { "realm": "%s", "enabled": true, "sslRequired": "none", "clients": [%s] }
-            """
-                .formatted(realm, String.join(",", clients)),
-            ContentType.APPLICATION_JSON));
-    try (var response = sqrl.getHttpClient().execute(request)) {
-      assertThat(response.getStatusLine().getStatusCode())
-          .as(EntityUtils.toString(response.getEntity()))
-          .isEqualTo(201);
-    }
-  }
-
-  private static String adminToken() {
-    return token("master", "grant_type=password&client_id=admin-cli&username=admin&password=admin");
-  }
-
   private static String clientToken(String realm, String clientId) {
-    return token(
+    return keycloak.token(
         realm,
         "grant_type=client_credentials&client_id=%s&client_secret=%s-secret"
             .formatted(clientId, clientId));
-  }
-
-  @SneakyThrows
-  private static String token(String realm, String form) {
-    var request =
-        new HttpPost(keycloakHostUrl + "/realms/" + realm + "/protocol/openid-connect/token");
-    request.setEntity(new StringEntity(form, ContentType.APPLICATION_FORM_URLENCODED));
-    try (var response = sqrl.getHttpClient().execute(request)) {
-      var body = EntityUtils.toString(response.getEntity());
-      assertThat(response.getStatusLine().getStatusCode()).as(body).isEqualTo(200);
-      return MAPPER.readTree(body).get("access_token").asText();
-    }
   }
 }
