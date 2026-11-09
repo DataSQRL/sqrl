@@ -74,6 +74,7 @@ public class ServerConfig {
   private GraphQLTailSampleTracingConfig graphQLTailSampleTracingConfig =
       new GraphQLTailSampleTracingConfig();
   private GraphQLParserConfig graphQLParserConfig = new GraphQLParserConfig();
+  private HeavyQueryLogConfig heavyQueryLogConfig = new HeavyQueryLogConfig();
   private Map<String, Object> auth;
   private Map<String, Object> jwtAuth;
   private OAuthConfig oauthConfig;
@@ -298,6 +299,14 @@ public class ServerConfig {
         options == null
             ? new GraphQLParserConfig()
             : MAPPER.convertValue(options, GraphQLParserConfig.class);
+  }
+
+  @JsonSetter("heavyQueryLogConfig")
+  public void setHeavyQueryLogConfigFromJson(Map<String, Object> options) {
+    this.heavyQueryLogConfig =
+        options == null
+            ? new HeavyQueryLogConfig()
+            : MAPPER.convertValue(options, HeavyQueryLogConfig.class);
   }
 
   private JsonObject getJsonObjectOrEmpty(Map<String, Object> options) {

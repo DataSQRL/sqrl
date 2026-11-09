@@ -195,7 +195,8 @@ public class GraphQLServerVerticle extends AbstractVerticle {
               vertxJdbcClient,
               metadataReaders,
               functionExecutor,
-              new VertxParamArgumentTypeMapper());
+              new VertxParamArgumentTypeMapper(),
+              config.getHeavyQueryLogConfig());
 
       var graphQL =
           model.accept(

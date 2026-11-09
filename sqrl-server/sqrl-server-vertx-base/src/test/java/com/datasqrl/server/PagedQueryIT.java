@@ -17,6 +17,7 @@ package com.datasqrl.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datasqrl.server.config.HeavyQueryLogConfig;
 import com.datasqrl.server.graphql.CustomScalars;
 import com.datasqrl.server.graphql.GraphQLEngineBuilder;
 import com.datasqrl.server.graphql.RootGraphQLModel;
@@ -128,7 +129,8 @@ class PagedQueryIT {
                     new VertxJdbcClient(Map.of(DatabaseType.POSTGRES, recordingClient)),
                     null,
                     null,
-                    new VertxParamArgumentTypeMapper()))
+                    new VertxParamArgumentTypeMapper(),
+                    new HeavyQueryLogConfig()))
             .build();
     recordingClient.executed.clear();
   }
