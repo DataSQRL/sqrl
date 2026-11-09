@@ -19,70 +19,68 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.datasqrl.server.config.OAuthConfig;
-import com.datasqrl.server.config.ServerConfig;
+import com.datasqrl.server.config.ProtectedResourceMetadata;
 import io.vertx.core.http.HttpServerRequest;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class ProtectedResourceUrlsTest {
 
+  private static final String MCP_ENDPOINT = "/v1/mcp";
+
   @Test
   void givenNoConfiguredResource_whenBuildingUrls_thenUsesRequestOrigin() {
-    var config = configWithResource(null);
+    var metadata = metadata(null);
     var request = request("http", "localhost:8888", null);
 
-    assertThat(ProtectedResourceUrls.resource(config, request))
+    assertThat(ProtectedResourceUrls.resource(metadata, MCP_ENDPOINT, request))
         .isEqualTo("http://localhost:8888/v1/mcp");
-    assertThat(ProtectedResourceUrls.metadataUrl(config, request))
+    assertThat(ProtectedResourceUrls.metadataUrl(metadata, request))
         .isEqualTo("http://localhost:8888/.well-known/oauth-protected-resource");
   }
 
   @Test
   void givenNoConfiguredResourceAndForwardedProto_whenBuildingUrls_thenUsesForwardedScheme() {
-    var config = configWithResource(" ");
+    var metadata = metadata(" ");
     var request = request("http", "api.example.com", "https");
 
-    assertThat(ProtectedResourceUrls.resource(config, request))
+    assertThat(ProtectedResourceUrls.resource(metadata, MCP_ENDPOINT, request))
         .isEqualTo("https://api.example.com/v1/mcp");
-    assertThat(ProtectedResourceUrls.metadataUrl(config, request))
+    assertThat(ProtectedResourceUrls.metadataUrl(metadata, request))
         .isEqualTo("https://api.example.com/.well-known/oauth-protected-resource");
   }
 
   @Test
   void givenConfiguredResourceBehindHttpProxy_whenBuildingUrls_thenUsesResourceOrigin() {
-    var config = configWithResource("https://api.example.com/v1/mcp");
+    var metadata = metadata("https://api.example.com/v1/mcp");
     var request = request("http", "api.example.com", "http");
 
-    assertThat(ProtectedResourceUrls.resource(config, request))
+    assertThat(ProtectedResourceUrls.resource(metadata, MCP_ENDPOINT, request))
         .isEqualTo("https://api.example.com/v1/mcp");
-    assertThat(ProtectedResourceUrls.metadataUrl(config, request))
+    assertThat(ProtectedResourceUrls.metadataUrl(metadata, request))
         .isEqualTo("https://api.example.com/.well-known/oauth-protected-resource");
   }
 
   @Test
   void givenConfiguredResourceWithPort_whenBuildingMetadataUrl_thenKeepsPort() {
-    var config = configWithResource("https://api.example.com:8443/v1/mcp");
+    var metadata = metadata("https://api.example.com:8443/v1/mcp");
     var request = request("http", "sqrl-server:8888", null);
 
-    assertThat(ProtectedResourceUrls.metadataUrl(config, request))
+    assertThat(ProtectedResourceUrls.metadataUrl(metadata, request))
         .isEqualTo("https://api.example.com:8443/.well-known/oauth-protected-resource");
   }
 
   @Test
   void givenConfiguredResourceWithoutScheme_whenBuildingMetadataUrl_thenUsesRequestOrigin() {
-    var config = configWithResource("api.example.com/v1/mcp");
+    var metadata = metadata("api.example.com/v1/mcp");
     var request = request("http", "localhost:8888", null);
 
-    assertThat(ProtectedResourceUrls.metadataUrl(config, request))
+    assertThat(ProtectedResourceUrls.metadataUrl(metadata, request))
         .isEqualTo("http://localhost:8888/.well-known/oauth-protected-resource");
   }
 
-  static ServerConfig configWithResource(String resource) {
-    var oauthConfig = new OAuthConfig();
-    oauthConfig.setResource(resource);
-    var config = new ServerConfig();
-    config.setOauthConfig(oauthConfig);
-    return config;
+  static ProtectedResourceMetadata metadata(String resource) {
+    return new ProtectedResourceMetadata(List.of("https://idp.example.com/"), resource, List.of());
   }
 
   static HttpServerRequest request(String scheme, String host, String forwardedProto) {

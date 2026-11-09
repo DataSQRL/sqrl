@@ -15,6 +15,7 @@
  */
 package com.datasqrl.container.testing;
 
+import static com.datasqrl.container.testing.McpAssertions.assertMcpAuthorizationStatus;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -29,7 +30,6 @@ import feign.jackson.JacksonEncoder;
 import io.jsonwebtoken.Jwts;
 import io.modelcontextprotocol.client.McpClient;
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
-import io.modelcontextprotocol.client.transport.McpHttpClientTransportAuthorizationException;
 import io.modelcontextprotocol.spec.McpSchema;
 import java.security.KeyPairGenerator;
 import java.sql.SQLException;
@@ -432,22 +432,5 @@ public class JwtContainerIT {
     } catch (Exception e) {
       throw new RuntimeException("Failed to generate RSA key pair for test", e);
     }
-  }
-
-  private void assertMcpAuthorizationStatus(Throwable ex, int statusCode) {
-    var authException = findMcpAuthorizationException(ex);
-    assertThat(authException).isNotNull();
-    assertThat(authException.getResponseInfo().statusCode()).isEqualTo(statusCode);
-  }
-
-  private McpHttpClientTransportAuthorizationException findMcpAuthorizationException(Throwable ex) {
-    var current = ex;
-    while (current != null) {
-      if (current instanceof McpHttpClientTransportAuthorizationException authException) {
-        return authException;
-      }
-      current = current.getCause();
-    }
-    return null;
   }
 }

@@ -1,0 +1,27 @@
+{
+  "version": "1",
+  "script": {
+    "main": "oauth-authorized.sqrl"
+  },
+  "compiler": {
+    "compile-flink-plan": false
+  },
+  "engines": {
+    "vertx": {
+      "config": {
+        "auth": {
+          "issuers": [
+            {
+              "issuer": "${KEYCLOAK_ISSUER_ALPHA}",
+              "audiences": ["sqrl-api-alpha"]
+            },
+            {
+              "issuer": "${KEYCLOAK_ISSUER_BETA}",
+              "audiences": ["sqrl-api-beta"]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

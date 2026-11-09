@@ -1,134 +1,9 @@
-## JWT Authentication Configuration
+## Authentication Configuration
 
-For secure APIs with JWT authentication with Vert.x server configuration:
-
-```json5
-{
-  "engines": {
-    "vertx": {
-      "authKind": ["JWT"],
-      "config": {
-        "jwtAuth": {
-          "pubSecKeys": [
-            {
-              "algorithm": "HS256",
-              "buffer": "<signer-secret>" // Base64 encoded signer secret string
-            }
-          ],
-          "jwtOptions": {
-            "issuer": "<jwt-issuer>",
-            "audience": ["<jwt-audience>"],
-            "expiresInSeconds": 3600,
-            "leeway": 30
-          }
-        }
-      }
-    }
-  }
-}
-```
-
-As these config fields will be mapped to Vert.x Java POJOs, the name of the key fields are very important.
-For `pubSecKeys`, it is also possible to use different algorithms, that requires the key in a different (mostly PEM) format.
-For example, for `ES256`, this would look something like this:
-```json
-{
-  "pubSecKeys": [
-    {
-      "algorithm": "ES256",
-      "buffer": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhk...restOfBase64...\n-----END PUBLIC KEY-----"
-    }
-  ]
-}
-```
-
-## OAuth 2.0 Authentication Configuration
-
-For OAuth 2.0 authentication with providers like Auth0 or Keycloak, use the `oauthConfig` section.
-This enables MCP (Model Context Protocol) clients like Claude Code to authenticate using OAuth.
-
-```json
-{
-  "engines": {
-    "vertx": {
-      "authKind": ["OAUTH"],
-      "config": {
-        "oauthConfig": {
-          "oauth2Options": {
-            "site": "https://your-tenant.auth0.com/",
-            "clientId": "your-client-id"
-          },
-          "authorizationServerUrl": "https://your-tenant.auth0.com/",
-          "scopesSupported": ["mcp:tools", "mcp:resources"]
-        }
-      }
-    }
-  }
-}
-```
-
-### Combined JWT and OAuth Authentication
-
-You can enable both authentication methods simultaneously:
-
-```json
-{
-  "engines": {
-    "vertx": {
-      "authKind": ["JWT", "OAUTH"],
-      "config": {
-        "jwtAuth": { ... },
-        "oauthConfig": { ... }
-      }
-    }
-  }
-}
-```
-
-### OAuthConfig Structure
-
-The `oauthConfig` object combines Vert.x's OAuth2Options with discovery metadata:
-
-| Key                      | Type       | Required | Description                                              |
-|--------------------------|------------|----------|----------------------------------------------------------|
-| `oauth2Options`          | **object** | Yes      | Vert.x OAuth2Options for authentication                  |
-| `authorizationServerUrl` | **string** | No       | External authorization server URL for discovery          |
-| `scopesSupported`        | **array**  | No       | Scopes advertised (default: `["mcp:tools", "mcp:resources"]`) |
-| `resource`               | **string** | No       | Public URL of the MCP endpoint, e.g. `https://api.example.com/v1/mcp` |
-
-### OAuth2Options Configuration
-
-The `oauth2Options` object uses Vert.x's OAuth2Options class:
-
-| Key        | Type       | Required | Description                                           |
-|------------|------------|----------|-------------------------------------------------------|
-| `site`     | **string** | Yes      | OAuth issuer URL (e.g., `https://tenant.auth0.com`)   |
-| `clientId` | **string** | No       | OAuth client ID (defaults to `datasqrl-mcp`)          |
-
-### OAuth Discovery Endpoint
-
-When OAuth is configured, the server exposes a discovery endpoint at `/.well-known/oauth-protected-resource` per RFC 9728.
-This enables MCP clients to discover the authorization server and scopes.
-MCP requests without a valid token get a `401` with a `WWW-Authenticate: Bearer resource_metadata="..."` header that points to this endpoint.
-
-Without `resource`, the server derives the `resource` value and the `resource_metadata` URL from each request (`X-Forwarded-Proto` or the request scheme, plus the `Host` header).
-With `resource`, the discovery metadata returns it unchanged, and `resource_metadata` uses its origin: `https://api.example.com/v1/mcp` gives `https://api.example.com/.well-known/oauth-protected-resource`.
-Set `resource` to the exact public URL of the MCP endpoint when the server runs behind a proxy that terminates TLS, and route `/.well-known/oauth-protected-resource` on that origin to the server.
-
-### Environment Variable Support
-
-You can use environment variables in the OAuth configuration:
-
-```json
-{
-  "oauthConfig": {
-    "oauth2Options": {
-      "site": "${AUTH0_ISSUER}"
-    },
-    "authorizationServerUrl": "${AUTH0_EXTERNAL_URL}"
-  }
-}
-```
+Configure authentication in the `vertx` engine with the `auth` block: the list of trusted token issuers, each with its
+own audiences and signing keys. A token is accepted only when its `iss`, `aud` and signature all match the same issuer.
+The full reference, including the deprecated `jwtAuth` and `oauthConfig` blocks, is in the `/configure-sqrl` skill
+([vertx.md](../configure-sqrl/vertx.md#authentication)).
 
 ## Testing Authorization
 
@@ -143,43 +18,40 @@ small, dependency-free CLI available on `PATH` inside the agent. For testing, th
 A single secret string is the signing key, and it relates to the config two ways:
 
 - **`--secret`** passed to `jwt encode` is the **raw** secret string.
-- **`buffer`** in the `vertx` config is that same secret, **Base64-encoded**
-  (Vert.x Base64-decodes `buffer` back to the raw key). Encode it with `printf`
-  — not `echo`, which appends a trailing newline that changes the key and makes
-  every token fail to validate:
+- **`k`** of an `oct` key in `auth` is that same secret, **base64url-encoded**
+  without padding. Encode it with `printf` — not `echo`, which appends a trailing
+  newline that changes the key and makes every token fail to validate — and strip
+  the line breaks `base64` inserts into long output:
 
 ```sh
-printf '%s' 'mySuperSecretSignerStringThatIsLongEnough' | base64
-# -> bXlTdXBlclNlY3JldFNpZ25lclN0cmluZ1RoYXRJc0xvbmdFbm91Z2g=
+printf '%s' 'mySuperSecretSignerStringThatIsLongEnough' | base64 | tr '+/' '-_' | tr -d '=\n'
+# -> bXlTdXBlclNlY3JldFNpZ25lclN0cmluZ1RoYXRJc0xvbmdFbm91Z2g
 ```
 
-Set that encoded value as the `buffer` in the `package.json` `vertx` config section:
+Set it as the `k` of an `oct` key, which verifies `HS256` tokens:
 
 ```json
-{
-  ...
-  "engines" : {
-    "vertx" : {
-      "authKind": ["JWT"],
-      "config": {
-        "jwtAuth": {
-          "pubSecKeys": [
-            {
-              "algorithm": "HS256",
-              "buffer": "bXlTdXBlclNlY3JldFNpZ25lclN0cmluZ1RoYXRJc0xvbmdFbm91Z2g="
-            }
-          ],
-          ...
-        }
-      }
+"auth": {
+  "issuers": [
+    {
+      "issuer": "<jwt-issuer>",
+      "audiences": ["<jwt-audience>"],
+      "keys": [{ "kty": "oct", "k": "bXlTdXBlclNlY3JldFNpZ25lclN0cmluZ1RoYXRJc0xvbmdFbm91Z2g" }]
     }
-  },
-  ...
+  ]
 }
 ```
 
+A project still on the deprecated `jwtAuth` uses the same secret as `buffer`, which is standard **Base64** with
+padding, in `pubSecKeys`:
+
+```sh
+printf '%s' 'mySuperSecretSignerStringThatIsLongEnough' | base64 | tr -d '\n'
+# -> bXlTdXBlclNlY3JldFNpZ25lclN0cmluZ1RoYXRJc0xvbmdFbm91Z2g=
+```
+
 Then mint a token by passing the **raw** secret and the claims (shaped to your
-test's needs; `iss` / `aud` must match the `jwtOptions` configured above):
+test's needs; `iss` / `aud` must match an `auth.issuers` entry, or the deprecated `jwtOptions`):
 
 ```sh
 jwt encode --secret 'mySuperSecretSignerStringThatIsLongEnough' --alg HS256 \

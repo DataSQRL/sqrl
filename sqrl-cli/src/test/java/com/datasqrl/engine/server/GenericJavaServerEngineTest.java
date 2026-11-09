@@ -16,6 +16,7 @@
 package com.datasqrl.engine.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.ServerConfigConverter;
@@ -23,6 +24,7 @@ import com.datasqrl.server.config.ServerConfigUtil;
 import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.SneakyThrows;
@@ -102,6 +104,42 @@ class GenericJavaServerEngineTest {
     var jwtAuth = Map.of("pubSecKeys", List.of(pubSecKey), "jwtOptions", jwtOptions);
 
     return Map.of("jwtAuth", jwtAuth);
+  }
+
+  @Test
+  void givenAuthConfig_whenMergedWithDefaultTemplate_thenTrustedIssuersAreParsed() {
+    var result =
+        ServerConfigUtil.mergeConfigs(underTest.readDefaultConfig(), Map.of("auth", authBlock()));
+
+    assertThat(result.getAuthConfig().authorizationServers()).containsExactly("https://a/");
+    assertThat(result.getJwtAuth()).isNull();
+  }
+
+  @Test
+  void givenAuthAndDeprecatedJwtAuth_whenMergedAtCompileTime_thenRejected() {
+    var config = new HashMap<String, Object>(getConfigMap());
+    config.put("auth", authBlock());
+    var defaultConfig = underTest.readDefaultConfig();
+
+    assertThatThrownBy(() -> ServerConfigUtil.mergeConfigs(defaultConfig, config))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageStartingWith(
+            "'auth' cannot be combined with the deprecated 'jwtAuth' or 'oauthConfig'");
+  }
+
+  @Test
+  void givenJwtAuthWithoutKeys_whenMergedAtCompileTime_thenRejected() {
+    var defaultConfig = underTest.readDefaultConfig();
+    Map<String, Object> config =
+        Map.of("jwtAuth", Map.of("jwtOptions", Map.of("issuer", "my-issuer")));
+
+    assertThatThrownBy(() -> ServerConfigUtil.mergeConfigs(defaultConfig, config))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageStartingWith("'jwtAuth' has no key that can verify signatures");
+  }
+
+  private static Map<String, Object> authBlock() {
+    return Map.of("issuers", List.of(Map.of("issuer", "https://a/", "audiences", List.of("x"))));
   }
 
   private static class DummyConverter implements ServerConfigConverter {
