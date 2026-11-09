@@ -19,7 +19,6 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Jwts;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -31,20 +30,11 @@ import java.util.Map;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 /**
  * Integration tests for combined JWT and OAuth authentication. Tests that both authentication
@@ -60,21 +50,15 @@ class JwtOAuthCombinedIT {
   static PostgresContainerExtension postgres =
       new PostgresContainerExtension(sqrl, JwtOAuthCombinedIT::executeStatements);
 
-  private static final String KEYCLOAK_IMAGE = "quay.io/keycloak/keycloak:26.0";
-  private static final String KEYCLOAK_ADMIN = "admin";
-  private static final String KEYCLOAK_PASSWORD = "admin";
+  @RegisterExtension
+  static KeycloakContainerExtension keycloak = new KeycloakContainerExtension(sqrl);
+
   private static final String REALM_NAME = "datasqrl-jwt-oauth";
   private static final String CLIENT_ID = "jwt-oauth-client";
   private static final String CLIENT_SECRET = "jwt-oauth-secret";
   private static final String TEST_USER = "jwtoauthuser";
   private static final String TEST_PASSWORD = "testpassword";
   private static final int CLAIM_VAL = 5;
-
-  private static GenericContainer<?> keycloak;
-  private static String keycloakInternalUrl;
-  private static String keycloakExternalUrl;
-
-  private final ObjectMapper objectMapper = new ObjectMapper();
 
   private static void executeStatements(Statement stmt) throws SQLException {
     stmt.execute("CREATE TABLE IF NOT EXISTS \"MyTable\" (val INTEGER)");
@@ -84,176 +68,26 @@ class JwtOAuthCombinedIT {
   }
 
   @BeforeAll
-  static void startKeycloak() {
-    keycloak =
-        new GenericContainer<>(DockerImageName.parse(KEYCLOAK_IMAGE))
-            .withNetwork(sqrl.getNetwork())
-            .withNetworkAliases("keycloak")
-            .withExposedPorts(8080)
-            .withEnv("KC_BOOTSTRAP_ADMIN_USERNAME", KEYCLOAK_ADMIN)
-            .withEnv("KC_BOOTSTRAP_ADMIN_PASSWORD", KEYCLOAK_PASSWORD)
-            .withEnv("KC_HTTP_RELATIVE_PATH", "/")
-            .withCommand("start-dev")
-            .withLogConsumer(new Slf4jLogConsumer(log).withPrefix("keycloak"))
-            .waitingFor(
-                Wait.forHttp("/realms/master")
-                    .forPort(8080)
-                    .withStartupTimeout(Duration.ofMinutes(2)));
-
-    keycloak.start();
-
-    keycloakInternalUrl = "http://keycloak:8080";
-    keycloakExternalUrl = "http://localhost:" + keycloak.getMappedPort(8080);
-    log.info(
-        "Keycloak started - internal: {}, external: {}", keycloakInternalUrl, keycloakExternalUrl);
-
-    configureKeycloakRealm();
-  }
-
-  @AfterAll
-  static void stopKeycloak() {
-    if (keycloak != null) {
-      keycloak.stop();
-    }
-  }
-
-  @SneakyThrows
-  private static void configureKeycloakRealm() {
-    var keycloakHost = "localhost:" + keycloak.getMappedPort(8080);
-    var keycloakUrl = "http://" + keycloakHost;
-
-    log.info("Configuring Keycloak realm at: {}", keycloakUrl);
-
-    var adminToken = getAdminToken(keycloakUrl);
-
-    createRealm(keycloakUrl, adminToken);
-    var clientUuid = createClient(keycloakUrl, adminToken);
-    addClaimMapper(keycloakUrl, adminToken, clientUuid);
-    createUser(keycloakUrl, adminToken);
-
-    log.info("Keycloak realm '{}' configured successfully with 'val' claim mapper", REALM_NAME);
-  }
-
-  @SneakyThrows
-  private static String getAdminToken(String keycloakUrl) {
-    var tokenUrl = keycloakUrl + "/realms/master/protocol/openid-connect/token";
-
-    var request = new HttpPost(tokenUrl);
-    request.setEntity(
-        new StringEntity(
-            "grant_type=password&client_id=admin-cli&username="
-                + KEYCLOAK_ADMIN
-                + "&password="
-                + KEYCLOAK_PASSWORD,
-            ContentType.APPLICATION_FORM_URLENCODED));
-
-    try (var response = sqrl.getHttpClient().execute(request)) {
-      var body = EntityUtils.toString(response.getEntity());
-      var json = new ObjectMapper().readTree(body);
-      return json.get("access_token").asText();
-    }
-  }
-
-  @SneakyThrows
-  private static void createRealm(String keycloakUrl, String adminToken) {
-    var realmUrl = keycloakUrl + "/admin/realms";
-
-    var realmConfig =
-        String.format(
-            """
-            {
-              "realm": "%s",
-              "enabled": true,
-              "sslRequired": "none",
-              "registrationAllowed": false,
-              "verifyEmail": false,
-              "loginWithEmailAllowed": true
-            }
-            """,
-            REALM_NAME);
-
-    var request = new HttpPost(realmUrl);
-    request.setHeader("Authorization", "Bearer " + adminToken);
-    request.setEntity(new StringEntity(realmConfig, ContentType.APPLICATION_JSON));
-
-    try (var response = sqrl.getHttpClient().execute(request)) {
-      var statusCode = response.getStatusLine().getStatusCode();
-      if (statusCode == 409) {
-        log.info("Realm '{}' already exists", REALM_NAME);
-      } else if (statusCode != 201) {
-        var body = EntityUtils.toString(response.getEntity());
-        throw new RuntimeException("Failed to create realm: " + statusCode + " - " + body);
-      }
-    }
-  }
-
-  @SneakyThrows
-  private static String createClient(String keycloakUrl, String adminToken) {
-    var clientUrl = keycloakUrl + "/admin/realms/" + REALM_NAME + "/clients";
-
-    var clientConfig =
-        String.format(
-            """
-            {
-              "clientId": "%s",
-              "secret": "%s",
-              "enabled": true,
-              "directAccessGrantsEnabled": true,
-              "serviceAccountsEnabled": true,
-              "publicClient": false,
-              "protocol": "openid-connect",
-              "attributes": {
-                "access.token.lifespan": "3600"
-              }
-            }
-            """,
-            CLIENT_ID, CLIENT_SECRET);
-
-    var request = new HttpPost(clientUrl);
-    request.setHeader("Authorization", "Bearer " + adminToken);
-    request.setEntity(new StringEntity(clientConfig, ContentType.APPLICATION_JSON));
-
-    try (var response = sqrl.getHttpClient().execute(request)) {
-      var statusCode = response.getStatusLine().getStatusCode();
-      if (statusCode == 409) {
-        log.info("Client '{}' already exists", CLIENT_ID);
-      } else if (statusCode != 201) {
-        var body = EntityUtils.toString(response.getEntity());
-        throw new RuntimeException("Failed to create client: " + statusCode + " - " + body);
-      }
-
-      return getClientUuid(keycloakUrl, adminToken);
-    }
-  }
-
-  @SneakyThrows
-  private static String getClientUuid(String keycloakUrl, String adminToken) {
-    var clientUrl = keycloakUrl + "/admin/realms/" + REALM_NAME + "/clients?clientId=" + CLIENT_ID;
-
-    var request = new HttpGet(clientUrl);
-    request.setHeader("Authorization", "Bearer " + adminToken);
-
-    try (var response = sqrl.getHttpClient().execute(request)) {
-      var body = EntityUtils.toString(response.getEntity());
-      var json = new ObjectMapper().readTree(body);
-      return json.get(0).get("id").asText();
-    }
-  }
-
-  @SneakyThrows
-  private static void addClaimMapper(String keycloakUrl, String adminToken, String clientUuid) {
-    var mapperUrl =
-        keycloakUrl
-            + "/admin/realms/"
-            + REALM_NAME
-            + "/clients/"
-            + clientUuid
-            + "/protocol-mappers/models";
-
-    var mapperConfig =
-        String.format(
-            """
-            {
+  static void createRealm() {
+    keycloak.createRealm(
+        """
+        {
+          "realm": "%s",
+          "enabled": true,
+          "sslRequired": "none",
+          "registrationAllowed": false,
+          "verifyEmail": false,
+          "loginWithEmailAllowed": true,
+          "clients": [{
+            "clientId": "%s",
+            "secret": "%s",
+            "enabled": true,
+            "directAccessGrantsEnabled": true,
+            "serviceAccountsEnabled": true,
+            "publicClient": false,
+            "protocol": "openid-connect",
+            "attributes": { "access.token.lifespan": "3600" },
+            "protocolMappers": [{
               "name": "val-claim-mapper",
               "protocol": "openid-connect",
               "protocolMapper": "oidc-hardcoded-claim-mapper",
@@ -266,99 +100,35 @@ class JwtOAuthCombinedIT {
                 "access.token.claim": "true",
                 "userinfo.token.claim": "true"
               }
-            }
-            """,
-            CLAIM_VAL);
-
-    var request = new HttpPost(mapperUrl);
-    request.setHeader("Authorization", "Bearer " + adminToken);
-    request.setEntity(new StringEntity(mapperConfig, ContentType.APPLICATION_JSON));
-
-    try (var response = sqrl.getHttpClient().execute(request)) {
-      var statusCode = response.getStatusLine().getStatusCode();
-
-      if (statusCode == 409) {
-        log.info("Claim mapper already exists");
-      } else if (statusCode != 201) {
-        var body = EntityUtils.toString(response.getEntity());
-        throw new RuntimeException("Failed to create claim mapper: " + statusCode + " - " + body);
-      } else {
-        log.info("Added 'val' claim mapper with value {} to client", CLAIM_VAL);
-      }
-    }
+            }]
+          }],
+          "users": [{
+            "username": "%s",
+            "email": "%s@test.local",
+            "firstName": "Test",
+            "lastName": "User",
+            "enabled": true,
+            "emailVerified": true,
+            "requiredActions": [],
+            "credentials": [{ "type": "password", "value": "%s", "temporary": false }]
+          }]
+        }
+        """
+            .formatted(
+                REALM_NAME,
+                CLIENT_ID,
+                CLIENT_SECRET,
+                CLAIM_VAL,
+                TEST_USER,
+                TEST_USER,
+                TEST_PASSWORD));
   }
 
-  @SneakyThrows
-  private static void createUser(String keycloakUrl, String adminToken) {
-    var usersUrl = keycloakUrl + "/admin/realms/" + REALM_NAME + "/users";
-
-    var userConfig =
-        String.format(
-            """
-            {
-              "username": "%s",
-              "email": "%s@test.local",
-              "firstName": "Test",
-              "lastName": "User",
-              "enabled": true,
-              "emailVerified": true,
-              "requiredActions": [],
-              "credentials": [{
-                "type": "password",
-                "value": "%s",
-                "temporary": false
-              }]
-            }
-            """,
-            TEST_USER, TEST_USER, TEST_PASSWORD);
-
-    var request = new HttpPost(usersUrl);
-    request.setHeader("Authorization", "Bearer " + adminToken);
-    request.setEntity(new StringEntity(userConfig, ContentType.APPLICATION_JSON));
-
-    try (var response = sqrl.getHttpClient().execute(request)) {
-      var statusCode = response.getStatusLine().getStatusCode();
-      if (statusCode == 409) {
-        log.info("User '{}' already exists", TEST_USER);
-      } else if (statusCode != 201) {
-        var body = EntityUtils.toString(response.getEntity());
-        throw new RuntimeException("Failed to create user: " + statusCode + " - " + body);
-      }
-    }
-  }
-
-  @SneakyThrows
   private String getKeycloakToken() {
-    var keycloakHost = "localhost:" + keycloak.getMappedPort(8080);
-    var tokenUrl =
-        "http://" + keycloakHost + "/realms/" + REALM_NAME + "/protocol/openid-connect/token";
-
-    log.info("Requesting token from: {}", tokenUrl);
-
-    var request = new HttpPost(tokenUrl);
-    request.setEntity(
-        new StringEntity(
-            String.format(
-                "grant_type=password&client_id=%s&client_secret=%s&username=%s&password=%s",
-                CLIENT_ID, CLIENT_SECRET, TEST_USER, TEST_PASSWORD),
-            ContentType.APPLICATION_FORM_URLENCODED));
-
-    String body;
-    try (var response = sqrl.getHttpClient().execute(request)) {
-      body = EntityUtils.toString(response.getEntity());
-      log.info("Token response status: {}", response.getStatusLine().getStatusCode());
-    }
-
-    var json = objectMapper.readTree(body);
-    if (json.has("error")) {
-      throw new RuntimeException(
-          "Failed to get token: "
-              + json.get("error").asText()
-              + " - "
-              + json.path("error_description").asText());
-    }
-
-    return json.get("access_token").asText();
+    return keycloak.token(
+        REALM_NAME,
+        "grant_type=password&client_id=%s&client_secret=%s&username=%s&password=%s"
+            .formatted(CLIENT_ID, CLIENT_SECRET, TEST_USER, TEST_PASSWORD));
   }
 
   private void compileAndStartServerWithKeycloak() {
@@ -371,8 +141,9 @@ class JwtOAuthCombinedIT {
     var cmd =
         sqrl.createCmdContainer()
             .withCommand("compile", "package.json")
-            .withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/")
-            .withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/");
+            .withEnv("KEYCLOAK_ISSUER", KeycloakContainerExtension.issuer(REALM_NAME) + "/")
+            .withEnv(
+                "KEYCLOAK_EXTERNAL_URL", keycloak.getHostUrl() + "/realms/" + REALM_NAME + "/");
     cmd.start();
 
     await().atMost(Duration.ofMinutes(5)).until(() -> !cmd.isRunning());
@@ -390,8 +161,8 @@ class JwtOAuthCombinedIT {
   private void startGraphQLServerWithKeycloak() {
     var serverContainer =
         sqrl.createServerContainer()
-            .withEnv("KEYCLOAK_ISSUER", keycloakInternalUrl + "/realms/" + REALM_NAME + "/")
-            .withEnv("KEYCLOAK_EXTERNAL_URL", keycloakExternalUrl + "/realms/" + REALM_NAME + "/")
+            .withEnv("KEYCLOAK_ISSUER", KeycloakContainerExtension.issuer(REALM_NAME) + "/")
+            .withEnv("KEYCLOAK_EXTERNAL_URL", keycloak.getHostUrl() + "/realms/" + REALM_NAME + "/")
             .withEnv("POSTGRES_HOST", "postgresql")
             .withEnv("POSTGRES_USERNAME", postgres.getPostgresql().getUsername())
             .withEnv("POSTGRES_PASSWORD", postgres.getPostgresql().getPassword())

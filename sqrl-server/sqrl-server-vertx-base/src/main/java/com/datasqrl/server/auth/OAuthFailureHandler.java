@@ -15,23 +15,25 @@
  */
 package com.datasqrl.server.auth;
 
-import com.datasqrl.server.config.ServerConfig;
+import com.datasqrl.server.config.ProtectedResourceMetadata;
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
+import jakarta.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 /**
- * OAuth-aware authentication failure handler. Returns 401 with WWW-Authenticate header for OAuth
- * discovery (RFC 9728).
+ * OAuth-aware authentication failure handler. Returns 401, with a WWW-Authenticate header pointing
+ * to the OAuth discovery metadata (RFC 9728) when there is any.
  */
 @Slf4j
 @RequiredArgsConstructor
 public class OAuthFailureHandler implements Handler<RoutingContext> {
 
-  private final ServerConfig config;
+  /** The protected resource metadata to point clients to, or null to send no WWW-Authenticate. */
+  @Nullable private final ProtectedResourceMetadata metadata;
 
   @Override
   public void handle(RoutingContext ctx) {
@@ -56,12 +58,12 @@ public class OAuthFailureHandler implements Handler<RoutingContext> {
             .setStatusCode(statusCode != -1 ? statusCode : 401)
             .putHeader("Content-Type", "application/json");
 
-    var oauthConfig = config.getOauthConfig();
-    if (oauthConfig != null && oauthConfig.getSite() != null) {
-      var resourceMetadataUrl = ProtectedResourceUrls.metadataUrl(config, ctx.request());
+    if (metadata != null) {
       response.putHeader(
           "WWW-Authenticate",
-          String.format("Bearer resource_metadata=\"%s\"", resourceMetadataUrl));
+          String.format(
+              "Bearer resource_metadata=\"%s\"",
+              ProtectedResourceUrls.metadataUrl(metadata, ctx.request())));
     }
 
     var json = new JsonObject().put("error", "authentication_required").put("cause", errorCause);

@@ -15,7 +15,7 @@
  */
 package com.datasqrl.server.auth;
 
-import static com.datasqrl.server.auth.ProtectedResourceUrlsTest.configWithResource;
+import static com.datasqrl.server.auth.ProtectedResourceUrlsTest.metadata;
 import static com.datasqrl.server.auth.ProtectedResourceUrlsTest.request;
 import static org.mockito.Mockito.RETURNS_SELF;
 import static org.mockito.Mockito.mock;
@@ -23,7 +23,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.ext.auth.oauth2.OAuth2Options;
 import io.vertx.ext.web.RoutingContext;
 import org.junit.jupiter.api.Test;
 
@@ -31,8 +30,6 @@ class OAuthFailureHandlerTest {
 
   @Test
   void givenResourceBehindHttpProxy_whenAuthFails_thenMetadataUrlUsesResourceOrigin() {
-    var config = configWithResource("https://api.example.com/v1/mcp");
-    config.getOauthConfig().setOauth2Options(new OAuth2Options().setSite("https://auth.example"));
     var request = request("http", "api.example.com", "http");
     var response = mock(HttpServerResponse.class, RETURNS_SELF);
     var ctx = mock(RoutingContext.class);
@@ -40,7 +37,7 @@ class OAuthFailureHandlerTest {
     when(ctx.request()).thenReturn(request);
     when(ctx.response()).thenReturn(response);
 
-    new OAuthFailureHandler(config).handle(ctx);
+    new OAuthFailureHandler(metadata("https://api.example.com/v1/mcp")).handle(ctx);
 
     verify(response)
         .putHeader(

@@ -194,6 +194,7 @@
     "readerTrackData" : null,
     "redactTokenParserErrorMessages" : null
   },
+  "auth" : null,
   "jwtAuth" : null,
   "oauthConfig" : null,
   "logForwardedClientAddress" : false,

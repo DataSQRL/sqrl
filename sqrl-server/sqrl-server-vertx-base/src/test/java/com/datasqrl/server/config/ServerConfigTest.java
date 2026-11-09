@@ -61,7 +61,19 @@ class ServerConfigTest {
         MAPPER.createObjectNode().put("host", "custom-host").put("port", "1234"));
     json.set("poolOptions", MAPPER.createObjectNode().put("maxSize", 20));
     json.set("corsHandlerOptions", MAPPER.createObjectNode().put("allowCredentials", true));
-    json.set("jwtAuth", MAPPER.createObjectNode().put("algorithm", "HS256"));
+    json.set(
+        "jwtAuth",
+        MAPPER
+            .createObjectNode()
+            .set(
+                "pubSecKeys",
+                MAPPER
+                    .createArrayNode()
+                    .add(
+                        MAPPER
+                            .createObjectNode()
+                            .put("algorithm", "HS256")
+                            .put("buffer", "dGVzdA=="))));
     json.put("logForwardedClientAddress", false);
     json.set("openApiConfig", MAPPER.createObjectNode().put("enabled", true));
     json.set(

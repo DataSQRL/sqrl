@@ -1,0 +1,37 @@
+{
+  "version": "1",
+  "script": {
+    "main": "jwt-authorized-base.sqrl"
+  },
+  "engines" : {
+    "vertx" : {
+      "config": {
+        "auth": {
+          "leeway": 0,
+          "issuers": [
+            {
+              "issuer": "my-test-issuer",
+              "audiences": ["my-test-audience"],
+              "keys": [
+                {
+                  "kty": "oct",
+                  "k": "dGVzdFNlY3JldFRoYXRJc0F0TGVhc3QyNTZCaXRzTG9uZzMyQ2hhcnM"
+                }
+              ]
+            },
+            {
+              "issuer": "my-second-issuer",
+              "audiences": ["my-second-audience"],
+              "keys": [
+                {
+                  "kty": "oct",
+                  "k": "c2Vjb25kU2VjcmV0VGhhdElzQXRMZWFzdDI1NkJpdHNMb25nMzJDaGFycw"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

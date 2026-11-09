@@ -166,6 +166,8 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
 
     // MCP endpoint - handles POST for messages
     var postRoute = router.post(mcpRoutePrefix);
+    var authFailureHandler =
+        new OAuthFailureHandler(config.getProtectedResourceMetadata().orElse(null));
 
     // Add JWT/OAuth auth if configured
     if (!authProviders.isEmpty()) {
@@ -174,7 +176,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
           authProviders.size(),
           mcpRoutePrefix);
       postRoute.handler(createChainAuthHandler());
-      postRoute.failureHandler(new OAuthFailureHandler(config));
+      postRoute.failureHandler(authFailureHandler);
     }
 
     postRoute.handler(
@@ -204,7 +206,7 @@ public class McpBridgeVerticle extends AbstractBridgeVerticle {
           authProviders.size(),
           mcpRoutePrefix);
       sseRoute.handler(createChainAuthHandler());
-      sseRoute.failureHandler(new OAuthFailureHandler(config));
+      sseRoute.failureHandler(authFailureHandler);
     }
 
     sseRoute.handler(
