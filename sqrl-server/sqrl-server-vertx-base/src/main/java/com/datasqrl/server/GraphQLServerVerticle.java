@@ -30,8 +30,11 @@ import com.datasqrl.server.graphql.OperationOnlyPreparsedDocumentProvider;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.jdbc.DatabaseType;
 import com.datasqrl.server.jdbc.JdbcClientsConfig;
+import com.datasqrl.server.jdbc.JdbcStatementListener;
 import com.datasqrl.server.jdbc.VertxJdbcClient;
 import com.datasqrl.server.jdbc.VertxParamArgumentTypeMapper;
+import com.datasqrl.server.logging.FailedStatementLogger;
+import com.datasqrl.server.logging.LargeResultLogger;
 import com.datasqrl.server.operation.ApiOperation;
 import com.google.common.collect.ImmutableMap;
 import com.symbaloo.graphqlmicrometer.MicrometerInstrumentation;
@@ -189,14 +192,13 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       Map<MetadataType, MetadataReader> metadataReaders,
       FunctionExecutor functionExecutor) {
     try {
-      var vertxJdbcClient = new VertxJdbcClient(clients);
+      var vertxJdbcClient = new VertxJdbcClient(clients, statementListeners(config));
       var vertxServerCtx =
           new VertxServerContext(
               vertxJdbcClient,
               metadataReaders,
               functionExecutor,
-              new VertxParamArgumentTypeMapper(),
-              config.getHeavyQueryLogConfig());
+              new VertxParamArgumentTypeMapper());
 
       var graphQL =
           model.accept(
@@ -234,5 +236,18 @@ public class GraphQLServerVerticle extends AbstractVerticle {
       log.error("Unable to create GraphQL", e);
       throw e;
     }
+  }
+
+  /** Every failed statement is logged; large results only when that logging is enabled. */
+  static List<JdbcStatementListener> statementListeners(ServerConfig config) {
+    var listeners = new ArrayList<JdbcStatementListener>();
+    listeners.add(new FailedStatementLogger());
+
+    var largeResults = config.getJdbcStatementLogConfig().getLargeResults();
+    if (largeResults.isEnabled() && largeResults.getRowCountThreshold() > 0) {
+      listeners.add(new LargeResultLogger(largeResults.getRowCountThreshold()));
+    }
+
+    return listeners;
   }
 }

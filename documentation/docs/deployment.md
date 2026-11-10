@@ -38,7 +38,7 @@ Kubernetes gives you the most control over the deployment, and it runs the same 
 - **Kafka:** [Strimzi](https://strimzi.io/) or the Redpanda operator.
 - **PostgreSQL:** [CloudNativePG](https://cloudnative-pg.io/) runs highly available PostgreSQL clusters with replication and backups.
 - **Iceberg:** object storage and an Iceberg REST catalog, with the query engine running in the cluster or as a managed service.
-- **API server:** a standard `Deployment` and `Service` for the server image, scaled horizontally since the server is stateless. It exposes `/health` for probes and, when enabled, `/metrics` for Prometheus.
+- **API server:** a standard `Deployment` and `Service` for the server image, scaled horizontally since the server is stateless. It exposes `/health` for probes and, when enabled, `/metrics` for Prometheus. The server logs a `WARN` with the reason when `/health` first reports a check as failing, and an `INFO` when the check recovers.
 
 You can also mix both options, for example running Flink and the API server on Kubernetes against managed Kafka and PostgreSQL services.
 

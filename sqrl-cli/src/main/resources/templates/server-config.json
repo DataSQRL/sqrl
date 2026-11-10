@@ -194,9 +194,11 @@
     "readerTrackData" : null,
     "redactTokenParserErrorMessages" : null
   },
-  "heavyQueryLogConfig" : {
-    "rowCountThreshold" : 10000,
-    "elapsedThresholdMs" : 5000
+  "jdbcStatementLogConfig" : {
+    "largeResults" : {
+      "enabled" : false,
+      "rowCountThreshold" : 10000
+    }
   },
   "auth" : null,
   "jwtAuth" : null,

@@ -27,7 +27,6 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.Tuple;
-import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -91,9 +90,9 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
   /** Completes with the rows themselves: no page wrapper, no metadata. */
   private void runRowQuery(ResolvedSqlQuery resolvedQuery, BoundQuery boundQuery, boolean isList) {
     execute(resolvedQuery, boundQuery)
-        .map(rows -> unboxList(toJson(rows), isList))
+        .map(rows -> convert(() -> unboxList(toJson(rows), isList)))
         .onSuccess(cf::complete)
-        .onFailure(throwable -> failQuery(boundQuery.sql(), throwable));
+        .onFailure(cf::completeExceptionally);
   }
 
   /**
@@ -106,8 +105,7 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
     var pageInfoQuery = OffsetPageInfoQuery.from(environment);
     var aggregateSql = pageInfoQuery.aggregateSql(query);
 
-    var pageQuery = pageInfoQuery.pageQuery(query, params);
-    var pageFuture = execute(resolvedQuery, pageQuery);
+    var pageFuture = execute(resolvedQuery, pageInfoQuery.pageQuery(query, params));
     var aggregateFuture =
         aggregateSql == null
             ? Future.<RowSet<Row>>succeededFuture(null)
@@ -116,60 +114,48 @@ public class VertxQueryExecutionContext extends AbstractQueryExecutionContext<Ve
     Future.all(pageFuture, aggregateFuture)
         .map(
             ignored ->
-                pageInfoQuery.toPage(
-                    toJson(pageFuture.result()), firstRowAsJson(aggregateFuture.result())))
+                convert(
+                    () ->
+                        pageInfoQuery.toPage(
+                            toJson(pageFuture.result()), firstRowAsJson(aggregateFuture.result()))))
         .onSuccess(cf::complete)
-        .onFailure(
-            throwable ->
-                failQuery(aggregateFuture.failed() ? aggregateSql : pageQuery.sql(), throwable));
+        .onFailure(cf::completeExceptionally);
   }
 
   private Future<RowSet<Row>> execute(ResolvedSqlQuery resolvedQuery, BoundQuery boundQuery) {
     var container = (PreparedVertxSqrlQuery) resolvedQuery.getPreparedQueryContainer();
+    var statement = statement(boundQuery.sql());
     var params = Tuple.from(boundQuery.params());
     var client = serverContext.getSqlClient();
     if (container == null) {
-      return timed(
-          boundQuery.sql(),
-          () -> client.execute(resolvedQuery.getQuery().getDatabase(), boundQuery.sql(), params));
+      return client.execute(statement, resolvedQuery.getQuery().getDatabase(), params);
     }
-    return timed(boundQuery.sql(), () -> client.execute(container.preparedQuery(), params));
+    return client.execute(statement, container.preparedQuery(), params);
   }
 
   /** Companion aggregates are never prepared and bind the base parameters only. */
   private Future<RowSet<Row>> executeAggregate(SqlQuery query, String sql, List<Object> params) {
-    return timed(
-        sql,
-        () -> serverContext.getSqlClient().execute(query.getDatabase(), sql, Tuple.from(params)));
+    return serverContext
+        .getSqlClient()
+        .execute(statement(sql), query.getDatabase(), Tuple.from(params));
   }
 
-  /** Warns before the rows are converted to JSON, since that conversion can stall the pod. */
-  private Future<RowSet<Row>> timed(String sql, Supplier<Future<RowSet<Row>>> query) {
-    var start = System.nanoTime();
-    return query
-        .get()
-        .map(
-            rows -> {
-              var elapsed = Duration.ofNanos(System.nanoTime() - start);
-              HeavyQueryWarning.describe(
-                      serverContext.getHeavyQueryLogConfig(),
-                      fieldPath(),
-                      sql,
-                      rows.size(),
-                      elapsed)
-                  .ifPresent(log::warn);
-              return rows;
-            });
+  private JdbcStatement statement(String sql) {
+    return new JdbcStatement(environment.getExecutionStepInfo().getPath(), sql);
   }
 
-  private void failQuery(String sql, Throwable throwable) {
-    log.error(
-        "Query failed at {}; sql: {}", fieldPath(), HeavyQueryWarning.oneLine(sql), throwable);
-    cf.completeExceptionally(throwable);
-  }
-
-  private String fieldPath() {
-    return environment.getExecutionStepInfo().getPath().toString();
+  /**
+   * Failed statements are reported to the client's {@link JdbcStatementListener}s; a conversion
+   * that fails is logged here.
+   */
+  private <T> T convert(Supplier<T> conversion) {
+    try {
+      return conversion.get();
+    } catch (RuntimeException e) {
+      log.error(
+          "Converting rows to JSON failed at {}", environment.getExecutionStepInfo().getPath(), e);
+      throw e;
+    }
   }
 
   private static List<JsonObject> toJson(RowSet<Row> rows) {

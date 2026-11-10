@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.server.config;
+package com.datasqrl.server.jdbc;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import graphql.execution.ResultPath;
 
-/** A threshold of zero or less turns that warning off. */
-@Getter
-@Setter
-@NoArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class HeavyQueryLogConfig {
-
-  private long rowCountThreshold = 10000;
-  private long elapsedThresholdMs = 5000;
-}
+/**
+ * A SQL statement and the API field it runs for. The path stays a {@link ResultPath}, so it is only
+ * turned into text when a listener writes it.
+ */
+public record JdbcStatement(ResultPath fieldPath, String sql) {}

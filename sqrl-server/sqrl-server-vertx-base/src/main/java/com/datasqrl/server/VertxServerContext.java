@@ -17,7 +17,6 @@ package com.datasqrl.server;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.datasqrl.server.config.HeavyQueryLogConfig;
 import com.datasqrl.server.exec.QueryExecutionContext;
 import com.datasqrl.server.graphql.GraphQLEngineBuilder;
 import com.datasqrl.server.graphql.RootGraphQLModel;
@@ -45,7 +44,6 @@ public class VertxServerContext implements ServerContext {
   Map<MetadataType, MetadataReader> metadataReaders;
   FunctionExecutor functionExecutor;
   ParamArgumentTypeMapper paramArgumentTypeMapper;
-  HeavyQueryLogConfig heavyQueryLogConfig;
 
   @Override
   public JdbcClient getClient() {

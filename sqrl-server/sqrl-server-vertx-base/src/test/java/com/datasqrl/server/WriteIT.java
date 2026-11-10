@@ -26,7 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.datasqrl.server.config.HeavyQueryLogConfig;
 import com.datasqrl.server.config.KafkaConfig;
 import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.graphql.GraphQLEngineBuilder;
@@ -216,8 +215,7 @@ class WriteIT {
                     new VertxJdbcClient(Map.of(DatabaseType.POSTGRES, client)),
                     null,
                     null,
-                    new VertxParamArgumentTypeMapper(),
-                    new HeavyQueryLogConfig()))
+                    new VertxParamArgumentTypeMapper()))
             .build();
 
     ExecutionInput executionInput =

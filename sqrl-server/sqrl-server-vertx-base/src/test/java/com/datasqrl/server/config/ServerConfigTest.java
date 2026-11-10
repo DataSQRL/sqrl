@@ -99,6 +99,13 @@ class ServerConfigTest {
             .put("captureLineComments", true)
             .put("readerTrackData", false)
             .put("redactTokenParserErrorMessages", true));
+    json.set(
+        "jdbcStatementLogConfig",
+        MAPPER
+            .createObjectNode()
+            .set(
+                "largeResults",
+                MAPPER.createObjectNode().put("enabled", true).put("rowCountThreshold", 5000)));
 
     var kafkaMutationConfig = MAPPER.createObjectNode();
     kafkaMutationConfig.put("bootstrap.servers", "localhost:9092");
@@ -138,6 +145,9 @@ class ServerConfigTest {
     assertThat(serverConfig.getGraphQLParserConfig().getCaptureLineComments()).isTrue();
     assertThat(serverConfig.getGraphQLParserConfig().getReaderTrackData()).isFalse();
     assertThat(serverConfig.getGraphQLParserConfig().getRedactTokenParserErrorMessages()).isTrue();
+    assertThat(serverConfig.getJdbcStatementLogConfig().getLargeResults().isEnabled()).isTrue();
+    assertThat(serverConfig.getJdbcStatementLogConfig().getLargeResults().getRowCountThreshold())
+        .isEqualTo(5000);
     assertThat(serverConfig.getKafkaMutationConfig()).isNotNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNotNull();
     assertThat(serverConfig.isLogForwardedClientAddress()).isFalse();
@@ -156,6 +166,7 @@ class ServerConfigTest {
     json.putNull("openApiConfig");
     json.putNull("graphQLTailSampleTracingConfig");
     json.putNull("graphQLParserConfig");
+    json.putNull("jdbcStatementLogConfig");
     json.putNull("kafkaMutationConfig");
     json.putNull("kafkaSubscriptionConfig");
 
@@ -170,6 +181,9 @@ class ServerConfigTest {
     assertThat(serverConfig.getOpenApiConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLParserConfig()).isNotNull();
+    assertThat(serverConfig.getJdbcStatementLogConfig().getLargeResults().isEnabled()).isFalse();
+    assertThat(serverConfig.getJdbcStatementLogConfig().getLargeResults().getRowCountThreshold())
+        .isEqualTo(10000);
 
     // PgConnectOptions uses empty default when null
     assertThat(serverConfig.getPgConnectOptions()).isNotNull();
@@ -178,6 +192,28 @@ class ServerConfigTest {
     assertThat(serverConfig.getJwtAuth()).isNull();
     assertThat(serverConfig.getKafkaMutationConfig()).isNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNull();
+  }
+
+  @Test
+  void givenStatementLogEntryNullOrPartial_whenParsed_thenMissingSettingsKeepTheirDefaults() {
+    var nullEntry = MAPPER.createObjectNode();
+    nullEntry.set("jdbcStatementLogConfig", MAPPER.createObjectNode().putNull("largeResults"));
+    var partialEntry = MAPPER.createObjectNode();
+    partialEntry.set(
+        "jdbcStatementLogConfig",
+        MAPPER
+            .createObjectNode()
+            .set("largeResults", MAPPER.createObjectNode().put("enabled", true)));
+
+    var fromNull = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(nullEntry, Map.class));
+    var fromPartial = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(partialEntry, Map.class));
+
+    assertThat(fromNull.getJdbcStatementLogConfig().getLargeResults().isEnabled()).isFalse();
+    assertThat(fromNull.getJdbcStatementLogConfig().getLargeResults().getRowCountThreshold())
+        .isEqualTo(10000);
+    assertThat(fromPartial.getJdbcStatementLogConfig().getLargeResults().isEnabled()).isTrue();
+    assertThat(fromPartial.getJdbcStatementLogConfig().getLargeResults().getRowCountThreshold())
+        .isEqualTo(10000);
   }
 
   @Test

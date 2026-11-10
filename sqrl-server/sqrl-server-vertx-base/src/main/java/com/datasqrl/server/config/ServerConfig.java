@@ -74,7 +74,7 @@ public class ServerConfig {
   private GraphQLTailSampleTracingConfig graphQLTailSampleTracingConfig =
       new GraphQLTailSampleTracingConfig();
   private GraphQLParserConfig graphQLParserConfig = new GraphQLParserConfig();
-  private HeavyQueryLogConfig heavyQueryLogConfig = new HeavyQueryLogConfig();
+  private JdbcStatementLogConfig jdbcStatementLogConfig = new JdbcStatementLogConfig();
   private Map<String, Object> auth;
   private Map<String, Object> jwtAuth;
   private OAuthConfig oauthConfig;
@@ -301,12 +301,12 @@ public class ServerConfig {
             : MAPPER.convertValue(options, GraphQLParserConfig.class);
   }
 
-  @JsonSetter("heavyQueryLogConfig")
-  public void setHeavyQueryLogConfigFromJson(Map<String, Object> options) {
-    this.heavyQueryLogConfig =
+  @JsonSetter("jdbcStatementLogConfig")
+  public void setJdbcStatementLogConfigFromJson(Map<String, Object> options) {
+    this.jdbcStatementLogConfig =
         options == null
-            ? new HeavyQueryLogConfig()
-            : MAPPER.convertValue(options, HeavyQueryLogConfig.class);
+            ? new JdbcStatementLogConfig()
+            : MAPPER.convertValue(options, JdbcStatementLogConfig.class);
   }
 
   private JsonObject getJsonObjectOrEmpty(Map<String, Object> options) {
