@@ -42,7 +42,7 @@ class StatementObjectsTest {
         .containsExactly(new Catalog("mydb"));
     assertThat(read("CREATE CATALOG iceberg WITH ('type' = 'iceberg');").defined())
         .containsExactly(new Catalog("iceberg"));
-    assertThat(read("INSERT INTO mydb.Sink SELECT id FROM Orders;").targets())
+    assertThat(read("INSERT INTO mydb.Sink SELECT id FROM Orders;").requiredTables())
         .containsExactly(List.of("mydb", "Sink"));
   }
 

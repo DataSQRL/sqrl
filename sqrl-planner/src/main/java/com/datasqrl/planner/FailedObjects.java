@@ -132,12 +132,18 @@ final class FailedObjects {
   }
 
   /**
-   * The number of statements and imports recorded as failed or skipped so far, also those that
-   * failed on an object that already failed. Comparing it before and after a statement tells
-   * whether planning the statement recorded failures, e.g. in a script that it imports.
+   * A mark of the failures recorded so far, to tell whether planning a statement records any, e.g.
+   * in a script that it imports, see {@link #recordedSince}.
    */
-  int recordedFailures() {
+  int mark() {
     return store.recorded;
+  }
+
+  /**
+   * Whether failures were recorded since the mark, also those of objects that had already failed.
+   */
+  boolean recordedSince(int mark) {
+    return store.recorded > mark;
   }
 
   /**
@@ -183,9 +189,9 @@ final class FailedObjects {
   }
 
   /**
-   * Whether the statement adds to, exports or inserts into a table that failed, or uses one that
-   * the planner looks up before it validates the statement. The planner would report that error, so
-   * the statement is skipped instead.
+   * Whether the statement requires a table that failed before it is validated, see {@link
+   * StatementObjects#requiredTables()}. The planner would report that error, so the statement is
+   * skipped instead.
    *
    * @param isDefined whether a table, as written in the statement (e.g. {@code sources.Orders}), is
    *     defined. A table that is defined does not belong to a failed {@code IMPORT package.*},
@@ -195,7 +201,7 @@ final class FailedObjects {
     if (store.isEmpty()) {
       return false;
     }
-    return statement.targets().stream().anyMatch(path -> isFailedPath(path, isDefined));
+    return statement.requiredTables().stream().anyMatch(path -> isFailedPath(path, isDefined));
   }
 
   private boolean isFailedPath(List<String> path, Predicate<List<String>> isDefined) {

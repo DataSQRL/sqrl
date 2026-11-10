@@ -226,12 +226,12 @@ class FailedObjectsTest {
   @Test
   void givenObjectThatAlreadyFailed_whenItFailsAgain_thenTheFailureIsCounted() {
     failures.recordImported("Customer");
-    var failuresBefore = failures.recordedFailures();
+    var mark = failures.mark();
 
     // E.g. a star import of a package whose Customer table was imported before and failed
     sources.recordImported("Customer");
 
-    assertThat(failures.recordedFailures()).isEqualTo(failuresBefore + 1);
+    assertThat(failures.recordedSince(mark)).isTrue();
   }
 
   private StatementObjects objects(String statement) {

@@ -68,9 +68,11 @@ final class StatementObjects {
   /** A catalog or database */
   record Catalog(String name) implements Defined {}
 
-  private record Parts(List<Defined> defined, List<List<String>> targets, boolean isUse) {
+  private record Parts(List<Defined> defined, List<List<String>> requiredTables, boolean isUse) {
 
     static final Parts NONE = new Parts(List.of(), List.of(), false);
+
+    static final Parts USE = new Parts(List.of(), List.of(), true);
 
     static Parts defining(Defined defined) {
       return new Parts(List.of(defined), List.of(), false);
@@ -141,11 +143,12 @@ final class StatementObjects {
   }
 
   /**
-   * The tables, by their path as written, that the statement adds to, exports or inserts into, or
-   * that the planner looks up before the statement is validated
+   * The tables, by their path as written, that the planner needs before it validates the statement:
+   * the table that it adds a column or relationship to, exports or inserts into, and the tables
+   * that a passthrough query reads
    */
-  List<List<String>> targets() {
-    return parts.get().targets();
+  List<List<String>> requiredTables() {
+    return parts.get().requiredTables();
   }
 
   /** Whether it is a USE statement, which sets the catalog, database or modules after it */
@@ -205,8 +208,8 @@ final class StatementObjects {
         definition instanceof SqrlAddColumnStatement
             ? List.<Defined>of(new Column(path.getLast().getDisplay()))
             : List.<Defined>of();
-    var targets = Stream.concat(Stream.of(List.of(table)), fromTables.stream()).toList();
-    return new Parts(defined, targets, false);
+    var requiredTables = Stream.concat(Stream.of(List.of(table)), fromTables.stream()).toList();
+    return new Parts(defined, requiredTables, false);
   }
 
   private static Parts readFlinkSql(String sql, Function<String, SqlNode> parseFlinkSql) {
@@ -221,7 +224,7 @@ final class StatementObjects {
     if (node instanceof SqlUseCatalog
         || node instanceof SqlUseDatabase
         || node instanceof SqlUseModules) {
-      return new Parts(List.of(), List.of(), true);
+      return Parts.USE;
     }
     if (node instanceof SqlCreateCatalog createCatalog) {
       return Parts.defining(new Catalog(createCatalog.catalogName()));
@@ -263,7 +266,7 @@ final class StatementObjects {
     }
 
     if (USE.matcher(text).find()) {
-      return new Parts(List.of(), List.of(), true);
+      return Parts.USE;
     }
 
     var create = CREATE.matcher(text);

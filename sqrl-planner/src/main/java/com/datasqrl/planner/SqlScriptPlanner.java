@@ -269,26 +269,13 @@ public class SqlScriptPlanner {
         statementStack = stackAfterFailure(sqlStatement, statementStack);
         continue;
       }
-      var failuresBefore = failures.recordedFailures();
+      var failuresBefore = failures.mark();
       try {
         planStatement(sqlStatement, statementStack, inheritedHints, sqrlEnv, lineErrors);
       } catch (Throwable e) {
-        if (e instanceof VirtualMachineError vmError) {
-          // E.g. out of memory, so stop planning instead of planning the remaining statements
-          throw vmError;
-        }
-        if (!(e instanceof CollectedException) && failures.isKnockOnError(e)) {
-          // It uses an object that failed, whose error is already reported
-          failures.record(objects);
-        } else {
-          var error = reportStatementError(e, statement, lineErrors);
-          if (failures.recordedFailures() == failuresBefore) {
-            // Unless planning it recorded which of its objects failed, e.g. of an imported script
-            failures.record(objects);
-          }
-          if (firstError == null) {
-            firstError = error;
-          }
+        var error = recordFailure(e, statement, objects, failuresBefore, lineErrors);
+        if (firstError == null) {
+          firstError = error.orElse(null);
         }
         statementStack = stackAfterFailure(sqlStatement, statementStack);
         continue;
@@ -314,6 +301,38 @@ public class SqlScriptPlanner {
     if (firstError != null) {
       throw firstError;
     }
+  }
+
+  /**
+   * Records a statement that failed to plan. Its error is reported, unless it is a knock-on error
+   * of an object that failed, whose error is already reported.
+   *
+   * @param failuresBefore the mark of the failures before the statement was planned
+   * @param errors the errors at the location of the statement
+   * @return the reported error, or empty for a knock-on error
+   */
+  private Optional<RuntimeException> recordFailure(
+      Throwable e,
+      ParsedObject<SQLStatement> statement,
+      StatementObjects objects,
+      int failuresBefore,
+      ErrorCollector errors) {
+    if (e instanceof VirtualMachineError vmError) {
+      // E.g. out of memory, so stop planning instead of planning the remaining statements
+      throw vmError;
+    }
+    var failures = scriptContext.failures();
+    if (!(e instanceof CollectedException) && failures.isKnockOnError(e)) {
+      failures.record(objects);
+      return Optional.empty();
+    }
+
+    var error = reportStatementError(e, statement, errors);
+    if (!failures.recordedSince(failuresBefore)) {
+      // Unless planning it recorded which of its objects failed, e.g. those of an imported script
+      failures.record(objects);
+    }
+    return Optional.of(error);
   }
 
   /**
@@ -948,12 +967,12 @@ public class SqlScriptPlanner {
       var failures = scriptContext.failures();
       RuntimeException firstError = null;
       for (var namespaceObject : module.getNamespaceObjects()) {
-        var failuresBefore = failures.recordedFailures();
+        var failuresBefore = failures.mark();
         try {
           addImport(namespaceObject, nameModifier, hintsAndDoc, sqrlEnv);
         } catch (RuntimeException e) {
           // Import the other objects, so that the statements that use them are still planned
-          if (failures.recordedFailures() == failuresBefore) {
+          if (!failures.recordedSince(failuresBefore)) {
             failures.recordImported(nameModifier.apply(namespaceObject.name().getDisplay()));
           }
           var error = ParsePosUtil.reportError(errors, e, UnaryOperator.identity());
