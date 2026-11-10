@@ -1,0 +1,16 @@
+{
+  "errors" : [ {
+    "message" : "Exception while fetching data (/AuthNestedClaimMyTable) : Forbidden",
+    "locations" : [ {
+      "line" : 2,
+      "column" : 3
+    } ],
+    "path" : [ "AuthNestedClaimMyTable" ],
+    "extensions" : {
+      "classification" : "DataFetchingException"
+    }
+  } ],
+  "data" : {
+    "AuthNestedClaimMyTable" : null
+  }
+}

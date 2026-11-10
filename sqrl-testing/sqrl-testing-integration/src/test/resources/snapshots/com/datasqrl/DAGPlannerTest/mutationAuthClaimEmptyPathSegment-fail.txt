@@ -1,0 +1,7 @@
+[FATAL] Unknown metadata keys on table 'OrderRequests': 'auth.org.' on column 'org_id', 'auth..team' on column 'team_id', 'auth.org..location' on column 'location_id'. Use 'uuid', 'timestamp' or 'auth.<claim>'.
+in script:mutationAuthClaimEmptyPathSegment-fail.sqrl [3:1]:
+-- Each 'auth.' key has an empty segment: at the end, at the start, and between two dots.
+/*+engine(kafka) */
+CREATE TABLE OrderRequests (
+^
+

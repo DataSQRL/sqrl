@@ -1,0 +1,9 @@
+-- Each 'auth.' key has an empty segment: at the end, at the start, and between two dots.
+/*+engine(kafka) */
+CREATE TABLE OrderRequests (
+    org_id STRING NOT NULL METADATA FROM 'auth.org.',
+    team_id STRING NOT NULL METADATA FROM 'auth..team',
+    location_id STRING NOT NULL METADATA FROM 'auth.org..location',
+    item STRING NOT NULL,
+    requested_at TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);

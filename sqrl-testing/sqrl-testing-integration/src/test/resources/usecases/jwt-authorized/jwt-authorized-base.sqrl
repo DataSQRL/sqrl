@@ -27,3 +27,24 @@ AuthStringMyTableValues(vals ARRAY<STRING> NOT NULL METADATA FROM 'auth.values')
       FROM MyStringTable t
      WHERE array_contains(CAST(:vals AS ARRAY<STRING>), CAST(t.val AS STRING))
      ORDER BY t.val ASC;
+
+/* Reads the field "val" of the object claim "org". */
+AuthNestedClaimMyTable(val BIGINT NOT NULL METADATA FROM 'auth.org.val') :=
+    SELECT t.*
+      FROM MyTable t
+     WHERE t.val = :val
+     ORDER BY t.val ASC;
+
+/* Reads the field "val" of the object claim "https://example.com/org", whose name contains dots. */
+AuthNamespacedNestedClaimMyTable(val BIGINT NOT NULL METADATA FROM 'auth.https://example.com/org.val') :=
+    SELECT t.*
+      FROM MyTable t
+     WHERE t.val = :val
+     ORDER BY t.val ASC;
+
+/* Reads the array field "values" of the object claim "org". */
+AuthNestedArrayClaimMyTable(vals ARRAY<BIGINT> NOT NULL METADATA FROM 'auth.org.values') :=
+    SELECT t.*
+      FROM MyTable t
+     WHERE array_contains(cast(:vals as ARRAY<BIGINT>), t.val)
+     ORDER BY t.val ASC;
