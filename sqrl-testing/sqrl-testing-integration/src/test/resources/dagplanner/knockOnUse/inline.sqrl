@@ -1,0 +1,2 @@
+-- Fails, and the script is imported inline, so the rest of the importing script is skipped too
+USE CATALOG missing_catalog;

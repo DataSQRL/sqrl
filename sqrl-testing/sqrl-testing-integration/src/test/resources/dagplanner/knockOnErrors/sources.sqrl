@@ -1,0 +1,14 @@
+CREATE TABLE Customer (
+    `customerid` BIGINT NOT NULL,
+    `name` STRING NOT NULL,
+    `lastUpdated` TIMESTAMP_LTZ(3) NOT NULL,
+    WATERMARK FOR `lastUpdated` AS `lastUpdated` - INTERVAL '0.001' SECOND
+) WITH (
+    'connector' = 'filesystem',
+    'format' = 'flexible-json',
+    'path' = 'file:/mock'
+);
+
+-- Fails, and the knock-on errors of the script and of the main script are not reported
+CustomerNames := SELECT customerid, missing_name FROM Customer;
+NamedCustomers := SELECT * FROM CustomerNames;

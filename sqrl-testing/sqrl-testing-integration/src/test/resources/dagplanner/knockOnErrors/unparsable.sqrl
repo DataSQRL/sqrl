@@ -1,0 +1,5 @@
+CREATE TABLE Refunds (id BIGINT) WITH ('connector' = 'datagen');
+CREATE TABLE Chargebacks (id BIGINT) WITH ('connector' = 'datagen');
+
+-- Fails to parse, so no table of the script can be imported
+Broken := DISTINCT Refunds ON;

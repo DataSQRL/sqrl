@@ -1,0 +1,5 @@
+CREATE TABLE Good (id BIGINT) WITH ('connector' = 'datagen');
+-- Both fail in the Flink parser, and both are reported
+CREATE TABLE BadOne (id BIGINT WITH ('connector' = 'datagen');
+CREATE TABLE BadTwo (id BIGINT,, name STRING) WITH ('connector' = 'datagen');
+CREATE TABLE AlsoGood (id BIGINT) WITH ('connector' = 'datagen');

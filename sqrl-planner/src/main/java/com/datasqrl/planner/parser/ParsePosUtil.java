@@ -15,9 +15,12 @@
  */
 package com.datasqrl.planner.parser;
 
+import com.datasqrl.error.CollectedException;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 import org.apache.calcite.runtime.CalciteContextException;
 import org.apache.calcite.sql.parser.SqlParseException;
@@ -82,6 +85,46 @@ public class ParsePosUtil {
         .filter(Objects::nonNull)
         .flatMap(message -> extractPositionFromMessage(message).stream())
         .findFirst();
+  }
+
+  /**
+   * Reports an error at the location of the collector, e.g. a statement or a table that is defined
+   * in another file.
+   *
+   * @param mapSqlLocation maps the position of a Flink parser or validator error in the SQL to its
+   *     position relative to the location of the collector
+   * @return the reported error
+   */
+  public static RuntimeException reportError(
+      ErrorCollector errors, Throwable e, UnaryOperator<FileLocation> mapSqlLocation) {
+    if (e instanceof VirtualMachineError vmError) {
+      // E.g. out of memory, so stop planning instead of planning the remaining statements
+      throw vmError;
+    }
+    // Already reported, and it wraps the original error, which would be reported again below
+    if (e instanceof CollectedException collected) {
+      return collected;
+    }
+
+    var converted = convertFlinkParserException(e);
+    if (converted.isPresent()) {
+      var location = errors.getLocation();
+      var base = location.hasFile() ? location.getFileLocation() : FileLocation.START;
+      return errors
+          .atFile(base.add(mapSqlLocation.apply(converted.get().location())))
+          .exception("%s", converted.get().message());
+    }
+    if (e instanceof ValidationException && e.getCause() != null) {
+      e = e.getCause();
+    }
+    // Print stack trace for unknown exceptions
+    if (e.getMessage() == null
+        || e instanceof IllegalStateException
+        || e instanceof NullPointerException) {
+      e.printStackTrace();
+    }
+    // Use registered error handlers
+    return errors.handle(e);
   }
 
   /**

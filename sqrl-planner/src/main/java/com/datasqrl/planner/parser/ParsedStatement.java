@@ -21,4 +21,5 @@ package com.datasqrl.planner.parser;
  * @param statement the parsed statement object containing the AST representation
  * @param source the original SQL string of the parsed statement
  */
-public record ParsedStatement(ParsedObject<SQLStatement> statement, String source) {}
+public record ParsedStatement(ParsedObject<SQLStatement> statement, String source)
+    implements ScriptStatement {}

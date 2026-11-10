@@ -1,0 +1,5 @@
+-- The imports fail with the parse errors of the script, which are reported once in the script, and
+-- the knock-on errors of the imported tables are not reported
+IMPORT knockOnMalformedTables.tables.Good;
+IMPORT knockOnMalformedTables.tables.AlsoGood;
+GoodCount := SELECT COUNT(*) AS num FROM Good;
