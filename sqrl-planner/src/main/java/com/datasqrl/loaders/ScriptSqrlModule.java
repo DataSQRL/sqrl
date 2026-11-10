@@ -19,9 +19,11 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
 import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.plan.MainScript;
+import com.datasqrl.planner.parser.ParsedStatement;
 import com.datasqrl.planner.parser.SqrlCreateTableStatement;
 import com.datasqrl.planner.parser.SqrlStatementParser;
 import java.nio.file.Path;
@@ -48,6 +50,12 @@ public class ScriptSqrlModule implements SqrlModule {
 
   private Map<Name, Supplier<NamespaceObject>> tables = null;
 
+  /**
+   * The error of parsing the script for its tables, which every lookup fails with, so that it is
+   * reported once
+   */
+  private CollectedException parseError = null;
+
   @Override
   public Optional<NamespaceObject> getNamespaceObject(Name name) {
     initTables();
@@ -72,14 +80,23 @@ public class ScriptSqrlModule implements SqrlModule {
    * but validation and construction only run when that specific table is referenced.
    */
   private void initTables() {
+    if (parseError != null) {
+      throw parseError;
+    }
     if (tables != null) {
       return;
     }
 
-    tables = new HashMap<>();
-
     var scriptErrors = errors.withScript(scriptPath, scriptContent);
-    var parsedCreateTables = sqrlStatementParser.parseCreateTables(scriptContent, scriptErrors);
+    List<ParsedStatement> parsedCreateTables;
+    try {
+      parsedCreateTables = sqrlStatementParser.parseCreateTables(scriptContent, scriptErrors);
+    } catch (CollectedException e) {
+      parseError = e;
+      throw e;
+    }
+
+    tables = new HashMap<>();
 
     for (var parsedCreateTable : parsedCreateTables) {
       var createTableStmt = (SqrlCreateTableStatement) parsedCreateTable.statement().get();
