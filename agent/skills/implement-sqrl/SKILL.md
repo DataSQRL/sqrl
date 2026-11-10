@@ -714,6 +714,7 @@ The following produce compile time errors:
 * An `ORDER BY` column that does not also appear in the `SELECT` list — in any table definition, including `/*+test*/` tables (`All sort columns must be part of the SELECT clause`. The `/test-sqrl` skill shows how to sort by a column you do not want in the result).
 * Basetable inference failure for relationships.
 * Invalid or malformed hints (unknown name, wrong delimiter).
+* A statement without its terminating `;` before the next definition (`Missing ';' at the end of the statement`, reported where the `;` belongs). Both statements are still compiled.
 
 A compile reports all errors of the script at once, each with its position, so fix all of them before you compile again. It leaves out the errors that only follow from another error:
 * A table, column or function whose definition failed is not reported again as not found where it is used.

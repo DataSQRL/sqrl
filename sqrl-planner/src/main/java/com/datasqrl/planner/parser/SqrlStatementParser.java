@@ -22,8 +22,10 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCode;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.error.ErrorLabel;
 import com.datasqrl.error.ErrorLocation.FileLocation;
 import com.datasqrl.planner.hint.PlannerHints;
+import com.datasqrl.planner.parser.SqlScriptStatementSplitter.MissingDelimiter;
 import com.datasqrl.planner.parser.SqrlTableFunctionStatement.ParsedArgument;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +34,7 @@ import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.springframework.stereotype.Component;
@@ -150,11 +153,17 @@ public class SqrlStatementParser {
   private ParsedScript parseScript(
       String script, ErrorCollector scriptErrors, Predicate<SQLStatement> pred) {
     List<ParsedObject<String>> statements;
+    var missingDelimiters = new ArrayList<MissingDelimiter>();
     try {
-      statements = SqlScriptStatementSplitter.splitStatements(script);
+      statements = SqlScriptStatementSplitter.splitStatements(script, missingDelimiters);
     } catch (StatementParserException e) {
       throw scriptErrors.handle(e);
     }
+    var missingDelimiterByStatement =
+        missingDelimiters.stream()
+            .collect(
+                Collectors.toMap(
+                    MissingDelimiter::statementStart, MissingDelimiter::delimiterLocation));
 
     var sqlStatements = new ArrayList<ParsedStatement>();
     var unparsedStatements = new ArrayList<ParsedObject<String>>();
@@ -162,10 +171,29 @@ public class SqrlStatementParser {
     for (ParsedObject<String> statement : statements) {
       try {
         var parsedStmt = parseStatement(statement.getObject());
-        if (pred.test(parsedStmt)) {
-          sqlStatements.add(
-              new ParsedStatement(
-                  new ParsedObject<>(parsedStmt, statement.getFileLocation()), statement.get()));
+        if (!pred.test(parsedStmt)) {
+          // Neither the statement nor its missing `;` matter, e.g. a definition in a script whose
+          // tables are imported
+          continue;
+        }
+        sqlStatements.add(
+            new ParsedStatement(
+                new ParsedObject<>(parsedStmt, statement.getFileLocation()), statement.get()));
+        // The statement is still planned, so only a missing `;` is reported for it
+        var missingDelimiter = missingDelimiterByStatement.get(statement.getFileLocation());
+        if (missingDelimiter != null) {
+          var error =
+              scriptErrors
+                  .atFile(missingDelimiter)
+                  .getCatcher()
+                  .handle(
+                      new StatementParserException(
+                          ErrorLabel.GENERIC,
+                          FileLocation.START,
+                          "Missing ';' at the end of the statement"));
+          if (firstError == null) {
+            firstError = error;
+          }
         }
       } catch (StatementParserException e) {
         var error = scriptErrors.atFile(statement.getFileLocation()).getCatcher().handle(e);
