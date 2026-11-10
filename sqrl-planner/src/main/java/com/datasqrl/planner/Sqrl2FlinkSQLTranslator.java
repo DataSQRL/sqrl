@@ -507,13 +507,41 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
        - pull out top-level sort
      NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
     */
-    var viewDef2 = parseSQL(originalSql);
-    var viewAnalysis = analyzeView(viewDef2, removedSort, hintsAndDoc, errors);
-    var tableAnalysis =
-        viewAnalysis.tableAnalysis().objectIdentifier(identifier).originalSql(originalSql).build();
-    tableLookup.registerTable(tableAnalysis);
+    try {
+      var viewDef2 = parseSQL(originalSql);
+      var viewAnalysis = analyzeView(viewDef2, removedSort, hintsAndDoc, errors);
+      var tableAnalysis =
+          viewAnalysis
+              .tableAnalysis()
+              .objectIdentifier(identifier)
+              .originalSql(originalSql)
+              .build();
+      tableLookup.registerTable(tableAnalysis);
 
-    return tableAnalysis;
+      return tableAnalysis;
+    } catch (RuntimeException e) {
+      if (op instanceof CreateViewOperation) {
+        removeFailedView(identifier, e);
+      }
+      throw e;
+    }
+  }
+
+  /**
+   * Removes a view that {@link #addView} added, when its table failed. The statements that use the
+   * table then fail because it is not found, instead of being planned on a table that the planner
+   * does not know.
+   *
+   * @param failure the error of the table, which stays the error that is reported. If the view
+   *     cannot be removed, that error is added to it as suppressed.
+   */
+  public void removeFailedView(ObjectIdentifier identifier, Throwable failure) {
+    try {
+      catalogManager.dropView(identifier, true);
+      tableLookup.removeView(identifier);
+    } catch (RuntimeException e) {
+      failure.addSuppressed(e);
+    }
   }
 
   /** Analyzes an independent copy and binds the output query's tables for deferred execution. */
