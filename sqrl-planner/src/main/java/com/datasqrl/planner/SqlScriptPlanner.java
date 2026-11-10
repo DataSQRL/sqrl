@@ -136,7 +136,6 @@ import org.apache.flink.sql.parser.ddl.view.SqlAlterViewAs;
 import org.apache.flink.sql.parser.ddl.view.SqlCreateView;
 import org.apache.flink.sql.parser.ddl.view.SqlDropView;
 import org.apache.flink.sql.parser.dml.RichSqlInsert;
-import org.apache.flink.table.api.ValidationException;
 import org.apache.flink.table.catalog.ObjectIdentifier;
 import org.apache.flink.table.functions.UserDefinedFunction;
 import org.springframework.context.annotation.Lazy;
@@ -333,47 +332,7 @@ public class SqlScriptPlanner {
               : statement.getFileLocation();
       return errors.handle(new StatementParserException(location, noLocation));
     }
-    return reportError(errors, e, sqlStatement::mapSqlLocation);
-  }
-
-  /**
-   * Reports an error at the location of the collector, e.g. a statement or a table that is defined
-   * in another file.
-   *
-   * @param mapSqlLocation maps the position of a Flink parser or validator error in the SQL to its
-   *     position relative to the location of the collector
-   * @return the reported error
-   */
-  private static RuntimeException reportError(
-      ErrorCollector errors, Throwable e, UnaryOperator<FileLocation> mapSqlLocation) {
-    if (e instanceof VirtualMachineError vmError) {
-      // E.g. out of memory, so stop planning instead of planning the remaining statements
-      throw vmError;
-    }
-    // Already reported, and it wraps the original error, which would be reported again below
-    if (e instanceof CollectedException collected) {
-      return collected;
-    }
-
-    var converted = ParsePosUtil.convertFlinkParserException(e);
-    if (converted.isPresent()) {
-      var location = errors.getLocation();
-      var base = location.hasFile() ? location.getFileLocation() : FileLocation.START;
-      return errors
-          .atFile(base.add(mapSqlLocation.apply(converted.get().location())))
-          .exception("%s", converted.get().message());
-    }
-    if (e instanceof ValidationException && e.getCause() != null) {
-      e = e.getCause();
-    }
-    // Print stack trace for unknown exceptions
-    if (e.getMessage() == null
-        || e instanceof IllegalStateException
-        || e instanceof NullPointerException) {
-      e.printStackTrace();
-    }
-    // Use registered error handlers
-    return errors.handle(e);
+    return ParsePosUtil.reportError(errors, e, sqlStatement::mapSqlLocation);
   }
 
   /** Whether a table, as written in a statement (e.g. {@code sources.Orders}), is defined */
@@ -997,7 +956,7 @@ public class SqlScriptPlanner {
           if (failures.recordedFailures() == failuresBefore) {
             failures.recordImported(nameModifier.apply(namespaceObject.name().getDisplay()));
           }
-          var error = reportError(errors, e, UnaryOperator.identity());
+          var error = ParsePosUtil.reportError(errors, e, UnaryOperator.identity());
           if (firstError == null) {
             firstError = error;
           }
@@ -1060,7 +1019,7 @@ public class SqlScriptPlanner {
         addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());
       } catch (Throwable e) {
-        throw reportError(flinkTable.errorCollector, e, UnaryOperator.identity());
+        throw ParsePosUtil.reportError(flinkTable.errorCollector, e, UnaryOperator.identity());
       }
     } else if (nsObject instanceof FlinkUdfNsObject fnsObject) {
       Preconditions.checkArgument(
@@ -1314,7 +1273,7 @@ public class SqlScriptPlanner {
                 Optional.of(tableId),
                 addTableResult.tableAnalysis().getSourceSinkTable());
       } catch (Throwable e) {
-        throw reportError(flinkTable.errorCollector, e, UnaryOperator.identity());
+        throw ParsePosUtil.reportError(flinkTable.errorCollector, e, UnaryOperator.identity());
       }
       if (exportSchemaRef.get() != null) {
         FlinkTableBuilder tblBuilder = FlinkTableBuilder.toBuilder(addTableResult.createdTable());
