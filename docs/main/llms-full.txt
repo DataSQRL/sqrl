@@ -1884,6 +1884,55 @@ The compiler generates the full server configuration from a built-in template an
 
 For all settings and their defaults, see the [server configuration template](https://github.com/DataSQRL/sqrl/blob/main/sqrl-cli/src/main/resources/templates/server-config.json) or the generated `vertx-config.json` in your build output (`build/deploy/plan`), which contains the effective configuration with your overrides applied.
 
+## Query Logging
+
+The server has two independent query logs.
+
+### Slow-Query Logging
+
+`graphQLTailSampleTracingConfig` logs one structured `WARN` event (`sqrl.graphql.query.tail_trace`) for each API request that takes longer than its threshold or that fails. The decision is made after the request ends, so the event includes the timing of every query field the request ran. It is off by default.
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `enabled` | `false` | Turns the logging on |
+| `defaultThresholdMs` | `60000` | The threshold for fields without an entry in `thresholds` |
+| `thresholds` | `{}` | A threshold per field, keyed `Type.field`, e.g. `{"Query.OrdersByCustomer": 5000}`. A request uses the lowest threshold among the fields it runs |
+| `alwaysLogErrors` | `true` | Also logs failed requests |
+| `maxLoggedTracesPerMinute` | `60` | Limits the log volume during an incident |
+| `maxFieldTraces` | `50` | Maximum number of field timings in one event |
+
+### Large-Result Logging
+
+`jdbcStatementLogConfig` holds the logs about individual database queries, each with its own `enabled` flag. Its `largeResults` entry logs a `WARN` for each database query that returns at least `rowCountThreshold` rows, as soon as the rows arrive and before the server converts them to JSON. Converting a very large result blocks the server, so the warning is written even if the server is killed afterwards. It names the GraphQL field path, the row count, the elapsed time and the SQL (cut after 2000 characters), never the parameter values. The elapsed time includes any wait for a pool connection. It is off by default.
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `enabled` | `false` | Turns the warning on |
+| `rowCountThreshold` | `10000` | Warns when a query returns at least this many rows. `0` or less turns the warning off |
+
+Independently of both, the server always logs an `ERROR` when a query fails, with its GraphQL field path and SQL, and when it cannot convert the rows of a query to JSON, with the field path.
+
+```json
+{
+  "engines": {
+    "vertx": {
+      "config": {
+        "graphQLTailSampleTracingConfig": {
+          "enabled": true,
+          "defaultThresholdMs": 2000
+        },
+        "jdbcStatementLogConfig": {
+          "largeResults": {
+            "enabled": true,
+            "rowCountThreshold": 5000
+          }
+        }
+      }
+    }
+  }
+}
+```
+
 ## Authentication Configuration
 
 Configure authentication with the `auth` block. It lists the token issuers the server trusts. Each issuer has its own
@@ -4160,7 +4209,7 @@ Kubernetes gives you the most control over the deployment, and it runs the same 
 - **Kafka:** [Strimzi](https://strimzi.io/) or the Redpanda operator.
 - **PostgreSQL:** [CloudNativePG](https://cloudnative-pg.io/) runs highly available PostgreSQL clusters with replication and backups.
 - **Iceberg:** object storage and an Iceberg REST catalog, with the query engine running in the cluster or as a managed service.
-- **API server:** a standard `Deployment` and `Service` for the server image, scaled horizontally since the server is stateless. It exposes `/health` for probes and, when enabled, `/metrics` for Prometheus.
+- **API server:** a standard `Deployment` and `Service` for the server image, scaled horizontally since the server is stateless. It exposes `/health` for probes and, when enabled, `/metrics` for Prometheus. The server logs a `WARN` with the reason when `/health` first reports a check as failing, and an `INFO` when the check recovers.
 
 You can also mix both options, for example running Flink and the API server on Kubernetes against managed Kafka and PostgreSQL services.
 
