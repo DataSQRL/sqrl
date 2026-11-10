@@ -74,6 +74,7 @@ public class ServerConfig {
   private GraphQLTailSampleTracingConfig graphQLTailSampleTracingConfig =
       new GraphQLTailSampleTracingConfig();
   private GraphQLParserConfig graphQLParserConfig = new GraphQLParserConfig();
+  private JdbcStatementLogConfig jdbcStatementLogConfig = new JdbcStatementLogConfig();
   private Map<String, Object> auth;
   private Map<String, Object> jwtAuth;
   private OAuthConfig oauthConfig;
@@ -298,6 +299,14 @@ public class ServerConfig {
         options == null
             ? new GraphQLParserConfig()
             : MAPPER.convertValue(options, GraphQLParserConfig.class);
+  }
+
+  @JsonSetter("jdbcStatementLogConfig")
+  public void setJdbcStatementLogConfigFromJson(Map<String, Object> options) {
+    this.jdbcStatementLogConfig =
+        options == null
+            ? new JdbcStatementLogConfig()
+            : MAPPER.convertValue(options, JdbcStatementLogConfig.class);
   }
 
   private JsonObject getJsonObjectOrEmpty(Map<String, Object> options) {

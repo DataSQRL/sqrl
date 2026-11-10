@@ -22,6 +22,8 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import com.datasqrl.server.config.ServerConfig;
 import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.graphql.RootGraphQLModel.StringSchema;
+import com.datasqrl.server.logging.FailedStatementLogger;
+import com.datasqrl.server.logging.LargeResultLogger;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import io.vertx.ext.web.Router;
@@ -57,6 +59,31 @@ class GraphQLServerVerticleTest {
                       });
                   testContext.completeNow();
                 }));
+  }
+
+  @Test
+  void givenLargeResultLogNotEnabled_whenStatementListeners_thenOnlyFailuresAreLogged() {
+    assertThat(GraphQLServerVerticle.statementListeners(new ServerConfig()))
+        .hasExactlyElementsOfTypes(FailedStatementLogger.class);
+  }
+
+  @Test
+  void givenLargeResultLogEnabled_whenStatementListeners_thenLargeResultsAreLoggedToo() {
+    var config = new ServerConfig();
+    config.getJdbcStatementLogConfig().getLargeResults().setEnabled(true);
+
+    assertThat(GraphQLServerVerticle.statementListeners(config))
+        .hasExactlyElementsOfTypes(FailedStatementLogger.class, LargeResultLogger.class);
+  }
+
+  @Test
+  void givenLargeResultLogWithZeroThreshold_whenStatementListeners_thenOnlyFailuresAreLogged() {
+    var config = new ServerConfig();
+    config.getJdbcStatementLogConfig().getLargeResults().setEnabled(true);
+    config.getJdbcStatementLogConfig().getLargeResults().setRowCountThreshold(0);
+
+    assertThat(GraphQLServerVerticle.statementListeners(config))
+        .hasExactlyElementsOfTypes(FailedStatementLogger.class);
   }
 
   private static class TestGraphQLServerVerticle extends GraphQLServerVerticle {
