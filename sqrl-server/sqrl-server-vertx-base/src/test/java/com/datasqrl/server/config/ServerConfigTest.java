@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class ServerConfigTest {
 
@@ -208,66 +210,28 @@ class ServerConfigTest {
     assertThat(serverConfig.getCorsHandlerOptions().getAllowedHeaders()).containsExactly("*");
   }
 
-  @Test
-  void given_emptyJson_when_authProvidersChecked_then_noProviderIsConfigured() {
-    var json = MAPPER.createObjectNode();
+  @ParameterizedTest(name = "{0}")
+  @CsvSource(
+      delimiter = '|',
+      textBlock =
+          """
+          no auth config      | {}                                                                                      | false | false | false
+          auth                | {"auth": {"issuers": [{"issuer": "https://a/", "audiences": ["https://api/"]}]}}        | false | false | true
+          jwtAuth             | {"jwtAuth": {"pubSecKeys": [{"algorithm": "HS256", "buffer": "dGVzdA=="}]}}             | true  | false | true
+          oauthConfig         | {"oauthConfig": {"oauth2Options": {"site": "https://auth.example.com"}}}                | false | true  | true
+          oauthConfig no site | {"oauthConfig": {"oauth2Options": {}}}                                                  | false | false | false
+          """)
+  void given_authConfig_when_authProvidersChecked_then_matchesTheProvidersOfTheServer(
+      String caseName,
+      String configJson,
+      boolean expectedJwtAuthProvider,
+      boolean expectedOAuthProvider,
+      boolean expectedAuthProvider)
+      throws Exception {
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.readValue(configJson, Map.class));
 
-    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
-
-    assertThat(serverConfig.isJwtAuthConfigured()).isFalse();
-    assertThat(serverConfig.isOAuthConfigured()).isFalse();
-  }
-
-  @Test
-  void given_jwtAuth_when_authProvidersChecked_then_onlyJwtAuthIsConfigured() {
-    var json = MAPPER.createObjectNode();
-    json.set("jwtAuth", MAPPER.createObjectNode().put("algorithm", "HS256"));
-
-    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
-
-    assertThat(serverConfig.isJwtAuthConfigured()).isTrue();
-    assertThat(serverConfig.isOAuthConfigured()).isFalse();
-  }
-
-  @Test
-  void given_oauthConfigWithSite_when_authProvidersChecked_then_onlyOAuthIsConfigured() {
-    var json = MAPPER.createObjectNode();
-    json.set(
-        "oauthConfig",
-        MAPPER
-            .createObjectNode()
-            .set(
-                "oauth2Options",
-                MAPPER.createObjectNode().put("site", "https://auth.example.com")));
-
-    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
-
-    assertThat(serverConfig.isJwtAuthConfigured()).isFalse();
-    assertThat(serverConfig.isOAuthConfigured()).isTrue();
-  }
-
-  @Test
-  void given_oauthConfigWithoutSite_when_authProvidersChecked_then_oauthIsNotConfigured() {
-    var json = MAPPER.createObjectNode();
-    json.set(
-        "oauthConfig", MAPPER.createObjectNode().set("oauth2Options", MAPPER.createObjectNode()));
-
-    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
-
-    assertThat(serverConfig.isOAuthConfigured()).isFalse();
-  }
-
-  @Test
-  void given_jwtAuth_when_serialized_then_authProviderChecksAreNotWritten() throws Exception {
-    var json = MAPPER.createObjectNode();
-    json.set("jwtAuth", MAPPER.createObjectNode().put("algorithm", "HS256"));
-    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(json, Map.class));
-
-    var serializedConfig = MAPPER.readTree(MAPPER.writeValueAsString(serverConfig));
-
-    assertThat(serializedConfig.has("jwtAuth")).isTrue();
-    assertThat(serializedConfig.has("jwtAuthConfigured")).isFalse();
-    assertThat(serializedConfig.has("oAuthConfigured")).isFalse();
-    assertThat(serializedConfig.has("oauthConfigured")).isFalse();
+    assertThat(serverConfig.hasJwtAuthProvider()).isEqualTo(expectedJwtAuthProvider);
+    assertThat(serverConfig.hasOAuthProvider()).isEqualTo(expectedOAuthProvider);
+    assertThat(serverConfig.hasAuthProvider()).isEqualTo(expectedAuthProvider);
   }
 }

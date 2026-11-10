@@ -5,6 +5,16 @@ scalar Date
 "A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
 scalar DateTime
 
+input ItemRequestsInput {
+  item: String!
+}
+
+type ItemRequestsResultOutput {
+  customer_id: String!
+  item: String!
+  requested_at: DateTime!
+}
+
 "A JSON scalar"
 scalar JSON
 
@@ -13,6 +23,10 @@ scalar LocalTime
 
 "A 64-bit signed integer"
 scalar Long
+
+type Mutation {
+  ItemRequests(event: ItemRequestsInput!): ItemRequestsResultOutput!
+}
 
 "The orders of the caller. Reads the claim \"sub\"."
 type MyOrders {
@@ -27,8 +41,15 @@ type Orders {
 type Query {
   "Every order. Reads no claim."
   AllOrders(limit: Int = 10, offset: Int = 0): [Orders!]
+  "The number of item requests."
+  RequestCount(limit: Int = 10, offset: Int = 0): [RequestCount!]
   "The orders of the caller. Reads the claim \"sub\"."
   MyOrders(limit: Int = 10, offset: Int = 0): [MyOrders!]
+}
+
+"The number of item requests."
+type RequestCount {
+  n: Long!
 }
 
 enum _McpMethodType {
@@ -63,6 +84,21 @@ Inputs:
 Table AllOrders (postgres):
  - primary key: order_id
 
+=== ItemRequests
+ID:          default_catalog.default_database.ItemRequests
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   requested_at
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - customer_id: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - item: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - requested_at: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.ItemRequests__base
+
 === MyOrders
 ID:          default_catalog.default_database.MyOrders
 Type:        query
@@ -90,6 +126,22 @@ Table Orders (postgres):
  - primary key: order_id
  - index Orders_hash_c1 (hash): customer_id
 
+=== RequestCount
+ID:          default_catalog.default_database.RequestCount
+Type:        state
+Stage:       flink
+Primary key: -
+Timestamp:   -
+Row count:   ~1
+--- definition ---
+Schema:
+ - n: BIGINT NOT NULL
+Inputs:
+ - default_catalog.default_database.ItemRequests
+--- physical ---
+Table RequestCount (postgres):
+ - primary key: __pk_hash (generated hash key)
+
 >>>flink-sql-no-functions.sql
 CREATE VIEW `Orders`
 AS
@@ -100,6 +152,26 @@ CREATE VIEW `AllOrders`
 AS
 SELECT `order_id`, `customer_id`
 FROM `Orders`;
+CREATE TABLE `ItemRequests` (
+  `customer_id` STRING NOT NULL,
+  `item` STRING NOT NULL,
+  `requested_at` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `requested_at` AS `requested_at` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'ItemRequests'
+);
+CREATE VIEW `RequestCount`
+AS
+SELECT COUNT(*) AS `n`
+FROM `ItemRequests`;
 CREATE TABLE `AllOrders_1` (
   `order_id` CHAR(2) CHARACTER SET `UTF-16LE` NOT NULL,
   `customer_id` CHAR(2) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -126,6 +198,19 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
+CREATE TABLE `RequestCount_3` (
+  `n` BIGINT NOT NULL,
+  `__pk_hash` INTEGER NOT NULL,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'RequestCount',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`AllOrders_1`
 SELECT *
@@ -137,15 +222,34 @@ SELECT *
 FROM `default_catalog`.`default_database`.`Orders`
 ON CONFLICT DO DEDUPLICATE
 ;
+INSERT INTO `default_catalog`.`default_database`.`RequestCount_3`
+SELECT `n`, 1 AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`RequestCount`
+ON CONFLICT DO DEDUPLICATE
+;
 END
 >>>kafka.json
 {
-  "topics" : [ ],
+  "topics" : [
+    {
+      "topicName" : "ItemRequests",
+      "tableName" : "ItemRequests",
+      "logicalName" : "ItemRequests",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "AllOrders" ("order_id" TEXT NOT NULL, "customer_id" TEXT NOT NULL, PRIMARY KEY ("order_id"));
 CREATE TABLE IF NOT EXISTS "Orders" ("order_id" TEXT NOT NULL, "customer_id" TEXT NOT NULL, PRIMARY KEY ("order_id"));
+CREATE TABLE IF NOT EXISTS "RequestCount" ("n" BIGINT NOT NULL, "__pk_hash" INTEGER NOT NULL, PRIMARY KEY ("__pk_hash"));
 
 CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customer_id")
 >>>vertx.json
@@ -171,6 +275,31 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customer_id
             "query" : {
               "type" : "SqlQuery",
               "sql" : "SELECT *\nFROM \"AllOrders\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "RequestCount",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"n\"\nFROM \"RequestCount\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -213,7 +342,29 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customer_id
           }
         }
       ],
-      "mutations" : [ ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "ItemRequests",
+          "returnList" : false,
+          "topic" : "ItemRequests",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "customer_id" : {
+              "metadataType" : "AUTH",
+              "name" : "sub",
+              "required" : true
+            },
+            "requested_at" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
       "subscriptions" : [ ],
       "operations" : [
         {
@@ -259,6 +410,44 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customer_id
         },
         {
           "function" : {
+            "name" : "GetRequestCount",
+            "description" : "The number of item requests.",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query RequestCount($limit: Int = 10, $offset: Int = 0) {\nRequestCount(limit: $limit, offset: $offset) {\nn\n}\n\n}",
+            "queryName" : "RequestCount",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/RequestCount{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "n" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
             "name" : "GetMyOrders",
             "description" : "The orders of the caller. Reads the claim \"sub\".",
             "parameters" : {
@@ -294,11 +483,51 @@ CREATE INDEX IF NOT EXISTS "Orders_hash_c1" ON "Orders" USING hash ("customer_id
               }
             }
           }
+        },
+        {
+          "function" : {
+            "name" : "AddItemRequests",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "item" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "item"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation ItemRequests($item: String!) {\nItemRequests(event: { item: $item }) {\ncustomer_id\nitem\nrequested_at\n}\n\n}",
+            "queryName" : "ItemRequests",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/ItemRequests",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "customer_id" : {
+                "type" : "string"
+              },
+              "item" : {
+                "type" : "string"
+              },
+              "requested_at" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\n\"The orders of the caller. Reads the claim \\\"sub\\\".\"\ntype MyOrders {\n  order_id: String!\n}\n\ntype Orders {\n  order_id: String!\n  customer_id: String!\n}\n\ntype Query {\n  \"Every order. Reads no claim.\"\n  AllOrders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"The orders of the caller. Reads the claim \\\"sub\\\".\"\n  MyOrders(limit: Int = 10, offset: Int = 0): [MyOrders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ninput ItemRequestsInput {\n  item: String!\n}\n\ntype ItemRequestsResultOutput {\n  customer_id: String!\n  item: String!\n  requested_at: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  ItemRequests(event: ItemRequestsInput!): ItemRequestsResultOutput!\n}\n\n\"The orders of the caller. Reads the claim \\\"sub\\\".\"\ntype MyOrders {\n  order_id: String!\n}\n\ntype Orders {\n  order_id: String!\n  customer_id: String!\n}\n\ntype Query {\n  \"Every order. Reads no claim.\"\n  AllOrders(limit: Int = 10, offset: Int = 0): [Orders!]\n  \"The number of item requests.\"\n  RequestCount(limit: Int = 10, offset: Int = 0): [RequestCount!]\n  \"The orders of the caller. Reads the claim \\\"sub\\\".\"\n  MyOrders(limit: Int = 10, offset: Int = 0): [MyOrders!]\n}\n\n\"The number of item requests.\"\ntype RequestCount {\n  n: Long!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

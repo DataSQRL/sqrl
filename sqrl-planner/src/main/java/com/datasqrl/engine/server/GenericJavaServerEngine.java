@@ -91,52 +91,65 @@ public abstract class GenericJavaServerEngine extends ExecutionEngine.Base imple
 
   /**
    * Fails the compile when the script reads a JWT claim, but the server config has no auth
-   * provider. Without a provider, the server checks no token, and every claim column fails.
+   * provider: no {@code auth} block, no {@code jwtAuth} and no {@code oauthConfig} with a site.
+   * Without a provider, the server checks no token, and every claim column fails.
    */
   private void validateAuthProvider(ServerStagePlan serverPlan, ServerConfig serverConfig) {
-    if (serverConfig.isJwtAuthConfigured() || serverConfig.isOAuthConfigured()) {
+    if (serverConfig.hasAuthProvider()) {
       return;
     }
 
-    Stream<String> functionClaimColumns =
-        serverPlan.functions().stream()
-            .flatMap(
-                function ->
-                    function.getParameters().stream()
-                        .filter(SqrlFunctionParameter.class::isInstance)
-                        .map(SqrlFunctionParameter.class::cast)
-                        .filter(
-                            parameter ->
-                                parameter
-                                    .getMetadata()
-                                    .filter(GenericJavaServerEngine::isAuthMetadata)
-                                    .isPresent())
-                        .map(
-                            parameter ->
-                                describeClaimColumn(
-                                    function.getFullPath().getDisplay(),
-                                    parameter.getName(),
-                                    parameter.getMetadata().get())));
-    Stream<String> mutationClaimColumns =
-        serverPlan.mutations().stream()
-            .flatMap(
-                mutation ->
-                    mutation.getComputedColumns().entrySet().stream()
-                        .filter(computedColumn -> isAuthMetadata(computedColumn.getValue()))
-                        .map(
-                            computedColumn ->
-                                describeClaimColumn(
-                                    mutation.getName().getDisplay(),
-                                    computedColumn.getKey(),
-                                    computedColumn.getValue())));
-    var claimColumns = Stream.concat(functionClaimColumns, mutationClaimColumns).sorted().toList();
+    var claimColumns =
+        Stream.concat(functionClaimColumns(serverPlan), mutationClaimColumns(serverPlan))
+            .sorted()
+            .toList();
 
     errorCollector.checkFatal(
         claimColumns.isEmpty(),
-        "The script reads JWT claims (%s), but engines.%s.config has no jwtAuth and no"
-            + " oauthConfig. Add jwtAuth or oauthConfig, so the server can check the token.",
+        "The script reads JWT claims (%s), but engines.%s.config has no auth provider. Add an"
+            + " auth block with at least one issuer, so the server can check the token. The"
+            + " deprecated jwtAuth, or oauthConfig with oauth2Options.site, also gives a provider.",
         String.join(", ", claimColumns),
         getName());
+  }
+
+  /**
+   * Returns the function parameters that read a claim. Every parameter is a {@link
+   * SqrlFunctionParameter}, so the cast fails loudly for another type instead of skipping it.
+   */
+  private static Stream<String> functionClaimColumns(ServerStagePlan serverPlan) {
+    return serverPlan.functions().stream()
+        .flatMap(
+            function ->
+                function.getParameters().stream()
+                    .map(SqrlFunctionParameter.class::cast)
+                    .flatMap(
+                        parameter ->
+                            parameter
+                                .getMetadata()
+                                .filter(GenericJavaServerEngine::isAuthMetadata)
+                                .stream()
+                                .map(
+                                    metadata ->
+                                        describeClaimColumn(
+                                            function.getFullPath().getDisplay(),
+                                            parameter.getName(),
+                                            metadata))));
+  }
+
+  /** Returns the mutation columns that the server fills from a claim. */
+  private static Stream<String> mutationClaimColumns(ServerStagePlan serverPlan) {
+    return serverPlan.mutations().stream()
+        .flatMap(
+            mutation ->
+                mutation.getComputedColumns().entrySet().stream()
+                    .filter(computedColumn -> isAuthMetadata(computedColumn.getValue()))
+                    .map(
+                        computedColumn ->
+                            describeClaimColumn(
+                                mutation.getName().getDisplay(),
+                                computedColumn.getKey(),
+                                computedColumn.getValue())));
   }
 
   private static boolean isAuthMetadata(ResolvedMetadata metadata) {

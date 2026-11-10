@@ -1,9 +1,0 @@
-{
-  "version": "1",
-  "script": {
-    "main": "claims_mutation.sqrl"
-  },
-  "compiler": {
-    "compile-flink-plan": false
-  }
-}

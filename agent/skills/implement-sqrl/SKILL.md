@@ -360,7 +360,7 @@ AuthFilter(mySecretId BIGINT NOT NULL METADATA FROM 'auth.val') :=
   WHERE c.customerId = :mySecretId;
 ```
 
-A script that reads a claim, in a function argument or in a mutation column, needs `jwtAuth` or `oauthConfig` in `engines.vertx.config`. Without one of them, the server checks no token, so the compile fails with the error `The script reads JWT claims (...), but engines.vertx.config has no jwtAuth and no oauthConfig.` If you see that error, add `jwtAuth` or `oauthConfig` with the `/configure-sqrl` skill, and keep the `METADATA FROM 'auth.<claim>'` columns.
+A script that reads a claim needs an auth provider in `engines.vertx.config`. This applies to a function argument and to a mutation column. The provider is an `auth` block with at least one issuer. The deprecated `jwtAuth`, or `oauthConfig` with `oauth2Options.site`, also gives a provider. Without a provider, the server checks no token. The compile then fails with the error `The script reads JWT claims (...), but engines.vertx.config has no auth provider.` If you see that error, add an `auth` block with the `/configure-sqrl` skill, and keep the `METADATA FROM 'auth.<claim>'` columns. The check also covers a claim function that a custom GraphQL schema leaves out. If the API must not expose that function, start its name with `_`. The `/*+no_query*/` hint does not help here. It works on a table such as `Orders := SELECT ...`, where it stops the query endpoint that DataSQRL makes for the table. On a function with arguments, such as `MyOrders(customer_id ...)`, the hint has no effect. `MyOrders` stays a query endpoint that reads the claim, so the compile still needs a provider.
 
 ### Relationship definition
 
