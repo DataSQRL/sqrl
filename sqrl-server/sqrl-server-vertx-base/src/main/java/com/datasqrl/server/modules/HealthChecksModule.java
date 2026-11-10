@@ -28,7 +28,8 @@ public class HealthChecksModule implements ServerModule<VertxServerModuleContext
 
   @Override
   public CompletionStage<Void> configure(VertxServerModuleContext ctx) {
-    var healthCheckHandler = HealthCheckHandler.create(ctx.vertx());
+    var healthCheckHandler =
+        HealthCheckHandler.create(ctx.vertx()).resultMapper(new HealthCheckTransitionLogger());
 
     var kafkaHealthTrackerCtx = Optional.<KafkaHealthTracker.Context>empty();
     for (var model : ctx.models().values()) {

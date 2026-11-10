@@ -194,6 +194,12 @@
     "readerTrackData" : null,
     "redactTokenParserErrorMessages" : null
   },
+  "jdbcStatementLogConfig" : {
+    "largeResults" : {
+      "enabled" : false,
+      "rowCountThreshold" : 10000
+    }
+  },
   "auth" : null,
   "jwtAuth" : null,
   "oauthConfig" : null,

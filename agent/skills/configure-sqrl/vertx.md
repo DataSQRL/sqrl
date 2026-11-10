@@ -79,6 +79,19 @@ Make an educated guess for each threshold from how the API is used. The values i
 
 - Keep every threshold well below the client request timeout. The server writes the log line after a request ends, and it does not stop the request. A threshold below the timeout logs the requests that are slow but still succeed.
 
+## Large-Result Logging
+
+The server logs a warning for each database query that returns many rows, before it converts the rows to JSON. Converting a very large result blocks the server, so the warning is written even when the pod is killed afterwards. The warning names the GraphQL field path, the row count, the elapsed time and the SQL (cut after 2000 characters), and never the parameter values. The elapsed time counts from issuing the query to receiving its rows, including any wait for a pool connection, so it is not the database time. Also when this warning is off, the server logs an error for a failed query, with its field path and SQL, and for rows it cannot convert to JSON, with the field path.
+
+This warning is off by default and only covers large results. Slow requests are logged by [Slow-Query Logging](#slow-query-logging), which has per-field thresholds.
+
+All keys go under `engines.vertx.config.jdbcStatementLogConfig.largeResults`. `jdbcStatementLogConfig` holds the logs about individual database queries, and each has its own `enabled` flag:
+
+| Key | Default | Notes |
+|-----|---------|-------|
+| `enabled` | `false` | Turns the warning on |
+| `rowCountThreshold` | `10000` | Warns when a query returns at least this many rows. `0` or less turns the warning off |
+
 ## Authentication
 
 Configure `auth` with the list of trusted token issuers. Each issuer carries its own audiences and signing keys, and a

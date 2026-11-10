@@ -26,15 +26,29 @@ import io.vertx.sqlclient.Row;
 import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.Tuple;
+import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Purpose: Manages SQL clients and executes queries. Collaboration: Used by {@link
- * VertxServerContext} to prepare and execute SQL queries.
+ * VertxServerContext} to prepare and execute SQL queries. Every statement it runs is reported to
+ * its {@link JdbcStatementListener}s.
  */
 @Slf4j
-public record VertxJdbcClient(Map<DatabaseType, SqlClient> clients) implements JdbcClient {
+public record VertxJdbcClient(
+    Map<DatabaseType, SqlClient> clients, List<JdbcStatementListener> listeners)
+    implements JdbcClient {
+
+  public VertxJdbcClient {
+    listeners = List.copyOf(listeners);
+  }
+
+  public VertxJdbcClient(Map<DatabaseType, SqlClient> clients) {
+    this(clients, List.of());
+  }
+
   @Override
   public ResolvedQuery prepareQuery(SqlQuery query, ServerContext context) {
     var sqlClient = clients.get(query.getDatabase());
@@ -52,13 +66,53 @@ public record VertxJdbcClient(Map<DatabaseType, SqlClient> clients) implements J
     return new ResolvedSqlQuery(sqlQuery, null);
   }
 
-  public Future<RowSet<Row>> execute(PreparedQuery<RowSet<Row>> query, Tuple tup) {
-    return query.execute(tup);
+  /**
+   * Runs {@code query} and reports its rows, or its failure, to every listener before the returned
+   * future completes, so before the caller can read the rows. Without listeners, the statement runs
+   * untimed.
+   */
+  public Future<RowSet<Row>> execute(
+      JdbcStatement statement, PreparedQuery<RowSet<Row>> query, Tuple params) {
+    if (listeners.isEmpty()) {
+      return query.execute(params);
+    }
+
+    var start = System.nanoTime();
+    return query
+        .execute(params)
+        .andThen(
+            (rows, failure) -> {
+              var elapsed = Duration.ofNanos(System.nanoTime() - start);
+              listeners.forEach(listener -> report(listener, statement, rows, failure, elapsed));
+            });
   }
 
-  public Future<RowSet<Row>> execute(DatabaseType database, String query, Tuple tup) {
+  /** Prepares {@link JdbcStatement#sql()} on the database's client and runs it. */
+  public Future<RowSet<Row>> execute(JdbcStatement statement, DatabaseType database, Tuple params) {
     var sqlClient = clients.get(database);
 
-    return execute(sqlClient.preparedQuery(query), tup);
+    return execute(statement, sqlClient.preparedQuery(statement.sql()), params);
+  }
+
+  /** Isolates the listener: Vert.x would fail the statement's future if it threw. */
+  private static void report(
+      JdbcStatementListener listener,
+      JdbcStatement statement,
+      RowSet<Row> rows,
+      Throwable failure,
+      Duration elapsed) {
+    try {
+      if (failure == null) {
+        listener.onRows(statement, rows, elapsed);
+      } else {
+        listener.onFailure(statement, failure, elapsed);
+      }
+    } catch (RuntimeException e) {
+      log.warn(
+          "Statement listener {} failed at {}",
+          listener.getClass().getSimpleName(),
+          statement.fieldPath(),
+          e);
+    }
   }
 }
