@@ -718,10 +718,11 @@ The following produce compile time errors:
 * Invalid or malformed hints (unknown name, wrong delimiter).
 
 A compile reports all errors of the script at once, each with its position, so fix all of them before you compile again. It leaves out the errors that only follow from another error:
-* A table, column or function whose definition failed is not reported again as not found where it is used.
+* A table, column or function whose definition failed is not reported again as not found where it is used. A failed column is recognized by its name, so no table is reported as missing a column of that name until you fix its definition.
 * After an `IMPORT package.*` whose package cannot be loaded, no table or function is reported as not found.
-* A statement that adds a column to, exports or inserts into a table whose definition failed is skipped.
-* After a `USE` statement fails, the rest of the script is skipped.
+* The tables imported from a script that fails to parse report only the script's parse errors.
+* A statement that adds a column to, exports or inserts into a table whose definition failed is skipped, as is a passthrough definition (`RETURNS`) whose query reads from it.
+* After a `USE` statement fails, the rest of the script is skipped. In an imported script, that is the rest of that script, and of the importing script too if the script is imported inline (`IMPORT package.script.*`).
 
 So a fix can bring up new errors in the statements that were skipped or used the failed object. Compile again until no errors are left.
 
