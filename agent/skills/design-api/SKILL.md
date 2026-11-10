@@ -144,7 +144,7 @@ This definition maps to query endpoint `CustomerByIdRange(fromId: Long!, toId: L
 
 ### Authentication & Authorization
 
-DataSQRL authenticates JWT tokens as configured in the server engine and maps claims to function arguments with `METADATA FROM 'auth.[claim-name]'`. A dot in the claim name steps into a nested object claim: `'auth.org.id'` reads the field `id` of the claim `org`.
+DataSQRL authenticates JWT tokens as configured in the server engine and maps claims to function arguments with `METADATA FROM 'auth.[claim-name]'`. A dot in the claim name steps into a nested object claim: `'auth.org.id'` reads the field `id` of the claim `org`. A key can also contain dots, at the top level and inside an object. At each level, the server uses the longest key that it finds in the token, and steps into objects only for the rest of the path. For example, `'auth.https://example.com/org_id'` reads the top-level claim `https://example.com/org_id`, `'auth.https://example.com/org.id'` reads the field `id` of the claim `https://example.com/org`, and `'auth.resource_access.com.example.app.roles'` reads the field `roles` of the key `com.example.app` inside the claim `resource_access`.
 
 ```sql
 MyUser(customerId BIGINT NOT NULL METADATA FROM 'auth.userId') :=

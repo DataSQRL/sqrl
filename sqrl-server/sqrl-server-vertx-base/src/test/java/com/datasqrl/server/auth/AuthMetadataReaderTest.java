@@ -94,6 +94,32 @@ class AuthMetadataReaderTest {
   }
 
   @Test
+  void givenNestedFieldNameWithDots_whenRead_thenReturnsNestedFieldValue() {
+    var env =
+        requestWithToken(
+            "{\"resource_access\": {\"com.example.app\": {\"roles\": [\"admin\", \"user\"]}}}");
+
+    assertThat(authMetadataReader.read(env, "resource_access.com.example.app.roles", true))
+        .isEqualTo(new JsonArray().add("admin").add("user"));
+  }
+
+  @Test
+  void givenNestedFieldWithDotsAndNestedPathWithSameName_whenRead_thenReturnsFieldWithDots() {
+    var env =
+        requestWithToken("{\"org\": {\"a.b\": \"FIELD_WITH_DOTS\", \"a\": {\"b\": \"NESTED\"}}}");
+
+    assertThat(authMetadataReader.read(env, "org.a.b", true)).isEqualTo("FIELD_WITH_DOTS");
+  }
+
+  @Test
+  void givenLongestNestedFieldNameWithoutPath_whenRead_thenDoesNotTryShorterFieldName() {
+    var env = requestWithToken("{\"org\": {\"a.b\": \"x\", \"a\": {\"b\": {\"c\": 1}}}}");
+
+    assertThatThrownBy(() -> authMetadataReader.read(env, "org.a.b.c", true))
+        .isInstanceOf(MissingRequiredClaimException.class);
+  }
+
+  @Test
   void givenNestedArrayClaim_whenRead_thenReturnsWholeArray() {
     var env = requestWithToken("{\"realm_access\": {\"roles\": [\"admin\", \"user\"]}}");
 
@@ -115,6 +141,15 @@ class AuthMetadataReaderTest {
 
     assertThatThrownBy(() -> authMetadataReader.read(env, "org.id", true))
         .isInstanceOf(MissingRequiredClaimException.class);
+  }
+
+  @Test
+  void givenClaimNameWithTrailingDot_whenRead_thenThrowsMissingRequiredClaim() {
+    var env = requestWithToken("{\"org\": {\"id\": \"ORG1\"}}");
+
+    assertThatThrownBy(() -> authMetadataReader.read(env, "org.", true))
+        .isInstanceOf(MissingRequiredClaimException.class);
+    verify(response).setStatusCode(403);
   }
 
   @Test

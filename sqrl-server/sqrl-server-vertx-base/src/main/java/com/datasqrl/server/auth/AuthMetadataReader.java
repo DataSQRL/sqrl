@@ -74,39 +74,52 @@ public class AuthMetadataReader implements MetadataReader {
 
   /**
    * Finds the claim with the given name. A dot in the name steps into a nested object claim, so
-   * 'org.id' reads the field 'id' of the claim 'org'. A claim name can also contain dots, for
-   * example 'https://example.com/org'. So the longest prefix of the name that is a top-level claim
-   * is used, and the rest of the name is the path into that claim.
+   * 'org.id' reads the field 'id' of the claim 'org'. A key can also contain dots, for example the
+   * claim 'https://example.com/org' or the Keycloak client 'com.example.app' inside the claim
+   * 'resource_access'. So at each level, the longest key that the token contains is used, and the
+   * rest of the name is the path into the value of that key. The name is split the same way as in
+   * the planner, so an empty segment such as the end of 'org.' stays in the path and finds no
+   * claim.
    *
    * @return the claim value, or empty when the token has no claim with this name
    */
   private static Optional<ResolvedClaimValue> findClaim(User principal, String claimName) {
-    var segments = claimName.split("\\.");
-    for (var prefixLength = segments.length; prefixLength >= 1; prefixLength--) {
-      var topLevelClaimName = String.join(".", Arrays.copyOfRange(segments, 0, prefixLength));
+    var segments = claimName.split("\\.", -1);
+    for (var keyEnd = segments.length; keyEnd >= 1; keyEnd--) {
+      var topLevelClaimName = joinSegments(segments, 0, keyEnd);
       if (principal.containsKey(topLevelClaimName)) {
-        var pathSegments = Arrays.copyOfRange(segments, prefixLength, segments.length);
-        return walkPath(principal.get(topLevelClaimName), pathSegments);
+        return walkPath(principal.get(topLevelClaimName), segments, keyEnd);
       }
     }
     return Optional.empty();
   }
 
   /**
-   * Steps from the top-level claim value into the nested object field of each path segment, in
-   * order. A step into a value that is not an object, such as an array, finds no claim.
+   * Steps from the current value into the nested object field that the segments from {@code
+   * pathStart} name. Like the top-level claim, the longest field name that the object contains is
+   * used. When that field name leads to no claim, a shorter field name is not tried. A step into a
+   * value that is not an object, such as an array, finds no claim.
    */
   private static Optional<ResolvedClaimValue> walkPath(
-      Object topLevelClaimValue, String[] pathSegments) {
-    var currentValue = topLevelClaimValue;
-    for (var pathSegment : pathSegments) {
-      if (!(currentValue instanceof JsonObject currentObject)
-          || !currentObject.containsKey(pathSegment)) {
-        return Optional.empty();
-      }
-      currentValue = currentObject.getValue(pathSegment);
+      Object currentValue, String[] segments, int pathStart) {
+    if (pathStart == segments.length) {
+      return Optional.of(new ResolvedClaimValue(currentValue));
     }
-    return Optional.of(new ResolvedClaimValue(currentValue));
+    if (!(currentValue instanceof JsonObject currentObject)) {
+      return Optional.empty();
+    }
+    for (var keyEnd = segments.length; keyEnd > pathStart; keyEnd--) {
+      var fieldName = joinSegments(segments, pathStart, keyEnd);
+      if (currentObject.containsKey(fieldName)) {
+        return walkPath(currentObject.getValue(fieldName), segments, keyEnd);
+      }
+    }
+    return Optional.empty();
+  }
+
+  /** Joins the segments from {@code keyStart} up to, but not including, {@code keyEnd}. */
+  private static String joinSegments(String[] segments, int keyStart, int keyEnd) {
+    return String.join(".", Arrays.copyOfRange(segments, keyStart, keyEnd));
   }
 
   /**
