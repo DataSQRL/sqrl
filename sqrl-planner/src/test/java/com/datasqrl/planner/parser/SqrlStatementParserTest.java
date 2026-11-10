@@ -92,7 +92,7 @@ class SqrlStatementParserTest {
   }
 
   @Test
-  void givenDefinitionThatFailsToParse_whenParseScript_thenItsSourceIsKept() {
+  void givenDefinitionThatFailsToParse_whenParseScript_thenItsSourceIsKeptInScriptOrder() {
     var script =
         """
         A := SELECT 1;
@@ -102,14 +102,16 @@ class SqrlStatementParserTest {
 
     var parsed = parser.parseScript(script, ErrorCollector.root().withScript("test.sqrl", script));
 
-    assertThat(parsed.statements()).hasSize(2);
-    assertThat(parsed.unparsedStatements())
-        .singleElement()
-        .satisfies(
+    assertThat(parsed.statements())
+        .hasSize(3)
+        .element(1)
+        .isInstanceOfSatisfying(
+            UnparsedStatement.class,
             statement -> {
-              assertThat(statement.get()).startsWith("B := DISTINCT A ON id;");
-              assertThat(statement.getFileLocation()).isEqualTo(new FileLocation(2, 1));
+              assertThat(statement.source().get()).startsWith("B := DISTINCT A ON id;");
+              assertThat(statement.source().getFileLocation()).isEqualTo(new FileLocation(2, 1));
             });
+    assertThat(parsed.statements().get(2)).isInstanceOf(ParsedStatement.class);
     assertThat(parsed.firstError()).isPresent();
   }
 }

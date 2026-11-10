@@ -1,0 +1,8 @@
+IMPORT ecommerceTs.orders;
+
+-- Only the rest of the imported script is skipped, which has a catalog and database of its own
+IMPORT knockOnUse.separate;
+MistypedOrders := SELECT * FROM Ordrs;
+
+IMPORT knockOnUse.inline.*;
+SkippedOrders := SELECT * FROM Ordrs;

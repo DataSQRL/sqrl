@@ -1,0 +1,3 @@
+-- Fails, so the rest of this script is skipped
+USE CATALOG missing_catalog;
+SkippedInScript := SELECT * FROM MissingTable;

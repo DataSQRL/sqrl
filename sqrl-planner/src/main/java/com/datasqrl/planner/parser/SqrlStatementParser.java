@@ -118,13 +118,11 @@ public class SqrlStatementParser {
       Pattern.compile(NEXT_BATCH_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   /**
-   * The statements of a script that could be parsed, the source of those that could not, and the
-   * first error.
+   * The statements of a script in script order, those that failed to parse included, and the first
+   * error.
    */
   public record ParsedScript(
-      List<ParsedStatement> statements,
-      List<ParsedObject<String>> unparsedStatements,
-      Optional<CollectedException> firstError) {}
+      List<ScriptStatement> statements, Optional<CollectedException> firstError) {}
 
   /**
    * Main entry point for parsing a script. Statements that fail to parse are skipped and their
@@ -144,7 +142,8 @@ public class SqrlStatementParser {
     if (parsed.firstError().isPresent()) {
       throw parsed.firstError().get();
     }
-    return parsed.statements();
+    // Without an error, all statements were parsed
+    return parsed.statements().stream().map(ParsedStatement.class::cast).toList();
   }
 
   private ParsedScript parseScript(
@@ -156,27 +155,26 @@ public class SqrlStatementParser {
       throw scriptErrors.handle(e);
     }
 
-    var sqlStatements = new ArrayList<ParsedStatement>();
-    var unparsedStatements = new ArrayList<ParsedObject<String>>();
+    var scriptStatements = new ArrayList<ScriptStatement>();
     CollectedException firstError = null;
     for (ParsedObject<String> statement : statements) {
       try {
         var parsedStmt = parseStatement(statement.getObject());
         if (pred.test(parsedStmt)) {
-          sqlStatements.add(
+          scriptStatements.add(
               new ParsedStatement(
                   new ParsedObject<>(parsedStmt, statement.getFileLocation()), statement.get()));
         }
       } catch (StatementParserException e) {
         var error = scriptErrors.atFile(statement.getFileLocation()).getCatcher().handle(e);
-        unparsedStatements.add(statement);
+        scriptStatements.add(new UnparsedStatement(statement));
         if (firstError == null) {
           firstError = error;
         }
       }
     }
 
-    return new ParsedScript(sqlStatements, unparsedStatements, Optional.ofNullable(firstError));
+    return new ParsedScript(scriptStatements, Optional.ofNullable(firstError));
   }
 
   /**

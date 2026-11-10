@@ -1,0 +1,19 @@
+[FATAL] A catalog with name [missing_catalog] does not exist.
+in script:separate.sqrl [2:1]:
+-- Fails, so the rest of this script is skipped
+USE CATALOG missing_catalog;
+^
+
+[FATAL]  Object 'Ordrs' not found
+in script:knockOnUse-fail.sqrl [5:33]:
+-- Only the rest of the imported script is skipped, which has a catalog and database of its own
+IMPORT knockOnUse.separate;
+MistypedOrders := SELECT * FROM Ordrs;
+--------------------------------^
+
+[FATAL] A catalog with name [missing_catalog] does not exist.
+in script:inline.sqrl [2:1]:
+-- Fails, and the script is imported inline, so the rest of the importing script is skipped too
+USE CATALOG missing_catalog;
+^
+

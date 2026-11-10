@@ -81,6 +81,7 @@ import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.ParsedStatement;
 import com.datasqrl.planner.parser.SQLStatement;
+import com.datasqrl.planner.parser.ScriptStatement;
 import com.datasqrl.planner.parser.SqlScriptStatementSplitter;
 import com.datasqrl.planner.parser.SqrlAddColumnStatement;
 import com.datasqrl.planner.parser.SqrlCreateTableStatement;
@@ -96,6 +97,7 @@ import com.datasqrl.planner.parser.SqrlTableFunctionStatement;
 import com.datasqrl.planner.parser.SqrlTableFunctionStatement.ParsedArgument;
 import com.datasqrl.planner.parser.StackableStatement;
 import com.datasqrl.planner.parser.StatementParserException;
+import com.datasqrl.planner.parser.UnparsedStatement;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SqrlTableFunction;
@@ -107,9 +109,7 @@ import com.datasqrl.util.FunctionUtil;
 import com.google.common.base.Preconditions;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -118,6 +118,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.Getter;
@@ -162,9 +163,6 @@ public class SqlScriptPlanner {
 
   private final ErrorCollector errorCollector;
 
-  /** Tables that failed to plan, whose dependent statements are skipped */
-  private final FailedTables failedTables = new FailedTables();
-
   /** Used to assemble the full script with imports as a string */
   @Getter private final SqlScriptWriter completeScript;
 
@@ -192,7 +190,8 @@ public class SqlScriptPlanner {
     this.errorCollector = errorCollector;
     this.completeScript = new SqlScriptWriter();
     this.scriptContext =
-        new ScriptContext(moduleLoaders, FLINK_DEFAULT_DATABASE, true, Optional.empty());
+        new ScriptContext(
+            moduleLoaders, FLINK_DEFAULT_DATABASE, true, Optional.empty(), new FailedObjects());
     this.sqrlParser = sqrlParser;
     this.packageJson = packageJson;
     this.pipeline = pipeline;
@@ -240,100 +239,57 @@ public class SqlScriptPlanner {
 
     var scriptErrors = errorCollector.withScript(mainScript.getPath(), mainScript.getContent());
     var parsedScript = sqrlParser.parseScript(mainScript.getContent(), scriptErrors);
+    var failures = scriptContext.failures();
     List<StackableStatement> statementStack = new ArrayList<>();
-    // Statements that failed to parse are skipped, the rest are still planned to report all errors
-    CollectedException firstError = parsedScript.firstError().orElse(null);
-    var unparsedStatements = new ArrayDeque<>(parsedScript.unparsedStatements());
+    // A statement that fails to parse or plan is skipped and the rest are still planned, so that
+    // all errors are reported. The script fails with the first one after the loop
+    RuntimeException firstError = parsedScript.firstError().orElse(null);
 
-    for (ParsedStatement sourceStmt : parsedScript.statements()) {
+    for (ScriptStatement scriptStatement : parsedScript.statements()) {
+      if (scriptStatement instanceof UnparsedStatement unparsed) {
+        // Its error is already reported. Like a statement that failed to plan, it ends the
+        // statement stack, unless it adds a column
+        var objects = StatementObjects.ofUnparsed(unparsed.source().get());
+        failures.record(objects);
+        if (!objects.addsColumn()) {
+          statementStack = new ArrayList<>();
+        }
+        continue;
+      }
+      var sourceStmt = (ParsedStatement) scriptStatement;
       var statement = sourceStmt.statement();
       var lineErrors = scriptErrors.atFile(statement.getFileLocation());
       var sqlStatement = statement.get();
-      if (recordUnparsedStatements(unparsedStatements, statement.getFileLocation())) {
-        // A statement that failed to parse ends the stack, like one that failed to plan
-        statementStack = new ArrayList<>();
-      }
+      var objects = StatementObjects.of(sqlStatement, sqrlEnv::parseSQL);
 
-      if (failedTables.isContextFailed()
-          || failedTables.isDependent(
-              sqlStatement,
-              sourceStmt.source(),
-              failedTableNamespace(),
-              path -> isDefined(path, sqrlEnv))) {
-        // Its errors would only be knock-on errors of a failed table or USE statement, which is
+      if (failures.isContextFailed()
+          || failures.isDependent(objects, path -> isDefined(path, sqrlEnv))) {
+        // Its errors would only be knock-on errors of a failed object or USE statement, which is
         // already reported
-        failedTables.recordSkipped(sqlStatement, sourceStmt.source(), failedTableNamespace());
+        failures.record(objects);
         statementStack = stackAfterFailure(sqlStatement, statementStack);
         continue;
       }
-      var failuresBefore = failedTables.size();
-
+      var failuresBefore = failures.recordedFailures();
       try {
-        try {
-          planStatement(sqlStatement, statementStack, inheritedHints, sqrlEnv, lineErrors);
-
-        } catch (CollectedException e) {
-          // Already reported
-          throw e;
-
-        } catch (NoLocationStatementParserException e) {
-          FileLocation location;
-          if (sqlStatement instanceof SqrlStatement sqrlStmt) {
-            location = sqrlStmt.getDefaultLocation();
-          } else {
-            location = statement.getFileLocation();
-          }
-
-          throw lineErrors.handle(new StatementParserException(location, e));
-
-        } catch (Throwable e) {
-          if (e instanceof VirtualMachineError vmError) {
-            // E.g. out of memory, so stop planning instead of planning the remaining statements
-            throw vmError;
-          }
-          if (failedTables.isKnockOnError(e, failedTableNamespace())) {
-            // It uses a table, column or function that failed, whose error is already reported
-            failedTables.recordSkipped(sqlStatement, sourceStmt.source(), failedTableNamespace());
-            statementStack = stackAfterFailure(sqlStatement, statementStack);
-            continue;
-          }
-          // Map errors from the Flink parser/planner by adjusting the line numbers
-          var converted = ParsePosUtil.convertFlinkParserException(e);
-          if (converted.isPresent()) {
-            var msgLocation = converted.get();
-            scriptErrors
-                .atFile(
-                    statement
-                        .getFileLocation()
-                        .add(sqlStatement.mapSqlLocation(msgLocation.location())))
-                .fatal("%s", msgLocation.message());
-          }
-          if (e instanceof ValidationException) {
-            if (e.getCause() != null && e.getCause() != e) {
-              e = e.getCause();
-            }
-          }
-
-          // Print stack trace for unknown exceptions
-          if (e.getMessage() == null
-              || e instanceof IllegalStateException
-              || e instanceof NullPointerException) {
-            e.printStackTrace();
-          }
-          // Use registered error handlers
-          throw lineErrors.handle(e);
+        planStatement(sqlStatement, statementStack, inheritedHints, sqrlEnv, lineErrors);
+      } catch (Throwable e) {
+        if (e instanceof VirtualMachineError vmError) {
+          // E.g. out of memory, so stop planning instead of planning the remaining statements
+          throw vmError;
         }
-
-      } catch (CollectedException e) {
-        // The error is already in the collector: keep planning the remaining statements so that
-        // all errors are reported, and fail with the first one after the loop
-        failedTables.recordFailure(
-            sqlStatement,
-            sourceStmt.source(),
-            failedTables.size() > failuresBefore,
-            failedTableNamespace());
-        if (firstError == null) {
-          firstError = e;
+        if (!(e instanceof CollectedException) && failures.isKnockOnError(e)) {
+          // It uses an object that failed, whose error is already reported
+          failures.record(objects);
+        } else {
+          var error = reportStatementError(e, statement, lineErrors);
+          if (failures.recordedFailures() == failuresBefore) {
+            // Unless planning it recorded which of its objects failed, e.g. of an imported script
+            failures.record(objects);
+          }
+          if (firstError == null) {
+            firstError = error;
+          }
         }
         statementStack = stackAfterFailure(sqlStatement, statementStack);
         continue;
@@ -356,32 +312,68 @@ public class SqlScriptPlanner {
       }
     }
 
-    // Also the statements after the last parsed one, so that an importing script knows which of
-    // its objects failed instead of failing the whole import
-    recordUnparsedStatements(unparsedStatements, null);
-
     if (firstError != null) {
       throw firstError;
     }
   }
 
   /**
-   * Records the statements that failed to parse before the location, or all remaining ones when it
-   * is null, in the order of the script, so that the knock-on errors of the tables they define are
-   * not reported.
+   * Reports an error of planning a statement at its position in the script.
    *
-   * @return whether one of them is not a column, so that it ends the statement stack
+   * @param errors the errors at the location of the statement
+   * @return the reported error
    */
-  private boolean recordUnparsedStatements(
-      Deque<ParsedObject<String>> unparsedStatements, FileLocation location) {
-    var endsStack = false;
-    while (!unparsedStatements.isEmpty()
-        && (location == null || isBefore(unparsedStatements.peek().getFileLocation(), location))) {
-      if (!failedTables.recordUnparsed(unparsedStatements.poll().get(), failedTableNamespace())) {
-        endsStack = true;
-      }
+  private static RuntimeException reportStatementError(
+      Throwable e, ParsedObject<SQLStatement> statement, ErrorCollector errors) {
+    var sqlStatement = statement.get();
+    if (e instanceof NoLocationStatementParserException noLocation) {
+      var location =
+          sqlStatement instanceof SqrlStatement sqrlStmt
+              ? sqrlStmt.getDefaultLocation()
+              : statement.getFileLocation();
+      return errors.handle(new StatementParserException(location, noLocation));
     }
-    return endsStack;
+    return reportError(errors, e, sqlStatement::mapSqlLocation);
+  }
+
+  /**
+   * Reports an error at the location of the collector, e.g. a statement or a table that is defined
+   * in another file.
+   *
+   * @param mapSqlLocation maps the position of a Flink parser or validator error in the SQL to its
+   *     position relative to the location of the collector
+   * @return the reported error
+   */
+  private static RuntimeException reportError(
+      ErrorCollector errors, Throwable e, UnaryOperator<FileLocation> mapSqlLocation) {
+    if (e instanceof VirtualMachineError vmError) {
+      // E.g. out of memory, so stop planning instead of planning the remaining statements
+      throw vmError;
+    }
+    // Already reported, and it wraps the original error, which would be reported again below
+    if (e instanceof CollectedException collected) {
+      return collected;
+    }
+
+    var converted = ParsePosUtil.convertFlinkParserException(e);
+    if (converted.isPresent()) {
+      var location = errors.getLocation();
+      var base = location.hasFile() ? location.getFileLocation() : FileLocation.START;
+      return errors
+          .atFile(base.add(mapSqlLocation.apply(converted.get().location())))
+          .exception("%s", converted.get().message());
+    }
+    if (e instanceof ValidationException && e.getCause() != null) {
+      e = e.getCause();
+    }
+    // Print stack trace for unknown exceptions
+    if (e.getMessage() == null
+        || e instanceof IllegalStateException
+        || e instanceof NullPointerException) {
+      e.printStackTrace();
+    }
+    // Use registered error handlers
+    return errors.handle(e);
   }
 
   /** Whether a table, as written in a statement (e.g. {@code sources.Orders}), is defined */
@@ -390,11 +382,6 @@ public class SqlScriptPlanner {
     return identifier != null
         && (dagBuilder.getNode(identifier).isPresent()
             || sqrlEnv.getTableLookup().lookupSourceTable(identifier) != null);
-  }
-
-  private static boolean isBefore(FileLocation location, FileLocation other) {
-    return location.line() < other.line()
-        || (location.line() == other.line() && location.offset() < other.offset());
   }
 
   /**
@@ -999,19 +986,20 @@ public class SqlScriptPlanner {
       // For multiple imports, the alias serves as a prefix.
       Function<String, String> nameModifier =
           alias.isPresent() ? name -> alias.get() + name : Function.identity();
+      var failures = scriptContext.failures();
       RuntimeException firstError = null;
       for (var namespaceObject : module.getNamespaceObjects()) {
-        var failuresBefore = failedTables.size();
+        var failuresBefore = failures.recordedFailures();
         try {
           addImport(namespaceObject, nameModifier, hintsAndDoc, sqrlEnv);
         } catch (RuntimeException e) {
           // Import the other objects, so that the statements that use them are still planned
-          if (failedTables.size() == failuresBefore) {
-            failedTables.recordImported(
-                nameModifier.apply(namespaceObject.name().getDisplay()), failedTableNamespace());
+          if (failures.recordedFailures() == failuresBefore) {
+            failures.recordImported(nameModifier.apply(namespaceObject.name().getDisplay()));
           }
+          var error = reportError(errors, e, UnaryOperator.identity());
           if (firstError == null) {
-            firstError = e instanceof CollectedException ? e : errors.handle(e);
+            firstError = error;
           }
         }
       }
@@ -1072,7 +1060,7 @@ public class SqlScriptPlanner {
         addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());
       } catch (Throwable e) {
-        throw handleTableError(flinkTable.errorCollector, e);
+        throw reportError(flinkTable.errorCollector, e, UnaryOperator.identity());
       }
     } else if (nsObject instanceof FlinkUdfNsObject fnsObject) {
       Preconditions.checkArgument(
@@ -1102,15 +1090,10 @@ public class SqlScriptPlanner {
           hintsAndDoc.hints().isEmpty()
               ? Optional.<PlannerHints>empty()
               : Optional.of(hintsAndDoc.hints());
-      var contextFailed = failedTables.isContextFailed();
       try {
         planMain(script, hints, sqrlEnv);
       } finally {
         // Restore the context even on errors, since planning continues with the next statement
-        if (!scriptObject.isInline()) {
-          // The script used catalogs and databases of its own, unlike one that is imported inline
-          failedTables.restoreContextFailed(contextFailed);
-        }
         if (priorContext.hasDifferentDatabase(scriptContext)) {
           // Switch it back
           var stmts = sqrlEnv.setDatabase(priorContext.databaseName(), true);
@@ -1121,35 +1104,6 @@ public class SqlScriptPlanner {
     } else {
       throw new UnsupportedOperationException("Unexpected object imported: " + nsObject);
     }
-  }
-
-  /** The namespace of the tables of the script that is planned, null for the main script. */
-  private String failedTableNamespace() {
-    return scriptContext.isRootContext() ? null : scriptContext.databaseName();
-  }
-
-  /**
-   * Handles an error for a table that is defined in another file, mapping the position of Flink
-   * errors to the location of the table definition in that file.
-   */
-  private static RuntimeException handleTableError(ErrorCollector errors, Throwable e) {
-    if (e instanceof VirtualMachineError vmError) {
-      // E.g. out of memory, so stop planning instead of planning the remaining statements
-      throw vmError;
-    }
-    // Already reported, and it wraps the original error, which would be reported again below
-    if (e instanceof CollectedException collected) {
-      return collected;
-    }
-    var converted = ParsePosUtil.convertFlinkParserException(e);
-    if (converted.isEmpty()) {
-      return errors.handle(e);
-    }
-    var location = errors.getLocation();
-    var base = location.hasFile() ? location.getFileLocation() : FileLocation.START;
-    return errors
-        .atFile(base.add(converted.get().location()))
-        .exception("%s", converted.get().message());
   }
 
   private Optional<String> getStandaloneInclude(FlinkTable table) {
@@ -1360,7 +1314,7 @@ public class SqlScriptPlanner {
                 Optional.of(tableId),
                 addTableResult.tableAnalysis().getSourceSinkTable());
       } catch (Throwable e) {
-        throw handleTableError(flinkTable.errorCollector, e);
+        throw reportError(flinkTable.errorCollector, e, UnaryOperator.identity());
       }
       if (exportSchemaRef.get() != null) {
         FlinkTableBuilder tblBuilder = FlinkTableBuilder.toBuilder(addTableResult.createdTable());
@@ -1463,12 +1417,15 @@ public class SqlScriptPlanner {
    *     {@code false} for regular imports
    * @param standaloneInclude the namespace of the standalone included project the script belongs
    *     to, or empty if the project owns the script's tables
+   * @param failures the objects that failed, as seen from the script, whose knock-on errors are not
+   *     reported
    */
   private record ScriptContext(
       ModuleLoaders moduleLoaders,
       String databaseName,
       boolean isRootContext,
-      Optional<String> standaloneInclude) {
+      Optional<String> standaloneInclude,
+      FailedObjects failures) {
 
     ScriptContext fromImport(
         ModuleLoader moduleLoader, boolean inline, String databaseName, Optional<Path> scriptPath) {
@@ -1477,8 +1434,14 @@ public class SqlScriptPlanner {
       var standaloneInclude = scriptPath.flatMap(moduleLoaders::getStandaloneInclude);
 
       return inline
-          ? new ScriptContext(importLoaders, this.databaseName, isRootContext, standaloneInclude)
-          : new ScriptContext(importLoaders, databaseName, false, standaloneInclude);
+          ? new ScriptContext(
+              importLoaders, this.databaseName, isRootContext, standaloneInclude, failures)
+          : new ScriptContext(
+              importLoaders,
+              databaseName,
+              false,
+              standaloneInclude,
+              failures.forImportedScript(databaseName));
     }
 
     ModuleLoader mainModuleLoader() {
