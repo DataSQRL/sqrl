@@ -634,12 +634,7 @@ public class SqlScriptPlanner {
         var visibility = new AccessVisibility(access, hints.isTest(), true, isHidden);
 
         if (!shouldExcludeTestTable(hints)) {
-          addTableToDag(
-              sqrlEnv.addView(originalSql, hintsAndDocs, errors),
-              hintsAndDocs,
-              visibility,
-              false,
-              sqrlEnv);
+          addViewToDag(originalSql, hintsAndDocs, visibility, errors, sqrlEnv);
         }
       }
     } else if (stmt instanceof SqrlNextBatch) {
@@ -658,12 +653,7 @@ public class SqlScriptPlanner {
         // plan like other definitions from above
         var visibility =
             new AccessVisibility(adjustAccess(AccessModifier.QUERY), false, true, false);
-        addTableToDag(
-            sqrlEnv.addView(flinkStmt.sql().get(), hintsAndDocs, errors),
-            hintsAndDocs,
-            visibility,
-            false,
-            sqrlEnv);
+        addViewToDag(flinkStmt.sql().get(), hintsAndDocs, visibility, errors, sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv
             .createTable(
@@ -687,6 +677,29 @@ public class SqlScriptPlanner {
         // just pass through
         sqrlEnv.executeSQL(flinkStmt.sql().get());
       }
+    }
+  }
+
+  /**
+   * Adds a view to Flink and its table to the DAG. If the table fails before it is in the DAG, its
+   * view is removed again, so that the statements that use it fail as knock-on errors instead of
+   * being planned on a table that is not in the DAG.
+   */
+  private void addViewToDag(
+      String viewSql,
+      HintsAndDoc hintsAndDoc,
+      AccessVisibility visibility,
+      ErrorCollector errors,
+      Sqrl2FlinkSQLTranslator sqrlEnv) {
+    var tableAnalysis = sqrlEnv.addView(viewSql, hintsAndDoc, errors);
+    try {
+      addTableToDag(tableAnalysis, hintsAndDoc, visibility, false, sqrlEnv);
+    } catch (RuntimeException e) {
+      // Unlike a new table, a column replaces the view of a table that is in the DAG
+      if (dagBuilder.getNode(tableAnalysis.getIdentifier()).isEmpty()) {
+        sqrlEnv.removeFailedView(tableAnalysis.getObjectIdentifier(), e);
+      }
+      throw e;
     }
   }
 

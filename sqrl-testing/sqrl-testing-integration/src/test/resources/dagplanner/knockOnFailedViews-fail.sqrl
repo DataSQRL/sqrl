@@ -1,0 +1,12 @@
+IMPORT ecommerceTs.customer;
+IMPORT ecommerceTs.orders;
+
+-- Fails after its view is added to Flink, because the engine is unknown. The view is removed again,
+-- so the statements that use the table fail as knock-on errors, which are not reported
+/*+engine(postgress) */
+OrderCounts := SELECT customerid, COUNT(*) AS num FROM Orders GROUP BY customerid;
+BigOrderCounts := SELECT * FROM OrderCounts WHERE num > 1;
+
+-- Fails when its view is analyzed, and the same applies
+OrderCustomer := SELECT o.id, o.`time` AS createdAt, c.`timestamp` AS updatedAt FROM Orders o JOIN Customer c ON o.customerid = c.customerid;
+RecentOrderCustomers := SELECT * FROM OrderCustomer WHERE id > 10;
