@@ -202,6 +202,10 @@ AuthFilter(mySecretId BIGINT NOT NULL METADATA FROM 'auth.val') :=
   WHERE c.customerId = :mySecretId;
 ```
 
+The server reads a claim only from a token that it checks. A script that reads a claim needs an auth provider in `engines.vertx.config`. This applies to a function argument and to a mutation column. The provider is an `auth` block with at least one issuer (see [Authentication Configuration](configuration-engine/vertx.md#authentication-configuration)). The deprecated `jwtAuth`, or `oauthConfig` with `oauth2Options.site`, also gives a provider. Without a provider, the server checks no token. The compile then fails with the error `The script reads JWT claims (...), but engines.vertx.config has no auth provider.`
+
+The check covers every function and mutation that reads a claim, including those from an inline `IMPORT script.*`. It also covers a function that a custom GraphQL schema leaves out. To keep such a function out of the API without a provider, start its name with `_`, for example `_MyOrders`. A function whose name starts with `_` is not exposed. The `/*+no_query*/` hint does not help here, because it works only on tables.
+
 ### Relationship Definition
 
 ```

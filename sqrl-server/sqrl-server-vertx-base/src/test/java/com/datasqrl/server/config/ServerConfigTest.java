@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class ServerConfigTest {
 
@@ -206,5 +208,30 @@ class ServerConfigTest {
     assertThat(serverConfig.getCorsHandlerOptions().getAllowedMethods())
         .containsExactlyInAnyOrder("POST", "GET", "OPTIONS");
     assertThat(serverConfig.getCorsHandlerOptions().getAllowedHeaders()).containsExactly("*");
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @CsvSource(
+      delimiter = '|',
+      textBlock =
+          """
+          no auth config      | {}                                                                                      | false | false | false
+          auth                | {"auth": {"issuers": [{"issuer": "https://a/", "audiences": ["https://api/"]}]}}        | false | false | true
+          jwtAuth             | {"jwtAuth": {"pubSecKeys": [{"algorithm": "HS256", "buffer": "dGVzdA=="}]}}             | true  | false | true
+          oauthConfig         | {"oauthConfig": {"oauth2Options": {"site": "https://auth.example.com"}}}                | false | true  | true
+          oauthConfig no site | {"oauthConfig": {"oauth2Options": {}}}                                                  | false | false | false
+          """)
+  void given_authConfig_when_authProvidersChecked_then_matchesTheProvidersOfTheServer(
+      String caseName,
+      String configJson,
+      boolean expectedJwtAuthProvider,
+      boolean expectedOAuthProvider,
+      boolean expectedAuthProvider)
+      throws Exception {
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.readValue(configJson, Map.class));
+
+    assertThat(serverConfig.hasJwtAuthProvider()).isEqualTo(expectedJwtAuthProvider);
+    assertThat(serverConfig.hasOAuthProvider()).isEqualTo(expectedOAuthProvider);
+    assertThat(serverConfig.hasAuthProvider()).isEqualTo(expectedAuthProvider);
   }
 }

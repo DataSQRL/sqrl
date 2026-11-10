@@ -1,0 +1,2 @@
+[FATAL] The script reads JWT claims (ItemRequests.customer_id from 'auth.sub', MyOrders.customer_id from 'auth.sub'), but engines.vertx.config has no auth provider. Add an auth block with at least one issuer, so the server can check the token. The deprecated jwtAuth, or oauthConfig with oauth2Options.site, also gives a provider.
+

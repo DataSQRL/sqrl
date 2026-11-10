@@ -105,6 +105,8 @@ Configure custom headers per query using `.properties` file (same name as `.grap
 Authorization: Bearer XYZ
 ```
 
+A script that reads a claim (`METADATA FROM 'auth.<claim>'`) compiles only with an auth provider in `engines.vertx.config`. The test overlay needs it too. Put the `auth` block in the shared base, or add it to the `-test` overlay. If only the `-prod` overlay has it, the `test` command fails with `The script reads JWT claims (...)`.
+
 ## Test Configuration
 
 ```json

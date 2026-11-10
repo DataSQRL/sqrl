@@ -20,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.config.PackageJson.EmptyEngineConfig;
 import com.datasqrl.config.ServerConfigConverter;
+import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.server.config.ServerConfigUtil;
 import com.datasqrl.util.JsonUtils;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -33,7 +34,8 @@ import org.junit.jupiter.api.Test;
 class GenericJavaServerEngineTest {
 
   GenericJavaServerEngine underTest =
-      new GenericJavaServerEngine("", new EmptyEngineConfig(""), List.of(new DummyConverter())) {};
+      new GenericJavaServerEngine(
+          "", new EmptyEngineConfig(""), List.of(new DummyConverter()), ErrorCollector.root()) {};
 
   @Test
   void test() {

@@ -1,0 +1,20 @@
+{
+  "version": "1",
+  "script": {
+    "main": "claims.sqrl"
+  },
+  "compiler": {
+    "compile-flink-plan": false
+  },
+  "engines": {
+    "vertx": {
+      "config": {
+        "oauthConfig": {
+          "oauth2Options": {
+            "site": "https://auth.example.com/realms/test"
+          }
+        }
+      }
+    }
+  }
+}
