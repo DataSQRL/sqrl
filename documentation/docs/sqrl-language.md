@@ -489,7 +489,9 @@ The following produce compile time errors:
 * Argument list problems (missing type, unused arg, unknown type).
 * `DISTINCT` must reference existing columns; `ORDER BY` column(s) must be monotonically increasing.
 * Basetable inference failure for relationships (see [base tables](interface#base-tables)).
-* Invalid or malformed hints (unknown name, wrong delimiter).
+* Malformed hints (wrong delimiter, or other text in the hint block that is not a hint).
+
+An unknown hint name is not an error: the compiler prints the warning `Unrecognized hint: [<name>]` and ignores the hint, so a misspelled hint has no effect.
 
 ---
 

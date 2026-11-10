@@ -114,13 +114,16 @@ docker run --rm -v $PWD/<project-folder>:/workspace datasqrl/cmd add-func -h
 ```
 
 ```
-Usage: sqrl add-func [-hV] [--aggregate] <fnName>
+Usage: sqrl add-func [-hV] [--aggregate] [-r=<projectRoot>] <fnName>
 Adds a new function definition into the 'functions' folder of an existing
 project.
       <fnName>      Name of the function.
       --aggregate   Adds an aggregate function instead of the default scalar
                       one.
   -h, --help        Show this help message and exit.
+  -r, --project-root=<projectRoot>
+                    Project root folder. Must be a relative path. If omitted,
+                      it defaults to "/workspace".
   -V, --version     Print version information and exit.
 ```
 
@@ -137,6 +140,12 @@ docker run --rm -v $PWD:/workspace datasqrl/cmd compile my-project-test-package.
 
 This creates a new scalar function template in the `functions/` directory, which the `compile` command builds with JBang.
 Use `--aggregate` to create an aggregate function instead.
+
+To add a function without changing into the project folder, pass the project root with `-r`. It is relative to the mounted directory and must exist:
+
+```bash
+docker run --rm -v $PWD:/workspace datasqrl/cmd add-func -r my-project MyAwesomeFunction
+```
 
 The template is a [JBang UDF](functions#jbang-scripts) that already declares `//DEPS org.apache.flink:flink-table-common:<version>` with the Flink version of the CLI.
 Keep this line and declare additional dependencies with further `//DEPS` lines.

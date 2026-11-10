@@ -20,7 +20,7 @@ Always pass the base first and the overlay second. The CLI default (`package.jso
 
 | Option                        | Meaning                                                                                                   |
 |-------------------------------|-----------------------------------------------------------------------------------------------------------|
-| `-r, --project-root=<dir>`    | Project root, relative path. Inferred from the package paths if omitted. Use `-r .` from the project root. |
+| `-r, --project-root=<dir>`    | Project root, relative to `/workspace` and not to the current directory: `-r .` is `/workspace` itself. Package file paths are relative to the project root. Inferred from the package paths if omitted. |
 | `-b, --build=<dir>`           | Subfolder of `<project-root>/build` for build output, e.g. `-b fraud_store` for a sub-project.            |
 | `-t, --target=<dir>`          | Folder for deployment artifacts. Defaults to `<build-folder>/deploy`.                                     |
 | `-B, --batch-output`          | Disable colored output.                                                                                   |
@@ -29,7 +29,7 @@ Always pass the base first and the overlay second. The CLI default (`package.jso
 
 ### init
 
-Creates a new project in the `<name>/` folder with `<name>.sqrl`, `<name>-prod-package.json`, and `<name>-test-package.json`. `<type>` is `stream`, `dataset`, or `api`; `--batch` selects Flink batch mode. The production sources depend on the type: an internal Kafka table for `api` and `stream` (`stream` also exports its result to a Kafka topic), and an existing Iceberg table for `dataset`. See the `init-sqrl` skill.
+Creates a new project in the `/workspace/<name>/` folder with `<name>.sqrl`, `<name>-prod-package.json`, and `<name>-test-package.json`. It creates no `<name>-shared-package.json`: pass the generated package file alone until the project has a shared base. `<type>` is `stream`, `dataset`, or `api`; `--batch` selects Flink batch mode. The production sources depend on the type: an internal Kafka table for `api` and `stream` (`stream` also exports its result to a Kafka topic), and an existing Iceberg table for `dataset`. See the `init-sqrl` skill.
 
 ```bash
 /opt/agent/cmd.sh init api myproject
@@ -37,10 +37,10 @@ Creates a new project in the `<name>/` folder with `<name>.sqrl`, `<name>-prod-p
 
 ### add-func
 
-Adds a Java UDF template to the `functions/` folder of an existing project. `--aggregate` creates an aggregate function instead of a scalar one.
+Adds a Java UDF template to the `functions/` folder of an existing project. `-r` names the project root, relative to `/workspace`; without it the file goes to `/workspace/functions/`. `--aggregate` creates an aggregate function instead of a scalar one.
 
 ```bash
-/opt/agent/cmd.sh add-func MyFunction
+/opt/agent/cmd.sh add-func -r myproject MyFunction
 ```
 
 ### compile
@@ -48,7 +48,7 @@ Adds a Java UDF template to the `functions/` folder of an existing project. `--a
 Compiles the project and writes `build/pipeline_explain.txt`, `build/pipeline_visual.html`, and the deployment artifacts in `build/deploy` (plans in `build/deploy/plan`).
 
 ```bash
-/opt/agent/cmd.sh compile -r . myproject-shared-package.json myproject-prod-package.json
+/opt/agent/cmd.sh compile -r myproject myproject-shared-package.json myproject-prod-package.json
 ```
 
 ### test
@@ -56,7 +56,7 @@ Compiles the project and writes `build/pipeline_explain.txt`, `build/pipeline_vi
 Compiles and runs the pipeline in simulation, drains the Flink job, executes the GraphQL tests and `/*+ test */` tables, and compares the results against the snapshots. New tests create a snapshot; if no other test failed, the pipeline is reset and re-run in the same invocation to verify the new snapshots, and the test passes if the results match.
 
 ```bash
-/opt/agent/cmd.sh test -r . myproject-shared-package.json myproject-test-package.json
+/opt/agent/cmd.sh test -r myproject myproject-shared-package.json myproject-test-package.json
 ```
 
 ### run
@@ -64,7 +64,7 @@ Compiles and runs the pipeline in simulation, drains the Flink job, executes the
 Compiles and runs the pipeline with all engines locally. The API is served at `http://localhost:8888/v1/graphiql/`. `run` keeps running until it is terminated, so prefer `test` for verification.
 
 ```bash
-/opt/agent/cmd.sh run -r . myproject-shared-package.json myproject-prod-package.json
+/opt/agent/cmd.sh run -r myproject myproject-shared-package.json myproject-prod-package.json
 ```
 
 ### exec
@@ -72,7 +72,7 @@ Compiles and runs the pipeline with all engines locally. The API is served at `h
 Runs an already compiled project from its existing build artifacts without recompiling. It takes no package files.
 
 ```bash
-/opt/agent/cmd.sh exec -r .
+/opt/agent/cmd.sh exec -r myproject
 ```
 
 ## Sub-projects
@@ -88,9 +88,9 @@ When several sub-projects share a repository, give each its own build folder so 
 The user runs DataSQRL with the `datasqrl/cmd` Docker image, not `/opt/agent/cmd.sh`. When you give the user a command, use the `docker run` form below with the same CLI arguments you pass to `cmd.sh`. Both images run the CLI in `/workspace`, so the paths stay valid when the user runs the command from the directory they mounted as `/workspace` when starting the agent; tell them to run it from there.
 
 ```bash
-docker run --rm -v "$PWD":/workspace datasqrl/cmd:latest compile -r . myproject-shared-package.json myproject-prod-package.json
-docker run -it --rm -v "$PWD":/workspace datasqrl/cmd:latest test -r . myproject-shared-package.json myproject-test-package.json
-docker run -it --rm -p 8888:8888 -p 8081:8081 -v "$PWD":/workspace datasqrl/cmd:latest run -r . myproject-shared-package.json myproject-prod-package.json
+docker run --rm -v "$PWD":/workspace datasqrl/cmd:latest compile -r myproject myproject-shared-package.json myproject-prod-package.json
+docker run -it --rm -v "$PWD":/workspace datasqrl/cmd:latest test -r myproject myproject-shared-package.json myproject-test-package.json
+docker run -it --rm -p 8888:8888 -p 8081:8081 -v "$PWD":/workspace datasqrl/cmd:latest run -r myproject myproject-shared-package.json myproject-prod-package.json
 ```
 
-`init` and `add-func` take the `compile` options, and `exec` takes the `run` options. The port mappings of `run` and `exec` expose the API at `http://localhost:8888/v1/graphiql/` and the Flink UI at `http://localhost:8081/`; add `-p 9092:9092` when the user needs to reach Redpanda with Kafka tooling. The pipeline keeps running until the user stops it with `Ctrl-C`. In Windows PowerShell, mount the directory with `-v "${PWD}:/workspace"`.
+`init` and `add-func` take the Docker options of `compile`, and `exec` takes the `run` options. The port mappings of `run` and `exec` expose the API at `http://localhost:8888/v1/graphiql/` and the Flink UI at `http://localhost:8081/`; add `-p 9092:9092` when the user needs to reach Redpanda with Kafka tooling. The pipeline keeps running until the user stops it with `Ctrl-C`. In Windows PowerShell, mount the directory with `-v "${PWD}:/workspace"`.

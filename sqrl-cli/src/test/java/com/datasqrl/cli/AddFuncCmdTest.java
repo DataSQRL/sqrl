@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -169,5 +170,54 @@ class AddFuncCmdTest {
                     .matches(
                         "//DEPS org\\.apache\\.flink:flink-table-common:\\d+\\.\\d+\\.\\d+.*"));
     assertThat(String.join("\n", lines)).doesNotContain("__flinkversion__").doesNotContain("${");
+  }
+
+  @Test
+  void givenNoProjectRoot_whenGetTargetRoot_thenReturnsWorkspaceDir() {
+    // Given
+    addFuncCmd.cli = new DatasqrlCli(tempDir);
+
+    // When & Then
+    assertThat(addFuncCmd.getTargetRoot()).isEqualTo(tempDir);
+  }
+
+  @Test
+  void givenProjectRoot_whenAddUdf_thenCreatesFileInProjectFunctionsFolder() throws IOException {
+    // Given
+    var projectDir = Files.createDirectory(tempDir.resolve("my-project"));
+    addFuncCmd.cli = new DatasqrlCli(tempDir);
+    addFuncCmd.projectRoot = Optional.of(Path.of("my-project"));
+
+    // When
+    addFuncCmd.addUdf(addFuncCmd::getTargetRoot);
+
+    // Then
+    assertThat(projectDir.resolve("functions").resolve(UDF_NAME + ".java")).isRegularFile();
+    assertThat(tempDir.resolve("functions")).doesNotExist();
+  }
+
+  @Test
+  void givenMissingProjectRoot_whenGetTargetRoot_thenThrowsException() {
+    // Given
+    addFuncCmd.cli = new DatasqrlCli(tempDir);
+    addFuncCmd.projectRoot = Optional.of(Path.of("missing"));
+
+    // When & Then
+    assertThatThrownBy(addFuncCmd::getTargetRoot)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Project root does not exist");
+    assertThat(tempDir.resolve("missing")).doesNotExist();
+  }
+
+  @Test
+  void givenAbsoluteProjectRoot_whenGetTargetRoot_thenThrowsException() {
+    // Given
+    addFuncCmd.cli = new DatasqrlCli(tempDir);
+    addFuncCmd.projectRoot = Optional.of(tempDir.toAbsolutePath());
+
+    // When & Then
+    assertThatThrownBy(addFuncCmd::getTargetRoot)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must be a relative path");
   }
 }

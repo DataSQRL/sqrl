@@ -715,7 +715,9 @@ The following produce compile time errors:
 * `DISTINCT` must reference existing columns; `ORDER BY` column(s) must be monotonically increasing.
 * An `ORDER BY` column that does not also appear in the `SELECT` list — in any table definition, including `/*+test*/` tables (`All sort columns must be part of the SELECT clause`. The `/test-sqrl` skill shows how to sort by a column you do not want in the result).
 * Basetable inference failure for relationships.
-* Invalid or malformed hints (unknown name, wrong delimiter).
+* Malformed hints (wrong delimiter, or other text in the hint block that is not a hint).
+
+An unknown hint name is **not** an error: the compiler prints the warning `Unrecognized hint: [<name>]` and drops the hint, so a misspelled hint has no effect. Check the compile output for this warning after adding a hint.
 
 ## Additional pattern guides
 For additional patterns, read these guides:

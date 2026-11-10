@@ -22,6 +22,7 @@ import com.datasqrl.util.ResourceUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
@@ -52,13 +53,23 @@ public class AddFuncCmd extends BaseCmd {
       description = "Adds an aggregate function instead of the default scalar one.")
   boolean aggregate = false;
 
+  @Option(
+      names = {"-r", "--project-root"},
+      description =
+          "Project root folder. Must be a relative path. If omitted, it defaults to \"/workspace\".")
+  Optional<Path> projectRoot = Optional.empty();
+
   @Override
   protected void runInternal(ErrorCollector errors) {
     try {
-      addUdf(() -> cli.workspaceDir);
+      addUdf(this::getTargetRoot);
     } catch (Exception e) {
       throw errors.exception("Failed to add function '%s': %s", fnName, e);
     }
+  }
+
+  Path getTargetRoot() {
+    return projectRoot.map(this::getFullProjectRoot).orElse(cli.workspaceDir);
   }
 
   @SneakyThrows
