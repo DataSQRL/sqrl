@@ -20,7 +20,7 @@ import com.datasqrl.calcite.dialect.ExtendedSparkSqlDialect;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.relational.ddl.GenericCreateTableDdlFactory;
 import com.datasqrl.engine.database.relational.ddl.ViewIdentifierResolver;
-import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.index.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;

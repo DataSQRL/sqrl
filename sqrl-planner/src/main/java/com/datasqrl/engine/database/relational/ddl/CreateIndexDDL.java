@@ -15,7 +15,7 @@
  */
 package com.datasqrl.engine.database.relational.ddl;
 
-import com.datasqrl.plan.global.IndexType;
+import com.datasqrl.plan.index.IndexType;
 import com.datasqrl.sql.SqlDDLStatement;
 import com.google.common.base.Preconditions;
 import java.util.List;

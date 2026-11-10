@@ -19,6 +19,7 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.io.tables.TableType;
+import com.datasqrl.plan.index.IndexDefinition;
 import com.datasqrl.plan.rules.EngineCapability;
 import com.datasqrl.plan.util.RelWriterWithHints;
 import com.datasqrl.planner.analyzer.TableAnalysis;

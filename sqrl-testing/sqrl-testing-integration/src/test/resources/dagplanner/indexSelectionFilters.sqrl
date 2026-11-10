@@ -1,0 +1,64 @@
+/* Index selection for the filters of served queries. Each query reads its own tables, so that the
+   indexes of the queries don't interfere. The warnings are in indexSelectionFilterExpressions-warn.
+
+   Issue #2471: the filters inside a subquery in a WHERE clause take part in index selection. */
+
+CREATE TABLE OrdersExists (order_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OwnersExists (account_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersIn (order_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OwnersIn (account_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersNotExists (order_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OwnersNotExists (account_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersNotIn (order_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OwnersNotIn (account_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersOr (order_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OwnersOr (account_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersScalar (order_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OwnersScalar (account_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersLatest (order_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OwnersLatest (account_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+
+/* EXISTS and IN become semi joins: the database can look up the owners for an order, or the
+   orders for the owners of the account. OrdersExists and OrdersIn get an index on customer_id,
+   the owner tables a btree index on (account_id, customer_id). */
+ByAccountExists(accountId BIGINT NOT NULL) := SELECT * FROM OrdersExists c
+  WHERE EXISTS (SELECT 1 FROM OwnersExists o WHERE o.account_id = :accountId AND o.customer_id = c.customer_id);
+ByAccountIn(accountId BIGINT NOT NULL) := SELECT * FROM OrdersIn
+  WHERE customer_id IN (SELECT customer_id FROM OwnersIn WHERE account_id = :accountId);
+
+/* NOT EXISTS becomes an anti join that scans every order, NOT IN a subplan that the database
+   evaluates once: only the owner tables get an index. */
+ByAccountNotExists(accountId BIGINT NOT NULL) := SELECT * FROM OrdersNotExists c
+  WHERE NOT EXISTS (SELECT 1 FROM OwnersNotExists o WHERE o.account_id = :accountId AND o.customer_id = c.customer_id);
+ByAccountNotIn(accountId BIGINT NOT NULL) := SELECT * FROM OrdersNotIn
+  WHERE customer_id NOT IN (SELECT customer_id FROM OwnersNotIn WHERE account_id = :accountId);
+
+/* A subquery in a disjunction stays a subplan, so OrdersOr.customer_id gets no index. */
+ByAccountOrAgency(accountId BIGINT NOT NULL, agencyId BIGINT NOT NULL) := SELECT * FROM OrdersOr c
+  WHERE c.agency_id = :agencyId
+     OR EXISTS (SELECT 1 FROM OwnersOr o WHERE o.account_id = :accountId AND o.customer_id = c.customer_id);
+
+/* The database evaluates a correlated scalar subquery for each order, with the customer bound. */
+ByOwnerCount(accountId BIGINT NOT NULL, minOwners BIGINT NOT NULL) := SELECT * FROM OrdersScalar c
+  WHERE (SELECT COUNT(*) FROM OwnersScalar o WHERE o.account_id = :accountId AND o.customer_id = c.customer_id) >= :minOwners;
+
+/* The database evaluates an uncorrelated scalar subquery once, so it acts like a parameter. */
+ByLatestOwner(accountId BIGINT NOT NULL) := SELECT * FROM OrdersLatest
+  WHERE customer_id = (SELECT MAX(customer_id) FROM OwnersLatest WHERE account_id = :accountId);
+
+/* Issue #2472: only a column that stands alone in the comparison gets an index. OrdersArith gets
+   none, OrdersRewritten an index on agency_id. */
+CREATE TABLE OrdersArith (order_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersRewritten (order_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+
+ByAgencyArith(agency BIGINT NOT NULL) := SELECT * FROM OrdersArith WHERE agency_id + 1 = :agency;
+ByAgencyRewritten(agency BIGINT NOT NULL) := SELECT * FROM OrdersRewritten WHERE agency_id = :agency - 1;
+
+/* The expression in the join condition puts a projection between the WHERE filter and the join.
+   The filter still reaches OwnersShifted, which gets an index on account_id, and OrdersShifted
+   gets one on customer_id. */
+CREATE TABLE OrdersShifted (order_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OwnersShifted (account_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+
+ByAccountShifted(accountId BIGINT NOT NULL) := SELECT c.* FROM OwnersShifted o JOIN OrdersShifted c ON c.customer_id = o.customer_id + 1
+  WHERE o.account_id = :accountId;

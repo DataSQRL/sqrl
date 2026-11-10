@@ -20,7 +20,8 @@ import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.database.DatabasePhysicalPlan;
 import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.index.IndexDefinition;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.util.StreamUtil;
 import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.ArrayList;
@@ -31,7 +32,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Builder;
 import lombok.Singular;
-import org.apache.calcite.rel.RelNode;
 
 /**
  * @param queries Queries that are used for index selection
@@ -43,7 +43,7 @@ public record JdbcPhysicalPlan(
     ExecutionStage stage,
     @Singular List<JdbcStatement> statements,
     @Singular List<JdbcStatement> standaloneExtensionStatements,
-    @Singular List<RelNode> queries,
+    @Singular List<Query> queries,
     Map<String, CreateTableJdbcStatement> tableIdMap)
     implements DatabasePhysicalPlan {
 

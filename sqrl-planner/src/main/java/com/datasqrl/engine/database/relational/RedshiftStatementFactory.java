@@ -28,7 +28,7 @@ import com.datasqrl.engine.database.relational.ddl.GenericCreateTableDdlFactory;
 import com.datasqrl.engine.database.relational.ddl.GenericCreateViewDdlFactory;
 import com.datasqrl.engine.database.relational.ddl.RedshiftCreateViewDdlFactory;
 import com.datasqrl.engine.database.relational.ddl.ViewIdentifierResolver;
-import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.index.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;
 import java.util.List;
 import java.util.Map;

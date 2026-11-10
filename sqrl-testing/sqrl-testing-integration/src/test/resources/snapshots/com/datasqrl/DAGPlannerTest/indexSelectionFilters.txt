@@ -1,0 +1,4813 @@
+>>>pipeline_explain.txt
+=== ByAccountExists
+ID:          default_catalog.default_database.ByAccountExists
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.OrdersExists
+ - default_catalog.default_database.OwnersExists
+Annotations:
+ - parameters: accountId
+ - base-table: OrdersExists
+Plan:
+LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
+  LogicalFilter(condition=[EXISTS({
+LogicalFilter(condition=[AND(=($0, ?0), =($1, $cor0.customer_id))])
+  LogicalTableScan(table=[[default_catalog, default_database, OwnersExists]])
+})], variablesSet=[[$cor0]])
+    LogicalTableScan(table=[[default_catalog, default_database, OrdersExists]])
+SQL:
+CREATE VIEW `ByAccountExists` AS  SELECT * FROM OrdersExists c
+  WHERE EXISTS (SELECT 1 FROM OwnersExists o WHERE o.account_id = ?          AND o.customer_id = c.customer_id);
+
+=== ByAccountIn
+ID:          default_catalog.default_database.ByAccountIn
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.OrdersIn
+ - default_catalog.default_database.OwnersIn
+Annotations:
+ - parameters: accountId
+ - base-table: OrdersIn
+Plan:
+LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
+  LogicalFilter(condition=[IN($1, {
+LogicalProject(customer_id=[$1])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, OwnersIn]])
+})])
+    LogicalTableScan(table=[[default_catalog, default_database, OrdersIn]])
+SQL:
+CREATE VIEW `ByAccountIn` AS  SELECT * FROM OrdersIn
+  WHERE customer_id IN (SELECT customer_id FROM OwnersIn WHERE account_id = ?         );
+
+=== ByAccountNotExists
+ID:          default_catalog.default_database.ByAccountNotExists
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.OrdersNotExists
+ - default_catalog.default_database.OwnersNotExists
+Annotations:
+ - parameters: accountId
+ - base-table: OrdersNotExists
+Plan:
+LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
+  LogicalFilter(condition=[NOT(EXISTS({
+LogicalFilter(condition=[AND(=($0, ?0), =($1, $cor1.customer_id))])
+  LogicalTableScan(table=[[default_catalog, default_database, OwnersNotExists]])
+}))], variablesSet=[[$cor1]])
+    LogicalTableScan(table=[[default_catalog, default_database, OrdersNotExists]])
+SQL:
+CREATE VIEW `ByAccountNotExists` AS  SELECT * FROM OrdersNotExists c
+  WHERE NOT EXISTS (SELECT 1 FROM OwnersNotExists o WHERE o.account_id = ?          AND o.customer_id = c.customer_id);
+
+=== ByAccountNotIn
+ID:          default_catalog.default_database.ByAccountNotIn
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.OrdersNotIn
+ - default_catalog.default_database.OwnersNotIn
+Annotations:
+ - parameters: accountId
+ - base-table: OrdersNotIn
+Plan:
+LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
+  LogicalFilter(condition=[NOT(IN($1, {
+LogicalProject(customer_id=[$1])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, OwnersNotIn]])
+}))])
+    LogicalTableScan(table=[[default_catalog, default_database, OrdersNotIn]])
+SQL:
+CREATE VIEW `ByAccountNotIn` AS  SELECT * FROM OrdersNotIn
+  WHERE customer_id NOT IN (SELECT customer_id FROM OwnersNotIn WHERE account_id = ?         );
+
+=== ByAccountOrAgency
+ID:          default_catalog.default_database.ByAccountOrAgency
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.OrdersOr
+ - default_catalog.default_database.OwnersOr
+Annotations:
+ - parameters: accountId, agencyId
+ - base-table: OrdersOr
+Plan:
+LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
+  LogicalFilter(condition=[OR(=($2, ?1), EXISTS({
+LogicalFilter(condition=[AND(=($0, ?0), =($1, $cor2.customer_id))])
+  LogicalTableScan(table=[[default_catalog, default_database, OwnersOr]])
+}))], variablesSet=[[$cor2]])
+    LogicalTableScan(table=[[default_catalog, default_database, OrdersOr]])
+SQL:
+CREATE VIEW `ByAccountOrAgency` AS  SELECT * FROM OrdersOr c
+  WHERE c.agency_id = ?        
+     OR EXISTS (SELECT 1 FROM OwnersOr o WHERE o.account_id = ?          AND o.customer_id = c.customer_id);
+
+=== ByAccountShifted
+ID:          default_catalog.default_database.ByAccountShifted
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.OrdersShifted
+ - default_catalog.default_database.OwnersShifted
+Annotations:
+ - parameters: accountId
+ - base-table: OrdersShifted
+Plan:
+LogicalProject(order_id=[$3], customer_id=[$4], ts=[$5])
+  LogicalFilter(condition=[=($0, ?0)])
+    LogicalProject(account_id=[$0], customer_id=[$1], ts=[$2], order_id=[$4], customer_id0=[$5], ts0=[$6])
+      LogicalJoin(condition=[=($5, $3)], joinType=[inner])
+        LogicalProject(account_id=[$0], customer_id=[$1], ts=[$2], $f3=[+($1, 1)])
+          LogicalTableScan(table=[[default_catalog, default_database, OwnersShifted]])
+        LogicalTableScan(table=[[default_catalog, default_database, OrdersShifted]])
+SQL:
+CREATE VIEW `ByAccountShifted` AS  SELECT c.* FROM OwnersShifted o JOIN OrdersShifted c ON c.customer_id = o.customer_id + 1
+  WHERE o.account_id = ?         ;
+
+=== ByAgencyArith
+ID:          default_catalog.default_database.ByAgencyArith
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.OrdersArith
+Annotations:
+ - parameters: agency
+ - base-table: OrdersArith
+Plan:
+LogicalProject(order_id=[$0], agency_id=[$1], ts=[$2])
+  LogicalFilter(condition=[=(+($1, 1), ?0)])
+    LogicalTableScan(table=[[default_catalog, default_database, OrdersArith]])
+SQL:
+CREATE VIEW `ByAgencyArith` AS  SELECT * FROM OrdersArith WHERE agency_id + 1 = ?      ;
+
+=== ByAgencyRewritten
+ID:          default_catalog.default_database.ByAgencyRewritten
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.OrdersRewritten
+Annotations:
+ - parameters: agency
+ - base-table: OrdersRewritten
+Plan:
+LogicalProject(order_id=[$0], agency_id=[$1], ts=[$2])
+  LogicalFilter(condition=[=($1, CAST(-(?0, 1)):BIGINT)])
+    LogicalTableScan(table=[[default_catalog, default_database, OrdersRewritten]])
+SQL:
+CREATE VIEW `ByAgencyRewritten` AS  SELECT * FROM OrdersRewritten WHERE agency_id = ?       - 1;
+
+=== ByLatestOwner
+ID:          default_catalog.default_database.ByLatestOwner
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.OrdersLatest
+ - default_catalog.default_database.OwnersLatest
+Annotations:
+ - parameters: accountId
+ - base-table: OrdersLatest
+Plan:
+LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
+  LogicalFilter(condition=[=($1, $SCALAR_QUERY({
+LogicalAggregate(group=[{}], EXPR$0=[MAX($0)])
+  LogicalProject(customer_id=[$1])
+    LogicalFilter(condition=[=($0, ?0)])
+      LogicalTableScan(table=[[default_catalog, default_database, OwnersLatest]])
+}))])
+    LogicalTableScan(table=[[default_catalog, default_database, OrdersLatest]])
+SQL:
+CREATE VIEW `ByLatestOwner` AS  SELECT * FROM OrdersLatest
+  WHERE customer_id = (SELECT MAX(customer_id) FROM OwnersLatest WHERE account_id = ?         );
+
+=== ByOwnerCount
+ID:          default_catalog.default_database.ByOwnerCount
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.OrdersScalar
+ - default_catalog.default_database.OwnersScalar
+Annotations:
+ - parameters: accountId, minOwners
+ - base-table: OrdersScalar
+Plan:
+LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
+  LogicalFilter(condition=[>=($SCALAR_QUERY({
+LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
+  LogicalFilter(condition=[AND(=($0, ?0), =($1, $cor3.customer_id))])
+    LogicalTableScan(table=[[default_catalog, default_database, OwnersScalar]])
+}), ?1)], variablesSet=[[$cor3]])
+    LogicalTableScan(table=[[default_catalog, default_database, OrdersScalar]])
+SQL:
+CREATE VIEW `ByOwnerCount` AS  SELECT * FROM OrdersScalar c
+  WHERE (SELECT COUNT(*) FROM OwnersScalar o WHERE o.account_id = ?          AND o.customer_id = c.customer_id) >= ?         ;
+
+=== OrdersArith
+ID:          default_catalog.default_database.OrdersArith
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - agency_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersArith__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, OrdersArith]])
+SQL:
+CREATE TABLE `OrdersArith` (
+  `order_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OrdersArith_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== OrdersExists
+ID:          default_catalog.default_database.OrdersExists
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - agency_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersExists__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, OrdersExists]])
+SQL:
+CREATE TABLE `OrdersExists` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OrdersExists_2 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OrdersExists_2_hash_c1 (hash): customer_id
+
+=== OrdersIn
+ID:          default_catalog.default_database.OrdersIn
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - agency_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersIn__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, OrdersIn]])
+SQL:
+CREATE TABLE `OrdersIn` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OrdersIn_3 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OrdersIn_3_hash_c1 (hash): customer_id
+
+=== OrdersLatest
+ID:          default_catalog.default_database.OrdersLatest
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - agency_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersLatest__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, OrdersLatest]])
+SQL:
+CREATE TABLE `OrdersLatest` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OrdersLatest_4 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OrdersLatest_4_hash_c1 (hash): customer_id
+
+=== OrdersNotExists
+ID:          default_catalog.default_database.OrdersNotExists
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - agency_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersNotExists__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, OrdersNotExists]])
+SQL:
+CREATE TABLE `OrdersNotExists` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OrdersNotExists_5 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== OrdersNotIn
+ID:          default_catalog.default_database.OrdersNotIn
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - agency_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersNotIn__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, OrdersNotIn]])
+SQL:
+CREATE TABLE `OrdersNotIn` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OrdersNotIn_6 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== OrdersOr
+ID:          default_catalog.default_database.OrdersOr
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - agency_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersOr__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, OrdersOr]])
+SQL:
+CREATE TABLE `OrdersOr` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OrdersOr_7 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OrdersOr_7_hash_c2 (hash): agency_id
+
+=== OrdersRewritten
+ID:          default_catalog.default_database.OrdersRewritten
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - agency_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersRewritten__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, OrdersRewritten]])
+SQL:
+CREATE TABLE `OrdersRewritten` (
+  `order_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OrdersRewritten_8 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OrdersRewritten_8_hash_c1 (hash): agency_id
+
+=== OrdersScalar
+ID:          default_catalog.default_database.OrdersScalar
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - agency_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersScalar__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, OrdersScalar]])
+SQL:
+CREATE TABLE `OrdersScalar` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OrdersScalar_9 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== OrdersShifted
+ID:          default_catalog.default_database.OrdersShifted
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrdersShifted__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, OrdersShifted]])
+SQL:
+CREATE TABLE `OrdersShifted` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OrdersShifted_10 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OrdersShifted_10_hash_c1 (hash): customer_id
+
+=== OwnersExists
+ID:          default_catalog.default_database.OwnersExists
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - account_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OwnersExists__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, OwnersExists]])
+SQL:
+CREATE TABLE `OwnersExists` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OwnersExists_11 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OwnersExists_11_btree_c0c1 (btree): account_id, customer_id
+
+=== OwnersIn
+ID:          default_catalog.default_database.OwnersIn
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - account_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OwnersIn__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, OwnersIn]])
+SQL:
+CREATE TABLE `OwnersIn` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OwnersIn_12 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OwnersIn_12_btree_c0c1 (btree): account_id, customer_id
+
+=== OwnersLatest
+ID:          default_catalog.default_database.OwnersLatest
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - account_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OwnersLatest__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, OwnersLatest]])
+SQL:
+CREATE TABLE `OwnersLatest` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OwnersLatest_13 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OwnersLatest_13_hash_c0 (hash): account_id
+
+=== OwnersNotExists
+ID:          default_catalog.default_database.OwnersNotExists
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - account_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OwnersNotExists__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, OwnersNotExists]])
+SQL:
+CREATE TABLE `OwnersNotExists` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OwnersNotExists_14 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OwnersNotExists_14_btree_c0c1 (btree): account_id, customer_id
+
+=== OwnersNotIn
+ID:          default_catalog.default_database.OwnersNotIn
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - account_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OwnersNotIn__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, OwnersNotIn]])
+SQL:
+CREATE TABLE `OwnersNotIn` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OwnersNotIn_15 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OwnersNotIn_15_hash_c0 (hash): account_id
+
+=== OwnersOr
+ID:          default_catalog.default_database.OwnersOr
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - account_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OwnersOr__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, OwnersOr]])
+SQL:
+CREATE TABLE `OwnersOr` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OwnersOr_16 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OwnersOr_16_btree_c0c1 (btree): account_id, customer_id
+
+=== OwnersScalar
+ID:          default_catalog.default_database.OwnersScalar
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - account_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OwnersScalar__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, OwnersScalar]])
+SQL:
+CREATE TABLE `OwnersScalar` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OwnersScalar_17 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OwnersScalar_17_btree_c0c1 (btree): account_id, customer_id
+
+=== OwnersShifted
+ID:          default_catalog.default_database.OwnersShifted
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - account_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OwnersShifted__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, OwnersShifted]])
+SQL:
+CREATE TABLE `OwnersShifted` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table OwnersShifted_18 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index OwnersShifted_18_hash_c0 (hash): account_id
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `OrdersExists` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OwnersExists` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OrdersIn` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OwnersIn` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OrdersNotExists` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OwnersNotExists` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OrdersNotIn` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OwnersNotIn` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OrdersOr` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OwnersOr` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OrdersScalar` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OwnersScalar` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OrdersLatest` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OwnersLatest` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OrdersArith` (
+  `order_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OrdersRewritten` (
+  `order_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OrdersShifted` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OwnersShifted` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `OrdersArith_1` (
+  `order_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrdersArith_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrdersExists_2` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrdersExists_2',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrdersIn_3` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrdersIn_3',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrdersLatest_4` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrdersLatest_4',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrdersNotExists_5` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrdersNotExists_5',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrdersNotIn_6` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrdersNotIn_6',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrdersOr_7` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrdersOr_7',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrdersRewritten_8` (
+  `order_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrdersRewritten_8',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrdersScalar_9` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrdersScalar_9',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrdersShifted_10` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrdersShifted_10',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OwnersExists_11` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OwnersExists_11',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OwnersIn_12` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OwnersIn_12',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OwnersLatest_13` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OwnersLatest_13',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OwnersNotExists_14` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OwnersNotExists_14',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OwnersNotIn_15` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OwnersNotIn_15',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OwnersOr_16` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OwnersOr_16',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OwnersScalar_17` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OwnersScalar_17',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OwnersShifted_18` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OwnersShifted_18',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`OrdersArith_1`
+SELECT `order_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `agency_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrdersArith`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrdersExists_2`
+SELECT `order_id`, `customer_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `agency_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrdersExists`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrdersIn_3`
+SELECT `order_id`, `customer_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `agency_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrdersIn`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrdersLatest_4`
+SELECT `order_id`, `customer_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `agency_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrdersLatest`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrdersNotExists_5`
+SELECT `order_id`, `customer_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `agency_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrdersNotExists`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrdersNotIn_6`
+SELECT `order_id`, `customer_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `agency_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrdersNotIn`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrdersOr_7`
+SELECT `order_id`, `customer_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `agency_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrdersOr`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrdersRewritten_8`
+SELECT `order_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `agency_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrdersRewritten`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrdersScalar_9`
+SELECT `order_id`, `customer_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `agency_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrdersScalar`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrdersShifted_10`
+SELECT `order_id`, `customer_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrdersShifted`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OwnersExists_11`
+SELECT `account_id`, `customer_id`, `ts`, `hash_key`(`account_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OwnersExists`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OwnersIn_12`
+SELECT `account_id`, `customer_id`, `ts`, `hash_key`(`account_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OwnersIn`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OwnersLatest_13`
+SELECT `account_id`, `customer_id`, `ts`, `hash_key`(`account_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OwnersLatest`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OwnersNotExists_14`
+SELECT `account_id`, `customer_id`, `ts`, `hash_key`(`account_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OwnersNotExists`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OwnersNotIn_15`
+SELECT `account_id`, `customer_id`, `ts`, `hash_key`(`account_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OwnersNotIn`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OwnersOr_16`
+SELECT `account_id`, `customer_id`, `ts`, `hash_key`(`account_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OwnersOr`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OwnersScalar_17`
+SELECT `account_id`, `customer_id`, `ts`, `hash_key`(`account_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OwnersScalar`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OwnersShifted_18`
+SELECT `account_id`, `customer_id`, `ts`, `hash_key`(`account_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OwnersShifted`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "OrdersArith_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersArith_1\" (\"order_id\" BIGINT NOT NULL, \"agency_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OrdersArith",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OrdersExists_2",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersExists_2\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"agency_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OrdersExists",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OrdersIn_3",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersIn_3\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"agency_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OrdersIn",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OrdersLatest_4",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersLatest_4\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"agency_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OrdersLatest",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OrdersNotExists_5",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersNotExists_5\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"agency_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OrdersNotExists",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OrdersNotIn_6",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersNotIn_6\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"agency_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OrdersNotIn",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OrdersOr_7",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersOr_7\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"agency_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OrdersOr",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OrdersRewritten_8",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersRewritten_8\" (\"order_id\" BIGINT NOT NULL, \"agency_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OrdersRewritten",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OrdersScalar_9",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersScalar_9\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"agency_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OrdersScalar",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OrdersShifted_10",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OrdersShifted_10\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OrdersShifted",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OwnersExists_11",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OwnersExists_11\" (\"account_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OwnersExists",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OwnersIn_12",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OwnersIn_12\" (\"account_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OwnersIn",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OwnersLatest_13",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OwnersLatest_13\" (\"account_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OwnersLatest",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OwnersNotExists_14",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OwnersNotExists_14\" (\"account_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OwnersNotExists",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OwnersNotIn_15",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OwnersNotIn_15\" (\"account_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OwnersNotIn",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OwnersOr_16",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OwnersOr_16\" (\"account_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OwnersOr",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OwnersScalar_17",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OwnersScalar_17\" (\"account_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OwnersScalar",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OwnersShifted_18",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"OwnersShifted_18\" (\"account_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "OwnersShifted",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "OrdersArith",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersArith\"(\"order_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"agency_id\", \"ts\"\nFROM \"OrdersArith_1\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OrdersArith_1"
+      ]
+    },
+    {
+      "name" : "OrdersExists",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersExists\"(\"order_id\", \"customer_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersExists_2\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OrdersExists_2"
+      ]
+    },
+    {
+      "name" : "OrdersIn",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersIn\"(\"order_id\", \"customer_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersIn_3\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OrdersIn_3"
+      ]
+    },
+    {
+      "name" : "OrdersLatest",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersLatest\"(\"order_id\", \"customer_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersLatest_4\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OrdersLatest_4"
+      ]
+    },
+    {
+      "name" : "OrdersNotExists",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersNotExists\"(\"order_id\", \"customer_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersNotExists_5\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OrdersNotExists_5"
+      ]
+    },
+    {
+      "name" : "OrdersNotIn",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersNotIn\"(\"order_id\", \"customer_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersNotIn_6\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OrdersNotIn_6"
+      ]
+    },
+    {
+      "name" : "OrdersOr",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersOr\"(\"order_id\", \"customer_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersOr_7\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OrdersOr_7"
+      ]
+    },
+    {
+      "name" : "OrdersRewritten",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersRewritten\"(\"order_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"agency_id\", \"ts\"\nFROM \"OrdersRewritten_8\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OrdersRewritten_8"
+      ]
+    },
+    {
+      "name" : "OrdersScalar",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersScalar\"(\"order_id\", \"customer_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersScalar_9\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OrdersScalar_9"
+      ]
+    },
+    {
+      "name" : "OrdersShifted",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OrdersShifted\"(\"order_id\", \"customer_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"ts\"\nFROM \"OrdersShifted_10\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OrdersShifted_10"
+      ]
+    },
+    {
+      "name" : "OwnersExists",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OwnersExists\"(\"account_id\", \"customer_id\", \"ts\") AS SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersExists_11\"",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OwnersExists_11"
+      ]
+    },
+    {
+      "name" : "OwnersIn",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OwnersIn\"(\"account_id\", \"customer_id\", \"ts\") AS SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersIn_12\"",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OwnersIn_12"
+      ]
+    },
+    {
+      "name" : "OwnersLatest",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OwnersLatest\"(\"account_id\", \"customer_id\", \"ts\") AS SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersLatest_13\"",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OwnersLatest_13"
+      ]
+    },
+    {
+      "name" : "OwnersNotExists",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OwnersNotExists\"(\"account_id\", \"customer_id\", \"ts\") AS SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersNotExists_14\"",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OwnersNotExists_14"
+      ]
+    },
+    {
+      "name" : "OwnersNotIn",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OwnersNotIn\"(\"account_id\", \"customer_id\", \"ts\") AS SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersNotIn_15\"",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OwnersNotIn_15"
+      ]
+    },
+    {
+      "name" : "OwnersOr",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OwnersOr\"(\"account_id\", \"customer_id\", \"ts\") AS SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersOr_16\"",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OwnersOr_16"
+      ]
+    },
+    {
+      "name" : "OwnersScalar",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OwnersScalar\"(\"account_id\", \"customer_id\", \"ts\") AS SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersScalar_17\"",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OwnersScalar_17"
+      ]
+    },
+    {
+      "name" : "OwnersShifted",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"OwnersShifted\"(\"account_id\", \"customer_id\", \"ts\") AS SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersShifted_18\"",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "OwnersShifted_18"
+      ]
+    },
+    {
+      "name" : "OrdersExists_2_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OrdersExists_2_hash_c1\" ON \"OrdersExists_2\" USING hash (\"customer_id\")"
+    },
+    {
+      "name" : "OrdersIn_3_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OrdersIn_3_hash_c1\" ON \"OrdersIn_3\" USING hash (\"customer_id\")"
+    },
+    {
+      "name" : "OrdersLatest_4_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OrdersLatest_4_hash_c1\" ON \"OrdersLatest_4\" USING hash (\"customer_id\")"
+    },
+    {
+      "name" : "OrdersOr_7_hash_c2",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OrdersOr_7_hash_c2\" ON \"OrdersOr_7\" USING hash (\"agency_id\")"
+    },
+    {
+      "name" : "OrdersRewritten_8_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OrdersRewritten_8_hash_c1\" ON \"OrdersRewritten_8\" USING hash (\"agency_id\")"
+    },
+    {
+      "name" : "OrdersShifted_10_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OrdersShifted_10_hash_c1\" ON \"OrdersShifted_10\" USING hash (\"customer_id\")"
+    },
+    {
+      "name" : "OwnersExists_11_btree_c0c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OwnersExists_11_btree_c0c1\" ON \"OwnersExists_11\" USING btree (\"account_id\",\"customer_id\")"
+    },
+    {
+      "name" : "OwnersIn_12_btree_c0c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OwnersIn_12_btree_c0c1\" ON \"OwnersIn_12\" USING btree (\"account_id\",\"customer_id\")"
+    },
+    {
+      "name" : "OwnersLatest_13_hash_c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OwnersLatest_13_hash_c0\" ON \"OwnersLatest_13\" USING hash (\"account_id\")"
+    },
+    {
+      "name" : "OwnersNotExists_14_btree_c0c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OwnersNotExists_14_btree_c0c1\" ON \"OwnersNotExists_14\" USING btree (\"account_id\",\"customer_id\")"
+    },
+    {
+      "name" : "OwnersNotIn_15_hash_c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OwnersNotIn_15_hash_c0\" ON \"OwnersNotIn_15\" USING hash (\"account_id\")"
+    },
+    {
+      "name" : "OwnersOr_16_btree_c0c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OwnersOr_16_btree_c0c1\" ON \"OwnersOr_16\" USING btree (\"account_id\",\"customer_id\")"
+    },
+    {
+      "name" : "OwnersScalar_17_btree_c0c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OwnersScalar_17_btree_c0c1\" ON \"OwnersScalar_17\" USING btree (\"account_id\",\"customer_id\")"
+    },
+    {
+      "name" : "OwnersShifted_18_hash_c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"OwnersShifted_18_hash_c0\" ON \"OwnersShifted_18\" USING hash (\"account_id\")"
+    }
+  ],
+  "standaloneExtensionStatements" : [ ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersArith",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"agency_id\", \"ts\"\nFROM \"OrdersArith_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersExists",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersExists_2\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersIn",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersIn_3\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersLatest",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersLatest_4\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersNotExists",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersNotExists_5\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersNotIn",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersNotIn_6\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersOr",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersOr_7\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersRewritten",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"agency_id\", \"ts\"\nFROM \"OrdersRewritten_8\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersScalar",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"OrdersScalar_9\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersShifted",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"ts\"\nFROM \"OrdersShifted_10\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OwnersExists",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersExists_11\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OwnersIn",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersIn_12\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OwnersLatest",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersLatest_13\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OwnersNotExists",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersNotExists_14\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OwnersNotIn",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersNotIn_15\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OwnersOr",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersOr_16\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OwnersScalar",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersScalar_17\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OwnersShifted",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"OwnersShifted_18\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByAccountExists",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "accountId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\n  FROM \"OrdersExists_2\") AS \"t\"\nWHERE EXISTS (SELECT *\n  FROM (SELECT \"account_id\", \"customer_id\", \"ts\"\n    FROM \"OwnersExists_11\") AS \"t0\"\n  WHERE \"account_id\" = $1 AND \"customer_id\" = \"t\".\"customer_id\")",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "accountId",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByAccountIn",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "accountId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\n  FROM \"OrdersIn_3\") AS \"t\"\nWHERE \"customer_id\" IN (SELECT \"customer_id\"\n   FROM (SELECT \"account_id\", \"customer_id\", \"ts\"\n     FROM \"OwnersIn_12\") AS \"t0\"\n   WHERE \"account_id\" = $1)",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "accountId",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByAccountNotExists",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "accountId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\n  FROM \"OrdersNotExists_5\") AS \"t\"\nWHERE NOT EXISTS (SELECT *\n  FROM (SELECT \"account_id\", \"customer_id\", \"ts\"\n    FROM \"OwnersNotExists_14\") AS \"t0\"\n  WHERE \"account_id\" = $1 AND \"customer_id\" = \"t\".\"customer_id\")",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "accountId",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByAccountNotIn",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "accountId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\n  FROM \"OrdersNotIn_6\") AS \"t\"\nWHERE \"customer_id\" NOT IN (SELECT \"customer_id\"\n   FROM (SELECT \"account_id\", \"customer_id\", \"ts\"\n     FROM \"OwnersNotIn_15\") AS \"t0\"\n   WHERE \"account_id\" = $1)",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "accountId",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByAccountOrAgency",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "agencyId"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "accountId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\n  FROM \"OrdersOr_7\") AS \"t\"\nWHERE \"agency_id\" = $2 OR EXISTS (SELECT *\n  FROM (SELECT \"account_id\", \"customer_id\", \"ts\"\n    FROM \"OwnersOr_16\") AS \"t0\"\n  WHERE \"account_id\" = $1 AND \"customer_id\" = \"t\".\"customer_id\")",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "accountId",
+                  "sqlType" : "BIGINT"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "agencyId",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByAccountShifted",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "accountId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id0\" AS \"customer_id\", \"ts0\" AS \"ts\"\nFROM (SELECT \"t0\".\"account_id\", \"t0\".\"customer_id\", \"t0\".\"ts\", \"t1\".\"order_id\", \"t1\".\"customer_id\" AS \"customer_id0\", \"t1\".\"ts\" AS \"ts0\"\n  FROM (SELECT \"account_id\", \"customer_id\", \"ts\", \"customer_id\" + 1 AS \"$f3\"\n    FROM \"OwnersShifted_18\") AS \"t0\"\n   INNER JOIN (SELECT \"order_id\", \"customer_id\", \"ts\"\n    FROM \"OrdersShifted_10\") AS \"t1\" ON \"t0\".\"$f3\" = \"t1\".\"customer_id\") AS \"t2\"\nWHERE \"t2\".\"account_id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "accountId",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByAgencyArith",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "agency"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"agency_id\", \"ts\"\n  FROM \"OrdersArith_1\") AS \"t\"\nWHERE \"agency_id\" + 1 = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "agency",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByAgencyRewritten",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "agency"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"agency_id\", \"ts\"\n  FROM \"OrdersRewritten_8\") AS \"t\"\nWHERE \"agency_id\" = CAST($1 - 1 AS BIGINT)",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "agency",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByLatestOwner",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "accountId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\n  FROM \"OrdersLatest_4\") AS \"t\"\nWHERE \"customer_id\" = (((SELECT MAX(\"customer_id\")\n     FROM (SELECT \"account_id\", \"customer_id\", \"ts\"\n       FROM \"OwnersLatest_13\") AS \"t0\"\n     WHERE \"account_id\" = $1)))",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "accountId",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByOwnerCount",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "minOwners"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "accountId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\n  FROM \"OrdersScalar_9\") AS \"t\"\nWHERE (((SELECT COUNT(*)\n     FROM (SELECT \"account_id\", \"customer_id\", \"ts\"\n       FROM \"OwnersScalar_17\") AS \"t0\"\n     WHERE \"account_id\" = $1 AND \"customer_id\" = \"t\".\"customer_id\"))) >= $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "accountId",
+                  "sqlType" : "BIGINT"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "minOwners",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetOrdersArith",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersArith($limit: Int = 10, $offset: Int = 0) {\nOrdersArith(limit: $limit, offset: $offset) {\norder_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "OrdersArith",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersArith{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersExists",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersExists($limit: Int = 10, $offset: Int = 0) {\nOrdersExists(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "OrdersExists",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersExists{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersIn",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersIn($limit: Int = 10, $offset: Int = 0) {\nOrdersIn(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "OrdersIn",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersIn{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersLatest",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersLatest($limit: Int = 10, $offset: Int = 0) {\nOrdersLatest(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "OrdersLatest",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersLatest{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersNotExists",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersNotExists($limit: Int = 10, $offset: Int = 0) {\nOrdersNotExists(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "OrdersNotExists",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersNotExists{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersNotIn",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersNotIn($limit: Int = 10, $offset: Int = 0) {\nOrdersNotIn(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "OrdersNotIn",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersNotIn{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersOr",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersOr($limit: Int = 10, $offset: Int = 0) {\nOrdersOr(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "OrdersOr",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersOr{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersRewritten",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersRewritten($limit: Int = 10, $offset: Int = 0) {\nOrdersRewritten(limit: $limit, offset: $offset) {\norder_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "OrdersRewritten",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersRewritten{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersScalar",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersScalar($limit: Int = 10, $offset: Int = 0) {\nOrdersScalar(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "OrdersScalar",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersScalar{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersShifted",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersShifted($limit: Int = 10, $offset: Int = 0) {\nOrdersShifted(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "OrdersShifted",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersShifted{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOwnersExists",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OwnersExists($limit: Int = 10, $offset: Int = 0) {\nOwnersExists(limit: $limit, offset: $offset) {\naccount_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "OwnersExists",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OwnersExists{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "account_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOwnersIn",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OwnersIn($limit: Int = 10, $offset: Int = 0) {\nOwnersIn(limit: $limit, offset: $offset) {\naccount_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "OwnersIn",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OwnersIn{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "account_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOwnersLatest",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OwnersLatest($limit: Int = 10, $offset: Int = 0) {\nOwnersLatest(limit: $limit, offset: $offset) {\naccount_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "OwnersLatest",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OwnersLatest{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "account_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOwnersNotExists",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OwnersNotExists($limit: Int = 10, $offset: Int = 0) {\nOwnersNotExists(limit: $limit, offset: $offset) {\naccount_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "OwnersNotExists",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OwnersNotExists{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "account_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOwnersNotIn",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OwnersNotIn($limit: Int = 10, $offset: Int = 0) {\nOwnersNotIn(limit: $limit, offset: $offset) {\naccount_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "OwnersNotIn",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OwnersNotIn{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "account_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOwnersOr",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OwnersOr($limit: Int = 10, $offset: Int = 0) {\nOwnersOr(limit: $limit, offset: $offset) {\naccount_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "OwnersOr",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OwnersOr{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "account_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOwnersScalar",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OwnersScalar($limit: Int = 10, $offset: Int = 0) {\nOwnersScalar(limit: $limit, offset: $offset) {\naccount_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "OwnersScalar",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OwnersScalar{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "account_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOwnersShifted",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OwnersShifted($limit: Int = 10, $offset: Int = 0) {\nOwnersShifted(limit: $limit, offset: $offset) {\naccount_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "OwnersShifted",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OwnersShifted{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "account_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByAccountExists",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "accountId" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "accountId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByAccountExists($accountId: Long!, $limit: Int = 10, $offset: Int = 0) {\nByAccountExists(accountId: $accountId, limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "ByAccountExists",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByAccountExists{?accountId,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByAccountIn",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "accountId" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "accountId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByAccountIn($accountId: Long!, $limit: Int = 10, $offset: Int = 0) {\nByAccountIn(accountId: $accountId, limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "ByAccountIn",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByAccountIn{?accountId,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByAccountNotExists",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "accountId" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "accountId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByAccountNotExists($accountId: Long!, $limit: Int = 10, $offset: Int = 0) {\nByAccountNotExists(accountId: $accountId, limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "ByAccountNotExists",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByAccountNotExists{?accountId,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByAccountNotIn",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "accountId" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "accountId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByAccountNotIn($accountId: Long!, $limit: Int = 10, $offset: Int = 0) {\nByAccountNotIn(accountId: $accountId, limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "ByAccountNotIn",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByAccountNotIn{?accountId,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByAccountOrAgency",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "accountId" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "agencyId" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "accountId",
+                "agencyId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByAccountOrAgency($accountId: Long!, $agencyId: Long!, $limit: Int = 10, $offset: Int = 0) {\nByAccountOrAgency(accountId: $accountId, agencyId: $agencyId, limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "ByAccountOrAgency",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByAccountOrAgency{?accountId,offset,limit,agencyId}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByAccountShifted",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "accountId" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "accountId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByAccountShifted($accountId: Long!, $limit: Int = 10, $offset: Int = 0) {\nByAccountShifted(accountId: $accountId, limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "ByAccountShifted",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByAccountShifted{?accountId,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByAgencyArith",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "agency" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "agency"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByAgencyArith($agency: Long!, $limit: Int = 10, $offset: Int = 0) {\nByAgencyArith(agency: $agency, limit: $limit, offset: $offset) {\norder_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "ByAgencyArith",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByAgencyArith{?agency,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByAgencyRewritten",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "agency" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "agency"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByAgencyRewritten($agency: Long!, $limit: Int = 10, $offset: Int = 0) {\nByAgencyRewritten(agency: $agency, limit: $limit, offset: $offset) {\norder_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "ByAgencyRewritten",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByAgencyRewritten{?agency,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByLatestOwner",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "accountId" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "accountId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByLatestOwner($accountId: Long!, $limit: Int = 10, $offset: Int = 0) {\nByLatestOwner(accountId: $accountId, limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "ByLatestOwner",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByLatestOwner{?accountId,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByOwnerCount",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "accountId" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "minOwners" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "accountId",
+                "minOwners"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByOwnerCount($accountId: Long!, $minOwners: Long!, $limit: Int = 10, $offset: Int = 0) {\nByOwnerCount(accountId: $accountId, minOwners: $minOwners, limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "ByOwnerCount",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByOwnerCount{?accountId,offset,limit,minOwners}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OrdersArith {\n  order_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersExists {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersIn {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersLatest {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersNotExists {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersNotIn {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersOr {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersRewritten {\n  order_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersScalar {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersShifted {\n  order_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersExists {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersIn {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersLatest {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersNotExists {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersNotIn {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersOr {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersScalar {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersShifted {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype Query {\n  OrdersArith(limit: Int = 10, offset: Int = 0): [OrdersArith!]\n  OrdersExists(limit: Int = 10, offset: Int = 0): [OrdersExists!]\n  OrdersIn(limit: Int = 10, offset: Int = 0): [OrdersIn!]\n  OrdersLatest(limit: Int = 10, offset: Int = 0): [OrdersLatest!]\n  OrdersNotExists(limit: Int = 10, offset: Int = 0): [OrdersNotExists!]\n  OrdersNotIn(limit: Int = 10, offset: Int = 0): [OrdersNotIn!]\n  OrdersOr(limit: Int = 10, offset: Int = 0): [OrdersOr!]\n  OrdersRewritten(limit: Int = 10, offset: Int = 0): [OrdersRewritten!]\n  OrdersScalar(limit: Int = 10, offset: Int = 0): [OrdersScalar!]\n  OrdersShifted(limit: Int = 10, offset: Int = 0): [OrdersShifted!]\n  OwnersExists(limit: Int = 10, offset: Int = 0): [OwnersExists!]\n  OwnersIn(limit: Int = 10, offset: Int = 0): [OwnersIn!]\n  OwnersLatest(limit: Int = 10, offset: Int = 0): [OwnersLatest!]\n  OwnersNotExists(limit: Int = 10, offset: Int = 0): [OwnersNotExists!]\n  OwnersNotIn(limit: Int = 10, offset: Int = 0): [OwnersNotIn!]\n  OwnersOr(limit: Int = 10, offset: Int = 0): [OwnersOr!]\n  OwnersScalar(limit: Int = 10, offset: Int = 0): [OwnersScalar!]\n  OwnersShifted(limit: Int = 10, offset: Int = 0): [OwnersShifted!]\n  ByAccountExists(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersExists!]\n  ByAccountIn(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersIn!]\n  ByAccountNotExists(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersNotExists!]\n  ByAccountNotIn(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersNotIn!]\n  ByAccountOrAgency(accountId: Long!, agencyId: Long!, limit: Int = 10, offset: Int = 0): [OrdersOr!]\n  ByAccountShifted(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersShifted!]\n  ByAgencyArith(agency: Long!, limit: Int = 10, offset: Int = 0): [OrdersArith!]\n  ByAgencyRewritten(agency: Long!, limit: Int = 10, offset: Int = 0): [OrdersRewritten!]\n  ByLatestOwner(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersLatest!]\n  ByOwnerCount(accountId: Long!, minOwners: Long!, limit: Int = 10, offset: Int = 0): [OrdersScalar!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

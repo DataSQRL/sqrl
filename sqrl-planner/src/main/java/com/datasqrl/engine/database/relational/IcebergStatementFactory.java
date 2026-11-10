@@ -19,7 +19,7 @@ import com.datasqrl.calcite.Dialect;
 import com.datasqrl.calcite.OperatorRuleTransformer;
 import com.datasqrl.calcite.dialect.ExtendedPostgresSqlDialect;
 import com.datasqrl.engine.database.relational.ddl.IcebergCreateTableDdlFactory;
-import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.index.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;

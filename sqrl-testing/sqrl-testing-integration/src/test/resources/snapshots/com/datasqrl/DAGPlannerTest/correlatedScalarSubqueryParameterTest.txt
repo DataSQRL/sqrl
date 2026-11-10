@@ -111,6 +111,7 @@ WITH (
 --- physical ---
 Table Orders_2 (postgres):
  - primary key: id, time
+ - index Orders_2_btree_c1c2 (btree): customerid, time
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (
@@ -336,6 +337,11 @@ END
       "referencedTables" : [
         "Orders_2"
       ]
+    },
+    {
+      "name" : "Orders_2_btree_c1c2",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders_2_btree_c1c2\" ON \"Orders_2\" USING btree (\"customerid\",\"time\")"
     }
   ],
   "standaloneExtensionStatements" : [ ]
