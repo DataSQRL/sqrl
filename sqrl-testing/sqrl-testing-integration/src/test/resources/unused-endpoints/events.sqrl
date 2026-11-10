@@ -1,0 +1,22 @@
+CREATE TABLE _Events (
+  id STRING NOT NULL,
+  site STRING NOT NULL,
+  ts TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR ts AS ts - INTERVAL '1' SECOND
+) WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+
+/*+query_by_any(site) */
+SiteCount := SELECT site, COUNT(*) AS n FROM _Events GROUP BY site;
+
+SiteCount.events := SELECT * FROM _Events e WHERE e.site = this.site;
+
+/*+engine(postgres), query_by_any(id) */
+RecentEvents := SELECT id, site, ts FROM _Events;
+
+/*+engine(iceberg) */
+EventArchive := SELECT id, site, ts FROM _Events;
+
+EventAlert := SUBSCRIBE SELECT id, site, ts FROM _Events WHERE site = 'a';

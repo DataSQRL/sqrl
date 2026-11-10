@@ -67,6 +67,8 @@ You can customize the GraphQL schema by:
 * Adding enums
 * Adding interfaces and structuring types with interfaces
 
+A custom schema can leave out queries, relationships, and subscriptions, but the compiler still computes them and writes the tables they read to the database or log. If no API version's schema uses an endpoint, the compiler prints a warning that lists it. Endpoints on Iceberg are not listed, because their views are queried directly. The `test` command uses the inferred schema unless `test-runner.use-inferred-schema` is `false`, so by default it does not warn. To stop computing an endpoint, remove it or start its name with `_`. When a relationship in the schema returns the rows of a table, hint that table `/*+no_query */` instead: the table stays, without a query endpoint of its own.
+
 With a provided GraphQL schema, the compiler matches each GraphQL field to an item in the SQRL script:
 * A field of `type Query` matches the queryable SQRL table or SQRL function with the same name, and a field of `type Subscription` matches the `SUBSCRIBE` table or function with the same name. The compiler does not check that a field is in the matching root type.
 * A field of the type that a table, function, or relationship returns matches the first of:

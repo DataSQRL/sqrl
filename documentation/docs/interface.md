@@ -71,6 +71,8 @@ You can customize the GraphQL schema by:
 * Adding enums
 * Adding interfaces and structuring types with interfaces
 
+A custom schema can leave out queries, relationships, and subscriptions, but the compiler still computes them and writes the tables they read to the database or log. If no API version's schema uses an endpoint, the compiler prints a warning that lists it. Endpoints on Iceberg are not listed, because their views are queried directly. The [`test` command](compiler#test-command) uses the inferred schema unless `test-runner.use-inferred-schema` is `false`, so by default it does not warn. To stop computing an endpoint, remove it or start its name with `_`. When a relationship in the schema returns the rows of a table, hint that table `/*+no_query */` instead: the table stays, without a query endpoint of its own.
+
 Mutation input fields must match the column types of the table. A `String` column also accepts enum, `ID`, and `JSON` inputs, where JSON objects and arrays are stored as JSON text. Nullable columns can be omitted from the mutation input. If the mutation result type still includes them, those fields must be nullable and return `null`.
 
 :::warning

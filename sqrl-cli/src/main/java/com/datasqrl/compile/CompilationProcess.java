@@ -17,12 +17,14 @@ package com.datasqrl.compile;
 
 import static com.datasqrl.server.openapi.OpenApiService.OPENAPI_JSON_ARTIFACT_NAME_SUFFIX_TEMPLATE;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.GraphqlSourceLoader;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.database.AnalyticDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
@@ -34,7 +36,10 @@ import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
+import com.datasqrl.planner.dag.PipelineDAG;
+import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
+import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.server.ServerModelManager;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.nio.file.Path;
@@ -42,6 +47,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Lazy;
@@ -120,6 +126,9 @@ public class CompilationProcess {
                         String.format(OPENAPI_JSON_ARTIFACT_NAME_SUFFIX_TEMPLATE, api.version()),
                         generatedOpenApi));
           });
+      if (loadResult.inferredSchema().isEmpty()) {
+        warnUnservedEndpoints(dag, serverPlan.getServedFunctions());
+      }
 
       // create test artifact
       if (executionGoal == ExecutionGoal.TEST) {
@@ -152,5 +161,29 @@ public class CompilationProcess {
                         mutationDatabase, compareDb, environment, errors),
                     "The mutation tables defined by the script are not backwards compatible with the provided database. See warnings above for incompatibilities."));
     return Pair.of(physicalPlan, testPlan);
+  }
+
+  /**
+   * Warns about the endpoints that no custom GraphQL schema uses, since they are still computed.
+   * Endpoints on an analytic database, like Iceberg, are left out because their views are queried
+   * directly.
+   */
+  private void warnUnservedEndpoints(PipelineDAG dag, Set<NamePath> servedFunctions) {
+    var unserved =
+        dag.allNodesByClass(TableFunctionNode.class)
+            .filter(node -> !(node.getChosenStage().engine() instanceof AnalyticDatabaseEngine))
+            .map(TableFunctionNode::getFunction)
+            .filter(fn -> fn.getVisibility().isQueryable() && !fn.getVisibility().isTest())
+            .map(SqrlTableFunction::getFullPath)
+            .filter(path -> !servedFunctions.contains(path))
+            .map(NamePath::getDisplay)
+            .toList();
+    if (!unserved.isEmpty()) {
+      errors.warn(
+          "No GraphQL schema uses these endpoints, but they are still computed and written to the"
+              + " database or log: %s. Add them to a schema if the API should serve them. Otherwise,"
+              + " remove them, start their names with `_`, or hint a table `/*+no_query */`.",
+          String.join(", ", unserved));
+    }
   }
 }
