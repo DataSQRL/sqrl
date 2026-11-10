@@ -175,7 +175,7 @@ public class ServerConfig {
                   authorizationServers, authConfig.resource(), authConfig.scopesSupported()));
     }
 
-    if (oauthConfig != null && oauthConfig.getSite() != null) {
+    if (hasOAuthProvider()) {
       var scopes = oauthConfig.getScopesSupported();
       return Optional.of(
           new ProtectedResourceMetadata(
@@ -206,6 +206,28 @@ public class ServerConfig {
   @SneakyThrows
   private JsonObject resolveEnvVars(Map<String, Object> block) {
     return MAPPER.readValue(MAPPER.writeValueAsString(block), JsonObject.class);
+  }
+
+  /**
+   * Returns true when the server creates at least one auth provider: from the {@code auth} block,
+   * which {@link AuthConfig#parse} accepts only with an issuer, from {@code jwtAuth}, or from
+   * {@code oauthConfig} with a site URL.
+   */
+  public boolean hasAuthProvider() {
+    return auth != null || hasJwtAuthProvider() || hasOAuthProvider();
+  }
+
+  /** Returns true when {@code jwtAuth} is set, so the server creates a JWT auth provider. */
+  public boolean hasJwtAuthProvider() {
+    return jwtAuth != null;
+  }
+
+  /**
+   * Returns true when {@code oauthConfig} has a site URL, so the server creates an OAuth auth
+   * provider.
+   */
+  public boolean hasOAuthProvider() {
+    return oauthConfig != null && oauthConfig.getSite() != null;
   }
 
   ////////////////////////////////////////////////////////////////////////////////

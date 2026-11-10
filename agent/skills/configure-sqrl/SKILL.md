@@ -94,6 +94,7 @@ Rules for writing the configuration files:
 * **Every independently compiled or tested project and sub-project MUST have a named package file for each environment it uses:** `<project-or-sub-project>-<env>-package.json` (for example, `fraud_store-test-package.json`). Do not use an unqualified standalone package file for a deployable sub-project. The name lets the agent's package-discovery fallback identify the package that belongs to each build.
 * If settings are common across environments or sibling sub-projects, share them through a `*-shared-package.json` base; keep only environment- or sub-project-specific settings in the named package files.
 * **Fix duplicated configuration:** move common settings to `<project>-shared-package.json` and retain only differing fields in `<project>-<env>-package.json`.
+* **Give every compiled combination an auth provider when the script reads a claim.** The compiler checks the merged files of each compile. A script with `METADATA FROM 'auth.<claim>'` fails to compile when the merged `engines.vertx.config` has no `auth` block. So put `auth` in the shared base, or in each overlay that compiles the script. Use `${...}` placeholders for values that differ per environment. This also applies when a deployment mounts its own `vertx-config.json`.
 
 ## Sub-projects (multiple deployments in one project)
 
