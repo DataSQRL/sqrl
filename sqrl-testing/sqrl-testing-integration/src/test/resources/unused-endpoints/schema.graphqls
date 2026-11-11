@@ -1,0 +1,11 @@
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  SiteCount(site: String, limit: Int = 10, offset: Int = 0): [SiteCount!]
+}
+
+type SiteCount {
+  site: String!
+  n: Long!
+}

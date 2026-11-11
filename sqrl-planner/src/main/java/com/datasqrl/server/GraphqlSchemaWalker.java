@@ -43,6 +43,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -61,7 +62,9 @@ public abstract class GraphqlSchemaWalker {
   protected final List<MutationTable> mutations;
 
   protected final Set<ObjectTypeDefinition> seenObjectTypes = new HashSet<>();
-  protected final Set<NamePath> seenTableFunctions = new HashSet<>();
+
+  /** The full paths of the table functions that the walked schema has a field for. */
+  @Getter protected final Set<NamePath> seenTableFunctions = new HashSet<>();
 
   /** The first function that returned each object type, see {@link #checkSameRelationships}. */
   private final Map<ObjectTypeDefinition, SqrlTableFunction> resultTypeFunctions = new HashMap<>();

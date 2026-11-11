@@ -6,7 +6,7 @@ description: Use when designing or modifying the API exposed by a DataSQRL data 
 Prefer designing the API implicitly by defining tables, functions, and relationships in SQRL that map to the desired API. After compiling, the generated API schema is found in `build/inferred_schema.graphqls`.
 Only configure an explicit schema in the `package.json` configuration if:
 - the schema needs to be static (e.g. to align with consumers of the API)
-- the user wants to adjust the schema (e.g. introduce enums, add interfaces, remove fields, or rename/consolidate types)
+- the user wants to adjust the schema (e.g. introduce enums, add interfaces, remove fields from result types, or rename/consolidate types). To remove an endpoint, change the SQRL script instead (see Schema Customization below)
 
 Use the `/configure-sqrl` skill to configure the API, which protocols to expose, and how the exposed API endpoints are generated.
 
@@ -41,6 +41,7 @@ Maps to GraphQL query `Customer(limit: Int = 10, offset: Int = 0): [Customer!]` 
 - Change cardinalities, scalar types, mutation argument names, field types
 - Add enums and interfaces
 - Compiler validates compatibility with SQRL script(s)
+- Leaving a query, relationship, or subscription out of the schema does not stop the compiler from computing it. The compiler lists such endpoints in a warning, except those on Iceberg: an Iceberg table is a data product that other engines read from the catalog. A Postgres endpoint is listed even when something reads its view directly. `test` uses the inferred schema by default, so it does not warn: check the output of `compile`. To stop computing an endpoint that nothing in the schema reads, remove it or start its name with `_`. If the table has to stay, because it is a mutation table or a relationship or table function in the schema returns its rows, hint it `/*+no_query*/` instead (see [interface.md](interface.md)).
 - A relationship field resolves to `<GraphQL type name>.<field name>` or, if there is neither such a relationship nor a column with that name, to the relationship on the base table. All tables/functions that return a type must resolve its relationship fields the same way (see [interface.md](interface.md)).
 
 ## REST and MCP Endpoints

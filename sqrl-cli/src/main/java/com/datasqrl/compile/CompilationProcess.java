@@ -17,12 +17,14 @@ package com.datasqrl.compile;
 
 import static com.datasqrl.server.openapi.OpenApiService.OPENAPI_JSON_ARTIFACT_NAME_SUFFIX_TEMPLATE;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.GraphqlSourceLoader;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.database.AnalyticDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.engine.stream.flink.FlinkStreamEngine;
@@ -35,6 +37,7 @@ import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
+import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.server.ServerModelManager;
 import com.datasqrl.util.ServiceLoaderDiscovery;
 import java.nio.file.Path;
@@ -120,6 +123,9 @@ public class CompilationProcess {
                         String.format(OPENAPI_JSON_ARTIFACT_NAME_SUFFIX_TEMPLATE, api.version()),
                         generatedOpenApi));
           });
+      if (loadResult.inferredSchema().isEmpty()) {
+        warnUnservedEndpoints(serverPlan);
+      }
 
       // create test artifact
       if (executionGoal == ExecutionGoal.TEST) {
@@ -152,5 +158,36 @@ public class CompilationProcess {
                         mutationDatabase, compareDb, environment, errors),
                     "The mutation tables defined by the script are not backwards compatible with the provided database. See warnings above for incompatibilities."));
     return Pair.of(physicalPlan, testPlan);
+  }
+
+  /**
+   * Warns about the endpoints that no custom GraphQL schema uses, since they are still computed.
+   * Endpoints on an analytic database, like Iceberg, are left out: such a table is a data product
+   * that other engines read from the catalog, so the API is not its only reader. Postgres tables
+   * exist to serve the API, so a Postgres endpoint is listed even when something reads its view
+   * directly.
+   */
+  private void warnUnservedEndpoints(ServerPhysicalPlan serverPlan) {
+    var unserved =
+        serverPlan.getFunctions().stream()
+            .filter(fn -> !fn.getVisibility().isTest())
+            .filter(
+                fn ->
+                    !(fn.getExecutableQuery().getStage().engine()
+                        instanceof AnalyticDatabaseEngine))
+            .map(SqrlTableFunction::getFullPath)
+            .filter(path -> !serverPlan.getServedFunctions().contains(path))
+            .map(NamePath::getDisplay)
+            .sorted()
+            .toList();
+    if (!unserved.isEmpty()) {
+      errors.warn(
+          "No GraphQL schema uses these endpoints, but they are still computed and written to the"
+              + " database or log: %s. Add them to a schema if the API should serve them. Otherwise,"
+              + " remove them or start their names with `_`. If a table has to stay, because it is"
+              + " a mutation table or a relationship or table function in the schema returns its"
+              + " rows, hint it `/*+no_query*/` instead.",
+          String.join(", ", unserved));
+    }
   }
 }
