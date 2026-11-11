@@ -43,7 +43,9 @@ A filter counts only when its column stands alone in the comparison. The compile
 The compiler selects the indexes for the filters of a subquery as for any query, with the columns of the outer query that the subquery compares with as parameters. How the database runs the subquery decides which tables get an index:
 
 - `EXISTS (...)` and `IN (SELECT ...)` combined with the other conditions of the `WHERE` clause by `AND`: the database joins the two tables and can start from either one. The subquery's table gets an index on the columns that it compares with a parameter, followed by the columns that it compares with the outer query. The outer table gets an index on the column that the subquery compares with.
-- `NOT EXISTS (...)`, `NOT IN (SELECT ...)`, a subquery that is part of an `OR`, and a scalar subquery such as `(SELECT COUNT(*) ...)`: the database runs the subquery once, or for each row of the outer table. Only the subquery's table gets an index. The database reads every row of the outer table that the other conditions leave.
+- `NOT EXISTS (...)`, `NOT IN (SELECT ...)`, a subquery that is part of an `OR`, and a correlated scalar subquery such as `(SELECT COUNT(*) ...)`: the database runs the subquery once, or for each row of the outer table. Only the subquery's table gets an index. The database reads every row of the outer table that the other conditions leave.
+
+A comparison with an uncorrelated scalar subquery, such as `customer_id = (SELECT MAX(customer_id) FROM ...)`, counts as a comparison with a parameter: `customer_id` gets an index.
 
 Example: the API returns the orders of all customers who own a given account. `AccountOwners` has the primary key `owner_id`, and a customer can own an account through several of its rows, so a `JOIN` would add duplicate rows.
 
