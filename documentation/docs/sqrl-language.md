@@ -427,7 +427,7 @@ Without an `index` hint, the compiler selects the PostgreSQL indexes for a table
 
 In a correlated subquery, the columns of the outer query that the subquery compares with act like parameters. Which tables get an index depends on how PostgreSQL runs the subquery:
 
-- `EXISTS (...)` and `IN (SELECT ...)`, combined with the other conditions of the `WHERE` clause by `AND`: PostgreSQL joins the two tables and can start from either one, so both get an index.
+- `EXISTS (...)` and `IN (SELECT ...)`, combined with the other conditions of the `WHERE` clause by `AND`: PostgreSQL joins the two tables. When the subquery compares its columns with the outer columns only by `=`, as an `IN` always does, PostgreSQL can start from either table, so both get an index. With any other comparison, like `o.ts > c.ts`, PostgreSQL starts from the outer table, and only the subquery's table gets an index.
 - `NOT EXISTS (...)`, `NOT IN (SELECT ...)`, a subquery that is part of an `OR`, and a correlated scalar subquery like `(SELECT COUNT(*) ...)`: PostgreSQL runs the subquery once, or for each row of the outer table. Only the subquery's table gets an index, and PostgreSQL reads every row of the outer table that its other conditions leave.
 
 When a filter wraps its column in an expression, PostgreSQL cannot use an index on the column. The compiler then creates no index for that filter and warns at the definition of the table function:

@@ -211,6 +211,50 @@ class IndexSelectorTest {
               "Owners eq[account_id]");
     }
 
+    /** Postgres reads the outer table first when a join condition is not an equality. */
+    @Test
+    void givenExistsWithRangeCorrelation_whenGetIndexSelection_thenOnlySubqueryTableIsLookedUp() {
+      var orders = Holder.<RexCorrelVariable>empty();
+      builder.scan("Orders").variable(orders);
+      var query =
+          builder
+              .filter(
+                  List.of(orders.get().id),
+                  builder.exists(
+                      b ->
+                          b.scan("Owners")
+                              .filter(
+                                  b.equals(b.field("account_id"), accountParam),
+                                  b.greaterThan(
+                                      b.field("customer_id"), b.field(orders.get(), "customer_id")))
+                              .build()))
+              .build();
+
+      assertThat(describe(query))
+          .containsExactlyInAnyOrder(
+              "Owners eq[account_id] iq[customer_id]", "Owners eq[account_id]");
+    }
+
+    @Test
+    void givenExistsWithEqualityAndRangeCorrelation_whenGetIndexSelection_thenOuterIsNotLookedUp() {
+      var orders = Holder.<RexCorrelVariable>empty();
+      builder.scan("Orders").variable(orders);
+      var query =
+          builder
+              .filter(
+                  List.of(orders.get().id),
+                  builder.exists(
+                      b ->
+                          ownersOfAccount(b, orders.get())
+                              .filter(b.greaterThan(b.field("ts"), b.field(orders.get(), "ts")))
+                              .build()))
+              .build();
+
+      assertThat(describe(query))
+          .containsExactlyInAnyOrder(
+              "Owners eq[account_id, customer_id] iq[ts]", "Owners eq[account_id]");
+    }
+
     @Test
     void givenIn_whenGetIndexSelection_thenOuterColumnIsAnEqualityColumn() {
       var owners =
@@ -347,8 +391,8 @@ class IndexSelectorTest {
 
     private RelBuilder createRelBuilder() {
       var rootSchema = CalciteSchema.createRootSchema(false);
-      addTable(rootSchema, "Orders", List.of("order_id", "customer_id", "agency_id"));
-      addTable(rootSchema, "Owners", List.of("account_id", "customer_id"));
+      addTable(rootSchema, "Orders", List.of("order_id", "customer_id", "agency_id", "ts"));
+      addTable(rootSchema, "Owners", List.of("account_id", "customer_id", "ts"));
       var catalogReader =
           new CalciteCatalogReader(
               rootSchema, List.of(), typeFactory, CalciteConnectionConfig.DEFAULT);

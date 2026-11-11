@@ -58,9 +58,9 @@ Annotations:
 Plan:
 LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
   LogicalFilter(condition=[NOT(EXISTS({
-LogicalFilter(condition=[AND(=($0, ?0), =($1, $cor1.customer_id))])
+LogicalFilter(condition=[AND(=($0, ?0), =($1, $cor4.customer_id))])
   LogicalTableScan(table=[[default_catalog, default_database, OwnersNotExists]])
-}))], variablesSet=[[$cor1]])
+}))], variablesSet=[[$cor4]])
     LogicalTableScan(table=[[default_catalog, default_database, OrdersNotExists]])
 SQL:
 CREATE VIEW `ByAccountNotExists` AS  SELECT * FROM OrdersNotExists c
@@ -103,14 +103,36 @@ Annotations:
 Plan:
 LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
   LogicalFilter(condition=[OR(=($2, ?1), EXISTS({
-LogicalFilter(condition=[AND(=($0, ?0), =($1, $cor2.customer_id))])
+LogicalFilter(condition=[AND(=($0, ?0), =($1, $cor5.customer_id))])
   LogicalTableScan(table=[[default_catalog, default_database, OwnersOr]])
-}))], variablesSet=[[$cor2]])
+}))], variablesSet=[[$cor5]])
     LogicalTableScan(table=[[default_catalog, default_database, OrdersOr]])
 SQL:
 CREATE VIEW `ByAccountOrAgency` AS  SELECT * FROM OrdersOr c
   WHERE c.agency_id = ?        
      OR EXISTS (SELECT 1 FROM OwnersOr o WHERE o.account_id = ?          AND o.customer_id = c.customer_id);
+
+=== ByAccountRange
+ID:          default_catalog.default_database.ByAccountRange
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.RangeOrders
+ - default_catalog.default_database.RangeOwners
+Annotations:
+ - parameters: accountId
+ - base-table: RangeOrders
+Plan:
+LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
+  LogicalFilter(condition=[EXISTS({
+LogicalFilter(condition=[AND(=($0, ?0), >($1, $cor1.customer_id))])
+  LogicalTableScan(table=[[default_catalog, default_database, RangeOwners]])
+})], variablesSet=[[$cor1]])
+    LogicalTableScan(table=[[default_catalog, default_database, RangeOrders]])
+SQL:
+CREATE VIEW `ByAccountRange` AS  SELECT * FROM RangeOrders c
+  WHERE EXISTS (SELECT 1 FROM RangeOwners o WHERE o.account_id = ?          AND o.customer_id > c.customer_id);
 
 === ByAccountShifted
 ID:          default_catalog.default_database.ByAccountShifted
@@ -134,6 +156,29 @@ LogicalProject(order_id=[$3], customer_id=[$4], ts=[$5])
 SQL:
 CREATE VIEW `ByAccountShifted` AS  SELECT c.* FROM OwnersShifted o JOIN OrdersShifted c ON c.customer_id = o.customer_id + 1
   WHERE o.account_id = ?         ;
+
+=== ByAccountSince
+ID:          default_catalog.default_database.ByAccountSince
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.SinceOrders
+ - default_catalog.default_database.SinceOwners
+Annotations:
+ - parameters: accountId
+ - base-table: SinceOrders
+Plan:
+LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
+  LogicalFilter(condition=[EXISTS({
+LogicalFilter(condition=[AND(=($0, ?0), =($1, $cor2.customer_id), >($2, $cor2.ts))])
+  LogicalTableScan(table=[[default_catalog, default_database, SinceOwners]])
+})], variablesSet=[[$cor2]])
+    LogicalTableScan(table=[[default_catalog, default_database, SinceOrders]])
+SQL:
+CREATE VIEW `ByAccountSince` AS  SELECT * FROM SinceOrders c
+  WHERE EXISTS (SELECT 1 FROM SinceOwners o WHERE o.account_id = ?          AND o.customer_id = c.customer_id
+                AND o.ts > c.ts);
 
 === ByAgencyArith
 ID:          default_catalog.default_database.ByAgencyArith
@@ -208,9 +253,9 @@ Plan:
 LogicalProject(order_id=[$0], customer_id=[$1], agency_id=[$2], ts=[$3])
   LogicalFilter(condition=[>=($SCALAR_QUERY({
 LogicalAggregate(group=[{}], EXPR$0=[COUNT()])
-  LogicalFilter(condition=[AND(=($0, ?0), =($1, $cor3.customer_id))])
+  LogicalFilter(condition=[AND(=($0, ?0), =($1, $cor6.customer_id))])
     LogicalTableScan(table=[[default_catalog, default_database, OwnersScalar]])
-}), ?1)], variablesSet=[[$cor3]])
+}), ?1)], variablesSet=[[$cor6]])
     LogicalTableScan(table=[[default_catalog, default_database, OrdersScalar]])
 SQL:
 CREATE VIEW `ByOwnerCount` AS  SELECT * FROM OrdersScalar c
@@ -820,6 +865,140 @@ Table OwnersShifted_18 (postgres):
  - primary key: __pk_hash (generated hash key)
  - index OwnersShifted_18_hash_c0 (hash): account_id
 
+=== RangeOrders
+ID:          default_catalog.default_database.RangeOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - agency_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.RangeOrders__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, RangeOrders]])
+SQL:
+CREATE TABLE `RangeOrders` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table RangeOrders_19 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== RangeOwners
+ID:          default_catalog.default_database.RangeOwners
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - account_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.RangeOwners__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, RangeOwners]])
+SQL:
+CREATE TABLE `RangeOwners` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table RangeOwners_20 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index RangeOwners_20_btree_c0c1 (btree): account_id, customer_id
+
+=== SinceOrders
+ID:          default_catalog.default_database.SinceOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - order_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - agency_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SinceOrders__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$3])
+  LogicalTableScan(table=[[default_catalog, default_database, SinceOrders]])
+SQL:
+CREATE TABLE `SinceOrders` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table SinceOrders_21 (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== SinceOwners
+ID:          default_catalog.default_database.SinceOwners
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - account_id: BIGINT NOT NULL
+ - customer_id: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.SinceOwners__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$2])
+  LogicalTableScan(table=[[default_catalog, default_database, SinceOwners]])
+SQL:
+CREATE TABLE `SinceOwners` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table SinceOwners_22 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index SinceOwners_22_btree_c0c1c2 (btree): account_id, customer_id, ts
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `OrdersExists` (
   `order_id` BIGINT NOT NULL,
@@ -959,6 +1138,48 @@ WITH (
   'number-of-rows' = '10'
 );
 CREATE TABLE `OwnersLatest` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `RangeOrders` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `RangeOwners` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `SinceOrders` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `SinceOwners` (
   `account_id` BIGINT NOT NULL,
   `customer_id` BIGINT NOT NULL,
   `ts` TIMESTAMP_LTZ(3) NOT NULL,
@@ -1303,6 +1524,72 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
+CREATE TABLE `RangeOrders_19` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'RangeOrders_19',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `RangeOwners_20` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'RangeOwners_20',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `SinceOrders_21` (
+  `order_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `agency_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'SinceOrders_21',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `SinceOwners_22` (
+  `account_id` BIGINT NOT NULL,
+  `customer_id` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'SinceOwners_22',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`OrdersArith_1`
 SELECT `order_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `agency_id`, `ts`) AS `__pk_hash`
@@ -1392,6 +1679,26 @@ ON CONFLICT DO DEDUPLICATE
 INSERT INTO `default_catalog`.`default_database`.`OwnersShifted_18`
 SELECT `account_id`, `customer_id`, `ts`, `hash_key`(`account_id`, `customer_id`, `ts`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`OwnersShifted`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`RangeOrders_19`
+SELECT `order_id`, `customer_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `agency_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`RangeOrders`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`RangeOwners_20`
+SELECT `account_id`, `customer_id`, `ts`, `hash_key`(`account_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`RangeOwners`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`SinceOrders_21`
+SELECT `order_id`, `customer_id`, `agency_id`, `ts`, `hash_key`(`order_id`, `customer_id`, `agency_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`SinceOrders`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`SinceOwners_22`
+SELECT `account_id`, `customer_id`, `ts`, `hash_key`(`account_id`, `customer_id`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`SinceOwners`
 ON CONFLICT DO DEDUPLICATE
 ;
 END
@@ -2087,6 +2394,160 @@ END
       "role" : "MATERIALIZATION"
     },
     {
+      "name" : "RangeOrders_19",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"RangeOrders_19\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"agency_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "RangeOrders",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "RangeOwners_20",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"RangeOwners_20\" (\"account_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "RangeOwners",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "SinceOrders_21",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SinceOrders_21\" (\"order_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"agency_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "SinceOrders",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "SinceOwners_22",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"SinceOwners_22\" (\"account_id\" BIGINT NOT NULL, \"customer_id\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "SinceOwners",
+      "role" : "MATERIALIZATION"
+    },
+    {
       "name" : "OrdersArith",
       "type" : "VIEW",
       "sql" : "CREATE OR REPLACE VIEW \"OrdersArith\"(\"order_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"agency_id\", \"ts\"\nFROM \"OrdersArith_1\"",
@@ -2572,6 +3033,116 @@ END
       ]
     },
     {
+      "name" : "RangeOrders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"RangeOrders\"(\"order_id\", \"customer_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"RangeOrders_19\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "RangeOrders_19"
+      ]
+    },
+    {
+      "name" : "RangeOwners",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"RangeOwners\"(\"account_id\", \"customer_id\", \"ts\") AS SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"RangeOwners_20\"",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "RangeOwners_20"
+      ]
+    },
+    {
+      "name" : "SinceOrders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"SinceOrders\"(\"order_id\", \"customer_id\", \"agency_id\", \"ts\") AS SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"SinceOrders_21\"",
+      "fields" : [
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "agency_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "SinceOrders_21"
+      ]
+    },
+    {
+      "name" : "SinceOwners",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"SinceOwners\"(\"account_id\", \"customer_id\", \"ts\") AS SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"SinceOwners_22\"",
+      "fields" : [
+        {
+          "name" : "account_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "SinceOwners_22"
+      ]
+    },
+    {
       "name" : "OrdersExists_2_hash_c1",
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"OrdersExists_2_hash_c1\" ON \"OrdersExists_2\" USING hash (\"customer_id\")"
@@ -2640,6 +3211,16 @@ END
       "name" : "OwnersShifted_18_hash_c0",
       "type" : "INDEX",
       "sql" : "CREATE INDEX IF NOT EXISTS \"OwnersShifted_18_hash_c0\" ON \"OwnersShifted_18\" USING hash (\"account_id\")"
+    },
+    {
+      "name" : "RangeOwners_20_btree_c0c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"RangeOwners_20_btree_c0c1\" ON \"RangeOwners_20\" USING btree (\"account_id\",\"customer_id\")"
+    },
+    {
+      "name" : "SinceOwners_22_btree_c0c1c2",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"SinceOwners_22_btree_c0c1c2\" ON \"SinceOwners_22\" USING btree (\"account_id\",\"customer_id\",\"ts\")"
     }
   ],
   "standaloneExtensionStatements" : [ ]
@@ -3102,6 +3683,106 @@ END
         {
           "type" : "args",
           "parentType" : "Query",
+          "fieldName" : "RangeOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"RangeOrders_19\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "RangeOwners",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"RangeOwners_20\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SinceOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\nFROM \"SinceOrders_21\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SinceOwners",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"account_id\", \"customer_id\", \"ts\"\nFROM \"SinceOwners_22\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
           "fieldName" : "ByAccountExists",
           "exec" : {
             "arguments" : [
@@ -3286,6 +3967,41 @@ END
         {
           "type" : "args",
           "parentType" : "Query",
+          "fieldName" : "ByAccountRange",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "accountId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\n  FROM \"RangeOrders_19\") AS \"t\"\nWHERE EXISTS (SELECT *\n  FROM (SELECT \"account_id\", \"customer_id\", \"ts\"\n    FROM \"RangeOwners_20\") AS \"t0\"\n  WHERE \"account_id\" = $1 AND \"customer_id\" > \"t\".\"customer_id\")",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "accountId",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
           "fieldName" : "ByAccountShifted",
           "exec" : {
             "arguments" : [
@@ -3305,6 +4021,41 @@ END
             "query" : {
               "type" : "SqlQuery",
               "sql" : "SELECT \"order_id\", \"customer_id0\" AS \"customer_id\", \"ts0\" AS \"ts\"\nFROM (SELECT \"t0\".\"account_id\", \"t0\".\"customer_id\", \"t0\".\"ts\", \"t1\".\"order_id\", \"t1\".\"customer_id\" AS \"customer_id0\", \"t1\".\"ts\" AS \"ts0\"\n  FROM (SELECT \"account_id\", \"customer_id\", \"ts\", \"customer_id\" + 1 AS \"$f3\"\n    FROM \"OwnersShifted_18\") AS \"t0\"\n   INNER JOIN (SELECT \"order_id\", \"customer_id\", \"ts\"\n    FROM \"OrdersShifted_10\") AS \"t1\" ON \"t0\".\"$f3\" = \"t1\".\"customer_id\") AS \"t2\"\nWHERE \"t2\".\"account_id\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "accountId",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "ByAccountSince",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "accountId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"order_id\", \"customer_id\", \"agency_id\", \"ts\"\n  FROM \"SinceOrders_21\") AS \"t\"\nWHERE EXISTS (SELECT *\n  FROM (SELECT \"account_id\", \"customer_id\", \"ts\"\n    FROM \"SinceOwners_22\") AS \"t0\"\n  WHERE \"account_id\" = $1 AND \"customer_id\" = \"t\".\"customer_id\" AND \"ts\" > \"t\".\"ts\")",
               "parameters" : [
                 {
                   "type" : "arg",
@@ -4286,6 +5037,188 @@ END
         },
         {
           "function" : {
+            "name" : "GetRangeOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query RangeOrders($limit: Int = 10, $offset: Int = 0) {\nRangeOrders(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "RangeOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/RangeOrders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetRangeOwners",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query RangeOwners($limit: Int = 10, $offset: Int = 0) {\nRangeOwners(limit: $limit, offset: $offset) {\naccount_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "RangeOwners",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/RangeOwners{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "account_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetSinceOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query SinceOrders($limit: Int = 10, $offset: Int = 0) {\nSinceOrders(limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "SinceOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SinceOrders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetSinceOwners",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query SinceOwners($limit: Int = 10, $offset: Int = 0) {\nSinceOwners(limit: $limit, offset: $offset) {\naccount_id\ncustomer_id\nts\n}\n\n}",
+            "queryName" : "SinceOwners",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SinceOwners{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "account_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
             "name" : "GetByAccountExists",
             "parameters" : {
               "type" : "object",
@@ -4550,6 +5483,58 @@ END
         },
         {
           "function" : {
+            "name" : "GetByAccountRange",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "accountId" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "accountId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByAccountRange($accountId: Long!, $limit: Int = 10, $offset: Int = 0) {\nByAccountRange(accountId: $accountId, limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "ByAccountRange",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByAccountRange{?accountId,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
             "name" : "GetByAccountShifted",
             "parameters" : {
               "type" : "object",
@@ -4587,6 +5572,58 @@ END
                   "type" : "integer"
                 },
                 "customer_id" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetByAccountSince",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "accountId" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "accountId"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query ByAccountSince($accountId: Long!, $limit: Int = 10, $offset: Int = 0) {\nByAccountSince(accountId: $accountId, limit: $limit, offset: $offset) {\norder_id\ncustomer_id\nagency_id\nts\n}\n\n}",
+            "queryName" : "ByAccountSince",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/ByAccountSince{?accountId,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "agency_id" : {
                   "type" : "integer"
                 },
                 "ts" : {
@@ -4806,7 +5843,7 @@ END
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OrdersArith {\n  order_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersExists {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersIn {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersLatest {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersNotExists {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersNotIn {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersOr {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersRewritten {\n  order_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersScalar {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersShifted {\n  order_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersExists {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersIn {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersLatest {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersNotExists {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersNotIn {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersOr {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersScalar {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersShifted {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype Query {\n  OrdersArith(limit: Int = 10, offset: Int = 0): [OrdersArith!]\n  OrdersExists(limit: Int = 10, offset: Int = 0): [OrdersExists!]\n  OrdersIn(limit: Int = 10, offset: Int = 0): [OrdersIn!]\n  OrdersLatest(limit: Int = 10, offset: Int = 0): [OrdersLatest!]\n  OrdersNotExists(limit: Int = 10, offset: Int = 0): [OrdersNotExists!]\n  OrdersNotIn(limit: Int = 10, offset: Int = 0): [OrdersNotIn!]\n  OrdersOr(limit: Int = 10, offset: Int = 0): [OrdersOr!]\n  OrdersRewritten(limit: Int = 10, offset: Int = 0): [OrdersRewritten!]\n  OrdersScalar(limit: Int = 10, offset: Int = 0): [OrdersScalar!]\n  OrdersShifted(limit: Int = 10, offset: Int = 0): [OrdersShifted!]\n  OwnersExists(limit: Int = 10, offset: Int = 0): [OwnersExists!]\n  OwnersIn(limit: Int = 10, offset: Int = 0): [OwnersIn!]\n  OwnersLatest(limit: Int = 10, offset: Int = 0): [OwnersLatest!]\n  OwnersNotExists(limit: Int = 10, offset: Int = 0): [OwnersNotExists!]\n  OwnersNotIn(limit: Int = 10, offset: Int = 0): [OwnersNotIn!]\n  OwnersOr(limit: Int = 10, offset: Int = 0): [OwnersOr!]\n  OwnersScalar(limit: Int = 10, offset: Int = 0): [OwnersScalar!]\n  OwnersShifted(limit: Int = 10, offset: Int = 0): [OwnersShifted!]\n  ByAccountExists(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersExists!]\n  ByAccountIn(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersIn!]\n  ByAccountNotExists(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersNotExists!]\n  ByAccountNotIn(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersNotIn!]\n  ByAccountOrAgency(accountId: Long!, agencyId: Long!, limit: Int = 10, offset: Int = 0): [OrdersOr!]\n  ByAccountShifted(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersShifted!]\n  ByAgencyArith(agency: Long!, limit: Int = 10, offset: Int = 0): [OrdersArith!]\n  ByAgencyRewritten(agency: Long!, limit: Int = 10, offset: Int = 0): [OrdersRewritten!]\n  ByLatestOwner(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersLatest!]\n  ByOwnerCount(accountId: Long!, minOwners: Long!, limit: Int = 10, offset: Int = 0): [OrdersScalar!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OrdersArith {\n  order_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersExists {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersIn {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersLatest {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersNotExists {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersNotIn {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersOr {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersRewritten {\n  order_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersScalar {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype OrdersShifted {\n  order_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersExists {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersIn {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersLatest {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersNotExists {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersNotIn {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersOr {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersScalar {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype OwnersShifted {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype Query {\n  OrdersArith(limit: Int = 10, offset: Int = 0): [OrdersArith!]\n  OrdersExists(limit: Int = 10, offset: Int = 0): [OrdersExists!]\n  OrdersIn(limit: Int = 10, offset: Int = 0): [OrdersIn!]\n  OrdersLatest(limit: Int = 10, offset: Int = 0): [OrdersLatest!]\n  OrdersNotExists(limit: Int = 10, offset: Int = 0): [OrdersNotExists!]\n  OrdersNotIn(limit: Int = 10, offset: Int = 0): [OrdersNotIn!]\n  OrdersOr(limit: Int = 10, offset: Int = 0): [OrdersOr!]\n  OrdersRewritten(limit: Int = 10, offset: Int = 0): [OrdersRewritten!]\n  OrdersScalar(limit: Int = 10, offset: Int = 0): [OrdersScalar!]\n  OrdersShifted(limit: Int = 10, offset: Int = 0): [OrdersShifted!]\n  OwnersExists(limit: Int = 10, offset: Int = 0): [OwnersExists!]\n  OwnersIn(limit: Int = 10, offset: Int = 0): [OwnersIn!]\n  OwnersLatest(limit: Int = 10, offset: Int = 0): [OwnersLatest!]\n  OwnersNotExists(limit: Int = 10, offset: Int = 0): [OwnersNotExists!]\n  OwnersNotIn(limit: Int = 10, offset: Int = 0): [OwnersNotIn!]\n  OwnersOr(limit: Int = 10, offset: Int = 0): [OwnersOr!]\n  OwnersScalar(limit: Int = 10, offset: Int = 0): [OwnersScalar!]\n  OwnersShifted(limit: Int = 10, offset: Int = 0): [OwnersShifted!]\n  RangeOrders(limit: Int = 10, offset: Int = 0): [RangeOrders!]\n  RangeOwners(limit: Int = 10, offset: Int = 0): [RangeOwners!]\n  SinceOrders(limit: Int = 10, offset: Int = 0): [SinceOrders!]\n  SinceOwners(limit: Int = 10, offset: Int = 0): [SinceOwners!]\n  ByAccountExists(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersExists!]\n  ByAccountIn(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersIn!]\n  ByAccountNotExists(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersNotExists!]\n  ByAccountNotIn(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersNotIn!]\n  ByAccountOrAgency(accountId: Long!, agencyId: Long!, limit: Int = 10, offset: Int = 0): [OrdersOr!]\n  ByAccountRange(accountId: Long!, limit: Int = 10, offset: Int = 0): [RangeOrders!]\n  ByAccountShifted(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersShifted!]\n  ByAccountSince(accountId: Long!, limit: Int = 10, offset: Int = 0): [SinceOrders!]\n  ByAgencyArith(agency: Long!, limit: Int = 10, offset: Int = 0): [OrdersArith!]\n  ByAgencyRewritten(agency: Long!, limit: Int = 10, offset: Int = 0): [OrdersRewritten!]\n  ByLatestOwner(accountId: Long!, limit: Int = 10, offset: Int = 0): [OrdersLatest!]\n  ByOwnerCount(accountId: Long!, minOwners: Long!, limit: Int = 10, offset: Int = 0): [OrdersScalar!]\n}\n\ntype RangeOrders {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype RangeOwners {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\ntype SinceOrders {\n  order_id: Long!\n  customer_id: Long!\n  agency_id: Long!\n  ts: DateTime!\n}\n\ntype SinceOwners {\n  account_id: Long!\n  customer_id: Long!\n  ts: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

@@ -26,6 +26,20 @@ ByAccountExists(accountId BIGINT NOT NULL) := SELECT * FROM OrdersExists c
 ByAccountIn(accountId BIGINT NOT NULL) := SELECT * FROM OrdersIn
   WHERE customer_id IN (SELECT customer_id FROM OwnersIn WHERE account_id = :accountId);
 
+/* Postgres starts a semi join from the subquery only when all its join conditions are equalities.
+   With a range, the outer table gets no index: RangeOrders and SinceOrders get none, the owner tables
+   still do. */
+CREATE TABLE RangeOrders (order_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE RangeOwners (account_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE SinceOrders (order_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE SinceOwners (account_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+
+ByAccountRange(accountId BIGINT NOT NULL) := SELECT * FROM RangeOrders c
+  WHERE EXISTS (SELECT 1 FROM RangeOwners o WHERE o.account_id = :accountId AND o.customer_id > c.customer_id);
+ByAccountSince(accountId BIGINT NOT NULL) := SELECT * FROM SinceOrders c
+  WHERE EXISTS (SELECT 1 FROM SinceOwners o WHERE o.account_id = :accountId AND o.customer_id = c.customer_id
+                AND o.ts > c.ts);
+
 /* NOT EXISTS becomes an anti join that scans every order, NOT IN a subplan that the database
    evaluates once: only the owner tables get an index. */
 ByAccountNotExists(accountId BIGINT NOT NULL) := SELECT * FROM OrdersNotExists c

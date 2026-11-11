@@ -17,6 +17,7 @@ package com.datasqrl.plan.index;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -49,10 +50,12 @@ import org.apache.calcite.sql.fun.SqlStdOperatorTable;
  * it evaluates the subquery for a row of the outer query.
  *
  * <p>An {@code EXISTS} or {@code IN} subquery that is a conjunct of a filter becomes a semi join:
- * Postgres pulls it up into the join tree, the same way Flink rewrites it into a semi join. The
- * database can then read either table first and look up the other one. So the filter replaces the
- * subquery with comparisons of the outer columns that the subquery correlates with to optional
- * lookup parameters, and the parameters of the subquery are optional, too.
+ * Postgres pulls it up into the join tree, the same way Flink rewrites it into a semi join. When
+ * all conditions that join the subquery to the outer query are equalities, the database can read
+ * either table first and look up the other one. So the filter replaces the subquery with
+ * comparisons of the outer columns that the subquery correlates with to optional lookup parameters,
+ * and the parameters of the subquery are optional, too. Any other join condition, like {@code o.ts
+ * > c.ts}, makes the database read the outer table first, so the outer table gets no lookup.
  *
  * <p>The database evaluates any other subquery, like {@code NOT EXISTS}, {@code NOT IN}, a scalar
  * subquery or a subquery in a disjunction, once or for each row of the outer query, so it
@@ -154,10 +157,30 @@ final class SubQueryExpander {
       return subQuery.getOperands();
     }
 
-    return topConjuncts(subQuery.rel)
-        .flatMap(conjunct -> correlatedField(conjunct, filter.getVariablesSet()).stream())
+    var correlations = filter.getVariablesSet();
+    var joinConditions =
+        topConjuncts(subQuery.rel)
+            .filter(conjunct -> isJoinCondition(conjunct, correlations))
+            .toList();
+    // Postgres starts a semi join from the subquery side only when all its join conditions are
+    // equalities, otherwise it scans the outer table, and an index on an outer column goes unused
+    if (!joinConditions.stream().allMatch(condition -> condition.isA(SqlKind.EQUALS))) {
+      return List.of();
+    }
+
+    return joinConditions.stream()
+        .flatMap(condition -> correlatedField(condition, correlations).stream())
         .map(field -> (RexNode) rexBuilder.makeInputRef(filter.getInput(), field))
         .toList();
+  }
+
+  /** Whether a conjunct of the subquery compares its own columns with the outer row. */
+  private static boolean isJoinCondition(RexNode conjunct, Set<CorrelationId> correlations) {
+
+    var variables = new RelOptUtil.VariableUsedVisitor(null);
+    conjunct.accept(variables);
+    return RexUtil.containsInputRef(conjunct)
+        && !Collections.disjoint(variables.variables, correlations);
   }
 
   /** The conjuncts of the filters at the top of a query, above its first join or aggregation. */
