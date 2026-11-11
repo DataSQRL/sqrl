@@ -1,0 +1,20 @@
+/*+no_query */
+Orders := SELECT order_id, customer_id FROM (VALUES ('O1', 'C1'), ('O2', 'C2')) AS t(order_id, customer_id);
+
+/** The orders of the caller. Reads the claim "sub". */
+MyOrders(customer_id STRING NOT NULL METADATA FROM 'auth.sub') :=
+    SELECT order_id FROM Orders WHERE customer_id = :customer_id;
+
+/** Every order. Reads no claim. */
+AllOrders := SELECT order_id, customer_id FROM Orders;
+
+-- 'ItemRequests' sorts before 'MyOrders', so the error shows that the claim columns are sorted.
+/*+no_query, engine(kafka) */
+CREATE TABLE ItemRequests (
+    customer_id STRING NOT NULL METADATA FROM 'auth.sub',
+    item STRING NOT NULL,
+    requested_at TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+/** The number of item requests. */
+RequestCount := SELECT COUNT(*) AS n FROM ItemRequests;

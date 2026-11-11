@@ -217,10 +217,12 @@ The compiler reports all errors of a script in one run, each with its position, 
 If a statement is missing its `;` and the next line starts a definition (`Name :=`), the compiler reports `Missing ';' at the end of the statement` where the `;` belongs and still compiles both statements, so their other errors are reported as well.
 
 To avoid knock-on errors, the compiler does not report the errors that only follow from a failed statement:
-- If a table, column or function is not found because its definition failed, that error is not reported. The other errors of the statement are still reported.
+- If a table, column or function is not found because its definition failed, that error is not reported. The compiler stops at the first error of a statement, so the other errors of the statement can only show up once that definition is fixed.
+- A column that failed is also missing from the tables that select all columns of its table, so the compiler recognizes it by its name: no column of that name is reported as not found, in any table, until its definition is fixed.
 - If the package of an `IMPORT package.*` cannot be loaded, no table or function is reported as not found, since the compiler cannot tell which ones the package has. If only some of its tables fail, the others are still imported.
-- A statement that adds a column to, exports or inserts into a table whose definition failed is skipped.
-- After a `USE` statement fails, the rest of the script is skipped, since it would run in another catalog or database.
+- If you import tables from a script that fails to parse, only the parse errors of the script are reported, not each import of its tables.
+- A statement that adds a column to, exports or inserts into a table whose definition failed is skipped, and so is a passthrough definition (with `RETURNS`) whose query reads from it.
+- After a `USE` statement fails, the rest of the script is skipped, since it would run in another catalog or database. In an imported script, that is the rest of the imported script, and if the script is imported inline (`IMPORT package.script.*`), also the rest of the importing script.
 
 ## Run Command
 

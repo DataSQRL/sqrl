@@ -1,0 +1,10 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "postgres", "kafka", "vertx"],
+  "compiler": {
+    "logger": "kafka"
+  },
+  "script": {
+    "main": "sensors.sqrl"
+  }
+}

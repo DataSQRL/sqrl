@@ -19,9 +19,11 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.stream.flink.FlinkCalciteParser;
 import com.datasqrl.engine.stream.flink.FlinkSqlNodes;
+import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
 import com.datasqrl.plan.MainScript;
+import com.datasqrl.planner.parser.ParsePosUtil;
 import com.datasqrl.planner.parser.SqrlCreateTableStatement;
 import com.datasqrl.planner.parser.SqrlStatementParser;
 import java.nio.file.Path;
@@ -33,6 +35,7 @@ import java.util.function.Supplier;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.apache.calcite.sql.SqlNode;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTable;
 import org.apache.flink.sql.parser.ddl.table.SqlCreateTableLike;
 
@@ -47,6 +50,12 @@ public class ScriptSqrlModule implements SqrlModule {
   private final ErrorCollector errors;
 
   private Map<Name, Supplier<NamespaceObject>> tables = null;
+
+  /**
+   * The error of parsing the script for its tables, which every lookup fails with, so that it is
+   * reported once
+   */
+  private CollectedException parseError = null;
 
   @Override
   public Optional<NamespaceObject> getNamespaceObject(Name name) {
@@ -72,20 +81,49 @@ public class ScriptSqrlModule implements SqrlModule {
    * but validation and construction only run when that specific table is referenced.
    */
   private void initTables() {
+    if (parseError != null) {
+      throw parseError;
+    }
     if (tables != null) {
       return;
     }
 
-    tables = new HashMap<>();
+    try {
+      tables = parseTables();
+    } catch (CollectedException e) {
+      parseError = e;
+      throw e;
+    }
+  }
 
+  /**
+   * Parses the {@code CREATE TABLE} statements of the script. Like a statement of the script that
+   * fails to parse, one that the Flink parser rejects fails all tables, after the errors of all of
+   * them are reported at their position in the script.
+   */
+  private Map<Name, Supplier<NamespaceObject>> parseTables() {
     var scriptErrors = errors.withScript(scriptPath, scriptContent);
     var parsedCreateTables = sqrlStatementParser.parseCreateTables(scriptContent, scriptErrors);
 
+    var tables = new HashMap<Name, Supplier<NamespaceObject>>();
+    RuntimeException firstError = null;
     for (var parsedCreateTable : parsedCreateTables) {
       var createTableStmt = (SqrlCreateTableStatement) parsedCreateTable.statement().get();
 
-      var sql = createTableStmt.toSql();
-      var sqlNode = FlinkCalciteParser.parseSql(sql);
+      SqlNode sqlNode;
+      try {
+        sqlNode = FlinkCalciteParser.parseSql(createTableStmt.toSql());
+      } catch (RuntimeException e) {
+        var error =
+            ParsePosUtil.reportError(
+                scriptErrors.atFile(parsedCreateTable.statement().getFileLocation()),
+                e,
+                createTableStmt::mapSqlLocation);
+        if (firstError == null) {
+          firstError = error;
+        }
+        continue;
+      }
 
       if (!(sqlNode instanceof SqlCreateTable createTable)) {
         throw new IllegalStateException("Expected SqlCreateTable but got " + sqlNode.getClass());
@@ -120,6 +158,11 @@ public class ScriptSqrlModule implements SqrlModule {
 
       tables.put(Name.system(tableName), nsObjectSupplier);
     }
+
+    if (firstError != null) {
+      throw firstError;
+    }
+    return tables;
   }
 
   @AllArgsConstructor

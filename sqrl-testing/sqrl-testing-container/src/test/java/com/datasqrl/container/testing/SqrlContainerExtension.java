@@ -242,11 +242,18 @@ public class SqrlContainerExtension
   }
 
   public void compileSqrlProject() {
-    compileSqrlProject(null);
+    compileSqrlProject("package.json");
   }
 
   public void compileSqrlProject(@Nullable String packageFile) {
-    var result = sqrlCmd("compile", packageFile != null ? packageFile : "package.json");
+    compileSqrlProject(List.of(packageFile != null ? packageFile : "package.json"));
+  }
+
+  public void compileSqrlProject(List<String> packageFiles) {
+    var command = new ArrayList<String>();
+    command.add("compile");
+    command.addAll(packageFiles);
+    var result = sqrlCmd(command.toArray(String[]::new));
     validatePlan(result.logs());
     assertBuildNotOwnedByRoot(testDir, result.logs());
   }

@@ -1,0 +1,9 @@
+{
+  "data" : {
+    "AuthNestedArrayClaimMyTable" : [ {
+      "val" : 2
+    }, {
+      "val" : 3
+    } ]
+  }
+}

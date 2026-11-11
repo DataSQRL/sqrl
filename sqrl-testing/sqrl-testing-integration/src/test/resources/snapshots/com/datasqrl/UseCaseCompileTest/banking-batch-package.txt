@@ -76,7 +76,7 @@ Stage:       flink
 Primary key: loan_application_id, event_time
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - loan_application_id: BIGINT NOT NULL
  - status: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -86,6 +86,9 @@ Inputs:
  - default_catalog.default_database.ApplicationUpdates__base
 Annotations:
  - stream-root: ApplicationUpdates
+--- physical ---
+Table ApplicationUpdates (postgres):
+ - primary key: loan_application_id, event_time
 
 === Applications
 ID:          default_catalog.default_database.Applications
@@ -94,7 +97,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -107,6 +110,9 @@ Inputs:
  - default_catalog.default_database._ApplicationsStream
 Annotations:
  - stream-root: _ApplicationsStream
+--- physical ---
+Table Applications (postgres):
+ - primary key: id
 
 === CustomerUpdates
 ID:          default_catalog.default_database.CustomerUpdates
@@ -115,7 +121,7 @@ Stage:       flink
 Primary key: customer_id
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - customer_id: BIGINT NOT NULL
  - num_updates: BIGINT NOT NULL
@@ -123,6 +129,9 @@ Inputs:
  - default_catalog.default_database.ApplicationUpdates
  - default_catalog.default_database.Applications
  - default_catalog.default_database.Customers
+--- physical ---
+Table CustomerUpdates (postgres):
+ - primary key: customer_id
 
 === Customers
 ID:          default_catalog.default_database.Customers
@@ -131,7 +140,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -145,6 +154,9 @@ Inputs:
  - default_catalog.default_database._CustomersStream
 Annotations:
  - stream-root: _CustomersStream
+--- physical ---
+Table Customers (postgres):
+ - primary key: id
 
 === _ApplicationsStream
 ID:          default_catalog.default_database._ApplicationsStream
@@ -153,7 +165,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customer_id: BIGINT NOT NULL
@@ -174,7 +186,7 @@ Stage:       flink
 Primary key: id, updated_at
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - first_name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

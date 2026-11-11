@@ -15,9 +15,15 @@
  */
 package com.datasqrl.config;
 
+import com.datasqrl.canonicalizer.NamePath;
+import com.datasqrl.util.NameUtil;
 import java.nio.file.Path;
 
 public record WorkspacePaths(Path workspaceDir, Path buildDir, Path targetDir, Path projectRoot) {
+
+  public Path getIncludePath(String namespace) {
+    return NameUtil.namepath2Path(buildDir, NamePath.of(namespace));
+  }
 
   public Path getUdfPath() {
     return targetDir.resolve(SqrlConstants.FLINK_ASSETS_DIR).resolve(SqrlConstants.LIB_DIR);

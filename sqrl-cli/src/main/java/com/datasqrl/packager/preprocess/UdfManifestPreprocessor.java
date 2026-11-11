@@ -21,7 +21,6 @@ import com.datasqrl.util.SqrlObjectMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -47,11 +46,22 @@ abstract class UdfManifestPreprocessor implements Preprocessor {
   private static final ObjectMapper MAPPER = SqrlObjectMapper.INSTANCE;
   private static final String SERVICES_PATH = "META-INF/services/";
 
-  int createUdfManifests(Path jarPath, FilePreprocessingPipeline.Context ctx) {
+  /** Copies the JAR into the lib directory as {@code libJarName} and registers its UDFs. */
+  void registerUdfJar(Path jarPath, String libJarName, FilePreprocessingPipeline.Context ctx) {
+    var udfCount = createUdfManifests(jarPath, libJarName, ctx);
+    if (udfCount < 1) {
+      log.warn("No UDFs found in JAR file: {}", jarPath.getFileName());
+    }
+
+    ctx.copyToLib(jarPath, libJarName);
+  }
+
+  private int createUdfManifests(
+      Path jarPath, String jarName, FilePreprocessingPipeline.Context ctx) {
     try (var file = new JarFile(jarPath.toFile())) {
 
       var udfs = file.stream().filter(UdfManifestPreprocessor::isFlinkUdf).toList();
-      udfs.forEach(entry -> extractManifestData(entry, file, jarPath, ctx));
+      udfs.forEach(entry -> extractManifestData(entry, file, jarName, ctx));
 
       return udfs.size();
 
@@ -60,11 +70,6 @@ abstract class UdfManifestPreprocessor implements Preprocessor {
     }
 
     return 0;
-  }
-
-  void createUdfManifests(
-      List<String> fnClasses, String jarName, FilePreprocessingPipeline.Context ctx) {
-    fnClasses.forEach(fnClass -> createUdfManifest(fnClass, jarName, ctx));
   }
 
   @SneakyThrows
@@ -83,12 +88,12 @@ abstract class UdfManifestPreprocessor implements Preprocessor {
 
   @SneakyThrows
   private void extractManifestData(
-      JarEntry entry, JarFile file, Path jarPath, FilePreprocessingPipeline.Context ctx) {
+      JarEntry entry, JarFile file, String jarName, FilePreprocessingPipeline.Context ctx) {
     var jarEntryStream = file.getInputStream(entry);
     var classes = IOUtils.readLines(jarEntryStream, Charset.defaultCharset());
 
     for (var cls : classes) {
-      createUdfManifest(cls, jarPath.toFile().getName(), ctx);
+      createUdfManifest(cls, jarName, ctx);
     }
   }
 

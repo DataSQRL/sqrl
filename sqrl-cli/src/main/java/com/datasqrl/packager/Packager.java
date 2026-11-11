@@ -15,9 +15,9 @@
  */
 package com.datasqrl.packager;
 
-import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.compile.TestPlan;
 import com.datasqrl.config.PackageJson;
+import com.datasqrl.config.PackageJson.IncludeConfig;
 import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -25,6 +25,7 @@ import com.datasqrl.engine.EnginePhysicalPlan.DeploymentArtifact;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.packager.preprocess.JBangJars;
 import com.datasqrl.plan.MainScript;
 import com.datasqrl.util.FlinkCompileException;
 import com.datasqrl.util.SqrlObjectMapper;
@@ -69,17 +70,36 @@ public class Packager {
       // Preprocess included project(s) first if there are any
       var includes = config.getScriptConfig().getIncludeConfigs();
       for (var include : includes) {
-        var includePackage = basePath.resolve(include.getPackage());
-        var includePath = includePackage.getParent();
-        preprocessingPipeline.run(includePath, NamePath.of(include.getNamespace()), errors);
+        preprocessingPipeline.runInclude(
+            includeDir(basePath, include), include.getNamespace(), errors);
       }
 
       preprocessingPipeline.run(basePath, errors);
+
+      var libDir = workspacePaths.getUdfPath();
+      var namespaces = includes.stream().map(IncludeConfig::getNamespace).toList();
+      JBangJars.warnIfBundledSeparately(libDir, externalIncludes(basePath, includes), errors);
+      JBangJars.failOnConflictingUdfs(libDir, namespaces, errors);
 
       writePackageConfig();
     } catch (IOException e) {
       throw errors.handle(e);
     }
+  }
+
+  private static Path includeDir(Path basePath, IncludeConfig include) {
+    return basePath.resolve(include.getPackage()).getParent();
+  }
+
+  /** Returns the namespaces of the included projects outside the project folder. */
+  private static List<String> externalIncludes(Path basePath, List<IncludeConfig> includes) {
+    var projectDir = basePath.toAbsolutePath().normalize();
+    return includes.stream()
+        .filter(
+            include ->
+                !includeDir(basePath, include).toAbsolutePath().normalize().startsWith(projectDir))
+        .map(IncludeConfig::getNamespace)
+        .toList();
   }
 
   @SneakyThrows

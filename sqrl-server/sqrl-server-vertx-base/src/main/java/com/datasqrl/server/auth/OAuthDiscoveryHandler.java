@@ -15,13 +15,12 @@
  */
 package com.datasqrl.server.auth;
 
-import com.datasqrl.server.config.OAuthConfig;
+import com.datasqrl.server.config.ProtectedResourceMetadata;
 import com.datasqrl.server.config.ServerConfig;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,56 +32,50 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class OAuthDiscoveryHandler {
 
-  private static final List<String> DEFAULT_SCOPES = List.of("mcp:tools", "mcp:resources");
-
   private final ServerConfig config;
 
   /**
-   * Registers OAuth discovery routes on the router. Only registers if OAuth configuration is
-   * present.
+   * Registers OAuth discovery routes on the router. Only registers if an OAuth authorization server
+   * is configured.
    */
   public void registerRoutes(Router router) {
-    var oauthConfig = config.getOauthConfig();
-    if (oauthConfig == null || oauthConfig.getSite() == null) {
-      log.debug("OAuth config not present or site not configured, skipping discovery endpoints");
+    var metadata = config.getProtectedResourceMetadata();
+    if (metadata.isEmpty()) {
+      log.debug("No OAuth authorization servers configured, skipping discovery endpoints");
       return;
     }
 
-    log.info("Registering OAuth discovery endpoints for site: {}", oauthConfig.getSite());
+    log.info(
+        "Registering OAuth discovery endpoints for authorization servers: {}",
+        metadata.get().authorizationServers());
 
-    router.get(ProtectedResourceUrls.METADATA_PATH).handler(this::handleProtectedResourceMetadata);
+    router
+        .get(ProtectedResourceUrls.METADATA_PATH)
+        .handler(ctx -> handleProtectedResourceMetadata(ctx, metadata.get()));
   }
 
   /**
    * Returns OAuth 2.0 Protected Resource Metadata per RFC 9728. This tells MCP clients which
    * authorization server to use.
    */
-  private void handleProtectedResourceMetadata(RoutingContext ctx) {
-    var oauthConfig = config.getOauthConfig();
+  private void handleProtectedResourceMetadata(
+      RoutingContext ctx, ProtectedResourceMetadata metadata) {
+    var resource =
+        ProtectedResourceUrls.resource(
+            metadata, config.getServletConfig().getMcpEndpoint("v1"), ctx.request());
 
-    var resource = ProtectedResourceUrls.resource(config, ctx.request());
-    var authServer = oauthConfig.getEffectiveAuthorizationServer();
-    var scopes = getScopes(oauthConfig);
-
-    var metadata =
+    var body =
         new JsonObject()
             .put("resource", resource)
-            .put("authorization_servers", new JsonArray().add(authServer))
-            .put("scopes_supported", new JsonArray(scopes))
+            .put("authorization_servers", new JsonArray(metadata.authorizationServers()))
+            .put("scopes_supported", new JsonArray(metadata.scopesSupported()))
             .put("bearer_methods_supported", new JsonArray().add("header"));
 
-    log.debug("Returning protected resource metadata: {}", metadata.encodePrettily());
+    log.debug("Returning protected resource metadata: {}", body.encodePrettily());
 
     ctx.response()
         .putHeader("Content-Type", "application/json")
         .putHeader("Cache-Control", "public, max-age=3600")
-        .end(metadata.encode());
-  }
-
-  private List<String> getScopes(OAuthConfig oauthConfig) {
-    if (oauthConfig.getScopesSupported() != null) {
-      return oauthConfig.getScopesSupported();
-    }
-    return DEFAULT_SCOPES;
+        .end(body.encode());
   }
 }

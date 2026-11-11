@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1
----
+--- definition ---
 Schema:
  - id: INTEGER NOT NULL
  - event_time: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
@@ -15,13 +15,16 @@ LogicalProject(id=[$0], event_time=[2000-01-01 08:00:00:TIMESTAMP_WITH_LOCAL_TIM
   LogicalValues(tuples=[[{ 1 }]])
 SQL:
 CREATE VIEW `NowSource` AS  SELECT id, CAST(TIMESTAMP '2000-01-01 00:00:00' AS TIMESTAMP_LTZ(3)) AS event_time FROM (VALUES (1)) AS source(id);
+--- physical ---
+Table NowSource_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === now_sink
 ID:          default_catalog.default_database.now_sink
 Type:        export
 Stage:       flink
 Connector:   blackhole
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.now_sink_in1
 
@@ -32,7 +35,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - id: INTEGER NOT NULL
 Inputs:

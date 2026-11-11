@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: boolean_value
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - boolean_value: BOOLEAN
  - record_count: BIGINT NOT NULL
@@ -25,7 +25,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - tiny_value: TINYINT
@@ -58,7 +58,7 @@ Stage:       flink
 Primary key: id
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - tiny_value: TINYINT

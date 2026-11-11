@@ -42,7 +42,7 @@ directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY
 ID:          default_catalog.default_database.AuthMyTable
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.MyTable
 Annotations:
@@ -56,11 +56,14 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~1e1
----
+--- definition ---
 Schema:
  - val: INTEGER NOT NULL
 Annotations:
  - sort: [0 ASC-nulls-first]
+--- physical ---
+Table MyTable (postgres):
+ - primary key: val
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`

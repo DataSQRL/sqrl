@@ -36,6 +36,8 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 
 - Kafka topics are automatically created based on your SQRL table definitions
 - Topic configurations are generated during the compilation process
+- `kafka.json` lists the topics of internal Kafka tables that a [standalone included project](../configuration#include-other-sources) defines under `includedTopics`, with only their names, because that project owns them and decides their settings
+- Only the mutation table writes its Kafka topic. Another writer mixes its rows into the mutation, and a writer that reads the mutation reads its own output in an endless loop. When the `kafka` connector template gives a Kafka table that the compiler creates for Flink the topic of a mutation table, the compiler puts `<table-name>-subscription` in place of `${sqrl:table-name}` in the template's `topic` instead, so `acme-${sqrl:table-name}` gives `acme-Events-subscription`. If the template gives a mutation topic again, for example with a fixed `topic` without `${sqrl:table-name}`, the compile fails with an error. For example, a script defines the mutation table `Events` with `CREATE TABLE` and the `engine(kafka)` hint, and a `SUBSCRIBE` function reads `Events` directly. Flink then copies `Events` into a Kafka table for the subscription. With the default templates, the mutation topic is `Events` and the copy gets the topic `Events-subscription`. An `EXPORT` statement to `log.<name>` or `logger.<name>` that gets the topic of a mutation table fails with an error, for example `EXPORT Orders TO log.Events` when `Events` is a mutation table. Use a different name in the `EXPORT` statement. All other topics keep the name from the template. The compiler does not check an `EXPORT` statement that writes directly into a mutation table, such as `EXPORT _Echo TO Events`. When the exported query reads that mutation table, the export loops
 - Retention settings control how long data is stored in Kafka topics
 - Ensure `replication-factor` does not exceed the number of brokers in the target Kafka cluster
 - Watermarks are used for handling late-arriving events in stream processing
@@ -43,6 +45,27 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
   they generate `WATERMARK FOR <timestamp-column> AS SOURCE_WATERMARK()` instead of using the
   corresponding watermark delay. It is only supported by our `kafka-safe` and `upsert-kafka-safe` connectors.
 - Kafka serves as the messaging backbone between different engines in the pipeline
+
+## Key and Value Formats
+
+The `kafka` and `kafka-mutation` [connector templates](../configuration#connector-templates-connectors) set one `format` (`flexible-json` by default) for the message key and value. To use separate formats, set `key.format` and `value.format` in the template, or in the `WITH` options of an internal table:
+
+```json
+{
+  "connectors": {
+    "kafka-mutation": {
+      "key.format": "json",
+      "value.format": "flexible-json"
+    }
+  }
+}
+```
+
+- `key.format` and `value.format` take precedence over `format`, which the default template always contains.
+- Tables with a message key (`PARTITIONED BY` or a primary key) use `key.format` for the key, otherwise `format`, otherwise `value.format`. Tables without a message key drop `key.format`.
+- Options of `format`, such as `flexible-json.timestamp-format.standard`, apply only to the key or value that uses that format. Set an option for one side with a `key.` or `value.` prefix, for example `value.flexible-json.timestamp-format.standard`.
+- When `key.format` and `value.format` are the same, the compiler notes that `format` is enough.
+- The server writes mutations as JSON, so the compiler warns when a mutation table uses a format other than `json` or `flexible-json`.
 
 <!--EXTENDED-->
 

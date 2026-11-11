@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: uuid
 Timestamp:   event_time
 Row count:   ~5e7
----
+--- definition ---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: INTEGER NOT NULL
@@ -24,7 +24,7 @@ Stage:       flink
 Primary key: sensorid
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - avg_temperatures: FLOAT NOT NULL
@@ -34,12 +34,15 @@ Inputs:
 Annotations:
  - stream-root: SensorReading
  - sort: [0 DESC-nulls-last]
+--- physical ---
+Table SensorAnalysis (postgres):
+ - primary key: sensorid
 
 === SensorAnalysisById
 ID:          default_catalog.default_database.SensorAnalysisById
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.SensorAnalysis
 Annotations:
@@ -54,7 +57,7 @@ Stage:       flink
 Primary key: sensorid
 Timestamp:   endOfMin
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - endOfMin: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
@@ -64,6 +67,9 @@ Inputs:
 Annotations:
  - mostRecentDistinct: true
  - stream-root: SensorReading
+--- physical ---
+Table SensorMaxTempLastMin (postgres):
+ - primary key: sensorid
 
 === SensorReading
 ID:          default_catalog.default_database.SensorReading
@@ -72,7 +78,7 @@ Stage:       flink
 Primary key: uuid
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - uuid: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - sensorid: INTEGER NOT NULL
@@ -82,12 +88,16 @@ Inputs:
  - default_catalog.default_database.SensorReading__base
 Annotations:
  - stream-root: SensorReading
+--- physical ---
+Table SensorReading (postgres):
+ - primary key: uuid
+ - index SensorReading_hash_c1 (hash): sensorid
 
 === SensorReadingById
 ID:          default_catalog.default_database.SensorReadingById
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.SensorReading
 Annotations:
@@ -102,7 +112,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   endOfMin
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - sensorid: INTEGER NOT NULL
  - endOfMin: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL

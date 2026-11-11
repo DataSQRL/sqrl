@@ -1,0 +1,14 @@
+-- This project owns the internal tables of the included package, unless the include is standalone
+-- (package-standalone.json): then the included package owns them and their topics are included topics
+IMPORT shared.base.*;
+
+-- The project's own internal table, so the project always owns its topic
+/*+engine(kafka) */
+CREATE TABLE Feedback (
+    customerid BIGINT NOT NULL,
+    message STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+-- Writes into an internal table of the included package
+EXPORT OrderEvent TO shared.sinks.OrderAudit;

@@ -1,0 +1,6 @@
+/*+no_query */
+Orders := SELECT order_id, org_id FROM (VALUES ('O1', 'ORG1'), ('O2', 'ORG2')) AS t(order_id, org_id);
+
+-- 'auth.org..id' has an empty segment between the two dots.
+OrgOrders(org_id STRING NOT NULL METADATA FROM 'auth.org..id') :=
+    SELECT order_id FROM Orders WHERE org_id = :org_id;

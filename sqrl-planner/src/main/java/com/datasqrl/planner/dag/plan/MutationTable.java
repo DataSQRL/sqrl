@@ -23,6 +23,7 @@ import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.util.Documented;
 import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.server.ResolvedMetadata;
+import java.util.List;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Builder.Default;
@@ -55,6 +56,9 @@ public class MutationTable implements ExecutableQuery, Documented {
 
   /** The table builder of the constructed table */
   FlinkTableBuilder tableBuilder;
+
+  /** The partition key as declared, since engines may remove it from the table builder */
+  @Default List<String> partitionKey = List.of();
 
   /** The columns that are computed and not provided explicitly by the user */
   @Singular Map<String, ResolvedMetadata> computedColumns;

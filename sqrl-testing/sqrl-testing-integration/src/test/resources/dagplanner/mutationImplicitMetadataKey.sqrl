@@ -1,0 +1,7 @@
+-- Without a FROM clause, the column name is the metadata key: 'uuid' and 'timestamp' are mutation metadata keys.
+/*+engine(kafka) */
+CREATE TABLE Clicks (
+    url STRING NOT NULL,
+    `uuid` STRING NOT NULL METADATA,
+    `timestamp` TIMESTAMP_LTZ(3) NOT NULL METADATA
+);

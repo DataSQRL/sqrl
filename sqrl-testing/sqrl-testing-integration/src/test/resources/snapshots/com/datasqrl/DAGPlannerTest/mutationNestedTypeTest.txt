@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~9e7
----
+--- definition ---
 Schema:
  - customerid: BIGINT NOT NULL
  - payload: RecordType:peek_no_expand(INTEGER a, INTEGER b, INTEGER c)
@@ -25,6 +25,9 @@ LogicalProject(customerid=[$1], payload=[$5])
 SQL:
 CREATE VIEW `CustomerData` AS  SELECT o.customerid, c.payload
                   FROM Orders o JOIN NestedCustomers FOR SYSTEM_TIME AS OF o.`time` c ON o.customerid = c.customerid;
+--- physical ---
+Table CustomerData_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === NestedCustomers
 ID:          default_catalog.default_database.NestedCustomers
@@ -33,7 +36,7 @@ Stage:       flink
 Primary key: customerid
 Timestamp:   updatedTime
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - customerid: INTEGER NOT NULL
  - payload: RecordType:peek_no_expand(INTEGER a, INTEGER b, INTEGER c)
@@ -67,6 +70,10 @@ WITH (
   'value.flexible-json.timestamp-format.standard' = 'ISO-8601',
   'value.format' = 'flexible-json'
 )
+--- physical ---
+Table NestedCustomers_2 (postgres):
+ - primary key: customerid
+
 === Orders
 ID:          default_catalog.default_database.Orders
 Type:        stream
@@ -74,7 +81,7 @@ Stage:       flink
 Primary key: id, time
 Timestamp:   time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - id: BIGINT NOT NULL
  - customerid: BIGINT NOT NULL
@@ -103,6 +110,10 @@ WITH (
   'path' = 'file:/mock',
   'source.monitor-interval' = '10 sec'
 )
+--- physical ---
+Table Orders_3 (postgres):
+ - primary key: id, time
+
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (
   `id` BIGINT NOT NULL,

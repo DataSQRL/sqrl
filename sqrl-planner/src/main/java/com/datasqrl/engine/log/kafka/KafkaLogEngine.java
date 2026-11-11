@@ -26,6 +26,7 @@ import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.datatype.DataTypeMapping;
 import com.datasqrl.datatype.flink.json.FlexibleJsonFlinkFormatTypeMapper;
+import com.datasqrl.deployment.model.KafkaIncludedTopicModel;
 import com.datasqrl.deployment.model.KafkaNewTopicModel;
 import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.EnginePhysicalPlan;
@@ -33,6 +34,8 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionStage;
+import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.flinkrunner.connector.kafka.KeyFieldsOptions;
 import com.datasqrl.flinkrunner.format.json.FlexibleJsonFormat;
 import com.datasqrl.io.schema.avro.AvroToRelDataTypeConverter;
 import com.datasqrl.io.tables.TableType;
@@ -50,9 +53,11 @@ import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -76,15 +81,21 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   public static final String CONNECTOR_TOPIC_KEY = "topic";
   public static final String UPSERT_FORMAT = "upsert-%s";
+  public static final String SUBSCRIPTION_TOPIC_SUFFIX = "-subscription";
 
   public static final String DEFAULT_TTL_KEY = "retention";
 
   public static final EnumSet<EngineFeature> KAFKA_FEATURES = EnumSet.of(EngineFeature.MUTATIONS);
 
   @Getter private final EngineConfig engineConfig;
+  private final ErrorCollector errors;
+  private final KafkaFormatConfigurer formats;
   private final TestRunnerConfiguration testRunnerConfig;
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf mutationConnectorConf;
+  private final List<String> standaloneIncludes;
+  // Filled by createMutation, which runs for every mutation before the planner calls createTable
+  private final Set<String> mutationTopicNames = new HashSet<>();
 
   // === SETTINGS ===
   private final Optional<Duration> defaultTTL;
@@ -97,13 +108,17 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final String format;
 
   @Inject
-  public KafkaLogEngine(PackageJson json, ConnectorFactoryFactory connectorFactory) {
+  public KafkaLogEngine(
+      PackageJson json, ConnectorFactoryFactory connectorFactory, ErrorCollector errors) {
     super(KafkaLogEngineFactory.ENGINE_NAME, EngineType.LOG, KAFKA_FEATURES);
     this.engineConfig = json.getEngines().getEngineConfigOrEmpty(KafkaLogEngineFactory.ENGINE_NAME);
+    this.errors = errors;
+    this.formats = new KafkaFormatConfigurer(errors);
     this.testRunnerConfig = json.getTestConfig();
     this.streamConnectorConf = connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME);
     this.mutationConnectorConf =
         connectorFactory.getConfig(KafkaLogEngineFactory.ENGINE_NAME + "-mutation");
+    this.standaloneIncludes = json.getScriptConfig().getStandaloneIncludes();
     defaultTTL =
         engineConfig
             .getPropertyOptional(DEFAULT_TTL_KEY)
@@ -119,7 +134,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     numPartitions = Integer.parseInt(engineConfig.getProperty("num-partitions"));
     replicationFactor = Short.parseShort(engineConfig.getProperty("replication-factor"));
     format =
-        String.valueOf(streamConnectorConf.toMap().get(FlinkConnectorConfigWrapper.FORMAT_KEY))
+        String.valueOf(KafkaFormatConfigurer.valueFormat(streamConnectorConf.toMap()))
             .trim()
             .toLowerCase();
   }
@@ -130,17 +145,15 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      MutationInsertType insertType,
-      Optional<Duration> ttl) {
+      MutationSettings settings) {
     return createInternal(
         stage,
         originalTableName,
         tableBuilder,
         relDataType,
         Optional.empty(),
-        ttl,
-        true,
-        insertType == MutationInsertType.TRANSACTION);
+        Optional.of(settings),
+        false);
   }
 
   @Override
@@ -156,20 +169,43 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         tableBuilder,
         relDataType,
         Optional.of(tableAnalysis),
-        defaultTTL,
-        false,
+        Optional.empty(),
         false);
   }
 
-  public Table createInternal(
+  @Override
+  public EngineCreateTable createTableForExportStatement(
+      ExecutionStage stage,
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      TableAnalysis tableAnalysis) {
+    return createInternal(
+        stage,
+        originalTableName,
+        tableBuilder,
+        relDataType,
+        Optional.of(tableAnalysis),
+        Optional.empty(),
+        true);
+  }
+
+  private Table createInternal(
       ExecutionStage stage,
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis,
-      Optional<Duration> ttl,
-      boolean isMutation,
-      boolean isTransactional) {
+      Optional<MutationSettings> mutation,
+      boolean isExportStatement) {
+
+    boolean isMutation = mutation.isPresent();
+    boolean isTransactional =
+        mutation
+            .map(settings -> settings.insertType() == MutationInsertType.TRANSACTION)
+            .orElse(false);
+    var ttl = mutation.map(MutationSettings::ttl).orElse(defaultTTL);
+    var standaloneInclude = mutation.flatMap(MutationSettings::standaloneInclude);
     var ctxBuilder =
         Context.builder().tableName(originalTableName).tableId(tableBuilder.getTableName());
     var conf = isMutation ? mutationConnectorConf : streamConnectorConf;
@@ -178,7 +214,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     var topicConfig = new HashMap<String, String>();
 
     if (tableBuilder.hasPartition()) {
+      // PARTITIONED BY only declares the Kafka message key. Flink's Kafka sink rejects partitioned
+      // tables, so the clause must not reach Flink.
       messageKey = tableBuilder.getPartition();
+      tableBuilder.removePartition();
     }
 
     if (tableBuilder.hasPrimaryKey()) {
@@ -203,20 +242,24 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       }
     }
 
-    // Configure format depending on type
-    String format = connectorConfig.get(FlinkConnectorConfigWrapper.FORMAT_KEY);
-    checkArgument(
-        format != null && !format.isBlank(),
-        "Need to configure a 'format' for connector {}",
-        KafkaLogEngineFactory.ENGINE_NAME);
+    // The message key is set in the connector options so that Flink writes it like the server does.
+    var hasMessageKey = !messageKey.isEmpty();
 
-    // The server keys mutation records itself; decoding that key in Flink would silently drop
-    // records written before the table was keyed, since a null key yields no key row. Upsert
-    // mutations still decode it because upsert-kafka requires a key, so this applies to them.
-    var decodeKey = isUpsert || (!isMutation && !messageKey.isEmpty());
-
-    if (decodeKey && !isUpsert) {
+    if (hasMessageKey && !isUpsert) {
       connectorConfig.put("key.fields", String.join(";", messageKey));
+      // Decoding the key drops records without a key; 'kafka-safe' can read the key fields from
+      // the value instead, since it holds every column ('value.fields-include' = 'ALL')
+      var connector = connectorConfig.get(FlinkConnectorConfigWrapper.CONNECTOR_KEY);
+      // TODO: Remove this '-safe' restriction and the warning once we update to an upstream Kafka
+      // connector version that reads records without a key
+      if (connector != null && connector.endsWith("-safe")) {
+        connectorConfig.put(KeyFieldsOptions.SCAN_KEY_FIELDS_READ_FROM_VALUE.key(), "true");
+      } else {
+        errors.warn(
+            "Kafka table '%s' uses the '%s' connector, which drops records without a message key"
+                + " when reading them. Use 'kafka-safe' to keep them.",
+            originalTableName, connector);
+      }
     }
 
     if (isUpsert) {
@@ -228,26 +271,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       topicConfig.put("cleanup.policy", "compact");
     }
 
-    if (decodeKey) {
-      connectorConfig.remove(FlinkConnectorConfigWrapper.FORMAT_KEY);
-      connectorConfig.put(FlinkConnectorConfigWrapper.KEY_FORMAT_KEY, format);
-      connectorConfig.put(FlinkConnectorConfigWrapper.VALUE_FORMAT_KEY, format);
+    if (hasMessageKey) {
       connectorConfig.put(
           "value.fields-include", "ALL"); // it's slightly less efficient but easier for debugging
-      // Extract format-specific options and re-assign them with key. and value. prefixes
-      Map<String, String> formatOptions = new HashMap<>();
-      for (java.util.Iterator<Map.Entry<String, String>> it = connectorConfig.entrySet().iterator();
-          it.hasNext(); ) {
-        Map.Entry<String, String> entry = it.next();
-        if (entry.getKey().startsWith(format)) {
-          formatOptions.put(entry.getKey(), entry.getValue());
-          it.remove();
-        }
-      }
-      for (Map.Entry<String, String> entry : formatOptions.entrySet()) {
-        connectorConfig.put("value." + entry.getKey(), entry.getValue());
-        connectorConfig.put("key." + entry.getKey(), entry.getValue());
-      }
     }
 
     if (isTransactional) {
@@ -257,16 +283,43 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
     ttl.ifPresent(duration -> topicConfig.put("retention.ms", String.valueOf(duration.toMillis())));
     // preserve any existing connector options
     connectorConfig.putAll(tableBuilder.getConnectorOptions());
+    // after merging, so formats and format options given in WITH are configured as well
+    var valueFormat =
+        formats.configure(connectorConfig, originalTableName, hasMessageKey, isMutation);
+    var topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
+    if (isMutation) {
+      mutationTopicNames.add(topicName);
+    } else if (mutationTopicNames.contains(topicName)) {
+      // Only the mutation table writes its topic: another writer mixes its rows into the
+      // mutation, and a writer that reads the mutation reads its own output in an endless loop
+      errors.checkFatal(
+          !isExportStatement,
+          "Kafka table '%s' of an EXPORT statement writes into the topic '%s' of a mutation"
+              + " table. Use a different table name in the EXPORT statement.",
+          originalTableName,
+          topicName);
+      topicName =
+          conf.toMapWithSubstitution(
+                  ctxBuilder.tableName(originalTableName + SUBSCRIPTION_TOPIC_SUFFIX).build())
+              .get(CONNECTOR_TOPIC_KEY);
+      errors.checkFatal(
+          !mutationTopicNames.contains(topicName),
+          "Kafka table '%s' writes into the topic '%s' of a mutation table. Use"
+              + " '${sqrl:table-name}' in the 'topic' option of the 'kafka' connector.",
+          originalTableName,
+          topicName);
+      connectorConfig.put(CONNECTOR_TOPIC_KEY, topicName);
+    }
     tableBuilder.setConnectorOptions(connectorConfig);
-    String topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     return new Table(
         topicName,
         tableBuilder.getTableName(),
         originalTableName,
-        format,
+        valueFormat,
         messageKey,
         relDataType,
-        topicConfig);
+        topicConfig,
+        standaloneInclude);
   }
 
   @Override
@@ -345,14 +398,20 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
           .function()
           .setExecutableQuery(new KafkaQuery(stagePlan.getStage(), topicName, filterColumns));
     }
-    // Plan topic creation
+    // Plan topic creation. The topics of mutation tables that a standalone included project defines
+    // belong to that project, so they are listed separately, without settings, from the topics this
+    // deployment owns.
+    var mutationsByInclusion =
+        stagePlan.getMutations().stream()
+            .map(Table.class::cast)
+            .collect(Collectors.partitioningBy(table -> table.standaloneInclude().isPresent()));
+
     var topics =
         Streams.concat(
                 stagePlan.getTables().stream()
                     .map(Table.class::cast)
                     .map(t -> createNewTopic(t, KafkaNewTopicModel.Type.SUBSCRIPTION)),
-                stagePlan.getMutations().stream()
-                    .map(Table.class::cast)
+                mutationsByInclusion.get(false).stream()
                     .map(t -> createNewTopic(t, KafkaNewTopicModel.Type.MUTATION)))
             .toList();
 
@@ -361,7 +420,26 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .map(topicName -> new KafkaNewTopic(new KafkaNewTopicModel(topicName, topicName)))
             .toList();
 
-    return new KafkaPhysicalPlan(topics, testRunnerTopics);
+    var includedTopics =
+        mutationsByInclusion.get(true).stream().map(KafkaLogEngine::toIncludedTopic).toList();
+    noticeStandaloneIncludesWithoutTopics(includedTopics);
+
+    return new KafkaPhysicalPlan(topics, testRunnerTopics, includedTopics);
+  }
+
+  private void noticeStandaloneIncludesWithoutTopics(List<KafkaIncludedTopicModel> includedTopics) {
+    var includesWithTopics =
+        includedTopics.stream().map(KafkaIncludedTopicModel::include).collect(Collectors.toSet());
+
+    standaloneIncludes.stream()
+        .filter(include -> !includesWithTopics.contains(include))
+        .forEach(
+            include ->
+                errors.notice(
+                    "Include '%1$s' sets \"standalone\": true, but this project uses no internal"
+                        + " Kafka table that '%1$s' defines, so kafka.json lists no topic of"
+                        + " '%1$s' under \"includedTopics\"",
+                    include));
   }
 
   private void setWatermark(
@@ -371,7 +449,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       boolean isTransactional) {
 
     var timestampMetadata =
-        metadataCol.getMetadataAlias().filter(s -> s.equalsIgnoreCase("timestamp")).isPresent();
+        FlinkTableBuilder.metadataKey(metadataCol).equalsIgnoreCase("timestamp");
 
     if (!timestampMetadata || tableBuilder.hasWatermark()) {
       return;
@@ -415,6 +493,14 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             table.config()));
   }
 
+  private static KafkaIncludedTopicModel toIncludedTopic(Table table) {
+    return new KafkaIncludedTopicModel(
+        table.topicName(),
+        table.tableName(),
+        table.logicalName(),
+        table.standaloneInclude().orElseThrow());
+  }
+
   public record Table(
       String topicName,
       String tableName,
@@ -422,13 +508,21 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       String format,
       List<String> messageKeys,
       RelDataType valueType,
-      Map<String, String> config)
+      Map<String, String> config,
+      Optional<String> standaloneInclude)
       implements MutationCreateTable {
 
     @Override
     public MutationCreateTable withValueType(RelDataType inputValueType) {
       return new Table(
-          topicName, tableName, logicalName, format, messageKeys, inputValueType, config);
+          topicName,
+          tableName,
+          logicalName,
+          format,
+          messageKeys,
+          inputValueType,
+          config,
+          standaloneInclude);
     }
 
     @Override

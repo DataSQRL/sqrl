@@ -59,6 +59,7 @@ public class ServerModelManager {
         new GraphqlModelGenerator(serverPlan.getFunctions(), serverPlan.getMutations(), errors);
     graphqlModelGenerator.walkAPISource(api.schema());
     serverPlan.getPagedRowTimeTables().addAll(graphqlModelGenerator.getPagedRowTimeTables());
+    serverPlan.getServedFunctions().addAll(graphqlModelGenerator.getSeenTableFunctions());
     var schema = StringSchema.builder().schema(api.schema().getDefinition()).build();
     var graphSchema = converter.getSchema(schema.getSchema());
     var apiConfig = packageConfig.getCompilerConfig().getApiConfig();

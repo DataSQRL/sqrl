@@ -94,6 +94,7 @@ Rules for writing the configuration files:
 * **Every independently compiled or tested project and sub-project MUST have a named package file for each environment it uses:** `<project-or-sub-project>-<env>-package.json` (for example, `fraud_store-test-package.json`). Do not use an unqualified standalone package file for a deployable sub-project. The name lets the agent's package-discovery fallback identify the package that belongs to each build.
 * If settings are common across environments or sibling sub-projects, share them through a `*-shared-package.json` base; keep only environment- or sub-project-specific settings in the named package files.
 * **Fix duplicated configuration:** move common settings to `<project>-shared-package.json` and retain only differing fields in `<project>-<env>-package.json`.
+* **Give every compiled combination an auth provider when the script reads a claim.** The compiler checks the merged files of each compile. A script with `METADATA FROM 'auth.<claim>'` fails to compile when the merged `engines.vertx.config` has no `auth` block. So put `auth` in the shared base, or in each overlay that compiles the script. Use `${...}` placeholders for values that differ per environment. This also applies when a deployment mounts its own `vertx-config.json`.
 
 ## Sub-projects (multiple deployments in one project)
 
@@ -283,6 +284,7 @@ Example:
 - **Template values for the included scripts.** An included project's scripts may use `{{...}}` placeholders — variables such as `{{environment}}`, sections such as `{{#is_batch}}…{{/is_batch}}`. DataSQRL renders them from two sources: the `script.config` of the package file named in `package`, and the include entry's own `config`, which overrides it. Add `config` only when you have values to pass: it must hold at least one property, so an empty `{}` is rejected (`must have at least 1 properties at location [/script/include/<namespace>/config]`).
 - **Declare `script.include` in the config that declares `script.main`** — the base config (or, with a base shared by several sub-projects, each sub-project's file that declares its `script.main`). Overlays that only add engine or test-runner settings need no `script.include`.
 - **Declare only the projects this project actually needs**, not everything the repository happens to contain: every declared project is copied into `build/` at compile time, so an unnecessary declaration are expensive.
+- **`standalone` includes.** By default the consumer owns the included project's internal tables like its own. Set `"standalone": true` on the include entry only when the included project has its own deployment; it can go in the deployment's package file alone, but that entry must repeat the include's `package`, because every include entry requires it. Then the included project owns its internal **Kafka** tables: `kafka.json` lists their topics by name under `includedTopics`, and their settings, such as the partition count, belong in its own package files. Both projects must resolve the same topic names and key/value formats. Internal Iceberg tables are not covered yet. See *Standalone Includes* in the configuration docs.
 - At compile time the included project is **copied into `build/<namespace>/`** from which IMPORT statements are resolved. Invoke the `/implement-sqrl` skill (SQRL Language Spec → IMPORT Statement → Included projects / multi-project).
 
 ## Test Runner (`test-runner`)
@@ -341,7 +343,7 @@ Note that these connector templates apply to table definition managed by DataSQR
 }
 ```
 
-`logger` is `print` or `none`. `extended-scalar-types` enables extended generated GraphQL scalars. `compile-flink-plan` controls Flink physical-plan generation and is not supported for batch pipelines. `cost-model` is `DEFAULT`, `READ`, or `WRITE`.
+`logger` is `print` or `none`. `extended-scalar-types` enables extended generated GraphQL scalars. `compile-flink-plan` controls Flink physical-plan generation and is not supported for batch pipelines. `cost-model` is `DEFAULT`, `READ`, or `WRITE`, and the default is `DEFAULT`. `DEFAULT` favors Flink unless joins make Flink too expensive, `WRITE` always favors Flink, and `READ` always favors the database. The compiler assigns each table to the cheapest engine. An `/*+ engine(...) */` hint limits the engines that the compiler can pick. With `DEFAULT`, Flink and the database can have the same cost for a table. Then the compiler assigns the table to Flink. To see the engine of each table, read its `Stage:` line in `build/pipeline_explain.txt`.
 
 `explain` controls plan output under `build/`: use `sql`, `logical`, or `physical` to include each representation, and `sorted` for deterministic order. Although the current schema accepts `text` and `visual`, the current compiler configuration interface does not consume them; do not rely on those keys.
 

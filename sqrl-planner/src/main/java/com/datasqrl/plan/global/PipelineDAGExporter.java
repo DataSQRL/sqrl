@@ -15,10 +15,14 @@
  */
 package com.datasqrl.plan.global;
 
+import com.datasqrl.engine.PhysicalPlan;
+import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
+import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.io.tables.TableType;
 import com.datasqrl.plan.rules.EngineCapability;
 import com.datasqrl.plan.util.RelWriterWithHints;
 import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.dag.DAGPlanner;
 import com.datasqrl.planner.dag.PipelineDAG;
 import com.datasqrl.planner.dag.nodes.ExportNode;
 import com.datasqrl.planner.dag.nodes.PipelineNode;
@@ -32,13 +36,16 @@ import com.datasqrl.util.StreamUtil;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.SuperBuilder;
 import org.apache.calcite.rel.RelNode;
@@ -46,6 +53,7 @@ import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.calcite.schema.FunctionParameter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.flink.table.catalog.ObjectIdentifier;
 
 @Value
 @Builder
@@ -53,6 +61,8 @@ public class PipelineDAGExporter {
 
   private static final String LINEBREAK = "\n";
   private static final String N_A = "-";
+  private static final String DEFINITION_SEPARATOR = "--- definition ---";
+  private static final String PHYSICAL_SEPARATOR = "--- physical ---";
 
   @Builder.Default boolean includeQueries = true;
 
@@ -69,8 +79,12 @@ public class PipelineDAGExporter {
   // TODO: We don't yet have the physical plans in the this DAG exporter
   @Builder.Default boolean includePhysicalPlan = true;
 
+  /** The physical plan to read the selected database indexes from */
+  @NonNull PhysicalPlan physicalPlan;
+
   public List<Node> export(PipelineDAG dag) {
     CalciteHacks.resetToSqrlMetadataProvider();
+    var databaseTables = getDatabaseTables();
     var result = new ArrayList<Node>();
     for (PipelineNode node : dag) {
       var inputs = dag.getInputs(node).stream().map(PipelineNode::getId).sorted().toList();
@@ -128,6 +142,7 @@ public class PipelineDAGExporter {
                                       table.getDocumentation().getColumn(field.getName(), null)))
                           .toList())
                   .annotations(getAnnotations(table))
+                  .databaseTables(databaseTables.get(table.getObjectIdentifier()))
                   .build());
         }
       } else if (node instanceof ExportNode export) {
@@ -203,6 +218,43 @@ public class PipelineDAGExporter {
     }
 
     return Optional.of(rowCountStr);
+  }
+
+  /**
+   * Collects the database tables with their primary key and indexes, keyed by the DAG table that
+   * each database table stores, since the database table names differ from the DAG.
+   */
+  private Map<ObjectIdentifier, List<DatabaseTable>> getDatabaseTables() {
+    var result = new HashMap<ObjectIdentifier, List<DatabaseTable>>();
+    for (var plan : physicalPlan.getPlans(JdbcPhysicalPlan.class).toList()) {
+      var stage = plan.stage().engine().getName().toLowerCase();
+      var hasPrimaryKeyIndex =
+          plan.stage().engine() instanceof AbstractJDBCDatabaseEngine engine
+              && engine.getIndexSelectorConfig().hasPrimaryKeyIndex();
+      var indexesByTable = plan.getIndexesByTable();
+
+      for (var table : plan.tableIdMap().values()) {
+        var indexes = new ArrayList<TableIndex>();
+        if (hasPrimaryKeyIndex && !table.getPrimaryKey().isEmpty()) {
+          indexes.add(TableIndex.primaryKey(table.getPrimaryKey()));
+        }
+
+        indexesByTable.getOrDefault(table.getName(), List.of()).stream()
+            .sorted()
+            .map(TableIndex::of)
+            .forEach(indexes::add);
+
+        if (!indexes.isEmpty()) {
+          // A DAG table can be stored in more than one database table, e.g. when also exported
+          result
+              .computeIfAbsent(
+                  table.getEngineTable().tableAnalysis().getObjectIdentifier(),
+                  id -> new ArrayList<>())
+              .add(new DatabaseTable(stage, table.getName(), indexes));
+        }
+      }
+    }
+    return result;
   }
 
   private String explain(RelNode relNode) {
@@ -309,7 +361,7 @@ public class PipelineDAGExporter {
 
     @Override
     public String toString() {
-      return getBaseHeaderString() + "---" + LINEBREAK + getBaseListsString();
+      return getBaseHeaderString() + DEFINITION_SEPARATOR + LINEBREAK + getBaseListsString();
     }
 
     String getBaseHeaderString() {
@@ -372,7 +424,11 @@ public class PipelineDAGExporter {
 
     @Override
     public String toString() {
-      return getBaseHeaderString() + connectorString() + "---" + LINEBREAK + getBaseListsString();
+      return getBaseHeaderString()
+          + connectorString()
+          + DEFINITION_SEPARATOR
+          + LINEBREAK
+          + getBaseListsString();
     }
   }
 
@@ -416,6 +472,9 @@ public class PipelineDAGExporter {
     String timestamp;
     List<SchemaColumn> schema;
 
+    @JsonProperty("database_tables")
+    List<DatabaseTable> databaseTables;
+
     @Override
     public String toString() {
       var s = new StringBuilder();
@@ -425,12 +484,29 @@ public class PipelineDAGExporter {
       s.append("Primary key: ").append(pKey).append(LINEBREAK);
       s.append("Timestamp:   ").append(timestamp).append(LINEBREAK);
       s.append("Row count:   ").append(rowCount).append(LINEBREAK);
-      s.append("---").append(LINEBREAK);
+      s.append(DEFINITION_SEPARATOR).append(LINEBREAK);
       s.append("Schema:").append(LINEBREAK);
       toListString(s, schema);
       s.append(getBaseListsString());
       s.append(getPlanString());
+      if (CollectionUtils.isNotEmpty(databaseTables)) {
+        // The SQL of the logical representation does not always end with a line break
+        if (!StringUtils.endsWith(s, LINEBREAK)) {
+          s.append(LINEBREAK);
+        }
+        s.append(getPhysicalString());
+      }
 
+      return s.toString();
+    }
+
+    /** The physical representation follows the logical one, after a separator of its own */
+    String getPhysicalString() {
+      var s = new StringBuilder(PHYSICAL_SEPARATOR).append(LINEBREAK);
+      for (var table : databaseTables) {
+        s.append("Table %s (%s):".formatted(table.name(), table.stage())).append(LINEBREAK);
+        toListString(s, table.indexes());
+      }
       return s.toString();
     }
   }
@@ -452,6 +528,47 @@ public class PipelineDAGExporter {
     @Override
     public String toString() {
       return name + ": " + description;
+    }
+  }
+
+  /** A database table that stores a DAG table, with its primary key and indexes */
+  private record DatabaseTable(String stage, String name, List<TableIndex> indexes) {}
+
+  /**
+   * An index of a database table. The primary key has no name of its own. The columns use the
+   * syntax of the {@code index} hint, e.g. {@code time DESC}.
+   */
+  private record TableIndex(String name, String type, List<String> columns) {
+
+    static TableIndex primaryKey(List<String> columns) {
+      return new TableIndex(null, "primary key", columns);
+    }
+
+    static TableIndex of(IndexDefinition index) {
+      var columns =
+          IntStream.range(0, index.getColumnNames().size())
+              .mapToObj(
+                  i ->
+                      index.getColumnNames().get(i)
+                          + (index.getDirections().get(i).isDescending() ? " DESC" : ""))
+              .toList();
+
+      return new TableIndex(index.getName(), index.getType().name().toLowerCase(), columns);
+    }
+
+    @Override
+    public String toString() {
+      var label = name == null ? type : "index %s (%s)".formatted(name, type);
+      return label
+          + ": "
+          + columns.stream().map(TableIndex::describeColumn).collect(Collectors.joining(", "));
+    }
+
+    // The synthetic hash key is not part of the table schema, so it needs an explanation
+    private static String describeColumn(String column) {
+      return column.equalsIgnoreCase(DAGPlanner.HASHED_PK_NAME)
+          ? column + " (generated hash key)"
+          : column;
     }
   }
 }

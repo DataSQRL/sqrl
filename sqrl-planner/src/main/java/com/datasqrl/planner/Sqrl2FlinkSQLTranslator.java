@@ -121,6 +121,7 @@ import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.table.api.bridge.java.internal.StreamTableEnvironmentImpl;
 import org.apache.flink.table.api.internal.TableResultInternal;
 import org.apache.flink.table.catalog.CatalogManager;
+import org.apache.flink.table.catalog.Column;
 import org.apache.flink.table.catalog.Column.ComputedColumn;
 import org.apache.flink.table.catalog.Column.MetadataColumn;
 import org.apache.flink.table.catalog.Column.PhysicalColumn;
@@ -506,13 +507,41 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
        - pull out top-level sort
      NOTE: Flink modifies the SqlSelect node during validation, so we have to re-create it from the original SQL
     */
-    var viewDef2 = parseSQL(originalSql);
-    var viewAnalysis = analyzeView(viewDef2, removedSort, hintsAndDoc, errors);
-    var tableAnalysis =
-        viewAnalysis.tableAnalysis().objectIdentifier(identifier).originalSql(originalSql).build();
-    tableLookup.registerTable(tableAnalysis);
+    try {
+      var viewDef2 = parseSQL(originalSql);
+      var viewAnalysis = analyzeView(viewDef2, removedSort, hintsAndDoc, errors);
+      var tableAnalysis =
+          viewAnalysis
+              .tableAnalysis()
+              .objectIdentifier(identifier)
+              .originalSql(originalSql)
+              .build();
+      tableLookup.registerTable(tableAnalysis);
 
-    return tableAnalysis;
+      return tableAnalysis;
+    } catch (RuntimeException e) {
+      if (op instanceof CreateViewOperation) {
+        removeFailedView(identifier, e);
+      }
+      throw e;
+    }
+  }
+
+  /**
+   * Removes a view that {@link #addView} added, when its table failed. The statements that use the
+   * table then fail because it is not found, instead of being planned on a table that the planner
+   * does not know.
+   *
+   * @param failure the error of the table, which stays the error that is reported. If the view
+   *     cannot be removed, that error is added to it as suppressed.
+   */
+  public void removeFailedView(ObjectIdentifier identifier, Throwable failure) {
+    try {
+      catalogManager.dropView(identifier, true);
+      tableLookup.removeView(identifier);
+    } catch (RuntimeException e) {
+      failure.addSuppressed(e);
+    }
   }
 
   /** Analyzes an independent copy and binds the output query's tables for deferred execution. */
@@ -953,6 +982,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             .orElse(PrimaryKeyMap.UNDEFINED);
     // Finish building mutation query by building input and output types from table schema
     if (mutationBld != null) {
+      validateMutationPartitionKey(flinkSchema, mutationBld.build().getPartitionKey());
       var fields = convertSchema2RelDataType(flinkSchema);
       var inputType = CalciteUtil.getRelTypeBuilder(typeFactory);
       var outputType = CalciteUtil.getRelTypeBuilder(typeFactory);
@@ -1173,6 +1203,30 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       throw new NoLocationStatementParserException(
           "Mutation engine hint \"/*+ engine(...) */\" is required for internal CREATE TABLE statements."
               + " Supported engines: \"kafka\", \"iceberg\".");
+    }
+  }
+
+  /**
+   * Partition columns must be physical, which includes the 'uuid' and 'auth' metadata columns the
+   * server fills in. Flink does not check this for engines that remove the partition from the
+   * table, e.g. Kafka uses it as the message key, which the server builds before the record is
+   * written.
+   */
+  private static void validateMutationPartitionKey(
+      ResolvedSchema schema, List<String> partitionKey) {
+
+    for (var colName : partitionKey) {
+      if (!schema.getColumn(colName).map(Column::isPhysical).orElse(false)) {
+        var availableCols =
+            schema.getColumns().stream()
+                .filter(Column::isPhysical)
+                .map(Column::getName)
+                .collect(Collectors.joining(", "));
+
+        throw new NoLocationStatementParserException(
+            "Invalid PARTITIONED BY column [%s]: partition columns must be regular columns or 'uuid' or 'auth' metadata columns. Available columns: [%s]"
+                .formatted(colName, availableCols));
+      }
     }
   }
 }

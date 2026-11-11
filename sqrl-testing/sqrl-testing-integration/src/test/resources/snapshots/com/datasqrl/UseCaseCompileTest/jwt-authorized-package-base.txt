@@ -27,6 +27,9 @@ type Query {
   MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]
   AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]
   AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]
+  AuthNamespacedNestedClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]
+  AuthNestedArrayClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]
+  AuthNestedClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]
   AuthStringMyTableValues(limit: Int = 10, offset: Int = 0): [MyStringTable!]
 }
 
@@ -49,7 +52,7 @@ directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY
 ID:          default_catalog.default_database.AuthMyTable
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.MyTable
 Annotations:
@@ -60,18 +63,51 @@ Annotations:
 ID:          default_catalog.default_database.AuthMyTableValues
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.MyTable
 Annotations:
  - parameters: vals
  - base-table: MyTable
 
+=== AuthNamespacedNestedClaimMyTable
+ID:          default_catalog.default_database.AuthNamespacedNestedClaimMyTable
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.MyTable
+Annotations:
+ - parameters: val
+ - base-table: MyTable
+
+=== AuthNestedArrayClaimMyTable
+ID:          default_catalog.default_database.AuthNestedArrayClaimMyTable
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.MyTable
+Annotations:
+ - parameters: vals
+ - base-table: MyTable
+
+=== AuthNestedClaimMyTable
+ID:          default_catalog.default_database.AuthNestedClaimMyTable
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.MyTable
+Annotations:
+ - parameters: val
+ - base-table: MyTable
+
 === AuthStringMyTableValues
 ID:          default_catalog.default_database.AuthStringMyTableValues
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.MyStringTable
 Annotations:
@@ -85,11 +121,14 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~4
----
+--- definition ---
 Schema:
  - val: CHAR(1) CHARACTER SET "UTF-16LE" NOT NULL
 Annotations:
  - sort: [0 ASC-nulls-first]
+--- physical ---
+Table MyStringTable (postgres):
+ - primary key: val
 
 === MyTable
 ID:          default_catalog.default_database.MyTable
@@ -98,11 +137,14 @@ Stage:       flink
 Primary key: val
 Timestamp:   -
 Row count:   ~1e1
----
+--- definition ---
 Schema:
  - val: INTEGER NOT NULL
 Annotations:
  - sort: [0 ASC-nulls-first]
+--- physical ---
+Table MyTable (postgres):
+ - primary key: val
 
 >>>flink-sql-no-functions.sql
 CREATE VIEW `MyTable`
@@ -282,6 +324,108 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
                   "metadata" : {
                     "metadataType" : "AUTH",
                     "name" : "values",
+                    "required" : true
+                  }
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AuthNamespacedNestedClaimMyTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"val\"\n  FROM \"MyTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"\nWHERE \"val\" = $1\nORDER BY \"val\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "metadata",
+                  "metadata" : {
+                    "metadataType" : "AUTH",
+                    "name" : "https://example.com/org.val",
+                    "required" : true
+                  }
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AuthNestedArrayClaimMyTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"val\"\n  FROM \"MyTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"\nWHERE (CAST(\"val\" AS BIGINT) = ANY (CAST($1 AS BIGINT ARRAY)))\nORDER BY \"val\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "metadata",
+                  "metadata" : {
+                    "metadataType" : "AUTH",
+                    "name" : "org.values",
+                    "required" : true
+                  }
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "AuthNestedClaimMyTable",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"val\"\n  FROM \"MyTable\"\n  ORDER BY \"val\" NULLS FIRST) AS \"t\"\nWHERE \"val\" = $1\nORDER BY \"val\" NULLS FIRST",
+              "parameters" : [
+                {
+                  "type" : "metadata",
+                  "metadata" : {
+                    "metadataType" : "AUTH",
+                    "name" : "org.val",
                     "required" : true
                   }
                 }
@@ -480,6 +624,117 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
         },
         {
           "function" : {
+            "name" : "GetAuthNamespacedNestedClaimMyTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query AuthNamespacedNestedClaimMyTable($limit: Int = 10, $offset: Int = 0) {\nAuthNamespacedNestedClaimMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "AuthNamespacedNestedClaimMyTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AuthNamespacedNestedClaimMyTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetAuthNestedArrayClaimMyTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query AuthNestedArrayClaimMyTable($limit: Int = 10, $offset: Int = 0) {\nAuthNestedArrayClaimMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "AuthNestedArrayClaimMyTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AuthNestedArrayClaimMyTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetAuthNestedClaimMyTable",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query AuthNestedClaimMyTable($limit: Int = 10, $offset: Int = 0) {\nAuthNestedClaimMyTable(limit: $limit, offset: $offset) {\nval\n}\n\n}",
+            "queryName" : "AuthNestedClaimMyTable",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/AuthNestedClaimMyTable{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "val" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
             "name" : "GetAuthStringMyTableValues",
             "parameters" : {
               "type" : "object",
@@ -518,7 +773,7 @@ CREATE TABLE IF NOT EXISTS "MyTable" ("val" INTEGER NOT NULL, PRIMARY KEY ("val"
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyStringTable {\n  val: String!\n}\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyStringTable(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthStringMyTableValues(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype MyStringTable {\n  val: String!\n}\n\ntype MyTable {\n  val: Int!\n}\n\ntype Query {\n  MyStringTable(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n  MyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthMyTableValues(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthNamespacedNestedClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthNestedArrayClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthNestedClaimMyTable(limit: Int = 10, offset: Int = 0): [MyTable!]\n  AuthStringMyTableValues(limit: Int = 10, offset: Int = 0): [MyStringTable!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

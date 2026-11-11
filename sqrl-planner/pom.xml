@@ -172,6 +172,10 @@
       <groupId>com.datasqrl.flinkrunner</groupId>
       <artifactId>postgresql-connector</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.datasqrl.flinkrunner</groupId>
+      <artifactId>kafka-safe-connector</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework</groupId>

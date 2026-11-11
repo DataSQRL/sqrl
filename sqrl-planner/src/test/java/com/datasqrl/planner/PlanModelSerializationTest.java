@@ -22,7 +22,9 @@ import com.datasqrl.deployment.model.JdbcPlanModel;
 import com.datasqrl.deployment.model.JdbcStatementModel;
 import com.datasqrl.deployment.model.JdbcStatementModel.Field;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
+import com.datasqrl.deployment.model.KafkaIncludedTopicModel;
 import com.datasqrl.deployment.model.KafkaNewTopicModel;
+import com.datasqrl.deployment.model.KafkaPlanModel;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.engine.database.relational.GenericJdbcStatement;
 import com.datasqrl.engine.database.relational.JdbcEngineCreateTable;
@@ -256,6 +258,90 @@ class PlanModelSerializationTest {
     assertThat(topicJson.get("logicalName").asText()).isEqualTo("Orders");
     assertThat(topicJson.get("type").asText()).isEqualTo("MUTATION");
     assertThat(json.get("testRunnerTopics").get(0).has("logicalName")).isFalse();
+  }
+
+  @Test
+  void givenIncludedTopic_whenSerialized_thenListsItSeparatelyWithoutSettings() {
+    var projectTopic = new KafkaNewTopicModel("orders", "Orders_1", "Orders", 1, (short) 1);
+    var plan =
+        KafkaPhysicalPlan.builder()
+            .topic(new KafkaNewTopic(projectTopic))
+            .includedTopic(
+                new KafkaIncludedTopicModel("customers", "Customers_2", "Customers", "core"))
+            .build();
+
+    var json = SqrlObjectMapper.INSTANCE.valueToTree(plan.toModel());
+
+    assertThat(json.get("topics")).hasSize(1);
+    assertThat(json.get("topics").get(0).has("numPartitions")).isTrue();
+    var includedTopic = json.get("includedTopics").get(0);
+    assertThat(json.get("includedTopics")).hasSize(1);
+    assertThat(includedTopic.get("topicName").asText()).isEqualTo("customers");
+    assertThat(includedTopic.get("include").asText()).isEqualTo("core");
+    assertThat(includedTopic.has("numPartitions")).isFalse();
+    assertThat(includedTopic.has("replicationFactor")).isFalse();
+    assertThat(includedTopic.has("config")).isFalse();
+  }
+
+  @Test
+  void givenNoIncludedTopic_whenSerialized_thenOmitsTheIncludedTopics() {
+    var plan =
+        KafkaPhysicalPlan.builder()
+            .topic(new KafkaNewTopic(new KafkaNewTopicModel("orders", "orders")))
+            .build();
+
+    var json = SqrlObjectMapper.INSTANCE.valueToTree(plan.toModel());
+
+    assertThat(json.has("includedTopics")).isFalse();
+    assertThat(json.has("testRunnerTopics")).isTrue();
+  }
+
+  @Test
+  void givenKafkaFileWithoutIncludedTopics_whenRead_thenIncludedTopicsIsEmpty() throws Exception {
+    var model =
+        SqrlObjectMapper.INSTANCE.readValue(
+            "{\"topics\":[{\"topicName\":\"orders\"}],\"testRunnerTopics\":[]}",
+            KafkaPlanModel.class);
+
+    assertThat(model.topics()).hasSize(1);
+    assertThat(model.includedTopics()).isEmpty();
+  }
+
+  @Test
+  void givenKafkaFileWithOnlyIncludedTopics_whenRead_thenThePlanIsNotEmpty() throws Exception {
+    var model =
+        SqrlObjectMapper.INSTANCE.readValue(
+            "{\"includedTopics\":[{\"topicName\":\"customers\",\"include\":\"core\"}]}",
+            KafkaPlanModel.class);
+
+    assertThat(model.topics()).isEmpty();
+    assertThat(model.testRunnerTopics()).isEmpty();
+    assertThat(model.includedTopics())
+        .singleElement()
+        .extracting(KafkaIncludedTopicModel::include)
+        .isEqualTo("core");
+    assertThat(model.isEmpty()).isFalse();
+  }
+
+  @Test
+  void givenTopicsOfEveryKind_whenAllTopicNames_thenNamesEachOfThem() {
+    var model =
+        KafkaPhysicalPlan.builder()
+            .topic(new KafkaNewTopic(new KafkaNewTopicModel("orders", "orders")))
+            .testRunnerTopic(
+                new KafkaNewTopic(new KafkaNewTopicModel("test-orders", "test-orders")))
+            .includedTopic(
+                new KafkaIncludedTopicModel("customers", "Customers_2", "Customers", "core"))
+            .build()
+            .toModel();
+
+    assertThat(model.allTopicNames())
+        .containsExactlyInAnyOrder("orders", "test-orders", "customers");
+  }
+
+  @Test
+  void givenEmptyKafkaFile_whenRead_thenThePlanIsEmpty() throws Exception {
+    assertThat(SqrlObjectMapper.INSTANCE.readValue("{}", KafkaPlanModel.class).isEmpty()).isTrue();
   }
 
   @Test

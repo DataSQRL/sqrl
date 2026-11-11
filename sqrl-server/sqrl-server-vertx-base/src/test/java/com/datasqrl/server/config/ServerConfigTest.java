@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class ServerConfigTest {
 
@@ -61,7 +63,19 @@ class ServerConfigTest {
         MAPPER.createObjectNode().put("host", "custom-host").put("port", "1234"));
     json.set("poolOptions", MAPPER.createObjectNode().put("maxSize", 20));
     json.set("corsHandlerOptions", MAPPER.createObjectNode().put("allowCredentials", true));
-    json.set("jwtAuth", MAPPER.createObjectNode().put("algorithm", "HS256"));
+    json.set(
+        "jwtAuth",
+        MAPPER
+            .createObjectNode()
+            .set(
+                "pubSecKeys",
+                MAPPER
+                    .createArrayNode()
+                    .add(
+                        MAPPER
+                            .createObjectNode()
+                            .put("algorithm", "HS256")
+                            .put("buffer", "dGVzdA=="))));
     json.put("logForwardedClientAddress", false);
     json.set("openApiConfig", MAPPER.createObjectNode().put("enabled", true));
     json.set(
@@ -85,6 +99,13 @@ class ServerConfigTest {
             .put("captureLineComments", true)
             .put("readerTrackData", false)
             .put("redactTokenParserErrorMessages", true));
+    json.set(
+        "jdbcStatementLogConfig",
+        MAPPER
+            .createObjectNode()
+            .set(
+                "largeResults",
+                MAPPER.createObjectNode().put("enabled", true).put("rowCountThreshold", 5000)));
 
     var kafkaMutationConfig = MAPPER.createObjectNode();
     kafkaMutationConfig.put("bootstrap.servers", "localhost:9092");
@@ -124,6 +145,9 @@ class ServerConfigTest {
     assertThat(serverConfig.getGraphQLParserConfig().getCaptureLineComments()).isTrue();
     assertThat(serverConfig.getGraphQLParserConfig().getReaderTrackData()).isFalse();
     assertThat(serverConfig.getGraphQLParserConfig().getRedactTokenParserErrorMessages()).isTrue();
+    assertThat(serverConfig.getJdbcStatementLogConfig().getLargeResults().isEnabled()).isTrue();
+    assertThat(serverConfig.getJdbcStatementLogConfig().getLargeResults().getRowCountThreshold())
+        .isEqualTo(5000);
     assertThat(serverConfig.getKafkaMutationConfig()).isNotNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNotNull();
     assertThat(serverConfig.isLogForwardedClientAddress()).isFalse();
@@ -142,6 +166,7 @@ class ServerConfigTest {
     json.putNull("openApiConfig");
     json.putNull("graphQLTailSampleTracingConfig");
     json.putNull("graphQLParserConfig");
+    json.putNull("jdbcStatementLogConfig");
     json.putNull("kafkaMutationConfig");
     json.putNull("kafkaSubscriptionConfig");
 
@@ -156,6 +181,9 @@ class ServerConfigTest {
     assertThat(serverConfig.getOpenApiConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLTailSampleTracingConfig()).isNotNull();
     assertThat(serverConfig.getGraphQLParserConfig()).isNotNull();
+    assertThat(serverConfig.getJdbcStatementLogConfig().getLargeResults().isEnabled()).isFalse();
+    assertThat(serverConfig.getJdbcStatementLogConfig().getLargeResults().getRowCountThreshold())
+        .isEqualTo(10000);
 
     // PgConnectOptions uses empty default when null
     assertThat(serverConfig.getPgConnectOptions()).isNotNull();
@@ -164,6 +192,28 @@ class ServerConfigTest {
     assertThat(serverConfig.getJwtAuth()).isNull();
     assertThat(serverConfig.getKafkaMutationConfig()).isNull();
     assertThat(serverConfig.getKafkaSubscriptionConfig()).isNull();
+  }
+
+  @Test
+  void givenStatementLogEntryNullOrPartial_whenParsed_thenMissingSettingsKeepTheirDefaults() {
+    var nullEntry = MAPPER.createObjectNode();
+    nullEntry.set("jdbcStatementLogConfig", MAPPER.createObjectNode().putNull("largeResults"));
+    var partialEntry = MAPPER.createObjectNode();
+    partialEntry.set(
+        "jdbcStatementLogConfig",
+        MAPPER
+            .createObjectNode()
+            .set("largeResults", MAPPER.createObjectNode().put("enabled", true)));
+
+    var fromNull = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(nullEntry, Map.class));
+    var fromPartial = ServerConfigUtil.fromConfigMap(MAPPER.convertValue(partialEntry, Map.class));
+
+    assertThat(fromNull.getJdbcStatementLogConfig().getLargeResults().isEnabled()).isFalse();
+    assertThat(fromNull.getJdbcStatementLogConfig().getLargeResults().getRowCountThreshold())
+        .isEqualTo(10000);
+    assertThat(fromPartial.getJdbcStatementLogConfig().getLargeResults().isEnabled()).isTrue();
+    assertThat(fromPartial.getJdbcStatementLogConfig().getLargeResults().getRowCountThreshold())
+        .isEqualTo(10000);
   }
 
   @Test
@@ -194,5 +244,30 @@ class ServerConfigTest {
     assertThat(serverConfig.getCorsHandlerOptions().getAllowedMethods())
         .containsExactlyInAnyOrder("POST", "GET", "OPTIONS");
     assertThat(serverConfig.getCorsHandlerOptions().getAllowedHeaders()).containsExactly("*");
+  }
+
+  @ParameterizedTest(name = "{0}")
+  @CsvSource(
+      delimiter = '|',
+      textBlock =
+          """
+          no auth config      | {}                                                                                      | false | false | false
+          auth                | {"auth": {"issuers": [{"issuer": "https://a/", "audiences": ["https://api/"]}]}}        | false | false | true
+          jwtAuth             | {"jwtAuth": {"pubSecKeys": [{"algorithm": "HS256", "buffer": "dGVzdA=="}]}}             | true  | false | true
+          oauthConfig         | {"oauthConfig": {"oauth2Options": {"site": "https://auth.example.com"}}}                | false | true  | true
+          oauthConfig no site | {"oauthConfig": {"oauth2Options": {}}}                                                  | false | false | false
+          """)
+  void given_authConfig_when_authProvidersChecked_then_matchesTheProvidersOfTheServer(
+      String caseName,
+      String configJson,
+      boolean expectedJwtAuthProvider,
+      boolean expectedOAuthProvider,
+      boolean expectedAuthProvider)
+      throws Exception {
+    var serverConfig = ServerConfigUtil.fromConfigMap(MAPPER.readValue(configJson, Map.class));
+
+    assertThat(serverConfig.hasJwtAuthProvider()).isEqualTo(expectedJwtAuthProvider);
+    assertThat(serverConfig.hasOAuthProvider()).isEqualTo(expectedOAuthProvider);
+    assertThat(serverConfig.hasAuthProvider()).isEqualTo(expectedAuthProvider);
   }
 }

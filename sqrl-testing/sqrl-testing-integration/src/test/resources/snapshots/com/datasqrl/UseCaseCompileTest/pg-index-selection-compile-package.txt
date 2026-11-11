@@ -485,7 +485,7 @@ directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY
 ID:          default_catalog.default_database.ByCampaignId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -496,7 +496,7 @@ Annotations:
 ID:          default_catalog.default_database.ByCarrierId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -507,7 +507,7 @@ Annotations:
 ID:          default_catalog.default_database.ByCategory
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -518,7 +518,7 @@ Annotations:
 ID:          default_catalog.default_database.ByChannel
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -529,7 +529,7 @@ Annotations:
 ID:          default_catalog.default_database.ByCountry
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -540,7 +540,7 @@ Annotations:
 ID:          default_catalog.default_database.ByCurrency
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -551,7 +551,7 @@ Annotations:
 ID:          default_catalog.default_database.ByCustomerId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -562,7 +562,7 @@ Annotations:
 ID:          default_catalog.default_database.ByDeviceType
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -573,7 +573,7 @@ Annotations:
 ID:          default_catalog.default_database.ByDiscountCode
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -584,7 +584,7 @@ Annotations:
 ID:          default_catalog.default_database.ByFulfillmentStatus
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -595,7 +595,7 @@ Annotations:
 ID:          default_catalog.default_database.ByOrderId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -606,7 +606,7 @@ Annotations:
 ID:          default_catalog.default_database.ByPaymentMethod
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -617,7 +617,7 @@ Annotations:
 ID:          default_catalog.default_database.ByProductId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -628,7 +628,7 @@ Annotations:
 ID:          default_catalog.default_database.ByReturnReason
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -639,7 +639,7 @@ Annotations:
 ID:          default_catalog.default_database.ByRiskLevel
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -650,7 +650,7 @@ Annotations:
 ID:          default_catalog.default_database.BySalesRepId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -661,7 +661,7 @@ Annotations:
 ID:          default_catalog.default_database.ByShippingMethod
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -672,7 +672,7 @@ Annotations:
 ID:          default_catalog.default_database.ByStatus
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -683,7 +683,7 @@ Annotations:
 ID:          default_catalog.default_database.ByStoreId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -694,7 +694,7 @@ Annotations:
 ID:          default_catalog.default_database.ByWarehouseId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.Orders
 Annotations:
@@ -705,7 +705,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByCampaignId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -716,7 +716,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByCarrierId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -727,7 +727,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByCategory
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -738,7 +738,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByChannel
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -749,7 +749,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByCountry
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -760,7 +760,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByCurrency
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -771,7 +771,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByCustomerId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -782,7 +782,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByDeviceType
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -793,7 +793,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByDiscountCode
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -804,7 +804,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByFulfillmentStatus
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -815,7 +815,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByOrderId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -826,7 +826,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByPaymentMethod
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -837,7 +837,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByProductId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -848,7 +848,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByReturnReason
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -859,7 +859,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByRiskLevel
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -870,7 +870,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitBySalesRepId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -881,7 +881,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByShippingMethod
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -892,7 +892,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByStatus
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -903,7 +903,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByStoreId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -914,7 +914,7 @@ Annotations:
 ID:          default_catalog.default_database.ExplicitByWarehouseId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexes
 Annotations:
@@ -928,7 +928,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   createdAt
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - orderId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -955,13 +955,17 @@ Schema:
  - createdAt: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Orders
+--- physical ---
+Table ExplicitIndexes (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index ExplicitIndexes_btree_c1 (btree): customerId
 
 === ExplicitIndexesSink
 ID:          default_catalog.default_database.ExplicitIndexesSink
 Type:        export
 Stage:       flink
 Connector:   print
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.ExplicitIndexesSink_in1
 
@@ -972,7 +976,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   createdAt
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - orderId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -984,7 +988,7 @@ Inputs:
 ID:          default_catalog.default_database.NoIndexByCampaignId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -995,7 +999,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByCarrierId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1006,7 +1010,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByCategory
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1017,7 +1021,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByChannel
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1028,7 +1032,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByCountry
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1039,7 +1043,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByCurrency
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1050,7 +1054,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByCustomerId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1061,7 +1065,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByDeviceType
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1072,7 +1076,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByDiscountCode
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1083,7 +1087,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByFulfillmentStatus
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1094,7 +1098,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByOrderId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1105,7 +1109,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByPaymentMethod
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1116,7 +1120,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByProductId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1127,7 +1131,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByReturnReason
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1138,7 +1142,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByRiskLevel
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1149,7 +1153,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexBySalesRepId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1160,7 +1164,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByShippingMethod
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1171,7 +1175,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByStatus
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1182,7 +1186,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByStoreId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1193,7 +1197,7 @@ Annotations:
 ID:          default_catalog.default_database.NoIndexByWarehouseId
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.NoIndexes
 Annotations:
@@ -1207,7 +1211,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   createdAt
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - orderId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -1234,6 +1238,9 @@ Schema:
  - createdAt: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Orders
+--- physical ---
+Table NoIndexes (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Orders
 ID:          default_catalog.default_database.Orders
@@ -1242,7 +1249,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   createdAt
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - orderId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - customerId: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -1269,6 +1276,17 @@ Schema:
  - createdAt: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Orders__base
+--- physical ---
+Table Orders (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index Orders_hash_c0 (hash): orderId
+ - index Orders_hash_c1 (hash): customerId
+ - index Orders_hash_c2 (hash): storeId
+ - index Orders_hash_c3 (hash): productId
+ - index Orders_hash_c4 (hash): category
+ - index Orders_hash_c5 (hash): status
+ - index Orders_hash_c6 (hash): paymentMethod
+ - index Orders_hash_c7 (hash): country
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (

@@ -1,0 +1,6 @@
+{
+  "version": "1",
+  "information": {
+    "description": "Internal Kafka tables that the kafka-include use case includes"
+  }
+}

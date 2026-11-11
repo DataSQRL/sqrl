@@ -20,6 +20,7 @@ import com.datasqrl.server.MetadataType;
 import com.datasqrl.server.ResolvedMetadata;
 import com.datasqrl.server.exec.FlinkExecFunction;
 import com.google.common.base.Preconditions;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
@@ -84,11 +85,13 @@ public class SqrlTableFunctionStatement extends SqrlDefinition {
       return Optional.empty();
     }
     String[] parts = metadata.split("\\.", 2);
-    try {
-      MetadataType type = MetadataType.valueOf(parts[0].toUpperCase());
-      return Optional.of(new ResolvedMetadata(type, parts[1], isRequired));
-    } catch (IllegalArgumentException e) {
+    // Only 'auth' takes a name after the dot, the server has no reader for the other types.
+    // A dot in the name steps into a nested claim, so each segment must have a name:
+    // 'auth.' has no name at all, and 'auth.org..id' or 'auth.org.' has an empty segment.
+    if (!parts[0].equalsIgnoreCase("auth")
+        || Arrays.stream(parts[1].split("\\.", -1)).anyMatch(String::isBlank)) {
       return Optional.empty();
     }
+    return Optional.of(new ResolvedMetadata(MetadataType.AUTH, parts[1], isRequired));
   }
 }

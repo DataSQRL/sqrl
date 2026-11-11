@@ -1,0 +1,15 @@
+[FATAL] Invalid metadata key provided: uuid.x
+in script:functionUuidDottedMetadataKey-fail.sqrl [5:1]:
+
+-- Only 'auth' takes a name after the dot: the server has no reader for 'uuid' metadata.
+MyOrders(customer_id STRING NOT NULL METADATA FROM 'uuid.x') :=
+^
+Invalid table function arguments provided.
+
+Table function arguments are defined like columns in a CREATE TABLE statement: the argument name followed by the argument type with multiple arguments separated by a comma `,`.
+Inside the query body, arguments are referenced by name prefixed with a colon `:`.
+
+For example:
+```
+MyTableFunction(argument INT, arg2 STRING NOT NULL) := SELECT * FROM MyTable WHERE col1 = :arg2 AND col2 > :argument
+```

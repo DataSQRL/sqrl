@@ -16,6 +16,8 @@
 package com.datasqrl.server;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 import com.datasqrl.server.graphql.CustomScalars;
 import com.datasqrl.server.graphql.GraphQLEngineBuilder;
@@ -25,10 +27,15 @@ import com.datasqrl.server.graphql.RootGraphQLModel.QueryWithArguments;
 import com.datasqrl.server.graphql.RootGraphQLModel.SqlQuery;
 import com.datasqrl.server.graphql.RootGraphQLModel.StringSchema;
 import com.datasqrl.server.jdbc.DatabaseType;
+import com.datasqrl.server.jdbc.JdbcStatement;
+import com.datasqrl.server.jdbc.JdbcStatementListener;
 import com.datasqrl.server.jdbc.VertxJdbcClient;
 import com.datasqrl.server.jdbc.VertxParamArgumentTypeMapper;
+import com.datasqrl.server.jdbc.VertxQueryExecutionContext;
+import com.datasqrl.server.util.LogCapture;
 import graphql.ExecutionInput;
 import graphql.GraphQL;
+import graphql.GraphQLError;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.junit5.VertxExtension;
@@ -43,12 +50,14 @@ import io.vertx.sqlclient.RowSet;
 import io.vertx.sqlclient.SqlClient;
 import io.vertx.sqlclient.SqlResult;
 import io.vertx.sqlclient.Tuple;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import lombok.SneakyThrows;
+import org.apache.logging.log4j.Level;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -90,6 +99,8 @@ class PagedQueryIT {
 
   private SqlClient client;
   private RecordingSqlClient recordingClient;
+  private RecordingStatementListener statements;
+  private LogCapture conversionLog;
   private GraphQL graphQL;
 
   @BeforeEach
@@ -118,6 +129,7 @@ class PagedQueryIT {
             .execute());
 
     recordingClient = new RecordingSqlClient(client);
+    statements = new RecordingStatementListener();
     graphQL =
         getPagedModel()
             .accept(
@@ -125,16 +137,19 @@ class PagedQueryIT {
                     .withExtendedScalarTypes(CustomScalars.getExtendedScalars())
                     .build(),
                 new VertxServerContext(
-                    new VertxJdbcClient(Map.of(DatabaseType.POSTGRES, recordingClient)),
+                    new VertxJdbcClient(
+                        Map.of(DatabaseType.POSTGRES, recordingClient), List.of(statements)),
                     null,
                     null,
                     new VertxParamArgumentTypeMapper()))
             .build();
     recordingClient.executed.clear();
+    conversionLog = LogCapture.of(VertxQueryExecutionContext.class);
   }
 
   @AfterEach
   void after() {
+    conversionLog.close();
     client.close();
   }
 
@@ -265,6 +280,47 @@ class PagedQueryIT {
     assertThat(pagination.get("lastEventTime")).isNull();
   }
 
+  @Test
+  void givenRowsCannotBeConverted_whenQuery_thenListenersSawEveryStatementsRowsFirst() {
+    recordingClient.unconvertibleRows = true;
+
+    var errors =
+        executeWithErrors(
+            "{ customers(limit: 2, offset: 0) { results { customerid }"
+                + " pagination { totalRecords } } }");
+
+    // The page query runs first. Listeners see the rows when they arrive, so a conversion to JSON
+    // that fails, or stalls the event loop, cannot hide them.
+    var pageSql = recordingClient.executed.get(0).sql();
+    assertThat(errors).isNotEmpty();
+    assertThat(statements.observed)
+        .containsExactlyInAnyOrder(
+            new Observed("/customers", pageSql, 2, null),
+            new Observed("/customers", COUNT_SQL, 1, null));
+    assertThat(conversionLog.messages(Level.ERROR))
+        .containsExactly("Converting rows to JSON failed at /customers");
+  }
+
+  @Test
+  void givenAggregateQueryFails_whenQuery_thenListenersSeeThatStatementFail() {
+    recordingClient.failingSql = COUNT_SQL;
+
+    var errors =
+        executeWithErrors(
+            "{ customers(limit: 2, offset: 0) { results { customerid }"
+                + " pagination { totalRecords } } }");
+
+    assertThat(errors).isNotEmpty();
+    assertThat(statements.observed)
+        .filteredOn(observed -> observed.failure() != null)
+        .containsExactly(new Observed("/customers", COUNT_SQL, null, "statement failed in test"));
+    assertThat(conversionLog.messages(Level.ERROR)).isEmpty();
+  }
+
+  private List<GraphQLError> executeWithErrors(String query) {
+    return graphQL.execute(ExecutionInput.newExecutionInput().query(query).build()).getErrors();
+  }
+
   @SneakyThrows
   private Map<String, Object> execute(String query) {
     var result = graphQL.execute(ExecutionInput.newExecutionInput().query(query).build());
@@ -385,11 +441,17 @@ class PagedQueryIT {
 
   private record ExecutedStatement(String sql, Tuple params) {}
 
-  /** Delegating {@link SqlClient} that records every executed statement with its bound tuple. */
+  /**
+   * Delegating {@link SqlClient} that records every executed statement with its bound tuple. It can
+   * fail one statement, or return rows that throw when they are read, as a stand-in for a
+   * conversion to JSON that never completes.
+   */
   private static final class RecordingSqlClient implements SqlClient {
 
     private final SqlClient delegate;
     final List<ExecutedStatement> executed = new CopyOnWriteArrayList<>();
+    volatile String failingSql;
+    volatile boolean unconvertibleRows;
 
     RecordingSqlClient(SqlClient delegate) {
       this.delegate = delegate;
@@ -420,7 +482,11 @@ class PagedQueryIT {
         @Override
         public Future<RowSet<Row>> execute(Tuple tuple) {
           executed.add(new ExecutedStatement(sql, tuple));
-          return delegate.execute(tuple);
+          if (sql.equals(failingSql)) {
+            return Future.failedFuture(new IllegalStateException("statement failed in test"));
+          }
+          var result = delegate.execute(tuple);
+          return unconvertibleRows ? result.map(RecordingSqlClient::unconvertible) : result;
         }
 
         @Override
@@ -444,6 +510,40 @@ class PagedQueryIT {
           throw new UnsupportedOperationException();
         }
       };
+    }
+
+    /** Keeps the row count; every other call, reading the rows included, throws. */
+    @SuppressWarnings("unchecked")
+    private static RowSet<Row> unconvertible(RowSet<Row> rows) {
+      RowSet<Row> unconvertible =
+          mock(
+              RowSet.class,
+              invocation -> {
+                throw new IllegalStateException("rows cannot be converted in test");
+              });
+      doReturn(rows.size()).when(unconvertible).size();
+      return unconvertible;
+    }
+  }
+
+  /** What a {@link JdbcStatementListener} was told about one statement. */
+  private record Observed(String fieldPath, String sql, Integer rowCount, String failure) {}
+
+  private static final class RecordingStatementListener implements JdbcStatementListener {
+
+    final List<Observed> observed = new CopyOnWriteArrayList<>();
+
+    @Override
+    public void onRows(JdbcStatement statement, RowSet<Row> rows, Duration elapsed) {
+      observed.add(
+          new Observed(statement.fieldPath().toString(), statement.sql(), rows.size(), null));
+    }
+
+    @Override
+    public void onFailure(JdbcStatement statement, Throwable failure, Duration elapsed) {
+      observed.add(
+          new Observed(
+              statement.fieldPath().toString(), statement.sql(), null, failure.getMessage()));
     }
   }
 }

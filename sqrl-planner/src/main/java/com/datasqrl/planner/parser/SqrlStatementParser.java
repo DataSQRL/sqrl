@@ -121,13 +121,11 @@ public class SqrlStatementParser {
       Pattern.compile(NEXT_BATCH_REGEX, Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   /**
-   * The statements of a script that could be parsed, the source of those that could not, and the
-   * first error.
+   * The statements of a script in script order, those that failed to parse included, and the first
+   * error.
    */
   public record ParsedScript(
-      List<ParsedStatement> statements,
-      List<ParsedObject<String>> unparsedStatements,
-      Optional<CollectedException> firstError) {}
+      List<ScriptStatement> statements, Optional<CollectedException> firstError) {}
 
   /**
    * Main entry point for parsing a script. Statements that fail to parse are skipped and their
@@ -147,7 +145,8 @@ public class SqrlStatementParser {
     if (parsed.firstError().isPresent()) {
       throw parsed.firstError().get();
     }
-    return parsed.statements();
+    // Without an error, all statements were parsed
+    return parsed.statements().stream().map(ParsedStatement.class::cast).toList();
   }
 
   private ParsedScript parseScript(
@@ -165,8 +164,7 @@ public class SqrlStatementParser {
                 Collectors.toMap(
                     MissingDelimiter::statementStart, MissingDelimiter::delimiterLocation));
 
-    var sqlStatements = new ArrayList<ParsedStatement>();
-    var unparsedStatements = new ArrayList<ParsedObject<String>>();
+    var scriptStatements = new ArrayList<ScriptStatement>();
     CollectedException firstError = null;
     for (ParsedObject<String> statement : statements) {
       try {
@@ -176,7 +174,7 @@ public class SqrlStatementParser {
           // tables are imported
           continue;
         }
-        sqlStatements.add(
+        scriptStatements.add(
             new ParsedStatement(
                 new ParsedObject<>(parsedStmt, statement.getFileLocation()), statement.get()));
         // The statement is still planned, so only a missing `;` is reported for it
@@ -197,14 +195,14 @@ public class SqrlStatementParser {
         }
       } catch (StatementParserException e) {
         var error = scriptErrors.atFile(statement.getFileLocation()).getCatcher().handle(e);
-        unparsedStatements.add(statement);
+        scriptStatements.add(new UnparsedStatement(statement));
         if (firstError == null) {
           firstError = error;
         }
       }
     }
 
-    return new ParsedScript(sqlStatements, unparsedStatements, Optional.ofNullable(firstError));
+    return new ParsedScript(scriptStatements, Optional.ofNullable(firstError));
   }
 
   /**
@@ -221,25 +219,21 @@ public class SqrlStatementParser {
       var directive = importExportMatcher.group("fullmatch");
       var commentEnd = importExportMatcher.end() - directive.length();
       var comment = SqrlComments.parse(parse(statement.substring(0, commentEnd), statement, 0));
+      // Match the body in place, so that the matched groups have their positions in the statement
       var bodyStart = importExportMatcher.end();
-      while (bodyStart < statement.length()
-          && Character.isWhitespace(statement.charAt(bodyStart))) {
-        bodyStart++;
-      }
-      var body = statement.substring(bodyStart).trim();
 
       if (directive.equalsIgnoreCase("import")) {
-        var subMatcher = IMPORT_PARSER.matcher(body);
+        var subMatcher = IMPORT_PARSER.matcher(statement).region(bodyStart, statement.length());
         checkFatal(subMatcher.find(), ErrorCode.INVALID_IMPORT, "Could not parse IMPORT statement");
-        var packageIdentifier = parseNamePath(subMatcher, "package", statement, bodyStart);
-        var alias = parseNamePath(subMatcher, "identifier", statement, bodyStart);
+        var packageIdentifier = parseNamePath(subMatcher, "package", statement);
+        var alias = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_IMPORT, "Missing package path");
         return new SqrlImportStatement(packageIdentifier, alias, comment);
       } else if (directive.equalsIgnoreCase("export")) {
-        var subMatcher = EXPORT_PARSER.matcher(body);
+        var subMatcher = EXPORT_PARSER.matcher(statement).region(bodyStart, statement.length());
         checkFatal(subMatcher.find(), ErrorCode.INVALID_EXPORT, "Could not parse EXPORT statement");
-        var packageIdentifier = parseNamePath(subMatcher, "package", statement, bodyStart);
-        var tableName = parseNamePath(subMatcher, "identifier", statement, bodyStart);
+        var packageIdentifier = parseNamePath(subMatcher, "package", statement);
+        var tableName = parseNamePath(subMatcher, "identifier", statement);
         checkFatal(packageIdentifier.isPresent(), ErrorCode.INVALID_EXPORT, "Missing package path");
         checkFatal(tableName.isPresent(), ErrorCode.INVALID_EXPORT, "Missing table");
         return new SqrlExportStatement(tableName, packageIdentifier, comment);
@@ -480,17 +474,6 @@ public class SqrlStatementParser {
 
   static ParsedObject<NamePath> parseNamePath(Matcher matcher, String groupName, String statement) {
     return parse(matcher, groupName, statement).map(NamePath::parse);
-  }
-
-  /**
-   * Parses a name that the matcher found in the part of the statement that starts at the given
-   * offset.
-   */
-  static ParsedObject<NamePath> parseNamePath(
-      Matcher matcher, String groupName, String statement, int matchedOffset) {
-    var content = matcher.group(groupName);
-    return parse(content, statement, content != null ? matchedOffset + matcher.start(groupName) : 0)
-        .map(NamePath::parse);
   }
 
   static ParsedObject<Name> parseName(Matcher matcher, String groupName, String statement) {

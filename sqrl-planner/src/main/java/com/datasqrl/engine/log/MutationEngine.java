@@ -34,8 +34,7 @@ public interface MutationEngine extends ExecutionEngine {
    * @param originalTableName
    * @param tableBuilder
    * @param relDataType
-   * @param insertType
-   * @param ttl
+   * @param settings
    * @return
    */
   default MutationCreateTable createMutation(
@@ -43,8 +42,7 @@ public interface MutationEngine extends ExecutionEngine {
       String originalTableName,
       FlinkTableBuilder tableBuilder,
       RelDataType relDataType,
-      MutationInsertType insertType,
-      Optional<Duration> ttl) {
+      MutationSettings settings) {
     throw new UnsupportedOperationException("Does not support mutations");
   }
 
@@ -53,4 +51,14 @@ public interface MutationEngine extends ExecutionEngine {
 
     Map<String, String> getConfig();
   }
+
+  /**
+   * The settings of a mutation table that the planner derives from the script.
+   *
+   * @param ttl how long records are retained, or empty if not limited
+   * @param standaloneInclude the namespace of the standalone included project that defines the
+   *     table and owns it, or empty if the project owns the table
+   */
+  record MutationSettings(
+      MutationInsertType insertType, Optional<Duration> ttl, Optional<String> standaloneInclude) {}
 }

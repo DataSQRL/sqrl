@@ -20,6 +20,7 @@ import static com.datasqrl.server.openapi.OpenApiService.OPENAPI_JSON_ARTIFACT_N
 import com.datasqrl.server.GraphQLServerVerticle;
 import com.datasqrl.server.McpBridgeVerticle;
 import com.datasqrl.server.RestBridgeVerticle;
+import com.datasqrl.server.auth.AuthProviderFactory;
 import com.datasqrl.server.auth.OAuth2AuthFactory;
 import com.datasqrl.server.exec.FlinkExecFunctionPlan;
 import com.datasqrl.server.graphql.RootGraphQLModel;
@@ -27,7 +28,6 @@ import com.datasqrl.server.operation.ApiOperation;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.ext.auth.authentication.AuthenticationProvider;
-import io.vertx.ext.auth.jwt.JWTAuth;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -159,22 +159,30 @@ public class ApiDeploymentModule implements ServerModule<VertxServerModuleContex
 
   private Future<List<AuthenticationProvider>> createAuthProviders(
       VertxServerModuleContext context) {
+    var authConfig = context.config().getAuthConfig();
+    if (authConfig != null) {
+      log.info("Configuring {} trusted issuer(s)", authConfig.issuers().size());
+      return AuthProviderFactory.createAuthProviders(context.vertx(), authConfig);
+    }
+
     List<Future<AuthenticationProvider>> providerFutures = new ArrayList<>();
 
-    if (context.config().getOauthConfig() != null
-        && context.config().getOauthConfig().getSite() != null) {
+    if (context.config().hasOAuthProvider()) {
       log.info("Configuring OAuth authentication with JWKS");
       providerFutures.add(
           OAuth2AuthFactory.createAuthProvider(context.vertx(), context.config().getOauthConfig())
               .map(provider -> (AuthenticationProvider) provider));
     }
 
-    if (context.config().getJwtAuth() != null) {
+    if (context.config().hasJwtAuthProvider()) {
       log.info("Configuring JWT authentication");
       providerFutures.add(
-          Future.succeededFuture(
-              (AuthenticationProvider)
-                  JWTAuth.create(context.vertx(), context.config().getJwtAuthOptions())));
+          AuthProviderFactory.createJwtAuth(context.vertx(), context.config().getJwtAuthOptions())
+              .recover(
+                  err ->
+                      Future.failedFuture(
+                          new IllegalStateException(
+                              "Cannot configure 'jwtAuth': " + err.getMessage(), err))));
     }
 
     if (providerFutures.isEmpty()) {

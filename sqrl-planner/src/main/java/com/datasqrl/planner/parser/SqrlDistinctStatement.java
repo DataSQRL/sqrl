@@ -37,18 +37,11 @@ import org.apache.calcite.rex.RexOver;
  */
 public class SqrlDistinctStatement extends SqrlDefinition {
 
-  // The DISTINCT statement is rewritten into this template around the ON columns, ORDER BY clause
-  // and FROM table of the original statement
-  private static final String COLUMNS_PREFIX =
-      "SELECT * FROM ( SELECT *, ROW_NUMBER() OVER (PARTITION BY ";
-  private static final String ORDER_PREFIX = "  ORDER BY ";
-  private static final String FROM_PREFIX = ") AS __sqrlinternal_rownum FROM ";
-  private static final String SUFFIX = ") WHERE __sqrlinternal_rownum=1";
+  public static final String FILTERED_DISTINCT_HINT_NAME = "filtered_distinct_order";
 
   final boolean isFilteredDistinct;
   private final ParsedObject<NamePath> from;
-  private final ParsedObject<String> columns;
-  private final ParsedObject<String> remaining;
+  private final SourceMappedSql query;
 
   public SqrlDistinctStatement(
       ParsedObject<NamePath> tableName,
@@ -56,56 +49,50 @@ public class SqrlDistinctStatement extends SqrlDefinition {
       AccessModifier access,
       ParsedObject<NamePath> from,
       ParsedObject<String> columns,
-      ParsedObject<String> remaining) {
+      ParsedObject<String> orderBy) {
+    this(tableName, comments, access, from, toDeduplicationQuery(from, columns, orderBy));
+  }
+
+  private SqrlDistinctStatement(
+      ParsedObject<NamePath> tableName,
+      SqrlComments comments,
+      AccessModifier access,
+      ParsedObject<NamePath> from,
+      SourceMappedSql query) {
     super(
         tableName,
-        new ParsedObject<>(
-            COLUMNS_PREFIX
-                + columns.get()
-                + ORDER_PREFIX
-                + remaining.get()
-                + FROM_PREFIX
-                + from.get()
-                + SUFFIX,
-            columns.getFileLocation()),
+        new ParsedObject<>(query.getSql(), from.getFileLocation()),
         access,
         comments.removeHintsByName(FILTERED_DISTINCT_HINT_NAME::equalsIgnoreCase));
-    isFilteredDistinct = comments.containsHintByName(FILTERED_DISTINCT_HINT_NAME::equalsIgnoreCase);
+    this.isFilteredDistinct =
+        comments.containsHintByName(FILTERED_DISTINCT_HINT_NAME::equalsIgnoreCase);
     this.from = from;
-    this.columns = columns;
-    this.remaining = remaining;
+    this.query = query;
+  }
+
+  /** Rewrites the DISTINCT statement into a query that keeps the first row of each partition. */
+  private static SourceMappedSql toDeduplicationQuery(
+      ParsedObject<NamePath> from, ParsedObject<String> columns, ParsedObject<String> orderBy) {
+    return SourceMappedSql.builder()
+        .append("SELECT * FROM ( SELECT *, ROW_NUMBER() OVER (PARTITION BY ")
+        .append(columns)
+        .append(" ORDER BY ")
+        .append(orderBy)
+        .append(") AS __sqrlinternal_rownum FROM ")
+        .append(from.get().toString())
+        .append(") WHERE __sqrlinternal_rownum=1")
+        .build();
   }
 
   /**
-   * Maps locations in the rewritten SQL back to the ON columns or the ORDER BY clause of the
+   * Maps locations in the rewritten query back to the ON columns or the ORDER BY clause of the
    * original statement, and all other locations to the FROM table.
    */
   @Override
   public FileLocation mapSqlLocation(FileLocation location) {
-    var index = toIndex(getPrefix() + definitionBody.get(), location) - getPrefix().length();
-    var columnsStart = COLUMNS_PREFIX.length();
-    var orderStart = columnsStart + columns.get().length() + ORDER_PREFIX.length();
-    if (index >= columnsStart && index <= columnsStart + columns.get().length()) {
-      return SqrlStatementParser.relativeLocation(columns, index - columnsStart);
-    }
-    if (index >= orderStart && index <= orderStart + remaining.get().length()) {
-      return SqrlStatementParser.relativeLocation(remaining, index - orderStart);
-    }
-    return from.getFileLocation();
+    var queryLocation = SQLStatement.removeFirstRowOffset(location, getPrefix().length());
+    return query.toSourceLocation(queryLocation).orElseGet(from::getFileLocation);
   }
-
-  private static int toIndex(String text, FileLocation location) {
-    var index = 0;
-    var line = 1;
-    while (line < location.line() && index < text.length()) {
-      if (text.charAt(index++) == '\n') {
-        line++;
-      }
-    }
-    return index + location.offset() - 1;
-  }
-
-  public static final String FILTERED_DISTINCT_HINT_NAME = "filtered_distinct_order";
 
   @Override
   public String toSql(Sqrl2FlinkSQLTranslator sqrlEnv, List<StackableStatement> stack) {

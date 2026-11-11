@@ -471,8 +471,37 @@ jobs:
             echo "default-key $(gpg --list-keys --with-colons | grep pub | cut -d':' -f5)" >> ~/.gnupg/gpg.conf
             echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
       - run:
-          name: Build shaded JAR
-          command: mvn -U clean -T1C -B deploy -DonlyJars ${CIRCLE_TAG:+-Prelease}
+          name: Deploy Maven artifacts
+          command: |
+            if [ -n "$CIRCLE_TAG" ]; then
+              # Releases go to Maven Central as a single bundle through the central-publishing-maven-plugin
+              mvn -U clean -T1C -B deploy -DonlyJars -Prelease
+              exit
+            fi
+
+            # Snapshots go to GitHub Packages, which intermittently fails uploads with HTTP 5xx.
+            # Upload each module's files sequentially and retry those errors too (Resolver only retries 429 and 503 by default).
+            # A 5xx can still store the file, and GitHub answers the retried upload with 409 because files can't be overwritten.
+            # A new Maven run deploys under a new snapshot timestamp, so resume from the failed module when the deploy fails.
+            set -o pipefail
+            LOG=$(mktemp)
+            ARGS="-U clean"
+            for ATTEMPT in 1 2 3; do
+              if mvn $ARGS -T1C -B deploy -DonlyJars \
+                  -Daether.connector.basic.parallelPut=false \
+                  -Daether.transport.http.retryHandler.count=5 \
+                  -Daether.transport.http.retryHandler.serviceUnavailable=429,500,502,503,504 \
+                  2>&1 | tee "$LOG"; then
+                exit 0
+              fi
+              # Build failures are not retried, only failed uploads
+              grep -q 'Failed to execute goal org.apache.maven.plugins:maven-deploy-plugin' "$LOG" || exit 1
+              RESUME=$(grep -oE -- '-rf :[^[:space:]]+' "$LOG" | tail -n 1 | cut -d' ' -f2)
+              [ -n "$RESUME" ] || exit 1
+              echo "Deploy attempt $ATTEMPT of 3 failed in $RESUME"
+              ARGS="-rf $RESUME"
+            done
+            exit 1
 
   build-images:
     # use a full VM so we can run Docker / Buildx

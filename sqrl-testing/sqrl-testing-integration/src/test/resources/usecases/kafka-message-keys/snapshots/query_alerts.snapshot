@@ -1,0 +1,17 @@
+{
+  "data" : {
+    "AlertMessage" : [ {
+      "writer" : "flink-omitted-region",
+      "message_key" : "{\"region\":null,\"alert_id\":\"<alert_id>\"}"
+    }, {
+      "writer" : "server-null-region",
+      "message_key" : "{\"region\":null,\"alert_id\":\"<alert_id>\"}"
+    }, {
+      "writer" : "server-omitted-region",
+      "message_key" : "{\"region\":null,\"alert_id\":\"<alert_id>\"}"
+    }, {
+      "writer" : "server-region",
+      "message_key" : "{\"region\":\"north\",\"alert_id\":\"<alert_id>\"}"
+    } ]
+  }
+}

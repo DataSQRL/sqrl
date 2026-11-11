@@ -6,11 +6,14 @@ Stage:       flink
 Primary key: name
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Inputs:
  - default_catalog.default_database.Submission
+--- physical ---
+Table Package (postgres):
+ - primary key: name
 
 === Submission
 ID:          default_catalog.default_database.Submission
@@ -19,7 +22,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - version: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -43,6 +46,12 @@ Schema:
  - repoURL: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
 Inputs:
  - default_catalog.default_database._SubmissionRaw
+--- physical ---
+Table Submission (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index Submission_btree_c0c1c2 (btree): name, version, variant
+ - index Submission_btree_c0c2 (btree): name, variant
+ - index Submission_btree_c0c3 (btree): name, latest
 
 === SubmissionTopics
 ID:          default_catalog.default_database.SubmissionTopics
@@ -51,13 +60,16 @@ Stage:       flink
 Primary key: -
 Timestamp:   -
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - pkgName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - submissionTime: TIMESTAMP_WITH_LOCAL_TIME_ZONE(3) NOT NULL
 Inputs:
  - default_catalog.default_database.Submission
+--- physical ---
+Table SubmissionTopics (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === TopicPackages
 ID:          default_catalog.default_database.TopicPackages
@@ -66,7 +78,7 @@ Stage:       flink
 Primary key: pkgName, topicName
 Timestamp:   -
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - pkgName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
@@ -76,6 +88,9 @@ Inputs:
  - default_catalog.default_database.SubmissionTopics
 Annotations:
  - sort: [2 DESC-nulls-last, 0 ASC-nulls-first]
+--- physical ---
+Table TopicPackages (postgres):
+ - primary key: pkgName, topicName
 
 === TopicSearch
 ID:          default_catalog.default_database.TopicSearch
@@ -84,7 +99,7 @@ Stage:       flink
 Primary key: topicName
 Timestamp:   -
 Row count:   ~1e7
----
+--- definition ---
 Schema:
  - topicName: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - numPackages: BIGINT NOT NULL
@@ -92,6 +107,9 @@ Inputs:
  - default_catalog.default_database.SubmissionTopics
 Annotations:
  - sort: [1 DESC-nulls-last, 0 ASC-nulls-first]
+--- physical ---
+Table TopicSearch (postgres):
+ - primary key: topicName
 
 === _SubmissionRaw
 ID:          default_catalog.default_database._SubmissionRaw
@@ -100,7 +118,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   event_time
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
  - version: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL

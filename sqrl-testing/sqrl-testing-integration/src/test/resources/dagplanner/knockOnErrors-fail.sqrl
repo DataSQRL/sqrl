@@ -4,6 +4,9 @@ IMPORT ecomerceTs.customer;
 IMPORT knockOnErrors.sources;
 -- Alerts fails, but Payments is still imported
 IMPORT knockOnStar.*;
+-- Both fail because their script fails to parse, which is only reported once
+IMPORT knockOnErrors.unparsable.Refunds;
+IMPORT knockOnErrors.unparsable.Chargebacks;
 
 -- The knock-on errors of the failed import are not reported, also of a statement that uses one
 -- that failed because of it
@@ -35,6 +38,9 @@ ImportedNames := SELECT * FROM sources.CustomerNames;
 -- Only the knock-on errors of the table of the package that failed are not reported
 AlertCount := SELECT COUNT(*) AS num FROM Alerts;
 PaymentAmounts := SELECT id, missing_amount FROM Payments;
+
+-- The knock-on errors of a table of a script that failed to parse are not reported
+RefundCount := SELECT COUNT(*) AS num FROM Refunds;
 
 -- The other errors are reported
 MistypedOrders := SELECT * FROM Ordrs;

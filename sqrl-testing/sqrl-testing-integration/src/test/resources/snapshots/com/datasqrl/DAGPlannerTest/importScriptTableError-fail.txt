@@ -1,4 +1,4 @@
-[FATAL] The rowtime attribute field 'ordertime' is not defined in the table schema, Available fields: ['id', 'order_time']
+[FATAL] The rowtime attribute field 'ordertime' is not defined in the table schema. Available fields: ['id', 'order_time']
 in script:sources.sqrl [7:106]:
 );
 

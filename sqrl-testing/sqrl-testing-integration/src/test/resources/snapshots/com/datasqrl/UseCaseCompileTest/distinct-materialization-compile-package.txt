@@ -6,7 +6,7 @@ Stage:       flink
 Primary key: deploymentId
 Timestamp:   eventTime
 Row count:   ~2e7
----
+--- definition ---
 Schema:
  - deploymentId: BIGINT NOT NULL
  - dataGroupId: BIGINT NOT NULL
@@ -15,6 +15,9 @@ Inputs:
  - default_catalog.default_database.DeploymentStateBase
 Annotations:
  - mostRecentDistinct: true
+--- physical ---
+Table DeploymentState (postgres):
+ - primary key: deploymentId
 
 === DeploymentStateBase
 ID:          default_catalog.default_database.DeploymentStateBase
@@ -23,7 +26,7 @@ Stage:       flink
 Primary key: -
 Timestamp:   eventTime
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - deploymentId: BIGINT NOT NULL
  - dataGroupId: BIGINT NOT NULL
@@ -31,12 +34,15 @@ Schema:
 Inputs:
  - default_catalog.default_database.Deployments
  - default_catalog.default_database.Projects
+--- physical ---
+Table DeploymentStateBase (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === DeploymentStateById
 ID:          default_catalog.default_database.DeploymentStateById
 Type:        query
 Stage:       postgres
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.DeploymentState
 Annotations:
@@ -50,13 +56,16 @@ Stage:       flink
 Primary key: -
 Timestamp:   eventTime
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - deploymentId: BIGINT NOT NULL
  - projectId: BIGINT NOT NULL
  - eventTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Deployments__base
+--- physical ---
+Table Deployments (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === Projects
 ID:          default_catalog.default_database.Projects
@@ -65,19 +74,22 @@ Stage:       flink
 Primary key: -
 Timestamp:   eventTime
 Row count:   ~1e8
----
+--- definition ---
 Schema:
  - projectId: BIGINT NOT NULL
  - dataGroupId: BIGINT NOT NULL
  - eventTime: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
 Inputs:
  - default_catalog.default_database.Projects__base
+--- physical ---
+Table Projects (postgres):
+ - primary key: __pk_hash (generated hash key)
 
 === DeploymentState
 ID:          logger.DeploymentState
 Type:        export
 Stage:       flink
----
+--- definition ---
 Inputs:
  - default_catalog.default_database.DeploymentState
 
