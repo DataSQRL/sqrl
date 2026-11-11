@@ -214,6 +214,8 @@ See [Compilation Output](compilation-output) to learn more about the files the c
 
 The compiler reports all errors of a script in one run, each with its position, so you can fix them together. Compilation fails if there is any error.
 
+If a statement is missing its `;` and the next line starts a definition (`Name :=`), the compiler reports `Missing ';' at the end of the statement` where the `;` belongs and still compiles both statements, so their other errors are reported as well.
+
 To avoid knock-on errors, the compiler does not report the errors that only follow from a failed statement:
 - If a table, column or function is not found because its definition failed, that error is not reported. The compiler stops at the first error of a statement, so the other errors of the statement can only show up once that definition is fixed.
 - A column that failed is also missing from the tables that select all columns of its table, so the compiler recognizes it by its name: no column of that name is reported as not found, in any table, until its definition is fixed.
