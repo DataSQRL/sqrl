@@ -1,0 +1,22 @@
+{
+  "version": "1",
+  "enabled-engines": ["flink", "postgres", "kafka", "iceberg", "duckdb", "vertx"],
+  "script": {
+    "main": "events.sqrl",
+    "api": {
+      "v1": {
+        "schema": "schema.graphqls"
+      },
+      "v2": {
+        "schema": "schema-v2.graphqls"
+      }
+    }
+  },
+  "connectors": {
+    "iceberg": {
+      "warehouse": "/tmp/duckdb",
+      "catalog-type": "hadoop",
+      "catalog-name": "mydatabase"
+    }
+  }
+}

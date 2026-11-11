@@ -1,0 +1,12 @@
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+type Query {
+  RecentEvents(id: String, limit: Int = 10, offset: Int = 0): [RecentEvents!]
+}
+
+type RecentEvents {
+  id: String!
+  site: String!
+  ts: DateTime!
+}

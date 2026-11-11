@@ -15,6 +15,7 @@
  */
 package com.datasqrl.engine.server;
 
+import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.engine.EnginePhysicalPlan;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MutationTable;
@@ -57,4 +58,7 @@ public class ServerPhysicalPlan implements EnginePhysicalPlan {
    * added to their physical tables afterwards.
    */
   @JsonIgnore final Set<TableAnalysis> pagedRowTimeTables = new LinkedHashSet<>();
+
+  /** Full paths of the functions that the GraphQL schema of any API version uses. */
+  @JsonIgnore final Set<NamePath> servedFunctions = new LinkedHashSet<>();
 }
