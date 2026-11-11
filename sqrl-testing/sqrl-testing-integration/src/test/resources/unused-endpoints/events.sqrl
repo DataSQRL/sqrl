@@ -20,3 +20,6 @@ RecentEvents := SELECT id, site, ts FROM _Events;
 EventArchive := SELECT id, site, ts FROM _Events;
 
 EventAlert := SUBSCRIBE SELECT id, site, ts FROM _Events WHERE site = 'a';
+
+/*+test */
+EventCountTest := SELECT COUNT(*) AS n FROM _Events;

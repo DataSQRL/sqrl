@@ -49,6 +49,31 @@ class UnusedEndpointsWarningTest {
   }
 
   @Test
+  void givenTwoApiVersions_whenCompile_thenWarnsOnlyAboutEndpointsThatNoVersionServes() {
+    // v1 serves SiteCount and v2 serves RecentEvents
+    var status = compileExtension.execute(PROJECT_DIR, List.of("compile", "package-versions.json"));
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isTrue();
+    assertThat(status.getMessages())
+        .contains(
+            WARNING
+                + ", but they are still computed and written to the database or log:"
+                + " EventAlert, SiteCount.events.");
+  }
+
+  @Test
+  void givenCustomSchemaAndTestTable_whenTest_thenDoesNotWarnAboutTestTable() {
+    var status = compileExtension.execute(PROJECT_DIR, List.of("test", "package-test-schema.json"));
+
+    assertThat(status.isSuccess()).as(status.getMessages()).isTrue();
+    assertThat(status.getMessages())
+        .contains(
+            WARNING
+                + ", but they are still computed and written to the database or log:"
+                + " EventAlert, RecentEvents, SiteCount.events.");
+  }
+
+  @Test
   void givenInferredSchema_whenCompile_thenDoesNotWarn() {
     var status =
         compileExtension.execute(PROJECT_DIR, List.of("compile", "package-inferred-schema.json"));

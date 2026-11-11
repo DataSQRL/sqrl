@@ -36,8 +36,6 @@ import com.datasqrl.plan.validate.ExecutionGoal;
 import com.datasqrl.planner.SqlScriptPlanner;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.dag.DAGPlanner;
-import com.datasqrl.planner.dag.PipelineDAG;
-import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.plan.MutationDatabase;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.server.ServerModelManager;
@@ -47,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Lazy;
@@ -127,7 +124,7 @@ public class CompilationProcess {
                         generatedOpenApi));
           });
       if (loadResult.inferredSchema().isEmpty()) {
-        warnUnservedEndpoints(dag, serverPlan.getServedFunctions());
+        warnUnservedEndpoints(serverPlan);
       }
 
       // create test artifact
@@ -165,24 +162,31 @@ public class CompilationProcess {
 
   /**
    * Warns about the endpoints that no custom GraphQL schema uses, since they are still computed.
-   * Endpoints on an analytic database, like Iceberg, are left out because their views are queried
+   * Endpoints on an analytic database, like Iceberg, are left out: such a table is a data product
+   * that other engines read from the catalog, so the API is not its only reader. Postgres tables
+   * exist to serve the API, so a Postgres endpoint is listed even when something reads its view
    * directly.
    */
-  private void warnUnservedEndpoints(PipelineDAG dag, Set<NamePath> servedFunctions) {
+  private void warnUnservedEndpoints(ServerPhysicalPlan serverPlan) {
     var unserved =
-        dag.allNodesByClass(TableFunctionNode.class)
-            .filter(node -> !(node.getChosenStage().engine() instanceof AnalyticDatabaseEngine))
-            .map(TableFunctionNode::getFunction)
-            .filter(fn -> fn.getVisibility().isQueryable() && !fn.getVisibility().isTest())
+        serverPlan.getFunctions().stream()
+            .filter(fn -> !fn.getVisibility().isTest())
+            .filter(
+                fn ->
+                    !(fn.getExecutableQuery().getStage().engine()
+                        instanceof AnalyticDatabaseEngine))
             .map(SqrlTableFunction::getFullPath)
-            .filter(path -> !servedFunctions.contains(path))
+            .filter(path -> !serverPlan.getServedFunctions().contains(path))
             .map(NamePath::getDisplay)
+            .sorted()
             .toList();
     if (!unserved.isEmpty()) {
       errors.warn(
           "No GraphQL schema uses these endpoints, but they are still computed and written to the"
               + " database or log: %s. Add them to a schema if the API should serve them. Otherwise,"
-              + " remove them, start their names with `_`, or hint a table `/*+no_query */`.",
+              + " remove them or start their names with `_`. If a table has to stay, because it is"
+              + " a mutation table or a relationship or table function in the schema returns its"
+              + " rows, hint it `/*+no_query*/` instead.",
           String.join(", ", unserved));
     }
   }
