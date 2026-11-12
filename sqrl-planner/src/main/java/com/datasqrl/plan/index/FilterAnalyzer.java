@@ -21,9 +21,11 @@ import com.datasqrl.plan.index.IndexSelector.NamedTable;
 import com.datasqrl.plan.index.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.plan.index.UnindexableFilter.Reason;
 import com.datasqrl.util.FunctionUtil;
+import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -180,9 +182,13 @@ final class FilterAnalyzer {
       return Optional.empty();
     }
 
+    // IndexSelector breaks cost ties by the order of the index candidates, which follows the order
+    // of these sets, so the order must be the same in every run: no Set.copyOf (which randomizes
+    // the
+    // order per JVM) and no hashing by object identity (like IndexableFunction)
     Set<Integer> equalityColumns = new HashSet<>();
     Set<Integer> inequalityColumns = new HashSet<>();
-    Set<IndexableFunctionCall> functionCalls = new HashSet<>();
+    Set<IndexableFunctionCall> functionCalls = new LinkedHashSet<>();
     for (var constraint : constraints) {
       if (constraint instanceof ColumnConstraint column) {
         (column.isEquality() ? equalityColumns : inequalityColumns).add(column.column());
@@ -196,9 +202,9 @@ final class FilterAnalyzer {
     return Optional.of(
         new QueryIndexSummary(
             table,
-            Set.copyOf(equalityColumns),
-            Set.copyOf(inequalityColumns),
-            Set.copyOf(functionCalls),
+            ImmutableSet.copyOf(equalityColumns),
+            ImmutableSet.copyOf(inequalityColumns),
+            ImmutableSet.copyOf(functionCalls),
             1.0));
   }
 
