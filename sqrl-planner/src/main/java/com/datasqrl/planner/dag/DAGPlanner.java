@@ -23,8 +23,8 @@ import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.engine.database.DatabaseEngine;
+import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.export.ExportEngine;
-import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
@@ -215,8 +215,7 @@ public class DAGPlanner {
     final var exportTableCounter = new AtomicInteger(0);
     Function<String, String> uniqueNameFct =
         name -> name + UNIQUE_TABLE_APPENDIX + exportTableCounter.incrementAndGet();
-    // The tables that standalone includes write, as "'<table>' of '<include>'"
-    var includedTables = new ArrayList<String>();
+    var includedTables = new ArrayList<IncludedTable>();
     // move assembler logic here
     // ##1st: find all the cuts between flink and materialization (db+log) stages or sinks
     // generate a sink for each in the respective engine and insert into
@@ -341,63 +340,62 @@ public class DAGPlanner {
                 // #3rd: create table
                 var datatype = relBuilder.peek().getRowType();
                 tblBuilder.setColumns(datatype);
-                var subscribingInclude =
+                // A standalone include that subscribes to the table writes it into the tables that
+                // the deployments share, so this project only reads it there
+                var includedBy =
                     downstream instanceof ExportNode
                         ? Optional.<String>empty()
-                        : node.getSubscribingInclude();
-                if (subscribingInclude.isPresent()
-                    && exportEngine instanceof LogEngine logEngine
-                    && logEngine.sharesTablesWithStandaloneIncludes()) {
-                  // The deployment of the standalone include writes the table, so this project
-                  // only reads it and leaves it out of the Flink plan
-                  exportPlans
-                      .get(exportStage)
-                      .table(
-                          logEngine.createIncludedTable(
-                              exportStage,
-                              originalTableName,
-                              tblBuilder,
-                              datatype,
-                              originalNodeTable,
-                              subscribingInclude.get()));
-                  streamTableMapping.put(
-                      new InputTableKey(exportStage, originalNodeTable.getObjectIdentifier()),
-                      sqrlEnv.registerTable(tblBuilder));
-                  includedTables.add(
-                      "'%s' of '%s'".formatted(originalTableName, subscribingInclude.get()));
-                  continue;
+                        : node.getSubscribingInclude()
+                            .filter(
+                                include ->
+                                    exportStage.supportsFeature(
+                                        EngineFeature.SHARED_WITH_STANDALONE_INCLUDES));
+                EngineCreateTable createdTable;
+                if (includedBy.isPresent()) {
+                  createdTable =
+                      exportEngine.createIncludedTable(
+                          exportStage,
+                          originalTableName,
+                          tblBuilder,
+                          datatype,
+                          originalNodeTable,
+                          includedBy.get());
+                } else if (downstream instanceof ExportNode) {
+                  createdTable =
+                      exportEngine.createTableForExportStatement(
+                          exportStage, originalTableName, tblBuilder, datatype, originalNodeTable);
+                } else {
+                  createdTable =
+                      exportEngine.createTable(
+                          exportStage, originalTableName, tblBuilder, datatype, originalNodeTable);
                 }
-                var createdTable =
-                    downstream instanceof ExportNode
-                        ? exportEngine.createTableForExportStatement(
-                            exportStage, originalTableName, tblBuilder, datatype, originalNodeTable)
-                        : exportEngine.createTable(
-                            exportStage,
-                            originalTableName,
-                            tblBuilder,
-                            datatype,
-                            originalNodeTable);
                 exportPlans.get(exportStage).table(createdTable);
-                targetTable = sqrlEnv.createSinkTable(tblBuilder);
+                if (includedBy.isPresent()) {
+                  // Only the queries of this project read the table, so it is not in the Flink plan
+                  targetTable = sqrlEnv.createTableOutsidePlan(tblBuilder);
+                  includedTables.add(new IncludedTable(originalTableName, includedBy.get()));
+                } else {
+                  targetTable = sqrlEnv.createSinkTable(tblBuilder);
+                  // Finally: add insert statement to sink into table
+                  sqrlEnv.addInsert(
+                      relBuilder.build(),
+                      targetTable,
+                      originalNodeTable,
+                      exportEngine.isUpsertSink(tblBuilder));
+                }
                 streamTableMapping.put(
                     new InputTableKey(exportStage, originalNodeTable.getObjectIdentifier()),
                     targetTable);
-                // Finally: add insert statement to sink into table
-                sqrlEnv.addInsert(
-                    relBuilder.build(),
-                    targetTable,
-                    originalNodeTable,
-                    exportEngine.isUpsertSink(tblBuilder));
               }
             });
 
     errors.checkFatal(
         includedTables.isEmpty() || sqrlEnv.hasInserts(),
-        "The Flink job of this project writes no table: standalone includes write the tables"
-            + " that it subscribes to (%s), and a project needs at least one table that it writes"
-            + " itself. Add such a table, or don't mark the include as standalone so that this"
-            + " project writes its own copy.",
-        String.join(", ", includedTables));
+        "The Flink job of this project would write no table, since the deployments of standalone"
+            + " includes write the tables that it subscribes to: %s. A project needs at least one"
+            + " table that its own Flink job writes. Add one, or subscribe through the APIs of the"
+            + " included projects' deployments instead.",
+        includedTables.stream().map(IncludedTable::toString).collect(Collectors.joining(", ")));
     try {
       planBuilder.stagePlan(new PhysicalStagePlan(streamStage, sqrlEnv.compileFlinkPlan()));
 
@@ -650,6 +648,14 @@ public class DAGPlanner {
   }
 
   public record InputTableKey(ExecutionStage stage, ObjectIdentifier tableId) {}
+
+  /** A table that the deployment of a standalone include writes, so this project only reads it. */
+  private record IncludedTable(String name, String standaloneInclude) {
+    @Override
+    public String toString() {
+      return "'%s' of '%s'".formatted(name, standaloneInclude);
+    }
+  }
 
   private Map<InputTableKey, List<RelHint>> collectSourceHints(
       PipelineDAG dag, ExecutionStage streamStage) {

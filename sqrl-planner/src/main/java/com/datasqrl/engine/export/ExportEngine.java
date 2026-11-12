@@ -60,6 +60,25 @@ public interface ExportEngine extends ExecutionEngine {
   }
 
   /**
+   * Creates the table of a computed table that the deployment of a standalone included project
+   * writes, so that the current project only reads it. The parameters are the same as for {@link
+   * #createTable}. Only called for engines that support {@link
+   * EngineFeature#SHARED_WITH_STANDALONE_INCLUDES}.
+   *
+   * @param standaloneInclude the namespace of the standalone include that writes the table
+   */
+  default EngineCreateTable createIncludedTable(
+      ExecutionStage stage,
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      TableAnalysis tableAnalysis,
+      String standaloneInclude) {
+    throw new UnsupportedOperationException(
+        "Does not share tables with standalone includes: " + getName());
+  }
+
+  /**
    * Returns whether the generated Flink sink accepts {@code ON CONFLICT} clauses.
    *
    * <p>This is distinct from whether the target system can merge records by primary key. Flink must

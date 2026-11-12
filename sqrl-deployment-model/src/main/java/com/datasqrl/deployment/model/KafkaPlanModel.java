@@ -28,8 +28,9 @@ import java.util.stream.Stream;
  *
  * @param topics the topics that the deployment owns, so it creates and configures them
  * @param testRunnerTopics the topics that the test runner creates before the tests start
- * @param includedTopics the topics of internal Kafka tables that a standalone included project
- *     ({@code script.include}) defines. That project owns them, so the deployment only uses them.
+ * @param includedTopics the topics that the deployment of a standalone included project ({@code
+ *     script.include}) writes, i.e. of its internal Kafka tables and of the tables that it
+ *     subscribes to. That project owns them, so the deployment only uses them.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record KafkaPlanModel(

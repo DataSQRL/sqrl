@@ -29,6 +29,7 @@ import com.datasqrl.config.TestRunnerConfiguration;
 import com.datasqrl.config.TestScriptConfig;
 import com.datasqrl.deployment.model.KafkaIncludedTopicModel;
 import com.datasqrl.deployment.model.KafkaNewTopicModel;
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.log.MutationEngine.MutationSettings;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
@@ -183,23 +184,45 @@ class KafkaLogEngineTest {
   }
 
   @Test
-  void givenStandaloneInclude_whenCreateIncludedTable_thenTableKeepsItsStandaloneInclude() {
-    var table = createIncludedTable("BigOrders", "core");
+  void givenKafkaEngine_whenCheckFeatures_thenSharesItsTablesWithStandaloneIncludes() {
+    assertThat(engine.supports(EngineFeature.SHARED_WITH_STANDALONE_INCLUDES)).isTrue();
+  }
 
-    assertThat(engine.sharesTablesWithStandaloneIncludes()).isTrue();
+  @Test
+  void givenStandaloneInclude_whenCreateIncludedTable_thenTableKeepsItsStandaloneInclude() {
+    var table = createIncludedTable("${sqrl:table-name}", "BigOrders", "core");
+
     assertThat(table.topicName()).isEqualTo("BigOrders");
     assertThat(table.standaloneInclude()).contains("core");
   }
 
   @Test
-  void givenMutationTopic_whenCreateIncludedTableWithThatTopic_thenUsesSubscriptionTopic() {
-    createMutationWithTopic("Events");
+  void givenMutationTopicOfSameInclude_whenCreateIncludedTableWithIt_thenUsesSubscriptionTopic() {
+    createMutationWithTopic("Events", Optional.of("core"));
 
-    var table = createIncludedTable("Events", "core");
+    var table = createIncludedTable("${sqrl:table-name}", "Events", "core");
 
     // The included project renames the topic in the same way
     assertThat(table.topicName()).isEqualTo("Events-subscription");
     assertThat(table.standaloneInclude()).contains("core");
+  }
+
+  @Test
+  void givenMutationTopicOfThisProject_whenCreateIncludedTableWithIt_thenFailsWithError() {
+    createMutationWithTopic("Events");
+
+    // The included project does not know the mutation, so it writes into its topic
+    assertThatThrownBy(() -> createIncludedTable("${sqrl:table-name}", "Events", "core"))
+        .hasMessageContaining(
+            "Kafka table 'Events' is written by the standalone include 'core' into the topic"
+                + " 'Events', which is the topic of a mutation table that 'core' does not define");
+  }
+
+  @Test
+  void givenTopicTemplateWithTableId_whenCreateIncludedTable_thenFailsWithError() {
+    assertThatThrownBy(() -> createIncludedTable("acme-${sqrl:TABLE-ID}", "BigOrders", "core"))
+        .hasMessageContaining("Kafka table 'BigOrders' is written by the standalone include 'core'")
+        .hasMessageContaining("'${sqrl:table-id}'");
   }
 
   @Test
@@ -355,6 +378,11 @@ class KafkaLogEngineTest {
   }
 
   private void createMutationWithTopic(String mutationTopicName) {
+    createMutationWithTopic(mutationTopicName, Optional.empty());
+  }
+
+  private void createMutationWithTopic(
+      String mutationTopicName, Optional<String> standaloneInclude) {
     when(mutationConnectorConf.toMapWithSubstitution(any(ConnectorConf.Context.class)))
         .thenReturn(
             new HashMap<>(
@@ -375,12 +403,14 @@ class KafkaLogEngineTest {
         mutationTopicName,
         tableBuilder,
         null,
-        new MutationSettings(MutationInsertType.SINGLE, Optional.empty(), Optional.empty()));
+        new MutationSettings(MutationInsertType.SINGLE, Optional.empty(), standaloneInclude));
   }
 
   private KafkaLogEngine.Table createIncludedTable(
-      String originalTableName, String standaloneInclude) {
-    mockStreamConnector("${sqrl:table-name}");
+      String topicTemplate, String originalTableName, String standaloneInclude) {
+    when(streamConnectorConf.toMap())
+        .thenReturn(Map.of("format", "flexible-json", "topic", topicTemplate));
+    mockStreamConnector(topicTemplate);
     createdTableBuilder = new FlinkTableBuilder().setName(originalTableName + "_2");
     createdTableBuilder.setColumnList(SqlNodeList.EMPTY);
 

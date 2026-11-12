@@ -1,12 +1,22 @@
--- Statements that write Kafka topics. A project that includes this package as standalone leaves
--- their topics to the package's own deployment.
+-- The main script of the package's own deployment. Its statements write Kafka topics, so a project
+-- that includes the package as standalone leaves these topics to the package's deployment.
 IMPORT base.*;
+IMPORT sinks.OrderAudit;
+-- Planned with a namespace, so the deployment runs its statements but exposes no subscription of it
+IMPORT extras;
 
 -- Subscriptions, whose topics are named after the tables they read
 BigOrders := SUBSCRIBE SELECT * FROM OrderEvent WHERE orderid > 100;
 CustomerEventsById(customerid BIGINT NOT NULL) := SUBSCRIBE SELECT * FROM CustomerEvent WHERE customerid = :customerid;
 
--- Exports into the log and into an internal table of the package
+-- Subscriptions that the deployment does not expose, so it writes no topic for them
+/*+no_query*/
+QuietOrders := SUBSCRIBE SELECT * FROM OrderEvent WHERE orderid < 0;
+_HiddenOrders := SUBSCRIBE SELECT * FROM OrderEvent WHERE orderid = 0;
+
+-- Writes into the log, into an internal table of the package and into an external table
 SmallOrders := SELECT * FROM OrderEvent WHERE orderid <= 100;
 EXPORT SmallOrders TO log.SmallOrderLog;
-EXPORT BigOrders TO sinks.OrderAudit;
+EXPORT BigOrders TO OrderAudit;
+INSERT INTO OrderAudit SELECT * FROM SmallOrders;
+EXPORT SmallOrders TO sinks.OrderArchive;

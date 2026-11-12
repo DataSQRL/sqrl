@@ -72,7 +72,7 @@ The `build/deploy/flink` folder contains the data files that sources read locall
 
 | File         | Contents                                                                                                                             |
 |--------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `kafka.json` | The topics the pipeline creates, with name, partitions, replication factor, and configuration, plus the topics the test runner uses. The topics that a standalone included project writes, i.e. of its internal Kafka tables and of its subscriptions, are listed separately under `includedTopics`, by name only, because that project creates them. |
+| `kafka.json` | The topics the pipeline creates, with name, partitions, replication factor, and configuration, plus the topics the test runner uses. The topics that a standalone included project writes, i.e. of its internal Kafka tables and of the subscriptions that its deployment exposes, are listed separately under `includedTopics`, by name only, because that project creates them. |
 
 ### PostgreSQL
 

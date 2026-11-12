@@ -16,13 +16,8 @@
 package com.datasqrl.engine.log;
 
 import com.datasqrl.engine.database.DatabaseEngine;
-import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.database.QueryEngine;
 import com.datasqrl.engine.export.ExportEngine;
-import com.datasqrl.engine.pipeline.ExecutionStage;
-import com.datasqrl.planner.analyzer.TableAnalysis;
-import com.datasqrl.planner.tables.FlinkTableBuilder;
-import org.apache.calcite.rel.type.RelDataType;
 
 public interface LogEngine extends ExportEngine, MutationEngine, DatabaseEngine {
 
@@ -34,31 +29,5 @@ public interface LogEngine extends ExportEngine, MutationEngine, DatabaseEngine 
   @Override
   default void addQueryEngine(QueryEngine engine) {
     throw new UnsupportedOperationException("Not supported");
-  }
-
-  /**
-   * Returns whether the deployment of a standalone included project shares this engine's tables
-   * with the current project, like Kafka topics. The included project then owns the tables that its
-   * own statements write, and the current project does not write them again.
-   */
-  default boolean sharesTablesWithStandaloneIncludes() {
-    return false;
-  }
-
-  /**
-   * Creates the table of a computed table that a standalone included project writes, so that the
-   * current project can read it without writing it. The parameters are the same as for {@link
-   * #createTable}. Only called if {@link #sharesTablesWithStandaloneIncludes()}.
-   *
-   * @param standaloneInclude the namespace of the standalone included project that writes the table
-   */
-  default EngineCreateTable createIncludedTable(
-      ExecutionStage stage,
-      String originalTableName,
-      FlinkTableBuilder tableBuilder,
-      RelDataType relDataType,
-      TableAnalysis tableAnalysis,
-      String standaloneInclude) {
-    throw new UnsupportedOperationException("Does not share tables with standalone includes");
   }
 }

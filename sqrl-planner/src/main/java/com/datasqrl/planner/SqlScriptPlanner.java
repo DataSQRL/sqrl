@@ -25,7 +25,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
-import com.datasqrl.engine.log.LogEngine;
+import com.datasqrl.engine.EngineFeature;
 import com.datasqrl.engine.log.MutationEngine;
 import com.datasqrl.engine.log.MutationEngine.MutationSettings;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -41,6 +41,7 @@ import com.datasqrl.function.FlinkUdfNsObject;
 import com.datasqrl.io.schema.SchemaConversionResult;
 import com.datasqrl.loaders.FlinkTableNamespaceObject;
 import com.datasqrl.loaders.FlinkTableNamespaceObject.FlinkTable;
+import com.datasqrl.loaders.IncludedScript;
 import com.datasqrl.loaders.ModuleLoader;
 import com.datasqrl.loaders.ModuleLoaderImpl;
 import com.datasqrl.loaders.ModuleLoaders;
@@ -62,6 +63,7 @@ import com.datasqrl.planner.analyzer.TableOrFunctionAnalysis;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.dag.DAGBuilder;
 import com.datasqrl.planner.dag.nodes.ExportNode;
+import com.datasqrl.planner.dag.nodes.PipelineNode;
 import com.datasqrl.planner.dag.nodes.TableFunctionNode;
 import com.datasqrl.planner.dag.nodes.TableNode;
 import com.datasqrl.planner.dag.plan.MutationMetadataExtractor;
@@ -123,6 +125,7 @@ import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 import org.apache.calcite.rel.type.RelDataTypeField;
@@ -398,7 +401,7 @@ public class SqlScriptPlanner {
     if (stmt instanceof SqrlImportStatement statement) {
       addImport(statement, hintsAndDocs, sqrlEnv, errors);
     } else if (stmt instanceof SqrlExportStatement statement) {
-      addExport(statement, sqrlEnv);
+      addExport(statement, sqrlEnv, errors);
     } else if (stmt instanceof SqrlCreateTableStatement statement) {
       sqrlEnv
           .createTable(
@@ -438,11 +441,14 @@ public class SqlScriptPlanner {
               || (shouldExcludeTestTable(hints))
               || (hints.isWorkload() && !(hints.isTest() && executionGoal == ExecutionGoal.TEST));
 
-      // The deployment of a standalone include writes the subscriptions of its scripts, also when
-      // this project does not expose them, e.g. for a script that is not imported inline
+      // The deployment of a standalone include writes the subscriptions that it exposes, also when
+      // this project does not expose them, e.g. for a script that it does not import inline
       var subscribingInclude =
           !isHidden && access == AccessModifier.SUBSCRIPTION
-              ? scriptContext.standaloneInclude()
+              ? scriptContext
+                  .includedScript()
+                  .filter(IncludedScript::exposesSubscriptions)
+                  .map(IncludedScript::include)
               : Optional.<String>empty();
 
       // Ignore any hidden table
@@ -605,13 +611,10 @@ public class SqlScriptPlanner {
           sqrlEnv.registerSqrlTableFunction(fn);
         }
         // The log engine serves a subscription function from the table that it reads
-        subscribingInclude.ifPresent(
-            include ->
-                fn.getFunctionAnalysis().getFromTables().stream()
-                    .flatMap(table -> dagBuilder.getNode(table.getIdentifier()).stream())
-                    .filter(TableNode.class::isInstance)
-                    .forEach(
-                        node -> ((TableNode) node).setSubscribingInclude(Optional.of(include))));
+        markSubscribedBy(
+            subscribingInclude,
+            fn.getFunctionAnalysis().getFromTables().stream()
+                .flatMap(table -> dagBuilder.getNode(table.getIdentifier()).stream()));
       } else {
         var visibility = new AccessVisibility(access, hints.isTest(), true, isHidden);
 
@@ -888,7 +891,7 @@ public class SqlScriptPlanner {
     var queryByHint = hintsAndDoc.hints().getQueryByHint();
     if (queryByHint.filter(NoQueryHint.class::isInstance).isEmpty()) {
       // Without an access function, the include does not subscribe to the table either
-      tableNode.setSubscribingInclude(subscribingInclude);
+      markSubscribedBy(subscribingInclude, Stream.of(tableNode));
     }
     if (visibility.isEndpoint()) { // only add function if this table is an endpoint
       var relBuilder = sqrlEnv.getTableScan(tableAnalysis.getObjectIdentifier());
@@ -1117,7 +1120,9 @@ public class SqlScriptPlanner {
   /** Provides connector settings for CREATE TABLE statements managed by a configured engine. */
   private Optional<MutationBuilder> getMutationBuilder(HintsAndDoc hintsAndDoc) {
     return getMutationBuilder(
-        hintsAndDoc, scriptContext.isRootContext(), scriptContext.standaloneInclude());
+        hintsAndDoc,
+        scriptContext.isRootContext(),
+        scriptContext.includedScript().map(IncludedScript::include));
   }
 
   private Optional<ExecutionStage> getMutationStage(HintsAndDoc hintsAndDoc) {
@@ -1128,27 +1133,51 @@ public class SqlScriptPlanner {
   }
 
   /**
-   * Returns whether the current script belongs to a standalone include, whose deployment shares the
-   * tables of the given stage with this project, e.g. Kafka topics. The include's deployment runs
-   * the script's statements that write into those tables, so this project skips them.
+   * Records that the deployment of a standalone include subscribes to the given tables, so that the
+   * DAG planner reads them where that deployment writes them, instead of writing them again.
    */
-  private boolean isWrittenByStandaloneInclude(ExecutionStage stage) {
-    return scriptContext.standaloneInclude().isPresent()
-        && stage.engine() instanceof LogEngine logEngine
-        && logEngine.sharesTablesWithStandaloneIncludes();
+  private static void markSubscribedBy(
+      Optional<String> standaloneInclude, Stream<? extends PipelineNode> tables) {
+    standaloneInclude.ifPresent(
+        include ->
+            tables
+                .filter(TableNode.class::isInstance)
+                .forEach(table -> ((TableNode) table).markSubscribedBy(include)));
   }
 
   /**
-   * Returns whether the current script belongs to a standalone include and writes into an internal
-   * table that a standalone include owns. The include's deployment runs the statement, so this
-   * project skips it.
+   * Returns whether the deployment of the standalone include that the current script belongs to
+   * runs a statement of the script that writes into a sink that the deployments share, and reports
+   * a notice if so. The current project then skips the statement, so that the sink is not written
+   * twice.
    */
-  private boolean isWrittenByStandaloneInclude(Optional<SourceSinkTableAnalysis> sinkTable) {
-    return scriptContext.standaloneInclude().isPresent()
-        && sinkTable
-            .map(SourceSinkTableAnalysis::mutationDefinition)
-            .flatMap(mutation -> mutation.getCreateTable().standaloneInclude())
-            .isPresent();
+  private boolean isRunByStandaloneInclude(boolean sharedSink, ErrorCollector errors) {
+    var include =
+        scriptContext
+            .includedScript()
+            .filter(script -> sharedSink && script.runsStatements())
+            .map(IncludedScript::include);
+    include.ifPresent(
+        name ->
+            errors.notice(
+                "This project skips the statement, since the deployment of the standalone include"
+                    + " '%s' runs it and writes into the same sink",
+                name));
+    return include.isPresent();
+  }
+
+  /** The deployments share the tables of an engine that supports it, e.g. Kafka topics. */
+  private static boolean isShared(ExecutionStage stage) {
+    return stage.supportsFeature(EngineFeature.SHARED_WITH_STANDALONE_INCLUDES);
+  }
+
+  /**
+   * The deployments share an external table, i.e. a table with a connector, and an internal table
+   * of an engine whose tables they share.
+   */
+  private static boolean isShared(SourceSinkTableAnalysis table) {
+    var mutation = table.mutationDefinition();
+    return mutation == null || isShared(mutation.getStage());
   }
 
   private Optional<MutationBuilder> getMutationBuilder(
@@ -1204,8 +1233,10 @@ public class SqlScriptPlanner {
    *
    * @param exportStmt
    * @param sqrlEnv
+   * @param errors the errors of the statement
    */
-  private void addExport(SqrlExportStatement exportStmt, Sqrl2FlinkSQLTranslator sqrlEnv) {
+  private void addExport(
+      SqrlExportStatement exportStmt, Sqrl2FlinkSQLTranslator sqrlEnv, ErrorCollector errors) {
     var sinkPath = exportStmt.getPackageIdentifier().get();
     var sinkName = sinkPath.getLast();
     var tablePath = exportStmt.getTableIdentifier().get();
@@ -1257,7 +1288,7 @@ public class SqlScriptPlanner {
             engineName);
         exportStage = optStage.get();
       }
-      if (isWrittenByStandaloneInclude(exportStage)) {
+      if (isRunByStandaloneInclude(isShared(exportStage), errors)) {
         return;
       }
       exportNode =
@@ -1270,7 +1301,9 @@ public class SqlScriptPlanner {
               Optional.empty());
     } else if ((existingTable = sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId)) != null) {
       // 2nd: the sink path resolves to a table source (i.e. CREATE TABLE)
-      if (isWrittenByStandaloneInclude(existingTable.getSourceSinkTable())) {
+      if (isRunByStandaloneInclude(
+          existingTable.getSourceSinkTable().map(SqlScriptPlanner::isShared).orElse(false),
+          errors)) {
         return;
       }
       exportNode =
@@ -1324,13 +1357,11 @@ public class SqlScriptPlanner {
               ErrorCode.INVALID_INDIVIDUAL_SCRIPT_TABLE,
               "Referenced table '%s' must specify a connector or an engine hint",
               sinkName);
-      // The sink is an internal table of a standalone include whose engine shares it, so the
-      // include owns it (see MutationSettings). Checked before the sink is added to Flink.
-      if (mutationBuilder.isPresent()
-          && getStandaloneInclude(sinkTable.table()).isPresent()
-          && getMutationStage(sinkHintsAndDoc)
-              .filter(this::isWrittenByStandaloneInclude)
-              .isPresent()) {
+      // Checked before the sink is added to Flink
+      var sharedSink =
+          sinkTable.table().external()
+              || getMutationStage(sinkHintsAndDoc).map(SqlScriptPlanner::isShared).orElse(false);
+      if (isRunByStandaloneInclude(sharedSink, errors)) {
         return;
       }
       AtomicReference<RelDataType> exportSchemaRef = new AtomicReference<>(null);
@@ -1380,7 +1411,8 @@ public class SqlScriptPlanner {
     var sinkTableId = sqrlEnv.getInsertTarget(insert);
     var sinkTable = sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId);
     errors.checkFatal(sinkTable != null, "Could not find INSERT target table: %s", sinkTableId);
-    if (isWrittenByStandaloneInclude(sinkTable.getSourceSinkTable())) {
+    if (isRunByStandaloneInclude(
+        sinkTable.getSourceSinkTable().map(SqlScriptPlanner::isShared).orElse(false), errors)) {
       return;
     }
 
@@ -1464,8 +1496,8 @@ public class SqlScriptPlanner {
    * @param databaseName corresponding database name for the script context
    * @param isRootContext {@code true} if the context refers to the main script or an inline import,
    *     {@code false} for regular imports
-   * @param standaloneInclude the namespace of the standalone included project the script belongs
-   *     to, or empty if the project owns the script's tables
+   * @param includedScript the standalone included project that the script belongs to, with how its
+   *     own deployment plans the script, or empty if the project owns the script's tables
    * @param failures the objects that failed, as seen from the script, whose knock-on errors are not
    *     reported
    */
@@ -1473,23 +1505,23 @@ public class SqlScriptPlanner {
       ModuleLoaders moduleLoaders,
       String databaseName,
       boolean isRootContext,
-      Optional<String> standaloneInclude,
+      Optional<IncludedScript> includedScript,
       FailedObjects failures) {
 
     ScriptContext fromImport(
         ModuleLoader moduleLoader, boolean inline, String databaseName, Optional<Path> scriptPath) {
 
       var importLoaders = moduleLoaders.withMainLoader(moduleLoader);
-      var standaloneInclude = scriptPath.flatMap(moduleLoaders::getStandaloneInclude);
+      var includedScript = scriptPath.flatMap(moduleLoaders::getIncludedScript);
 
       return inline
           ? new ScriptContext(
-              importLoaders, this.databaseName, isRootContext, standaloneInclude, failures)
+              importLoaders, this.databaseName, isRootContext, includedScript, failures)
           : new ScriptContext(
               importLoaders,
               databaseName,
               false,
-              standaloneInclude,
+              includedScript,
               failures.forImportedScript(databaseName));
     }
 

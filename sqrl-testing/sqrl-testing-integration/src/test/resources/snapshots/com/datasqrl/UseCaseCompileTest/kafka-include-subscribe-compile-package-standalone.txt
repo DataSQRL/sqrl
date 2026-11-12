@@ -33,7 +33,25 @@ scalar Long
 
 type Mutation {
   CustomerEvent(event: CustomerEventInput!): CustomerEventResultOutput!
+  OrderAudit(event: OrderAuditInput!): OrderAuditResultOutput!
   OrderEvent(event: OrderEventInput!): OrderEventResultOutput!
+}
+
+type OrderAudit {
+  orderid: Long!
+  customerid: Long!
+  event_time: DateTime!
+}
+
+input OrderAuditInput {
+  orderid: Long!
+  customerid: Long!
+}
+
+type OrderAuditResultOutput {
+  orderid: Long!
+  customerid: Long!
+  event_time: DateTime!
 }
 
 type OrderEvent {
@@ -55,6 +73,7 @@ type OrderEventResultOutput {
 
 type Query {
   CustomerEvent(limit: Int = 10, offset: Int = 0): [CustomerEvent!]
+  OrderAudit(limit: Int = 10, offset: Int = 0): [OrderAudit!]
   OrderEvent(limit: Int = 10, offset: Int = 0): [OrderEvent!]
   SmallOrders(limit: Int = 10, offset: Int = 0): [OrderEvent!]
 }
@@ -62,7 +81,9 @@ type Query {
 type Subscription {
   BigOrders: OrderEvent
   CustomerEventsById(customerid: Long!): CustomerEvent
+  HiddenOrdersByCustomer(customerid: Long!): OrderEvent
   OrdersByCustomer(customerid: Long!): OrderEvent
+  QuietOrdersByCustomer(customerid: Long!): OrderEvent
 }
 
 enum _McpMethodType {
@@ -124,6 +145,35 @@ Annotations:
  - parameters: customerid
  - base-table: CustomerEvent
 
+=== HiddenOrdersByCustomer
+ID:          default_catalog.default_database.HiddenOrdersByCustomer
+Type:        query
+Stage:       kafka
+--- definition ---
+Inputs:
+ - default_catalog.default_database._HiddenOrders
+Annotations:
+ - parameters: customerid
+ - base-table: OrderEvent
+
+=== OrderAudit
+ID:          default_catalog.default_database.OrderAudit
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - orderid: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrderAudit__base
+--- physical ---
+Table OrderAudit (postgres):
+ - primary key: __pk_hash (generated hash key)
+
 === OrderEvent
 ID:          default_catalog.default_database.OrderEvent
 Type:        stream
@@ -153,6 +203,32 @@ Annotations:
  - parameters: customerid
  - base-table: OrderEvent
 
+=== QuietOrders
+ID:          default_catalog.default_database.QuietOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~5e7
+--- definition ---
+Schema:
+ - orderid: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrderEvent
+
+=== QuietOrdersByCustomer
+ID:          default_catalog.default_database.QuietOrdersByCustomer
+Type:        query
+Stage:       kafka
+--- definition ---
+Inputs:
+ - default_catalog.default_database.QuietOrders
+Annotations:
+ - parameters: customerid
+ - base-table: OrderEvent
+
 === SmallOrders
 ID:          default_catalog.default_database.SmallOrders
 Type:        stream
@@ -170,6 +246,21 @@ Inputs:
 --- physical ---
 Table SmallOrders (postgres):
  - primary key: __pk_hash (generated hash key)
+
+=== _HiddenOrders
+ID:          default_catalog.default_database._HiddenOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~2e7
+--- definition ---
+Schema:
+ - orderid: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrderEvent
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `CustomerEvent` (
@@ -204,11 +295,62 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'OrderEvent'
 );
+CREATE TABLE `OrderAudit` (
+  `orderid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'OrderAudit'
+);
+CREATE DATABASE IF NOT EXISTS `extras`;
+USE `extras`;
+CREATE TABLE `Shipment` (
+  `orderid` BIGINT NOT NULL,
+  `carrier` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'Shipment'
+);
+CREATE VIEW `ShipmentStream`
+AS
+SELECT *
+FROM `Shipment`;
+USE CATALOG `default_catalog`;
+CREATE DATABASE IF NOT EXISTS `default_database`;
+USE `default_database`;
 CREATE VIEW `BigOrders`
 AS
 SELECT *
 FROM `OrderEvent`
 WHERE `orderid` > 100;
+CREATE VIEW `QuietOrders`
+AS
+SELECT *
+FROM `OrderEvent`
+WHERE `orderid` < 0;
+CREATE VIEW `_HiddenOrders`
+AS
+SELECT *
+FROM `OrderEvent`
+WHERE `orderid` = 0;
 CREATE VIEW `SmallOrders`
 AS
 SELECT *
@@ -230,7 +372,23 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `OrderEvent_4` (
+CREATE TABLE `OrderAudit_4` (
+  `orderid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrderAudit',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrderEvent_5` (
   `orderid` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -246,7 +404,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `OrderEvent_5` (
+CREATE TABLE `OrderEvent_6` (
   `orderid` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
@@ -260,7 +418,21 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'OrderEvent-subscription'
 );
-CREATE TABLE `SmallOrders_6` (
+CREATE TABLE `QuietOrders_7` (
+  `orderid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'QuietOrders'
+);
+CREATE TABLE `SmallOrders_8` (
   `orderid` BIGINT NOT NULL,
   `customerid` BIGINT NOT NULL,
   `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
@@ -276,25 +448,52 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
+CREATE TABLE `_HiddenOrders_9` (
+  `orderid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = '_HiddenOrders'
+);
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`CustomerEvent_2`
 SELECT `customerid`, `name`, `event_time`, `hash_key`(`customerid`, `name`, `event_time`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`CustomerEvent`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`OrderEvent_4`
+INSERT INTO `default_catalog`.`default_database`.`OrderAudit_4`
 SELECT `orderid`, `customerid`, `event_time`, `hash_key`(`orderid`, `customerid`, `event_time`) AS `__pk_hash`
-FROM `default_catalog`.`default_database`.`OrderEvent`
+FROM `default_catalog`.`default_database`.`OrderAudit`
 ON CONFLICT DO DEDUPLICATE
 ;
 INSERT INTO `default_catalog`.`default_database`.`OrderEvent_5`
+SELECT `orderid`, `customerid`, `event_time`, `hash_key`(`orderid`, `customerid`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrderEvent`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrderEvent_6`
 SELECT *
 FROM `default_catalog`.`default_database`.`OrderEvent`
 ;
-INSERT INTO `default_catalog`.`default_database`.`SmallOrders_6`
+INSERT INTO `default_catalog`.`default_database`.`QuietOrders_7`
+SELECT *
+FROM `default_catalog`.`default_database`.`QuietOrders`
+;
+INSERT INTO `default_catalog`.`default_database`.`SmallOrders_8`
 SELECT `orderid`, `customerid`, `event_time`, `hash_key`(`orderid`, `customerid`, `event_time`) AS `__pk_hash`
 FROM `default_catalog`.`default_database`.`SmallOrders`
 ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`_HiddenOrders_9`
+SELECT *
+FROM `default_catalog`.`default_database`.`_HiddenOrders`
 ;
 END
 >>>kafka.json
@@ -302,8 +501,32 @@ END
   "topics" : [
     {
       "topicName" : "OrderEvent-subscription",
-      "tableName" : "OrderEvent_5",
+      "tableName" : "OrderEvent_6",
       "logicalName" : "OrderEvent",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "QuietOrders",
+      "tableName" : "QuietOrders_7",
+      "logicalName" : "QuietOrders",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    },
+    {
+      "topicName" : "_HiddenOrders",
+      "tableName" : "_HiddenOrders_9",
+      "logicalName" : "_HiddenOrders",
       "format" : "flexible-json",
       "numPartitions" : 1,
       "replicationFactor" : 3,
@@ -334,6 +557,12 @@ END
       "include" : "shared"
     },
     {
+      "topicName" : "OrderAudit",
+      "tableName" : "OrderAudit",
+      "logicalName" : "OrderAudit",
+      "include" : "shared"
+    },
+    {
       "topicName" : "OrderEvent",
       "tableName" : "OrderEvent",
       "logicalName" : "OrderEvent",
@@ -343,6 +572,7 @@ END
 }
 >>>postgres-schema.sql
 CREATE TABLE IF NOT EXISTS "CustomerEvent" ("customerid" BIGINT NOT NULL, "name" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "OrderAudit" ("orderid" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "OrderEvent" ("orderid" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "SmallOrders" ("orderid" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
 >>>vertx.json
@@ -368,6 +598,31 @@ CREATE TABLE IF NOT EXISTS "SmallOrders" ("orderid" BIGINT NOT NULL, "customerid
             "query" : {
               "type" : "SqlQuery",
               "sql" : "SELECT \"customerid\", \"name\", \"event_time\"\nFROM \"CustomerEvent\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrderAudit",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"orderid\", \"customerid\", \"event_time\"\nFROM \"OrderAudit\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -445,6 +700,22 @@ CREATE TABLE IF NOT EXISTS "SmallOrders" ("orderid" BIGINT NOT NULL, "customerid
         },
         {
           "type" : "kafka",
+          "fieldName" : "OrderAudit",
+          "returnList" : false,
+          "topic" : "OrderAudit",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        },
+        {
+          "type" : "kafka",
           "fieldName" : "OrderEvent",
           "returnList" : false,
           "topic" : "OrderEvent",
@@ -483,8 +754,34 @@ CREATE TABLE IF NOT EXISTS "SmallOrders" ("orderid" BIGINT NOT NULL, "customerid
         },
         {
           "type" : "kafka",
+          "fieldName" : "HiddenOrdersByCustomer",
+          "topic" : "_HiddenOrders",
+          "sinkConfig" : { },
+          "equalityConditions" : {
+            "customerid" : {
+              "type" : "arg",
+              "path" : "customerid",
+              "sqlType" : "BIGINT"
+            }
+          }
+        },
+        {
+          "type" : "kafka",
           "fieldName" : "OrdersByCustomer",
           "topic" : "OrderEvent-subscription",
+          "sinkConfig" : { },
+          "equalityConditions" : {
+            "customerid" : {
+              "type" : "arg",
+              "path" : "customerid",
+              "sqlType" : "BIGINT"
+            }
+          }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "QuietOrdersByCustomer",
+          "topic" : "QuietOrders",
           "sinkConfig" : { },
           "equalityConditions" : {
             "customerid" : {
@@ -531,6 +828,50 @@ CREATE TABLE IF NOT EXISTS "SmallOrders" ("orderid" BIGINT NOT NULL, "customerid
                 },
                 "name" : {
                   "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrderAudit",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrderAudit($limit: Int = 10, $offset: Int = 0) {\nOrderAudit(limit: $limit, offset: $offset) {\norderid\ncustomerid\nevent_time\n}\n\n}",
+            "queryName" : "OrderAudit",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderAudit{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderid" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
                 },
                 "event_time" : {
                   "type" : "string",
@@ -674,6 +1015,50 @@ CREATE TABLE IF NOT EXISTS "SmallOrders" ("orderid" BIGINT NOT NULL, "customerid
         },
         {
           "function" : {
+            "name" : "AddOrderAudit",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "orderid" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "orderid",
+                "customerid"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation OrderAudit($orderid: Long!, $customerid: Long!) {\nOrderAudit(event: { orderid: $orderid, customerid: $customerid }) {\norderid\ncustomerid\nevent_time\n}\n\n}",
+            "queryName" : "OrderAudit",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/OrderAudit",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "orderid" : {
+                "type" : "integer"
+              },
+              "customerid" : {
+                "type" : "integer"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        },
+        {
+          "function" : {
             "name" : "AddOrderEvent",
             "parameters" : {
               "type" : "object",
@@ -719,7 +1104,7 @@ CREATE TABLE IF NOT EXISTS "SmallOrders" ("orderid" BIGINT NOT NULL, "customerid
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type CustomerEvent {\n  customerid: Long!\n  name: String!\n  event_time: DateTime!\n}\n\ninput CustomerEventInput {\n  customerid: Long!\n  name: String!\n}\n\ntype CustomerEventResultOutput {\n  customerid: Long!\n  name: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  CustomerEvent(event: CustomerEventInput!): CustomerEventResultOutput!\n  OrderEvent(event: OrderEventInput!): OrderEventResultOutput!\n}\n\ntype OrderEvent {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ninput OrderEventInput {\n  orderid: Long!\n  customerid: Long!\n}\n\ntype OrderEventResultOutput {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ntype Query {\n  CustomerEvent(limit: Int = 10, offset: Int = 0): [CustomerEvent!]\n  OrderEvent(limit: Int = 10, offset: Int = 0): [OrderEvent!]\n  SmallOrders(limit: Int = 10, offset: Int = 0): [OrderEvent!]\n}\n\ntype Subscription {\n  BigOrders: OrderEvent\n  CustomerEventsById(customerid: Long!): CustomerEvent\n  OrdersByCustomer(customerid: Long!): OrderEvent\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type CustomerEvent {\n  customerid: Long!\n  name: String!\n  event_time: DateTime!\n}\n\ninput CustomerEventInput {\n  customerid: Long!\n  name: String!\n}\n\ntype CustomerEventResultOutput {\n  customerid: Long!\n  name: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  CustomerEvent(event: CustomerEventInput!): CustomerEventResultOutput!\n  OrderAudit(event: OrderAuditInput!): OrderAuditResultOutput!\n  OrderEvent(event: OrderEventInput!): OrderEventResultOutput!\n}\n\ntype OrderAudit {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ninput OrderAuditInput {\n  orderid: Long!\n  customerid: Long!\n}\n\ntype OrderAuditResultOutput {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ntype OrderEvent {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ninput OrderEventInput {\n  orderid: Long!\n  customerid: Long!\n}\n\ntype OrderEventResultOutput {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ntype Query {\n  CustomerEvent(limit: Int = 10, offset: Int = 0): [CustomerEvent!]\n  OrderAudit(limit: Int = 10, offset: Int = 0): [OrderAudit!]\n  OrderEvent(limit: Int = 10, offset: Int = 0): [OrderEvent!]\n  SmallOrders(limit: Int = 10, offset: Int = 0): [OrderEvent!]\n}\n\ntype Subscription {\n  BigOrders: OrderEvent\n  CustomerEventsById(customerid: Long!): CustomerEvent\n  HiddenOrdersByCustomer(customerid: Long!): OrderEvent\n  OrdersByCustomer(customerid: Long!): OrderEvent\n  QuietOrdersByCustomer(customerid: Long!): OrderEvent\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
