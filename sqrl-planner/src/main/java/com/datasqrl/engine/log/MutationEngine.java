@@ -50,6 +50,15 @@ public interface MutationEngine extends ExecutionEngine {
     MutationCreateTable withValueType(RelDataType inputValueType);
 
     Map<String, String> getConfig();
+
+    /**
+     * Returns the namespace of the standalone included project that owns the table, or empty if the
+     * project owns it. Engines that don't share their tables with standalone includes keep this
+     * default.
+     */
+    default Optional<String> standaloneInclude() {
+      return Optional.empty();
+    }
   }
 
   /**

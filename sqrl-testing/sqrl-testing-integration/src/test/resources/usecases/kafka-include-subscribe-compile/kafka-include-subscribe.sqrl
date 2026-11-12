@@ -1,0 +1,7 @@
+-- An inline import exposes the subscriptions of the included package and runs its exports. If the
+-- include is standalone (package-standalone.json), the included package's deployment writes their
+-- topics: this project only reads the subscription topics and skips the exports.
+IMPORT shared.streams.*;
+
+-- The project's own subscription on a table that the included package does not subscribe to
+OrdersByCustomer(customerid BIGINT NOT NULL) := SUBSCRIBE SELECT * FROM OrderEvent WHERE customerid = :customerid;

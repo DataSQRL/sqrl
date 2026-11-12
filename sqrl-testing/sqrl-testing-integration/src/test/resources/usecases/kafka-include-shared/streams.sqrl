@@ -1,0 +1,12 @@
+-- Statements that write Kafka topics. A project that includes this package as standalone leaves
+-- their topics to the package's own deployment.
+IMPORT base.*;
+
+-- Subscriptions, whose topics are named after the tables they read
+BigOrders := SUBSCRIBE SELECT * FROM OrderEvent WHERE orderid > 100;
+CustomerEventsById(customerid BIGINT NOT NULL) := SUBSCRIBE SELECT * FROM CustomerEvent WHERE customerid = :customerid;
+
+-- Exports into the log and into an internal table of the package
+SmallOrders := SELECT * FROM OrderEvent WHERE orderid <= 100;
+EXPORT SmallOrders TO log.SmallOrderLog;
+EXPORT BigOrders TO sinks.OrderAudit;

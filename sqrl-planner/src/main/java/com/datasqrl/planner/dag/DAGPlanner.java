@@ -24,6 +24,7 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.PhysicalPlan.PhysicalStagePlan;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.export.ExportEngine;
+import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.error.ErrorCollector;
@@ -214,6 +215,8 @@ public class DAGPlanner {
     final var exportTableCounter = new AtomicInteger(0);
     Function<String, String> uniqueNameFct =
         name -> name + UNIQUE_TABLE_APPENDIX + exportTableCounter.incrementAndGet();
+    // The tables that standalone includes write, as "'<table>' of '<include>'"
+    var includedTables = new ArrayList<String>();
     // move assembler logic here
     // ##1st: find all the cuts between flink and materialization (db+log) stages or sinks
     // generate a sink for each in the respective engine and insert into
@@ -338,6 +341,32 @@ public class DAGPlanner {
                 // #3rd: create table
                 var datatype = relBuilder.peek().getRowType();
                 tblBuilder.setColumns(datatype);
+                var subscribingInclude =
+                    downstream instanceof ExportNode
+                        ? Optional.<String>empty()
+                        : node.getSubscribingInclude();
+                if (subscribingInclude.isPresent()
+                    && exportEngine instanceof LogEngine logEngine
+                    && logEngine.sharesTablesWithStandaloneIncludes()) {
+                  // The deployment of the standalone include writes the table, so this project
+                  // only reads it and leaves it out of the Flink plan
+                  exportPlans
+                      .get(exportStage)
+                      .table(
+                          logEngine.createIncludedTable(
+                              exportStage,
+                              originalTableName,
+                              tblBuilder,
+                              datatype,
+                              originalNodeTable,
+                              subscribingInclude.get()));
+                  streamTableMapping.put(
+                      new InputTableKey(exportStage, originalNodeTable.getObjectIdentifier()),
+                      sqrlEnv.registerTable(tblBuilder));
+                  includedTables.add(
+                      "'%s' of '%s'".formatted(originalTableName, subscribingInclude.get()));
+                  continue;
+                }
                 var createdTable =
                     downstream instanceof ExportNode
                         ? exportEngine.createTableForExportStatement(
@@ -362,6 +391,13 @@ public class DAGPlanner {
               }
             });
 
+    errors.checkFatal(
+        includedTables.isEmpty() || sqrlEnv.hasInserts(),
+        "The Flink job of this project writes no table: standalone includes write the tables"
+            + " that it subscribes to (%s), and a project needs at least one table that it writes"
+            + " itself. Add such a table, or don't mark the include as standalone so that this"
+            + " project writes its own copy.",
+        String.join(", ", includedTables));
     try {
       planBuilder.stagePlan(new PhysicalStagePlan(streamStage, sqrlEnv.compileFlinkPlan()));
 

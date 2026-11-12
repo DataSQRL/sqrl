@@ -153,8 +153,8 @@ class KafkaLogEngineTest {
     var plan =
         plan(
             engine,
-            mutation("Feedback", Optional.empty()),
-            mutation("Order", Optional.of("shared")));
+            kafkaTable("Feedback", Optional.empty()),
+            kafkaTable("Order", Optional.of("shared")));
 
     assertThat(plan.topics())
         .singleElement()
@@ -172,7 +172,7 @@ class KafkaLogEngineTest {
   void givenStandaloneIncludeWithoutUsedTables_whenPlanned_thenNoticesThatItHasNoIncludedTopics() {
     var engine = newEngine(Map.of("shared", true, "unused", true, "catalog", false));
 
-    plan(engine, mutation("Order", Optional.of("shared")));
+    plan(engine, kafkaTable("Order", Optional.of("shared")));
 
     assertThat(errors.getErrors())
         .filteredOn(ErrorMessage::isNotice)
@@ -180,6 +180,58 @@ class KafkaLogEngineTest {
         .singleElement()
         .asString()
         .contains("'unused'", "\"standalone\"", "includedTopics");
+  }
+
+  @Test
+  void givenStandaloneInclude_whenCreateIncludedTable_thenTableKeepsItsStandaloneInclude() {
+    var table = createIncludedTable("BigOrders", "core");
+
+    assertThat(engine.sharesTablesWithStandaloneIncludes()).isTrue();
+    assertThat(table.topicName()).isEqualTo("BigOrders");
+    assertThat(table.standaloneInclude()).contains("core");
+  }
+
+  @Test
+  void givenMutationTopic_whenCreateIncludedTableWithThatTopic_thenUsesSubscriptionTopic() {
+    createMutationWithTopic("Events");
+
+    var table = createIncludedTable("Events", "core");
+
+    // The included project renames the topic in the same way
+    assertThat(table.topicName()).isEqualTo("Events-subscription");
+    assertThat(table.standaloneInclude()).contains("core");
+  }
+
+  @Test
+  void givenOwnAndIncludedComputedTables_whenPlanned_thenOnlyTheOwnTopicHasSettings() {
+    var plan =
+        plan(
+            engine,
+            List.of(
+                kafkaTable("Alerts", Optional.empty()),
+                kafkaTable("BigOrders", Optional.of("shared"))),
+            List.of(kafkaTable("Order", Optional.of("shared"))));
+
+    assertThat(plan.topics())
+        .singleElement()
+        .satisfies(
+            topic -> {
+              assertThat(topic.topic().topicName()).isEqualTo("Alerts");
+              assertThat(topic.topic().type()).isEqualTo(KafkaNewTopicModel.Type.SUBSCRIPTION);
+            });
+    assertThat(plan.includedTopics())
+        .containsExactly(
+            new KafkaIncludedTopicModel("BigOrders", "BigOrders_1", "BigOrders", "shared"),
+            new KafkaIncludedTopicModel("Order", "Order_1", "Order", "shared"));
+  }
+
+  @Test
+  void givenStandaloneIncludeWithOnlyAnIncludedComputedTable_whenPlanned_thenDoesNotNotice() {
+    var engine = newEngine(Map.of("shared", true));
+
+    plan(engine, List.of(kafkaTable("BigOrders", Optional.of("shared"))), List.of());
+
+    assertThat(errors.getErrors()).noneMatch(ErrorMessage::isNotice);
   }
 
   @Test
@@ -247,11 +299,18 @@ class KafkaLogEngineTest {
   }
 
   private static KafkaPhysicalPlan plan(KafkaLogEngine engine, KafkaLogEngine.Table... mutations) {
-    var stagePlan = MaterializationStagePlan.builder().mutations(List.of(mutations)).build();
+    return plan(engine, List.of(), List.of(mutations));
+  }
+
+  private static KafkaPhysicalPlan plan(
+      KafkaLogEngine engine,
+      List<KafkaLogEngine.Table> tables,
+      List<KafkaLogEngine.Table> mutations) {
+    var stagePlan = MaterializationStagePlan.builder().tables(tables).mutations(mutations).build();
     return (KafkaPhysicalPlan) engine.plan(stagePlan);
   }
 
-  private static KafkaLogEngine.Table mutation(String name, Optional<String> standaloneInclude) {
+  private static KafkaLogEngine.Table kafkaTable(String name, Optional<String> standaloneInclude) {
     return new KafkaLogEngine.Table(
         name, name + "_1", name, "flexible-json", List.of(), null, Map.of(), standaloneInclude);
   }
@@ -319,8 +378,45 @@ class KafkaLogEngineTest {
         new MutationSettings(MutationInsertType.SINGLE, Optional.empty(), Optional.empty()));
   }
 
+  private KafkaLogEngine.Table createIncludedTable(
+      String originalTableName, String standaloneInclude) {
+    mockStreamConnector("${sqrl:table-name}");
+    createdTableBuilder = new FlinkTableBuilder().setName(originalTableName + "_2");
+    createdTableBuilder.setColumnList(SqlNodeList.EMPTY);
+
+    return (KafkaLogEngine.Table)
+        engine.createIncludedTable(
+            null,
+            originalTableName,
+            createdTableBuilder,
+            null,
+            tableAnalysis(originalTableName),
+            standaloneInclude);
+  }
+
   private KafkaLogEngine.Table createTable(
       String topicTemplate, String originalTableName, boolean isExportStatement) {
+    mockStreamConnector(topicTemplate);
+    createdTableBuilder = new FlinkTableBuilder().setName(originalTableName + "_2");
+    createdTableBuilder.setColumnList(SqlNodeList.EMPTY);
+    var tableAnalysis = tableAnalysis(originalTableName);
+
+    return (KafkaLogEngine.Table)
+        (isExportStatement
+            ? engine.createTableForExportStatement(
+                null, originalTableName, createdTableBuilder, null, tableAnalysis)
+            : engine.createTable(
+                null, originalTableName, createdTableBuilder, null, tableAnalysis));
+  }
+
+  private static TableAnalysis tableAnalysis(String originalTableName) {
+    return TableAnalysis.builder()
+        .objectIdentifier(
+            ObjectIdentifier.of("default_catalog", "default_database", originalTableName))
+        .build();
+  }
+
+  private void mockStreamConnector(String topicTemplate) {
     when(streamConnectorConf.toMapWithSubstitution(any(ConnectorConf.Context.class)))
         .thenAnswer(
             invocation -> {
@@ -336,20 +432,6 @@ class KafkaLogEngineTest {
                       "topic",
                       topicTemplate.replace("${sqrl:table-name}", context.getTableName())));
             });
-    createdTableBuilder = new FlinkTableBuilder().setName(originalTableName + "_2");
-    createdTableBuilder.setColumnList(SqlNodeList.EMPTY);
-    var tableAnalysis =
-        TableAnalysis.builder()
-            .objectIdentifier(
-                ObjectIdentifier.of("default_catalog", "default_database", originalTableName))
-            .build();
-
-    return (KafkaLogEngine.Table)
-        (isExportStatement
-            ? engine.createTableForExportStatement(
-                null, originalTableName, createdTableBuilder, null, tableAnalysis)
-            : engine.createTable(
-                null, originalTableName, createdTableBuilder, null, tableAnalysis));
   }
 
   private List<ErrorMessage> warnings() {

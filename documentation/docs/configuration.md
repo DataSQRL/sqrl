@@ -213,8 +213,16 @@ An included project is either a set of shared definitions or a project that is d
 By default, the current project treats it as shared definitions: it owns the included project's internal tables like its own, so its deployment creates and configures their Kafka topics.
 
 When the included project is deployed on its own, set `"standalone": true` on its include entry.
-That project then owns its internal Kafka tables, also when the current project imports them or exports into them.
-`kafka.json` lists their topics under `includedTopics` instead of `topics`, with only their names and `"include": "<namespace>"`, so the deployment leaves creating and configuring them, including their partition count, to the included project.
+That project then owns the Kafka topics that its own statements write, because its deployment writes them:
+
+- the topics of its internal Kafka tables, also when the current project imports them or exports into them;
+- the topics of its subscriptions, i.e. of its `SUBSCRIBE` tables and of the tables that its `SUBSCRIBE` functions read.
+  The current project reads these topics for its subscriptions instead of computing the tables and writing them again, also for a subscription of its own on such a table;
+- the topics that its `EXPORT` and `INSERT` statements write, into the log (`log.<name>`) or into its internal Kafka tables.
+  The current project skips these statements.
+
+`kafka.json` lists the topics that the current project uses under `includedTopics` instead of `topics`, with only their names and `"include": "<namespace>"`, so the deployment leaves creating and configuring them, including their partition count, to the included project.
+A subscription of the current project on a table of the included project that the included project does not subscribe to, such as a `SUBSCRIBE` function on one of its internal tables, still gets a topic of the current project.
 
 Package files are merged, so the package file of a deployment can mark an include standalone that the base package file declares.
 Every include entry requires `package`, so the deployment's entry repeats it.
@@ -246,8 +254,10 @@ For example, `reporting` includes `orders`, and in deployments `orders` is deplo
 Compiled with only `package.json`, e.g. for local tests, `reporting` owns the topics of the internal tables of `orders`. Compiled with both files, it leaves them to `orders`.
 
 :::important
-The current project still reads and writes the topics of a standalone include through its own `kafka-mutation` [connector template](#connector-templates-connectors), so it must resolve the same topic names and use the same key and value formats as the included project's deployment.
-`standalone` does not cover internal Iceberg tables yet: the current project still owns those.
+The current project still reads and writes the topics of a standalone include through its own `kafka-mutation` and `kafka` [connector templates](#connector-templates-connectors), so it must resolve the same topic names and use the same key and value formats as the included project's deployment.
+The included project's deployment must also run the statements that write those topics, i.e. plan the scripts that contain them in its main script.
+`standalone` does not cover internal Iceberg tables yet: the current project still owns those, and runs the included project's statements that write into them.
+A project whose Flink job would write no table because a standalone include writes all the tables that it subscribes to fails to compile.
 :::
 
 ## Test-Runner (`test-runner`)

@@ -1,0 +1,726 @@
+>>>inferred_schema.graphqls
+type CustomerEvent {
+  customerid: Long!
+  name: String!
+  event_time: DateTime!
+}
+
+input CustomerEventInput {
+  customerid: Long!
+  name: String!
+}
+
+type CustomerEventResultOutput {
+  customerid: Long!
+  name: String!
+  event_time: DateTime!
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Mutation {
+  CustomerEvent(event: CustomerEventInput!): CustomerEventResultOutput!
+  OrderEvent(event: OrderEventInput!): OrderEventResultOutput!
+}
+
+type OrderEvent {
+  orderid: Long!
+  customerid: Long!
+  event_time: DateTime!
+}
+
+input OrderEventInput {
+  orderid: Long!
+  customerid: Long!
+}
+
+type OrderEventResultOutput {
+  orderid: Long!
+  customerid: Long!
+  event_time: DateTime!
+}
+
+type Query {
+  CustomerEvent(limit: Int = 10, offset: Int = 0): [CustomerEvent!]
+  OrderEvent(limit: Int = 10, offset: Int = 0): [OrderEvent!]
+  SmallOrders(limit: Int = 10, offset: Int = 0): [OrderEvent!]
+}
+
+type Subscription {
+  BigOrders: OrderEvent
+  CustomerEventsById(customerid: Long!): CustomerEvent
+  OrdersByCustomer(customerid: Long!): OrderEvent
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== BigOrders
+ID:          default_catalog.default_database.BigOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~5e7
+--- definition ---
+Schema:
+ - orderid: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrderEvent
+
+=== CustomerEvent
+ID:          default_catalog.default_database.CustomerEvent
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - name: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomerEvent__base
+--- physical ---
+Table CustomerEvent (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== CustomerEventsById
+ID:          default_catalog.default_database.CustomerEventsById
+Type:        query
+Stage:       kafka
+--- definition ---
+Inputs:
+ - default_catalog.default_database.CustomerEvent
+Annotations:
+ - parameters: customerid
+ - base-table: CustomerEvent
+
+=== OrderEvent
+ID:          default_catalog.default_database.OrderEvent
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - orderid: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrderEvent__base
+--- physical ---
+Table OrderEvent (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== OrdersByCustomer
+ID:          default_catalog.default_database.OrdersByCustomer
+Type:        query
+Stage:       kafka
+--- definition ---
+Inputs:
+ - default_catalog.default_database.OrderEvent
+Annotations:
+ - parameters: customerid
+ - base-table: OrderEvent
+
+=== SmallOrders
+ID:          default_catalog.default_database.SmallOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~5e7
+--- definition ---
+Schema:
+ - orderid: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.OrderEvent
+--- physical ---
+Table SmallOrders (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `CustomerEvent` (
+  `customerid` BIGINT NOT NULL,
+  `name` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'CustomerEvent'
+);
+CREATE TABLE `OrderEvent` (
+  `orderid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'OrderEvent'
+);
+CREATE VIEW `BigOrders`
+AS
+SELECT *
+FROM `OrderEvent`
+WHERE `orderid` > 100;
+CREATE VIEW `SmallOrders`
+AS
+SELECT *
+FROM `OrderEvent`
+WHERE `orderid` <= 100;
+CREATE TABLE `CustomerEvent_2` (
+  `customerid` BIGINT NOT NULL,
+  `name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerEvent',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrderEvent_4` (
+  `orderid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'OrderEvent',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrderEvent_5` (
+  `orderid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'OrderEvent-subscription'
+);
+CREATE TABLE `SmallOrders_6` (
+  `orderid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'SmallOrders',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`CustomerEvent_2`
+SELECT `customerid`, `name`, `event_time`, `hash_key`(`customerid`, `name`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomerEvent`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrderEvent_4`
+SELECT `orderid`, `customerid`, `event_time`, `hash_key`(`orderid`, `customerid`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`OrderEvent`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrderEvent_5`
+SELECT *
+FROM `default_catalog`.`default_database`.`OrderEvent`
+;
+INSERT INTO `default_catalog`.`default_database`.`SmallOrders_6`
+SELECT `orderid`, `customerid`, `event_time`, `hash_key`(`orderid`, `customerid`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`SmallOrders`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "OrderEvent-subscription",
+      "tableName" : "OrderEvent_5",
+      "logicalName" : "OrderEvent",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ],
+  "includedTopics" : [
+    {
+      "topicName" : "BigOrders",
+      "tableName" : "BigOrders_1",
+      "logicalName" : "BigOrders",
+      "include" : "shared"
+    },
+    {
+      "topicName" : "CustomerEvent-subscription",
+      "tableName" : "CustomerEvent_3",
+      "logicalName" : "CustomerEvent",
+      "include" : "shared"
+    },
+    {
+      "topicName" : "CustomerEvent",
+      "tableName" : "CustomerEvent",
+      "logicalName" : "CustomerEvent",
+      "include" : "shared"
+    },
+    {
+      "topicName" : "OrderEvent",
+      "tableName" : "OrderEvent",
+      "logicalName" : "OrderEvent",
+      "include" : "shared"
+    }
+  ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "CustomerEvent" ("customerid" BIGINT NOT NULL, "name" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "OrderEvent" ("orderid" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "SmallOrders" ("orderid" BIGINT NOT NULL, "customerid" BIGINT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerEvent",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customerid\", \"name\", \"event_time\"\nFROM \"CustomerEvent\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrderEvent",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"orderid\", \"customerid\", \"event_time\"\nFROM \"OrderEvent\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SmallOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"orderid\", \"customerid\", \"event_time\"\nFROM \"SmallOrders\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerEvent",
+          "returnList" : false,
+          "topic" : "CustomerEvent",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "OrderEvent",
+          "returnList" : false,
+          "topic" : "OrderEvent",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "BigOrders",
+          "topic" : "BigOrders",
+          "sinkConfig" : { },
+          "equalityConditions" : { }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerEventsById",
+          "topic" : "CustomerEvent-subscription",
+          "sinkConfig" : { },
+          "equalityConditions" : {
+            "customerid" : {
+              "type" : "arg",
+              "path" : "customerid",
+              "sqlType" : "BIGINT"
+            }
+          }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "OrdersByCustomer",
+          "topic" : "OrderEvent-subscription",
+          "sinkConfig" : { },
+          "equalityConditions" : {
+            "customerid" : {
+              "type" : "arg",
+              "path" : "customerid",
+              "sqlType" : "BIGINT"
+            }
+          }
+        }
+      ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomerEvent",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerEvent($limit: Int = 10, $offset: Int = 0) {\nCustomerEvent(limit: $limit, offset: $offset) {\ncustomerid\nname\nevent_time\n}\n\n}",
+            "queryName" : "CustomerEvent",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerEvent{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrderEvent",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrderEvent($limit: Int = 10, $offset: Int = 0) {\nOrderEvent(limit: $limit, offset: $offset) {\norderid\ncustomerid\nevent_time\n}\n\n}",
+            "queryName" : "OrderEvent",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderEvent{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderid" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetSmallOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query SmallOrders($limit: Int = 10, $offset: Int = 0) {\nSmallOrders(limit: $limit, offset: $offset) {\norderid\ncustomerid\nevent_time\n}\n\n}",
+            "queryName" : "SmallOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SmallOrders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderid" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddCustomerEvent",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "name" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "customerid",
+                "name"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation CustomerEvent($customerid: Long!, $name: String!) {\nCustomerEvent(event: { customerid: $customerid, name: $name }) {\ncustomerid\nname\nevent_time\n}\n\n}",
+            "queryName" : "CustomerEvent",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/CustomerEvent",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "customerid" : {
+                "type" : "integer"
+              },
+              "name" : {
+                "type" : "string"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddOrderEvent",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "orderid" : {
+                  "type" : "integer"
+                },
+                "customerid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "orderid",
+                "customerid"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation OrderEvent($orderid: Long!, $customerid: Long!) {\nOrderEvent(event: { orderid: $orderid, customerid: $customerid }) {\norderid\ncustomerid\nevent_time\n}\n\n}",
+            "queryName" : "OrderEvent",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/OrderEvent",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "orderid" : {
+                "type" : "integer"
+              },
+              "customerid" : {
+                "type" : "integer"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "type CustomerEvent {\n  customerid: Long!\n  name: String!\n  event_time: DateTime!\n}\n\ninput CustomerEventInput {\n  customerid: Long!\n  name: String!\n}\n\ntype CustomerEventResultOutput {\n  customerid: Long!\n  name: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  CustomerEvent(event: CustomerEventInput!): CustomerEventResultOutput!\n  OrderEvent(event: OrderEventInput!): OrderEventResultOutput!\n}\n\ntype OrderEvent {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ninput OrderEventInput {\n  orderid: Long!\n  customerid: Long!\n}\n\ntype OrderEventResultOutput {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ntype Query {\n  CustomerEvent(limit: Int = 10, offset: Int = 0): [CustomerEvent!]\n  OrderEvent(limit: Int = 10, offset: Int = 0): [OrderEvent!]\n  SmallOrders(limit: Int = 10, offset: Int = 0): [OrderEvent!]\n}\n\ntype Subscription {\n  BigOrders: OrderEvent\n  CustomerEventsById(customerid: Long!): CustomerEvent\n  OrdersByCustomer(customerid: Long!): OrderEvent\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

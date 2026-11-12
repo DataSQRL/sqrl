@@ -271,6 +271,11 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     return relationAliasExpander.expand(sqlNode);
   }
 
+  /** Returns whether the Flink plan writes into any table. */
+  public boolean hasInserts() {
+    return planBuilder.hasSink();
+  }
+
   /**
    * Builds the statement set and compiles the plan for Flink which is the final component needed
    * for the {@link FlinkPhysicalPlan}.
@@ -1031,6 +1036,16 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   public ObjectIdentifier createSinkTable(FlinkTableBuilder tableBuilder) {
     return ((CreateTableOperation) executeSqlNode(tableBuilder.buildSql(false)))
         .getTableIdentifier();
+  }
+
+  /**
+   * Registers a table that queries outside of Flink read, without adding it to the Flink plan, e.g.
+   * a table that another deployment writes.
+   */
+  public ObjectIdentifier registerTable(FlinkTableBuilder tableBuilder) {
+    var operation = (CreateTableOperation) getOperation(tableBuilder.buildSql(false));
+    checkResultOk(tEnv.executeInternal(operation));
+    return operation.getTableIdentifier();
   }
 
   /** Adds a generated materialization insert whose conflict behavior is resolved after planning. */

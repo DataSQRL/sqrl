@@ -153,7 +153,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         relDataType,
         Optional.empty(),
         Optional.of(settings),
-        false);
+        false,
+        settings.standaloneInclude());
   }
 
   @Override
@@ -170,7 +171,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         relDataType,
         Optional.of(tableAnalysis),
         Optional.empty(),
-        false);
+        false,
+        Optional.empty());
   }
 
   @Override
@@ -187,7 +189,37 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         relDataType,
         Optional.of(tableAnalysis),
         Optional.empty(),
-        true);
+        true,
+        Optional.empty());
+  }
+
+  /** Topics live in a Kafka cluster that the deployments of standalone includes share. */
+  @Override
+  public boolean sharesTablesWithStandaloneIncludes() {
+    return true;
+  }
+
+  /**
+   * The table resolves its topic like {@link #createTable}, so it names the topic that the included
+   * project writes, which plans the table with the same statement.
+   */
+  @Override
+  public EngineCreateTable createIncludedTable(
+      ExecutionStage stage,
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      TableAnalysis tableAnalysis,
+      String standaloneInclude) {
+    return createInternal(
+        stage,
+        originalTableName,
+        tableBuilder,
+        relDataType,
+        Optional.of(tableAnalysis),
+        Optional.empty(),
+        false,
+        Optional.of(standaloneInclude));
   }
 
   private Table createInternal(
@@ -197,7 +229,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis,
       Optional<MutationSettings> mutation,
-      boolean isExportStatement) {
+      boolean isExportStatement,
+      Optional<String> standaloneInclude) {
 
     boolean isMutation = mutation.isPresent();
     boolean isTransactional =
@@ -205,7 +238,6 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .map(settings -> settings.insertType() == MutationInsertType.TRANSACTION)
             .orElse(false);
     var ttl = mutation.map(MutationSettings::ttl).orElse(defaultTTL);
-    var standaloneInclude = mutation.flatMap(MutationSettings::standaloneInclude);
     var ctxBuilder =
         Context.builder().tableName(originalTableName).tableId(tableBuilder.getTableName());
     var conf = isMutation ? mutationConnectorConf : streamConnectorConf;
@@ -398,18 +430,16 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
           .function()
           .setExecutableQuery(new KafkaQuery(stagePlan.getStage(), topicName, filterColumns));
     }
-    // Plan topic creation. The topics of mutation tables that a standalone included project defines
-    // belong to that project, so they are listed separately, without settings, from the topics this
-    // deployment owns.
-    var mutationsByInclusion =
-        stagePlan.getMutations().stream()
-            .map(Table.class::cast)
-            .collect(Collectors.partitioningBy(table -> table.standaloneInclude().isPresent()));
+    // Plan topic creation. The topics that a standalone included project writes, of the mutation
+    // tables that it defines and of the computed tables that it subscribes to, belong to that
+    // project, so they are listed separately, without settings, from the topics this deployment
+    // owns.
+    var tablesByInclusion = partitionByInclusion(stagePlan.getTables());
+    var mutationsByInclusion = partitionByInclusion(stagePlan.getMutations());
 
     var topics =
         Streams.concat(
-                stagePlan.getTables().stream()
-                    .map(Table.class::cast)
+                tablesByInclusion.get(false).stream()
                     .map(t -> createNewTopic(t, KafkaNewTopicModel.Type.SUBSCRIPTION)),
                 mutationsByInclusion.get(false).stream()
                     .map(t -> createNewTopic(t, KafkaNewTopicModel.Type.MUTATION)))
@@ -421,10 +451,20 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .toList();
 
     var includedTopics =
-        mutationsByInclusion.get(true).stream().map(KafkaLogEngine::toIncludedTopic).toList();
+        Streams.concat(
+                tablesByInclusion.get(true).stream(), mutationsByInclusion.get(true).stream())
+            .map(KafkaLogEngine::toIncludedTopic)
+            .toList();
     noticeStandaloneIncludesWithoutTopics(includedTopics);
 
     return new KafkaPhysicalPlan(topics, testRunnerTopics, includedTopics);
+  }
+
+  private static Map<Boolean, List<Table>> partitionByInclusion(
+      List<? extends EngineCreateTable> tables) {
+    return tables.stream()
+        .map(Table.class::cast)
+        .collect(Collectors.partitioningBy(table -> table.standaloneInclude().isPresent()));
   }
 
   private void noticeStandaloneIncludesWithoutTopics(List<KafkaIncludedTopicModel> includedTopics) {

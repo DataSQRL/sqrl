@@ -23,12 +23,21 @@ import com.datasqrl.planner.util.Documented.Documentation;
 import java.util.Map;
 import java.util.Optional;
 import lombok.Getter;
+import lombok.NonNull;
+import lombok.Setter;
 
 /** Represents a table in the DAG */
 @Getter
 public class TableNode extends PlannedNode {
 
   final TableAnalysis tableAnalysis;
+
+  /**
+   * The namespace of the standalone included project whose scripts subscribe to this table. That
+   * project's deployment writes the table to the log engine, so this project reads it from there
+   * instead of writing it, or empty if no standalone include subscribes to the table.
+   */
+  @Setter @NonNull private Optional<String> subscribingInclude = Optional.empty();
 
   public TableNode(TableAnalysis tableAnalysis, Map<ExecutionStage, StageAnalysis> stageAnalysis) {
     super(tableAnalysis.isSourceOrSink() ? "source" : "table", stageAnalysis);

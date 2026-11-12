@@ -1,0 +1,9 @@
+-- A namespaced import exposes no subscription of the included package, which still subscribes to
+-- BigOrders. Since the include is standalone, its deployment writes the topic of BigOrders, which
+-- this project's own subscription on BigOrders reads.
+IMPORT shared.streams;
+
+BigOrdersByCustomer(customerid BIGINT NOT NULL) := SUBSCRIBE SELECT * FROM streams.BigOrders WHERE customerid = :customerid;
+OrdersByCustomer(customerid BIGINT NOT NULL) := SUBSCRIBE SELECT * FROM streams.OrderEvent WHERE customerid = :customerid;
+
+OrderCount := SELECT customerid, COUNT(*) AS num FROM streams.OrderEvent GROUP BY customerid;

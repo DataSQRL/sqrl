@@ -25,6 +25,7 @@ import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.SystemBuiltInConnectors;
+import com.datasqrl.engine.log.LogEngine;
 import com.datasqrl.engine.log.MutationEngine;
 import com.datasqrl.engine.log.MutationEngine.MutationSettings;
 import com.datasqrl.engine.pipeline.ExecutionPipeline;
@@ -100,6 +101,7 @@ import com.datasqrl.planner.parser.StatementParserException;
 import com.datasqrl.planner.parser.UnparsedStatement;
 import com.datasqrl.planner.tables.AccessVisibility;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.SqlScriptPlannerUtil;
 import com.datasqrl.planner.util.SqlScriptWriter;
@@ -436,6 +438,13 @@ public class SqlScriptPlanner {
               || (shouldExcludeTestTable(hints))
               || (hints.isWorkload() && !(hints.isTest() && executionGoal == ExecutionGoal.TEST));
 
+      // The deployment of a standalone include writes the subscriptions of its scripts, also when
+      // this project does not expose them, e.g. for a script that is not imported inline
+      var subscribingInclude =
+          !isHidden && access == AccessModifier.SUBSCRIPTION
+              ? scriptContext.standaloneInclude()
+              : Optional.<String>empty();
+
       // Ignore any hidden table
       access = adjustAccess(isHidden ? AccessModifier.NONE : access);
 
@@ -595,11 +604,19 @@ public class SqlScriptPlanner {
         if (!fn.getVisibility().isAccessOnly()) {
           sqrlEnv.registerSqrlTableFunction(fn);
         }
+        // The log engine serves a subscription function from the table that it reads
+        subscribingInclude.ifPresent(
+            include ->
+                fn.getFunctionAnalysis().getFromTables().stream()
+                    .flatMap(table -> dagBuilder.getNode(table.getIdentifier()).stream())
+                    .filter(TableNode.class::isInstance)
+                    .forEach(
+                        node -> ((TableNode) node).setSubscribingInclude(Optional.of(include))));
       } else {
         var visibility = new AccessVisibility(access, hints.isTest(), true, isHidden);
 
         if (!shouldExcludeTestTable(hints)) {
-          addViewToDag(originalSql, hintsAndDocs, visibility, errors, sqrlEnv);
+          addViewToDag(originalSql, hintsAndDocs, visibility, subscribingInclude, errors, sqrlEnv);
         }
       }
     } else if (stmt instanceof SqrlNextBatch) {
@@ -618,7 +635,8 @@ public class SqlScriptPlanner {
         // plan like other definitions from above
         var visibility =
             new AccessVisibility(adjustAccess(AccessModifier.QUERY), false, true, false);
-        addViewToDag(flinkStmt.sql().get(), hintsAndDocs, visibility, errors, sqrlEnv);
+        addViewToDag(
+            flinkStmt.sql().get(), hintsAndDocs, visibility, Optional.empty(), errors, sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv
             .createTable(
@@ -654,11 +672,12 @@ public class SqlScriptPlanner {
       String viewSql,
       HintsAndDoc hintsAndDoc,
       AccessVisibility visibility,
+      Optional<String> subscribingInclude,
       ErrorCollector errors,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
     var tableAnalysis = sqrlEnv.addView(viewSql, hintsAndDoc, errors);
     try {
-      addTableToDag(tableAnalysis, hintsAndDoc, visibility, false, sqrlEnv);
+      addTableToDag(tableAnalysis, hintsAndDoc, visibility, subscribingInclude, false, sqrlEnv);
     } catch (RuntimeException e) {
       // Unlike a new table, a column replaces the view of a table that is in the DAG
       if (dagBuilder.getNode(tableAnalysis.getIdentifier()).isEmpty()) {
@@ -833,7 +852,7 @@ public class SqlScriptPlanner {
             false,
             true,
             isHidden);
-    addTableToDag(tableAnalysis, hintsAndDoc, visibility, true, sqrlEnv);
+    addTableToDag(tableAnalysis, hintsAndDoc, visibility, Optional.empty(), true, sqrlEnv);
   }
 
   /**
@@ -843,12 +862,15 @@ public class SqlScriptPlanner {
    * @param tableAnalysis
    * @param hintsAndDoc
    * @param visibility
+   * @param subscribingInclude the standalone include whose script declares the table as a
+   *     subscription, or empty
    * @param sqrlEnv
    */
   private void addTableToDag(
       TableAnalysis tableAnalysis,
       HintsAndDoc hintsAndDoc,
       AccessVisibility visibility,
+      Optional<String> subscribingInclude,
       boolean isSource,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
     // Sources must be processed by the stream stage
@@ -864,6 +886,10 @@ public class SqlScriptPlanner {
 
     // Figure out if and what type of access function we should add for this table
     var queryByHint = hintsAndDoc.hints().getQueryByHint();
+    if (queryByHint.filter(NoQueryHint.class::isInstance).isEmpty()) {
+      // Without an access function, the include does not subscribe to the table either
+      tableNode.setSubscribingInclude(subscribingInclude);
+    }
     if (visibility.isEndpoint()) { // only add function if this table is an endpoint
       var relBuilder = sqrlEnv.getTableScan(tableAnalysis.getObjectIdentifier());
       List<FunctionParameter> parameters = List.of();
@@ -1094,13 +1120,40 @@ public class SqlScriptPlanner {
         hintsAndDoc, scriptContext.isRootContext(), scriptContext.standaloneInclude());
   }
 
+  private Optional<ExecutionStage> getMutationStage(HintsAndDoc hintsAndDoc) {
+    return hintsAndDoc
+        .hints()
+        .getHint(EngineHint.class)
+        .flatMap(engineHint -> pipeline.getStage(engineHint.getStageNames().get(0)));
+  }
+
+  /**
+   * Returns whether the current script belongs to a standalone include, whose deployment shares the
+   * tables of the given stage with this project, e.g. Kafka topics. The include's deployment runs
+   * the script's statements that write into those tables, so this project skips them.
+   */
+  private boolean isWrittenByStandaloneInclude(ExecutionStage stage) {
+    return scriptContext.standaloneInclude().isPresent()
+        && stage.engine() instanceof LogEngine logEngine
+        && logEngine.sharesTablesWithStandaloneIncludes();
+  }
+
+  /**
+   * Returns whether the current script belongs to a standalone include and writes into an internal
+   * table that a standalone include owns. The include's deployment runs the statement, so this
+   * project skips it.
+   */
+  private boolean isWrittenByStandaloneInclude(Optional<SourceSinkTableAnalysis> sinkTable) {
+    return scriptContext.standaloneInclude().isPresent()
+        && sinkTable
+            .map(SourceSinkTableAnalysis::mutationDefinition)
+            .flatMap(mutation -> mutation.getCreateTable().standaloneInclude())
+            .isPresent();
+  }
+
   private Optional<MutationBuilder> getMutationBuilder(
       HintsAndDoc hintsAndDoc, boolean generateAccess, Optional<String> standaloneInclude) {
-    var mutationStage =
-        hintsAndDoc
-            .hints()
-            .getHint(EngineHint.class)
-            .flatMap(engineHint -> pipeline.getStage(engineHint.getStageNames().get(0)));
+    var mutationStage = getMutationStage(hintsAndDoc);
 
     if (mutationStage.isEmpty()) {
       return Optional.empty();
@@ -1204,6 +1257,9 @@ public class SqlScriptPlanner {
             engineName);
         exportStage = optStage.get();
       }
+      if (isWrittenByStandaloneInclude(exportStage)) {
+        return;
+      }
       exportNode =
           new ExportNode(
               stageAnalysis,
@@ -1214,6 +1270,9 @@ public class SqlScriptPlanner {
               Optional.empty());
     } else if ((existingTable = sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId)) != null) {
       // 2nd: the sink path resolves to a table source (i.e. CREATE TABLE)
+      if (isWrittenByStandaloneInclude(existingTable.getSourceSinkTable())) {
+        return;
+      }
       exportNode =
           new ExportNode(
               stageAnalysis,
@@ -1265,6 +1324,15 @@ public class SqlScriptPlanner {
               ErrorCode.INVALID_INDIVIDUAL_SCRIPT_TABLE,
               "Referenced table '%s' must specify a connector or an engine hint",
               sinkName);
+      // The sink is an internal table of a standalone include whose engine shares it, so the
+      // include owns it (see MutationSettings). Checked before the sink is added to Flink.
+      if (mutationBuilder.isPresent()
+          && getStandaloneInclude(sinkTable.table()).isPresent()
+          && getMutationStage(sinkHintsAndDoc)
+              .filter(this::isWrittenByStandaloneInclude)
+              .isPresent()) {
+        return;
+      }
       AtomicReference<RelDataType> exportSchemaRef = new AtomicReference<>(null);
       SchemaLoader schemaLoader =
           (tableName, schemaReference, tableProps) -> {
@@ -1312,6 +1380,9 @@ public class SqlScriptPlanner {
     var sinkTableId = sqrlEnv.getInsertTarget(insert);
     var sinkTable = sqrlEnv.getTableLookup().lookupSourceTable(sinkTableId);
     errors.checkFatal(sinkTable != null, "Could not find INSERT target table: %s", sinkTableId);
+    if (isWrittenByStandaloneInclude(sinkTable.getSourceSinkTable())) {
+      return;
+    }
 
     var inputTable =
         sqrlEnv.analyzeInsertQuery(

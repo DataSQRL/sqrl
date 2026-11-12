@@ -1,0 +1,2 @@
+[FATAL] The Flink job of this project writes no table: standalone includes write the tables that it subscribes to ('BigOrders' of 'shared'), and a project needs at least one table that it writes itself. Add such a table, or don't mark the include as standalone so that this project writes its own copy.
+
