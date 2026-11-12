@@ -46,7 +46,7 @@ mvn verify
 mvn test -pl sqrl-planner
 
 # Test specific test method in module
-mvn test -pl sqrl-tools/sqrl-config -Dtest=TestClassName#testMethodName
+mvn test -pl sqrl-planner -Dtest=TestClassName#testMethodName
 
 # Container tests (requires Docker images to be built)
 mvn -B install -DonlyContainerE2E -pl :sqrl-testing-container -Dit.test=TestClassName
@@ -55,13 +55,13 @@ mvn -B install -DonlyContainerE2E -pl :sqrl-testing-container -Dit.test=TestClas
 mvn -B install -Pdev -Dit.test=TestClassName
 
 # Run all container tests (omit -pl when testing container code changes)
-mvn -B install -DonlyContainerE2E -Dit.test=*ContainerIT
+mvn -B install -DonlyContainerE2E -Dit.test='*IT'
 ```
 
 ### Code Quality
 ```bash
 # Check code formatting
-mvn validate-code-format
+mvn com.cosium.code:git-code-format-maven-plugin:validate-code-format
 
 # Format code (Google Java Format)
 mvn -P dev initialize
@@ -225,7 +225,7 @@ sudo ln -s $HOME/.docker/run/docker.sock /var/run/docker.sock
 ```
 
 ## Server Runtime Model
-The server loads the compiler-generated `server-model.json` at startup; no SQL is generated at runtime, so GraphQL schema changes require recompiling.
+The server loads the compiler-generated `vertx.json` (the server model) and `vertx-config.json` (the server configuration) at startup; no SQL is generated at runtime, so GraphQL schema changes require recompiling.
 
 ## JBang UDF Files
 
