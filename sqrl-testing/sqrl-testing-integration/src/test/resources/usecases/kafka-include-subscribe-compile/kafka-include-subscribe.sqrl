@@ -1,0 +1,10 @@
+-- An inline import plans the main script of the included package at this project's root. If the
+-- include is standalone (package-standalone.json), the package's deployment writes the topics of
+-- the subscriptions that it exposes and runs the statements that write shared sinks: this project
+-- only reads those subscription topics and skips those statements.
+IMPORT shared.streams.*;
+
+-- The project's own subscriptions on tables whose topics the included package does not write
+OrdersByCustomer(customerid BIGINT NOT NULL) := SUBSCRIBE SELECT * FROM OrderEvent WHERE customerid = :customerid;
+QuietOrdersByCustomer(customerid BIGINT NOT NULL) := SUBSCRIBE SELECT * FROM QuietOrders WHERE customerid = :customerid;
+HiddenOrdersByCustomer(customerid BIGINT NOT NULL) := SUBSCRIBE SELECT * FROM _HiddenOrders WHERE customerid = :customerid;
