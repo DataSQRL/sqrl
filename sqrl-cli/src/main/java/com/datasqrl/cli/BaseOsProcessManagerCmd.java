@@ -19,20 +19,16 @@ import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.env.GlobalEnvironmentStore;
 import com.datasqrl.util.ConfigLoaderUtils;
 import com.datasqrl.util.OsProcessManager;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.flink.configuration.Configuration;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 public abstract class BaseOsProcessManagerCmd extends BaseCmd {
 
-  @Option(
-      names = {"-r", "--project-root"},
-      description =
-          "Project root folder. Must be a relative path. If omitted, it is inferred from the package path(s), falling back to \"/workspace\".")
-  protected Optional<Path> projectRoot = Optional.empty();
+  @Mixin protected ProjectRootOption projectRootOption = new ProjectRootOption();
 
   @Option(
       names = {"-b", "--build"},
@@ -72,11 +68,7 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
   }
 
   protected Path getProjectRoot() {
-    if (projectRoot.isEmpty()) {
-      return cli.workspaceDir;
-    }
-
-    return getFullProjectRoot(projectRoot.get());
+    return projectRootOption.resolve(cli.workspaceDir);
   }
 
   protected Path getBuildDir() {
@@ -108,29 +100,6 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
   @SneakyThrows
   protected Configuration getFlinkConfig(Path planDir) {
     return ConfigLoaderUtils.loadFlinkConfig(planDir);
-  }
-
-  /**
-   * Resolves the project root against the CLI workspace directory.
-   *
-   * @param projectRoot relative project root path
-   * @return project root resolved from the workspace directory
-   * @throws IllegalArgumentException if the path is absolute or does not resolve to an existing
-   *     directory
-   */
-  protected Path getFullProjectRoot(Path projectRoot) {
-    if (projectRoot.isAbsolute()) {
-      throw new IllegalArgumentException(
-          "Project root must be a relative path, got: " + projectRoot);
-    }
-
-    var fullProjectRoot = cli.workspaceDir.resolve(projectRoot);
-    if (!Files.isDirectory(fullProjectRoot)) {
-      throw new IllegalArgumentException(
-          "Project root does not exist or not a directory: " + fullProjectRoot);
-    }
-
-    return fullProjectRoot;
   }
 
   private Path resolveGivenCliDir(Path dir, String dirType) {

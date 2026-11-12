@@ -518,7 +518,9 @@ The following produce compile time errors:
 * Argument list problems (missing type, unused arg, unknown type).
 * `DISTINCT` must reference existing columns; `ORDER BY` column(s) must be monotonically increasing.
 * Basetable inference failure for relationships (see [base tables](interface#base-tables)).
-* Invalid or malformed hints (unknown name, wrong delimiter).
+* Malformed or invalid hints (wrong delimiter, other text in the hint block that is not a hint, invalid arguments to a known hint such as `ttl`, or more than one `query_by_*` or `no_query` hint on a table).
+
+An unknown hint name is not an error: the compiler prints the warning `Unrecognized hint: [<name>]` and ignores the hint, so a misspelled hint has no effect.
 
 ---
 

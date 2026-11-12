@@ -69,7 +69,7 @@ class CompileCmdTest {
 
     var compileCmd = new CompileCmd();
     compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
-    compileCmd.projectRoot = Optional.of(Path.of("project"));
+    compileCmd.projectRootOption.projectRoot = Optional.of(Path.of("project"));
 
     var physicalPlan = PhysicalPlan.builder().build();
     var testPlan = new TestPlan();
@@ -166,7 +166,7 @@ class CompileCmdTest {
 
     var compileCmd = new CompileCmd();
     compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
-    compileCmd.projectRoot = Optional.of(projRoot);
+    compileCmd.projectRootOption.projectRoot = Optional.of(projRoot);
     compileCmd.packageFiles = List.of(Path.of("package.json"));
 
     assertThat(compileCmd.formatGivenPackageFiles())
@@ -190,7 +190,7 @@ class CompileCmdTest {
 
     var compileCmd = new CompileCmd();
     compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, true);
-    compileCmd.projectRoot = Optional.of(Path.of("project"));
+    compileCmd.projectRootOption.projectRoot = Optional.of(Path.of("project"));
     compileCmd.buildFolder = Optional.of(Path.of("output"));
 
     assertThat(compileCmd.getBuildDir()).isEqualTo(projectRoot.resolve("build/output"));
@@ -218,7 +218,7 @@ class CompileCmdTest {
 
     var compileCmd = new CompileCmd();
     compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
-    compileCmd.projectRoot = Optional.of(Path.of("banking"));
+    compileCmd.projectRootOption.projectRoot = Optional.of(Path.of("banking"));
     compileCmd.buildFolder = Optional.of(Path.of("..", "build-banking"));
 
     assertThatThrownBy(compileCmd::getBuildDir)
@@ -238,7 +238,7 @@ class CompileCmdTest {
 
     var compileCmd = new CompileCmd();
     compileCmd.cli = new DatasqrlCli(tempDir, StatusHook.NONE, false);
-    compileCmd.projectRoot = Optional.of(Path.of("banking"));
+    compileCmd.projectRootOption.projectRoot = Optional.of(Path.of("banking"));
     compileCmd.targetFolder = Optional.of(Path.of("..", "deploy-banking"));
 
     assertThatThrownBy(compileCmd::getTargetDir)

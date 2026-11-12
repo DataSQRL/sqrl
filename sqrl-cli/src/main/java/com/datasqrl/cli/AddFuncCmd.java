@@ -27,6 +27,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.apache.flink.runtime.util.EnvironmentInformation;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -52,13 +53,19 @@ public class AddFuncCmd extends BaseCmd {
       description = "Adds an aggregate function instead of the default scalar one.")
   boolean aggregate = false;
 
+  @Mixin ProjectRootOption projectRootOption = new ProjectRootOption();
+
   @Override
   protected void runInternal(ErrorCollector errors) {
     try {
-      addUdf(() -> cli.workspaceDir);
+      addUdf(this::getTargetRoot);
     } catch (Exception e) {
       throw errors.exception("Failed to add function '%s': %s", fnName, e);
     }
+  }
+
+  Path getTargetRoot() {
+    return projectRootOption.resolve(cli.workspaceDir);
   }
 
   @SneakyThrows
