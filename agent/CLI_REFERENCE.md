@@ -20,7 +20,7 @@ Always pass the base first and the overlay second. The CLI default (`package.jso
 
 | Option                        | Meaning                                                                                                   |
 |-------------------------------|-----------------------------------------------------------------------------------------------------------|
-| `-r, --project-root=<dir>`    | Project root, relative to `/workspace` and not to the current directory: `-r .` is `/workspace` itself. Package file paths are relative to the project root. Inferred from the package paths if omitted. |
+| `-r, --project-root=<dir>`    | Project root, relative to `/workspace` and not to the current directory: `-r .` is `/workspace` itself. Package file paths are relative to the project root. If omitted, `compile`, `test` and `run` infer it from the package paths; `exec` and `add-func` use `/workspace`. |
 | `-b, --build=<dir>`           | Subfolder of `<project-root>/build` for build output, e.g. `-b fraud_store` for a sub-project.            |
 | `-t, --target=<dir>`          | Folder for deployment artifacts. Defaults to `<build-folder>/deploy`.                                     |
 | `-B, --batch-output`          | Disable colored output.                                                                                   |

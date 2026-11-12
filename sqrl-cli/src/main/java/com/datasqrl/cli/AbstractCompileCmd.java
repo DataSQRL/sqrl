@@ -60,14 +60,14 @@ public abstract class AbstractCompileCmd extends BasePackageConfCmd {
 
   @Override
   protected Path getProjectRoot() {
-    if (projectRoot.isPresent() || packageFiles.isEmpty()) {
+    if (projectRootOption.isSet() || packageFiles.isEmpty()) {
       return super.getProjectRoot();
     }
 
     var deepestCommonSubDir = DirectoryUtils.deepestCommonSubDir(packageFiles);
     inferredProjectRoot = Optional.of(deepestCommonSubDir);
 
-    return getFullProjectRoot(deepestCommonSubDir);
+    return ProjectRootOption.resolve(cli.workspaceDir, deepestCommonSubDir);
   }
 
   protected void compile(ErrorCollector errors) {

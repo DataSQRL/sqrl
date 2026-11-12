@@ -23,15 +23,12 @@ import java.nio.file.Path;
 import java.util.Optional;
 import lombok.SneakyThrows;
 import org.apache.flink.configuration.Configuration;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
 public abstract class BaseOsProcessManagerCmd extends BaseCmd {
 
-  @Option(
-      names = {"-r", "--project-root"},
-      description =
-          "Project root folder. Must be a relative path. If omitted, it is inferred from the package path(s), falling back to \"/workspace\".")
-  protected Optional<Path> projectRoot = Optional.empty();
+  @Mixin protected ProjectRootOption projectRootOption = new ProjectRootOption();
 
   @Option(
       names = {"-b", "--build"},
@@ -71,11 +68,7 @@ public abstract class BaseOsProcessManagerCmd extends BaseCmd {
   }
 
   protected Path getProjectRoot() {
-    if (projectRoot.isEmpty()) {
-      return cli.workspaceDir;
-    }
-
-    return getFullProjectRoot(projectRoot.get());
+    return projectRootOption.resolve(cli.workspaceDir);
   }
 
   protected Path getBuildDir() {

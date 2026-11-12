@@ -182,16 +182,17 @@ class AddFuncCmdTest {
   }
 
   @Test
-  void givenProjectRoot_whenAddUdf_thenCreatesFileInProjectFunctionsFolder() throws IOException {
+  void givenProjectRootOption_whenExecuteAddFunc_thenCreatesFileInProjectFunctionsFolder()
+      throws IOException {
     // Given
     var projectDir = Files.createDirectory(tempDir.resolve("my-project"));
-    addFuncCmd.cli = new DatasqrlCli(tempDir);
-    addFuncCmd.projectRoot = Optional.of(Path.of("my-project"));
 
     // When
-    addFuncCmd.addUdf(addFuncCmd::getTargetRoot);
+    var exitCode =
+        new DatasqrlCli(tempDir).getCmd().execute("add-func", "-r", "my-project", UDF_NAME);
 
     // Then
+    assertThat(exitCode).isZero();
     assertThat(projectDir.resolve("functions").resolve(UDF_NAME + ".java")).isRegularFile();
     assertThat(tempDir.resolve("functions")).doesNotExist();
   }
@@ -200,7 +201,7 @@ class AddFuncCmdTest {
   void givenMissingProjectRoot_whenGetTargetRoot_thenThrowsException() {
     // Given
     addFuncCmd.cli = new DatasqrlCli(tempDir);
-    addFuncCmd.projectRoot = Optional.of(Path.of("missing"));
+    addFuncCmd.projectRootOption.projectRoot = Optional.of(Path.of("missing"));
 
     // When & Then
     assertThatThrownBy(addFuncCmd::getTargetRoot)
@@ -213,7 +214,7 @@ class AddFuncCmdTest {
   void givenAbsoluteProjectRoot_whenGetTargetRoot_thenThrowsException() {
     // Given
     addFuncCmd.cli = new DatasqrlCli(tempDir);
-    addFuncCmd.projectRoot = Optional.of(tempDir.toAbsolutePath());
+    addFuncCmd.projectRootOption.projectRoot = Optional.of(tempDir.toAbsolutePath());
 
     // When & Then
     assertThatThrownBy(addFuncCmd::getTargetRoot)

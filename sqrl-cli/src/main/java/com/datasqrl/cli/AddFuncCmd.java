@@ -22,12 +22,12 @@ import com.datasqrl.util.ResourceUtils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Optional;
 import java.util.function.Supplier;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.apache.flink.runtime.util.EnvironmentInformation;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -53,11 +53,7 @@ public class AddFuncCmd extends BaseCmd {
       description = "Adds an aggregate function instead of the default scalar one.")
   boolean aggregate = false;
 
-  @Option(
-      names = {"-r", "--project-root"},
-      description =
-          "Project root folder. Must be a relative path. If omitted, it defaults to \"/workspace\".")
-  Optional<Path> projectRoot = Optional.empty();
+  @Mixin ProjectRootOption projectRootOption = new ProjectRootOption();
 
   @Override
   protected void runInternal(ErrorCollector errors) {
@@ -69,7 +65,7 @@ public class AddFuncCmd extends BaseCmd {
   }
 
   Path getTargetRoot() {
-    return projectRoot.map(this::getFullProjectRoot).orElse(cli.workspaceDir);
+    return projectRootOption.resolve(cli.workspaceDir);
   }
 
   @SneakyThrows

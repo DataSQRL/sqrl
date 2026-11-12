@@ -18,8 +18,6 @@ package com.datasqrl.cli;
 import com.datasqrl.error.CollectedException;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorPrinter;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.SneakyThrows;
 import org.springframework.beans.factory.BeanCreationException;
@@ -76,29 +74,6 @@ public abstract class BaseCmd implements Runnable, IExitCodeGenerator {
 
   protected void teardown() {
     // By default, do nothing
-  }
-
-  /**
-   * Resolves the project root against the CLI workspace directory.
-   *
-   * @param projectRoot relative project root path
-   * @return project root resolved from the workspace directory
-   * @throws IllegalArgumentException if the path is absolute or does not resolve to an existing
-   *     directory
-   */
-  protected Path getFullProjectRoot(Path projectRoot) {
-    if (projectRoot.isAbsolute()) {
-      throw new IllegalArgumentException(
-          "Project root must be a relative path, got: " + projectRoot);
-    }
-
-    var fullProjectRoot = cli.workspaceDir.resolve(projectRoot);
-    if (!Files.isDirectory(fullProjectRoot)) {
-      throw new IllegalArgumentException(
-          "Project root does not exist or not a directory: " + fullProjectRoot);
-    }
-
-    return fullProjectRoot;
   }
 
   protected long getElapsedTime() {
