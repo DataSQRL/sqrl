@@ -15,7 +15,7 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.plan.global.QueryIndexSummary;
+import com.datasqrl.plan.index.QueryIndexSummary;
 import com.datasqrl.planner.TableAnalysisLookup;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import javax.annotation.Nullable;

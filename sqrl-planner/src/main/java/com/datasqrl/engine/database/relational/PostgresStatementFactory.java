@@ -26,7 +26,7 @@ import com.datasqrl.engine.database.relational.ddl.CreateIndexDDL;
 import com.datasqrl.engine.database.relational.ddl.InsertStatement;
 import com.datasqrl.engine.database.relational.ddl.PostgresCreateTableDdlFactory;
 import com.datasqrl.engine.database.relational.ddl.notify.CreateNotifyTriggerDDL;
-import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.index.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
 import com.datasqrl.planner.hint.VectorDimensionHint;

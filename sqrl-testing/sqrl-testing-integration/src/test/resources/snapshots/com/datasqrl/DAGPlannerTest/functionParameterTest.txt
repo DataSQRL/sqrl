@@ -40,7 +40,6 @@ WITH (
 --- physical ---
 Table Customer_1 (postgres):
  - primary key: customerid, lastUpdated
- - index Customer_1_btree_c0c4 (btree): customerid, timestamp
  - index Customer_1_btree_c1c0 (btree): email, customerid
 
 === CustomerByEmail
@@ -303,11 +302,6 @@ END
       "referencedTables" : [
         "Customer_1"
       ]
-    },
-    {
-      "name" : "Customer_1_btree_c0c4",
-      "type" : "INDEX",
-      "sql" : "CREATE INDEX IF NOT EXISTS \"Customer_1_btree_c0c4\" ON \"Customer_1\" USING btree (\"customerid\",\"timestamp\")"
     },
     {
       "name" : "Customer_1_btree_c1c0",

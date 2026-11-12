@@ -1,0 +1,13 @@
+/* The index candidates of these queries tie on cost. Index selection breaks the ties by the order of
+   the candidates, which must be the same in every run, or the selected indexes change between
+   compilations of the same script. */
+CREATE TABLE Orders (customer_id BIGINT NOT NULL, order_id BIGINT NOT NULL, product_id BIGINT NOT NULL, quantity BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+
+OrdersFor(customerId BIGINT NOT NULL, productId BIGINT NOT NULL, quantity BIGINT NOT NULL) := SELECT * FROM Orders
+  WHERE customer_id = :customerId AND product_id = :productId AND quantity = :quantity;
+
+LargeOrders(productId BIGINT NOT NULL, minQuantity BIGINT NOT NULL) := SELECT * FROM Orders
+  WHERE product_id = :productId AND quantity > :minQuantity;
+
+OrdersOfQuantity(quantity BIGINT NOT NULL, afterCustomer BIGINT NOT NULL, afterProduct BIGINT NOT NULL) := SELECT * FROM Orders
+  WHERE quantity = :quantity AND customer_id > :afterCustomer AND product_id > :afterProduct;

@@ -65,6 +65,7 @@ WITH (
 --- physical ---
 Table Customer_1 (postgres):
  - primary key: customerid, lastUpdated
+ - index Customer_1_hash_c2 (hash): name
 
 === CustomerOrderCount
 ID:          default_catalog.default_database.CustomerOrderCount
@@ -163,6 +164,7 @@ WITH (
 --- physical ---
 Table Orders_3 (postgres):
  - primary key: id, time
+ - index Orders_3_hash_c1 (hash): customerid
 
 === SimilarOrders
 ID:          default_catalog.default_database.SimilarOrders
@@ -217,6 +219,7 @@ CREATE VIEW `_SpecialOrders` AS  SELECT *, id > 1000 AS isSpecialorder FROM Orde
 --- physical ---
 Table _SpecialOrders_4 (postgres):
  - primary key: id, time
+ - index _SpecialOrders_4_hash_c1 (hash): customerid
 
 >>>flink-sql-no-functions.sql
 CREATE TABLE `Orders` (
@@ -615,6 +618,21 @@ END
       "referencedTables" : [
         "Orders_3"
       ]
+    },
+    {
+      "name" : "Customer_1_hash_c2",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Customer_1_hash_c2\" ON \"Customer_1\" USING hash (\"name\")"
+    },
+    {
+      "name" : "Orders_3_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders_3_hash_c1\" ON \"Orders_3\" USING hash (\"customerid\")"
+    },
+    {
+      "name" : "_SpecialOrders_4_hash_c1",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"_SpecialOrders_4_hash_c1\" ON \"_SpecialOrders_4\" USING hash (\"customerid\")"
     }
   ],
   "standaloneExtensionStatements" : [ ]

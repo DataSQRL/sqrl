@@ -22,7 +22,7 @@ import com.datasqrl.calcite.dialect.snowflake.SqlCreateIcebergTableFromObjectSto
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
 import com.datasqrl.engine.database.relational.ddl.GenericCreateTableDdlFactory;
-import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.index.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;
 import java.util.Optional;
 import org.apache.calcite.rel.type.RelDataType;

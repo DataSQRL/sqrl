@@ -18,7 +18,7 @@ package com.datasqrl.function.translation.postgres.vector;
 import com.datasqrl.flinkrunner.stdlib.vector.euclidean_distance;
 import com.datasqrl.function.FunctionMetadata;
 import com.datasqrl.function.IndexableFunction;
-import com.datasqrl.plan.global.IndexType;
+import com.datasqrl.plan.index.IndexType;
 import com.google.auto.service.AutoService;
 import java.util.EnumSet;
 

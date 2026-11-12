@@ -1,0 +1,49 @@
+[NOTICE] This table does not propagate the source row time columns: default_catalog.default_database.OrdersView[ts]
+in script:indexSelectionFilterExpressions-warn.sqrl [30:1]:
+  WHERE o.account_id = :accountId;
+
+/* Warns: the database computes the cast of a table that runs in Postgres in every query. */
+^
+
+[WARN] The filter `customer_id + 1 = ?` in `ByAccountShifted` cannot use an index on table `OrdersJoined_7` because column `customer_id` is wrapped in the expression `customer_id + 1`. Move the arithmetic to the other side of the comparison so that `customer_id` stands alone.
+in script:indexSelectionFilterExpressions-warn.sqrl [26:1]:
+ByLegacyId(legacyId BIGINT NOT NULL) := SELECT * FROM OrdersLegacy WHERE legacy_id = :legacyId;
+
+/* Warns: a join condition is a filter of the joined table, too. */
+^
+
+[WARN] The filter `agency_id + 1 = :agency` in `ByAgencyArith` cannot use an index on table `OrdersArith_3` because column `agency_id` is wrapped in the expression `agency_id + 1`. Move the arithmetic to the other side of the comparison so that `agency_id` stands alone.
+in script:indexSelectionFilterExpressions-warn.sqrl [16:1]:
+CREATE TABLE OrdersHinted (order_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+
+/* Warns: arithmetic, a cast and a function on the column. */
+^
+
+[WARN] The filter `CAST(agency_id AS STRING) = :agency` in `ByAgencyCast` cannot use an index on table `OrdersCast_4` because column `agency_id` is wrapped in the expression `CAST(agency_id AS STRING)`. Compare `agency_id` with a value of its type `BIGINT`, such as a parameter of that type, or compute the converted value in a table that Flink computes (`/*+engine(flink) */`) and filter on that column.
+in script:indexSelectionFilterExpressions-warn.sqrl [18:1]:
+/* Warns: arithmetic, a cast and a function on the column. */
+ByAgencyArith(agency BIGINT NOT NULL) := SELECT * FROM OrdersArith WHERE agency_id + 1 = :agency;
+ByAgencyCast(agency STRING NOT NULL) := SELECT * FROM OrdersCast WHERE CAST(agency_id AS STRING) = :agency;
+^
+
+[WARN] The filter `CAST(agency_id AS STRING) = :agency` in `ByAgencyText` cannot use an index on table `OrdersView_10` because column `agency_id` is wrapped in the expression `CAST(agency_id AS STRING)`. Compare `agency_id` with a value of its type `BIGINT`, such as a parameter of that type, or compute the converted value in a table that Flink computes (`/*+engine(flink) */`) and filter on that column.
+in script:indexSelectionFilterExpressions-warn.sqrl [33:1]:
+/*+engine(postgres) */
+OrdersAgencyText := SELECT order_id, CAST(agency_id AS STRING) AS agency_text FROM OrdersView;
+ByAgencyText(agency STRING NOT NULL) := SELECT * FROM OrdersAgencyText WHERE agency_text = :agency;
+^
+
+[WARN] The filter `LOWER(email) = :email` in `ByEmail` cannot use an index on table `Customers_2` because column `email` is wrapped in the expression `LOWER(email)`. Compute the expression in a table that Flink computes (`/*+engine(flink) */`) and filter on that column.
+in script:indexSelectionFilterExpressions-warn.sqrl [19:1]:
+ByAgencyArith(agency BIGINT NOT NULL) := SELECT * FROM OrdersArith WHERE agency_id + 1 = :agency;
+ByAgencyCast(agency STRING NOT NULL) := SELECT * FROM OrdersCast WHERE CAST(agency_id AS STRING) = :agency;
+ByEmail(email STRING NOT NULL) := SELECT * FROM Customers WHERE LOWER(email) = :email;
+^
+
+[WARN] The filter `text_search(CAST(:query AS STRING), CONCAT(title, ' ', body)) > 0` in `SearchArticles` cannot use an index on table `Articles_1` because columns `title`, `body` are wrapped in the expression `CONCAT(title, ' ', body)`. Compute the expression in a table that Flink computes (`/*+engine(flink) */`) and filter on that column.
+in script:indexSelectionFilterExpressions-warn.sqrl [35:1]:
+ByAgencyText(agency STRING NOT NULL) := SELECT * FROM OrdersAgencyText WHERE agency_text = :agency;
+
+/* Warns: the text search index covers columns, not expressions. */
+^
+
