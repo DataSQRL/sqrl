@@ -23,6 +23,8 @@ import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.database.relational.JdbcStatement;
 import com.datasqrl.engine.server.ServerPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.index.IndexDefinition;
+import com.datasqrl.plan.index.IndexType;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.google.auto.service.AutoService;
 import java.util.List;
@@ -36,7 +38,7 @@ import java.util.stream.Collectors;
  * instead of scanning the table.
  */
 @AutoService(PhysicalPlanRewriter.class)
-public class PagedRowTimeIndexRewriter implements PhysicalPlanRewriter {
+public final class PagedRowTimeIndexRewriter implements PhysicalPlanRewriter {
 
   @Override
   public boolean appliesTo(EnginePhysicalPlan enginePlan) {

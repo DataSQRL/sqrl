@@ -12,7 +12,7 @@ The compiler selects the indexes for most served queries. Fix only the queries t
 2. Check the indexes of the query (see Checking the indexes).
 3. If no index fits a filter, fix the query in this order. Stop at the first step that gives the filter an index:
    1. Rewrite the query into the form in implement-sqrl `SKILL.md`, "Filters in API queries".
-   2. For a subquery that cannot become a `JOIN`, follow "Filters inside a subquery".
+   2. For a filter on another table, use a subquery form that the compiler indexes (see "Filters inside a subquery").
    3. Add an `index` hint to the table that the filter reads (see Index hints).
    4. When no index can serve the filter, compute the value in a table with `/*+engine(flink) */`, so that Postgres stores it as a column (see "Where a table runs" in [SKILL.md](../SKILL.md#where-a-table-runs)).
 4. Compile again and repeat the steps in "Checking the indexes". Make sure that an index now fits the filter.
@@ -23,8 +23,8 @@ The compiler selects the indexes for most served queries. Fix only the queries t
 Judge the table size from the requirements and the source data. For the query that you fix:
 
 1. Find the SQL of the query in `deploy/plan/vertx.json`, and the indexes of the table in `pipeline_explain.txt`, in the `Table` section after the `--- physical ---` line of the table. The section uses the table and index names of the SQL, for example the line `index Orders_2_btree_c1c2 (btree): customerid, time` under `Table Orders_2 (postgres):`. The primary key also counts as an index. A table that runs in Postgres has no indexes of its own and no `Table` section. Its query is part of the SQL of the served query, and the compiler creates its indexes on the stored tables that this query reads.
-2. Compare the columns that the query compares with a parameter or with another table, in the `WHERE` clause, in `JOIN ... ON` conditions and in subqueries, with the leading columns of the indexes. In a correlated subquery that is not part of an `OR`, the column of the outer table counts too: in the `EXISTS` example below, `Orders.customer_id` gets no index.
-3. Make sure that each of these columns stands alone in the SQL. The compiler also creates an index for `day_index + 1 = $1`, but the database cannot use it for that filter. When the filtered column comes from a table that runs in Postgres, find its expression in that table's query. The same rule applies to it: a column that a function computes, such as `CAST("event_time" AS TEXT) AS "t_str"`, gets no index.
+2. Compare the columns that the query compares with a parameter or with another table, in the `WHERE` clause, in `JOIN ... ON` conditions and in subqueries, with the leading columns of the indexes. In an `EXISTS (...)` or `IN (SELECT ...)` that is not part of an `OR`, the column of the outer table that the subquery compares with counts too.
+3. Make sure that each of these columns stands alone in the SQL. For a filter that wraps its column in an expression, such as `day_index + 1 = :day`, the compiler creates no index and warns `The filter ... cannot use an index on table ...`. When the filtered column comes from a table that runs in Postgres, the warning shows the expression of that table's query, such as `CAST(event_time AS STRING) = :t` for its column `t_str`.
 
 ## Automatic index selection
 
@@ -32,30 +32,28 @@ The compiler selects the indexes from these parts of the served queries:
 
 - The filters of `WHERE` clauses, in table functions, relationships and `query_by_*` arguments.
 - `JOIN ... ON` conditions, only for the table on the right side of the `JOIN`. The columns of the left table become parameters, and the left table gets no index from the join (see implement-sqrl `SKILL.md`, "Filters in API queries").
+- Subqueries, such as `EXISTS (...)`, `IN (SELECT ...)` or `(SELECT COUNT(*) ...)` (see Filters inside a subquery).
 - `text_search(...) > 0` filters: a `TEXT` index (GIN in Postgres) on the searched columns (see implement-sqrl `functions/text.md`).
 - The first `ORDER BY` column, only when the query has no `WHERE` filter and a literal `LIMIT` of 10000 at most. For example, in `WHERE customer_id = :cid ORDER BY amount DESC LIMIT 10`, only `customer_id` gets an index.
 
+A filter counts only when its column stands alone in the comparison. The compiler warns about a filter that wraps its column in an expression.
+
 ## Filters inside a subquery
 
-The compiler selects no index for a filter inside a subquery in a `WHERE` clause, such as `EXISTS (...)` or `IN (SELECT ...)`. For the column of the outer table that the subquery compares with, it selects no index in `EXISTS (...)`, and a `BTREE` index in `col IN (SELECT ...)`. When the subquery cannot become a `JOIN` (see implement-sqrl `SKILL.md`, "Filters in API queries"), keep it and check the compiled plan (see Checking the indexes). For each large table whose filter no index serves, add an `index` hint (see Index hints):
+The compiler selects the indexes for the filters of a subquery as for any query, with the columns of the outer query that the subquery compares with as parameters. How the database runs the subquery decides which tables get an index:
 
-- On the subquery's table: the columns that the subquery compares with a parameter first, then the columns that it compares with the outer query.
-- On the outer table of an `EXISTS (...)`: the column that the subquery compares with, but only when the subquery is not part of an `OR`. Inside an `OR`, the database runs the subquery once and reads the whole outer table, with or without that index.
+- `EXISTS (...)` and `IN (SELECT ...)` combined with the other conditions of the `WHERE` clause by `AND`: the database joins the two tables. The subquery's table gets an index on the columns that it compares with a parameter, followed by the columns that it compares with the outer query. When the subquery compares with the outer columns only by `=`, as an `IN` always does, the database can start from either table, and the outer table gets an index on the column that the subquery compares with. With any other comparison, like `o.ts > c.ts`, the database starts from the outer table, which gets no index from the subquery.
+- `NOT EXISTS (...)`, `NOT IN (SELECT ...)`, a subquery that is part of an `OR`, and a correlated scalar subquery such as `(SELECT COUNT(*) ...)`: the database runs the subquery once, or for each row of the outer table. Only the subquery's table gets an index. The database reads every row of the outer table that the other conditions leave.
+
+A comparison with an uncorrelated scalar subquery, such as `customer_id = (SELECT MAX(customer_id) FROM ...)`, counts as a comparison with a parameter: `customer_id` gets an index.
 
 Example: the API returns the orders of all customers who own a given account. `AccountOwners` has the primary key `owner_id`, and a customer can own an account through several of its rows, so a `JOIN` would add duplicate rows.
 
 ```sql
--- Subquery: no index for the filter on AccountOwners, and none on Orders.customer_id
+-- AccountOwners gets an index on (account_id, customer_id), Orders on customer_id
 OrdersByAccount(accountId STRING) := SELECT * FROM Orders c
 WHERE EXISTS (SELECT 1 FROM AccountOwners o
               WHERE o.account_id = :accountId AND o.customer_id = c.customer_id);
-
--- Hint both tables (Orders only because the subquery is not part of an OR),
--- together with the indexes that other served queries of each table use
-/*+index(BTREE, account_id, customer_id) */
-AccountOwners := SELECT owner_id, account_id, customer_id FROM ... ;
-/*+index(HASH, customer_id) */
-Orders := SELECT ... ;
 ```
 
 ## Index hints

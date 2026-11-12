@@ -20,20 +20,23 @@ import com.datasqrl.engine.PhysicalPlan;
 import com.datasqrl.engine.database.relational.AbstractJDBCDatabaseEngine;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.error.ErrorCollector;
+import com.datasqrl.plan.index.IndexDefinition;
+import com.datasqrl.plan.index.IndexSelector;
+import com.datasqrl.plan.index.QueryIndexSummary;
+import com.datasqrl.plan.index.UnindexableFilter;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
+import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.google.auto.service.AutoService;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-import lombok.Value;
+import org.apache.calcite.schema.FunctionParameter;
 
 /** Determines optimal index structure and primary key order */
-@Value
 @AutoService(PhysicalPlanRewriter.class)
-public class JdbcIndexOptimization implements PhysicalPlanRewriter {
+public final class JdbcIndexOptimizer implements PhysicalPlanRewriter {
 
   @Override
   public boolean appliesTo(EnginePhysicalPlan enginePlan) {
@@ -72,19 +75,34 @@ public class JdbcIndexOptimization implements PhysicalPlanRewriter {
                   .ifPresent(indexHints -> indexHintsByTable.put(tableName, indexHints));
             });
 
-    Collection<QueryIndexSummary> queryIndexSummaries =
-        jdbcPlan.queries().stream()
-            .map(indexSelector::getIndexSelection)
-            .flatMap(List::stream)
-            // Explicit index hints replace automatic selection, including its diagnostics.
-            .filter(summary -> !indexHintsByTable.containsKey(summary.getTable().getTableName()))
-            .collect(Collectors.toList());
-    List<IndexDefinition> indexDefinitions =
-        new ArrayList<>(indexSelector.optimizeIndexes(queryIndexSummaries));
+    Collection<QueryIndexSummary> queryIndexSummaries = new ArrayList<>();
+    for (var query : jdbcPlan.queries()) {
+      // Explicit index hints replace automatic selection, including its diagnostics.
+      var analysis =
+          indexSelector
+              .getIndexSelection(query.relNode())
+              .withoutTables(table -> indexHintsByTable.containsKey(table.getTableName()));
+      queryIndexSummaries.addAll(analysis.summaries());
+      warnAboutUnindexableFilters(query, analysis.unindexableFilters());
+    }
+
+    var indexDefinitions = new ArrayList<>(indexSelector.optimizeIndexes(queryIndexSummaries));
     indexHintsByTable.values().forEach(indexDefinitions::addAll);
+
     var builder = jdbcPlan.toBuilder();
     var stmtFactory = engine.getStatementFactory();
     indexDefinitions.stream().sorted().map(stmtFactory::addIndex).forEach(builder::statement);
+
     return builder.build();
+  }
+
+  private static void warnAboutUnindexableFilters(Query query, List<UnindexableFilter> filters) {
+    var function = query.function();
+    var parameterNames = function.getParameters().stream().map(FunctionParameter::getName).toList();
+
+    filters.stream()
+        .map(filter -> filter.toWarning(function.getFullPath().getDisplay(), parameterNames))
+        .distinct()
+        .forEach(query.errors()::warn);
   }
 }

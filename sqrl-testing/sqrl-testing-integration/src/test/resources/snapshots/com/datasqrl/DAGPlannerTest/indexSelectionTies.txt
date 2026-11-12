@@ -1,0 +1,660 @@
+>>>pipeline_explain.txt
+=== LargeOrders
+ID:          default_catalog.default_database.LargeOrders
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: productId, minQuantity
+ - base-table: Orders
+Plan:
+LogicalProject(customer_id=[$0], order_id=[$1], product_id=[$2], quantity=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($2, ?0), >($3, ?1))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `LargeOrders` AS  SELECT * FROM Orders
+  WHERE product_id = ?          AND quantity > ?           ;
+
+=== Orders
+ID:          default_catalog.default_database.Orders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   ts
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - customer_id: BIGINT NOT NULL
+ - order_id: BIGINT NOT NULL
+ - product_id: BIGINT NOT NULL
+ - quantity: BIGINT NOT NULL
+ - ts: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Orders__base
+Plan:
+LogicalWatermarkAssigner(rowtime=[ts], watermark=[$4])
+  LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE TABLE `Orders` (
+  `customer_id` BIGINT NOT NULL,
+  `order_id` BIGINT NOT NULL,
+  `product_id` BIGINT NOT NULL,
+  `quantity` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+)
+--- physical ---
+Table Orders_1 (postgres):
+ - primary key: __pk_hash (generated hash key)
+ - index Orders_1_btree_c2c3c0 (btree): product_id, quantity, customer_id
+ - index Orders_1_btree_c3c0 (btree): quantity, customer_id
+
+=== OrdersFor
+ID:          default_catalog.default_database.OrdersFor
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: customerId, productId, quantity
+ - base-table: Orders
+Plan:
+LogicalProject(customer_id=[$0], order_id=[$1], product_id=[$2], quantity=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($0, ?0), =($2, ?1), =($3, ?2))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `OrdersFor` AS  SELECT * FROM Orders
+  WHERE customer_id = ?           AND product_id = ?          AND quantity = ?        ;
+
+=== OrdersOfQuantity
+ID:          default_catalog.default_database.OrdersOfQuantity
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Orders
+Annotations:
+ - parameters: quantity, afterCustomer, afterProduct
+ - base-table: Orders
+Plan:
+LogicalProject(customer_id=[$0], order_id=[$1], product_id=[$2], quantity=[$3], ts=[$4])
+  LogicalFilter(condition=[AND(=($3, ?0), >($0, ?1), >($2, ?2))])
+    LogicalTableScan(table=[[default_catalog, default_database, Orders]])
+SQL:
+CREATE VIEW `OrdersOfQuantity` AS  SELECT * FROM Orders
+  WHERE quantity = ?         AND customer_id > ?              AND product_id > ?            ;
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Orders` (
+  `customer_id` BIGINT NOT NULL,
+  `order_id` BIGINT NOT NULL,
+  `product_id` BIGINT NOT NULL,
+  `quantity` BIGINT NOT NULL,
+  `ts` TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR `ts` AS `ts`
+)
+WITH (
+  'connector' = 'datagen',
+  'number-of-rows' = '10'
+);
+CREATE TABLE `Orders_1` (
+  `customer_id` BIGINT NOT NULL,
+  `order_id` BIGINT NOT NULL,
+  `product_id` BIGINT NOT NULL,
+  `quantity` BIGINT NOT NULL,
+  `ts` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Orders_1',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Orders_1`
+SELECT `customer_id`, `order_id`, `product_id`, `quantity`, `ts`, `hash_key`(`customer_id`, `order_id`, `product_id`, `quantity`, `ts`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Orders`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [ ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres.json
+{
+  "statements" : [
+    {
+      "name" : "Orders_1",
+      "type" : "TABLE",
+      "sql" : "CREATE TABLE IF NOT EXISTS \"Orders_1\" (\"customer_id\" BIGINT NOT NULL, \"order_id\" BIGINT NOT NULL, \"product_id\" BIGINT NOT NULL, \"quantity\" BIGINT NOT NULL, \"ts\" TIMESTAMP WITH TIME ZONE NOT NULL, \"__pk_hash\" TEXT, PRIMARY KEY (\"__pk_hash\"))",
+      "fields" : [
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "product_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "quantity",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        },
+        {
+          "name" : "__pk_hash",
+          "type" : "TEXT",
+          "nullable" : true
+        }
+      ],
+      "primaryKey" : [
+        "__pk_hash"
+      ],
+      "partitionKey" : [ ],
+      "partitionType" : "NONE",
+      "numPartitions" : 0,
+      "ttl" : 0.0,
+      "logicalName" : "Orders",
+      "role" : "MATERIALIZATION"
+    },
+    {
+      "name" : "Orders",
+      "type" : "VIEW",
+      "sql" : "CREATE OR REPLACE VIEW \"Orders\"(\"customer_id\", \"order_id\", \"product_id\", \"quantity\", \"ts\") AS SELECT \"customer_id\", \"order_id\", \"product_id\", \"quantity\", \"ts\"\nFROM \"Orders_1\"",
+      "fields" : [
+        {
+          "name" : "customer_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "order_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "product_id",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "quantity",
+          "type" : "BIGINT",
+          "nullable" : false
+        },
+        {
+          "name" : "ts",
+          "type" : "TIMESTAMP WITH TIME ZONE",
+          "nullable" : false
+        }
+      ],
+      "referencedTables" : [
+        "Orders_1"
+      ]
+    },
+    {
+      "name" : "Orders_1_btree_c2c3c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders_1_btree_c2c3c0\" ON \"Orders_1\" USING btree (\"product_id\",\"quantity\",\"customer_id\")"
+    },
+    {
+      "name" : "Orders_1_btree_c3c0",
+      "type" : "INDEX",
+      "sql" : "CREATE INDEX IF NOT EXISTS \"Orders_1_btree_c3c0\" ON \"Orders_1\" USING btree (\"quantity\",\"customer_id\")"
+    }
+  ],
+  "standaloneExtensionStatements" : [ ]
+}
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Orders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customer_id\", \"order_id\", \"product_id\", \"quantity\", \"ts\"\nFROM \"Orders_1\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "LargeOrders",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "minQuantity"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "productId"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customer_id\", \"order_id\", \"product_id\", \"quantity\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"product_id\" = $1 AND \"quantity\" > $2",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "productId",
+                  "sqlType" : "BIGINT"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "minQuantity",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersFor",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "customerId"
+              },
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "productId"
+              },
+              {
+                "type" : "variable",
+                "path" : "quantity"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customer_id\", \"order_id\", \"product_id\", \"quantity\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"customer_id\" = $1 AND \"product_id\" = $2 AND \"quantity\" = $3",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "customerId",
+                  "sqlType" : "BIGINT"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "productId",
+                  "sqlType" : "BIGINT"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "quantity",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrdersOfQuantity",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "afterCustomer"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              },
+              {
+                "type" : "variable",
+                "path" : "afterProduct"
+              },
+              {
+                "type" : "variable",
+                "path" : "quantity"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM (SELECT \"customer_id\", \"order_id\", \"product_id\", \"quantity\", \"ts\"\n  FROM \"Orders_1\") AS \"t\"\nWHERE \"quantity\" = $1 AND \"customer_id\" > $2 AND \"product_id\" > $3",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "quantity",
+                  "sqlType" : "BIGINT"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "afterCustomer",
+                  "sqlType" : "BIGINT"
+                },
+                {
+                  "type" : "arg",
+                  "path" : "afterProduct",
+                  "sqlType" : "BIGINT"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Orders($limit: Int = 10, $offset: Int = 0) {\nOrders(limit: $limit, offset: $offset) {\ncustomer_id\norder_id\nproduct_id\nquantity\nts\n}\n\n}",
+            "queryName" : "Orders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Orders{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "product_id" : {
+                  "type" : "integer"
+                },
+                "quantity" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetLargeOrders",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "productId" : {
+                  "type" : "integer"
+                },
+                "minQuantity" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "productId",
+                "minQuantity"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query LargeOrders($productId: Long!, $minQuantity: Long!, $limit: Int = 10, $offset: Int = 0) {\nLargeOrders(productId: $productId, minQuantity: $minQuantity, limit: $limit, offset: $offset) {\ncustomer_id\norder_id\nproduct_id\nquantity\nts\n}\n\n}",
+            "queryName" : "LargeOrders",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/LargeOrders{?productId,minQuantity,offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "product_id" : {
+                  "type" : "integer"
+                },
+                "quantity" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersFor",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "quantity" : {
+                  "type" : "integer"
+                },
+                "productId" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "customerId" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "customerId",
+                "productId",
+                "quantity"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersFor($customerId: Long!, $productId: Long!, $quantity: Long!, $limit: Int = 10, $offset: Int = 0) {\nOrdersFor(customerId: $customerId, productId: $productId, quantity: $quantity, limit: $limit, offset: $offset) {\ncustomer_id\norder_id\nproduct_id\nquantity\nts\n}\n\n}",
+            "queryName" : "OrdersFor",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersFor{?quantity,productId,offset,customerId,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "product_id" : {
+                  "type" : "integer"
+                },
+                "quantity" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetOrdersOfQuantity",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "afterProduct" : {
+                  "type" : "integer"
+                },
+                "quantity" : {
+                  "type" : "integer"
+                },
+                "offset" : {
+                  "type" : "integer"
+                },
+                "afterCustomer" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "quantity",
+                "afterCustomer",
+                "afterProduct"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrdersOfQuantity($quantity: Long!, $afterCustomer: Long!, $afterProduct: Long!, $limit: Int = 10, $offset: Int = 0) {\nOrdersOfQuantity(quantity: $quantity, afterCustomer: $afterCustomer, afterProduct: $afterProduct, limit: $limit, offset: $offset) {\ncustomer_id\norder_id\nproduct_id\nquantity\nts\n}\n\n}",
+            "queryName" : "OrdersOfQuantity",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrdersOfQuantity{?afterProduct,quantity,offset,afterCustomer,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "order_id" : {
+                  "type" : "integer"
+                },
+                "product_id" : {
+                  "type" : "integer"
+                },
+                "quantity" : {
+                  "type" : "integer"
+                },
+                "ts" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Orders {\n  customer_id: Long!\n  order_id: Long!\n  product_id: Long!\n  quantity: Long!\n  ts: DateTime!\n}\n\ntype Query {\n  Orders(limit: Int = 10, offset: Int = 0): [Orders!]\n  LargeOrders(productId: Long!, minQuantity: Long!, limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersFor(customerId: Long!, productId: Long!, quantity: Long!, limit: Int = 10, offset: Int = 0): [Orders!]\n  OrdersOfQuantity(quantity: Long!, afterCustomer: Long!, afterProduct: Long!, limit: Int = 10, offset: Int = 0): [Orders!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

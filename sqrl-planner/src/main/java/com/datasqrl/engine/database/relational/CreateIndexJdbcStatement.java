@@ -17,7 +17,7 @@ package com.datasqrl.engine.database.relational;
 
 import com.datasqrl.deployment.model.JdbcStatementModel.Field;
 import com.datasqrl.deployment.model.JdbcStatementModel.Type;
-import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.index.IndexDefinition;
 import java.util.List;
 import lombok.Value;
 

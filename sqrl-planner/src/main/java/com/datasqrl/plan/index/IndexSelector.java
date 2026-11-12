@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.datasqrl.plan.global;
+package com.datasqrl.plan.index;
 
 import com.datasqrl.calcite.SqrlRexUtil;
 import com.datasqrl.engine.database.relational.CreateTableJdbcStatement;
 import com.datasqrl.error.ErrorCollector;
-import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
+import com.datasqrl.plan.index.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.planner.Sqrl2FlinkSQLTranslator;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.hint.IndexHint;
@@ -42,8 +42,10 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.Include;
+import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.plan.RelOptRule;
+import org.apache.calcite.plan.hep.HepProgram;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.RelVisitor;
 import org.apache.calcite.rel.core.Filter;
@@ -53,7 +55,6 @@ import org.apache.calcite.rel.core.Sort;
 import org.apache.calcite.rel.core.TableScan;
 import org.apache.calcite.rel.logical.LogicalFilter;
 import org.apache.calcite.rel.rules.CoreRules;
-import org.apache.calcite.rex.RexDynamicParam;
 import org.apache.calcite.rex.RexInputRef;
 import org.apache.calcite.rex.RexNode;
 import org.apache.calcite.rex.RexShuttle;
@@ -77,10 +78,14 @@ public class IndexSelector {
   private final Map<String, CreateTableJdbcStatement> tableMap;
   private final ErrorCollector errors;
 
-  public List<QueryIndexSummary> getIndexSelection(RelNode queryRelnode) {
-    var pushedDownFilters = applyPushDownFilters(queryRelnode);
-    var indexFinder = new IndexFinder();
-    return indexFinder.find(pushedDownFilters);
+  /** Analyzes the filters and sorts of a query and of its subqueries. */
+  public IndexAnalysis getIndexSelection(RelNode queryRelnode) {
+    var parameters = new LookupParameters();
+    var indexFinder = new IndexFinder(parameters);
+    new SubQueryExpander(queryRelnode.getCluster().getRexBuilder(), parameters)
+        .expand(queryRelnode)
+        .forEach(query -> indexFinder.go(applyPushDownFilters(query)));
+    return new IndexAnalysis(indexFinder.queryIndexSummaries, indexFinder.unindexableFilters);
   }
 
   public static final List<RelOptRule> PUSH_DOWN_FILTERS_RULES =
@@ -94,8 +99,11 @@ public class IndexSelector {
           CoreRules.FILTER_SET_OP_TRANSPOSE);
 
   private RelNode applyPushDownFilters(RelNode queryRelnode) {
-    var program =
-        Programs.hep(PUSH_DOWN_FILTERS_RULES, false, FlinkDefaultRelMetadataProvider.INSTANCE());
+    // A rule collection runs all rules until none matches. Programs#hep would run each rule once in
+    // list order, so a filter that FILTER_PROJECT_TRANSPOSE moves onto a join never reaches
+    // FILTER_INTO_JOIN, and stacked filters never get merged.
+    var hepProgram = HepProgram.builder().addRuleCollection(PUSH_DOWN_FILTERS_RULES).build();
+    var program = Programs.of(hepProgram, false, FlinkDefaultRelMetadataProvider.INSTANCE());
 
     return program.run(null, queryRelnode, queryRelnode.getTraitSet(), List.of(), List.of());
   }
@@ -431,12 +439,12 @@ public class IndexSelector {
     }
   }
 
+  @RequiredArgsConstructor
   class IndexFinder extends RelVisitor {
 
-    private static final int PARAM_OFFSET = 10000;
-
+    final LookupParameters parameters;
     List<QueryIndexSummary> queryIndexSummaries = new ArrayList<>();
-    int paramIndex = PARAM_OFFSET;
+    List<UnindexableFilter> unindexableFilters = new ArrayList<>();
     SqrlRexUtil rexUtil = new SqrlRexUtil(framework.getTypeFactory());
 
     @Override
@@ -451,8 +459,9 @@ public class IndexSelector {
         visit(right, 1, node);
       } else if (node instanceof TableScan scan && parent instanceof Filter filter) {
         var table = getNamedTable(scan);
-        queryIndexSummaries.addAll(
-            QueryIndexSummary.ofFilter(table, filter.getCondition(), rexUtil));
+        var filterAnalysis = FilterAnalyzer.analyze(table, filter.getCondition(), rexUtil);
+        queryIndexSummaries.addAll(filterAnalysis.summaries());
+        unindexableFilters.addAll(filterAnalysis.unindexableFilters());
       } else if (node instanceof TableScan scan && parent instanceof Sort sort) {
         var table = getNamedTable(scan);
         var firstCollationIdx = getFirstCollation(sort);
@@ -496,11 +505,6 @@ public class IndexSelector {
                   join.getLeft().getRowType().getFieldCount(), join.getRight()));
     }
 
-    List<QueryIndexSummary> find(RelNode node) {
-      go(node);
-      return queryIndexSummaries;
-    }
-
     @AllArgsConstructor
     class JoinConditionRewriter extends RexShuttle {
 
@@ -511,7 +515,7 @@ public class IndexSelector {
       public RexNode visitInputRef(RexInputRef ref) {
         if (ref.getIndex() < maxLeftIdx) {
           // Replace with variables
-          return new RexDynamicParam(ref.getType(), paramIndex++);
+          return parameters.lookup(ref.getType());
         } else {
           // Shift indexes
           return RexInputRef.of(ref.getIndex() - maxLeftIdx, right.getRowType());

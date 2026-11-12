@@ -1,0 +1,51 @@
+/* Issue #2472: a database index on a column serves only a filter where the column stands alone on
+   one side of the comparison. Any other form gets no index and a warning.
+   Each query reads its own table, so that the indexes of the queries don't interfere. */
+
+CREATE TABLE OrdersArith (order_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersCast (order_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersRewritten (order_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersLegacy (order_id BIGINT NOT NULL, legacy_id INT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE Customers (customer_id BIGINT NOT NULL, email STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersJoined (order_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE Owners (account_id BIGINT NOT NULL, customer_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersView (order_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE Articles (article_id BIGINT NOT NULL, title STRING NOT NULL, body STRING NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+CREATE TABLE OrdersHinted (order_id BIGINT NOT NULL, agency_id BIGINT NOT NULL, ts TIMESTAMP_LTZ(3) NOT NULL, WATERMARK FOR ts AS ts) WITH ('connector' = 'datagen', 'number-of-rows' = '10');
+
+/* Warns: arithmetic, a cast and a function on the column. */
+ByAgencyArith(agency BIGINT NOT NULL) := SELECT * FROM OrdersArith WHERE agency_id + 1 = :agency;
+ByAgencyCast(agency STRING NOT NULL) := SELECT * FROM OrdersCast WHERE CAST(agency_id AS STRING) = :agency;
+ByEmail(email STRING NOT NULL) := SELECT * FROM Customers WHERE LOWER(email) = :email;
+
+/* No warning, and an index on the column: arithmetic and planner casts on the parameter side, and a
+   column of a narrower type than the parameter, which the database compares without a cast. */
+ByAgencyRewritten(agency BIGINT NOT NULL) := SELECT * FROM OrdersRewritten WHERE agency_id = :agency - 1;
+ByLegacyId(legacyId BIGINT NOT NULL) := SELECT * FROM OrdersLegacy WHERE legacy_id = :legacyId;
+
+/* Warns: a join condition is a filter of the joined table, too. */
+ByAccountShifted(accountId BIGINT NOT NULL) := SELECT c.* FROM Owners o JOIN OrdersJoined c ON c.customer_id + 1 = o.customer_id
+  WHERE o.account_id = :accountId;
+
+/* Warns: the database computes the cast of a table that runs in Postgres in every query. */
+/*+engine(postgres) */
+OrdersAgencyText := SELECT order_id, CAST(agency_id AS STRING) AS agency_text FROM OrdersView;
+ByAgencyText(agency STRING NOT NULL) := SELECT * FROM OrdersAgencyText WHERE agency_text = :agency;
+
+/* Warns: the text search index covers columns, not expressions. */
+SearchArticles(query STRING NOT NULL) := SELECT * FROM Articles WHERE text_search(:query, CONCAT(title, ' ', body)) > 0;
+
+/* No warning: explicit index hints replace automatic selection, including its diagnostics. */
+/*+index(btree, agency_id) */
+OrdersExplicit := SELECT * FROM OrdersHinted;
+
+CREATE TABLE OrdersExplicitSink (
+  order_id BIGINT NOT NULL,
+  agency_id BIGINT NOT NULL,
+  ts TIMESTAMP_LTZ(3) NOT NULL,
+  WATERMARK FOR ts AS ts
+) WITH ('connector' = 'print');
+
+INSERT INTO OrdersExplicitSink SELECT order_id, agency_id, ts FROM OrdersExplicit;
+
+ByAgencyExplicit(agency BIGINT NOT NULL) := SELECT * FROM OrdersExplicit WHERE agency_id + 1 = :agency;

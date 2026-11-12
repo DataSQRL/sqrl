@@ -23,7 +23,7 @@ import com.datasqrl.engine.database.relational.ddl.TrinoCreateTableDdlFactory;
 import com.datasqrl.engine.database.relational.ddl.TrinoCreateViewDdlFactory;
 import com.datasqrl.engine.database.relational.ddl.TrinoTypeFormatter;
 import com.datasqrl.engine.database.relational.ddl.ViewIdentifierResolver;
-import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.index.IndexDefinition;
 import com.datasqrl.planner.hint.DataTypeHint;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.util.Documented.Documentation;

@@ -15,8 +15,8 @@
  */
 package com.datasqrl.plan.rules;
 
-import com.datasqrl.plan.global.QueryIndexSummary;
-import com.datasqrl.plan.global.QueryIndexSummary.IndexableFunctionCall;
+import com.datasqrl.plan.index.QueryIndexSummary;
+import com.datasqrl.plan.index.QueryIndexSummary.IndexableFunctionCall;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import org.apache.calcite.rel.RelNode;
 import org.apache.calcite.rel.core.Aggregate;

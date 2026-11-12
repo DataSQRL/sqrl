@@ -29,7 +29,7 @@ import com.datasqrl.calcite.type.TypeFactory;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.relational.DuckDbMaterializedScanCtePlanner.MaterializedScanCte;
 import com.datasqrl.engine.database.relational.ddl.GenericCreateTableDdlFactory;
-import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.index.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.hint.DataTypeHint;
 import java.util.HashMap;

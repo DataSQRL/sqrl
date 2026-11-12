@@ -16,7 +16,7 @@
 package com.datasqrl.planner.hint;
 
 import com.datasqrl.error.ErrorLabel;
-import com.datasqrl.plan.global.IndexType;
+import com.datasqrl.plan.index.IndexType;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
 import com.datasqrl.planner.parser.StatementParserException;

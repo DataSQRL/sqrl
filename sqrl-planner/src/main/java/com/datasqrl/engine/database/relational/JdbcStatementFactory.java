@@ -15,7 +15,7 @@
  */
 package com.datasqrl.engine.database.relational;
 
-import com.datasqrl.plan.global.IndexDefinition;
+import com.datasqrl.plan.index.IndexDefinition;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import java.util.Collection;
 import java.util.List;

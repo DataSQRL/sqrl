@@ -22,7 +22,7 @@ import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson.EngineConfig;
 import com.datasqrl.engine.database.DatabaseEngine;
 import com.datasqrl.engine.database.QueryEngine;
-import com.datasqrl.plan.global.IndexSelectorConfig;
+import com.datasqrl.plan.index.IndexSelectorConfig;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;

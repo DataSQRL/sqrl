@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.datasqrl.error.ErrorLocation.FileLocation;
-import com.datasqrl.plan.global.IndexType;
+import com.datasqrl.plan.index.IndexType;
 import com.datasqrl.planner.parser.ParsedObject;
 import com.datasqrl.planner.parser.SqrlHint;
 import com.datasqrl.planner.parser.StatementParserException;
