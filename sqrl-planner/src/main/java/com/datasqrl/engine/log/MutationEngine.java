@@ -19,6 +19,7 @@ import com.datasqrl.engine.ExecutionEngine;
 import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.server.MutationInsertType;
 import java.time.Duration;
 import java.util.Map;
@@ -47,7 +48,14 @@ public interface MutationEngine extends ExecutionEngine {
   }
 
   interface MutationCreateTable extends EngineCreateTable {
+
     MutationCreateTable withValueType(RelDataType inputValueType);
+
+    /**
+     * The table with the tags that its {@code CREATE TABLE} statement declares, which are only
+     * known once the schema of the table is resolved, after the mutation table is created
+     */
+    MutationCreateTable withTags(TableTags tags);
 
     Map<String, String> getConfig();
   }

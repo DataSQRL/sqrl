@@ -23,6 +23,7 @@ import com.datasqrl.plan.util.PrimaryKeyMap;
 import com.datasqrl.planner.analyzer.cost.CostAnalysis;
 import com.datasqrl.planner.hint.PlannerHints;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
+import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.planner.util.Documented;
 import com.datasqrl.util.CalciteUtil;
 import java.util.List;
@@ -128,6 +129,12 @@ public class TableAnalysis implements TableOrFunctionAnalysis, Documented {
   @Builder.Default Documentation documentation = Documented.EMPTY;
 
   /**
+   * The effective tags of this table, which downstream tables inherit and the deployment assets
+   * list, see {@link com.datasqrl.planner.tags.TagAnalyzer}
+   */
+  @NonNull @Builder.Default TableTags tags = TableTags.EMPTY;
+
+  /**
    * The statistics for the table, either estimated by planner or provided as hints on the
    * definition
    */
@@ -181,7 +188,8 @@ public class TableAnalysis implements TableOrFunctionAnalysis, Documented {
       @NonNull ObjectIdentifier identifier,
       @NonNull SourceSinkTableAnalysis sourceTable,
       @NonNull TableType type,
-      @NonNull PrimaryKeyMap primaryKey) {
+      @NonNull PrimaryKeyMap primaryKey,
+      @NonNull TableTags tags) {
     return TableAnalysis.builder()
         .objectIdentifier(identifier)
         .collapsedRelnode(null)
@@ -190,6 +198,7 @@ public class TableAnalysis implements TableOrFunctionAnalysis, Documented {
         .primaryKey(primaryKey)
         .sourceSinkTable(Optional.of(sourceTable))
         .streamRoot(null)
+        .tags(tags)
         .build();
   }
 

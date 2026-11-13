@@ -28,6 +28,8 @@ import java.util.Map;
  *     share it, so key on {@code (logicalName, type)}. The topic is the template resolved for this
  *     name, unless that gives the topic of a mutation table: then the compiler substitutes {@code
  *     <logicalName>-subscription}; null for topics no SQRL table backs, such as test-runner topics
+ * @param tags the effective tags of the SQRL table that the topic stores, mapped from tag name to
+ *     value ({@code true} for boolean tags); not set when there are no tags
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -41,30 +43,8 @@ public record KafkaNewTopicModel(
     Type type,
     List<String> messageKeys,
     String messageSchema,
-    Map<String, String> config) {
-
-  public KafkaNewTopicModel(
-      String topicName,
-      String tableName,
-      String format,
-      int numPartitions,
-      short replicationFactor,
-      Type type,
-      List<String> messageKeys,
-      String messageSchema,
-      Map<String, String> config) {
-    this(
-        topicName,
-        tableName,
-        null,
-        format,
-        numPartitions,
-        replicationFactor,
-        type,
-        messageKeys,
-        messageSchema,
-        config);
-  }
+    Map<String, String> config,
+    @JsonInclude(JsonInclude.Include.NON_EMPTY) Map<String, String> tags) {
 
   public KafkaNewTopicModel(
       String topicName,
@@ -82,7 +62,8 @@ public record KafkaNewTopicModel(
         Type.SUBSCRIPTION,
         List.of(),
         "",
-        Map.of());
+        Map.of(),
+        null);
   }
 
   public KafkaNewTopicModel(

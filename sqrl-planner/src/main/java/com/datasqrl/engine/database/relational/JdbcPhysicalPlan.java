@@ -99,6 +99,8 @@ public record JdbcPhysicalPlan(
     var logicalName = engineTable == null ? null : engineTable.logicalName();
     var role =
         engineTable == null ? null : JdbcStatementModel.Role.valueOf(engineTable.role().name());
+    // A table has the tags of the table it materializes, a view those of the function it serves
+    var tags = engineTable == null ? statement.getTags() : engineTable.tags().toValueMap();
     if (statement instanceof CreateTableJdbcStatement createTable) {
       return new JdbcStatementModel(
           statement.getName(),
@@ -113,7 +115,8 @@ public record JdbcPhysicalPlan(
           createTable.getTtl(),
           logicalName,
           role,
-          statement.getReferencedTables());
+          statement.getReferencedTables(),
+          tags);
     }
     return new JdbcStatementModel(
         statement.getName(),
@@ -128,7 +131,8 @@ public record JdbcPhysicalPlan(
         null,
         logicalName,
         role,
-        statement.getReferencedTables());
+        statement.getReferencedTables(),
+        tags);
   }
 
   private static String toSql(List<JdbcStatement> statements) {

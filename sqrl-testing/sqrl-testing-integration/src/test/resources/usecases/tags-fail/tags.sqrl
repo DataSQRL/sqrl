@@ -1,0 +1,76 @@
+IMPORT `banking_catalog`.`sources`;
+
+/** Customer records @pii=raw @classification=confidential */
+Customers := DISTINCT sources.CustomersStream ON id ORDER BY updated_at DESC;
+
+/** Loan applications @financial @classification=internal */
+Applications := DISTINCT sources.ApplicationsStream ON id ORDER BY updated_at DESC;
+
+/** Missing the inherited pii tag, declares a lower classification */
+CustomerEmails := SELECT id, email FROM Customers WHERE email IS NOT NULL;
+
+/** Reads customers only in a subquery @financial @classification=internal */
+CustomerApplications := SELECT id, amount FROM Applications
+                        WHERE customer_id IN (SELECT id FROM Customers);
+
+/** Invalid tags @unknown @pii=secret @classification @financial=yes */
+InvalidTags := SELECT id FROM Customers;
+
+/*+declassify(pii, undefined_tag, financial) */
+/** Declassifies a tag it does not inherit @classification=confidential */
+CustomerCount := SELECT COUNT(*) AS num_customers FROM Customers;
+
+/** Lower classification @pii=raw @classification=internal */
+CustomerNames := SELECT id, first_name FROM Customers;
+
+/*+declassify(pii, classification) */
+/** Missing the column required by the jurisdiction tag @jurisdiction */
+CustomerRegions := SELECT id, address AS region FROM Customers;
+
+/*+declassify(pii, classification) */
+/** Wrong type for the column required by the jurisdiction tag @jurisdiction */
+CustomerJurisdictions := SELECT id, 1 AS jurisdiction FROM Customers;
+
+/*+engine(kafka) */
+CREATE TABLE ContactEvents (
+  id BIGINT NOT NULL,
+  email STRING COMMENT 'Contact email @pii=raw',
+  phone STRING COMMENT 'Contact phone @pii=unknown',
+  event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+/*+engine(kafka) */
+CREATE TABLE ContactEventsCopy (
+  source STRING
+) LIKE ContactEvents;
+
+/** Missing the pii tag of the email column comment that LIKE copies */
+ContactEmails := SELECT id, email FROM ContactEventsCopy;
+
+/** Customer contacts that don't declare the tags of the data written into them */
+CREATE TABLE CustomerContacts (
+  id BIGINT NOT NULL,
+  email STRING
+) WITH (
+  'connector' = 'filesystem',
+  'path' = 'file:///tmp/tags-fail/contacts',
+  'format' = 'csv'
+);
+
+INSERT INTO CustomerContacts SELECT id, email FROM Customers;
+
+/** Applications to write into the contacts @financial @classification=internal */
+ApplicationContacts := SELECT customer_id AS id, CAST(NULL AS STRING) AS email FROM Applications;
+
+EXPORT ApplicationContacts TO CustomerContacts;
+
+EXPORT CustomerEmails TO sinks.archive.EmailArchive;
+
+/** Audit of customer ids, missing the column required by the jurisdiction tag @jurisdiction */
+CREATE TABLE CustomerAudit (
+  id BIGINT NOT NULL
+) WITH (
+  'connector' = 'print'
+);
+
+EXPORT CustomerCount TO sinks.archive.CountArchive;

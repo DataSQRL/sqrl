@@ -71,7 +71,8 @@ public class CompilationProcess {
         new Sqrl2FlinkSQLTranslator(
             workspacePaths,
             (FlinkStreamEngine) planner.getStreamStage().engine(),
-            config.getCompilerConfig())) {
+            config.getCompilerConfig(),
+            errors)) {
 
       return executeCompilationInternal(testsPath, environment);
     }
@@ -81,6 +82,9 @@ public class CompilationProcess {
       Optional<Path> testsPath, Sqrl2FlinkSQLTranslator environment) {
 
     planner.planMain(mainScript, Optional.empty(), environment);
+    // Tag violations, including those in the tag configuration, are recorded without aborting so
+    // that all of them are reported. Don't optimize or assemble a plan with known errors.
+    errors.abortOnErrors();
     var dagBuilder = planner.getDagBuilder();
     var dag = dagPlanner.optimize(dagBuilder.getDag());
     var physicalPlan = dagPlanner.assemble(dag, environment);

@@ -18,6 +18,7 @@ package com.datasqrl.engine.log.kafka;
 import static com.datasqrl.flinkrunner.connector.kafka.KeyFieldsOptions.SCAN_KEY_FIELDS_READ_FROM_VALUE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -36,6 +37,9 @@ import com.datasqrl.error.ErrorMessage;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.dag.plan.MaterializationStagePlan;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tags.TableTags;
+import com.datasqrl.planner.tags.TagDefinition;
+import com.datasqrl.planner.tags.TagValue;
 import com.datasqrl.server.MutationInsertType;
 import java.util.HashMap;
 import java.util.List;
@@ -167,6 +171,21 @@ class KafkaLogEngineTest {
             });
     assertThat(plan.includedTopics())
         .containsExactly(new KafkaIncludedTopicModel("Order", "Order_1", "Order", "shared"));
+  }
+
+  @Test
+  void givenMutationWithTags_whenPlanned_thenItsTopicListsTheTags() {
+    var pii = TagDefinition.of("pii", List.of("masked", "raw"), List.of());
+    var mutation =
+        (KafkaLogEngine.Table)
+            kafkaTable("Feedback", Optional.empty())
+                .withTags(TableTags.of(List.of(new TagValue(pii, 1))));
+
+    var plan = plan(engine, mutation);
+
+    assertThat(plan.topics())
+        .singleElement()
+        .satisfies(topic -> assertThat(topic.topic().tags()).containsExactly(entry("pii", "raw")));
   }
 
   @Test
@@ -335,7 +354,15 @@ class KafkaLogEngineTest {
 
   private static KafkaLogEngine.Table kafkaTable(String name, Optional<String> standaloneInclude) {
     return new KafkaLogEngine.Table(
-        name, name + "_1", name, "flexible-json", List.of(), null, Map.of(), standaloneInclude);
+        name,
+        name + "_1",
+        name,
+        "flexible-json",
+        List.of(),
+        null,
+        Map.of(),
+        standaloneInclude,
+        TableTags.EMPTY);
   }
 
   private Map<String, String> createKeyedMutation(

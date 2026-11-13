@@ -19,6 +19,9 @@ import com.datasqrl.planner.PredicatePushdownRules;
 import com.datasqrl.planner.analyzer.cost.CostModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel;
 import com.datasqrl.planner.analyzer.cost.SimpleCostAnalysisModel.Type;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
@@ -61,5 +64,20 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
   @Override
   public CompilerApiConfigImpl getApiConfig() {
     return new CompilerApiConfigImpl(sqrlConfig.getSubConfig("api"));
+  }
+
+  @Override
+  public Optional<Map<String, PackageJson.TagConfig>> getTags() {
+    if (!sqrlConfig.hasSubConfig("tags")) {
+      return Optional.empty();
+    }
+
+    var tagsConfig = sqrlConfig.getSubConfig("tags");
+    var tags = new LinkedHashMap<String, PackageJson.TagConfig>();
+    tagsConfig
+        .getKeys()
+        .forEach(name -> tags.put(name, new TagConfigImpl(tagsConfig.getSubConfig(name))));
+
+    return Optional.of(tags);
   }
 }

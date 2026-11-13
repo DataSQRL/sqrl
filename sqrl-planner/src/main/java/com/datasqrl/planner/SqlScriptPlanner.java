@@ -184,6 +184,9 @@ public class SqlScriptPlanner {
   /** Manages the context of the script that is processed, adjusted for imports */
   private ScriptContext scriptContext;
 
+  /** The hints and doc string of the last table definition, which column expressions extend */
+  private HintsAndDoc tableDefinitionHintsAndDoc = HintsAndDoc.EMPTY;
+
   public SqlScriptPlanner(
       ErrorCollector errorCollector,
       ModuleLoaders moduleLoaders,
@@ -393,10 +396,7 @@ public class SqlScriptPlanner {
       Optional<PlannerHints> inheritedHints,
       Sqrl2FlinkSQLTranslator sqrlEnv,
       ErrorCollector errors) {
-    var hintsAndDocs =
-        stmt instanceof SqrlStatement statement
-            ? getHintsAndDoc(statement, inheritedHints, errors)
-            : HintsAndDoc.EMPTY;
+    var hintsAndDocs = getStatementHintsAndDoc(stmt, inheritedHints, sqrlEnv, errors);
     var hints = hintsAndDocs.hints();
     if (stmt instanceof SqrlImportStatement statement) {
       addImport(statement, hintsAndDocs, sqrlEnv, errors);
@@ -408,7 +408,8 @@ public class SqlScriptPlanner {
               statement.toSql(),
               getMutationBuilder(hintsAndDocs),
               scriptContext.mainModuleLoader().getSchemaLoader(),
-              hintsAndDocs)
+              hintsAndDocs,
+              errors)
           .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
     } else if (stmt instanceof SqrlDefinition sqrlDef) {
       var access = sqrlDef.getAccess();
@@ -453,6 +454,8 @@ public class SqlScriptPlanner {
 
       // Ignore any hidden table
       access = adjustAccess(isHidden ? AccessModifier.NONE : access);
+      // Tables in the API must declare their tags, but test tables are never deployed
+      var mustDeclareTags = !isHidden && !hints.isTest();
 
       var originalSql = sqrlDef.toSql(sqrlEnv, statementStack);
       // Relationships and Table functions require special handling
@@ -582,6 +585,7 @@ public class SqlScriptPlanner {
                   passthroughStmt.getReturnType(),
                   fromTables,
                   hintsAndDocs,
+                  mustDeclareTags && !tblFnStmt.isRelationship(),
                   errors);
         } else {
           fnBuilder =
@@ -591,6 +595,7 @@ public class SqlScriptPlanner {
                   new ArrayList<>(arguments.values()),
                   argumentIndexMap,
                   hintsAndDocs,
+                  mustDeclareTags && !tblFnStmt.isRelationship(),
                   errors);
         }
         fnBuilder.fullPath(tblFnStmt.getPath());
@@ -619,7 +624,14 @@ public class SqlScriptPlanner {
         var visibility = new AccessVisibility(access, hints.isTest(), true, isHidden);
 
         if (!shouldExcludeTestTable(hints)) {
-          addViewToDag(originalSql, hintsAndDocs, visibility, subscribingInclude, errors, sqrlEnv);
+          addViewToDag(
+              originalSql,
+              hintsAndDocs,
+              mustDeclareTags,
+              visibility,
+              subscribingInclude,
+              errors,
+              sqrlEnv);
         }
       }
     } else if (stmt instanceof SqrlNextBatch) {
@@ -635,18 +647,26 @@ public class SqlScriptPlanner {
     } else if (stmt instanceof FlinkSQLStatement flinkStmt) {
       var node = sqrlEnv.parseSQL(flinkStmt.sql().get());
       if (node instanceof SqlCreateView || node instanceof SqlAlterViewAs) {
-        // plan like other definitions from above
+        // plan like other definitions from above, but a Flink SQL statement has no doc string to
+        // declare its tags in, so the view only inherits them
         var visibility =
             new AccessVisibility(adjustAccess(AccessModifier.QUERY), false, true, false);
         addViewToDag(
-            flinkStmt.sql().get(), hintsAndDocs, visibility, Optional.empty(), errors, sqrlEnv);
+            flinkStmt.sql().get(),
+            hintsAndDocs,
+            false,
+            visibility,
+            Optional.empty(),
+            errors,
+            sqrlEnv);
       } else if (node instanceof SqlCreateTable) {
         sqrlEnv
             .createTable(
                 flinkStmt.sql().get(),
                 getMutationBuilder(hintsAndDocs),
                 scriptContext.mainModuleLoader().getSchemaLoader(),
-                hintsAndDocs)
+                hintsAndDocs,
+                errors)
             .ifPresent(tableAnalysis -> addSourceToDag(tableAnalysis, hintsAndDocs, sqrlEnv));
       } else if (node instanceof RichSqlInsert insert) {
         addInsert(insert, hintsAndDocs, sqrlEnv, errors);
@@ -667,6 +687,34 @@ public class SqlScriptPlanner {
   }
 
   /**
+   * The hints and doc string of a statement. A column expression extends the table definition it
+   * follows, so it keeps the hints and doc string of the definition.
+   */
+  private HintsAndDoc getStatementHintsAndDoc(
+      SQLStatement stmt,
+      Optional<PlannerHints> inheritedHints,
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorCollector errors) {
+
+    var hintsAndDoc = HintsAndDoc.EMPTY;
+    if (stmt instanceof SqrlAddColumnStatement statement) {
+      hintsAndDoc =
+          getHintsAndDoc(
+                  statement, Optional.of(tableDefinitionHintsAndDoc.hints()), sqrlEnv, errors)
+              .updateDocsIfAbsent(tableDefinitionHintsAndDoc.doc());
+
+    } else if (stmt instanceof SqrlStatement statement) {
+      hintsAndDoc = getHintsAndDoc(statement, inheritedHints, sqrlEnv, errors);
+    }
+
+    if (stmt instanceof StackableStatement) {
+      tableDefinitionHintsAndDoc = hintsAndDoc;
+    }
+
+    return hintsAndDoc;
+  }
+
+  /**
    * Adds a view to Flink and its table to the DAG. If the table fails before it is in the DAG, its
    * view is removed again, so that the statements that use it fail as knock-on errors instead of
    * being planned on a table that is not in the DAG.
@@ -674,11 +722,13 @@ public class SqlScriptPlanner {
   private void addViewToDag(
       String viewSql,
       HintsAndDoc hintsAndDoc,
+      boolean mustDeclareTags,
       AccessVisibility visibility,
       Optional<String> subscribingInclude,
       ErrorCollector errors,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
-    var tableAnalysis = sqrlEnv.addView(viewSql, hintsAndDoc, errors);
+
+    var tableAnalysis = sqrlEnv.addView(viewSql, hintsAndDoc, mustDeclareTags, errors);
     try {
       addTableToDag(tableAnalysis, hintsAndDoc, visibility, subscribingInclude, false, sqrlEnv);
     } catch (RuntimeException e) {
@@ -690,8 +740,13 @@ public class SqlScriptPlanner {
     }
   }
 
+  /** Parses the hints and doc string of a statement and validates the tags in the doc string. */
   private HintsAndDoc getHintsAndDoc(
-      SqrlStatement statement, Optional<PlannerHints> inheritedHints, ErrorCollector errors) {
+      SqrlStatement statement,
+      Optional<PlannerHints> inheritedHints,
+      Sqrl2FlinkSQLTranslator sqrlEnv,
+      ErrorCollector errors) {
+
     var comments = statement.getComments();
     var hints = PlannerHints.from(comments, inheritedHints, errors);
     var documentation =
@@ -702,6 +757,9 @@ public class SqlScriptPlanner {
                     .map(ParsedObject::get)
                     .map(String::trim)
                     .collect(Collectors.joining("\n")));
+
+    documentation.ifPresent(doc -> sqrlEnv.getTagAnalyzer().validateTags(doc, errors));
+
     return new HintsAndDoc(hints, documentation);
   }
 
@@ -1050,7 +1108,10 @@ public class SqlScriptPlanner {
               .map(
                   statement ->
                       getHintsAndDoc(
-                          statement, Optional.of(hintsAndDoc.hints()), flinkTable.errorCollector()))
+                          statement,
+                          Optional.of(hintsAndDoc.hints()),
+                          sqrlEnv,
+                          flinkTable.errorCollector()))
               .orElse(hintsAndDoc);
       try {
         var tableAnalysis =
@@ -1062,7 +1123,8 @@ public class SqlScriptPlanner {
                     importedHintsAndDoc,
                     scriptContext.isRootContext(),
                     getStandaloneInclude(object.table())),
-                importedHintsAndDoc);
+                importedHintsAndDoc,
+                flinkTable.errorCollector());
         importedHintsAndDoc.hints().updateColumnNamesHints(tableAnalysis::getField);
         addSourceToDag(tableAnalysis, importedHintsAndDoc, sqrlEnv);
         completeScript.append(tableAnalysis.getOriginalSql());
@@ -1309,6 +1371,7 @@ public class SqlScriptPlanner {
           errors)) {
         return;
       }
+      sqrlEnv.checkWriteTags(sinkTableId, List.of(inputNode.getTableAnalysis()), errors);
       exportNode =
           new ExportNode(
               stageAnalysis,
@@ -1347,7 +1410,8 @@ public class SqlScriptPlanner {
               .sqrlStatement()
               .map(
                   statement ->
-                      getHintsAndDoc(statement, Optional.empty(), flinkTable.errorCollector()))
+                      getHintsAndDoc(
+                          statement, Optional.empty(), sqrlEnv, flinkTable.errorCollector()))
               .orElse(HintsAndDoc.EMPTY);
       var mutationBuilder =
           sinkTable.table().external()
@@ -1383,8 +1447,16 @@ public class SqlScriptPlanner {
       try {
         addTableResult =
             sqrlEnv.addExternalExport(
-                tableNameModifier, flinkTable.sqlCreateTable, schemaLoader, mutationBuilder);
+                tableNameModifier,
+                flinkTable.sqlCreateTable,
+                schemaLoader,
+                mutationBuilder,
+                sinkHintsAndDoc,
+                flinkTable.errorCollector());
+
         var tableId = addTableResult.baseTableIdentifier();
+        sqrlEnv.checkWriteTags(tableId, List.of(inputNode.getTableAnalysis()), errors);
+
         exportNode =
             new ExportNode(
                 stageAnalysis,
@@ -1396,6 +1468,7 @@ public class SqlScriptPlanner {
       } catch (Throwable e) {
         throw ParsePosUtil.reportError(flinkTable.errorCollector, e, UnaryOperator.identity());
       }
+
       if (exportSchemaRef.get() != null) {
         FlinkTableBuilder tblBuilder = FlinkTableBuilder.toBuilder(addTableResult.createdTable());
         tblBuilder.addColumns(exportSchemaRef.get());
@@ -1427,6 +1500,7 @@ public class SqlScriptPlanner {
                 sinkTableId.getObjectName() + INSERT_SUFFIX + insertTableCounter.incrementAndGet()),
             hintsAndDocs,
             errors);
+    sqrlEnv.checkWriteTags(sinkTableId, inputTable.getFromTables(), errors);
     FlinkSqlNodes.qualifyIdentifier(
         (SqlIdentifier) insert.getTargetTableID(), sinkTableId.toList());
     var inputNode =

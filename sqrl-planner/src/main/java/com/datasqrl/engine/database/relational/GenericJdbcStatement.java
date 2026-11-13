@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Value;
 import org.apache.calcite.rel.type.RelDataType;
@@ -55,6 +56,9 @@ public class GenericJdbcStatement implements JdbcStatement {
   /** For VIEW statements, the names of the tables the view reads - nullable */
   @JsonIgnore List<String> referencedTables;
 
+  /** For VIEW statements, the effective tags by tag name - nullable */
+  @JsonIgnore Map<String, String> tags;
+
   public GenericJdbcStatement(String name, Type type, String sql) {
     this(name, type, sql, null, null);
   }
@@ -66,7 +70,7 @@ public class GenericJdbcStatement implements JdbcStatement {
       String description,
       RelDataType dataType,
       List<Field> fields) {
-    this(name, type, sql, description, dataType, fields, null, null);
+    this(name, type, sql, description, dataType, fields, null, null, null);
   }
 
   @JsonCreator

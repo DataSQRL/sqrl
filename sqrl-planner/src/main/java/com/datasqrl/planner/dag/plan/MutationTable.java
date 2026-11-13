@@ -20,6 +20,7 @@ import com.datasqrl.engine.ExecutableQuery;
 import com.datasqrl.engine.log.MutationEngine.MutationCreateTable;
 import com.datasqrl.engine.pipeline.ExecutionStage;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.planner.util.Documented;
 import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.server.ResolvedMetadata;
@@ -72,7 +73,10 @@ public class MutationTable implements ExecutableQuery, Documented {
   /** Whether this mutation should be exposed in the interface */
   boolean generateAccess;
 
+  /** The tags that the CREATE TABLE statement of the mutation declares */
+  @Default TableTags tags = TableTags.EMPTY;
+
   public MutationCreateTable getCreateTable() {
-    return createTable.withValueType(inputDataType);
+    return createTable.withValueType(inputDataType).withTags(tags);
   }
 }

@@ -46,6 +46,7 @@ import com.datasqrl.planner.dag.plan.MaterializationStagePlan.Query;
 import com.datasqrl.planner.parser.NoLocationStatementParserException;
 import com.datasqrl.planner.tables.FlinkConnectorConfigWrapper;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.server.MutationInsertType;
 import com.datasqrl.util.CalciteUtil;
 import com.datasqrl.util.StreamUtil;
@@ -369,6 +370,7 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       connectorConfig.put(CONNECTOR_TOPIC_KEY, topicName);
     }
     tableBuilder.setConnectorOptions(connectorConfig);
+    // A mutation table gets its tags later, see MutationCreateTable#withTags
     return new Table(
         topicName,
         tableBuilder.getTableName(),
@@ -377,7 +379,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         messageKey,
         relDataType,
         topicConfig,
-        standaloneInclude);
+        standaloneInclude,
+        tableAnalysis.map(TableAnalysis::getTags).orElse(TableTags.EMPTY));
   }
 
   @Override
@@ -567,7 +570,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             type,
             table.messageKeys(),
             messageSchema,
-            table.config()));
+            table.config(),
+            table.tags().toValueMap()));
   }
 
   private static KafkaIncludedTopicModel toIncludedTopic(Table table) {
@@ -586,7 +590,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       List<String> messageKeys,
       RelDataType valueType,
       Map<String, String> config,
-      Optional<String> standaloneInclude)
+      Optional<String> standaloneInclude,
+      TableTags tags)
       implements MutationCreateTable {
 
     @Override
@@ -599,7 +604,22 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
           messageKeys,
           inputValueType,
           config,
-          standaloneInclude);
+          standaloneInclude,
+          tags);
+    }
+
+    @Override
+    public MutationCreateTable withTags(TableTags tags) {
+      return new Table(
+          topicName,
+          tableName,
+          logicalName,
+          format,
+          messageKeys,
+          valueType,
+          config,
+          standaloneInclude,
+          tags);
     }
 
     @Override

@@ -44,6 +44,7 @@ class PackageJsonSchemaTest {
         "scriptApiWithOpenApiWithoutSchema.json",
         "scriptApiWithoutSchemaOrOpenApi.json",
         "compilerEndpointsOpsOnly.json",
+        "compilerTags.json",
         "validFlinkDeployment.json",
         "validPostgresDeployment.json",
         "validVertxDeployment.json",
@@ -71,6 +72,7 @@ class PackageJsonSchemaTest {
         "invalidEnumString.json",
         "invalidScriptFields.json",
         "invalidScriptApiFields.json",
+        "invalidCompilerTags.json",
       })
   void invalidConfigFile(String configFileName) {
     testForErrors(

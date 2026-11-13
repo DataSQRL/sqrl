@@ -32,6 +32,10 @@ import com.datasqrl.engine.database.relational.JdbcEngineCreateTable.Role;
 import com.datasqrl.engine.database.relational.JdbcPhysicalPlan;
 import com.datasqrl.engine.log.kafka.KafkaNewTopic;
 import com.datasqrl.engine.log.kafka.KafkaPhysicalPlan;
+import com.datasqrl.planner.analyzer.TableAnalysis;
+import com.datasqrl.planner.tags.TableTags;
+import com.datasqrl.planner.tags.TagDefinition;
+import com.datasqrl.planner.tags.TagValue;
 import com.datasqrl.util.SqrlObjectMapper;
 import java.time.Duration;
 import java.util.List;
@@ -129,7 +133,8 @@ class PlanModelSerializationTest {
             null,
             List.of(),
             null,
-            List.of("dev_customerspend_1", "dev_orders_2"));
+            List.of("dev_customerspend_1", "dev_orders_2"),
+            null);
     var plan = JdbcPhysicalPlan.builder().statement(view).tableIdMap(Map.of()).build();
 
     var viewModel = plan.toModel().statements().get(0);
@@ -137,6 +142,34 @@ class PlanModelSerializationTest {
     assertThat(viewModel.referencedTables()).containsExactly("dev_customerspend_1", "dev_orders_2");
     assertThat(viewModel.logicalName()).isNull();
     assertThat(viewModel.role()).isNull();
+  }
+
+  @Test
+  void givenViewWithTags_whenMapped_thenModelListsTagsAndSerializesThem() throws Exception {
+    var view =
+        new GenericJdbcStatement(
+            "Customers",
+            Type.VIEW,
+            "CREATE VIEW Customers",
+            null,
+            null,
+            List.of(),
+            null,
+            null,
+            Map.of("classification", "secret", "gdpr", "true"));
+    var untagged = new GenericJdbcStatement("Orders", Type.VIEW, "CREATE VIEW Orders");
+    var plan =
+        JdbcPhysicalPlan.builder().statement(view).statement(untagged).tableIdMap(Map.of()).build();
+
+    var model = plan.toModel();
+
+    assertThat(model.statements().get(0).tags())
+        .containsExactlyInAnyOrderEntriesOf(Map.of("classification", "secret", "gdpr", "true"));
+    assertThat(model.statements().get(1).tags()).isNull();
+    var json = SqrlObjectMapper.INSTANCE.writeValueAsString(model);
+    assertThat(json).contains("\"tags\":{").containsOnlyOnce("\"tags\"");
+    var roundTrip = SqrlObjectMapper.INSTANCE.readValue(json, JdbcPlanModel.class);
+    assertThat(roundTrip.statements().get(0).tags()).isEqualTo(model.statements().get(0).tags());
   }
 
   @Test
@@ -215,6 +248,32 @@ class PlanModelSerializationTest {
   }
 
   @Test
+  void givenCreateTableOfTaggedTable_whenMapped_thenModelListsTheTableTags() {
+    var pii = TagDefinition.of("pii", List.of("masked", "raw"), List.of());
+    var tableAnalysis =
+        TableAnalysis.buildPlaceholder().tags(TableTags.of(List.of(new TagValue(pii, 1)))).build();
+    var engineTable =
+        new JdbcEngineCreateTable(
+            "sqrl_dev_orders", "Orders", Role.MATERIALIZATION, null, null, tableAnalysis);
+    var createTable =
+        new GenericJdbcStatement(
+            "sqrl_dev_orders",
+            Type.TABLE,
+            "CREATE TABLE sqrl_dev_orders",
+            null,
+            null,
+            null,
+            engineTable,
+            null,
+            null);
+    var plan = JdbcPhysicalPlan.builder().statement(createTable).tableIdMap(Map.of()).build();
+
+    var model = plan.toModel();
+
+    assertThat(model.statements().get(0).tags()).containsExactly(Map.entry("pii", "raw"));
+  }
+
+  @Test
   void givenStatementJsonWithoutLogicalName_whenDeserialized_thenLogicalNameAndRoleAreNull()
       throws Exception {
     var model =
@@ -231,6 +290,64 @@ class PlanModelSerializationTest {
   }
 
   @Test
+  void givenMutationTableWithTags_whenMapped_thenModelListsTheTags() {
+    var pii = TagDefinition.of("pii", List.of("masked", "raw"), List.of());
+    var engineTable =
+        new JdbcEngineCreateTable(
+                "sqrl_dev_orders",
+                "Orders",
+                Role.MUTATION,
+                null,
+                null,
+                TableAnalysis.buildPlaceholder().build())
+            .withTags(TableTags.of(List.of(new TagValue(pii, 1))));
+    var createTable =
+        new GenericJdbcStatement(
+            "sqrl_dev_orders",
+            Type.TABLE,
+            "CREATE TABLE sqrl_dev_orders",
+            null,
+            null,
+            null,
+            (JdbcEngineCreateTable) engineTable,
+            null,
+            null);
+    var plan = JdbcPhysicalPlan.builder().statement(createTable).tableIdMap(Map.of()).build();
+
+    var model = plan.toModel();
+
+    assertThat(model.statements().get(0).tags()).containsExactly(Map.entry("pii", "raw"));
+  }
+
+  @Test
+  void givenTopicsWithAndWithoutTags_whenSerialized_thenOnlyTheTaggedTopicListsTags() {
+    var tagged =
+        new KafkaNewTopicModel(
+            "orders",
+            "Orders_1",
+            "Orders",
+            "flexible-json",
+            1,
+            (short) 1,
+            KafkaNewTopicModel.Type.MUTATION,
+            List.of(),
+            "",
+            Map.of(),
+            Map.of("pii", "raw"));
+    var untagged = new KafkaNewTopicModel("items", "Items_2", "Items", 1, (short) 1);
+    var plan =
+        KafkaPhysicalPlan.builder()
+            .topic(new KafkaNewTopic(tagged))
+            .topic(new KafkaNewTopic(untagged))
+            .build();
+
+    var json = SqrlObjectMapper.INSTANCE.valueToTree(plan.toModel());
+
+    assertThat(json.get("topics").get(0).get("tags").get("pii").asText()).isEqualTo("raw");
+    assertThat(json.get("topics").get(1).has("tags")).isFalse();
+  }
+
+  @Test
   void givenPrefixedKafkaTopic_whenSerialized_thenLogicalNameKeepsUnprefixedName() {
     var topic =
         new KafkaNewTopicModel(
@@ -243,6 +360,7 @@ class PlanModelSerializationTest {
             KafkaNewTopicModel.Type.MUTATION,
             List.of(),
             "",
+            Map.of(),
             Map.of());
     var testRunnerTopic = new KafkaNewTopicModel("test-orders", "test-orders");
     var plan =
@@ -357,6 +475,7 @@ class PlanModelSerializationTest {
             null,
             null,
             engineTable,
+            null,
             null);
     var plan = JdbcPhysicalPlan.builder().statement(table).tableIdMap(Map.of()).build();
 

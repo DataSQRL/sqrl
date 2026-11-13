@@ -40,6 +40,7 @@ import com.datasqrl.planner.hint.HintsAndDoc;
 import com.datasqrl.planner.hint.PrimaryKeyHint;
 import com.datasqrl.planner.hint.RowCountHint;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.util.Documented;
 import com.datasqrl.planner.util.Documented.Documentation;
 import com.datasqrl.util.CalciteUtil;
 import com.google.common.base.Preconditions;
@@ -145,6 +146,9 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
    * ordered by rowtime desc)
    */
   private boolean hasMostRecentDistinct = false;
+
+  /** Whether this query deduplicates its input by filtering on a partitioned row number */
+  private boolean isDeduplication = false;
 
   /** Whether this query preserves a base table from the input (FROM) */
   private boolean preservesBaseTable = true;
@@ -272,22 +276,27 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
 
     // The base table is the right-most table in the relational tree that has the same type as the
     // result
-    Optional<TableAnalysis> baseTable = Optional.empty();
+    var sameTypeSource =
+        Lists.reverse(sourceTables).stream()
+            .filter(AbstractAnalysis::hasRowType)
+            .filter(tbl -> tbl.getRowType().equals(originalRelnode.getRowType()))
+            .findFirst();
+
+    var baseTable =
+        sameTypeSource
+            .filter(tbl -> preservesBaseTable)
+            .map(TableOrFunctionAnalysis::getBaseTable)
+            .filter(tbl -> !Name.isHiddenString(tbl.getName()));
+
+    // A table without a doc string of its own that keeps the rows of its source table, filtered or
+    // deduplicated, takes the documentation (and tags) of the source, even if it is hidden
     Documentation documentation = hintsAndDoc.getDocumentation();
-    if (preservesBaseTable && !sourceTables.isEmpty()) {
-      baseTable =
-          Lists.reverse(sourceTables).stream()
-              .filter(AbstractAnalysis::hasRowType)
-              .filter(tbl -> tbl.getRowType().equals(originalRelnode.getRowType()))
-              .findFirst()
-              .map(TableOrFunctionAnalysis::getBaseTable);
-
-      // We inherit doc even if basetable is hidden
-      if (documentation.isEmpty() && baseTable.isPresent()) {
-        documentation = baseTable.get().getDocumentation();
-      }
-
-      baseTable = baseTable.filter(tbl -> !Name.isHiddenString(tbl.getName()));
+    if (documentation.isEmpty() && (preservesBaseTable || isDeduplication)) {
+      documentation =
+          sameTypeSource
+              .filter(Documented.class::isInstance)
+              .map(source -> ((Documented) source).getDocumentation())
+              .orElse(documentation);
     }
 
     var tableAnalysis =
@@ -574,6 +583,7 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             newPk = null; // Not all partition RexNodes are input refs
             isMostRecentDistinct = false;
           }
+          isDeduplication |= newPk != null;
           if (window.orderKeys.isEmpty()) {
             isMostRecentDistinct = false;
           } else {

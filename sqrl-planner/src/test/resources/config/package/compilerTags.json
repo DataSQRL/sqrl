@@ -1,0 +1,11 @@
+{
+  "version": "1",
+  "compiler": {
+    "tags": {
+      "classification": { "values": ["unclassified", "secret", "top_secret"] },
+      "pii": { "values": ["masked", "raw", "sensitive"] },
+      "gdpr": {},
+      "jurisdiction": { "required-columns": { "jurisdiction": "STRING" } }
+    }
+  }
+}

@@ -1,0 +1,6 @@
+/** Archive of customer emails @pii=raw @classification=confidential */
+/*+engine(kafka) */
+CREATE TABLE EmailArchive (
+  id BIGINT NOT NULL,
+  email STRING
+);
