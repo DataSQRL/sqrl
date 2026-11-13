@@ -82,7 +82,7 @@ class TagAnalyzerTest {
                     input("Orders", "@classification=top_secret @gdpr")))
             .build();
 
-    var tags = analyzer.analyze(table, List.of(), false, errors);
+    var tags = analyzer.analyze(table, false, errors);
 
     assertThat(tags.toValueMap())
         .containsExactly(
@@ -98,21 +98,18 @@ class TagAnalyzerTest {
             .documentation(DocStringParser.parse("Customers @classification=top_secret @pii=raw"))
             .build();
 
-    var tags = analyzer.analyze(table, List.of(), true, errors);
+    var tags = analyzer.analyze(table, true, errors);
 
     assertThat(tags).hasToString("@classification=top_secret @pii=raw");
     assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
   }
 
   @Test
-  void givenTagsInColumnDocsAndComments_whenAnalyze_thenTheyAreDeclared() {
-    var table =
-        table("MyTable")
-            .documentation(
-                DocStringParser.parse("Customers\n# Columns:\n- id: The id @classification=secret"))
-            .build();
+  void givenTagsInColumnDocsAndComments_whenDeclaredTags_thenTheyAreDeclared() {
+    var documentation =
+        DocStringParser.parse("Customers\n# Columns:\n- id: The id @classification=secret");
 
-    var tags = analyzer.analyze(table, List.of("Contact email @pii=raw"), false, errors);
+    var tags = analyzer.declaredTags(documentation, List.of("Contact email @pii=raw"));
 
     assertThat(tags).hasToString("@classification=secret @pii=raw");
   }
@@ -128,7 +125,7 @@ class TagAnalyzerTest {
             .documentation(DocStringParser.parse("Lower @classification=unclassified"))
             .build();
 
-    var tags = analyzer.analyze(table, List.of(), true, errors);
+    var tags = analyzer.analyze(table, true, errors);
 
     assertThat(messages())
         .containsExactly(
@@ -144,7 +141,7 @@ class TagAnalyzerTest {
   void givenTableThatNeedNotDeclare_whenAnalyze_thenCarriesInheritedTagsWithoutErrors() {
     var table = table("_Hidden").fromTables(List.of(input("Customers", "@pii=raw"))).build();
 
-    var tags = analyzer.analyze(table, List.of(), false, errors);
+    var tags = analyzer.analyze(table, false, errors);
 
     assertThat(tags).hasToString("@pii=raw");
     assertThat(errors.hasErrors()).isFalse();
@@ -159,7 +156,7 @@ class TagAnalyzerTest {
             .documentation(DocStringParser.parse("Counts @classification=secret @gdpr"))
             .build();
 
-    var tags = analyzer.analyze(table, List.of(), true, errors);
+    var tags = analyzer.analyze(table, true, errors);
 
     assertThat(tags).hasToString("@classification=secret @gdpr");
     assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();
@@ -173,7 +170,7 @@ class TagAnalyzerTest {
             .hints(hints("/*+declassify(pii, gdpr, nope) */"))
             .build();
 
-    analyzer.analyze(table, List.of(), true, errors);
+    analyzer.analyze(table, true, errors);
 
     assertThat(all())
         .extracting(ErrorMessage::getSeverity, ErrorMessage::getMessage)
@@ -191,18 +188,13 @@ class TagAnalyzerTest {
   void givenTagWithRequiredColumns_whenAnalyze_thenChecksTheColumns() {
     List<TableOrFunctionAnalysis> inputs = List.of(input("Customers", "@jurisdiction"));
 
+    analyzer.analyze(table("Missing", "id", INT).fromTables(inputs).build(), false, errors);
     analyzer.analyze(
-        table("Missing", "id", INT).fromTables(inputs).build(), List.of(), false, errors);
-    analyzer.analyze(
-        table("WrongType", "JURISDICTION", INT).fromTables(inputs).build(),
-        List.of(),
-        false,
-        errors);
+        table("WrongType", "JURISDICTION", INT).fromTables(inputs).build(), false, errors);
     analyzer.analyze(
         table("Valid", "Jurisdiction", TYPES.createSqlType(SqlTypeName.VARCHAR, 3))
             .fromTables(inputs)
             .build(),
-        List.of(),
         false,
         errors);
 
@@ -222,7 +214,7 @@ class TagAnalyzerTest {
             .hints(hints("/*+declassify(jurisdiction) */"))
             .build();
 
-    var tags = analyzer.analyze(table, List.of(), true, errors);
+    var tags = analyzer.analyze(table, true, errors);
 
     assertThat(tags.isEmpty()).isTrue();
     assertThat(errors.hasErrors()).isFalse();
@@ -230,10 +222,10 @@ class TagAnalyzerTest {
 
   @Test
   void givenDataWithUndeclaredTags_whenCheckWrite_thenReportsTheTags() {
-    var target = table("Copy").tags(DEFINITIONS.parse("@pii=masked", invalid -> {})).build();
+    var declared = DEFINITIONS.parse("@pii=masked", invalid -> {});
     var inputs = List.of(input("Customers", "@pii=raw @gdpr"));
 
-    analyzer.checkWrite(target, inputs, errors);
+    analyzer.checkWrite("Copy", declared, inputs, errors);
 
     assertThat(messages())
         .containsExactly(
@@ -251,7 +243,7 @@ class TagAnalyzerTest {
             .hints(hints("/*+declassify(pii) */"))
             .build();
 
-    var tags = new TagAnalyzer(TagDefinitions.DISABLED).analyze(table, List.of(), true, errors);
+    var tags = new TagAnalyzer(TagDefinitions.DISABLED).analyze(table, true, errors);
 
     assertThat(tags.isEmpty()).isTrue();
     assertThat(errors.hasErrorsWarningsOrNotices()).isFalse();

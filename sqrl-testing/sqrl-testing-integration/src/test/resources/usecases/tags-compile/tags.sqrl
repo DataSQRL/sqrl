@@ -64,3 +64,19 @@ INSERT INTO CustomerContacts SELECT id, email FROM CustomersStream;
 
 /** Contacts with an email @pii=raw @classification=confidential @gdpr */
 ContactEmails := SELECT id, email FROM CustomerContacts WHERE email IS NOT NULL;
+
+-- The topics of a mutation table and of a table that subscribes to it list their tags
+/** Messages that customers send @pii=raw @classification=confidential */
+/*+engine(kafka) */
+CREATE TABLE CustomerMessages (
+  customer_id BIGINT NOT NULL,
+  message STRING NOT NULL COMMENT 'The message text @gdpr',
+  event_time TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+);
+
+/** New messages of customers @pii=raw @classification=confidential @gdpr */
+NewCustomerMessages := SUBSCRIBE SELECT customer_id, message, event_time FROM CustomerMessages;
+
+-- An internal table that EXPORT writes into declares the tags of the exported data
+_ArchivedEmails := SELECT id, email FROM CustomersStream;
+EXPORT _ArchivedEmails TO sinks.archive.EmailArchive;

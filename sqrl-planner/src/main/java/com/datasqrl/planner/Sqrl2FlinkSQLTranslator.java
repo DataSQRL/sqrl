@@ -53,6 +53,7 @@ import com.datasqrl.planner.tables.FlinkTableBuilder;
 import com.datasqrl.planner.tables.SourceSinkTableAnalysis;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
+import com.datasqrl.planner.tags.TableTags;
 import com.datasqrl.planner.tags.TagAnalyzer;
 import com.datasqrl.planner.tags.TagDefinitions;
 import com.datasqrl.server.MetadataType;
@@ -547,7 +548,6 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       var tableAnalysis =
           buildWithTags(
               viewAnalysis.tableAnalysis().objectIdentifier(identifier).originalSql(originalSql),
-              List.of(),
               mustDeclareTags,
               errors);
       tableLookup.registerTable(tableAnalysis);
@@ -609,28 +609,26 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             .originalSql(originalSql);
 
     // The query carries the tags it inherits, the target table must declare them (checkWriteTags)
-    return buildWithTags(builder, List.of(), false, errors);
+    return buildWithTags(builder, false, errors);
   }
 
   /**
    * Builds the table analysis with its effective tags.
    *
-   * @param columnComments the column comments of a created table, which declare tags too
    * @param mustDeclareTags whether the table must declare the tags it inherits
    */
   private TableAnalysis buildWithTags(
-      TableAnalysis.TableAnalysisBuilder builder,
-      List<String> columnComments,
-      boolean mustDeclareTags,
-      ErrorCollector errors) {
+      TableAnalysis.TableAnalysisBuilder builder, boolean mustDeclareTags, ErrorCollector errors) {
 
-    var tags = tagAnalyzer.analyze(builder.build(), columnComments, mustDeclareTags, errors);
+    var tags = tagAnalyzer.analyze(builder.build(), mustDeclareTags, errors);
     return builder.tags(tags).build();
   }
 
   /**
    * Validates that a created table declares the tags of the data that {@code INSERT INTO} or {@code
-   * EXPORT} writes into it, if other tables can read from it, see {@link TagAnalyzer#checkWrite}.
+   * EXPORT} writes into it, see {@link TagAnalyzer#checkWrite}. Only tables that other tables read
+   * or that the pipeline manages, i.e. mutation tables, are checked: the data written into an
+   * external table that nothing reads leaves the pipeline.
    *
    * @param tableId the created table that is written into
    * @param inputs the tables the written data is computed from
@@ -640,9 +638,12 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       List<? extends TableOrFunctionAnalysis> inputs,
       ErrorCollector errors) {
 
-    var readableTable = tableLookup.lookupView(tableId);
-    if (readableTable != null) {
-      tagAnalyzer.checkWrite(readableTable, inputs, errors);
+    var table = tableLookup.lookupSourceTable(tableId);
+    var mutation = table.getSourceSinkTable().map(SourceSinkTableAnalysis::mutationDefinition);
+    if (mutation.isPresent() || tableLookup.lookupView(tableId) != null) {
+      // The name of a mutation table is the name in its statement, without an export suffix
+      var name = mutation.map(m -> m.getName().getDisplay()).orElse(table.getName());
+      tagAnalyzer.checkWrite(name, table.getTags(), inputs, errors);
     }
   }
 
@@ -692,7 +693,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     tblBuilder.collapsedRelnode(updateParameters);
     tblBuilder.objectIdentifier(identifier);
     tblBuilder.originalSql(originalSql);
-    var tableAnalysis = buildWithTags(tblBuilder, List.of(), mustDeclareTags, errors);
+    var tableAnalysis = buildWithTags(tblBuilder, mustDeclareTags, errors);
     // Build table function
     return SqrlTableFunction.builder()
         .functionAnalysis(tableAnalysis)
@@ -730,7 +731,6 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
                 .documentation(hintsAndDoc.getDocumentation())
                 .errors(errors)
                 .fromTables(fromTables),
-            List.of(),
             mustDeclareTags,
             errors);
 
@@ -874,8 +874,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       HintsAndDoc hintsAndDoc,
       ErrorCollector errors) {
     return addSourceTable(
-        addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder),
-        hintsAndDoc,
+        addTable(
+            tableNameModifier, tableDefinition, schemaLoader, mutationBuilder, hintsAndDoc, errors),
         errors);
   }
 
@@ -883,9 +883,12 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       Function<String, String> tableNameModifier,
       String tableDefinition,
       SchemaLoader schemaLoader,
-      Optional<MutationBuilder> mutationBuilder) {
+      Optional<MutationBuilder> mutationBuilder,
+      HintsAndDoc hintsAndDoc,
+      ErrorCollector errors) {
 
-    return addTable(tableNameModifier, tableDefinition, schemaLoader, mutationBuilder);
+    return addTable(
+        tableNameModifier, tableDefinition, schemaLoader, mutationBuilder, hintsAndDoc, errors);
   }
 
   public Optional<TableAnalysis> createTable(
@@ -894,17 +897,23 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       SchemaLoader schemaLoader,
       HintsAndDoc hintsAndDoc,
       ErrorCollector errors) {
-    var result = addTable(Function.identity(), tableDefinition, schemaLoader, mutationBuilder);
-    hintsAndDoc = updateDocumentationFromLike(result, hintsAndDoc);
-    if (result.isSourceTable()) return Optional.of(addSourceTable(result, hintsAndDoc, errors));
+    var result =
+        addTable(
+            Function.identity(),
+            tableDefinition,
+            schemaLoader,
+            mutationBuilder,
+            hintsAndDoc,
+            errors);
+    if (result.isSourceTable()) return Optional.of(addSourceTable(result, errors));
     else return Optional.empty();
   }
 
   private HintsAndDoc updateDocumentationFromLike(
-      AddTableResult addResult, HintsAndDoc hintsAndDoc) {
-    createTableDocumentation.put(addResult.baseTableIdentifier, hintsAndDoc.doc());
+      ObjectIdentifier tableId, SqlCreateTable createdTable, HintsAndDoc hintsAndDoc) {
+    createTableDocumentation.put(tableId, hintsAndDoc.doc());
     // check if we should inherit doc-string from LIKE table
-    if (addResult.createdTable instanceof SqlCreateTableLike createTableLike) {
+    if (createdTable instanceof SqlCreateTableLike createTableLike) {
       var sourceTable = createTableLike.getTableLike().getSourceTable();
       ObjectIdentifier oid = qualifyIdentifier(sourceTable);
       if (createTableDocumentation.containsKey(oid)) {
@@ -936,17 +945,16 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    * because of that repetition. By adding a view on top, we get a stable reference to the expanded
    * table that we can add to the tableLookup for resolution.
    *
-   * <p>The tags of the table are declared in its doc string and column comments.
+   * <p>The view inherits the tags of the created table.
    *
    * @param addResult
    * @return
    */
-  private TableAnalysis addSourceTable(
-      AddTableResult addResult, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
+  private TableAnalysis addSourceTable(AddTableResult addResult, ErrorCollector errors) {
 
     var view =
         createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
-    var viewAnalysis = analyzeView(view, false, hintsAndDoc, ErrorCollector.root());
+    var viewAnalysis = analyzeView(view, false, addResult.hintsAndDoc, ErrorCollector.root());
     var tableBuilder = viewAnalysis.tableAnalysis();
     tableBuilder
         .objectIdentifier(addResult.baseTableIdentifier)
@@ -958,18 +966,9 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       relNode = relNode.getInput(0);
     }
 
-    // Validate the comments of the declared columns only, since the comments that a LIKE clause
-    // copies are validated on the table that declares them
-    addResult.createdTable().getColumnList().stream()
-        .map(column -> ((SqlTableColumn) column).getComment())
-        .forEach(comment -> tagAnalyzer.validateTags(comment, errors));
-
     var tableAnalysis =
         buildWithTags(
-            tableBuilder.originalRelnode(relNode).collapsedRelnode(relNode),
-            addResult.columnComments(),
-            false,
-            errors);
+            tableBuilder.originalRelnode(relNode).collapsedRelnode(relNode), false, errors);
 
     tableLookup.registerTable(tableAnalysis);
 
@@ -983,7 +982,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       TableAnalysis tableAnalysis,
       SqlCreateTable createdTable,
       String completeCreateTableSql,
-      List<String> columnComments) {}
+      HintsAndDoc hintsAndDoc) {}
 
   /**
    * Adds a table to Flink and analyzes the table for schema and primary key definition. If the
@@ -994,13 +993,17 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    * @param createTableSql
    * @param schemaLoader
    * @param mutationBuilder
+   * @param hintsAndDoc the hints and doc string of the statement
    * @return
    */
   private AddTableResult addTable(
       Function<String, String> tableNameModifier,
       String createTableSql,
       SchemaLoader schemaLoader,
-      Optional<MutationBuilder> mutationBuilder) {
+      Optional<MutationBuilder> mutationBuilder,
+      HintsAndDoc hintsAndDoc,
+      ErrorCollector errors) {
+
     var tableSqlNode = parseSQL(createTableSql);
     checkArgument(tableSqlNode instanceof SqlCreateTable, "Expected CREATE TABLE statement");
     var tableDefinition = FlinkSqlNodes.resolveTableProperties((SqlCreateTable) tableSqlNode);
@@ -1062,6 +1065,9 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
 
     // Create table analysis
     var flinkSchema = tableOp.getCatalogTable().getResolvedSchema();
+    var tableId = tableOp.getTableIdentifier();
+    var tableHintsAndDoc = updateDocumentationFromLike(tableId, fullTable, hintsAndDoc);
+    var tags = getDeclaredTags(fullTable, flinkSchema, tableHintsAndDoc, errors);
     // Map primary key
     var pk =
         flinkSchema
@@ -1108,8 +1114,8 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       }
       mutationBld.inputDataType(inputType.build());
       mutationBld.outputDataType(outputType.build());
+      mutationBld.tags(tags);
     }
-    ObjectIdentifier tableId = tableOp.getTableIdentifier();
     var connector =
         new FlinkConnectorConfigWrapper(
             tableOp.getCatalogTable().getOptions(),
@@ -1120,12 +1126,10 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             new SourceSinkTableAnalysis(
                 connector, flinkSchema, mutationBld != null ? mutationBld.build() : null),
             connector.getTableType(),
-            pk);
+            pk,
+            tags);
     tableLookup.registerTable(tableAnalysis);
     completeCreateTableSql += RelToFlinkSql.convertToString(fullTable);
-    // Includes the comments of the columns that a LIKE clause copies
-    var columnComments =
-        flinkSchema.getColumns().stream().flatMap(column -> column.getComment().stream()).toList();
     return new AddTableResult(
         finalTableName,
         tableId,
@@ -1133,7 +1137,29 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
         tableAnalysis,
         fullTable,
         completeCreateTableSql,
-        columnComments);
+        tableHintsAndDoc);
+  }
+
+  /**
+   * The tags that a {@code CREATE TABLE} statement declares in its doc string and column comments,
+   * including the comments of the columns that a LIKE clause copies. Only the comments of the
+   * columns that the statement declares are validated, since the comments that a LIKE clause copies
+   * are validated on the table that declares them.
+   */
+  private TableTags getDeclaredTags(
+      SqlCreateTable createdTable,
+      ResolvedSchema schema,
+      HintsAndDoc hintsAndDoc,
+      ErrorCollector errors) {
+
+    createdTable.getColumnList().stream()
+        .map(column -> ((SqlTableColumn) column).getComment())
+        .forEach(comment -> tagAnalyzer.validateTags(comment, errors));
+
+    var columnComments =
+        schema.getColumns().stream().flatMap(column -> column.getComment().stream()).toList();
+
+    return tagAnalyzer.declaredTags(hintsAndDoc.getDocumentation(), columnComments);
   }
 
   public ObjectIdentifier createSinkTable(FlinkTableBuilder tableBuilder) {

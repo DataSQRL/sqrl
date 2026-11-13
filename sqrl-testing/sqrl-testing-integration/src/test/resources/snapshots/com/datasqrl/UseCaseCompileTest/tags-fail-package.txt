@@ -152,3 +152,17 @@ ApplicationContacts := SELECT customer_id AS id, CAST(NULL AS STRING) AS email F
 EXPORT ApplicationContacts TO CustomerContacts;
 ^
 
+[FATAL] Table [EmailArchive] must declare tag [@classification=confidential] inherited from [CustomerEmails]: declare it in the doc string of the table
+in script:tags.sqrl [67:1]:
+EXPORT ApplicationContacts TO CustomerContacts;
+
+EXPORT CustomerEmails TO sinks.archive.EmailArchive;
+^
+
+[FATAL] Table [EmailArchive] must declare tag [@pii=raw] inherited from [CustomerEmails]: declare it in the doc string of the table
+in script:tags.sqrl [67:1]:
+EXPORT ApplicationContacts TO CustomerContacts;
+
+EXPORT CustomerEmails TO sinks.archive.EmailArchive;
+^
+

@@ -366,6 +366,24 @@ DataSQRL's authoritative API model is GraphQL; REST and MCP are generated from i
 
 `add-prefix` prefixes generated operation names to avoid collisions. `max-result-depth` controls generated REST/MCP result traversal depth, `default-limit` is the generated query limit, and `paginated-results: true` wraps multi-row query results in a page with pagination metadata.
 
+### Tags (`compiler.tags`)
+
+Configure tags only when the requirements ask the compiler to enforce data classification or similar tags, and use the tag names and values they define. When `compiler.tags` is present, the compiler validates the `@name` and `@name=value` tags in doc strings and propagates them from the tables a query reads to the table it defines. Without it, doc strings are plain text.
+
+```json
+{
+  "compiler": {
+    "tags": {
+      "classification": { "values": ["unclassified", "secret", "top_secret"] },
+      "gdpr": {},
+      "jurisdiction": { "required-columns": { "jurisdiction": "STRING" } }
+    }
+  }
+}
+```
+
+Each key is a tag name. `values` lists the allowed values from lowest to highest; a tag without `values`, like `gdpr`, is a boolean tag that is written `@gdpr`. `required-columns` maps each column that every table carrying the tag must have to its type. Names and values may only contain letters, digits, underscores and dashes, and are case-insensitive. Put the tags in the shared base: combined package files merge them per tag. To write tags and `declassify` hints in scripts, invoke the `/implement-sqrl` skill (Tags in doc-strings). The compiler lists the tags of every table in `build/pipeline_explain.txt` and in the deployment plans of the database and Kafka.
+
 ## Environment Variables (`${VAR}`)
 
 `${NAME}` is a normal environment-variable template; `${NAME:-fallback}` and `${NAME:=fallback}` both use `fallback` when `NAME` is absent. In supported compile-time fields, a present value is resolved and can be written into `build/` or `build/deploy/`; otherwise the normal template remains for runtime resolution. Do not use this form for a credential that must stay out of compile artifacts.

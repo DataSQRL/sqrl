@@ -188,7 +188,8 @@ public class TableAnalysis implements TableOrFunctionAnalysis, Documented {
       @NonNull ObjectIdentifier identifier,
       @NonNull SourceSinkTableAnalysis sourceTable,
       @NonNull TableType type,
-      @NonNull PrimaryKeyMap primaryKey) {
+      @NonNull PrimaryKeyMap primaryKey,
+      @NonNull TableTags tags) {
     return TableAnalysis.builder()
         .objectIdentifier(identifier)
         .collapsedRelnode(null)
@@ -197,6 +198,7 @@ public class TableAnalysis implements TableOrFunctionAnalysis, Documented {
         .primaryKey(primaryKey)
         .sourceSinkTable(Optional.of(sourceTable))
         .streamRoot(null)
+        .tags(tags)
         .build();
   }
 

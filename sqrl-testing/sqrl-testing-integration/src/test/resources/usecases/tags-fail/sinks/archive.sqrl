@@ -1,0 +1,6 @@
+/** Archive of customer emails that doesn't declare the tags of the data exported into it */
+/*+engine(kafka) */
+CREATE TABLE EmailArchive (
+  id BIGINT NOT NULL,
+  email STRING
+);

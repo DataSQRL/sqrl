@@ -63,3 +63,5 @@ INSERT INTO CustomerContacts SELECT id, email FROM Customers;
 ApplicationContacts := SELECT customer_id AS id, CAST(NULL AS STRING) AS email FROM Applications;
 
 EXPORT ApplicationContacts TO CustomerContacts;
+
+EXPORT CustomerEmails TO sinks.archive.EmailArchive;

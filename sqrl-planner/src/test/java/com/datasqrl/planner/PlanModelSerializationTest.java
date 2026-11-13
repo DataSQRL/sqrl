@@ -290,6 +290,64 @@ class PlanModelSerializationTest {
   }
 
   @Test
+  void givenMutationTableWithTags_whenMapped_thenModelListsTheTags() {
+    var pii = TagDefinition.of("pii", List.of("masked", "raw"), List.of());
+    var engineTable =
+        new JdbcEngineCreateTable(
+                "sqrl_dev_orders",
+                "Orders",
+                Role.MUTATION,
+                null,
+                null,
+                TableAnalysis.buildPlaceholder().build())
+            .withTags(TableTags.of(List.of(new TagValue(pii, 1))));
+    var createTable =
+        new GenericJdbcStatement(
+            "sqrl_dev_orders",
+            Type.TABLE,
+            "CREATE TABLE sqrl_dev_orders",
+            null,
+            null,
+            null,
+            (JdbcEngineCreateTable) engineTable,
+            null,
+            null);
+    var plan = JdbcPhysicalPlan.builder().statement(createTable).tableIdMap(Map.of()).build();
+
+    var model = plan.toModel();
+
+    assertThat(model.statements().get(0).tags()).containsExactly(Map.entry("pii", "raw"));
+  }
+
+  @Test
+  void givenTopicsWithAndWithoutTags_whenSerialized_thenOnlyTheTaggedTopicListsTags() {
+    var tagged =
+        new KafkaNewTopicModel(
+            "orders",
+            "Orders_1",
+            "Orders",
+            "flexible-json",
+            1,
+            (short) 1,
+            KafkaNewTopicModel.Type.MUTATION,
+            List.of(),
+            "",
+            Map.of(),
+            Map.of("pii", "raw"));
+    var untagged = new KafkaNewTopicModel("items", "Items_2", "Items", 1, (short) 1);
+    var plan =
+        KafkaPhysicalPlan.builder()
+            .topic(new KafkaNewTopic(tagged))
+            .topic(new KafkaNewTopic(untagged))
+            .build();
+
+    var json = SqrlObjectMapper.INSTANCE.valueToTree(plan.toModel());
+
+    assertThat(json.get("topics").get(0).get("tags").get("pii").asText()).isEqualTo("raw");
+    assertThat(json.get("topics").get(1).has("tags")).isFalse();
+  }
+
+  @Test
   void givenPrefixedKafkaTopic_whenSerialized_thenLogicalNameKeepsUnprefixedName() {
     var topic =
         new KafkaNewTopicModel(
@@ -302,6 +360,7 @@ class PlanModelSerializationTest {
             KafkaNewTopicModel.Type.MUTATION,
             List.of(),
             "",
+            Map.of(),
             Map.of());
     var testRunnerTopic = new KafkaNewTopicModel("test-orders", "test-orders");
     var plan =

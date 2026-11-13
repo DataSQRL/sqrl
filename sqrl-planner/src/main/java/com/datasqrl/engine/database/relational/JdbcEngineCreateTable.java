@@ -19,12 +19,16 @@ import com.datasqrl.engine.database.EngineCreateTable;
 import com.datasqrl.engine.log.MutationEngine.MutationCreateTable;
 import com.datasqrl.planner.analyzer.TableAnalysis;
 import com.datasqrl.planner.tables.FlinkTableBuilder;
+import com.datasqrl.planner.tags.TableTags;
 import java.util.Map;
 import org.apache.calcite.rel.type.RelDataType;
 
 /**
  * For the JDBC database engines, we just keep track of the schema data so we can plan them later in
  * the plan method.
+ *
+ * @param tags the effective tags of the table, those of its table analysis unless a mutation table
+ *     sets them with {@link #withTags}
  */
 public record JdbcEngineCreateTable(
     String tableName,
@@ -32,8 +36,26 @@ public record JdbcEngineCreateTable(
     Role role,
     FlinkTableBuilder table,
     RelDataType datatype,
-    TableAnalysis tableAnalysis)
+    TableAnalysis tableAnalysis,
+    TableTags tags)
     implements EngineCreateTable, MutationCreateTable {
+
+  public JdbcEngineCreateTable(
+      String tableName,
+      String logicalName,
+      Role role,
+      FlinkTableBuilder table,
+      RelDataType datatype,
+      TableAnalysis tableAnalysis) {
+    this(
+        tableName,
+        logicalName,
+        role,
+        table,
+        datatype,
+        tableAnalysis,
+        tableAnalysis == null ? TableTags.EMPTY : tableAnalysis.getTags());
+  }
 
   public enum Role {
     MUTATION,
@@ -41,13 +63,20 @@ public record JdbcEngineCreateTable(
   }
 
   public JdbcEngineCreateTable withRole(Role role) {
-    return new JdbcEngineCreateTable(tableName, logicalName, role, table, datatype, tableAnalysis);
+    return new JdbcEngineCreateTable(
+        tableName, logicalName, role, table, datatype, tableAnalysis, tags);
   }
 
   @Override
   public MutationCreateTable withValueType(RelDataType inputValueType) {
     return new JdbcEngineCreateTable(
-        tableName, logicalName, role, table, inputValueType, tableAnalysis);
+        tableName, logicalName, role, table, inputValueType, tableAnalysis, tags);
+  }
+
+  @Override
+  public MutationCreateTable withTags(TableTags tags) {
+    return new JdbcEngineCreateTable(
+        tableName, logicalName, role, table, datatype, tableAnalysis, tags);
   }
 
   @Override

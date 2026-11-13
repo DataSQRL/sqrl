@@ -35,8 +35,8 @@ import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
  *
  * <ul>
  *   <li>The <b>inherited</b> tags are the tags of all input tables, with the highest value per tag.
- *   <li>The <b>declared</b> tags are the tags in the table's documentation and, for a created
- *       table, in its column comments.
+ *   <li>The <b>declared</b> tags are the tags in the table's documentation. A created table
+ *       declares tags in its column comments too, see {@link #declaredTags}.
  *   <li>The <b>effective</b> tags are the inherited tags that are not declassified with the {@code
  *       declassify} hint, combined with the declared tags, with the highest value per tag.
  *       Downstream tables inherit the effective tags, and the deployment assets list them.
@@ -64,22 +64,17 @@ public class TagAnalyzer {
    * declares the tags it inherits and has the columns its tags require.
    *
    * @param table the analyzed table
-   * @param columnComments the column comments of a created table, which declare tags too
    * @param mustDeclare whether the table must declare the tags it inherits
    * @return the effective tags of the table
    */
-  public TableTags analyze(
-      TableAnalysis table,
-      List<String> columnComments,
-      boolean mustDeclare,
-      ErrorCollector errors) {
+  public TableTags analyze(TableAnalysis table, boolean mustDeclare, ErrorCollector errors) {
 
     if (!definitions.isEnabled()) {
       return TableTags.EMPTY;
     }
 
     errors = errors.abortOnFatal(false);
-    var declared = declaredTags(table.getDocumentation(), columnComments);
+    var declared = declaredTags(table.getDocumentation(), List.of());
     var inherited = inheritedTags(table.getFromTables());
     var required = inherited.without(declassifiedTags(table, inherited, errors));
 
@@ -95,26 +90,31 @@ public class TagAnalyzer {
 
   /**
    * Validates that a table declares the tags of the data that {@code INSERT INTO} or {@code EXPORT}
-   * writes into it, since the tables reading from it only inherit its declared tags.
+   * writes into it, since its deployment and the tables reading from it only have its declared
+   * tags.
    *
-   * @param target the table that is written into
+   * @param table the name of the table that is written into
+   * @param declared the tags that the table declares
    * @param inputs the tables the written data is computed from
    */
   public void checkWrite(
-      TableAnalysis target, List<? extends TableOrFunctionAnalysis> inputs, ErrorCollector errors) {
+      String table,
+      TableTags declared,
+      List<? extends TableOrFunctionAnalysis> inputs,
+      ErrorCollector errors) {
 
     if (definitions.isEnabled()) {
       checkDeclared(
-          target.getName(),
-          inheritedTags(inputs),
-          target.getTags(),
-          inputs,
-          false,
-          errors.abortOnFatal(false));
+          table, inheritedTags(inputs), declared, inputs, false, errors.abortOnFatal(false));
     }
   }
 
-  private TableTags declaredTags(Documentation documentation, List<String> columnComments) {
+  /**
+   * The tags that a table declares in its documentation and, for a created table, in its column
+   * comments. Invalid tags are ignored, since {@link #validateTags} reports them where they are
+   * written.
+   */
+  public TableTags declaredTags(Documentation documentation, List<String> columnComments) {
     return Stream.of(
             Stream.ofNullable(documentation.docString()),
             documentation.columnDocs().values().stream(),

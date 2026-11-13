@@ -1447,8 +1447,16 @@ public class SqlScriptPlanner {
       try {
         addTableResult =
             sqrlEnv.addExternalExport(
-                tableNameModifier, flinkTable.sqlCreateTable, schemaLoader, mutationBuilder);
+                tableNameModifier,
+                flinkTable.sqlCreateTable,
+                schemaLoader,
+                mutationBuilder,
+                sinkHintsAndDoc,
+                flinkTable.errorCollector());
+
         var tableId = addTableResult.baseTableIdentifier();
+        sqrlEnv.checkWriteTags(tableId, List.of(inputNode.getTableAnalysis()), errors);
+
         exportNode =
             new ExportNode(
                 stageAnalysis,
@@ -1460,6 +1468,7 @@ public class SqlScriptPlanner {
       } catch (Throwable e) {
         throw ParsePosUtil.reportError(flinkTable.errorCollector, e, UnaryOperator.identity());
       }
+
       if (exportSchemaRef.get() != null) {
         FlinkTableBuilder tblBuilder = FlinkTableBuilder.toBuilder(addTableResult.createdTable());
         tblBuilder.addColumns(exportSchemaRef.get());

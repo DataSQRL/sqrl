@@ -34,6 +34,24 @@ type CustomerEmails {
   email: String!
 }
 
+"Messages that customers send @pii=raw @classification=confidential"
+type CustomerMessages {
+  customer_id: Long!
+  message: String!
+  event_time: DateTime
+}
+
+input CustomerMessagesInput {
+  customer_id: Long!
+  message: String!
+}
+
+type CustomerMessagesResultOutput {
+  customer_id: Long!
+  message: String!
+  event_time: DateTime
+}
+
 "Number of customers per first name"
 type CustomerNameCounts {
   first_name: String!
@@ -92,6 +110,11 @@ scalar LocalTime
 "A 64-bit signed integer"
 scalar Long
 
+type Mutation {
+  "Messages that customers send @pii=raw @classification=confidential"
+  CustomerMessages(event: CustomerMessagesInput!): CustomerMessagesResultOutput!
+}
+
 type Query {
   Applications(limit: Int = 10, offset: Int = 0): [Applications!]
   "Loan applications @financial @classification=internal"
@@ -101,6 +124,8 @@ type Query {
   "Contacts written from the customers @pii=raw @classification=confidential"
   CustomerContacts(limit: Int = 10, offset: Int = 0): [CustomerContacts!]
   CustomerEmails(limit: Int = 10, offset: Int = 0): [CustomerEmails!]
+  "Messages that customers send @pii=raw @classification=confidential"
+  CustomerMessages(limit: Int = 10, offset: Int = 0): [CustomerMessages!]
   "Number of customers per first name"
   CustomerNameCounts(limit: Int = 10, offset: Int = 0): [CustomerNameCounts!]
   Customers(limit: Int = 10, offset: Int = 0): [Customers!]
@@ -115,6 +140,11 @@ type Query {
   LoanTotals(limit: Int = 10, offset: Int = 0): [LoanTotals!]
   "Applications of the given customer @financial @classification=internal"
   CustomerApplications(customerId: Long!, limit: Int = 10, offset: Int = 0): [Applications!]
+}
+
+type Subscription {
+  "New messages of customers @pii=raw @classification=confidential @gdpr"
+  NewCustomerMessages: CustomerMessages
 }
 
 enum _McpMethodType {
@@ -281,6 +311,25 @@ Annotations:
 Table CustomerEmails (postgres):
  - primary key: id
 
+=== CustomerMessages
+ID:          default_catalog.default_database.CustomerMessages
+Type:        stream
+Stage:       flink
+Tags:        classification=confidential, gdpr=true, pii=raw
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - customer_id: BIGINT NOT NULL
+ - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.CustomerMessages__base
+--- physical ---
+Table CustomerMessages (postgres):
+ - primary key: __pk_hash (generated hash key)
+
 === CustomerNameCounts
 ID:          default_catalog.default_database.CustomerNameCounts
 Type:        state
@@ -441,6 +490,22 @@ Inputs:
 Table LoanTotals (postgres):
  - primary key: loan_type_id
 
+=== NewCustomerMessages
+ID:          default_catalog.default_database.NewCustomerMessages
+Type:        stream
+Stage:       flink
+Tags:        classification=confidential, gdpr=true, pii=raw
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - customer_id: BIGINT NOT NULL
+ - message: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.CustomerMessages
+
 === _ApplicationsByCustomer
 ID:          default_catalog.default_database._ApplicationsByCustomer
 Type:        state
@@ -457,6 +522,23 @@ Schema:
 Inputs:
  - default_catalog.default_database.Applications
  - default_catalog.default_database.Customers
+
+=== _ArchivedEmails
+ID:          default_catalog.default_database._ArchivedEmails
+Type:        stream
+Stage:       flink
+Tags:        classification=confidential, pii=raw
+Primary key: -
+Timestamp:   -
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+Inputs:
+ - default_catalog.default_database.CustomersStream
+Annotations:
+ - stream-root: CustomersStream
 
 === _CustomerNameCounts
 ID:          default_catalog.default_database._CustomerNameCounts
@@ -514,6 +596,15 @@ Inputs:
  - default_catalog.sources.CustomersStream__base
 Annotations:
  - stream-root: CustomersStream
+
+=== EmailArchive
+ID:          sinks.archive.EmailArchive
+Type:        export
+Stage:       flink
+Connector:   kafka-safe
+--- definition ---
+Inputs:
+ - default_catalog.default_database._ArchivedEmails
 
 >>>flink-sql-no-functions.sql
 CREATE DATABASE IF NOT EXISTS `sources`;
@@ -688,6 +779,44 @@ AS
 SELECT `id`, `email`
 FROM `CustomerContacts`
 WHERE `email` IS NOT NULL;
+CREATE TABLE `CustomerMessages` (
+  `customer_id` BIGINT NOT NULL,
+  `message` STRING NOT NULL COMMENT 'The message text @gdpr',
+  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'CustomerMessages'
+);
+CREATE VIEW `NewCustomerMessages`
+AS
+SELECT `customer_id`, `message`, `event_time`
+FROM `CustomerMessages`;
+CREATE VIEW `_ArchivedEmails`
+AS
+SELECT `id`, `email`
+FROM `CustomersStream`;
+CREATE TABLE `EmailArchive_ex1` (
+  `id` BIGINT NOT NULL,
+  `email` STRING
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'EmailArchive'
+);
 CREATE TABLE `Applications_1` (
   `id` BIGINT NOT NULL,
   `customer_id` BIGINT NOT NULL,
@@ -772,7 +901,23 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `CustomerNameCounts_6` (
+CREATE TABLE `CustomerMessages_6` (
+  `customer_id` BIGINT NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerMessages',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `CustomerNameCounts_7` (
   `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `num_customers` BIGINT NOT NULL,
   PRIMARY KEY (`first_name`) NOT ENFORCED
@@ -785,7 +930,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `Customers_7` (
+CREATE TABLE `Customers_8` (
   `id` BIGINT NOT NULL,
   `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -806,7 +951,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `CustomersByJurisdiction_8` (
+CREATE TABLE `CustomersByJurisdiction_9` (
   `jurisdiction` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `num_customers` BIGINT NOT NULL,
   PRIMARY KEY (`jurisdiction`) NOT ENFORCED
@@ -819,7 +964,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `CustomersStream_9` (
+CREATE TABLE `CustomersStream_10` (
   `id` BIGINT NOT NULL,
   `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -839,7 +984,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `CustomersWithEmail_10` (
+CREATE TABLE `CustomersWithEmail_11` (
   `id` BIGINT NOT NULL,
   `first_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
   `last_name` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
@@ -860,7 +1005,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `LargeApplications_11` (
+CREATE TABLE `LargeApplications_12` (
   `id` BIGINT NOT NULL,
   `customer_id` BIGINT NOT NULL,
   `loan_type_id` BIGINT NOT NULL,
@@ -881,7 +1026,7 @@ WITH (
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
 );
-CREATE TABLE `LoanTotals_12` (
+CREATE TABLE `LoanTotals_13` (
   `loan_type_id` BIGINT NOT NULL,
   `total_amount` DOUBLE NOT NULL,
   `num_loans` BIGINT NOT NULL,
@@ -894,6 +1039,20 @@ WITH (
   'table-name' = 'LoanTotals',
   'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
   'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `NewCustomerMessages_14` (
+  `customer_id` BIGINT NOT NULL,
+  `message` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'NewCustomerMessages'
 );
 EXECUTE STATEMENT SET BEGIN
 INSERT INTO `default_catalog`.`default_database`.`Applications_1`
@@ -924,44 +1083,108 @@ SELECT *
 FROM `default_catalog`.`default_database`.`CustomerEmails`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`CustomerNameCounts_6`
+INSERT INTO `default_catalog`.`default_database`.`CustomerMessages_6`
+SELECT `customer_id`, `message`, `event_time`, `hash_key`(`customer_id`, `message`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomerMessages`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`CustomerNameCounts_7`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomerNameCounts`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`Customers_7`
+INSERT INTO `default_catalog`.`default_database`.`Customers_8`
 SELECT *
 FROM `default_catalog`.`default_database`.`Customers`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`CustomersByJurisdiction_8`
+INSERT INTO `default_catalog`.`default_database`.`CustomersByJurisdiction_9`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomersByJurisdiction`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`CustomersStream_9`
+INSERT INTO `default_catalog`.`default_database`.`CustomersStream_10`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomersStream`
 ;
-INSERT INTO `default_catalog`.`default_database`.`CustomersWithEmail_10`
+INSERT INTO `default_catalog`.`default_database`.`CustomersWithEmail_11`
 SELECT *
 FROM `default_catalog`.`default_database`.`CustomersWithEmail`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`LargeApplications_11`
+INSERT INTO `default_catalog`.`default_database`.`LargeApplications_12`
 SELECT *
 FROM `default_catalog`.`default_database`.`LargeApplications`
 ON CONFLICT DO DEDUPLICATE
 ;
-INSERT INTO `default_catalog`.`default_database`.`LoanTotals_12`
+INSERT INTO `default_catalog`.`default_database`.`LoanTotals_13`
 SELECT *
 FROM `default_catalog`.`default_database`.`LoanTotals`
 ON CONFLICT DO DEDUPLICATE
 ;
+INSERT INTO `default_catalog`.`default_database`.`NewCustomerMessages_14`
+SELECT *
+FROM `default_catalog`.`default_database`.`NewCustomerMessages`
+;
+INSERT INTO `default_catalog`.`default_database`.`EmailArchive_ex1`
+SELECT *
+FROM `default_catalog`.`default_database`.`_ArchivedEmails`
+;
 END
 >>>kafka.json
 {
-  "topics" : [ ],
+  "topics" : [
+    {
+      "topicName" : "NewCustomerMessages",
+      "tableName" : "NewCustomerMessages_14",
+      "logicalName" : "NewCustomerMessages",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { },
+      "tags" : {
+        "classification" : "confidential",
+        "gdpr" : "true",
+        "pii" : "raw"
+      }
+    },
+    {
+      "topicName" : "CustomerMessages",
+      "tableName" : "CustomerMessages",
+      "logicalName" : "CustomerMessages",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { },
+      "tags" : {
+        "classification" : "confidential",
+        "gdpr" : "true",
+        "pii" : "raw"
+      }
+    },
+    {
+      "topicName" : "EmailArchive",
+      "tableName" : "EmailArchive_ex1",
+      "logicalName" : "EmailArchive",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { },
+      "tags" : {
+        "classification" : "confidential",
+        "pii" : "raw"
+      }
+    }
+  ],
   "testRunnerTopics" : [ ]
 }
 >>>postgres-schema.sql
@@ -970,6 +1193,7 @@ CREATE TABLE IF NOT EXISTS "ApplicationsStream" ("id" BIGINT NOT NULL, "customer
 CREATE TABLE IF NOT EXISTS "ContactEmails" ("id" BIGINT NOT NULL, "email" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "CustomerContacts" ("id" BIGINT NOT NULL, "email" TEXT, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "CustomerEmails" ("id" BIGINT NOT NULL, "email" TEXT NOT NULL, PRIMARY KEY ("id"));
+CREATE TABLE IF NOT EXISTS "CustomerMessages" ("customer_id" BIGINT NOT NULL, "message" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
 CREATE TABLE IF NOT EXISTS "CustomerNameCounts" ("first_name" TEXT NOT NULL, "num_customers" BIGINT NOT NULL, PRIMARY KEY ("first_name"));
 CREATE TABLE IF NOT EXISTS "Customers" ("id" BIGINT NOT NULL, "first_name" TEXT NOT NULL, "last_name" TEXT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT NOT NULL, "address" TEXT NOT NULL, "date_of_birth" TEXT NOT NULL, "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL, PRIMARY KEY ("id"));
 CREATE TABLE IF NOT EXISTS "CustomersByJurisdiction" ("jurisdiction" TEXT NOT NULL, "num_customers" BIGINT NOT NULL, PRIMARY KEY ("jurisdiction"));
@@ -1102,6 +1326,31 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
             "query" : {
               "type" : "SqlQuery",
               "sql" : "SELECT *\nFROM \"CustomerEmails\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerMessages",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"customer_id\", \"message\", \"event_time\"\nFROM \"CustomerMessages\"",
               "parameters" : [ ],
               "pagination" : "LIMIT_AND_OFFSET",
               "cacheDurationMs" : 0,
@@ -1351,8 +1600,33 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
           }
         }
       ],
-      "mutations" : [ ],
-      "subscriptions" : [ ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerMessages",
+          "returnList" : false,
+          "topic" : "CustomerMessages",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : false
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "NewCustomerMessages",
+          "topic" : "NewCustomerMessages",
+          "sinkConfig" : { },
+          "equalityConditions" : { }
+        }
+      ],
       "operations" : [
         {
           "function" : {
@@ -1592,6 +1866,51 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
                 },
                 "email" : {
                   "type" : "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetCustomerMessages",
+            "description" : "Messages that customers send @pii=raw @classification=confidential",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerMessages($limit: Int = 10, $offset: Int = 0) {\nCustomerMessages(limit: $limit, offset: $offset) {\ncustomer_id\nmessage\nevent_time\n}\n\n}",
+            "queryName" : "CustomerMessages",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerMessages{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "message" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
                 }
               }
             }
@@ -2107,11 +2426,56 @@ CREATE INDEX IF NOT EXISTS "Applications_hash_c1" ON "Applications" USING hash (
               }
             }
           }
+        },
+        {
+          "function" : {
+            "name" : "AddCustomerMessages",
+            "description" : "Messages that customers send @pii=raw @classification=confidential",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "customer_id" : {
+                  "type" : "integer"
+                },
+                "message" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "customer_id",
+                "message"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation CustomerMessages($customer_id: Long!, $message: String!) {\nCustomerMessages(event: { customer_id: $customer_id, message: $message }) {\ncustomer_id\nmessage\nevent_time\n}\n\n}",
+            "queryName" : "CustomerMessages",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/CustomerMessages",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "customer_id" : {
+                "type" : "integer"
+              },
+              "message" : {
+                "type" : "string"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
         }
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"Loan applications @financial @classification=internal\"\ntype Applications {\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  amount: Float!\n  duration: Long!\n  application_date: DateTime!\n  updated_at: DateTime!\n  amount_thousands: Float!\n}\n\n\"Loan applications @financial @classification=internal\"\ntype ApplicationsStream {\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  amount: Float!\n  duration: Long!\n  application_date: DateTime!\n  updated_at: DateTime!\n  amount_thousands: Float!\n}\n\n\"Contacts written from the customers @pii=raw @classification=confidential\"\ntype CustomerContacts {\n  id: Long!\n  email: String\n}\n\ntype CustomerEmails {\n  id: Long!\n  email: String!\n}\n\n\"Number of customers per first name\"\ntype CustomerNameCounts {\n  first_name: String!\n  num_customers: Long!\n}\n\n\"Customer records @pii=raw @classification=confidential\"\ntype Customers {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n  applications(limit: Int = 10, offset: Int = 0): [Applications!]\n}\n\n\"Number of customers per jurisdiction @jurisdiction\"\ntype CustomersByJurisdiction {\n  jurisdiction: String!\n  num_customers: Long!\n}\n\ntype CustomersStream {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"Loan totals per loan type @financial @classification=confidential\"\ntype LoanTotals {\n  loan_type_id: Long!\n  total_amount: Float!\n  num_loans: Long!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Applications(limit: Int = 10, offset: Int = 0): [Applications!]\n  \"Loan applications @financial @classification=internal\"\n  ApplicationsStream(limit: Int = 10, offset: Int = 0): [ApplicationsStream!]\n  \"Contacts with an email @pii=raw @classification=confidential @gdpr\"\n  ContactEmails(limit: Int = 10, offset: Int = 0): [CustomerContacts!]\n  \"Contacts written from the customers @pii=raw @classification=confidential\"\n  CustomerContacts(limit: Int = 10, offset: Int = 0): [CustomerContacts!]\n  CustomerEmails(limit: Int = 10, offset: Int = 0): [CustomerEmails!]\n  \"Number of customers per first name\"\n  CustomerNameCounts(limit: Int = 10, offset: Int = 0): [CustomerNameCounts!]\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  \"Number of customers per jurisdiction @jurisdiction\"\n  CustomersByJurisdiction(limit: Int = 10, offset: Int = 0): [CustomersByJurisdiction!]\n  \"Customer records @pii=raw @classification=confidential\"\n  CustomersStream(limit: Int = 10, offset: Int = 0): [CustomersStream!]\n  CustomersWithEmail(limit: Int = 10, offset: Int = 0): [Customers!]\n  \"Large applications of customers with a known last name @financial @classification=confidential @pii=raw\"\n  LargeApplications(limit: Int = 10, offset: Int = 0): [Applications!]\n  \"Loan totals per loan type @financial @classification=confidential\"\n  LoanTotals(limit: Int = 10, offset: Int = 0): [LoanTotals!]\n  \"Applications of the given customer @financial @classification=internal\"\n  CustomerApplications(customerId: Long!, limit: Int = 10, offset: Int = 0): [Applications!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"Loan applications @financial @classification=internal\"\ntype Applications {\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  amount: Float!\n  duration: Long!\n  application_date: DateTime!\n  updated_at: DateTime!\n  amount_thousands: Float!\n}\n\n\"Loan applications @financial @classification=internal\"\ntype ApplicationsStream {\n  id: Long!\n  customer_id: Long!\n  loan_type_id: Long!\n  amount: Float!\n  duration: Long!\n  application_date: DateTime!\n  updated_at: DateTime!\n  amount_thousands: Float!\n}\n\n\"Contacts written from the customers @pii=raw @classification=confidential\"\ntype CustomerContacts {\n  id: Long!\n  email: String\n}\n\ntype CustomerEmails {\n  id: Long!\n  email: String!\n}\n\n\"Messages that customers send @pii=raw @classification=confidential\"\ntype CustomerMessages {\n  customer_id: Long!\n  message: String!\n  event_time: DateTime\n}\n\ninput CustomerMessagesInput {\n  customer_id: Long!\n  message: String!\n}\n\ntype CustomerMessagesResultOutput {\n  customer_id: Long!\n  message: String!\n  event_time: DateTime\n}\n\n\"Number of customers per first name\"\ntype CustomerNameCounts {\n  first_name: String!\n  num_customers: Long!\n}\n\n\"Customer records @pii=raw @classification=confidential\"\ntype Customers {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n  applications(limit: Int = 10, offset: Int = 0): [Applications!]\n}\n\n\"Number of customers per jurisdiction @jurisdiction\"\ntype CustomersByJurisdiction {\n  jurisdiction: String!\n  num_customers: Long!\n}\n\ntype CustomersStream {\n  id: Long!\n  first_name: String!\n  last_name: String!\n  email: String!\n  phone: String!\n  address: String!\n  date_of_birth: String!\n  updated_at: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"Loan totals per loan type @financial @classification=confidential\"\ntype LoanTotals {\n  loan_type_id: Long!\n  total_amount: Float!\n  num_loans: Long!\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  \"Messages that customers send @pii=raw @classification=confidential\"\n  CustomerMessages(event: CustomerMessagesInput!): CustomerMessagesResultOutput!\n}\n\ntype Query {\n  Applications(limit: Int = 10, offset: Int = 0): [Applications!]\n  \"Loan applications @financial @classification=internal\"\n  ApplicationsStream(limit: Int = 10, offset: Int = 0): [ApplicationsStream!]\n  \"Contacts with an email @pii=raw @classification=confidential @gdpr\"\n  ContactEmails(limit: Int = 10, offset: Int = 0): [CustomerContacts!]\n  \"Contacts written from the customers @pii=raw @classification=confidential\"\n  CustomerContacts(limit: Int = 10, offset: Int = 0): [CustomerContacts!]\n  CustomerEmails(limit: Int = 10, offset: Int = 0): [CustomerEmails!]\n  \"Messages that customers send @pii=raw @classification=confidential\"\n  CustomerMessages(limit: Int = 10, offset: Int = 0): [CustomerMessages!]\n  \"Number of customers per first name\"\n  CustomerNameCounts(limit: Int = 10, offset: Int = 0): [CustomerNameCounts!]\n  Customers(limit: Int = 10, offset: Int = 0): [Customers!]\n  \"Number of customers per jurisdiction @jurisdiction\"\n  CustomersByJurisdiction(limit: Int = 10, offset: Int = 0): [CustomersByJurisdiction!]\n  \"Customer records @pii=raw @classification=confidential\"\n  CustomersStream(limit: Int = 10, offset: Int = 0): [CustomersStream!]\n  CustomersWithEmail(limit: Int = 10, offset: Int = 0): [Customers!]\n  \"Large applications of customers with a known last name @financial @classification=confidential @pii=raw\"\n  LargeApplications(limit: Int = 10, offset: Int = 0): [Applications!]\n  \"Loan totals per loan type @financial @classification=confidential\"\n  LoanTotals(limit: Int = 10, offset: Int = 0): [LoanTotals!]\n  \"Applications of the given customer @financial @classification=internal\"\n  CustomerApplications(customerId: Long!, limit: Int = 10, offset: Int = 0): [Applications!]\n}\n\ntype Subscription {\n  \"New messages of customers @pii=raw @classification=confidential @gdpr\"\n  NewCustomerMessages: CustomerMessages\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
