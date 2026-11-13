@@ -128,7 +128,7 @@
     <commons-exec.version>1.6.0</commons-exec.version>
     <commons-io.version>2.22.0</commons-io.version>
     <commons-lang3.version>3.21.0</commons-lang3.version>
-    <duckdb.version>1.5.6.0</duckdb.version>
+    <duckdb.version>2.0.0.1</duckdb.version>
     <feign.version>13.17</feign.version>
     <freemarker.version>2.3.35</freemarker.version>
     <glassfish.version>3.0.0</glassfish.version>
@@ -138,7 +138,6 @@
     <guava.version>33.7.2-jre</guava.version>
     <h2.version>2.5.252</h2.version>
     <spring-framework.version>7.0.10</spring-framework.version>
-    <hikari.version>7.1.0</hikari.version>
     <!-- Do not touch Hadoop version unless it has been updated on the Flink side.
          Otherwise, it might break the Flink filesystem integration. -->
     <hadoop.version>3.3.4</hadoop.version>
@@ -397,11 +396,6 @@
         <groupId>io.agroal</groupId>
         <artifactId>agroal-pool</artifactId>
         <version>${agroal.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.zaxxer</groupId>
-        <artifactId>HikariCP</artifactId>
-        <version>${hikari.version}</version>
       </dependency>
 
       <!-- validation -->
