@@ -80,3 +80,12 @@ NewCustomerMessages := SUBSCRIBE SELECT customer_id, message, event_time FROM Cu
 -- An internal table that EXPORT writes into declares the tags of the exported data
 _ArchivedEmails := SELECT id, email FROM CustomersStream;
 EXPORT _ArchivedEmails TO sinks.archive.EmailArchive;
+
+-- A table that is only written into has the columns its tags require
+/** Audit of customer jurisdictions @jurisdiction */
+CREATE TABLE CustomerAudit (
+  id BIGINT NOT NULL,
+  jurisdiction STRING
+) WITH (
+  'connector' = 'print'
+);

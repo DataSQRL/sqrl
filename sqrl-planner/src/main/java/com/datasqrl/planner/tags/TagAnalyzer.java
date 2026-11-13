@@ -28,6 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import org.apache.calcite.rel.type.RelDataTypeField;
 import org.apache.flink.table.planner.calcite.FlinkTypeFactory;
 
 /**
@@ -83,9 +84,48 @@ public class TagAnalyzer {
     }
 
     var effective = required.merge(declared);
-    checkRequiredColumns(table, effective, errors);
+    checkRequiredColumns(table.getName(), table::getField, effective, errors);
 
     return effective;
+  }
+
+  /**
+   * Validates that a table has the columns that its tags require. {@link #analyze} validates this
+   * for the tables it analyzes.
+   *
+   * @param table the name of the table
+   * @param columnByName looks up a column of the table by name, returns null if it is missing
+   * @param tags the tags of the table
+   */
+  public void checkRequiredColumns(
+      String table,
+      Function<String, RelDataTypeField> columnByName,
+      TableTags tags,
+      ErrorCollector errors) {
+
+    errors = errors.abortOnFatal(false);
+    for (var tag : tags.values()) {
+      for (var column : tag.definition().requiredColumns()) {
+        var field = columnByName.apply(column.name());
+
+        if (field == null) {
+          errors.fatal(
+              "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the column is"
+                  + " missing",
+              table, tag, column.name(), column.typeName());
+
+        } else if (!TypeCompatibility.isCallSiteCompatible(field.getType(), column.type())) {
+          errors.fatal(
+              "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the column has"
+                  + " type [%s]",
+              table,
+              tag,
+              column.name(),
+              column.typeName(),
+              FlinkTypeFactory.toLogicalType(field.getType()).asSummaryString());
+        }
+      }
+    }
   }
 
   /**
@@ -194,31 +234,5 @@ public class TagAnalyzer {
         .distinct()
         .sorted()
         .collect(Collectors.joining(", "));
-  }
-
-  private static void checkRequiredColumns(
-      TableAnalysis table, TableTags tags, ErrorCollector errors) {
-
-    for (var tag : tags.values()) {
-      for (var column : tag.definition().requiredColumns()) {
-        var field = table.getField(column.name());
-
-        if (field == null) {
-          errors.fatal(
-              "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the column is"
-                  + " missing",
-              table.getName(), tag, column.name(), column.typeName());
-        } else if (!TypeCompatibility.isCallSiteCompatible(field.getType(), column.type())) {
-          errors.fatal(
-              "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the column has"
-                  + " type [%s]",
-              table.getName(),
-              tag,
-              column.name(),
-              column.typeName(),
-              FlinkTypeFactory.toLogicalType(field.getType()).asSummaryString());
-        }
-      }
-    }
   }
 }

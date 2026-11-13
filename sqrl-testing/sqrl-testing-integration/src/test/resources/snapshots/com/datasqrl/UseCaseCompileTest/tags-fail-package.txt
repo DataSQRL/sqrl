@@ -166,3 +166,17 @@ EXPORT ApplicationContacts TO CustomerContacts;
 EXPORT CustomerEmails TO sinks.archive.EmailArchive;
 ^
 
+[FATAL] Table [CustomerAudit] has tag [@jurisdiction] which requires column [jurisdiction] of type [STRING], but the column is missing
+in script:tags.sqrl [69:1]:
+EXPORT CustomerEmails TO sinks.archive.EmailArchive;
+
+/** Audit of customer ids, missing the column required by the jurisdiction tag @jurisdiction */
+^
+
+[FATAL] Table [CountArchive] has tag [@jurisdiction] which requires column [jurisdiction] of type [STRING], but the column is missing
+in script:archive.sqrl [10:1]:
+/** Archive of customer counts, missing the column required by the jurisdiction tag @classification=confidential @jurisdiction */
+/*+engine(kafka) */
+CREATE TABLE CountArchive (
+^
+

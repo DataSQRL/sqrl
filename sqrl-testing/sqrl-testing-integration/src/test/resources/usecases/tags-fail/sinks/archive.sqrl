@@ -4,3 +4,9 @@ CREATE TABLE EmailArchive (
   id BIGINT NOT NULL,
   email STRING
 );
+
+/** Archive of customer counts, missing the column required by the jurisdiction tag @classification=confidential @jurisdiction */
+/*+engine(kafka) */
+CREATE TABLE CountArchive (
+  num_customers BIGINT NOT NULL
+);

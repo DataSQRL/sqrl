@@ -887,8 +887,12 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       HintsAndDoc hintsAndDoc,
       ErrorCollector errors) {
 
-    return addTable(
-        tableNameModifier, tableDefinition, schemaLoader, mutationBuilder, hintsAndDoc, errors);
+    var result =
+        addTable(
+            tableNameModifier, tableDefinition, schemaLoader, mutationBuilder, hintsAndDoc, errors);
+    checkRequiredColumns(result, errors);
+
+    return result;
   }
 
   public Optional<TableAnalysis> createTable(
@@ -905,8 +909,29 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             mutationBuilder,
             hintsAndDoc,
             errors);
-    if (result.isSourceTable()) return Optional.of(addSourceTable(result, errors));
-    else return Optional.empty();
+    if (result.isSourceTable()) {
+      return Optional.of(addSourceTable(result, errors));
+    }
+    checkRequiredColumns(result, errors);
+    return Optional.empty();
+  }
+
+  /**
+   * Validates that a created table has the columns that its declared tags require. Only needed for
+   * a table without a covering view, i.e. a table that is only written into, since the analysis of
+   * the covering view validates them otherwise, see {@link #addSourceTable}.
+   */
+  private void checkRequiredColumns(AddTableResult result, ErrorCollector errors) {
+    var table = result.tableAnalysis();
+    var schema = table.getSourceSinkTable().orElseThrow().schema();
+    tagAnalyzer.checkRequiredColumns(
+        result.statementName(),
+        column ->
+            typeFactory
+                .createFieldTypeFromLogicalType(schema.toSourceRowDataType().getLogicalType())
+                .getField(column, false, false),
+        table.getTags(),
+        errors);
   }
 
   private HintsAndDoc updateDocumentationFromLike(
@@ -975,8 +1000,13 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     return tableAnalysis;
   }
 
+  /**
+   * @param tableName the name of the table in Flink, which has a suffix for an export
+   * @param statementName the name of the table in its {@code CREATE TABLE} statement
+   */
   public record AddTableResult(
       String tableName,
+      String statementName,
       ObjectIdentifier baseTableIdentifier,
       boolean isSourceTable,
       TableAnalysis tableAnalysis,
@@ -1132,6 +1162,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     completeCreateTableSql += RelToFlinkSql.convertToString(fullTable);
     return new AddTableResult(
         finalTableName,
+        origTableName,
         tableId,
         connector.isSourceConnector(),
         tableAnalysis,

@@ -817,6 +817,13 @@ WITH (
   'properties.group.id' = '${KAFKA_GROUP_ID}',
   'topic' = 'EmailArchive'
 );
+CREATE TABLE `CustomerAudit` (
+  `id` BIGINT NOT NULL,
+  `jurisdiction` STRING
+)
+WITH (
+  'connector' = 'print'
+);
 CREATE TABLE `Applications_1` (
   `id` BIGINT NOT NULL,
   `customer_id` BIGINT NOT NULL,
