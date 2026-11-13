@@ -1909,6 +1909,8 @@ The compiler generates the full server configuration from a built-in template an
 | `httpServerOptions.port` | HTTP port (default `8888`). Keep `8888` for the `test` command, whose test runner connects to that port |
 | `corsHandlerOptions` | CORS policy. Defaults allow all origins; restrict `allowedOrigin`/`allowedOrigins` in production |
 | `poolOptions.maxSize` | PostgreSQL connection pool size |
+| `poolOptions.maxLifetime` | Seconds before a pooled PostgreSQL connection is closed and replaced (default `600`), so connections rebalance across replicas; `0` keeps them forever |
+| `pgConnectOptions.cachePreparedStatements` | Cache prepared statements per connection so each query is planned once (default `true`) |
 | `servletConfig` | Endpoint paths (`graphQLEndpoint`, `restEndpoint`, `mcpEndpoint`, `graphiQLEndpoint`), prefixed with the API version, e.g. `/v1/graphql` |
 | `publicGraphQLEndpointEnabled` | Set to `false` to disable the public GraphQL endpoint; REST and MCP endpoints keep working |
 | `onlyConfiguredGraphQLOperations` | Set to `true` to only accept the predefined API operations instead of arbitrary GraphQL queries |
