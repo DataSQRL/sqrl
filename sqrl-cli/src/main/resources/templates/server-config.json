@@ -113,7 +113,7 @@
     "user" : "${POSTGRES_USERNAME}",
     "password" : "${POSTGRES_PASSWORD}",
     "database" : "${POSTGRES_DATABASE}",
-    "cachePreparedStatements" : false,
+    "cachePreparedStatements" : true,
     "preparedStatementCacheMaxSize" : 256,
     "preparedStatementCacheSqlFilter" : { },
     "properties" : {
@@ -143,7 +143,7 @@
     "maxWaitQueueSize" : -1,
     "idleTimeout" : 0,
     "idleTimeoutUnit" : "SECONDS",
-    "maxLifetime" : 0,
+    "maxLifetime" : 600,
     "maxLifetimeUnit" : "SECONDS",
     "poolCleanerPeriod" : 1000,
     "connectionTimeout" : 30,
