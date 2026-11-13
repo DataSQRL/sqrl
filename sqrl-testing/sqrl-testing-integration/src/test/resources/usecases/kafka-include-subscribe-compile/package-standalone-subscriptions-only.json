@@ -1,0 +1,13 @@
+{
+  "version": "1",
+  "enabled-engines": ["vertx", "kafka", "flink"],
+  "script": {
+    "main": "kafka-include-subscribe-only.sqrl",
+    "include": {
+      "shared": {
+        "package": "../kafka-include-shared/package.json",
+        "standalone": true
+      }
+    }
+  }
+}

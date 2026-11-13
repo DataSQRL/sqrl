@@ -1,0 +1,12 @@
+{
+  "version": "1",
+  "script": {
+    "main": "kafka-include-subscribe.sqrl",
+    "include": {
+      "shared": {
+        "package": "../kafka-include-shared/package.json",
+        "standalone": true
+      }
+    }
+  }
+}

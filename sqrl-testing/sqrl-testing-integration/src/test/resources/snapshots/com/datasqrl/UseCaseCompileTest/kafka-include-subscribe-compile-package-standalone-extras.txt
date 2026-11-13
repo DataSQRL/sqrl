@@ -1,0 +1,338 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Mutation {
+  Shipment(event: ShipmentInput!): ShipmentResultOutput!
+}
+
+type Query {
+  Shipment(limit: Int = 10, offset: Int = 0): [Shipment!]
+}
+
+type Shipment {
+  orderid: Long!
+  carrier: String!
+  event_time: DateTime!
+}
+
+input ShipmentInput {
+  orderid: Long!
+  carrier: String!
+}
+
+type ShipmentResultOutput {
+  orderid: Long!
+  carrier: String!
+  event_time: DateTime!
+}
+
+type Subscription {
+  ShipmentStream: Shipment
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Shipment
+ID:          default_catalog.default_database.Shipment
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - orderid: BIGINT NOT NULL
+ - carrier: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Shipment__base
+--- physical ---
+Table Shipment (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== ShipmentStream
+ID:          default_catalog.default_database.ShipmentStream
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - orderid: BIGINT NOT NULL
+ - carrier: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.default_database.Shipment
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `Shipment` (
+  `orderid` BIGINT NOT NULL,
+  `carrier` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'Shipment'
+);
+CREATE VIEW `ShipmentStream`
+AS
+SELECT *
+FROM `Shipment`;
+CREATE TABLE `Shipment_1` (
+  `orderid` BIGINT NOT NULL,
+  `carrier` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'Shipment',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `ShipmentStream_2` (
+  `orderid` BIGINT NOT NULL,
+  `carrier` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'ShipmentStream'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`Shipment_1`
+SELECT `orderid`, `carrier`, `event_time`, `hash_key`(`orderid`, `carrier`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`Shipment`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`ShipmentStream_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`ShipmentStream`
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "ShipmentStream",
+      "tableName" : "ShipmentStream_2",
+      "logicalName" : "ShipmentStream",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ],
+  "includedTopics" : [
+    {
+      "topicName" : "Shipment",
+      "tableName" : "Shipment",
+      "logicalName" : "Shipment",
+      "include" : "shared"
+    }
+  ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Shipment" ("orderid" BIGINT NOT NULL, "carrier" TEXT NOT NULL, "event_time" TIMESTAMP WITH TIME ZONE NOT NULL, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Shipment",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"orderid\", \"carrier\", \"event_time\"\nFROM \"Shipment\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "Shipment",
+          "returnList" : false,
+          "topic" : "Shipment",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : true
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "ShipmentStream",
+          "topic" : "ShipmentStream",
+          "sinkConfig" : { },
+          "equalityConditions" : { }
+        }
+      ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetShipment",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Shipment($limit: Int = 10, $offset: Int = 0) {\nShipment(limit: $limit, offset: $offset) {\norderid\ncarrier\nevent_time\n}\n\n}",
+            "queryName" : "Shipment",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Shipment{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "orderid" : {
+                  "type" : "integer"
+                },
+                "carrier" : {
+                  "type" : "string"
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddShipment",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "carrier" : {
+                  "type" : "string"
+                },
+                "orderid" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [
+                "orderid",
+                "carrier"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation Shipment($orderid: Long!, $carrier: String!) {\nShipment(event: { orderid: $orderid, carrier: $carrier }) {\norderid\ncarrier\nevent_time\n}\n\n}",
+            "queryName" : "Shipment",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/Shipment",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "orderid" : {
+                "type" : "integer"
+              },
+              "carrier" : {
+                "type" : "string"
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  Shipment(event: ShipmentInput!): ShipmentResultOutput!\n}\n\ntype Query {\n  Shipment(limit: Int = 10, offset: Int = 0): [Shipment!]\n}\n\ntype Shipment {\n  orderid: Long!\n  carrier: String!\n  event_time: DateTime!\n}\n\ninput ShipmentInput {\n  orderid: Long!\n  carrier: String!\n}\n\ntype ShipmentResultOutput {\n  orderid: Long!\n  carrier: String!\n  event_time: DateTime!\n}\n\ntype Subscription {\n  ShipmentStream: Shipment\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

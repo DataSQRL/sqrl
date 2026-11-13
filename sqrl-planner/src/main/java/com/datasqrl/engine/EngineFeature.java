@@ -58,7 +58,11 @@ public enum EngineFeature {
   // Engine requires that the primary key is not null
   REQUIRES_NOT_NULL_PRIMARY_KEY,
   // Datastore engine support access to data without partition key
-  ACCESS_WITHOUT_PARTITION;
+  ACCESS_WITHOUT_PARTITION,
+  // The engine's tables live in a system that the deployments of standalone included projects
+  // share, e.g. a Kafka cluster, so an included project's deployment writes the tables that its
+  // own statements write, and the current project does not write them again
+  SHARED_WITH_STANDALONE_INCLUDES;
 
   public static final EnumSet<EngineFeature> STANDARD_STREAM =
       EnumSet.of(

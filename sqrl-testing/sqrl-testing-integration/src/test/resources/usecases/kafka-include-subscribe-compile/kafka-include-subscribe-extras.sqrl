@@ -1,0 +1,4 @@
+-- The included package's main script imports this script with a namespace, so the package's
+-- deployment does not expose its subscription. This project exposes it and writes its topic
+-- itself, but skips the EXPORT statement, which the package's deployment runs.
+IMPORT shared.extras.*;

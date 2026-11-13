@@ -272,7 +272,7 @@ public class FlinkPhysicalPlan implements EnginePhysicalPlan {
           + ExecNodePlanDumper.dagToString(plan.getExecNodeGraph());
     }
 
-    private boolean hasSink() {
+    boolean hasSink() {
       for (List<RichSqlInsert> statementSet : statementSets) {
         if (!statementSet.isEmpty()) {
           return true;

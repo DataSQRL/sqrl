@@ -20,12 +20,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datasqrl.engine.stream.flink.sql.RelToFlinkSql;
 import com.datasqrl.util.ArgumentsProviders;
+import com.datasqrl.util.SqrlObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+import org.apache.commons.io.FileUtils;
 import org.apache.flink.table.api.EnvironmentSettings;
 import org.apache.flink.table.api.TableEnvironment;
 import org.apache.flink.table.api.internal.TableEnvironmentImpl;
@@ -37,6 +43,7 @@ import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.junit.jupiter.params.provider.CsvSource;
 import uk.org.webcompere.systemstubs.environment.EnvironmentVariables;
 import uk.org.webcompere.systemstubs.jupiter.SystemStub;
 import uk.org.webcompere.systemstubs.jupiter.SystemStubsExtension;
@@ -111,6 +118,48 @@ public class UseCaseCompileTest {
     }
     return rows;
   }
+
+  /**
+   * Compiles a standalone include on its own, as its deployment does, and a project that includes
+   * it, and checks that each Kafka topic has one writer: the project only reads the topics that the
+   * include writes, and it writes none of them itself.
+   */
+  @ParameterizedTest
+  @CsvSource({
+    "kafka-include-compile, package-standalone.json",
+    "kafka-include-subscribe-compile, package-standalone.json",
+    "kafka-include-subscribe-compile, package-standalone-namespaced.json",
+    "kafka-include-subscribe-compile, package-standalone-extras.json"
+  })
+  void givenStandaloneInclude_whenProjectAndIncludeAreCompiled_thenEachTopicHasOneWriter(
+      String project, String packageFile) throws IOException {
+    var include = compileKafkaTopics(USECASE_DIR.resolve("kafka-include-shared"), "package.json");
+    var includingProject = compileKafkaTopics(USECASE_DIR.resolve(project), packageFile);
+
+    assertThat(includingProject.included()).isNotEmpty().isSubsetOf(include.own());
+    assertThat(includingProject.own()).doesNotContainAnyElementsOf(include.own());
+  }
+
+  private KafkaTopics compileKafkaTopics(Path useCase, String packageFile) throws IOException {
+    var hook = snapshotExtension.execute(useCase, "compile", packageFile);
+    assertThat(hook.isSuccess()).as(hook.getMessages()).isTrue();
+    var plan =
+        SqrlObjectMapper.INSTANCE.readTree(
+            snapshotExtension.getPlanDir().resolve("kafka.json").toFile());
+    // An included project's build directory would be copied into the build of the next project
+    FileUtils.deleteDirectory(snapshotExtension.getBuildDir().toFile());
+    return new KafkaTopics(
+        topicNames(plan.path("topics")), topicNames(plan.path("includedTopics")));
+  }
+
+  private static Set<String> topicNames(JsonNode topics) {
+    return StreamSupport.stream(topics.spliterator(), false)
+        .map(topic -> topic.path("topicName").asText())
+        .collect(Collectors.toSet());
+  }
+
+  /** The topics that a project writes itself, and those that it reads from standalone includes. */
+  private record KafkaTopics(Set<String> own, Set<String> included) {}
 
   private String compileInsertIdentityUseCase() throws IOException {
     var useCase = USECASE_DIR.resolve("insert-table-identity-compile");
