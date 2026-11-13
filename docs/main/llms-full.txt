@@ -1599,7 +1599,20 @@ By default, the current project treats it as shared definitions: it owns the inc
 
 When the included project is deployed on its own, set `"standalone": true` on its include entry.
 That project then owns its internal Kafka tables, also when the current project imports them or exports into them.
-`kafka.json` lists their topics under `includedTopics` instead of `topics`, with only their names and `"include": "<namespace>"`, so the deployment leaves creating and configuring them, including their partition count, to the included project.
+
+The deployment of the included project also writes what its own statements write, so the current project does not write it again.
+Which statements those are follows from the `script.main` of the included project's package file, i.e. the `package` of the include entry: its deployment plans the main script and the scripts that the main script imports, transitively.
+
+- **Subscriptions:** the deployment writes the topics of the subscriptions that it exposes, i.e. of the `SUBSCRIBE` tables, and of the tables that `SUBSCRIBE` functions read, in the main script and in the scripts that it imports inline (`IMPORT script.*`), transitively.
+  The current project reads these topics for the subscriptions that it plans from these scripts, and for its own subscriptions on these tables, instead of computing the tables and writing them again.
+  It writes the topics of the other subscriptions itself, e.g. of a script that the main script imports with a namespace (`IMPORT script`), since the deployment does not expose those.
+- **Writes into shared sinks:** the deployment runs the `EXPORT` and `INSERT` statements of every script that it plans. The current project skips those that write into a sink that both deployments write: the log (`log.<name>`, and `logger.<name>` when the logger is `kafka`), the included project's internal Kafka tables, and external tables, i.e. tables with a connector.
+  It reports a notice for each statement that it skips.
+
+`kafka.json` lists the topics that the current project uses but does not write under `includedTopics` instead of `topics`, with only their names and `"include": "<namespace>"`, so the deployment leaves creating and configuring them, including their partition count, to the included project.
+
+Without a `script.main` in the included project's package file, the current project cannot tell which statements the included project's deployment runs: it warns and runs them itself.
+The topic of a subscription of the current project on a table of the included project, such as a `SUBSCRIBE` function on one of its internal tables, is named after that table. If the included project subscribes to the same table only in a script that the current project does not plan, both deployments write that topic.
 
 Package files are merged, so the package file of a deployment can mark an include standalone that the base package file declares.
 Every include entry requires `package`, so the deployment's entry repeats it.
@@ -1632,8 +1645,11 @@ Compiled with only `package.json`, e.g. for local tests, `reporting` owns the to
 
 > **Important**
 >
-> The current project still reads and writes the topics of a standalone include through its own `kafka-mutation` [connector template](#connector-templates-connectors), so it must resolve the same topic names and use the same key and value formats as the included project's deployment.
-> `standalone` does not cover internal Iceberg tables yet: the current project still owns those.
+> The current project still reads and writes the topics of a standalone include through its own `kafka-mutation` and `kafka` [connector templates](#connector-templates-connectors), so it must resolve the same topic names and use the same key and value formats as the included project's deployment.
+> A `topic` of the `kafka` template that uses `${sqrl:table-id}` differs between the projects, so the compilation fails when the current project reads a subscription topic of a standalone include.
+> The included project's deployment must expose its subscriptions, i.e. run Kafka and the server, for the current project to read their topics.
+> `standalone` does not cover internal Iceberg tables yet: the current project still owns those, and runs the included project's statements that write into them.
+> A project whose Flink job would write no table, because standalone includes write all the tables that it subscribes to, fails to compile: subscribe through the API of the included project's deployment instead.
 
 ## Test-Runner (`test-runner`)
 
@@ -1819,7 +1835,7 @@ Apache Kafka is a streaming data platform that serves as the log engine in DataS
 
 - Kafka topics are automatically created based on your SQRL table definitions
 - Topic configurations are generated during the compilation process
-- `kafka.json` lists the topics of internal Kafka tables that a [standalone included project](https://docs.datasqrl.com/docs/main/configuration.md#include-other-sources) defines under `includedTopics`, with only their names, because that project owns them and decides their settings
+- `kafka.json` lists the topics that a [standalone included project](https://docs.datasqrl.com/docs/main/configuration.md#standalone-includes) writes and the current project uses under `includedTopics`, with only their names, because that project owns them and decides their settings: the topics of its internal Kafka tables and of the subscriptions that its deployment exposes. Flink does not write those subscription topics, and the include's `EXPORT` and `INSERT` statements into the log, its internal Kafka tables and external tables don't run, because the included project's deployment runs them
 - Only the mutation table writes its Kafka topic. Another writer mixes its rows into the mutation, and a writer that reads the mutation reads its own output in an endless loop. When the `kafka` connector template gives a Kafka table that the compiler creates for Flink the topic of a mutation table, the compiler puts `<table-name>-subscription` in place of `${sqrl:table-name}` in the template's `topic` instead, so `acme-${sqrl:table-name}` gives `acme-Events-subscription`. If the template gives a mutation topic again, for example with a fixed `topic` without `${sqrl:table-name}`, the compile fails with an error. For example, a script defines the mutation table `Events` with `CREATE TABLE` and the `engine(kafka)` hint, and a `SUBSCRIBE` function reads `Events` directly. Flink then copies `Events` into a Kafka table for the subscription. With the default templates, the mutation topic is `Events` and the copy gets the topic `Events-subscription`. An `EXPORT` statement to `log.<name>` or `logger.<name>` that gets the topic of a mutation table fails with an error, for example `EXPORT Orders TO log.Events` when `Events` is a mutation table. Use a different name in the `EXPORT` statement. All other topics keep the name from the template. The compiler does not check an `EXPORT` statement that writes directly into a mutation table, such as `EXPORT _Echo TO Events`. When the exported query reads that mutation table, the export loops
 - Retention settings control how long data is stored in Kafka topics
 - Ensure `replication-factor` does not exceed the number of brokers in the target Kafka cluster
@@ -4162,7 +4178,7 @@ The `build/deploy/flink` folder contains the data files that sources read locall
 
 | File         | Contents                                                                                                                             |
 |--------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `kafka.json` | The topics the pipeline creates, with name, partitions, replication factor, and configuration, plus the topics the test runner uses. The topics of internal Kafka tables that a standalone included project defines are listed separately under `includedTopics`, by name only, because that project creates them. |
+| `kafka.json` | The topics the pipeline creates, with name, partitions, replication factor, and configuration, plus the topics the test runner uses. The topics that a standalone included project writes, i.e. of its internal Kafka tables and of the subscriptions that its deployment exposes, are listed separately under `includedTopics`, by name only, because that project creates them. |
 
 ### PostgreSQL
 
@@ -4245,6 +4261,7 @@ Every deployment consists of the same components, regardless of where they run:
 | API server    | `vertx.json`, `vertx-config.json`                                     | The [`datasqrl/sqrl-server`](https://hub.docker.com/r/datasqrl/sqrl-server) Docker image, which serves GraphQL, REST, and MCP |
 
 A deployment creates the Kafka topics and database schemas first, then starts the API server and the Flink job. Only the components for the engines enabled in your [configuration](https://docs.datasqrl.com/docs/main/configuration.md) are generated.
+The topics under `includedTopics` in `kafka.json` belong to a [standalone included project](https://docs.datasqrl.com/docs/main/configuration.md#standalone-includes), whose own deployment creates and writes them, so deploy that project first.
 
 ## Option A: Managed Cloud Services
 
