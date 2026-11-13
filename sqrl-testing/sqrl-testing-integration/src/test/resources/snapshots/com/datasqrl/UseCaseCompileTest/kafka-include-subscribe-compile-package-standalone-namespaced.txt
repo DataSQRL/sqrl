@@ -1,0 +1,404 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type OrderCount {
+  customerid: Long!
+  num: Long!
+}
+
+type OrderEvent {
+  orderid: Long!
+  customerid: Long!
+  event_time: DateTime!
+}
+
+type Query {
+  OrderCount(limit: Int = 10, offset: Int = 0): [OrderCount!]
+}
+
+type Subscription {
+  BigOrdersByCustomer(customerid: Long!): OrderEvent
+  OrdersByCustomer(customerid: Long!): OrderEvent
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== BigOrdersByCustomer
+ID:          default_catalog.default_database.BigOrdersByCustomer
+Type:        query
+Stage:       kafka
+--- definition ---
+Inputs:
+ - default_catalog.streams.BigOrders
+Annotations:
+ - parameters: customerid
+ - base-table: OrderEvent
+
+=== OrderCount
+ID:          default_catalog.default_database.OrderCount
+Type:        state
+Stage:       flink
+Primary key: customerid
+Timestamp:   -
+Row count:   ~1e7
+--- definition ---
+Schema:
+ - customerid: BIGINT NOT NULL
+ - num: BIGINT NOT NULL
+Inputs:
+ - default_catalog.streams.OrderEvent
+--- physical ---
+Table OrderCount (postgres):
+ - primary key: customerid
+
+=== OrdersByCustomer
+ID:          default_catalog.default_database.OrdersByCustomer
+Type:        query
+Stage:       kafka
+--- definition ---
+Inputs:
+ - default_catalog.streams.OrderEvent
+Annotations:
+ - parameters: customerid
+ - base-table: OrderEvent
+
+=== BigOrders
+ID:          default_catalog.streams.BigOrders
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~5e7
+--- definition ---
+Schema:
+ - orderid: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.streams.OrderEvent
+
+=== OrderEvent
+ID:          default_catalog.streams.OrderEvent
+Type:        stream
+Stage:       flink
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - orderid: BIGINT NOT NULL
+ - customerid: BIGINT NOT NULL
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME* NOT NULL
+Inputs:
+ - default_catalog.streams.OrderEvent__base
+
+>>>flink-sql-no-functions.sql
+CREATE DATABASE IF NOT EXISTS `streams`;
+USE `streams`;
+CREATE TABLE `CustomerEvent` (
+  `customerid` BIGINT NOT NULL,
+  `name` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'CustomerEvent'
+);
+CREATE TABLE `OrderEvent` (
+  `orderid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'OrderEvent'
+);
+CREATE TABLE `OrderAudit` (
+  `orderid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'OrderAudit'
+);
+CREATE DATABASE IF NOT EXISTS `extras`;
+USE `extras`;
+CREATE TABLE `Shipment` (
+  `orderid` BIGINT NOT NULL,
+  `carrier` STRING NOT NULL,
+  `event_time` TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'Shipment'
+);
+CREATE VIEW `ShipmentStream`
+AS
+SELECT *
+FROM `Shipment`;
+USE CATALOG `default_catalog`;
+USE `streams`;
+CREATE VIEW `BigOrders`
+AS
+SELECT *
+FROM `OrderEvent`
+WHERE `orderid` > 100;
+CREATE VIEW `QuietOrders`
+AS
+SELECT *
+FROM `OrderEvent`
+WHERE `orderid` < 0;
+CREATE VIEW `_HiddenOrders`
+AS
+SELECT *
+FROM `OrderEvent`
+WHERE `orderid` = 0;
+CREATE VIEW `SmallOrders`
+AS
+SELECT *
+FROM `OrderEvent`
+WHERE `orderid` <= 100;
+USE CATALOG `default_catalog`;
+CREATE DATABASE IF NOT EXISTS `default_database`;
+USE `default_database`;
+CREATE VIEW `OrderCount`
+AS
+SELECT `customerid`, COUNT(*) AS `num`
+FROM `streams`.`OrderEvent`
+GROUP BY `customerid`;
+CREATE TABLE `OrderCount_1` (
+  `customerid` BIGINT NOT NULL,
+  `num` BIGINT NOT NULL,
+  PRIMARY KEY (`customerid`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'OrderCount',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `OrderEvent_3` (
+  `orderid` BIGINT NOT NULL,
+  `customerid` BIGINT NOT NULL,
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE NOT NULL
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'OrderEvent-subscription'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`OrderCount_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`OrderCount`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`OrderEvent_3`
+SELECT *
+FROM `default_catalog`.`streams`.`OrderEvent`
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "OrderEvent-subscription",
+      "tableName" : "OrderEvent_3",
+      "logicalName" : "OrderEvent",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "SUBSCRIPTION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { }
+    }
+  ],
+  "testRunnerTopics" : [ ],
+  "includedTopics" : [
+    {
+      "topicName" : "BigOrders",
+      "tableName" : "BigOrders_2",
+      "logicalName" : "BigOrders",
+      "include" : "shared"
+    },
+    {
+      "topicName" : "OrderEvent",
+      "tableName" : "OrderEvent",
+      "logicalName" : "OrderEvent",
+      "include" : "shared"
+    }
+  ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "OrderCount" ("customerid" BIGINT NOT NULL, "num" BIGINT NOT NULL, PRIMARY KEY ("customerid"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "OrderCount",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"OrderCount\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "BigOrdersByCustomer",
+          "topic" : "BigOrders",
+          "sinkConfig" : { },
+          "equalityConditions" : {
+            "customerid" : {
+              "type" : "arg",
+              "path" : "customerid",
+              "sqlType" : "BIGINT"
+            }
+          }
+        },
+        {
+          "type" : "kafka",
+          "fieldName" : "OrdersByCustomer",
+          "topic" : "OrderEvent-subscription",
+          "sinkConfig" : { },
+          "equalityConditions" : {
+            "customerid" : {
+              "type" : "arg",
+              "path" : "customerid",
+              "sqlType" : "BIGINT"
+            }
+          }
+        }
+      ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetOrderCount",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query OrderCount($limit: Int = 10, $offset: Int = 0) {\nOrderCount(limit: $limit, offset: $offset) {\ncustomerid\nnum\n}\n\n}",
+            "queryName" : "OrderCount",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/OrderCount{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "customerid" : {
+                  "type" : "integer"
+                },
+                "num" : {
+                  "type" : "integer"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype OrderCount {\n  customerid: Long!\n  num: Long!\n}\n\ntype OrderEvent {\n  orderid: Long!\n  customerid: Long!\n  event_time: DateTime!\n}\n\ntype Query {\n  OrderCount(limit: Int = 10, offset: Int = 0): [OrderCount!]\n}\n\ntype Subscription {\n  BigOrdersByCustomer(customerid: Long!): OrderEvent\n  OrdersByCustomer(customerid: Long!): OrderEvent\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

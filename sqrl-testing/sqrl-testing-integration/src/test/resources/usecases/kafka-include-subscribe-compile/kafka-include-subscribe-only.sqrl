@@ -1,0 +1,5 @@
+-- This project only subscribes to a table whose topic the standalone include writes, so its Flink
+-- job would write no table, and the compilation fails
+IMPORT shared.streams;
+
+BigOrdersByCustomer(customerid BIGINT NOT NULL) := SUBSCRIBE SELECT * FROM streams.BigOrders WHERE customerid = :customerid;

@@ -19,7 +19,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * The topic of an internal Kafka table that a standalone included project defines. That project
+ * A topic that the deployment of a standalone included project writes: the topic of an internal
+ * Kafka table that the project defines, or of a table that the project subscribes to. That project
  * owns the topic and decides its settings, so this only names it.
  *
  * @param tableName the internal table id the planner assigned, e.g. {@code Orders_3}

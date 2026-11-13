@@ -1,0 +1,12 @@
+-- The package's main script imports this script with a namespace, so the package's deployment runs
+-- its EXPORT statement but does not expose its subscription
+/*+engine(kafka) */
+CREATE TABLE Shipment (
+    orderid BIGINT NOT NULL,
+    carrier STRING NOT NULL,
+    event_time TIMESTAMP_LTZ(3) NOT NULL METADATA FROM 'timestamp'
+);
+
+ShipmentStream := SUBSCRIBE SELECT * FROM Shipment;
+
+EXPORT Shipment TO log.ShipmentLog;

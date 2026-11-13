@@ -1,0 +1,37 @@
+[NOTICE] This project skips the statement, since the deployment of the standalone include 'shared' runs it and writes into the same sink
+in script:extras.sqrl [12:1]:
+ShipmentStream := SUBSCRIBE SELECT * FROM Shipment;
+
+EXPORT Shipment TO log.ShipmentLog;
+^
+
+[NOTICE] This project skips the statement, since the deployment of the standalone include 'shared' runs it and writes into the same sink
+in script:streams.sqrl [19:1]:
+-- Writes into the log, into an internal table of the package and into an external table
+SmallOrders := SELECT * FROM OrderEvent WHERE orderid <= 100;
+EXPORT SmallOrders TO log.SmallOrderLog;
+^
+
+[NOTICE] This project skips the statement, since the deployment of the standalone include 'shared' runs it and writes into the same sink
+in script:streams.sqrl [20:1]:
+SmallOrders := SELECT * FROM OrderEvent WHERE orderid <= 100;
+EXPORT SmallOrders TO log.SmallOrderLog;
+EXPORT BigOrders TO OrderAudit;
+^
+
+[NOTICE] This project skips the statement, since the deployment of the standalone include 'shared' runs it and writes into the same sink
+in script:streams.sqrl [21:1]:
+EXPORT SmallOrders TO log.SmallOrderLog;
+EXPORT BigOrders TO OrderAudit;
+INSERT INTO OrderAudit SELECT * FROM SmallOrders;
+^
+
+[NOTICE] This project skips the statement, since the deployment of the standalone include 'shared' runs it and writes into the same sink
+in script:streams.sqrl [22:1]:
+EXPORT BigOrders TO OrderAudit;
+INSERT INTO OrderAudit SELECT * FROM SmallOrders;
+EXPORT SmallOrders TO sinks.OrderArchive;
+^
+
+[FATAL] The Flink job of this project would write no table, since the deployments of standalone includes write the tables that it subscribes to: 'BigOrders' of 'shared'. A project needs at least one table that its own Flink job writes. Add one, or subscribe through the APIs of the included projects' deployments instead.
+

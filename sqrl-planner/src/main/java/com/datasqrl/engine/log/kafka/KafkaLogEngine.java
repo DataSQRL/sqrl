@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.datasqrl.config.ConnectorConf;
 import com.datasqrl.config.ConnectorConf.Context;
+import com.datasqrl.config.ConnectorConfImpl;
 import com.datasqrl.config.ConnectorFactoryFactory;
 import com.datasqrl.config.EngineType;
 import com.datasqrl.config.PackageJson;
@@ -53,11 +54,9 @@ import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -85,7 +84,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
 
   public static final String DEFAULT_TTL_KEY = "retention";
 
-  public static final EnumSet<EngineFeature> KAFKA_FEATURES = EnumSet.of(EngineFeature.MUTATIONS);
+  public static final EnumSet<EngineFeature> KAFKA_FEATURES =
+      EnumSet.of(EngineFeature.MUTATIONS, EngineFeature.SHARED_WITH_STANDALONE_INCLUDES);
+
+  private static final String TABLE_ID_VARIABLE = "table-id";
 
   @Getter private final EngineConfig engineConfig;
   private final ErrorCollector errors;
@@ -94,8 +96,10 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
   private final ConnectorConf streamConnectorConf;
   private final ConnectorConf mutationConnectorConf;
   private final List<String> standaloneIncludes;
-  // Filled by createMutation, which runs for every mutation before the planner calls createTable
-  private final Set<String> mutationTopicNames = new HashSet<>();
+  // The topics of the mutation tables, with the standalone include that owns each, or empty if this
+  // project owns it. Filled by createMutation, which runs for every mutation before the planner
+  // calls createTable
+  private final Map<String, Optional<String>> mutationTopicOwners = new HashMap<>();
 
   // === SETTINGS ===
   private final Optional<Duration> defaultTTL;
@@ -153,7 +157,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         relDataType,
         Optional.empty(),
         Optional.of(settings),
-        false);
+        false,
+        Optional.empty());
   }
 
   @Override
@@ -170,7 +175,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         relDataType,
         Optional.of(tableAnalysis),
         Optional.empty(),
-        false);
+        false,
+        Optional.empty());
   }
 
   @Override
@@ -187,9 +193,49 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         relDataType,
         Optional.of(tableAnalysis),
         Optional.empty(),
-        true);
+        true,
+        Optional.empty());
   }
 
+  /**
+   * The table resolves its topic like {@link #createTable} does in the included project, which
+   * plans the table with the same statement, so it names the topic that the included project
+   * writes.
+   */
+  @Override
+  public EngineCreateTable createIncludedTable(
+      ExecutionStage stage,
+      String originalTableName,
+      FlinkTableBuilder tableBuilder,
+      RelDataType relDataType,
+      TableAnalysis tableAnalysis,
+      String standaloneInclude) {
+    // The table id is unique within a project, so the projects resolve different topics with it
+    errors.checkFatal(
+        !usesVariable(
+            streamConnectorConf.toMap().getOrDefault(CONNECTOR_TOPIC_KEY, ""), TABLE_ID_VARIABLE),
+        "Kafka table '%s' is written by the standalone include '%s', but the 'topic' option of"
+            + " the 'kafka' connector uses '${sqrl:%s}', so this project cannot resolve the topic"
+            + " that the include writes. Use '${sqrl:table-name}' instead.",
+        originalTableName,
+        standaloneInclude,
+        TABLE_ID_VARIABLE);
+    return createInternal(
+        stage,
+        originalTableName,
+        tableBuilder,
+        relDataType,
+        Optional.of(tableAnalysis),
+        Optional.empty(),
+        false,
+        Optional.of(standaloneInclude));
+  }
+
+  /**
+   * @param mutation the settings of a mutation table, or empty for a table that Flink writes
+   * @param includedBy the standalone include that writes a table that is not a mutation table, or
+   *     empty if this project writes it
+   */
   private Table createInternal(
       ExecutionStage stage,
       String originalTableName,
@@ -197,15 +243,17 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
       RelDataType relDataType,
       Optional<TableAnalysis> tableAnalysis,
       Optional<MutationSettings> mutation,
-      boolean isExportStatement) {
+      boolean isExportStatement,
+      Optional<String> includedBy) {
 
     boolean isMutation = mutation.isPresent();
+    var standaloneInclude =
+        mutation.flatMap(MutationSettings::standaloneInclude).or(() -> includedBy);
     boolean isTransactional =
         mutation
             .map(settings -> settings.insertType() == MutationInsertType.TRANSACTION)
             .orElse(false);
     var ttl = mutation.map(MutationSettings::ttl).orElse(defaultTTL);
-    var standaloneInclude = mutation.flatMap(MutationSettings::standaloneInclude);
     var ctxBuilder =
         Context.builder().tableName(originalTableName).tableId(tableBuilder.getTableName());
     var conf = isMutation ? mutationConnectorConf : streamConnectorConf;
@@ -288,8 +336,8 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         formats.configure(connectorConfig, originalTableName, hasMessageKey, isMutation);
     var topicName = connectorConfig.get(CONNECTOR_TOPIC_KEY);
     if (isMutation) {
-      mutationTopicNames.add(topicName);
-    } else if (mutationTopicNames.contains(topicName)) {
+      mutationTopicOwners.put(topicName, standaloneInclude);
+    } else if (mutationTopicOwners.containsKey(topicName)) {
       // Only the mutation table writes its topic: another writer mixes its rows into the
       // mutation, and a writer that reads the mutation reads its own output in an endless loop
       errors.checkFatal(
@@ -298,12 +346,22 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
               + " table. Use a different table name in the EXPORT statement.",
           originalTableName,
           topicName);
+      // A standalone include renames the topic only for its own mutation tables, the ones its
+      // deployment knows, so it would write into the mutation topic of another project
+      errors.checkFatal(
+          includedBy.isEmpty() || mutationTopicOwners.get(topicName).equals(includedBy),
+          "Kafka table '%s' is written by the standalone include '%s' into the topic '%s', which"
+              + " is the topic of a mutation table that '%2$s' does not define. Rename one of"
+              + " the tables.",
+          originalTableName,
+          includedBy.orElse(""),
+          topicName);
       topicName =
           conf.toMapWithSubstitution(
                   ctxBuilder.tableName(originalTableName + SUBSCRIPTION_TOPIC_SUFFIX).build())
               .get(CONNECTOR_TOPIC_KEY);
       errors.checkFatal(
-          !mutationTopicNames.contains(topicName),
+          !mutationTopicOwners.containsKey(topicName),
           "Kafka table '%s' writes into the topic '%s' of a mutation table. Use"
               + " '${sqrl:table-name}' in the 'topic' option of the 'kafka' connector.",
           originalTableName,
@@ -398,18 +456,16 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
           .function()
           .setExecutableQuery(new KafkaQuery(stagePlan.getStage(), topicName, filterColumns));
     }
-    // Plan topic creation. The topics of mutation tables that a standalone included project defines
-    // belong to that project, so they are listed separately, without settings, from the topics this
-    // deployment owns.
-    var mutationsByInclusion =
-        stagePlan.getMutations().stream()
-            .map(Table.class::cast)
-            .collect(Collectors.partitioningBy(table -> table.standaloneInclude().isPresent()));
+    // Plan topic creation. The topics that a standalone included project writes, of the mutation
+    // tables that it defines and of the computed tables that it subscribes to, belong to that
+    // project, so they are listed separately, without settings, from the topics this deployment
+    // owns.
+    var tablesByInclusion = partitionByInclusion(stagePlan.getTables());
+    var mutationsByInclusion = partitionByInclusion(stagePlan.getMutations());
 
     var topics =
         Streams.concat(
-                stagePlan.getTables().stream()
-                    .map(Table.class::cast)
+                tablesByInclusion.get(false).stream()
                     .map(t -> createNewTopic(t, KafkaNewTopicModel.Type.SUBSCRIPTION)),
                 mutationsByInclusion.get(false).stream()
                     .map(t -> createNewTopic(t, KafkaNewTopicModel.Type.MUTATION)))
@@ -421,10 +477,30 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
             .toList();
 
     var includedTopics =
-        mutationsByInclusion.get(true).stream().map(KafkaLogEngine::toIncludedTopic).toList();
+        Streams.concat(
+                tablesByInclusion.get(true).stream(), mutationsByInclusion.get(true).stream())
+            .map(KafkaLogEngine::toIncludedTopic)
+            .toList();
     noticeStandaloneIncludesWithoutTopics(includedTopics);
 
     return new KafkaPhysicalPlan(topics, testRunnerTopics, includedTopics);
+  }
+
+  private static boolean usesVariable(String template, String variable) {
+    var matcher = ConnectorConfImpl.SQRL_VARIABLE_FINDER.matcher(template);
+    while (matcher.find()) {
+      if (matcher.group("identifier").equalsIgnoreCase(variable)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static Map<Boolean, List<Table>> partitionByInclusion(
+      List<? extends EngineCreateTable> tables) {
+    return tables.stream()
+        .map(Table.class::cast)
+        .collect(Collectors.partitioningBy(table -> table.standaloneInclude().isPresent()));
   }
 
   private void noticeStandaloneIncludesWithoutTopics(List<KafkaIncludedTopicModel> includedTopics) {
@@ -436,8 +512,9 @@ public class KafkaLogEngine extends ExecutionEngine.Base implements LogEngine {
         .forEach(
             include ->
                 errors.notice(
-                    "Include '%1$s' sets \"standalone\": true, but this project uses no internal"
-                        + " Kafka table that '%1$s' defines, so kafka.json lists no topic of"
+                    "Include '%1$s' sets \"standalone\": true, but this project uses no Kafka"
+                        + " topic that '%1$s' writes, i.e. of an internal table that it defines or"
+                        + " of a table that it subscribes to, so kafka.json lists no topic of"
                         + " '%1$s' under \"includedTopics\"",
                     include));
   }

@@ -19,6 +19,7 @@ Every deployment consists of the same components, regardless of where they run:
 | API server    | `vertx.json`, `vertx-config.json`                                     | The [`datasqrl/sqrl-server`](https://hub.docker.com/r/datasqrl/sqrl-server) Docker image, which serves GraphQL, REST, and MCP |
 
 A deployment creates the Kafka topics and database schemas first, then starts the API server and the Flink job. Only the components for the engines enabled in your [configuration](configuration) are generated.
+The topics under `includedTopics` in `kafka.json` belong to a [standalone included project](configuration#standalone-includes), whose own deployment creates and writes them, so deploy that project first.
 
 ## Option A: Managed Cloud Services
 
