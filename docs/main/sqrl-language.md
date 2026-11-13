@@ -171,6 +171,7 @@ DistinctTbl := DISTINCT SourceTbl
 
 * Deduplicates a **STREAM** of changelog data into a **VERSIONED_STATE** table.
 * Hint `/*+filtered_distinct_order*/` (see [hints](#hints)) may precede the statement to push filters before deduplication for optimization.
+* Without a doc string of its own, the table takes the doc string (including [tags](https://docs.datasqrl.com/docs/main/configuration.md#tags-compilertags)) of the source table.
 
 ```sql
 DistinctProducts := DISTINCT Products ON id ORDER BY updated DESC;
@@ -236,7 +237,7 @@ Customer.highValueOrders(minAmount BIGINT) := SELECT * FROM Orders o WHERE o.cus
 TableName.new_col := expression;
 ```
 
-Must appear **immediately after** the table definition it extends, and may reference previously added columns of the same table. Cannot be applied after `CREATE TABLE` statements.
+Must appear **immediately after** the table definition it extends, and may reference previously added columns of the same table. Cannot be applied after `CREATE TABLE` statements. The table keeps the hints and doc string (including [tags](https://docs.datasqrl.com/docs/main/configuration.md#tags-compilertags)) of the definition it extends.
 
 ### Relation Alias As ROW
 
@@ -404,6 +405,7 @@ Hints live in a `/*+ ... */` comment placed **immediately before** the definitio
 | **maintenance**             | `maintenance(type)`                                                                    | table          | specifies table maintenance type, in case an engine support it (`none`, `regular`)                                                                                                                                                                                                                                                                                                                                                                          |
 | **test**                    | `test` or `test(no_rows)`                                                              | table          | marks test case, only executed with [`test` command](https://docs.datasqrl.com/docs/main/compiler.md#test-command).                                                                                                                                                                                                                                                                                                                                                                                |
 | **workload**                | `workload`                                                                             | table          | retained as sink for DAG optimization but hidden from interface                                                                                                                                                                                                                                                                                                                                                                                             |
+| **declassify**              | `declassify(tag, ...)`                                                                 | table          | lets the table drop or lower the listed inherited tags: each listed tag takes the value the doc string declares, or no value. Only applies when tags are configured (see [Tags](https://docs.datasqrl.com/docs/main/configuration.md#tags-compilertags))                                                                                                                                                                                                                                       |
 | **row_count**               | `row_count(count)` or `row_count(col1, col2, ..., count)`                              | table          | specifies estimated row count for the table (e.g. `1e6`) or distinct count for column combinations. Used for query optimization.                                                                                                                                                                                                                                                                                                                            |
 
 This example configures the vector length and a vector index for the `SensorTempByHour` table:
@@ -502,7 +504,7 @@ NEXT_BATCH;
 
 * `--` single-line comment
 * `/* ... */` multi-line comment
-* `/** ... */` **doc-string**: attached to the next definition and propagated to generated API docs.
+* `/** ... */` **doc-string**: attached to the next definition and propagated to generated API docs. When [`compiler.tags`](https://docs.datasqrl.com/docs/main/configuration.md#tags-compilertags) is configured, its `@name` and `@name=value` words are tags that the compiler validates and propagates to the tables that read the definition.
 
 ---
 
@@ -516,6 +518,7 @@ The following produce compile time errors:
 * `DISTINCT` must reference existing columns; `ORDER BY` column(s) must be monotonically increasing.
 * Basetable inference failure for relationships (see [base tables](https://docs.datasqrl.com/docs/main/interface.md#base-tables)).
 * Malformed or invalid hints (wrong delimiter, other text in the hint block that is not a hint, invalid arguments to a known hint such as `ttl`, or more than one `query_by_*` or `no_query` hint on a table).
+* Tag violations when [`compiler.tags`](https://docs.datasqrl.com/docs/main/configuration.md#tags-compilertags) is configured: an undefined tag or value, an inherited tag that a table does not declare or declares lower, or a missing required column.
 
 An unknown hint name is not an error: the compiler prints the warning `Unrecognized hint: [<name>]` and ignores the hint, so a misspelled hint has no effect.
 
