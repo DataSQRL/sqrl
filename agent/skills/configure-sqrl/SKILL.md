@@ -382,7 +382,7 @@ Configure tags only when the requirements ask the compiler to enforce data class
 }
 ```
 
-Each key is a tag name. `values` lists the allowed values from lowest to highest; a tag without `values`, like `gdpr`, is a boolean tag that is written `@gdpr`. `required-columns` maps each column that every table carrying the tag must have to its type. Names and values may only contain letters, digits, underscores and dashes, and are case-insensitive. Put the tags in the shared base: combined package files merge them per tag. To write tags and `declassify` hints in scripts, invoke the `/implement-sqrl` skill (Tags in doc-strings). The compiler lists the tags of every table in `build/pipeline_explain.txt` and in the deployment plans of the database and Kafka.
+Each key is a tag name. `values` lists the allowed values from lowest to highest; a tag without `values`, like `gdpr`, is a boolean tag that is written `@gdpr`. `required-columns` maps each column that every table carrying the tag must have to its type. Names and values may only contain letters, digits, underscores and dashes, and are case-insensitive. Values and required column names must be unique within a tag, also ignoring case. Put the tags in the shared base: combined package files merge them per tag. To write tags and `declassify` hints in scripts, invoke the `/implement-sqrl` skill (Tags in doc-strings). The compiler lists the tags of every table in `build/pipeline_explain.txt` and in the deployment plans of the database and Kafka.
 
 ## Environment Variables (`${VAR}`)
 

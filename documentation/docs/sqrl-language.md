@@ -507,7 +507,7 @@ If you wish to start with those, you need to explicitly write them out and read 
 
 * `--` single-line comment
 * `/* ... */` multi-line comment
-* `/** ... */` **doc-string**: attached to the next definition and propagated to generated API docs.
+* `/** ... */` **doc-string**: attached to the next definition and propagated to generated API docs. When [`compiler.tags`](configuration#tags-compilertags) is configured, its `@name` and `@name=value` words are tags that the compiler validates and propagates to the tables that read the definition.
 
 ---
 
@@ -521,6 +521,7 @@ The following produce compile time errors:
 * `DISTINCT` must reference existing columns; `ORDER BY` column(s) must be monotonically increasing.
 * Basetable inference failure for relationships (see [base tables](interface#base-tables)).
 * Malformed or invalid hints (wrong delimiter, other text in the hint block that is not a hint, invalid arguments to a known hint such as `ttl`, or more than one `query_by_*` or `no_query` hint on a table).
+* Tag violations when [`compiler.tags`](configuration#tags-compilertags) is configured: an undefined tag or value, an inherited tag that a table does not declare or declares lower, or a missing required column.
 
 An unknown hint name is not an error: the compiler prints the warning `Unrecognized hint: [<name>]` and ignores the hint, so a misspelled hint has no effect.
 

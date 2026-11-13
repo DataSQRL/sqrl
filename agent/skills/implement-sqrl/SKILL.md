@@ -720,6 +720,7 @@ When the package configuration defines tags under `compiler.tags`, the `@name` a
 * Use only the tags and values defined in `compiler.tags`. A boolean tag is written `@name`; an ordered tag needs a value, e.g. `@pii=raw`.
 * A table inherits the tags of every table it reads, including joined and subquery tables. A public table or function must repeat each inherited tag in its doc-string with the same or a higher value, or the compile fails. Copy the tags from the compile error's `inherited from [...]` tables. Hidden tables, relationships and test tables carry their inherited tags without declaring them.
 * Tags in `# Columns:` notes and in `CREATE TABLE` column `COMMENT`s count toward the whole table.
+* A tag with `required-columns` in `compiler.tags` requires those columns, with a compatible type, in every table that carries the tag, including hidden tables and tables that are only written into. Keep the column in the `SELECT`, or declassify the tag when the requirements allow it.
 * A `CREATE TABLE` that `INSERT INTO` or `EXPORT` writes into must declare the tags of the written data when other tables read it or it is an internal table with an `engine` hint (e.g. an Iceberg or Kafka table in a separate script).
 * To drop or lower an inherited tag, e.g. for an aggregate that no longer contains personal data, add `/*+declassify(tag, ...) */` and declare the lower value or none. Only declassify when the requirements say the data allows it.
 
@@ -735,6 +736,7 @@ The following produce compile time errors:
 * An `ORDER BY` column that does not also appear in the `SELECT` list — in any table definition, including `/*+test*/` tables (`All sort columns must be part of the SELECT clause`. The `/test-sqrl` skill shows how to sort by a column you do not want in the result).
 * Basetable inference failure for relationships.
 * Malformed or invalid hints (wrong delimiter, other text in the hint block that is not a hint, invalid arguments to a known hint such as `ttl`, or more than one `query_by_*` or `no_query` hint on a table).
+* Tag violations when `compiler.tags` is configured (see Tags in doc-strings above).
 
 An unknown hint name is **not** an error: the compiler prints the warning `Unrecognized hint: [<name>]` and drops the hint, so a misspelled hint has no effect. Check the compile output for this warning after adding a hint.
 
