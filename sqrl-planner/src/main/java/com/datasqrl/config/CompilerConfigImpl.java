@@ -71,11 +71,13 @@ public class CompilerConfigImpl implements PackageJson.CompilerConfig {
     if (!sqrlConfig.hasSubConfig("tags")) {
       return Optional.empty();
     }
+
     var tagsConfig = sqrlConfig.getSubConfig("tags");
     var tags = new LinkedHashMap<String, PackageJson.TagConfig>();
     tagsConfig
         .getKeys()
         .forEach(name -> tags.put(name, new TagConfigImpl(tagsConfig.getSubConfig(name))));
+
     return Optional.of(tags);
   }
 }

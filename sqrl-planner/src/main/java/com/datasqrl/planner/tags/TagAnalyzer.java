@@ -73,18 +73,23 @@ public class TagAnalyzer {
       List<String> columnComments,
       boolean mustDeclare,
       ErrorCollector errors) {
+
     if (!definitions.isEnabled()) {
       return TableTags.EMPTY;
     }
+
     errors = errors.abortOnFatal(false);
     var declared = declaredTags(table.getDocumentation(), columnComments);
     var inherited = inheritedTags(table.getFromTables());
     var required = inherited.without(declassifiedTags(table, inherited, errors));
+
     if (mustDeclare) {
       checkDeclared(table.getName(), required, declared, table.getFromTables(), true, errors);
     }
+
     var effective = required.merge(declared);
     checkRequiredColumns(table, effective, errors);
+
     return effective;
   }
 
@@ -97,6 +102,7 @@ public class TagAnalyzer {
    */
   public void checkWrite(
       TableAnalysis target, List<? extends TableOrFunctionAnalysis> inputs, ErrorCollector errors) {
+
     if (definitions.isEnabled()) {
       checkDeclared(
           target.getName(),
@@ -128,12 +134,14 @@ public class TagAnalyzer {
   /** The tags of the table's declassify hints, which must be defined and should be inherited. */
   private Set<String> declassifiedTags(
       TableAnalysis table, TableTags inherited, ErrorCollector errors) {
+
     var declassified =
         table
             .getHints()
             .getHints(DeclassifyHint.class)
             .flatMap(hint -> hint.getTagNames().stream())
             .collect(Collectors.toCollection(TreeSet::new));
+
     for (var tag : declassified) {
       if (definitions.get(tag).isEmpty()) {
         errors.fatal(
@@ -145,6 +153,7 @@ public class TagAnalyzer {
             table.getName(), tag);
       }
     }
+
     return declassified;
   }
 
@@ -155,6 +164,7 @@ public class TagAnalyzer {
       List<? extends TableOrFunctionAnalysis> inputs,
       boolean canDeclassify,
       ErrorCollector errors) {
+
     for (var tag : required.values()) {
       var found = declared.get(tag.name());
       var fix =
@@ -162,10 +172,12 @@ public class TagAnalyzer {
               ? "declare it in the doc string or declassify it with /*+declassify(%s) */"
                   .formatted(tag.name())
               : "declare it in the doc string of the table";
+
       if (found.isEmpty()) {
         errors.fatal(
             "Table [%s] must declare tag [%s] inherited from [%s]: %s",
             table, tag, sourcesOf(tag, inputs), fix);
+
       } else if (found.get().isLowerThan(tag)) {
         errors.fatal(
             "Table [%s] declares tag [%s] which is lower than [%s] inherited from [%s]: %s",
@@ -186,9 +198,11 @@ public class TagAnalyzer {
 
   private static void checkRequiredColumns(
       TableAnalysis table, TableTags tags, ErrorCollector errors) {
+
     for (var tag : tags.values()) {
       for (var column : tag.definition().requiredColumns()) {
         var field = table.getField(column.name());
+
         if (field == null) {
           errors.fatal(
               "Table [%s] has tag [%s] which requires column [%s] of type [%s], but the column is"

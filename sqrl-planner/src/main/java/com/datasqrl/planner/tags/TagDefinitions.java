@@ -27,6 +27,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Pattern;
+import lombok.Getter;
 import org.apache.calcite.rel.type.RelDataType;
 
 /**
@@ -44,7 +45,7 @@ public final class TagDefinitions {
   private static final Pattern TAG_PATTERN =
       Pattern.compile("(?<!\\S)@([A-Za-z0-9_-]+)(?:=([A-Za-z0-9_-]+))?");
 
-  private final boolean enabled;
+  @Getter private final boolean enabled;
   private final Map<String, TagDefinition> definitions;
 
   private TagDefinitions(boolean enabled, Map<String, TagDefinition> definitions) {
@@ -70,10 +71,13 @@ public final class TagDefinitions {
       Optional<Map<String, TagConfig>> configs,
       Function<String, RelDataType> typeParser,
       ErrorCollector errors) {
+
     if (configs.isEmpty()) {
       return DISABLED;
     }
+
     errors = errors.abortOnFatal(false);
+
     var definitions = new LinkedHashMap<String, TagDefinition>();
     for (var entry : configs.get().entrySet()) {
       var name = normalize(entry.getKey());
@@ -81,6 +85,7 @@ public final class TagDefinitions {
         errors.fatal("Duplicate tag [%s] in compiler.tags: tag names are case-insensitive", name);
         continue;
       }
+
       var values = new ArrayList<String>();
       for (var value : entry.getValue().getValues()) {
         if (values.contains(normalize(value))) {
@@ -91,6 +96,7 @@ public final class TagDefinitions {
           values.add(normalize(value));
         }
       }
+
       var columns = new ArrayList<RequiredColumn>();
       for (var column : entry.getValue().getRequiredColumns().entrySet()) {
         try {
@@ -103,13 +109,10 @@ public final class TagDefinitions {
               column.getValue(), column.getKey(), name, e.getMessage());
         }
       }
+
       definitions.put(name, TagDefinition.of(name, values, columns));
     }
     return new TagDefinitions(true, definitions);
-  }
-
-  public boolean isEnabled() {
-    return enabled;
   }
 
   public Optional<TagDefinition> get(String name) {
@@ -128,34 +131,40 @@ public final class TagDefinitions {
     if (!enabled || text == null) {
       return TableTags.EMPTY;
     }
+
     var values = new ArrayList<TagValue>();
     var matcher = TAG_PATTERN.matcher(text);
     while (matcher.find()) {
       resolve(matcher.group(), matcher.group(1), matcher.group(2), onInvalid)
           .ifPresent(values::add);
     }
+
     return TableTags.of(values);
   }
 
   private Optional<TagValue> resolve(
       String tag, String name, String value, Consumer<String> onInvalid) {
+
     var definition = get(name);
     if (definition.isEmpty()) {
       onInvalid.accept("Tag [%s] is not defined in compiler.tags".formatted(tag));
       return Optional.empty();
     }
+
     var def = definition.get();
     if (value == null && !def.isBoolean()) {
       onInvalid.accept(
           "Tag [%s] requires a value: allowed values are %s".formatted(tag, def.values()));
       return Optional.empty();
     }
+
     var level = def.values().indexOf(value == null ? TagDefinition.TRUE : normalize(value));
     if (level < 0) {
       onInvalid.accept(
           "Tag [%s] has an invalid value: allowed values are %s".formatted(tag, def.values()));
       return Optional.empty();
     }
+
     return Optional.of(new TagValue(def, level));
   }
 

@@ -607,6 +607,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
             .tableAnalysis()
             .objectIdentifier(identifier)
             .originalSql(originalSql);
+
     // The query carries the tags it inherits, the target table must declare them (checkWriteTags)
     return buildWithTags(builder, List.of(), false, errors);
   }
@@ -622,6 +623,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       List<String> columnComments,
       boolean mustDeclareTags,
       ErrorCollector errors) {
+
     var tags = tagAnalyzer.analyze(builder.build(), columnComments, mustDeclareTags, errors);
     return builder.tags(tags).build();
   }
@@ -637,6 +639,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       ObjectIdentifier tableId,
       List<? extends TableOrFunctionAnalysis> inputs,
       ErrorCollector errors) {
+
     var readableTable = tableLookup.lookupView(tableId);
     if (readableTable != null) {
       tagAnalyzer.checkWrite(readableTable, inputs, errors);
@@ -940,28 +943,36 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
    */
   private TableAnalysis addSourceTable(
       AddTableResult addResult, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
+
     var view =
         createScanView(addResult.tableName + TEMP_VIEW_SUFFIX, addResult.baseTableIdentifier);
     var viewAnalysis = analyzeView(view, false, hintsAndDoc, ErrorCollector.root());
-    TableAnalysis.TableAnalysisBuilder tbBuilder = viewAnalysis.tableAnalysis();
-    tbBuilder
+    var tableBuilder = viewAnalysis.tableAnalysis();
+    tableBuilder
         .objectIdentifier(addResult.baseTableIdentifier)
         .originalSql(addResult.completeCreateTableSql);
+
     // Remove trivial LogicalProject so that subsequent references match
-    RelNode relNode = tbBuilder.build().getOriginalRelnode();
-    if (CalciteUtil.isTrivialProject(relNode)) relNode = relNode.getInput(0);
+    var relNode = tableBuilder.build().getOriginalRelnode();
+    if (CalciteUtil.isTrivialProject(relNode)) {
+      relNode = relNode.getInput(0);
+    }
+
     // Validate the comments of the declared columns only, since the comments that a LIKE clause
     // copies are validated on the table that declares them
     addResult.createdTable().getColumnList().stream()
         .map(column -> ((SqlTableColumn) column).getComment())
         .forEach(comment -> tagAnalyzer.validateTags(comment, errors));
+
     var tableAnalysis =
         buildWithTags(
-            tbBuilder.originalRelnode(relNode).collapsedRelnode(relNode),
+            tableBuilder.originalRelnode(relNode).collapsedRelnode(relNode),
             addResult.columnComments(),
             false,
             errors);
+
     tableLookup.registerTable(tableAnalysis);
+
     return tableAnalysis;
   }
 

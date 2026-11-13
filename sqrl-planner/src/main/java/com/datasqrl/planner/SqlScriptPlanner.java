@@ -695,18 +695,22 @@ public class SqlScriptPlanner {
       Optional<PlannerHints> inheritedHints,
       Sqrl2FlinkSQLTranslator sqrlEnv,
       ErrorCollector errors) {
+
     var hintsAndDoc = HintsAndDoc.EMPTY;
     if (stmt instanceof SqrlAddColumnStatement statement) {
       hintsAndDoc =
           getHintsAndDoc(
                   statement, Optional.of(tableDefinitionHintsAndDoc.hints()), sqrlEnv, errors)
               .updateDocsIfAbsent(tableDefinitionHintsAndDoc.doc());
+
     } else if (stmt instanceof SqrlStatement statement) {
       hintsAndDoc = getHintsAndDoc(statement, inheritedHints, sqrlEnv, errors);
     }
+
     if (stmt instanceof StackableStatement) {
       tableDefinitionHintsAndDoc = hintsAndDoc;
     }
+
     return hintsAndDoc;
   }
 
@@ -723,6 +727,7 @@ public class SqlScriptPlanner {
       Optional<String> subscribingInclude,
       ErrorCollector errors,
       Sqrl2FlinkSQLTranslator sqrlEnv) {
+
     var tableAnalysis = sqrlEnv.addView(viewSql, hintsAndDoc, mustDeclareTags, errors);
     try {
       addTableToDag(tableAnalysis, hintsAndDoc, visibility, subscribingInclude, false, sqrlEnv);
@@ -741,6 +746,7 @@ public class SqlScriptPlanner {
       Optional<PlannerHints> inheritedHints,
       Sqrl2FlinkSQLTranslator sqrlEnv,
       ErrorCollector errors) {
+
     var comments = statement.getComments();
     var hints = PlannerHints.from(comments, inheritedHints, errors);
     var documentation =
@@ -751,7 +757,9 @@ public class SqlScriptPlanner {
                     .map(ParsedObject::get)
                     .map(String::trim)
                     .collect(Collectors.joining("\n")));
+
     documentation.ifPresent(doc -> sqrlEnv.getTagAnalyzer().validateTags(doc, errors));
+
     return new HintsAndDoc(hints, documentation);
   }
 

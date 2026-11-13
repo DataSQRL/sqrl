@@ -37,6 +37,7 @@ public record TagDefinition(
   /** Creates a boolean tag if there are no values, and an ordered tag otherwise. */
   public static TagDefinition of(
       String name, List<String> values, List<RequiredColumn> requiredColumns) {
+
     return values.isEmpty()
         ? new TagDefinition(name, List.of(TRUE), true, requiredColumns)
         : new TagDefinition(name, List.copyOf(values), false, requiredColumns);

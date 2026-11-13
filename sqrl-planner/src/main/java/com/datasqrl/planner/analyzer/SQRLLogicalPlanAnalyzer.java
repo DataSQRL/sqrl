@@ -281,7 +281,8 @@ public class SQRLLogicalPlanAnalyzer implements SqrlRelShuttle {
             .filter(AbstractAnalysis::hasRowType)
             .filter(tbl -> tbl.getRowType().equals(originalRelnode.getRowType()))
             .findFirst();
-    Optional<TableAnalysis> baseTable =
+
+    var baseTable =
         sameTypeSource
             .filter(tbl -> preservesBaseTable)
             .map(TableOrFunctionAnalysis::getBaseTable)
