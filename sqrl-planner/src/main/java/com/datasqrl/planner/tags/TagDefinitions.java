@@ -20,6 +20,7 @@ import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.planner.tags.TagDefinition.RequiredColumn;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -98,7 +99,16 @@ public final class TagDefinitions {
       }
 
       var columns = new ArrayList<RequiredColumn>();
+      var columnNames = new HashSet<String>();
       for (var column : entry.getValue().getRequiredColumns().entrySet()) {
+        // Tables are checked for their required columns case-insensitively
+        if (!columnNames.add(column.getKey().toLowerCase(Locale.ROOT))) {
+          errors.fatal(
+              "Duplicate required column [%s] of tag [%s] in compiler.tags: column names are"
+                  + " case-insensitive",
+              column.getKey(), name);
+          continue;
+        }
         try {
           columns.add(
               new RequiredColumn(

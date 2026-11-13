@@ -99,6 +99,27 @@ class TagDefinitionsTest {
   }
 
   @Test
+  void givenRequiredColumnsDifferingInCase_whenFrom_thenReportsTheDuplicate() {
+    var columns = new LinkedHashMap<String, String>();
+    columns.put("jurisdiction", "STRING");
+    columns.put("JURISDICTION", "STRING");
+
+    var definitions =
+        TagDefinitions.from(
+            Optional.of(Map.of("jurisdiction", config(List.of(), columns))),
+            this::parseType,
+            errors);
+
+    assertThat(messages())
+        .containsExactly(
+            "Duplicate required column [JURISDICTION] of tag [jurisdiction] in compiler.tags:"
+                + " column names are case-insensitive");
+    assertThat(definitions.get("jurisdiction").orElseThrow().requiredColumns())
+        .extracting(TagDefinition.RequiredColumn::name)
+        .containsExactly("jurisdiction");
+  }
+
+  @Test
   void givenTextWithTags_whenParse_thenResolvesTagsCaseInsensitively() {
     var tags =
         DEFINITIONS.parse(
