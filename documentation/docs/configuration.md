@@ -108,7 +108,7 @@ MyTable :=
 ### API Versioning
 
 The top-level `script.graphql` and `script.operations` fields configure a single API at version `v1`.
-The top-level `script.operations` field is deprecated, and compiling with it produces a warning: configure the API under `script.api` instead.
+The top-level `script.operations` field is deprecated: configure the API under `script.api` instead.
 To serve multiple API versions concurrently, configure them under `script.api`.
 API version names must start with `v` followed by a number, such as `v1` or `v2`. Each version must define a GraphQL `schema`, GraphQL `operations`, an `openapi` compatibility specification, or an `mcp-apps` directory. When a version does not define a schema, DataSQRL infers its GraphQL schema from the SQRL script.
 

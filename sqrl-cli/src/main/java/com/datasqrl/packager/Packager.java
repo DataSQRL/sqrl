@@ -37,11 +37,9 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -77,13 +75,6 @@ public class Packager {
       }
 
       preprocessingPipeline.run(basePath, errors);
-      copyMcpApps(basePath);
-      if (!config.getScriptConfig().getOperations().isEmpty()) {
-        errors.warn(
-            "'script.operations' is deprecated: configure the operations of an API version in"
-                + " 'script.api.<version>.operations', with its schema in"
-                + " 'script.api.<version>.schema' instead of 'script.graphql'");
-      }
 
       var libDir = workspacePaths.getUdfPath();
       var namespaces = includes.stream().map(IncludeConfig::getNamespace).toList();
@@ -94,35 +85,6 @@ public class Packager {
     } catch (IOException e) {
       throw errors.handle(e);
     }
-  }
-
-  /**
-   * Copies the {@code .html} files directly in each configured MCP apps directory to the same
-   * directory in the build directory, where the compiler loads the apps from. A directory that
-   * doesn't exist is not copied, so the compiler reports it.
-   */
-  private void copyMcpApps(Path basePath) throws IOException {
-    for (var apiConfig : config.getScriptConfig().getScriptApiConfigs()) {
-      var appsDir = apiConfig.getMcpApps();
-      if (appsDir.isEmpty() || !Files.isDirectory(basePath.resolve(appsDir.get()))) {
-        continue;
-      }
-      var buildAppsDir = workspacePaths.buildDir().resolve(appsDir.get());
-      Files.createDirectories(buildAppsDir);
-      try (var files = Files.list(basePath.resolve(appsDir.get()))) {
-        for (var file : files.filter(Packager::isHtmlFile).toList()) {
-          Files.copy(
-              file,
-              buildAppsDir.resolve(file.getFileName().toString()),
-              StandardCopyOption.REPLACE_EXISTING);
-        }
-      }
-    }
-  }
-
-  private static boolean isHtmlFile(Path file) {
-    return Files.isRegularFile(file)
-        && file.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".html");
   }
 
   private static Path includeDir(Path basePath, IncludeConfig include) {

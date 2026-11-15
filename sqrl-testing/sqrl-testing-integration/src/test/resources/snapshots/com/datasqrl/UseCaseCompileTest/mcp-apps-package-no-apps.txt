@@ -1,0 +1,289 @@
+>>>inferred_schema.graphqls
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Query {
+  Sales(limit: Int = 10, offset: Int = 0): [Sales!]
+  SalesByRegion(region: String!, limit: Int = 10, offset: Int = 0): [Sales!]
+}
+
+type Sales {
+  region: String!
+  product: String!
+  amount: Float!
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  APP
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== Sales
+ID:          default_catalog.default_database.Sales
+Type:        state
+Stage:       flink
+Primary key: region
+Timestamp:   -
+Row count:   ~2
+--- definition ---
+Schema:
+ - region: CHAR(5) CHARACTER SET "UTF-16LE" NOT NULL
+ - product: CHAR(6) CHARACTER SET "UTF-16LE" NOT NULL
+ - amount: DECIMAL(4, 1) NOT NULL
+--- physical ---
+Table Sales (postgres):
+ - primary key: region
+
+=== SalesByRegion
+ID:          default_catalog.default_database.SalesByRegion
+Type:        query
+Stage:       postgres
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Sales
+Annotations:
+ - parameters: region
+ - base-table: Sales
+
+=== sales
+ID:          print.sales
+Type:        export
+Stage:       flink
+--- definition ---
+Inputs:
+ - default_catalog.default_database.Sales
+
+>>>flink-sql-no-functions.sql
+CREATE VIEW `Sales`
+AS
+SELECT *
+FROM (VALUES ROW('north', 'widget', 120.5),
+   ROW('south', 'gadget', 80.0)) AS `t` (`region`, `product`, `amount`);
+CREATE TABLE `sales_1` (
+  `region` CHAR(5) CHARACTER SET `UTF-16LE` NOT NULL,
+  `product` CHAR(6) CHARACTER SET `UTF-16LE` NOT NULL,
+  `amount` DECIMAL(4, 1) NOT NULL,
+  PRIMARY KEY (`region`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'print',
+  'print-identifier' = 'sales'
+);
+CREATE TABLE `Sales_2` (
+  `region` CHAR(5) CHARACTER SET `UTF-16LE` NOT NULL,
+  `product` CHAR(6) CHARACTER SET `UTF-16LE` NOT NULL,
+  `amount` DECIMAL(4, 1) NOT NULL,
+  PRIMARY KEY (`region`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'table-name' = 'Sales',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`sales_1`
+SELECT *
+FROM `default_catalog`.`default_database`.`Sales`
+;
+INSERT INTO `default_catalog`.`default_database`.`Sales_2`
+SELECT *
+FROM `default_catalog`.`default_database`.`Sales`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "Sales" ("region" TEXT NOT NULL, "product" TEXT NOT NULL, "amount" NUMERIC NOT NULL, PRIMARY KEY ("region"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "Sales",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Sales\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "SalesByRegion",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "region"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"Sales\"\nWHERE \"region\" = $1",
+              "parameters" : [
+                {
+                  "type" : "arg",
+                  "path" : "region",
+                  "sqlType" : "VARCHAR"
+                }
+              ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [ ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetSales",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query Sales($limit: Int = 10, $offset: Int = 0) {\nSales(limit: $limit, offset: $offset) {\nregion\nproduct\namount\n}\n\n}",
+            "queryName" : "Sales",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/Sales{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "region" : {
+                  "type" : "string"
+                },
+                "product" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetSalesByRegion",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                },
+                "region" : {
+                  "type" : "string"
+                }
+              },
+              "required" : [
+                "region"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query SalesByRegion($region: String!, $limit: Int = 10, $offset: Int = 0) {\nSalesByRegion(region: $region, limit: $limit, offset: $offset) {\nregion\nproduct\namount\n}\n\n}",
+            "queryName" : "SalesByRegion",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/SalesByRegion{?offset,limit,region}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "region" : {
+                  "type" : "string"
+                },
+                "product" : {
+                  "type" : "string"
+                },
+                "amount" : {
+                  "type" : "number"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Sales(limit: Int = 10, offset: Int = 0): [Sales!]\n  SalesByRegion(region: String!, limit: Int = 10, offset: Int = 0): [Sales!]\n}\n\ntype Sales {\n  region: String!\n  product: String!\n  amount: Float!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      },
+      "mcpApps" : [ ]
+    }
+  }
+}

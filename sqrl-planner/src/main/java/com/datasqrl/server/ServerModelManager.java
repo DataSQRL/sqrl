@@ -120,9 +120,9 @@ public class ServerModelManager {
   }
 
   /**
-   * Loads the MCP apps of the API version from its apps directory in the build directory, or
-   * returns empty if it has no MCP Apps support: no apps directory is configured, or MCP is not one
-   * of the API protocols.
+   * Loads the MCP apps of the API version from its apps directory in the build directory, where the
+   * packager copies the {@code .html} files with the other source files, or returns empty if it has
+   * no MCP Apps support: no apps directory is configured, or MCP is not one of the API protocols.
    */
   private Optional<List<McpApp>> loadMcpApps(String apiVersion, boolean mcpEnabled) {
     var directory = findApiConfig(apiVersion).flatMap(PackageJson.ScriptApiConfig::getMcpApps);
@@ -136,9 +136,14 @@ public class ServerModelManager {
           directory.get());
       return Optional.empty();
     }
-    return Optional.of(
-        McpAppLinker.loadApps(
-            workspacePaths.buildDir().resolve(directory.get()), directory.get(), errors));
+    var buildDirectory = workspacePaths.buildDir().resolve(directory.get());
+    // The build directory only has the apps directory once it has an app, since the packager
+    // copies the source files into the build directory but no empty directories
+    if (!Files.isDirectory(buildDirectory)
+        && Files.isDirectory(workspacePaths.projectRoot().resolve(directory.get()))) {
+      return Optional.of(List.of());
+    }
+    return Optional.of(McpAppLinker.loadApps(buildDirectory, directory.get(), errors));
   }
 
   private Optional<PackageJson.ScriptApiConfig> findApiConfig(String apiVersion) {

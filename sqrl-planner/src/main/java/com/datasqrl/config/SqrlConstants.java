@@ -42,4 +42,5 @@ public class SqrlConstants {
   public static final String GRAPHQL_EXTENSION = "graphql";
   public static final String CONFIG_EXTENSION = "json";
   public static final String GRAPHQL_SCHEMA_EXTENSION = "graphqls";
+  public static final String HTML_EXTENSION = "html";
 }

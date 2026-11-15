@@ -15,6 +15,7 @@
  */
 package com.datasqrl.server;
 
+import com.datasqrl.config.SqrlConstants;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.server.operation.ApiOperation;
 import com.datasqrl.server.operation.McpApp;
@@ -47,7 +48,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class McpAppLinker {
 
-  private static final String HTML_EXTENSION = ".html";
+  private static final String HTML_EXTENSION = "." + SqrlConstants.HTML_EXTENSION;
 
   /** A {@code src} or {@code href} of a script, link or img element, with or without quotes. */
   private static final Pattern RESOURCE_REFERENCE =
