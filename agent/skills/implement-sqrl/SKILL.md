@@ -695,7 +695,6 @@ How DataSQRL publishes a doc-string:
 * A `CREATE TABLE` doc-string describes the type, the generated query and the mutation.
 * A `# Columns:` section describes the columns of the type that the definition creates. A `# Arguments:` section describes the arguments of a function. Each section has one `- name: text` line for each column or argument. A column note becomes the GraphQL field description and the field description in the REST response schema. An argument note becomes the GraphQL argument description and the MCP parameter description.
 * A line indented under a column describes a field nested in it, to any depth: the fields of a `ROW` column, or of the rows of an `ARRAY<ROW<...>>` column (e.g. `- address: ...` and below it `  - street: ...`).
-* A `CREATE TABLE` column that the `# Columns:` section doesn't list uses its `COMMENT` as its note. Flink SQL keeps the comments of top-level columns only, so describe nested fields in the doc-string.
 
 ```sql
 /** A registered person.
