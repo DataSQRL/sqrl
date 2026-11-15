@@ -32,6 +32,7 @@ import com.datasqrl.planner.parser.SqrlComments;
 import com.datasqrl.planner.tags.TagDefinition.RequiredColumn;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import org.apache.calcite.plan.RelOptCluster;
 import org.apache.calcite.plan.volcano.VolcanoPlanner;
@@ -107,11 +108,34 @@ class TagAnalyzerTest {
   @Test
   void givenTagsInColumnDocsAndComments_whenDeclaredTags_thenTheyAreDeclared() {
     var documentation =
-        DocStringParser.parse("Customers\n# Columns:\n- id: The id @classification=secret");
+        DocStringParser.parse("Customers\n# Columns:\n- id: The id @classification=secret")
+            .withColumnDocsIfAbsent(Map.of("email", "Contact email @pii=raw"));
 
-    var tags = analyzer.declaredTags(documentation, List.of("Contact email @pii=raw"));
+    var tags = analyzer.declaredTags(documentation);
 
     assertThat(tags).hasToString("@classification=secret @pii=raw");
+  }
+
+  @Test
+  void givenTagInCommentOfColumnThatDocStringDocuments_whenDeclaredTags_thenItIsNotDeclared() {
+    var documentation =
+        DocStringParser.parse("Customers\n# Columns:\n- email: The contact email")
+            .withColumnDocsIfAbsent(Map.of("email", "Contact email @pii=raw"));
+
+    var tags = analyzer.declaredTags(documentation);
+
+    assertThat(tags).hasToString("");
+  }
+
+  @Test
+  void givenTagInNestedColumnDoc_whenDeclaredTags_thenItIsDeclared() {
+    var documentation =
+        DocStringParser.parse(
+            "Customers\n# Columns:\n- address: The address\n  - street: The street @pii=raw");
+
+    var tags = analyzer.declaredTags(documentation);
+
+    assertThat(tags).hasToString("@pii=raw");
   }
 
   @Test

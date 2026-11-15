@@ -978,7 +978,10 @@ public class SqlScriptPlanner {
               scriptContext.toIdentifier(fnName), relBuilder.build(), parameters, tableAnalysis);
       fnBuilder.fullPath(NamePath.of(tableName));
       fnBuilder.visibility(visibility);
-      fnBuilder.documentation(hintsAndDoc.getDocumentation());
+      // The analysis of a created table has its consolidated docs: the doc string, or the one of
+      // the table its LIKE clause copies, with the column comments
+      fnBuilder.documentation(
+          isSource ? tableAnalysis.getDocumentation() : hintsAndDoc.getDocumentation());
       fnBuilder.cacheDuration(getCacheDuration(hintsAndDoc));
       addFunctionToDag(
           fnBuilder.build(), hintsAndDoc.dropHints()); // hints don't apply to the function access

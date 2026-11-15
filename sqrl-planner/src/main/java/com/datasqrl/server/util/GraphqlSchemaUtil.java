@@ -21,7 +21,6 @@ import com.datasqrl.canonicalizer.Name;
 import com.datasqrl.canonicalizer.NamePath;
 import com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType;
 import com.datasqrl.plan.table.Multiplicity;
-import com.datasqrl.planner.util.Documented;
 import com.datasqrl.planner.util.Documented.Lookup;
 import com.datasqrl.server.graphql.CustomScalars;
 import graphql.Scalars;
@@ -238,7 +237,12 @@ public class GraphqlSchemaUtil {
         continue;
       }
       var columnType = field.getType();
-      getGraphQLType(metaType, columnType, fieldPath, extendedScalarTypes, Documented.NO_LOOKUP)
+      getGraphQLType(
+              metaType,
+              columnType,
+              fieldPath,
+              extendedScalarTypes,
+              fieldDocs.nested(field.getName()))
           .map(fieldType -> wrapNullable(fieldType, columnType)) // recursively traverse
           .ifPresent(fieldType -> fieldConsumer.accept(field.getName(), fieldType));
     }

@@ -509,6 +509,29 @@ If you wish to start with those, you need to explicitly write them out and read 
 * `/* ... */` multi-line comment
 * `/** ... */` **doc-string**: attached to the next definition and propagated to generated API docs. When [`compiler.tags`](configuration#tags-compilertags) is configured, its `@name` and `@name=value` words are tags that the compiler validates and propagates to the tables that read the definition.
 
+A `# Columns` or `# Arguments` section in a doc-string documents the columns or arguments of the definition, as `- name: description` list items. An item that is indented more than the item above it documents a field nested in that item, to any depth: the fields of a `ROW` column, or of the rows of an `ARRAY<ROW<...>>` column. The `*` that starts each line of a doc-string is optional.
+
+```sql
+/** Profiles that customers submit
+ * # Columns:
+ * - email: The contact email
+ * - address: The postal address
+ *   - street: The street and house number
+ *   - geo: The location of the address
+ *     - lat: The latitude
+ * - orders: The orders of the customer
+ *   - total: The order total
+ */
+CREATE TABLE CustomerProfiles (
+  id BIGINT NOT NULL COMMENT 'The customer id',
+  email STRING NOT NULL,
+  address ROW<street STRING, geo ROW<lat DOUBLE, lon DOUBLE>>,
+  orders ARRAY<ROW<orderId BIGINT, total DOUBLE>>
+);
+```
+
+A column of a `CREATE TABLE` that the doc-string doesn't document gets its `COMMENT` as its documentation, like `id` above. Flink SQL keeps the comments of top-level columns only, so document nested fields in the doc-string.
+
 ---
 
 ## Validation Rules

@@ -1,0 +1,733 @@
+>>>inferred_schema.graphqls
+"Profiles that customers submit @pii=raw"
+type CustomerProfiles {
+  "The customer id"
+  id: Long!
+  "The contact email"
+  email: String!
+  "The phone number @gdpr"
+  phone: String
+  "The postal address"
+  address: CustomerProfiles_addressOutput
+  "The orders of the customer"
+  orders: [CustomerProfiles_ordersOutput]
+  event_time: DateTime
+}
+
+input CustomerProfilesInput {
+  "The customer id"
+  id: Long!
+  "The contact email"
+  email: String!
+  "The phone number @gdpr"
+  phone: String
+  "The postal address"
+  address: CustomerProfiles_addressInput
+  "The orders of the customer"
+  orders: [CustomerProfiles_ordersInput]
+}
+
+type CustomerProfilesResultOutput {
+  "The customer id"
+  id: Long!
+  "The contact email"
+  email: String!
+  "The phone number @gdpr"
+  phone: String
+  "The postal address"
+  address: CustomerProfilesResult_addressOutput
+  "The orders of the customer"
+  orders: [CustomerProfilesResult_ordersOutput]
+  event_time: DateTime
+}
+
+type CustomerProfilesResult_addressOutput {
+  "The street and house number"
+  street: String
+  "The location of the address"
+  geo: CustomerProfilesResult_address_geoOutput
+}
+
+type CustomerProfilesResult_address_geoOutput {
+  "The latitude"
+  lat: Float
+  "The longitude"
+  lon: Float
+}
+
+type CustomerProfilesResult_ordersOutput {
+  orderId: Long
+  "The order total"
+  total: Float
+}
+
+input CustomerProfiles_addressInput {
+  "The street and house number"
+  street: String
+  "The location of the address"
+  geo: CustomerProfiles_address_geoInput
+}
+
+type CustomerProfiles_addressOutput {
+  "The street and house number"
+  street: String
+  "The location of the address"
+  geo: CustomerProfiles_address_geoOutput
+}
+
+input CustomerProfiles_address_geoInput {
+  "The latitude"
+  lat: Float
+  "The longitude"
+  lon: Float
+}
+
+type CustomerProfiles_address_geoOutput {
+  "The latitude"
+  lat: Float
+  "The longitude"
+  lon: Float
+}
+
+input CustomerProfiles_ordersInput {
+  orderId: Long
+  "The order total"
+  total: Float
+}
+
+type CustomerProfiles_ordersOutput {
+  orderId: Long
+  "The order total"
+  total: Float
+}
+
+"An RFC-3339 compliant Full Date Scalar"
+scalar Date
+
+"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats"
+scalar DateTime
+
+"A JSON scalar"
+scalar JSON
+
+"Profiles that customers submit @pii=raw"
+type LatestProfiles {
+  "The customer id"
+  id: Long!
+  "The contact email"
+  email: String!
+  "The phone number @gdpr"
+  phone: String
+  "The postal address"
+  address: LatestProfiles_addressOutput
+  "The orders of the customer"
+  orders: [LatestProfiles_ordersOutput]
+  event_time: DateTime
+}
+
+type LatestProfiles_addressOutput {
+  "The street and house number"
+  street: String
+  "The location of the address"
+  geo: LatestProfiles_address_geoOutput
+}
+
+type LatestProfiles_address_geoOutput {
+  "The latitude"
+  lat: Float
+  "The longitude"
+  lon: Float
+}
+
+type LatestProfiles_ordersOutput {
+  orderId: Long
+  "The order total"
+  total: Float
+}
+
+"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`."
+scalar LocalTime
+
+"A 64-bit signed integer"
+scalar Long
+
+type Mutation {
+  "Profiles that customers submit @pii=raw"
+  CustomerProfiles(event: CustomerProfilesInput!): CustomerProfilesResultOutput!
+}
+
+type Query {
+  "Profiles that customers submit @pii=raw"
+  CustomerProfiles(limit: Int = 10, offset: Int = 0): [CustomerProfiles!]
+  LatestProfiles(limit: Int = 10, offset: Int = 0): [LatestProfiles!]
+}
+
+enum _McpMethodType {
+  NONE
+  TOOL
+  RESOURCE
+}
+
+enum _RestMethodType {
+  NONE
+  GET
+  POST
+}
+
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+>>>pipeline_explain.txt
+=== CustomerProfiles
+ID:          default_catalog.default_database.CustomerProfiles
+Type:        stream
+Stage:       flink
+Tags:        gdpr=true, pii=raw
+Primary key: -
+Timestamp:   event_time
+Row count:   ~1e8
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - phone: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - address: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" street, RecordType:peek_no_expand(DOUBLE lat, DOUBLE lon) geo)
+ - orders: RecordType:peek_no_expand(BIGINT orderId, DOUBLE total) ARRAY
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.CustomerProfiles__base
+Annotations:
+ - features: DENORMALIZE (feature)
+--- physical ---
+Table CustomerProfiles (postgres):
+ - primary key: __pk_hash (generated hash key)
+
+=== LatestProfiles
+ID:          default_catalog.default_database.LatestProfiles
+Type:        state
+Stage:       flink
+Tags:        gdpr=true, pii=raw
+Primary key: id
+Timestamp:   event_time
+Row count:   ~2e7
+--- definition ---
+Schema:
+ - id: BIGINT NOT NULL
+ - email: VARCHAR(2147483647) CHARACTER SET "UTF-16LE" NOT NULL
+ - phone: VARCHAR(2147483647) CHARACTER SET "UTF-16LE"
+ - address: RecordType:peek_no_expand(VARCHAR(2147483647) CHARACTER SET "UTF-16LE" street, RecordType:peek_no_expand(DOUBLE lat, DOUBLE lon) geo)
+ - orders: RecordType:peek_no_expand(BIGINT orderId, DOUBLE total) ARRAY
+ - event_time: TIMESTAMP_LTZ(3) *ROWTIME*
+Inputs:
+ - default_catalog.default_database.CustomerProfiles
+Annotations:
+ - mostRecentDistinct: true
+--- physical ---
+Table LatestProfiles (postgres):
+ - primary key: id
+
+>>>flink-sql-no-functions.sql
+CREATE TABLE `CustomerProfiles` (
+  `id` BIGINT NOT NULL COMMENT 'The customer id',
+  `email` STRING NOT NULL COMMENT 'Overridden by the doc string @financial',
+  `phone` STRING COMMENT 'The phone number @gdpr',
+  `address` ROW< `street` STRING, `geo` ROW< `lat` DOUBLE, `lon` DOUBLE > >,
+  `orders` ARRAY< ROW< `orderId` BIGINT, `total` DOUBLE > >,
+  `event_time` TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+  WATERMARK FOR `event_time` AS `event_time` - INTERVAL '0.0' SECOND
+)
+WITH (
+  'connector' = 'kafka-safe',
+  'flexible-json.timestamp-format.standard' = 'ISO-8601',
+  'format' = 'flexible-json',
+  'properties.auto.offset.reset' = 'earliest',
+  'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+  'properties.compression.type' = 'zstd',
+  'properties.group.id' = '${KAFKA_GROUP_ID}',
+  'topic' = 'CustomerProfiles'
+);
+CREATE VIEW `LatestProfiles`
+AS
+SELECT `id`, `email`, `phone`, `address`, `orders`, `event_time`
+FROM (SELECT `id`, `email`, `phone`, `address`, `orders`, `event_time`, ROW_NUMBER() OVER (PARTITION BY `id` ORDER BY `event_time` DESC NULLS LAST) AS `__sqrlinternal_rownum`
+  FROM `default_catalog`.`default_database`.`CustomerProfiles`) AS `t`
+WHERE `__sqrlinternal_rownum` = 1;
+CREATE TABLE `CustomerProfiles_1` (
+  `id` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `address` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `orders` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  `__pk_hash` CHAR(32) CHARACTER SET `UTF-16LE`,
+  PRIMARY KEY (`__pk_hash`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'IGNORE',
+  'table-name' = 'CustomerProfiles',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+CREATE TABLE `LatestProfiles_2` (
+  `id` BIGINT NOT NULL,
+  `email` VARCHAR(2147483647) CHARACTER SET `UTF-16LE` NOT NULL,
+  `phone` VARCHAR(2147483647) CHARACTER SET `UTF-16LE`,
+  `address` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `orders` RAW('com.datasqrl.flinkrunner.stdlib.json.FlinkJsonType', 'AERjb20uZGF0YXNxcmwuZmxpbmtydW5uZXIuc3RkbGliLmpzb24uRmxpbmtKc29uVHlwZVNlcmlhbGl6ZXJTbmFwc2hvdAAAAAM='),
+  `event_time` TIMESTAMP(3) WITH LOCAL TIME ZONE,
+  PRIMARY KEY (`id`) NOT ENFORCED
+)
+WITH (
+  'connector' = 'jdbc-sqrl',
+  'driver' = 'org.postgresql.Driver',
+  'password' = '${POSTGRES_PASSWORD}',
+  'sink.on-conflict.action' = 'TIMESTAMP',
+  'sink.on-conflict.timestamp-column' = 'event_time',
+  'table-name' = 'LatestProfiles',
+  'url' = 'jdbc:postgresql://${POSTGRES_AUTHORITY}',
+  'username' = '${POSTGRES_USERNAME}'
+);
+EXECUTE STATEMENT SET BEGIN
+INSERT INTO `default_catalog`.`default_database`.`CustomerProfiles_1`
+SELECT `id`, `email`, `phone`, `to_jsonb`(`address`) AS `address`, `to_jsonb`(`orders`) AS `orders`, `event_time`, `hash_key`(`id`, `email`, `phone`, `address`, `orders`, `event_time`) AS `__pk_hash`
+FROM `default_catalog`.`default_database`.`CustomerProfiles`
+ON CONFLICT DO DEDUPLICATE
+;
+INSERT INTO `default_catalog`.`default_database`.`LatestProfiles_2`
+SELECT `id`, `email`, `phone`, `to_jsonb`(`address`) AS `address`, `to_jsonb`(`orders`) AS `orders`, `event_time`
+FROM `default_catalog`.`default_database`.`CustomerProfiles`
+ON CONFLICT DO DEDUPLICATE
+;
+END
+>>>kafka.json
+{
+  "topics" : [
+    {
+      "topicName" : "CustomerProfiles",
+      "tableName" : "CustomerProfiles",
+      "logicalName" : "CustomerProfiles",
+      "format" : "flexible-json",
+      "numPartitions" : 1,
+      "replicationFactor" : 3,
+      "type" : "MUTATION",
+      "messageKeys" : [ ],
+      "messageSchema" : "",
+      "config" : { },
+      "tags" : {
+        "gdpr" : "true",
+        "pii" : "raw"
+      }
+    }
+  ],
+  "testRunnerTopics" : [ ]
+}
+>>>postgres-schema.sql
+CREATE TABLE IF NOT EXISTS "CustomerProfiles" ("id" BIGINT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT, "address" JSONB, "orders" JSONB, "event_time" TIMESTAMP WITH TIME ZONE, "__pk_hash" TEXT, PRIMARY KEY ("__pk_hash"));
+CREATE TABLE IF NOT EXISTS "LatestProfiles" ("id" BIGINT NOT NULL, "email" TEXT NOT NULL, "phone" TEXT, "address" JSONB, "orders" JSONB, "event_time" TIMESTAMP WITH TIME ZONE, PRIMARY KEY ("id"))
+>>>vertx.json
+{
+  "models" : {
+    "v1" : {
+      "queries" : [
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "CustomerProfiles",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT \"id\", \"email\", \"phone\", \"address\", \"orders\", \"event_time\"\nFROM \"CustomerProfiles\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        },
+        {
+          "type" : "args",
+          "parentType" : "Query",
+          "fieldName" : "LatestProfiles",
+          "exec" : {
+            "arguments" : [
+              {
+                "type" : "variable",
+                "path" : "limit"
+              },
+              {
+                "type" : "variable",
+                "path" : "offset"
+              }
+            ],
+            "query" : {
+              "type" : "SqlQuery",
+              "sql" : "SELECT *\nFROM \"LatestProfiles\"",
+              "parameters" : [ ],
+              "pagination" : "LIMIT_AND_OFFSET",
+              "cacheDurationMs" : 0,
+              "database" : "POSTGRES"
+            }
+          }
+        }
+      ],
+      "mutations" : [
+        {
+          "type" : "kafka",
+          "fieldName" : "CustomerProfiles",
+          "returnList" : false,
+          "topic" : "CustomerProfiles",
+          "keyColumns" : [ ],
+          "computedColumns" : {
+            "event_time" : {
+              "metadataType" : "TIMESTAMP",
+              "name" : "",
+              "required" : false
+            }
+          },
+          "transactional" : false,
+          "sinkConfig" : { }
+        }
+      ],
+      "subscriptions" : [ ],
+      "operations" : [
+        {
+          "function" : {
+            "name" : "GetCustomerProfiles",
+            "description" : "Profiles that customers submit @pii=raw",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query CustomerProfiles($limit: Int = 10, $offset: Int = 0) {\nCustomerProfiles(limit: $limit, offset: $offset) {\nid\nemail\nphone\naddress {\nstreet\ngeo {\nlat\nlon\n}\n}\norders {\norderId\ntotal\n}\nevent_time\n}\n\n}",
+            "queryName" : "CustomerProfiles",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/CustomerProfiles{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer",
+                  "description" : "The customer id"
+                },
+                "email" : {
+                  "type" : "string",
+                  "description" : "The contact email"
+                },
+                "phone" : {
+                  "type" : "string",
+                  "description" : "The phone number @gdpr"
+                },
+                "address" : {
+                  "type" : "object",
+                  "description" : "The postal address",
+                  "properties" : {
+                    "street" : {
+                      "type" : "string",
+                      "description" : "The street and house number"
+                    },
+                    "geo" : {
+                      "type" : "object",
+                      "description" : "The location of the address",
+                      "properties" : {
+                        "lat" : {
+                          "type" : "number",
+                          "description" : "The latitude"
+                        },
+                        "lon" : {
+                          "type" : "number",
+                          "description" : "The longitude"
+                        }
+                      }
+                    }
+                  }
+                },
+                "orders" : {
+                  "type" : "array",
+                  "description" : "The orders of the customer",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "orderId" : {
+                        "type" : "integer"
+                      },
+                      "total" : {
+                        "type" : "number",
+                        "description" : "The order total"
+                      }
+                    }
+                  }
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "GetLatestProfiles",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "offset" : {
+                  "type" : "integer"
+                },
+                "limit" : {
+                  "type" : "integer"
+                }
+              },
+              "required" : [ ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "query LatestProfiles($limit: Int = 10, $offset: Int = 0) {\nLatestProfiles(limit: $limit, offset: $offset) {\nid\nemail\nphone\naddress {\nstreet\ngeo {\nlat\nlon\n}\n}\norders {\norderId\ntotal\n}\nevent_time\n}\n\n}",
+            "queryName" : "LatestProfiles",
+            "operationType" : "QUERY"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "GET",
+          "uriTemplate" : "queries/LatestProfiles{?offset,limit}",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "array",
+            "items" : {
+              "type" : "object",
+              "properties" : {
+                "id" : {
+                  "type" : "integer",
+                  "description" : "The customer id"
+                },
+                "email" : {
+                  "type" : "string",
+                  "description" : "The contact email"
+                },
+                "phone" : {
+                  "type" : "string",
+                  "description" : "The phone number @gdpr"
+                },
+                "address" : {
+                  "type" : "object",
+                  "description" : "The postal address",
+                  "properties" : {
+                    "street" : {
+                      "type" : "string",
+                      "description" : "The street and house number"
+                    },
+                    "geo" : {
+                      "type" : "object",
+                      "description" : "The location of the address",
+                      "properties" : {
+                        "lat" : {
+                          "type" : "number",
+                          "description" : "The latitude"
+                        },
+                        "lon" : {
+                          "type" : "number",
+                          "description" : "The longitude"
+                        }
+                      }
+                    }
+                  }
+                },
+                "orders" : {
+                  "type" : "array",
+                  "description" : "The orders of the customer",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "orderId" : {
+                        "type" : "integer"
+                      },
+                      "total" : {
+                        "type" : "number",
+                        "description" : "The order total"
+                      }
+                    }
+                  }
+                },
+                "event_time" : {
+                  "type" : "string",
+                  "format" : "date-time"
+                }
+              }
+            }
+          }
+        },
+        {
+          "function" : {
+            "name" : "AddCustomerProfiles",
+            "description" : "Profiles that customers submit @pii=raw",
+            "parameters" : {
+              "type" : "object",
+              "properties" : {
+                "address" : {
+                  "type" : "object",
+                  "description" : "The postal address",
+                  "properties" : {
+                    "geo" : {
+                      "type" : "object",
+                      "description" : "The location of the address",
+                      "properties" : {
+                        "lon" : {
+                          "type" : "number",
+                          "description" : "The longitude"
+                        },
+                        "lat" : {
+                          "type" : "number",
+                          "description" : "The latitude"
+                        }
+                      },
+                      "required" : [ ]
+                    },
+                    "street" : {
+                      "type" : "string",
+                      "description" : "The street and house number"
+                    }
+                  },
+                  "required" : [ ]
+                },
+                "phone" : {
+                  "type" : "string",
+                  "description" : "The phone number @gdpr"
+                },
+                "orders" : {
+                  "type" : "array",
+                  "description" : "The orders of the customer",
+                  "items" : {
+                    "type" : "object",
+                    "properties" : {
+                      "total" : {
+                        "type" : "number",
+                        "description" : "The order total"
+                      },
+                      "orderId" : {
+                        "type" : "integer"
+                      }
+                    },
+                    "required" : [ ]
+                  }
+                },
+                "id" : {
+                  "type" : "integer",
+                  "description" : "The customer id"
+                },
+                "email" : {
+                  "type" : "string",
+                  "description" : "The contact email"
+                }
+              },
+              "required" : [
+                "id",
+                "email"
+              ]
+            }
+          },
+          "apiQuery" : {
+            "query" : "mutation CustomerProfiles($id: Long!, $email: String!, $phone: String, $address: CustomerProfiles_addressInput, $orders: [CustomerProfiles_ordersInput]) {\nCustomerProfiles(event: { id: $id, email: $email, phone: $phone, address: $address, orders: $orders }) {\nid\nemail\nphone\naddress {\nstreet\ngeo {\nlat\nlon\n}\n}\norders {\norderId\ntotal\n}\nevent_time\n}\n\n}",
+            "queryName" : "CustomerProfiles",
+            "operationType" : "MUTATION"
+          },
+          "mcpMethod" : "TOOL",
+          "restMethod" : "POST",
+          "uriTemplate" : "mutations/CustomerProfiles",
+          "format" : "JSON",
+          "resultDefinition" : {
+            "type" : "object",
+            "properties" : {
+              "id" : {
+                "type" : "integer",
+                "description" : "The customer id"
+              },
+              "email" : {
+                "type" : "string",
+                "description" : "The contact email"
+              },
+              "phone" : {
+                "type" : "string",
+                "description" : "The phone number @gdpr"
+              },
+              "address" : {
+                "type" : "object",
+                "description" : "The postal address",
+                "properties" : {
+                  "street" : {
+                    "type" : "string",
+                    "description" : "The street and house number"
+                  },
+                  "geo" : {
+                    "type" : "object",
+                    "description" : "The location of the address",
+                    "properties" : {
+                      "lat" : {
+                        "type" : "number",
+                        "description" : "The latitude"
+                      },
+                      "lon" : {
+                        "type" : "number",
+                        "description" : "The longitude"
+                      }
+                    }
+                  }
+                }
+              },
+              "orders" : {
+                "type" : "array",
+                "description" : "The orders of the customer",
+                "items" : {
+                  "type" : "object",
+                  "properties" : {
+                    "orderId" : {
+                      "type" : "integer"
+                    },
+                    "total" : {
+                      "type" : "number",
+                      "description" : "The order total"
+                    }
+                  }
+                }
+              },
+              "event_time" : {
+                "type" : "string",
+                "format" : "date-time"
+              }
+            }
+          }
+        }
+      ],
+      "schema" : {
+        "type" : "string",
+        "schema" : "\"Profiles that customers submit @pii=raw\"\ntype CustomerProfiles {\n  \"The customer id\"\n  id: Long!\n  \"The contact email\"\n  email: String!\n  \"The phone number @gdpr\"\n  phone: String\n  \"The postal address\"\n  address: CustomerProfiles_addressOutput\n  \"The orders of the customer\"\n  orders: [CustomerProfiles_ordersOutput]\n  event_time: DateTime\n}\n\ninput CustomerProfilesInput {\n  \"The customer id\"\n  id: Long!\n  \"The contact email\"\n  email: String!\n  \"The phone number @gdpr\"\n  phone: String\n  \"The postal address\"\n  address: CustomerProfiles_addressInput\n  \"The orders of the customer\"\n  orders: [CustomerProfiles_ordersInput]\n}\n\ntype CustomerProfilesResultOutput {\n  \"The customer id\"\n  id: Long!\n  \"The contact email\"\n  email: String!\n  \"The phone number @gdpr\"\n  phone: String\n  \"The postal address\"\n  address: CustomerProfilesResult_addressOutput\n  \"The orders of the customer\"\n  orders: [CustomerProfilesResult_ordersOutput]\n  event_time: DateTime\n}\n\ntype CustomerProfilesResult_addressOutput {\n  \"The street and house number\"\n  street: String\n  \"The location of the address\"\n  geo: CustomerProfilesResult_address_geoOutput\n}\n\ntype CustomerProfilesResult_address_geoOutput {\n  \"The latitude\"\n  lat: Float\n  \"The longitude\"\n  lon: Float\n}\n\ntype CustomerProfilesResult_ordersOutput {\n  orderId: Long\n  \"The order total\"\n  total: Float\n}\n\ninput CustomerProfiles_addressInput {\n  \"The street and house number\"\n  street: String\n  \"The location of the address\"\n  geo: CustomerProfiles_address_geoInput\n}\n\ntype CustomerProfiles_addressOutput {\n  \"The street and house number\"\n  street: String\n  \"The location of the address\"\n  geo: CustomerProfiles_address_geoOutput\n}\n\ninput CustomerProfiles_address_geoInput {\n  \"The latitude\"\n  lat: Float\n  \"The longitude\"\n  lon: Float\n}\n\ntype CustomerProfiles_address_geoOutput {\n  \"The latitude\"\n  lat: Float\n  \"The longitude\"\n  lon: Float\n}\n\ninput CustomerProfiles_ordersInput {\n  orderId: Long\n  \"The order total\"\n  total: Float\n}\n\ntype CustomerProfiles_ordersOutput {\n  orderId: Long\n  \"The order total\"\n  total: Float\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"Profiles that customers submit @pii=raw\"\ntype LatestProfiles {\n  \"The customer id\"\n  id: Long!\n  \"The contact email\"\n  email: String!\n  \"The phone number @gdpr\"\n  phone: String\n  \"The postal address\"\n  address: LatestProfiles_addressOutput\n  \"The orders of the customer\"\n  orders: [LatestProfiles_ordersOutput]\n  event_time: DateTime\n}\n\ntype LatestProfiles_addressOutput {\n  \"The street and house number\"\n  street: String\n  \"The location of the address\"\n  geo: LatestProfiles_address_geoOutput\n}\n\ntype LatestProfiles_address_geoOutput {\n  \"The latitude\"\n  lat: Float\n  \"The longitude\"\n  lon: Float\n}\n\ntype LatestProfiles_ordersOutput {\n  orderId: Long\n  \"The order total\"\n  total: Float\n}\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  \"Profiles that customers submit @pii=raw\"\n  CustomerProfiles(event: CustomerProfilesInput!): CustomerProfilesResultOutput!\n}\n\ntype Query {\n  \"Profiles that customers submit @pii=raw\"\n  CustomerProfiles(limit: Int = 10, offset: Int = 0): [CustomerProfiles!]\n  LatestProfiles(limit: Int = 10, offset: Int = 0): [LatestProfiles!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  RESOURCE\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+      }
+    }
+  }
+}

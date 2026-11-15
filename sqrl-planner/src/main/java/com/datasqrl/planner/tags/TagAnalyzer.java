@@ -75,7 +75,7 @@ public class TagAnalyzer {
     }
 
     errors = errors.abortOnFatal(false);
-    var declared = declaredTags(table.getDocumentation(), List.of());
+    var declared = declaredTags(table.getDocumentation());
     var inherited = inheritedTags(table.getFromTables());
     var required = inherited.without(declassifiedTags(table, inherited, errors));
 
@@ -150,16 +150,15 @@ public class TagAnalyzer {
   }
 
   /**
-   * The tags that a table declares in its documentation and, for a created table, in its column
-   * comments. Invalid tags are ignored, since {@link #validateTags} reports them where they are
-   * written.
+   * The tags that a table declares in its documentation. For a created table, that includes the
+   * comments of the columns that its doc string doesn't document. Invalid tags are ignored, since
+   * {@link #validateTags} reports them where they are written.
    */
-  public TableTags declaredTags(Documentation documentation, List<String> columnComments) {
+  public TableTags declaredTags(Documentation documentation) {
     return Stream.of(
             Stream.ofNullable(documentation.docString()),
             documentation.columnDocs().values().stream(),
-            documentation.argumentDocs().values().stream(),
-            columnComments.stream())
+            documentation.argumentDocs().values().stream())
         .flatMap(Function.identity())
         .map(text -> definitions.parse(text, invalidTag -> {}))
         .reduce(TableTags.EMPTY, TableTags::merge);

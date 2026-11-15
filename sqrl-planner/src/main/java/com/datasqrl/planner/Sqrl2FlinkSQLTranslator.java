@@ -69,6 +69,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -1096,8 +1097,11 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
     // Create table analysis
     var flinkSchema = tableOp.getCatalogTable().getResolvedSchema();
     var tableId = tableOp.getTableIdentifier();
-    var tableHintsAndDoc = updateDocumentationFromLike(tableId, fullTable, hintsAndDoc);
-    var tags = getDeclaredTags(fullTable, flinkSchema, tableHintsAndDoc, errors);
+    // The column comments document the columns that the doc string doesn't, also for the tags
+    var tableHintsAndDoc =
+        updateDocumentationFromLike(tableId, fullTable, hintsAndDoc)
+            .withColumnComments(columnComments(flinkSchema));
+    var tags = getDeclaredTags(fullTable, tableHintsAndDoc, errors);
     // Map primary key
     var pk =
         flinkSchema
@@ -1145,6 +1149,7 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
       mutationBld.inputDataType(inputType.build());
       mutationBld.outputDataType(outputType.build());
       mutationBld.tags(tags);
+      mutationBld.documentation(tableHintsAndDoc.getDocumentation());
     }
     var connector =
         new FlinkConnectorConfigWrapper(
@@ -1172,25 +1177,33 @@ public class Sqrl2FlinkSQLTranslator implements AutoCloseable {
   }
 
   /**
-   * The tags that a {@code CREATE TABLE} statement declares in its doc string and column comments,
-   * including the comments of the columns that a LIKE clause copies. Only the comments of the
-   * columns that the statement declares are validated, since the comments that a LIKE clause copies
-   * are validated on the table that declares them.
+   * The tags that a {@code CREATE TABLE} statement declares in its documentation, which includes
+   * the comments of the columns that its doc string doesn't document, also of the columns that a
+   * LIKE clause copies. All comments of the columns that the statement declares are validated,
+   * since the comments that a LIKE clause copies are validated on the table that declares them.
    */
   private TableTags getDeclaredTags(
-      SqlCreateTable createdTable,
-      ResolvedSchema schema,
-      HintsAndDoc hintsAndDoc,
-      ErrorCollector errors) {
+      SqlCreateTable createdTable, HintsAndDoc hintsAndDoc, ErrorCollector errors) {
 
     createdTable.getColumnList().stream()
         .map(column -> ((SqlTableColumn) column).getComment())
         .forEach(comment -> tagAnalyzer.validateTags(comment, errors));
 
-    var columnComments =
-        schema.getColumns().stream().flatMap(column -> column.getComment().stream()).toList();
+    return tagAnalyzer.declaredTags(hintsAndDoc.getDocumentation());
+  }
 
-    return tagAnalyzer.declaredTags(hintsAndDoc.getDocumentation(), columnComments);
+  /** The comments of the table's columns, by column name. */
+  private static Map<String, String> columnComments(ResolvedSchema schema) {
+    var comments = new LinkedHashMap<String, String>();
+    schema
+        .getColumns()
+        .forEach(
+            column ->
+                column
+                    .getComment()
+                    .filter(comment -> !comment.isBlank())
+                    .ifPresent(comment -> comments.put(column.getName(), comment)));
+    return comments;
   }
 
   public ObjectIdentifier createSinkTable(FlinkTableBuilder tableBuilder) {

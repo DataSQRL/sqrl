@@ -34,6 +34,7 @@ import com.datasqrl.planner.parser.AccessModifier;
 import com.datasqrl.planner.tables.SqrlFunctionParameter;
 import com.datasqrl.planner.tables.SqrlTableFunction;
 import com.datasqrl.planner.util.Documented;
+import com.datasqrl.planner.util.Documented.Lookup;
 import com.datasqrl.server.graphql.CustomScalars;
 import com.datasqrl.server.util.GraphqlSchemaUtil;
 import graphql.Scalars;
@@ -192,8 +193,7 @@ public class GraphqlSchemaFactory {
     List<GraphQLFieldDefinition> fields = new ArrayList<>();
     for (RelDataTypeField field : rowType.getFieldList()) {
       final var fieldPath = typePath.concat(NamePath.of(field.getName()));
-      createRelDataTypeField(
-              field, fieldPath, table.getDocumentation().getColumnOpt(field.getName()))
+      createRelDataTypeField(field, fieldPath, table.getDocumentation().getColumnLookup())
           .map(fields::add);
     }
 
@@ -311,9 +311,10 @@ public class GraphqlSchemaFactory {
    * (which is no more planed as a table function) and which we recursively process
    */
   private Optional<GraphQLFieldDefinition> createRelDataTypeField(
-      RelDataTypeField field, NamePath fieldPath, Optional<String> docs) {
+      RelDataTypeField field, NamePath fieldPath, Lookup columnDocs) {
+    var docs = columnDocs.getDocsFor(field.getName());
     return getGraphQLOutputType(
-            field.getType(), fieldPath, extendedScalarTypes, Documented.NO_LOOKUP)
+            field.getType(), fieldPath, extendedScalarTypes, columnDocs.nested(field.getName()))
         .filter(type -> isValidGraphQLName(field.getName()))
         .filter(type -> isVisible(field))
         .map(
@@ -381,7 +382,10 @@ public class GraphqlSchemaFactory {
                                       parameter.getType(null),
                                       NamePath.of(parameter.getName()),
                                       extendedScalarTypes,
-                                      Documented.NO_LOOKUP)
+                                      tableFunction
+                                          .getDocumentation()
+                                          .getArgumentLookup()
+                                          .nested(parameter.getName()))
                                   .get());
                   tableFunction
                       .getDocumentation()
