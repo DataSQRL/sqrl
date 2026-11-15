@@ -261,7 +261,7 @@ enum _RestMethodType { NONE, GET, POST }
 directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
 ```
 
-The compilation fails when the apps directory doesn't exist, when an `appName` names an app that doesn't exist, when an operation with `mcp: NONE` has a non-empty `appName`, and when the names of two apps differ only in case. It warns about an app that is linked to no tool, and about an app that loads external or relative resources with `<script src>`, `<link href>`, or `<img src>` other than `data:` URLs.
+The compilation fails when the apps directory doesn't exist or has no apps, when an `appName` names an app that doesn't exist, when an operation with `mcp: NONE` has a non-empty `appName`, and when the names of two apps differ only in case. It warns about an app that is linked to no tool, and about an app that loads external or relative resources with `<script src>`, `<link href>`, or `<img src>` other than `data:` URLs.
 
 ### OpenAPI
 

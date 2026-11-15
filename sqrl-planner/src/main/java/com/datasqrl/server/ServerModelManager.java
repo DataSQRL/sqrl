@@ -136,14 +136,9 @@ public class ServerModelManager {
           directory.get());
       return Optional.empty();
     }
-    var buildDirectory = workspacePaths.buildDir().resolve(directory.get());
-    // The build directory only has the apps directory once it has an app, since the packager
-    // copies the source files into the build directory but no empty directories
-    if (!Files.isDirectory(buildDirectory)
-        && Files.isDirectory(workspacePaths.projectRoot().resolve(directory.get()))) {
-      return Optional.of(List.of());
-    }
-    return Optional.of(McpAppLinker.loadApps(buildDirectory, directory.get(), errors));
+    return Optional.of(
+        McpAppLinker.loadApps(
+            workspacePaths.buildDir().resolve(directory.get()), directory.get(), errors));
   }
 
   private Optional<PackageJson.ScriptApiConfig> findApiConfig(String apiVersion) {

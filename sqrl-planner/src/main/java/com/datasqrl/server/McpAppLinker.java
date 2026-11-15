@@ -58,6 +58,8 @@ public final class McpAppLinker {
 
   /**
    * Loads the apps in the directory. Subdirectories and files other than {@code .html} are ignored.
+   * Fails if the directory doesn't exist or has no apps, since then no tool can be linked to an
+   * app.
    *
    * @param directory the apps directory
    * @param configuredDirectory the directory as configured, for messages
@@ -66,13 +68,15 @@ public final class McpAppLinker {
    */
   public static List<McpApp> loadApps(
       Path directory, String configuredDirectory, ErrorCollector errors) {
+    var files = Files.isDirectory(directory) ? listHtmlFiles(directory, errors) : List.<Path>of();
     errors.checkFatal(
-        Files.isDirectory(directory),
-        "The MCP apps directory '%s' does not exist",
+        !files.isEmpty(),
+        "The MCP apps directory '%s' does not exist or has no MCP apps: expected an .html file"
+            + " directly in it for each app",
         configuredDirectory);
 
     var contentsByFileName = new LinkedHashMap<String, String>();
-    for (var file : listHtmlFiles(directory, errors)) {
+    for (var file : files) {
       contentsByFileName.put(file.getFileName().toString(), readApp(file, errors));
     }
     return toApps(contentsByFileName, configuredDirectory, errors);

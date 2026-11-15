@@ -67,7 +67,20 @@ class McpAppLinkerTest {
   @Test
   void givenMissingDirectory_whenLoading_thenFails() {
     assertThatThrownBy(() -> McpAppLinker.loadApps(tempDir.resolve("missing"), "api/apps", errors))
-        .hasMessageContaining("The MCP apps directory 'api/apps' does not exist");
+        .hasMessageContaining(
+            "The MCP apps directory 'api/apps' does not exist or has no MCP apps");
+  }
+
+  @Test
+  @SneakyThrows
+  void givenDirectoryWithoutTopLevelHtmlFiles_whenLoading_thenFails() {
+    Files.writeString(tempDir.resolve("README.md"), "# Apps");
+    Files.createDirectories(tempDir.resolve("src"));
+    Files.writeString(tempDir.resolve("src/Nested.html"), APP_HTML);
+
+    assertThatThrownBy(() -> McpAppLinker.loadApps(tempDir, "api/apps", errors))
+        .hasMessageContaining(
+            "The MCP apps directory 'api/apps' does not exist or has no MCP apps");
   }
 
   @Test
