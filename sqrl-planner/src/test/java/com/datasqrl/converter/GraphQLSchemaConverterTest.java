@@ -303,6 +303,37 @@ public class GraphQLSchemaConverterTest {
   }
 
   @Test
+  void givenAppDirectiveArguments_whenConvertOperations_thenSetsMcpMethodAndAppName() {
+    var schema =
+        underTest.getSchema(
+            """
+            enum _McpMethodType { NONE TOOL APP }
+            directive @api(mcp: _McpMethodType, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
+
+            type Query {
+              ping: String
+            }
+            """);
+
+    var operations =
+        underTest.convertOperations(
+            """
+            query GetSales @api(mcp: TOOL, appName: "SalesChart") { ping }
+            query GetDailySales @api(mcp: APP) { ping }
+            query GetPlain @api(appName: "") { ping }
+            """,
+            GraphQLSchemaConverterConfig.DEFAULT,
+            schema);
+
+    assertThat(getOperation(operations, "GetSales").getMcpMethod()).isEqualTo(McpMethodType.TOOL);
+    assertThat(getOperation(operations, "GetSales").getAppName()).isEqualTo("SalesChart");
+    assertThat(getOperation(operations, "GetDailySales").getMcpMethod())
+        .isEqualTo(McpMethodType.APP);
+    assertThat(getOperation(operations, "GetDailySales").getAppName()).isNull();
+    assertThat(getOperation(operations, "GetPlain").getAppName()).isEmpty();
+  }
+
+  @Test
   void givenResourceMcpMethod_whenConvertOperations_thenFailsWithSupportedValues() {
     var schema =
         underTest.getSchema(
@@ -323,7 +354,7 @@ public class GraphQLSchemaConverterTest {
                     schema))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage(
-            "Unsupported value 'RESOURCE' for @api(mcp: ...), supported values are [NONE, TOOL]");
+            "Unsupported value 'RESOURCE' for @api(mcp: ...), supported values are [NONE, TOOL, APP]");
   }
 
   @Test

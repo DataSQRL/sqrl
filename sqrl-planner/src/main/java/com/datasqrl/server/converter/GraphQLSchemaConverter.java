@@ -691,6 +691,7 @@ public class GraphQLSchemaConverter {
       builder.format(ResultFormat.valueOf(v.toString().toUpperCase()));
     }
     if ((v = args.get("uri")) != null) builder.uriTemplate(v.toString());
+    if ((v = args.get("appName")) != null) builder.appName(v.toString());
   }
 
   private static McpMethodType toMcpMethod(Object value) {

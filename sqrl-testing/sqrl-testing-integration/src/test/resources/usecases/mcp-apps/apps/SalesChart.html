@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Sales Chart</title>
+    <style>body { font-family: sans-serif; }</style>
+  </head>
+  <body>
+    <ul id="sales"></ul>
+    <script>
+      window.addEventListener("message", (event) => {
+        const sales = JSON.parse(event.data?.params?.content?.[0]?.text ?? "[]");
+        document.getElementById("sales").innerHTML = sales
+          .map((sale) => `<li>${sale.region}: ${sale.amount}</li>`)
+          .join("");
+      });
+    </script>
+  </body>
+</html>

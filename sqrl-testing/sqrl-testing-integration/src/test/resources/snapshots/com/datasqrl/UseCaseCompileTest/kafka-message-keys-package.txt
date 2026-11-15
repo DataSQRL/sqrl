@@ -104,6 +104,7 @@ type ReadingResultOutput {
 enum _McpMethodType {
   NONE
   TOOL
+  APP
 }
 
 enum _RestMethodType {
@@ -112,7 +113,7 @@ enum _RestMethodType {
   POST
 }
 
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
 === Alert
@@ -1129,7 +1130,7 @@ CREATE TABLE IF NOT EXISTS "ReadingRecord" ("writer" TEXT NOT NULL, "sensorid" I
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "input AlertInput {\n  region: String\n  writer: String!\n}\n\ntype AlertMessage {\n  writer: String!\n  message_key: String\n}\n\ntype AlertResultOutput {\n  region: String\n  alert_id: String!\n  writer: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ninput ExternalReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ExternalReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\ninput ForwardedAlertInput {\n  region: String\n  writer: String!\n}\n\ntype ForwardedAlertResultOutput {\n  region: String\n  alert_id: String!\n  writer: String!\n  event_time: DateTime!\n}\n\ninput ForwardedReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ForwardedReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  Alert(event: AlertInput!): AlertResultOutput!\n  ExternalReading(event: ExternalReadingInput!): ExternalReadingResultOutput!\n  ForwardedAlert(event: ForwardedAlertInput!): ForwardedAlertResultOutput!\n  ForwardedReading(event: ForwardedReadingInput!): ForwardedReadingResultOutput!\n  Reading(event: ReadingInput!): ReadingResultOutput!\n}\n\ntype Query {\n  AlertMessage(limit: Int = 10, offset: Int = 0): [AlertMessage!]\n  ReadingMessage(limit: Int = 10, offset: Int = 0): [ReadingMessage!]\n  ReadingRecord(limit: Int = 10, offset: Int = 0): [ReadingRecord!]\n}\n\ninput ReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ReadingMessage {\n  writer: String!\n  sensorid: Int!\n  message_key: String\n}\n\ntype ReadingRecord {\n  writer: String!\n  sensorid: Int!\n}\n\ntype ReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "input AlertInput {\n  region: String\n  writer: String!\n}\n\ntype AlertMessage {\n  writer: String!\n  message_key: String\n}\n\ntype AlertResultOutput {\n  region: String\n  alert_id: String!\n  writer: String!\n  event_time: DateTime!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ninput ExternalReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ExternalReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\ninput ForwardedAlertInput {\n  region: String\n  writer: String!\n}\n\ntype ForwardedAlertResultOutput {\n  region: String\n  alert_id: String!\n  writer: String!\n  event_time: DateTime!\n}\n\ninput ForwardedReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ForwardedReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Mutation {\n  Alert(event: AlertInput!): AlertResultOutput!\n  ExternalReading(event: ExternalReadingInput!): ExternalReadingResultOutput!\n  ForwardedAlert(event: ForwardedAlertInput!): ForwardedAlertResultOutput!\n  ForwardedReading(event: ForwardedReadingInput!): ForwardedReadingResultOutput!\n  Reading(event: ReadingInput!): ReadingResultOutput!\n}\n\ntype Query {\n  AlertMessage(limit: Int = 10, offset: Int = 0): [AlertMessage!]\n  ReadingMessage(limit: Int = 10, offset: Int = 0): [ReadingMessage!]\n  ReadingRecord(limit: Int = 10, offset: Int = 0): [ReadingRecord!]\n}\n\ninput ReadingInput {\n  sensorid: Int!\n  writer: String!\n}\n\ntype ReadingMessage {\n  writer: String!\n  sensorid: Int!\n  message_key: String\n}\n\ntype ReadingRecord {\n  writer: String!\n  sensorid: Int!\n}\n\ntype ReadingResultOutput {\n  sensorid: Int!\n  writer: String!\n  event_time: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

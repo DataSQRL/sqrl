@@ -71,6 +71,7 @@ type Query {
 enum _McpMethodType {
   NONE
   TOOL
+  APP
 }
 
 enum _RestMethodType {
@@ -79,7 +80,7 @@ enum _RestMethodType {
   POST
 }
 
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
 === Attributed
@@ -1061,7 +1062,7 @@ CREATE TABLE IF NOT EXISTS "GrpStream" ("grp" INTEGER NOT NULL, "val" TEXT NOT N
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type CountsByVal {\n  val: String\n  event_date: Date!\n  cnt: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Dim {\n  id: Int!\n  grp: Int!\n  updated: DateTime!\n}\n\ntype DimStream {\n  id: Int!\n  grp: Int!\n  updated: DateTime!\n}\n\ntype Enriched {\n  event_id: String!\n  id: Int!\n  ts: DateTime!\n  val: String\n}\n\ntype Events {\n  event_id: String!\n  id: Int!\n  ts: DateTime!\n}\n\ntype Grp {\n  grp: Int!\n  val: String!\n  updated: DateTime!\n}\n\ntype GrpStream {\n  grp: Int!\n  val: String!\n  updated: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Attributed(limit: Int = 10, offset: Int = 0): [Enriched!]\n  CountsByVal(limit: Int = 10, offset: Int = 0): [CountsByVal!]\n  Dim(limit: Int = 10, offset: Int = 0): [Dim!]\n  DimStream(limit: Int = 10, offset: Int = 0): [DimStream!]\n  Enriched(limit: Int = 10, offset: Int = 0): [Enriched!]\n  Events(limit: Int = 10, offset: Int = 0): [Events!]\n  Grp(limit: Int = 10, offset: Int = 0): [Grp!]\n  GrpStream(limit: Int = 10, offset: Int = 0): [GrpStream!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type CountsByVal {\n  val: String\n  event_date: Date!\n  cnt: Long!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Dim {\n  id: Int!\n  grp: Int!\n  updated: DateTime!\n}\n\ntype DimStream {\n  id: Int!\n  grp: Int!\n  updated: DateTime!\n}\n\ntype Enriched {\n  event_id: String!\n  id: Int!\n  ts: DateTime!\n  val: String\n}\n\ntype Events {\n  event_id: String!\n  id: Int!\n  ts: DateTime!\n}\n\ntype Grp {\n  grp: Int!\n  val: String!\n  updated: DateTime!\n}\n\ntype GrpStream {\n  grp: Int!\n  val: String!\n  updated: DateTime!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Attributed(limit: Int = 10, offset: Int = 0): [Enriched!]\n  CountsByVal(limit: Int = 10, offset: Int = 0): [CountsByVal!]\n  Dim(limit: Int = 10, offset: Int = 0): [Dim!]\n  DimStream(limit: Int = 10, offset: Int = 0): [DimStream!]\n  Enriched(limit: Int = 10, offset: Int = 0): [Enriched!]\n  Events(limit: Int = 10, offset: Int = 0): [Events!]\n  Grp(limit: Int = 10, offset: Int = 0): [Grp!]\n  GrpStream(limit: Int = 10, offset: Int = 0): [GrpStream!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

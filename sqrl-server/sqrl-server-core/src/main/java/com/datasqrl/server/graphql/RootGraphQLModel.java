@@ -19,6 +19,7 @@ import com.datasqrl.server.PaginationType;
 import com.datasqrl.server.ResolvedMetadata;
 import com.datasqrl.server.jdbc.DatabaseType;
 import com.datasqrl.server.operation.ApiOperation;
+import com.datasqrl.server.operation.McpApp;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -61,18 +62,23 @@ public class RootGraphQLModel {
   @Singular List<ApiOperation> operations;
   Schema schema;
 
+  /** The MCP apps of this API version, or null if it has no MCP Apps support. */
+  List<McpApp> mcpApps;
+
   @JsonCreator
   public RootGraphQLModel(
       @JsonProperty("queries") List<QueryCoords> queries,
       @JsonProperty("mutations") List<MutationCoords> mutations,
       @JsonProperty("subscriptions") List<SubscriptionCoords> subscriptions,
       @JsonProperty("operations") List<ApiOperation> operations,
-      @JsonProperty("schema") Schema schema) {
+      @JsonProperty("schema") Schema schema,
+      @JsonProperty("mcpApps") List<McpApp> mcpApps) {
     this.queries = queries;
     this.mutations = mutations == null ? List.of() : mutations;
     this.subscriptions = subscriptions == null ? List.of() : subscriptions;
     this.operations = operations == null ? List.of() : operations;
     this.schema = schema;
+    this.mcpApps = mcpApps;
   }
 
   public <R, C> R accept(RootVisitor<R, C> visitor, C context) {

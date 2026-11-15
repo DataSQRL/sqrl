@@ -60,6 +60,7 @@ type VisitAfter {
 enum _McpMethodType {
   NONE
   TOOL
+  APP
 }
 
 enum _RestMethodType {
@@ -68,7 +69,7 @@ enum _RestMethodType {
   POST
 }
 
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
 === Click
@@ -569,7 +570,7 @@ CREATE TABLE IF NOT EXISTS "VisitAfter" ("beforeURL" TEXT NOT NULL, "afterURL" T
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "type Click {\n  timestamp: DateTime!\n  userid: String!\n  url: String!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): [Click!]\n  \"Recommend pages that are visited shortly after\"\n  Recommendation(\n    \"the URL to get recommendations for\"\n    url: String!,\n    limit: Int = 10,\n    offset: Int = 0\n  ): [Recommendation!]\n  \"Most visited pages\"\n  Trending(limit: Int = 10, offset: Int = 0): [Trending!]\n  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]\n}\n\n\"Recommend pages that are visited shortly after\"\ntype Recommendation {\n  url: String!\n  \"the recommended page URL\"\n  rec: String!\n  \"the number of visitors that co-visited that page\"\n  frequency: Long!\n}\n\n\"Most visited pages\"\ntype Trending {\n  \"URL of the top visited page\"\n  url: String!\n  \"Total number of visitors\"\n  total: Long!\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "type Click {\n  timestamp: DateTime!\n  userid: String!\n  url: String!\n}\n\n\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Click(limit: Int = 10, offset: Int = 0): [Click!]\n  \"Recommend pages that are visited shortly after\"\n  Recommendation(\n    \"the URL to get recommendations for\"\n    url: String!,\n    limit: Int = 10,\n    offset: Int = 0\n  ): [Recommendation!]\n  \"Most visited pages\"\n  Trending(limit: Int = 10, offset: Int = 0): [Trending!]\n  VisitAfter(limit: Int = 10, offset: Int = 0): [VisitAfter!]\n}\n\n\"Recommend pages that are visited shortly after\"\ntype Recommendation {\n  url: String!\n  \"the recommended page URL\"\n  rec: String!\n  \"the number of visitors that co-visited that page\"\n  frequency: Long!\n}\n\n\"Most visited pages\"\ntype Trending {\n  \"URL of the top visited page\"\n  url: String!\n  \"Total number of visitors\"\n  total: Long!\n}\n\ntype VisitAfter {\n  beforeURL: String!\n  afterURL: String!\n  timestamp: DateTime!\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }

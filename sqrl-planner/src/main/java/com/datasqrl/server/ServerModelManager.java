@@ -26,11 +26,15 @@ import com.datasqrl.server.graphql.RootGraphQLModel;
 import com.datasqrl.server.graphql.RootGraphQLModel.StringSchema;
 import com.datasqrl.server.openapi.OpenApiService;
 import com.datasqrl.server.operation.ApiOperation;
+import com.datasqrl.server.operation.ApiProtocol;
+import com.datasqrl.server.operation.McpApp;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import lombok.AllArgsConstructor;
 import org.openapitools.openapidiff.core.OpenApiCompare;
 import org.openapitools.openapidiff.core.model.ChangedOpenApi;
@@ -93,13 +97,54 @@ public class ServerModelManager {
     // Third, distincting preserves only the first operation by id
     var dedupedOperations = definedOperations.stream().distinct().toList();
 
+    // Fourth, link the MCP tools to the MCP apps
+    var mcpEnabled = apiConfig.getProtocols().contains(ApiProtocol.MCP);
+    var mcpApps = loadMcpApps(api.version(), mcpEnabled);
+    final List<ApiOperation> operations;
+    if (mcpApps.isPresent()) {
+      operations = McpAppLinker.link(dedupedOperations, mcpApps.get(), errors);
+    } else if (mcpEnabled) {
+      operations = McpAppLinker.withoutApps(dedupedOperations, api.version(), errors);
+    } else {
+      operations = McpAppLinker.unlinked(dedupedOperations);
+    }
+
     return RootGraphQLModel.builder()
         .queries(graphqlModelGenerator.getQueryCoords())
         .mutations(graphqlModelGenerator.getMutations())
         .subscriptions(graphqlModelGenerator.getSubscriptions())
-        .operations(dedupedOperations)
+        .operations(operations)
         .schema(schema)
+        .mcpApps(mcpApps.orElse(null))
         .build();
+  }
+
+  /**
+   * Loads the MCP apps of the API version from its apps directory in the build directory, or
+   * returns empty if it has no MCP Apps support: no apps directory is configured, or MCP is not one
+   * of the API protocols.
+   */
+  private Optional<List<McpApp>> loadMcpApps(String apiVersion, boolean mcpEnabled) {
+    var directory = findApiConfig(apiVersion).flatMap(PackageJson.ScriptApiConfig::getMcpApps);
+    if (directory.isEmpty()) {
+      return Optional.empty();
+    }
+    if (!mcpEnabled) {
+      errors.warn(
+          "The MCP apps in '%s' are not served because 'compiler.api.protocols' does not include"
+              + " MCP",
+          directory.get());
+      return Optional.empty();
+    }
+    return Optional.of(
+        McpAppLinker.loadApps(
+            workspacePaths.buildDir().resolve(directory.get()), directory.get(), errors));
+  }
+
+  private Optional<PackageJson.ScriptApiConfig> findApiConfig(String apiVersion) {
+    return packageConfig.getScriptConfig().getScriptApiConfigs().stream()
+        .filter(apiConfig -> apiConfig.getVersion().equals(apiVersion))
+        .findFirst();
   }
 
   public String generateOpenApiJson(
@@ -119,10 +164,7 @@ public class ServerModelManager {
 
   private void validateOpenApiJsonIfNeeded(String apiVersion, String generatedOpenApi) {
     var configuredFilenameOpt =
-        packageConfig.getScriptConfig().getScriptApiConfigs().stream()
-            .filter(apiConfig -> apiConfig.getVersion().equals(apiVersion))
-            .findFirst()
-            .flatMap(PackageJson.ScriptApiConfig::getOpenApi);
+        findApiConfig(apiVersion).flatMap(PackageJson.ScriptApiConfig::getOpenApi);
 
     if (configuredFilenameOpt.isEmpty()) {
       return;

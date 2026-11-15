@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.entry;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import com.datasqrl.config.PackageJson;
 import com.datasqrl.config.PackageJson.IncludeConfig;
+import com.datasqrl.config.PackageJson.ScriptApiConfig;
 import com.datasqrl.config.WorkspacePaths;
 import com.datasqrl.error.ErrorCollector;
 import com.datasqrl.error.ErrorMessage;
@@ -43,6 +44,7 @@ import java.nio.file.Path;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
@@ -85,10 +87,14 @@ class PackagerTest {
     var pipeline = new FilePreprocessingPipeline(workspacePaths, buildDir, preprocessors);
     underTest = new Packager(workspacePaths, packageJson, pipeline, mainScript);
 
-    when(jBangRunner.isJBangAvailable()).thenReturn(true);
-    doAnswer(invocation -> exportFatJar(invocation.getArgument(0), invocation.getArgument(1)))
+    // Not every test has JBang UDFs, top-level operations or API versions
+    lenient().when(jBangRunner.isJBangAvailable()).thenReturn(true);
+    lenient()
+        .doAnswer(invocation -> exportFatJar(invocation.getArgument(0), invocation.getArgument(1)))
         .when(jBangRunner)
         .exportFatJar(any(), any());
+    lenient().when(packageJson.getScriptConfig().getOperations()).thenReturn(List.of());
+    lenient().when(packageJson.getScriptConfig().getScriptApiConfigs()).thenReturn(List.of());
   }
 
   @Test
@@ -194,6 +200,59 @@ class PackagerTest {
 
     assertThat(manifests()).containsOnly(entry("usrlib/Foo.function.json", "jbang-udfs.jar"));
     verify(jBangRunner).exportFatJar(any(), any());
+  }
+
+  @Test
+  void givenMcpAppsDirectory_whenPreprocessed_thenCopiesItsHtmlFilesToBuild() throws IOException {
+    givenIncludes();
+    var apiConfig = mock(ScriptApiConfig.class);
+    when(apiConfig.getMcpApps()).thenReturn(Optional.of("api/apps"));
+    when(packageJson.getScriptConfig().getScriptApiConfigs()).thenReturn(List.of(apiConfig));
+    var appsDir = projectDir.resolve("api/apps");
+    Files.createDirectories(appsDir.resolve("src"));
+    Files.writeString(appsDir.resolve("SalesChart.html"), "<html>chart</html>");
+    Files.writeString(appsDir.resolve("Orders.HTML"), "<html>orders</html>");
+    Files.writeString(appsDir.resolve("notes.md"), "# Notes");
+    Files.writeString(appsDir.resolve("src/Nested.html"), "<html>nested</html>");
+
+    underTest.preprocess(errors);
+
+    var buildAppsDir = workspacePaths.buildDir().resolve("api/apps");
+    try (var files = Files.walk(buildAppsDir)) {
+      assertThat(
+              files.filter(Files::isRegularFile).map(buildAppsDir::relativize).map(Path::toString))
+          .containsExactlyInAnyOrder("SalesChart.html", "Orders.HTML");
+    }
+    assertThat(buildAppsDir.resolve("SalesChart.html")).hasContent("<html>chart</html>");
+    assertThat(warnings()).isEmpty();
+  }
+
+  @Test
+  void givenMissingMcpAppsDirectory_whenPreprocessed_thenCopiesNothing() throws IOException {
+    givenIncludes();
+    var apiConfig = mock(ScriptApiConfig.class);
+    when(apiConfig.getMcpApps()).thenReturn(Optional.of("api/apps"));
+    when(packageJson.getScriptConfig().getScriptApiConfigs()).thenReturn(List.of(apiConfig));
+    Files.createDirectories(projectDir);
+
+    underTest.preprocess(errors);
+
+    assertThat(workspacePaths.buildDir().resolve("api/apps")).doesNotExist();
+  }
+
+  @Test
+  void givenTopLevelOperations_whenPreprocessed_thenWarnsThatTheyAreDeprecated()
+      throws IOException {
+    givenIncludes();
+    when(packageJson.getScriptConfig().getOperations()).thenReturn(List.of("operations.graphql"));
+    Files.createDirectories(projectDir);
+
+    underTest.preprocess(errors);
+
+    assertThat(warnings())
+        .singleElement()
+        .asString()
+        .startsWith("'script.operations' is deprecated");
   }
 
   private void givenIncludes(IncludeConfig... includes) {

@@ -167,6 +167,11 @@ public interface PackageJson {
     default Optional<String> getOpenApi() {
       return Optional.empty();
     }
+
+    /** The directory with the MCP apps of this API version, if it has MCP Apps support. */
+    default Optional<String> getMcpApps() {
+      return Optional.empty();
+    }
   }
 
   interface EnginesConfig {

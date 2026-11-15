@@ -28,7 +28,7 @@ import lombok.Value;
  * passed to the LLM as a tool and the {@link GraphQLQuery} that is executed.
  */
 @Value
-@Builder
+@Builder(toBuilder = true)
 public class ApiOperation {
 
   @NonNull FunctionDefinition function;
@@ -41,6 +41,13 @@ public class ApiOperation {
 
   ResultFormat format;
   ResultDefinition resultDefinition;
+
+  /**
+   * The name of the MCP app that renders the result of the tool, or null for none. The compiler
+   * resolves it to the name of an {@link McpApp}; before that, it holds the {@code appName} of the
+   * {@code @api} directive, where an empty name turns off linking the app by the tool's name.
+   */
+  String appName;
 
   public static ApiOperationBuilder getBuilder(FunctionDefinition function, GraphQLQuery apiQuery) {
     return builder()
@@ -60,7 +67,8 @@ public class ApiOperation {
       @JsonProperty("restMethod") RestMethodType restMethod,
       @JsonProperty("uriTemplate") String uriTemplate,
       @JsonProperty("format") ResultFormat format,
-      @JsonProperty("resultDefinition") ResultDefinition resultDefinition) {
+      @JsonProperty("resultDefinition") ResultDefinition resultDefinition,
+      @JsonProperty("appName") String appName) {
     this.function = function;
     this.apiQuery = apiQuery;
     this.mcpMethod = mcpMethod;
@@ -68,6 +76,7 @@ public class ApiOperation {
     this.uriTemplate = uriTemplate;
     this.format = format;
     this.resultDefinition = resultDefinition;
+    this.appName = appName;
   }
 
   /**

@@ -27,6 +27,7 @@ type Query {
 enum _McpMethodType {
   NONE
   TOOL
+  APP
 }
 
 enum _RestMethodType {
@@ -35,7 +36,7 @@ enum _RestMethodType {
   POST
 }
 
-directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
 
 >>>pipeline_explain.txt
 === Greeting
@@ -224,7 +225,7 @@ CREATE TABLE IF NOT EXISTS "Greeting" ("id" INTEGER NOT NULL, "message" TEXT NOT
       ],
       "schema" : {
         "type" : "string",
-        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Greeting {\n  id: Int!\n  message: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Greeting(limit: Int = 10, offset: Int = 0): [Greeting!]\n  GreetingById(id: Int!, limit: Int = 10, offset: Int = 0): [Greeting!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
+        "schema" : "\"An RFC-3339 compliant Full Date Scalar\"\nscalar Date\n\n\"A DateTime scalar that handles both full RFC3339 and shorter timestamp formats\"\nscalar DateTime\n\ntype Greeting {\n  id: Int!\n  message: String!\n}\n\n\"A JSON scalar\"\nscalar JSON\n\n\"24-hour clock time value string in the format `hh:mm:ss` or `hh:mm:ss.sss`.\"\nscalar LocalTime\n\n\"A 64-bit signed integer\"\nscalar Long\n\ntype Query {\n  Greeting(limit: Int = 10, offset: Int = 0): [Greeting!]\n  GreetingById(id: Int!, limit: Int = 10, offset: Int = 0): [Greeting!]\n}\n\nenum _McpMethodType {\n  NONE\n  TOOL\n  APP\n}\n\nenum _RestMethodType {\n  NONE\n  GET\n  POST\n}\n\ndirective @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION\n"
       }
     }
   }
