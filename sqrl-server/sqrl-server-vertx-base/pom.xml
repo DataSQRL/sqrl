@@ -306,23 +306,23 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>io.modelcontextprotocol.sdk</groupId>
-      <artifactId>mcp-core</artifactId>
-      <version>${mcp-sdk.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>io.modelcontextprotocol.sdk</groupId>
-      <artifactId>mcp-json-jackson2</artifactId>
-      <version>${mcp-sdk.version}</version>
-      <scope>test</scope>
-    </dependency>
 
     <!-- JSON Schema validation -->
     <dependency>
       <groupId>com.networknt</groupId>
       <artifactId>json-schema-validator</artifactId>
+    </dependency>
+
+    <!-- MCP server (the Jackson 2 binding, not the mcp artifact that brings Jackson 3) -->
+    <dependency>
+      <groupId>io.modelcontextprotocol.sdk</groupId>
+      <artifactId>mcp-core</artifactId>
+      <version>${mcp-sdk.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.modelcontextprotocol.sdk</groupId>
+      <artifactId>mcp-json-jackson2</artifactId>
+      <version>${mcp-sdk.version}</version>
     </dependency>
 
     <!-- OpenAPI dependencies -->

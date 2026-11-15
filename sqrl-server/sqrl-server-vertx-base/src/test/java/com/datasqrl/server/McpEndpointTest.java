@@ -52,6 +52,7 @@ import io.vertx.ext.auth.authentication.AuthenticationProvider;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.auth.jwt.JWTAuthOptions;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -86,6 +87,7 @@ class McpEndpointTest {
       type Query {
         sensors(sensorId: Int!, limit: Int): [Sensor]
         failing: String
+        forbidden: String
       }
       type Mutation {
         addReading(sensorId: Int!, temperature: Float!): Sensor
@@ -141,7 +143,7 @@ class McpEndpointTest {
 
         assertThat(tools)
             .extracting(McpSchema.Tool::name)
-            .containsExactlyInAnyOrder("GetSensors", "AddReading", "GetFailing");
+            .containsExactlyInAnyOrder("GetSensors", "AddReading", "GetFailing", "GetForbidden");
 
         var getSensors = tool(tools, "GetSensors");
         assertThat(getSensors.description()).isEqualTo("Returns the readings of a sensor.");
@@ -232,6 +234,17 @@ class McpEndpointTest {
     }
 
     @Test
+    void givenOperationThatSetsHttpStatus_whenCallingTool_thenRespondsWithThatStatus() {
+      var response =
+          post(
+              "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/call\","
+                  + "\"params\":{\"name\":\"GetForbidden\",\"arguments\":{}}}");
+
+      assertThat(response.statusCode()).isEqualTo(403);
+      assertThat(body(response).at("/result/isError").asBoolean()).isTrue();
+    }
+
+    @Test
     void givenUnknownTool_whenCallingTool_thenFailsWithInvalidParams() {
       try (var client = createClient(null)) {
         client.initialize();
@@ -281,11 +294,36 @@ class McpEndpointTest {
     }
 
     @Test
+    void givenToolCallWithoutParams_whenRequesting_thenFailsWithInternalError() {
+      var response = post("{\"jsonrpc\":\"2.0\",\"id\":6,\"method\":\"tools/call\"}");
+
+      assertThat(response.statusCode()).isEqualTo(200);
+      assertThat(body(response).at("/id").asInt()).isEqualTo(6);
+      assertThat(body(response).at("/error/code").asInt()).isEqualTo(-32603);
+    }
+
+    @Test
     void givenNotification_whenPosting_thenAcceptsWithoutBody() {
       var response = post("{\"jsonrpc\":\"2.0\",\"method\":\"notifications/initialized\"}");
 
-      assertThat(response.statusCode()).isEqualTo(204);
+      assertThat(response.statusCode()).isEqualTo(202);
       assertThat(response.body()).isEmpty();
+    }
+
+    @Test
+    void givenClientResponse_whenPosting_thenAcceptsWithoutBody() {
+      var response = post("{\"jsonrpc\":\"2.0\",\"id\":9,\"result\":{}}");
+
+      assertThat(response.statusCode()).isEqualTo(202);
+      assertThat(response.body()).isEmpty();
+    }
+
+    @Test
+    void givenObjectThatIsNoJsonRpcMessage_whenPosting_thenFailsWithInvalidRequest() {
+      var response = post("{\"jsonrpc\":\"2.0\"}");
+
+      assertThat(response.statusCode()).isEqualTo(400);
+      assertThat(body(response).at("/error/code").asInt()).isEqualTo(-32600);
     }
 
     @Test
@@ -294,6 +332,7 @@ class McpEndpointTest {
 
       assertThat(response.statusCode()).isEqualTo(400);
       assertThat(body(response).at("/error/code").asInt()).isEqualTo(-32700);
+      assertThat(body(response).get("id").isNull()).isTrue();
     }
 
     @Test
@@ -301,6 +340,7 @@ class McpEndpointTest {
       var response = post("[" + initializeRequest("2025-11-25") + "]");
 
       assertThat(response.statusCode()).isEqualTo(400);
+      assertThat(body(response).at("/error/code").asInt()).isEqualTo(-32600);
     }
 
     @Test
@@ -359,7 +399,7 @@ class McpEndpointTest {
       try (var client = createClient(token)) {
         client.initialize();
 
-        assertThat(client.listTools().tools()).hasSize(3);
+        assertThat(client.listTools().tools()).hasSize(4);
       }
     }
   }
@@ -452,6 +492,15 @@ class McpEndpointTest {
                             "failing",
                             env -> {
                               throw new IllegalStateException("sensor offline");
+                            })
+                        .dataFetcher(
+                            "forbidden",
+                            env -> {
+                              // Like a required auth claim that the token does not have
+                              RoutingContext ctx =
+                                  env.getGraphQlContext().get(RoutingContext.class);
+                              ctx.response().setStatusCode(403);
+                              throw new IllegalStateException("Forbidden");
                             }))
             .type(
                 "Mutation",
@@ -500,6 +549,15 @@ class McpEndpointTest {
                 "query GetFailing { failing }",
                 Operation.QUERY)
             .build();
+    var getForbidden =
+        operation(
+                "GetForbidden",
+                "Requires a claim.",
+                Map.of(),
+                List.of(),
+                "query GetForbidden { forbidden }",
+                Operation.QUERY)
+            .build();
     var getHidden =
         operation(
                 "GetHidden",
@@ -511,7 +569,8 @@ class McpEndpointTest {
             .mcpMethod(McpMethodType.NONE)
             .build();
     return RootGraphQLModel.builder()
-        .operations(new ArrayList<>(List.of(getSensors, addReading, getFailing, getHidden)))
+        .operations(
+            new ArrayList<>(List.of(getSensors, addReading, getFailing, getForbidden, getHidden)))
         .build();
   }
 
