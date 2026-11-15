@@ -52,6 +52,7 @@ Maps to GraphQL query `Customer(limit: Int = 10, offset: Int = 0): [Customer!]` 
 - `@api(mcp: NONE)` on a query or mutation field omits its generated operation from MCP
 - Results follow relationships in GraphQL up to configured `max-result-depth`
 - Mutation input types are followed to the leaf input types to construct the expected request payload. 
+- MCP apps (interactive HTML UIs for MCP tools) are self-contained `.html` files in the directory set by `script.api.<version>.mcp-apps`. A tool is linked to the app with its name, or to the one its `appName` names; names match regardless of case (see [interface.md](interface.md))
 - MCP is served over Streamable HTTP at `/<version>/mcp` (e.g. `/v1/mcp`) and supports MCP protocol versions `2024-11-05`, `2025-03-26`, `2025-06-18`, and `2025-11-25`. The server echoes the client's requested version if supported, otherwise it responds with `2025-11-25` (see [interface.md](interface.md)).
 
 ### Custom Operations
@@ -68,8 +69,9 @@ query GetPersonByAge($age: Int!)
 
 **`@api` Directive:**
 - `rest`: `NONE` | `GET` | `POST` (HTTP method or disable)
-- `mcp`: `NONE` | `TOOL` (expose as MCP tool or not)
+- `mcp`: `NONE` | `TOOL` | `APP` (not exposed, MCP tool for the model and apps, or MCP tool for apps only)
 - `uri`: RFC 6570 template (args in template = path params, others = payload requiring POST)
+- `appName`: links the tool to the MCP app of that name; `appName: ""` links none (see MCP Apps in [interface.md](interface.md))
 
 **Rules:**
 - Operation name = MCP tool name = REST endpoint name (must be unique)

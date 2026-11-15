@@ -148,8 +148,9 @@ The name of the operation is the name of the MCP tool and REST endpoint and must
 
 The `@api` directive is applied to the directive to control how the operation is exposed:
 * `rest`: `NONE`, `GET`, or `POST` to configure the HTTP method or not expose as REST endpoint.
-* `mcp`: `NONE` or `TOOL` to configure whether the operation is exposed as an MCP tool.
+* `mcp`: `NONE`, `TOOL`, or `APP` to configure whether the operation is exposed as an MCP tool. `TOOL`, the default, is a tool for the model that [MCP apps](#mcp-apps) can call as well. `APP` is a tool that only MCP apps can call, hidden from the model.
 * `uri`: An RFC 6570 template to configure the REST path. Any operation arguments that are not defined in the uri template are considered part of the payload for REST (and the method must be POST).
+* `appName`: The name of the [MCP app](#mcp-apps) that renders the tool's result. An empty value (`appName: ""`) links no app.
 
 ```graphql
 # Returns up to 10 people of the given age.
@@ -168,6 +169,53 @@ The `#` comment lines above an operation are its REST (OpenAPI) description and 
 By default, DataSQRL adds explicit operations to the generated ones. Set `compiler.api.endpoints` to `OPS_ONLY` to omit generated REST/MCP operations and restrict a public GraphQL endpoint to explicitly defined named operations. The server executes its stored operation definition, so clients cannot alter its selection set.
 
 The MCP server uses the Streamable HTTP transport at `/<version>/mcp` (e.g. `/v1/mcp`) and supports the MCP protocol versions `2024-11-05`, `2025-03-26`, `2025-06-18`, and `2025-11-25`. On `initialize`, it responds with the protocol version the client requests if that version is supported, and with the latest supported version, `2025-11-25`, otherwise.
+
+### MCP Apps
+
+An MCP app is an interactive HTML UI for an MCP tool. MCP hosts that support the [MCP Apps extension](https://github.com/modelcontextprotocol/ext-apps) (`io.modelcontextprotocol/ui`) render the app of a tool in a sandboxed iframe when the tool is called. The app receives the tool's input and result from the host, and it can call the server's tools through the host.
+
+Configure the directory with the apps of an API version in `script.api.<version>.mcp-apps` in the `package.json`:
+
+```json
+"script": {
+  "api": {
+    "v1": {
+      "schema": "api/schema.v1.graphqls",
+      "operations": ["api/operations-v1/ops.graphql"],
+      "mcp-apps": "api/apps-v1"
+    }
+  }
+}
+```
+
+Without `mcp-apps`, the API version has no MCP Apps support. Apps are only served when `compiler.api.protocols` includes `MCP`.
+
+Each app is a single, self-contained `.html` file directly in the apps directory, with all scripts, styles, and assets inlined. Subdirectories and other files are ignored. The app's name is its file name without `.html`. You can build apps with any framework that writes single-file HTML into the apps directory, for example Vite with `vite-plugin-singlefile`. DataSQRL only picks up the finished files.
+
+A tool is linked to an app as follows. All names match regardless of case.
+* By default, a tool is linked to the app with the tool's name. For example, the operation `GetSales` is linked to `api/apps-v1/GetSales.html`.
+* `@api(appName: "SalesChart")` links the tool to the app `SalesChart` instead, and `@api(appName: "")` links no app. One app can serve several tools.
+* An `APP` tool doesn't need an app of its own. Typical `APP` tools are helpers that an app calls, such as a drill-down query or a mutation that the user submits from a form.
+
+```graphql
+# Sales by region and product for a time range.
+query GetSales($from: DateTime!, $to: DateTime!) @api(mcp: TOOL, appName: "SalesChart") { ... }
+
+# Daily sales for one region. Called by the SalesChart app for drill-downs.
+query GetDailySales($region: String!, $from: DateTime!, $to: DateTime!) @api(mcp: APP) { ... }
+```
+
+DataSQRL serves each app as the MCP resource `ui://apps/<name>` with the MIME type `text/html;profile=mcp-app`, and lists it in `resources/list`. The app's file is loaded when the project is compiled. A tool linked to an app has the app's URI in `_meta.ui.resourceUri`. With MCP Apps support, each tool has `_meta.ui.visibility`: `["model", "app"]` for `TOOL` and `["app"]` for `APP`. The server advertises the `io.modelcontextprotocol/ui` extension on `initialize`. Tool results don't change: apps parse the JSON in the result's `content`.
+
+When you define your own GraphQL schema, declare `APP` and `appName` in the `@api` directive:
+
+```graphql
+enum _McpMethodType { NONE, TOOL, APP }
+enum _RestMethodType { NONE, GET, POST }
+directive @api(mcp: _McpMethodType, rest: _RestMethodType, uri: String, appName: String) on QUERY | MUTATION | FIELD_DEFINITION
+```
+
+The compilation fails when the apps directory doesn't exist, when an `appName` names an app that doesn't exist, when an operation with `mcp: NONE` has a non-empty `appName`, and when the names of two apps differ only in case. It warns about an app that is linked to no tool, and about an app that loads external or relative resources with `<script src>`, `<link href>`, or `<img src>` other than `data:` URLs.
 
 ### OpenAPI and API Versioning
 
